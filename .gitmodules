@@ -1,0 +1,9 @@
+[submodule "code/ext/sphericalquadpy"]
+	path = code/ext/sphericalquadpy
+	url = git://github.com/camminady/sphericalquadpy.git
+[submodule "code/ext/cpptoml"]
+	path = code/ext/cpptoml
+	url = git://github.com/skystrife/cpptoml.git
+[submodule "code/ext/spdlog"]
+	path = code/ext/spdlog
+	url = git://github.com/gabime/spdlog.git
