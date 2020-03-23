@@ -30,7 +30,7 @@ git submodule update
  
 ```bash 
 cd code/build/release
-cmake -DCMAKE_BUILD_TYPE=Release ../../src
+cmake -DCMAKE_BUILD_TYPE=Release ../../
 make 
 ```
 If building in parallel is desired, change the last line to `make -jN`, where `N` optimally is equal to the number of available threads+1.
@@ -39,7 +39,7 @@ If building in parallel is desired, change the last line to `make -jN`, where `N
 
 ```bash 
 cd code/build/release
-cmake -G Ninja -DCMAKE_BUILD_TYPE=Release ../../src
+cmake -G Ninja -DCMAKE_BUILD_TYPE=Release ../../
 ninja
 ```
 
@@ -68,6 +68,7 @@ TBD
 
 ## Code structure
 ![Can't load image](doc/uml.png "UML diagram")
+<br/><br/>
 The diagram can be modified by opening `doc/uml.zargo` with `ArgoUML`.
 
 ## Coding style
