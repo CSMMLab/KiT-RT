@@ -68,7 +68,20 @@ OMP_NUM_THREADS=N mpirun -np J ./bin/RTSN input/example.toml
 with `N` equal to the number of shared memory threads and `J` equal to the number of distrubuted memory threads.
 
 ### BwUniCluster
-TBD
+Example for build and run on bwUniCluster.
+```bash
+git clone https://git.scc.kit.edu/rtsn/rtsn.git
+cd rtsn/
+git submodule init
+git submodule update
+module load devel/cmake/3.16
+module load compiler/gnu/9.2
+module load mpi/openmpi/4.0
+cd code/build/release/
+cmake -DCMAKE_BUILD_TYPE=Release ../../
+make
+./../../bin/RTSN ../../input/example.toml
+```
 
 ---
 
