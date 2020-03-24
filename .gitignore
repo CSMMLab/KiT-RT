@@ -476,6 +476,9 @@ tags
 # Coc configuration directory
 .vim
 
+# gitkeep files
+.gitkeep
+
 # project folder
 code/bin/*
 code/build/*

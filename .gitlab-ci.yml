@@ -2,10 +2,12 @@ image: ubuntu:18.04
 
 stages:
   - build
-  - test
+  - unit_tests
 
 build:
   stage: build
+  artifacts:
+    untracked: true
   script:
     - apt-get update
     - apt-get install -y g++ cmake libopenmpi-dev libblas-dev liblapack-dev git ninja-build
@@ -14,7 +16,9 @@ build:
     - cmake -G Ninja -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=True -DCMAKE_EXPORT_COMPILE_COMMANDS=True ../../
     - ninja
 
-test:
-  stage: test
+unit_tests:
+  stage: unit_tests
+  dependencies:
+    - build
   script:
-    - bin/unit_tests
+    - ./code/bin/unit_tests
