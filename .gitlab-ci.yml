@@ -7,7 +7,8 @@ stages:
 build:
   stage: build
   artifacts:
-    untracked: true
+    paths: 
+      - code/bin
   script:
     - apt-get update
     - apt-get install -y g++ cmake libopenmpi-dev libblas-dev liblapack-dev git ninja-build
