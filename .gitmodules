@@ -7,3 +7,6 @@
 [submodule "code/ext/spdlog"]
 	path = code/ext/spdlog
 	url = git://github.com/gabime/spdlog.git
+[submodule "code/ext/Catch2"]
+	path = code/ext/Catch2
+	url = git://github.com/catchorg/Catch2.git

@@ -6,8 +6,10 @@ TBD
 ### Examples
 TBD
 
+---
+
 ## Build
-### System dependencies
+### Required dependencies
  - Compiler with C++17 support (GCC >= v6, clang >= v3.8)
  - cmake >= v3.5
  - LAPACK
@@ -25,7 +27,7 @@ git submodule init
 git submodule update
 ```
 
-### Compile
+### Compile the code
 **Make** build system (available on most systems)
  
 ```bash 
@@ -45,7 +47,9 @@ ninja
 
 
 The resulting executable will automatically be placed in the `code/bin` folder.
- 
+
+---
+
 ## Run
 ### Local
 Execute the compiled binary and hand over a valid *TOML*-styled config file.
@@ -66,10 +70,28 @@ with `N` equal to the number of shared memory threads and `J` equal to the numbe
 ### BwUniCluster
 TBD
 
+---
+
+## Tests
+In order to also compile the unit tests, add `-DBUILD_TESTING=True` to the cmake command, e.g.:
+
+```bash
+cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=True ../../
+```
+
+The resulting `unit_tests` executable will also be placed in `/bin`.
+
+## Continuous Integration (CI)
+TBD
+
+---
+
 ## Code structure
 ![Can't load image](doc/uml.png "UML diagram")
 <br/><br/>
 The diagram can be modified by opening `doc/uml.zargo` with `ArgoUML`.
+
+---
 
 ## Coding style
 Please stick to the following coding style for easier code readability:
