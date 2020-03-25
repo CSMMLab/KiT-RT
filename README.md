@@ -1,4 +1,4 @@
-# RTSN - a HPC Radio Tomography $`S_n`$ framework
+# RTSN - a HPC Radio Therapy $`S_n`$ framework
 TBD 
 ## What RTSN is capable of
 ### Theory
