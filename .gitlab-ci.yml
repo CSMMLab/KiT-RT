@@ -11,7 +11,7 @@ build:
       - code/bin
   script:
     - apt-get update
-    - apt-get install -y g++ cmake libopenmpi-dev libblas-dev liblapack-dev git ninja-build
+    - DEBIAN_FRONTEND=noninteractive apt-get install -y g++ cmake libopenmpi-dev libblas-dev liblapack-dev git libvtk7.1 ninja-build
     - git submodule update --init --recursive
     - cd code/build/debug
     - cmake -G Ninja -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=True -DCMAKE_EXPORT_COMPILE_COMMANDS=True ../../
