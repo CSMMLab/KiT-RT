@@ -10,11 +10,12 @@ TBD
 
 ## Build
 ### Required dependencies
- - Compiler with C++17 support (GCC >= v6, clang >= v3.8)
+ - Compiler with C++20 support
  - cmake >= v3.5
  - LAPACK
  - OpenMP
  - MPI
+ - VTK
  - git
  - ninja or make
 
