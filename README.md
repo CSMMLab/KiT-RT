@@ -10,8 +10,8 @@ TBD
 
 ## Build
 ### Required dependencies
- - Compiler with C++20 support
- - cmake >= v3.5
+ - Compiler with C++20 support (e.g. g++ v9)
+ - cmake >= v3.12.4
  - LAPACK
  - OpenMP
  - MPI
@@ -24,8 +24,7 @@ Note that an **active internet connection is required for the first build** in o
 For the first build only, download all submodules:
 
 ```bash
-git submodule init
-git submodule update
+git submodule update --init --recursive
 ```
 
 ### Compile the code
