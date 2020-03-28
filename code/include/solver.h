@@ -5,6 +5,7 @@
 #include "typedef.h"
 
 #include "numericalflux.h"
+#include "settings.h"
 #include <string>
 
 class Solver

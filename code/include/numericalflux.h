@@ -2,6 +2,7 @@
 #define NUMERICALFLUX_H
 
 #include "typedef.h"
+#include "settings.h"
 
 class NumericalFlux
 {
