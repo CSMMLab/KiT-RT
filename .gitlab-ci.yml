@@ -7,8 +7,8 @@ stages:
 build:
   stage: build
   artifacts:
-    paths: 
-      - code/bin
+    expire_in: 1 day
+    untracked: true
   script:
     - git submodule update --init --recursive
     - cd code/build/debug
