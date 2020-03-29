@@ -1,4 +1,4 @@
-image: rtsn:latest
+image: rtsn/test:latest
 
 stages:
   - build
