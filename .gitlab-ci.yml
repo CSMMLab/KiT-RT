@@ -10,6 +10,7 @@ build:
     expire_in: 1 day
     untracked: true
   script:
+    - export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/lib"
     - git submodule update --init --recursive
     - cd code/build/debug
     - cmake -G Ninja -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=True -DCMAKE_EXPORT_COMPILE_COMMANDS=True ../../
