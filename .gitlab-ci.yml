@@ -20,5 +20,4 @@ unit_tests:
   dependencies:
     - build
   script:
-    - export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/lib"
     - ./code/bin/unit_tests

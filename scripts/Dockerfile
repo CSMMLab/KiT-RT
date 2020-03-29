@@ -1,7 +1,8 @@
 FROM ubuntu:18.04
 
 ENV CXX=/usr/bin/g++ \
-    CC=/usr/bin/gcc
+    CC=/usr/bin/gcc \
+    LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/lib"
 
 RUN apt-get update -qq \
     && apt-get install -qq software-properties-common \
