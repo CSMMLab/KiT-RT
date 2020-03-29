@@ -1,4 +1,4 @@
-image: conanio/gcc9
+image: rtsn:latest
 
 stages:
   - build
@@ -10,8 +10,6 @@ build:
     paths: 
       - code/bin
   script:
-    - sudo apt-get update
-    - sudo DEBIAN_FRONTEND=noninteractive apt-get install -y libopenmpi-dev libblas-dev liblapack-dev git libvtk7-dev ninja-build
     - git submodule update --init --recursive
     - cd code/build/debug
     - cmake -G Ninja -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=True -DCMAKE_EXPORT_COMPILE_COMMANDS=True ../../
