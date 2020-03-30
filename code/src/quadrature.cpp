@@ -17,12 +17,25 @@ double Quadrature::SumUpWeights() { return sum( _weights ); }
 
 void Quadrature::PrintWeights() {
     for( int i = 0; i < _nq; i++ ) {
-        std::cout << _weights[i] << std::endl;
+        double w = _weights[i];
+        std::cout << w << std::endl;
     }
 }
 
 void Quadrature::PrintPoints() {
     for( int i = 0; i < _nq; i++ ) {
-        std::cout << _points[i][0] << ", " << _points[i][1] << ", " << _points[i][2] << std::endl;
+        double x = _points[i][0];
+        double y = _points[i][1];
+        double z = _points[i][2];
+        std::cout << x << ", " << y << ", " << z << std::endl;
+    }
+}
+void Quadrature::PrintPointsAndWeights() {
+    for( int i = 0; i < _nq; i++ ) {
+        double x = _points[i][0];
+        double y = _points[i][1];
+        double z = _points[i][2];
+        double w = _weights[i];
+        std::cout << x << ", " << y << ", " << z << ", " << w << std::endl;
     }
 }
