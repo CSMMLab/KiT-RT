@@ -12,7 +12,7 @@ class Quadrature
     virtual ~Quadrature(){};
 
     virtual std::string ComputeName()           = 0;
-    virtual int ComputeNq()                     = 0;
+    virtual unsigned ComputeNq()                = 0;
     virtual VectorVector ComputePoints()        = 0;
     virtual Vector ComputeWeights()             = 0;
     virtual VectorVectorU ComputeConnectivity() = 0;
