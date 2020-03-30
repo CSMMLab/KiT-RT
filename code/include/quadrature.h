@@ -22,6 +22,7 @@ class Quadrature
     void PrintPoints();
     void PrintPointsAndWeights();
     double SumUpWeights();
+    double Integrate( double( f )( double x0, double x1, double x2 ) );
 
     // Quadrature Hub
     static Quadrature* CreateQuadrature( std::string name, unsigned order );

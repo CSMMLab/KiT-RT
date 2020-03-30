@@ -9,7 +9,7 @@ bool approxequal( double a, double b ) {
     return abs( a - b ) < tol;
 }
 
-TEST_CASE( "Quadrature weights sum to 4*pi.", "WHAT TO PUT HERE?" ) {
+TEST_CASE( "Quadrature weights sum to 4*pi.", "[correctweightsum]" ) {
     for( auto quadraturename : quadraturenames ) {
         for( auto quadratureorder : quadratureorders ) {
             Quadrature* Q = Quadrature::CreateQuadrature( quadraturename, quadratureorder );
@@ -18,7 +18,7 @@ TEST_CASE( "Quadrature weights sum to 4*pi.", "WHAT TO PUT HERE?" ) {
     }
 }
 
-TEST_CASE( "Quadrature points are on the unit sphere.", "WHAT TO PUT HERE?" ) {
+TEST_CASE( "Quadrature points are on the unit sphere.", "[pointsonsphere]" ) {
     for( auto quadraturename : quadraturenames ) {
         for( auto quadratureorder : quadratureorders ) {
             Quadrature* Q       = Quadrature::CreateQuadrature( quadraturename, quadratureorder );
@@ -30,7 +30,7 @@ TEST_CASE( "Quadrature points are on the unit sphere.", "WHAT TO PUT HERE?" ) {
     }
 }
 
-TEST_CASE( "Nq is actually equal to the number of weights.", "WHAT TO PUT HERE?" ) {
+TEST_CASE( "Nq is actually equal to the number of weights.", "[nqequallengthweights]" ) {
     for( auto quadraturename : quadraturenames ) {
         for( auto quadratureorder : quadratureorders ) {
             Quadrature* Q = Quadrature::CreateQuadrature( quadraturename, quadratureorder );
@@ -39,11 +39,24 @@ TEST_CASE( "Nq is actually equal to the number of weights.", "WHAT TO PUT HERE?"
     }
 }
 
-TEST_CASE( "Nq is actually equal to the number of points.", "WHAT TO PUT HERE?" ) {
+TEST_CASE( "Nq is actually equal to the number of points.", "[nqequallengthpoints]" ) {
     for( auto quadraturename : quadraturenames ) {
         for( auto quadratureorder : quadratureorders ) {
             Quadrature* Q = Quadrature::CreateQuadrature( quadraturename, quadratureorder );
             REQUIRE( Q->GetNq() == size( Q->GetPoints() ) );
+        }
+    }
+}
+
+double f( double x, double y, double z ) {
+    return x * x + y * y + z * z;    // == 1
+}
+
+TEST_CASE( "Integrate a constant function.", "[integrateconstantfunction" ) {
+    for( auto quadraturename : quadraturenames ) {
+        for( auto quadratureorder : quadratureorders ) {
+            Quadrature* Q = Quadrature::CreateQuadrature( quadraturename, quadratureorder );
+            REQUIRE( approxequal( Q->Integrate( f ), 4.0 * M_PI ) );
         }
     }
 }

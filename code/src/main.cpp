@@ -4,6 +4,8 @@
 #include "quadrature.h"
 #include "typedef.h"
 
+double f( double x, double y, double z ) { return x * y + z; }    // Dummy function to demonstrate integration.
+
 int main( int argc, char** argv ) {
 
     MPI_Init( &argc, &argv );
@@ -15,6 +17,7 @@ int main( int argc, char** argv ) {
     // playground and demo
     Quadrature* Q = Quadrature::CreateQuadrature( "montecarlo", 10 );
     Q->PrintWeights();
+    std::cout << Q->Integrate( f ) << std::endl;
 
     auto log = spdlog::get( "event" );
     log->info( "this is a print function to terminal and a logfile simultaneously" );

@@ -13,6 +13,18 @@ Quadrature* Quadrature::CreateQuadrature( std::string name, unsigned order ) {
     return new QMonteCarlo( order );
 }
 
+double Quadrature::Integrate( double( f )( double x0, double x1, double x2 ) ) {
+    // Integrates f(x,y,z) with the quadrature.
+    double result = 0;
+    for( unsigned i = 0; i < _nq; i++ ) {
+        double x = _points[i][0];
+        double y = _points[i][1];
+        double z = _points[i][2];
+        double w = _weights[i];
+        result += w * f( x, y, z );
+    }
+    return result;
+}
 double Quadrature::SumUpWeights() { return sum( _weights ); }
 
 void Quadrature::PrintWeights() {
