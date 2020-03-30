@@ -23,5 +23,8 @@ int main( int argc, char** argv ) {
     Vector foo( 10, 1.0 );            // blaze vector (see typedef.h)
     std::cout << foo << std::endl;    // is printable
 
+    log->info( BLAZE_CACHE_SIZE );
+    log->info( BLAZE_USE_SHARED_MEMORY_PARALLELIZATION );
+
     return EXIT_SUCCESS;
 }
