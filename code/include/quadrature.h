@@ -20,7 +20,9 @@ class Quadrature
 
     // Aux functions
     void PrintWeights();
+    void PrintPoints();
     double SumUpWeights();
+    
 
     // Quadrature Hub
     static Quadrature* CreateQuadrature( std::string name, int order );

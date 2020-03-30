@@ -13,15 +13,16 @@ Quadrature* Quadrature::CreateQuadrature( std::string name, int order ) {
     return new QMonteCarlo( order );
 }
 
-double Quadrature::SumUpWeights() {
-    double w = 0;
-    for( int i = 0; i < _nq; i++ ) {
-        w += _weights[i];
-    }
-    return w;
-}
+double Quadrature::SumUpWeights() { return sum( _weights ); }
+
 void Quadrature::PrintWeights() {
     for( int i = 0; i < _nq; i++ ) {
         std::cout << _weights[i] << std::endl;
+    }
+}
+
+void Quadrature::PrintPoints() {
+    for( int i = 0; i < _nq; i++ ) {
+        std::cout << _points[i][0] << ", " << _points[i][1] << ", " << _points[i][2] << std::endl;
     }
 }
