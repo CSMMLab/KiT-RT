@@ -2,29 +2,28 @@
 #define QUADRATURE_H
 
 #include <blaze/Math.h>
-#include <math.h>
-#include <random>
+#include <iostream>
 #include <string>
-
+#include <vector>
+using namespace std;
 class Quadrature
 {
   public:
-    Quadrature( int order ) {
-        SetOrder( order );
-        SetName( ComputeName() );
-        SetNq( ComputeNq() );
-        SetPoints( ComputePoints() );
-        SetWeights( ComputeWeights() );
-        SetConnectivity( ComputeConnectivity() );
-    };
-    virtual ~Quadrature() = 0;
+    Quadrature( int order );
+    virtual ~Quadrature(){};
 
-    // Virtual methods that every quadrature has to implement
-    virtual std::string ComputeName();
-    virtual int ComputeNq();
-    virtual blaze::DynamicVector<blaze::DynamicVector<double>> ComputePoints();
-    virtual blaze::DynamicVector<double> ComputeWeights();
-    virtual blaze::DynamicVector<blaze::DynamicVector<int>> ComputeConnectivity();
+    virtual std::string ComputeName()                                             = 0;
+    virtual int ComputeNq()                                                       = 0;
+    virtual blaze::DynamicVector<blaze::DynamicVector<double>> ComputePoints()    = 0;
+    virtual blaze::DynamicVector<double> ComputeWeights()                         = 0;
+    virtual blaze::DynamicVector<blaze::DynamicVector<int>> ComputeConnectivity() = 0;
+
+    // Aux functions
+    void PrintWeights();
+    double SumUpWeights();
+
+    // Quadrature Hub
+    static Quadrature* CreateQuadrature( std::string name, int order );
 
     // Setter
     void SetName( std::string name ) { _name = name; };
