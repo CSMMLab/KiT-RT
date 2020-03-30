@@ -1,16 +1,17 @@
 #ifndef RECONSTRUCTOR_H
 #define RECONSTRUCTOR_H
 
+#include "settings.h"
 #include "typedef.h"
 
 class Reconstructor
 {
-public:
+  public:
     /**
      * @brief Reconstruction
      * @param settings
      */
-    Reconstructor(Settings* settings);
+    Reconstructor( Settings* settings );
 
     /**
      * @brief Flux computes flux on edge for fixed ordinate at a given edge
@@ -20,7 +21,7 @@ public:
      * @param n scaled normal vector of given edge
      * @return reconstructed slope
      */
-    virtual double Slope(const Vector& Omega, double psiL, double psiR, const Vector& n)const;
+    virtual double Slope( const Vector& Omega, double psiL, double psiR, const Vector& n ) const;
 };
 
-#endif // RECONSTRUCTOR_H
+#endif    // RECONSTRUCTOR_H
