@@ -1,24 +1,18 @@
-#include "qmontecarlo.h"
+#include "qgausslegendretensorized.h"
 
-QMonteCarlo::QMonteCarlo( int order ) : Quadrature( order ) {
+QGaussLegendreTensorized::QGaussLegendreTensorized( int order ) : Quadrature( order ) {
     SetName( ComputeName() );
     SetNq( ComputeNq() );
     SetPoints( ComputePoints() );
     SetWeights( ComputeWeights() );
     SetConnectivity( ComputeConnectivity() );
-};
+}
 
-std::string QMonteCarlo::ComputeName() {
-    // Human readable description.
-    return "Monte Carlo Quadrature.";
-};
+std::string QGaussLegendreTensorized::ComputeName() { return "Tensorized Gauss-Legendre quadrature."; };
 
-int QMonteCarlo::ComputeNq() {
-    // For Monte Carlo Quadrature, nq = order.
-    return GetOrder();
-};
+int QGaussLegendreTensorized::ComputeNq() { return pow( GetOrder(), 2 ); };
 
-blaze::DynamicVector<blaze::DynamicVector<double>> QMonteCarlo::ComputePoints() {
+blaze::DynamicVector<blaze::DynamicVector<double>> QGaussLegendreTensorized::ComputePoints() {
     // Nq random points on the sphere.
     int nq = GetNq();
     blaze::DynamicVector<blaze::DynamicVector<double>> points( nq );
@@ -38,14 +32,14 @@ blaze::DynamicVector<blaze::DynamicVector<double>> QMonteCarlo::ComputePoints() 
     return points;
 };
 
-blaze::DynamicVector<double> QMonteCarlo::ComputeWeights() {
+blaze::DynamicVector<double> QGaussLegendreTensorized::ComputeWeights() {
     // Equal weights
     int nq = GetNq();
     blaze::DynamicVector<double> weights( nq, 4.0 * M_PI / nq );
     return weights;
 };
 
-blaze::DynamicVector<blaze::DynamicVector<int>> QMonteCarlo::ComputeConnectivity() {
+blaze::DynamicVector<blaze::DynamicVector<int>> QGaussLegendreTensorized::ComputeConnectivity() {
     // Not initialized for this quadrature.
     blaze::DynamicVector<blaze::DynamicVector<int>> connectivity;
     return connectivity;
