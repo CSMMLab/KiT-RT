@@ -3,19 +3,17 @@
 
 #include "quadrature.h"
 
-class QGaussLegendreTensorized:public Quadrature
+class QGaussLegendreTensorized : public Quadrature
 {
   public:
-    QGaussLegendreTensorized( int order );
+    QGaussLegendreTensorized( unsigned order );
     virtual ~QGaussLegendreTensorized() {}
 
-
     std::string ComputeName();
-    int ComputeNq();
-    blaze::DynamicVector<blaze::DynamicVector<double>> ComputePoints();
-    blaze::DynamicVector<double> ComputeWeights();
-    blaze::DynamicVector<blaze::DynamicVector<int>> ComputeConnectivity();
+    unsigned ComputeNq();
+    VectorVector ComputePoints();
+    Vector ComputeWeights();
+    VectorVectorU ComputeConnectivity();
 };
 
-#endif // QGAUSSLEGENDRETENSORIZED_H
-
+#endif    // QGAUSSLEGENDRETENSORIZED_H

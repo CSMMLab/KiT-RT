@@ -3,18 +3,17 @@
 
 #include "quadrature.h"
 
-class QMonteCarlo:public Quadrature
+class QMonteCarlo : public Quadrature
 {
   public:
-    QMonteCarlo( int order );
+    QMonteCarlo( unsigned order );
     virtual ~QMonteCarlo() {}
 
-
     std::string ComputeName();
-    int ComputeNq();
-    blaze::DynamicVector<blaze::DynamicVector<double>> ComputePoints();
-    blaze::DynamicVector<double> ComputeWeights();
-    blaze::DynamicVector<blaze::DynamicVector<int>> ComputeConnectivity();
+    unsigned ComputeNq();
+    VectorVector ComputePoints();
+    Vector ComputeWeights();
+    VectorVectorU ComputeConnectivity();
 };
 
 #endif    // QMONTECARLO_H

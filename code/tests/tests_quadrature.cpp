@@ -21,17 +21,15 @@ TEST_CASE( "Quadrature weights sum to 4*pi.", "WHAT TO PUT HERE?" ) {
 TEST_CASE( "Quadrature points are on the unit sphere.", "WHAT TO PUT HERE?" ) {
     for( auto quadraturename : quadraturenames ) {
         for( auto quadratureorder : quadratureorders ) {
-            Quadrature* Q = Quadrature::CreateQuadrature( quadraturename, quadratureorder );
-
-            blaze::DynamicVector<blaze::DynamicVector<double>> points = Q->GetPoints();
-            for( int i = 0; i < Q->GetNq(); i++ ) {
+            Quadrature* Q       = Quadrature::CreateQuadrature( quadraturename, quadratureorder );
+            VectorVector points = Q->GetPoints();
+            for( unsigned i = 0; i < Q->GetNq(); i++ ) {
                 REQUIRE( approxequal( 1.0, norm( points[i] ) ) );
             }
         }
     }
 }
 
-/*
 TEST_CASE( "Nq is actually equal to the number of weights.", "WHAT TO PUT HERE?" ) {
     for( auto quadraturename : quadraturenames ) {
         for( auto quadratureorder : quadratureorders ) {
@@ -49,4 +47,3 @@ TEST_CASE( "Nq is actually equal to the number of points.", "WHAT TO PUT HERE?" 
         }
     }
 }
-*/

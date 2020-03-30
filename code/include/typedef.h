@@ -5,8 +5,8 @@
 #include <blaze/math/DynamicVector.h>
 
 typedef blaze::DynamicMatrix<double> Matrix;
-typedef std::vector<blaze::DynamicVector<double>> VecVec;
-typedef std::vector<blaze::DynamicVector<unsigned>> VecVecU;
+typedef std::vector<blaze::DynamicVector<double>> VectorVector;
+typedef std::vector<blaze::DynamicVector<unsigned>> VectorVectorU;
 typedef blaze::DynamicVector<double> Vector;
 typedef blaze::DynamicVector<unsigned> VectorU;
 
