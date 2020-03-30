@@ -1,6 +1,7 @@
-cmake_minimum_required( VERSION 3.5 )
+cmake_minimum_required( VERSION 3.12.4 )
 project( RTSN LANGUAGES CXX VERSION 0.0.1 )
-set( CMAKE_CXX_STANDARD 17 )
+set( CMAKE_CXX_STANDARD 20 )
+set( CMAKE_CXX_STANDARD_REQUIRED ON )
 
 set( CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -march=native" )
 set( CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -O3 -march=native -pg -no-pie" )
@@ -24,8 +25,10 @@ include_directories( ${MPI_INCLUDE_PATH} )
 find_package( LAPACK REQUIRED )
 include_directories( ${LAPACK_INCLUDE_DIR} )
 
-include_directories( ${CMAKE_SOURCE_DIR}/../ext/cpptoml/include )
-include_directories( ${CMAKE_SOURCE_DIR}/../ext/spdlog/include )
+find_package( VTK REQUIRED COMPONENTS vtkIOGeometry vtkFiltersCore )
+
+include_directories( ${CMAKE_SOURCE_DIR}/ext/cpptoml/include )
+include_directories( ${CMAKE_SOURCE_DIR}/ext/spdlog/include )
 
 execute_process(
     COMMAND git rev-parse HEAD
@@ -35,7 +38,7 @@ execute_process(
 )
 add_definitions( '-DGIT_HASH="${GIT_HASH}"' )
 
-set( CORE_LIBRARIES ${LAPACK_LIBRARIES} ${MPI_LIBRARIES} -lstdc++fs )
+set( CORE_LIBRARIES ${LAPACK_LIBRARIES} ${MPI_LIBRARIES} ${VTK_LIBRARIES} -lstdc++fs )
 
 target_link_libraries( ${CMAKE_PROJECT_NAME} ${CORE_LIBRARIES} )
 
