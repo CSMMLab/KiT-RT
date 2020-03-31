@@ -8,5 +8,6 @@ meshFile = "foo"
 
 [solver]
 CFL = 0.9
+tEnd = 0.3
 quadType = "bar"
 quadOrder = 42 

@@ -5,7 +5,6 @@
 #include "typedef.h"
 
 #include "numericalflux.h"
-#include "quadrature.h"
 #include "settings.h"
 #include <string>
 
@@ -14,7 +13,7 @@ class Solver
   protected:
     unsigned _nq;                                     // number of quadrature points
     const unsigned _NCells;                           // number of spatial cells
-    const unsigned _NTimeSteps;                       // number of time steps, number of nodal energy values for CSD
+    unsigned _nTimeSteps;                             // number of time steps, number of nodal energy values for CSD
     double _dt;                                       // time step size
     Matrix _psi;                                      // angular flux vector, dim(_psi) = (_NCells,_nq)
     std::vector<unsigned> _areas;                     // surface area of all spatial cells, dim(_areas) = _NCells
@@ -39,6 +38,12 @@ class Solver
      * @param fileName is name of stopping power file
      */
     void LoadStoppingPower( std::string fileName );
+
+    /**
+     * @brief ComputeTimeStep calculates the maximal stable time step
+     * @param cfl is cfl number
+     */
+    double ComputeTimeStep( double cfl ) const;
 
   public:
     /**

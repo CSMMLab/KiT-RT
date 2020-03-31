@@ -9,7 +9,7 @@ void SNSolver::Solve() {
     Matrix psiNew = _psi;
 
     // loop over energies (pseudo-time)
-    for( unsigned n = 0; n < _NTimeSteps; ++n ) {
+    for( unsigned n = 0; n < _nTimeSteps; ++n ) {
         // loop over all spatial cells
         for( unsigned j = 0; j < _NCells; ++j ) {
             // loop over all ordinates

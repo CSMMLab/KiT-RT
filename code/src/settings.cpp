@@ -10,3 +10,5 @@ std::string Settings::GetLogDir() const { return _logDir.string(); }
 
 unsigned Settings::GetQuadOrder() const { return _quadOrder; }
 std::string Settings::GetQuadName() const { return _quadName; }
+double Settings::GetCFL() const { return _CFL; }
+double Settings::GetTEnd() const { return _tEnd; }
