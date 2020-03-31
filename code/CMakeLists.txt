@@ -1,5 +1,5 @@
 cmake_minimum_required( VERSION 3.12.4 )
-project( RTSN LANGUAGES CXX VERSION 0.0.1 )
+project( RTSN LANGUAGES C CXX VERSION 0.0.1 )
 set( CMAKE_CXX_STANDARD 20 )
 set( CMAKE_CXX_STANDARD_REQUIRED ON )
 
@@ -25,8 +25,11 @@ include_directories( ${MPI_INCLUDE_PATH} )
 find_package( LAPACK REQUIRED )
 include_directories( ${LAPACK_INCLUDE_DIR} )
 
-add_definitions( '-DBLAZE_USE_SHARED_MEMORY_PARALLELIZATION=0' )
-add_definitions( '-DBLAZE_BLAS_MODE=1' )
+find_package( GSL REQUIRED )
+include_directories( ${GSL_INCLUDE_DIR} )
+
+add_compile_definitions( BLAZE_USE_SHARED_MEMORY_PARALLELIZATION=0 )
+add_compile_definitions( BLAZE_BLAS_MODE=1 )
 message( "Automatic Cache Size Configuration" )
 set(flag 1)
 if (WIN32)
@@ -97,9 +100,16 @@ endif (flag)
 
 string( REGEX MATCH "([0-9][0-9]+)" tmp ${tmp} )
 math( EXPR BLAZE_CACHE_SIZE ${tmp}*1024 )
-add_definitions( '-DBLAZE_CACHE_SIZE=${BLAZE_CACHE_SIZE}UL' )
+add_compile_definitions( BLAZE_CACHE_SIZE=${BLAZE_CACHE_SIZE}UL )
 message( "Configuring Cache Size: ${BLAZE_CACHE_SIZE}" )
 include_directories( ${CMAKE_SOURCE_DIR}/ext/blaze )
+
+add_compile_definitions( METIS_EXPORT= )
+add_compile_definitions( IDXTYPEWIDTH=64 )
+add_compile_definitions( REALTYPEWIDTH=64 )
+include_directories( ${CMAKE_SOURCE_DIR}/ext/parmetis/include )
+include_directories( ${CMAKE_SOURCE_DIR}/ext/parmetis/metis/GKlib )
+add_subdirectory( ${CMAKE_SOURCE_DIR}/ext/parmetis/libparmetis )
 
 find_package( VTK REQUIRED COMPONENTS vtkIOGeometry vtkFiltersCore )
 
@@ -112,9 +122,9 @@ execute_process(
     OUTPUT_VARIABLE GIT_HASH
     OUTPUT_STRIP_TRAILING_WHITESPACE
 )
-add_definitions( '-DGIT_HASH="${GIT_HASH}"' )
+add_compile_definitions( GIT_HASH="${GIT_HASH}" )
 
-set( CORE_LIBRARIES ${LAPACK_LIBRARIES} ${MPI_LIBRARIES} ${VTK_LIBRARIES} -lstdc++fs )
+set( CORE_LIBRARIES ${LAPACK_LIBRARIES} ${MPI_LIBRARIES} ${VTK_LIBRARIES} parmetis -lstdc++fs )
 
 target_link_libraries( ${CMAKE_PROJECT_NAME} ${CORE_LIBRARIES} )
 
