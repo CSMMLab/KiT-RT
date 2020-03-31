@@ -1,17 +1,17 @@
 #ifndef UPWINDFLUX_H
 #define UPWINDFLUX_H
 
-#include "typedef.h"
 #include "numericalflux.h"
+#include "typedef.h"
 
 class UpwindFlux : public NumericalFlux
 {
-public:
+  public:
     /**
      * @brief UpwindFlux
      * @param settings
      */
-    UpwindFlux(Settings* settings);
+    UpwindFlux( Settings* settings );
 
     /**
      * @brief Flux computes flux on edge for fixed ordinate at a given edge
@@ -21,7 +21,7 @@ public:
      * @param n scaled normal vector of given edge
      * @return numerical flux value
      */
-    virtual double Flux(const Vector& Omega, double psiL, double psiR, const Vector& n)const;
+    virtual double Flux( const Vector& Omega, double psiL, double psiR, const Vector& n ) const;
 };
 
-#endif // UPWINDFLUX_H
+#endif    // UPWINDFLUX_H

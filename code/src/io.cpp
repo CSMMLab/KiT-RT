@@ -72,7 +72,7 @@ Settings* ReadInputFile( std::string inputFile ) {
         }
         auto quadType = solver->get_as<std::string>( "quadType" );
         if( quadType ) {
-            // TODO
+            settings->_quadName = *quadType;
         }
         else {
             spdlog::error( "[inputfile] [solver] 'quadType' not set!" );
