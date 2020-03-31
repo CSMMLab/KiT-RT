@@ -1,8 +1,17 @@
 #include "solver.h"
 #include "snsolver.h"
 
-Solver::Solver( Settings* settings ) : _Q( 1 ), _NCells( 1 ), _NTimeSteps( 1 ) {
+Solver::Solver( Settings* settings ) : _NCells( 1 ), _NTimeSteps( 1 ) {
     // @TODO save parameters from settings class
+
+    // build quadrature object and store quadrature points and weights
+    Quadrature* q = Quadrature::CreateQuadrature( settings->GetQuadName(), settings->GetQuadOrder() );
+    _quadPoints   = q->GetPoints();
+    _weights      = q->GetWeights();
+    _nq           = q->GetNq();
+
+    // setup angular flux array (maybe directly call SetupIC() from physics class? )
+    _psi = Matrix( _NCells, _nq, 0.0 );
 
     // @TODO create object mesh and store _cells, ...
 

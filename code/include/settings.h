@@ -20,6 +20,7 @@ class Settings
 
     // Solver
     unsigned _quadOrder;
+    std::string _quadName;
     double _CFL;
 
     // MPI
@@ -34,6 +35,9 @@ class Settings
     std::string GetOutputFile() const;
     std::string GetOutputDir() const;
     std::string GetLogDir() const;
+
+    unsigned GetQuadOrder() const;
+    std::string GetQuadName() const;
 
     friend Settings* ReadInputFile( std::string fileName );
 };
