@@ -1,16 +1,12 @@
 #include "upwindflux.h"
 
-UpwindFlux::UpwindFlux(Settings* settings) : NumericalFlux(settings)
-{
+UpwindFlux::UpwindFlux( Settings* settings ) : NumericalFlux( settings ) {}
 
-}
-
-double UpwindFlux::Flux(const Vector& Omega, double psiL, double psiR, const Vector& n)const{
-    /*if( Omega * n > 0 ) {
-        return Omega*psiL * norm(n);
+double UpwindFlux::Flux( const Vector& Omega, double psiL, double psiR, const Vector& n ) const {
+    if( inner( Omega, n ) > 0 ) {
+        return inner( Omega, n ) * psiL;
     }
     else {
-        return Omega*psiR * norm(n);
-    }*/
-    return -1.0;
+        return inner( Omega, n ) * psiR;
+    }
 }

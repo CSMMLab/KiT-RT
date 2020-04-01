@@ -70,9 +70,17 @@ Settings* ReadInputFile( std::string inputFile ) {
             spdlog::error( "[inputfile] [solver] 'CFL' not set!" );
             validConfig = false;
         }
+        auto tEnd = solver->get_as<double>( "tEnd" );
+        if( tEnd ) {
+            settings->_tEnd = *tEnd;
+        }
+        else {
+            spdlog::error( "[inputfile] [solver] 'tEnd' not set!" );
+            validConfig = false;
+        }
         auto quadType = solver->get_as<std::string>( "quadType" );
         if( quadType ) {
-            // TODO
+            settings->_quadName = *quadType;
         }
         else {
             spdlog::error( "[inputfile] [solver] 'quadType' not set!" );
