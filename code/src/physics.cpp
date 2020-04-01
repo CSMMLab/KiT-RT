@@ -13,14 +13,20 @@ void Physics::LoadXSH2O( std::string fileName1, std::string fileName2){
 
 VectorVector Physics::GetScatteringXS (std::vector<double> energies,std::vector<double> density, std::vector<double> Omegas){
     // @TODO
+    VectorVector scattering_XS;
+    return scattering_XS;
 }
 
 VectorVector Physics::GetTotalXS (std::vector<double> energies,std::vector<double> density){
     // @TODO 
+    VectorVector total_XS;
+    return total_XS;
 }
 
 VectorVector Physics::GetStoppingPower (std::vector<double> energies,std::vector<double> sH2O){
     // @TODO
+    VectorVector stopping_power;
+    return stopping_power;
 }
 
 Physics* Physics::Create( Settings* settings ) { return new Physics( settings ); }
