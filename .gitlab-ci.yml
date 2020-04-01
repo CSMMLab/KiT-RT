@@ -14,10 +14,26 @@ build:
     - cd code/build/debug
     - cmake -G Ninja -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=True -DCMAKE_EXPORT_COMPILE_COMMANDS=True ../../
     - ninja
-
+  only:
+    changes:
+      - "code/include/**/*"
+      - "code/tests/**/*"
+      - "code/src/**/*"
+      - "code/CMakeLists.txt"
+      - "scripts/Dockerfile"
+      - ".gitmodules"
+      
 unit_tests:
   stage: unit_tests
   dependencies:
     - build
   script:
     - ./code/bin/unit_tests
+  only:
+    changes:
+      - "code/include/**/*"
+      - "code/tests/**/*"
+      - "code/src/**/*"
+      - "code/CMakeLists.txt"
+      - "scripts/Dockerfile"
+      - ".gitmodules"
