@@ -46,7 +46,7 @@ public:
      * @brief Physics constructor
      * @param settings stores all needed user information
      */
-    void Physics (Settings* settings);
+    Physics ( Settings* settings );
 
     /**
      * @brief Create constructor
@@ -54,7 +54,7 @@ public:
      * @return pointer to Physics
      */
     static Physics* Create (Settings* settings);
-}
+};
 
 
 #endif
