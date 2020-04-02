@@ -14,7 +14,7 @@ class Reconstructor
     Reconstructor( Settings* settings );
 
     /**
-     * @brief Flux computes flux on edge for fixed ordinate at a given edge
+     * @brief Slope of angular flux psi inside a given cell
      * @param Omega fixed ordinate for flux computation
      * @param psiL left solution state
      * @param psiR right solution state
