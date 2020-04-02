@@ -10,16 +10,21 @@ double Reconstructor::Slope(const Vector& Omega, double psiL, double psiR, const
     return 0.0;
 }
 
-int FortSign(double x){
+int Sign(double x){
 
     if (x > 0) return 1;
     if (x < 0) return -1;
     return 0;
 }
 
-double LMinMod(double x){
+int FortSign(double a, double b){
 
-    return -1.0;
+    return abs(a) * Sign(b);
+}
+
+double LMinMod(double sL, double sR){
+
+    return 0.5 * (FortSign(1.0, sL) + FortSign(1., sR)) * fmin(abs(sL), abs(sR));
 
 }
 
