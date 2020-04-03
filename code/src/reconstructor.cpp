@@ -10,14 +10,14 @@ double Reconstructor::Slope(const Vector& Omega, double psiL, double psiR, const
     return 0.0;
 }
 
-int Sign(double x){
+double Sign(double x){
 
-    if (x > 0) return 1;
-    if (x < 0) return -1;
-    return 0;
+    if (x > 0.0) return 1.0;
+    if (x < 0.0) return -1.0;
+    return 0.0;
 }
 
-int FortSign(double a, double b){
+double FortSign(double a, double b){
 
     return abs(a) * Sign(b);
 }
@@ -28,32 +28,28 @@ double LMinMod(double sL, double sR){
 
 }
 
-double LWarmBeam(double x){
+double LvanLeer(double sL, double sR){
 
-    return -1.0;
-
-}
-
-double LMuscl(double x){
-
-    return -1.0;
+    return (FortSign(1.0, sL) + FortSign(1.0, sR)) * abs(sL) * abs(sR) / (abs(sL) + abs(sR) + 0.0000001);
 
 }
 
-double LSuperBee(double x){
+double LSuperBee(double sL, double sR){
 
-    return -1.0;
+    if (sR >= 0.5 * sL && sR <= 2.0 * sL) return 0.5 * (FortSign(1.0, sL) + FortSign(1., sR)) * fmax(abs(sL), abs(sR));
+    if (sR < 0.5 * sL && sR > 2.0 * sL) return (FortSign(1.0, sL) + FortSign(1., sR)) * fmin(abs(sL), abs(sR));
+    return 0.0;
 
 }
 
-double LOsherC(double x){
+double LVanAlbaba(double sL, double sR){
 
-    return -1.0;
+    return (sL* sL * sR + sL * sR * sR) / (sL * sL + sR * sR);
 
 }
 
 double LWENOJS(double x){
 
-    return -1.0;
+    return 0.0;
 
 }
