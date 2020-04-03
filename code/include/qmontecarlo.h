@@ -9,11 +9,11 @@ class QMonteCarlo : public Quadrature
     QMonteCarlo( unsigned order );
     virtual ~QMonteCarlo() {}
 
-    std::string ComputeName();
-    unsigned ComputeNq();
-    VectorVector ComputePoints();
-    Vector ComputeWeights();
-    VectorVectorU ComputeConnectivity();
+    std::string ComputeName() override;
+    unsigned ComputeNq() override;
+    VectorVector ComputePoints() override;
+    Vector ComputeWeights() override;
+    VectorVectorU ComputeConnectivity() override;
 };
 
 #endif    // QMONTECARLO_H
