@@ -6,17 +6,17 @@ QMonteCarlo::QMonteCarlo( unsigned order ) : Quadrature( order ) {
     SetPoints( ComputePoints() );
     SetWeights( ComputeWeights() );
     SetConnectivity( ComputeConnectivity() );
-};
+}
 
 std::string QMonteCarlo::ComputeName() {
     // Human readable description.
     return "Monte Carlo Quadrature.";
-};
+}
 
 unsigned QMonteCarlo::ComputeNq() {
     // For Monte Carlo Quadrature, nq = order.
     return GetOrder();
-};
+}
 
 VectorVector QMonteCarlo::ComputePoints() {
     // Nq random points on the sphere.
@@ -36,17 +36,17 @@ VectorVector QMonteCarlo::ComputePoints() {
         points[i] = point;
     }
     return points;
-};
+}
 
 Vector QMonteCarlo::ComputeWeights() {
     // Equal weights
     unsigned nq = GetNq();
     Vector weights( nq, 4.0 * M_PI / nq );
     return weights;
-};
+}
 
 VectorVectorU QMonteCarlo::ComputeConnectivity() {
     // Not initialized for this quadrature.
     VectorVectorU connectivity;
     return connectivity;
-};
+}

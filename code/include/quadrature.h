@@ -9,7 +9,7 @@ class Quadrature
 {
   public:
     Quadrature( unsigned order );
-    virtual ~Quadrature(){};
+    virtual ~Quadrature(){}
 
     virtual std::string ComputeName()           = 0;
     virtual unsigned ComputeNq()                = 0;
