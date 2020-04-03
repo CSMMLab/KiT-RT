@@ -40,8 +40,8 @@ class Quadrature
       *  @returns sum of all weights */
     double SumUpWeights();
 
-     /*! @brief computes the weighted sum of a given flux function f over all quadrature points.
-      *  @param double(f)( double x0, double x1, double x2 ) : flux function that depends on a three spatial dimensions.
+     /*! @brief computes the weighted sum of a given density function f over all quadrature points.
+      *  @param double(f)( double x0, double x1, double x2 ) : density function that depends on a three spatial dimensions.
       *  @returns double result: result of the quadrature rule */
     double Integrate( double( f )( double x0, double x1, double x2 ) );
 
@@ -61,12 +61,12 @@ class Quadrature
     inline void SetConnectivity( VectorVectorU connectivity ) { _connectivity = connectivity; } /*! @brief sets: connectivity vector */
 
     // Getter
-    inline std::string GetName() { return _name; }      /*! @returns std::string _name:  name of the quadrature */
-    inline unsigned GetOrder() { return _order; }       /*! @returns unsigned _order:  order of the quadrature */
-    inline unsigned GetNq() { return _nq; }             /*! @returns unsigned _nq:  number of gridpoints of the quadrature */
-    inline VectorVector GetPoints() { return _points; } /*! @returns VectorVector _points:  coordinates of gridpoints of the quadrature */
-    inline Vector GetWeights() { return _weights; }     /*! @returns Vector _weights:  weights of gridpoints of the quadrature */
-    inline VectorVectorU GetConnectivity() { return _connectivity; } /*! @returns VectorVectorU _connectivity:  connectivity of gridpoints of the quadrature */
+    inline std::string GetName() const { return _name; }      /*! @returns std::string _name:  name of the quadrature */
+    inline unsigned GetOrder() const { return _order; }       /*! @returns unsigned _order:  order of the quadrature */
+    inline unsigned GetNq() const { return _nq; }             /*! @returns unsigned _nq:  number of gridpoints of the quadrature */
+    inline VectorVector GetPoints() const { return _points; } /*! @returns VectorVector _points:  coordinates of gridpoints of the quadrature */
+    inline Vector GetWeights() const { return _weights; }     /*! @returns Vector _weights:  weights of gridpoints of the quadrature */
+    inline VectorVectorU GetConnectivity() const { return _connectivity; } /*! @returns VectorVectorU _connectivity:  connectivity of gridpoints of the quadrature */
 
   protected:
     std::string _name;          /*! @brief name of the quadrature */

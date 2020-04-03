@@ -8,23 +8,23 @@ QGaussLegendreTensorized::QGaussLegendreTensorized( unsigned order ) : Quadratur
     SetConnectivity( ComputeConnectivity() );
 }
 
-std::string QGaussLegendreTensorized::ComputeName() { return "Tensorized Gauss-Legendre quadrature."; };
+std::string QGaussLegendreTensorized::ComputeName() { return "Tensorized Gauss-Legendre quadrature."; }
 
-unsigned QGaussLegendreTensorized::ComputeNq() { return pow( GetOrder(), 2 ); };
+unsigned QGaussLegendreTensorized::ComputeNq() { return pow( GetOrder(), 2 ); }
 
 VectorVector QGaussLegendreTensorized::ComputePoints() {
     // Nq random points on the sphere.
     unsigned nq = GetNq();
     VectorVector points( nq );
     return points;
-};
+}
 
 Vector QGaussLegendreTensorized::ComputeWeights() {
     // Equal weights
     unsigned nq = GetNq();
     Vector weights( nq, 4.0 * M_PI / nq );
     return weights;
-};
+}
 
 VectorVectorU QGaussLegendreTensorized::ComputeConnectivity() {
     // Not initialized for this quadrature.
