@@ -7,7 +7,13 @@ Quadrature::Quadrature( unsigned order ) : _order( order ) {}
 
 Quadrature* Quadrature::CreateQuadrature( std::string name, unsigned order ) {
 
-   return new QLDFESA( order );
+    if( name == "montecarlo" ) {
+           return new QMonteCarlo( order );
+       }
+
+       // If nothing has been picked, take this as dummy:
+       return new QMonteCarlo( order );
+
   /*  switch (name){
         case QUAD_MonteCarlo: return new QMonteCarlo( order );
         case QUAD_GaussLegendreTensorized: return new QGaussLegendreTensorized( order );
