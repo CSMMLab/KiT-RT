@@ -1,16 +1,20 @@
 #include "quadrature.h"
 #include "qmontecarlo.h"
-
+#include "qgausslegendretensorized.h"
+#include "qlevelsymmetric.h"
+#include "qldfesa.h"
 Quadrature::Quadrature( unsigned order ) : _order( order ) {}
 
 Quadrature* Quadrature::CreateQuadrature( std::string name, unsigned order ) {
 
-    if( name == "montecarlo" ) {
-        return new QMonteCarlo( order );
+   return new QLDFESA( order );
+  /*  switch (name){
+        case QUAD_MonteCarlo: return new QMonteCarlo( order );
+        case QUAD_GaussLegendreTensorized: return new QGaussLegendreTensorized( order );
+        case QUAD_LevelSymmetric: return new QLevelSymmetric( order );
+        default: return new QMonteCarlo( order ); // Use MonteCarlo as dummy
     }
-
-    // If nothing has been picked, take this as dummy:
-    return new QMonteCarlo( order );
+  */
 }
 
 double Quadrature::Integrate( double( f )( double x0, double x1, double x2 ) ) {

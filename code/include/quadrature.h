@@ -5,31 +5,17 @@
 #include <iostream>
 #include <string>
 using namespace std;
+
+enum QuadName{
+    QUAD_MonteCarlo,
+    QUAD_GaussLegendreTensorized,
+    QUAD_LevelSymmetric
+};
 class Quadrature
 {
   public:
     Quadrature( unsigned order );
     virtual ~Quadrature(){}
-
-    /*! @brief Gives the name of the quadrature rule
-     *  @returns string name : Name of quadrature rule     */
-    virtual std::string ComputeName()           = 0;
-
-    /*! @brief Computes the number of gridpoints of the quadrature rule
-     *  @returns unsigned nq : number of gridpoints of the quadrature rule     */
-    virtual unsigned ComputeNq()                = 0;
-
-    /*! @brief Computes the a vector (length: nq) of (coordinates of) gridpoints used for the quadrature rule
-     *  @returns VectorVector coordinates : A Vector of coordinates the gridpoints.     */
-    virtual VectorVector ComputePoints()        = 0;
-
-    /*! @brief Computes the a vector (length: nq) of weights for the gridpoints. The indices match the gridpoints VectorVector.
-     *  @returns Vector weights : A Vector of weights of the gridpoints.     */
-    virtual Vector ComputeWeights()             = 0;
-
-    /*! @brief TODO: How is connectivity defined?.
-     *  @returns VectorVectorU connectivity : TODO */
-    virtual VectorVectorU ComputeConnectivity() = 0;
 
     // Aux functions
     void PrintWeights();            /*! @brief prints: Weight vector */
@@ -52,14 +38,6 @@ class Quadrature
      *  @returns Quadrature* quadrature: returns pointer to instance of the given derived quadrature class */
     static Quadrature* CreateQuadrature( std::string name, unsigned order );
 
-    // Setter
-    inline void SetName( std::string name ) { _name = name; }           /*! @brief sets: name of the quadrature */
-    inline void SetOrder( unsigned order ) { _order = order; }          /*! @brief sets: order of the quadrature */
-    inline void SetNq( unsigned nq ) { _nq = nq; }                      /*! @brief sets: number of gridpoints of the quadrature */
-    inline void SetPoints( VectorVector points ) { _points = points; }  /*! @brief sets: coordinates of gridpoints of the quadrature */
-    inline void SetWeights( Vector weights ) { _weights = weights; }    /*! @brief sets: weights of gridpoints of the quadrature */
-    inline void SetConnectivity( VectorVectorU connectivity ) { _connectivity = connectivity; } /*! @brief sets: connectivity vector */
-
     // Getter
     inline std::string GetName() const { return _name; }      /*! @returns std::string _name:  name of the quadrature */
     inline unsigned GetOrder() const { return _order; }       /*! @returns unsigned _order:  order of the quadrature */
@@ -69,6 +47,38 @@ class Quadrature
     inline VectorVectorU GetConnectivity() const { return _connectivity; } /*! @returns VectorVectorU _connectivity:  connectivity of gridpoints of the quadrature */
 
   protected:
+
+    // Setter
+    inline void SetName( std::string name ) { _name = name; }           /*! @brief sets: name of the quadrature */
+    inline void SetOrder( unsigned order ) { _order = order; }          /*! @brief sets: order of the quadrature */
+    inline void SetNq( unsigned nq ) { _nq = nq; }                      /*! @brief sets: number of gridpoints of the quadrature */
+    inline void SetPoints( VectorVector points ) { _points = points; }  /*! @brief sets: coordinates of gridpoints of the quadrature */
+    inline void SetWeights( Vector weights ) { _weights = weights; }    /*! @brief sets: weights of gridpoints of the quadrature */
+    inline void SetConnectivity( VectorVectorU connectivity ) { _connectivity = connectivity; } /*! @brief sets: connectivity vector */
+
+    //
+    /*! @brief Gives the name of the quadrature rule
+     *  @returns string name : Name of quadrature rule     */
+    virtual std::string ComputeName()           = 0;
+
+    /*! @brief Computes the number of gridpoints of the quadrature rule
+     *  @returns unsigned nq : number of gridpoints of the quadrature rule     */
+    virtual unsigned ComputeNq()                = 0;
+
+    /*! @brief Computes the a vector (length: nq) of (coordinates of) gridpoints used for the quadrature rule
+     *  @returns VectorVector coordinates : A Vector of coordinates the gridpoints.     */
+    virtual VectorVector ComputePoints()        = 0;
+
+    /*! @brief Computes the a vector (length: nq) of weights for the gridpoints. The indices match the gridpoints VectorVector.
+     *  @returns Vector weights : A Vector of weights of the gridpoints.     */
+    virtual Vector ComputeWeights()             = 0;
+
+    /*! @brief TODO: How is connectivity defined?.
+     *  @returns VectorVectorU connectivity : TODO */
+    virtual VectorVectorU ComputeConnectivity() = 0;
+
+
+    // Member variables
     std::string _name;          /*! @brief name of the quadrature */
     unsigned _order;            /*! @brief order of the quadrature */
     unsigned _nq;               /*! @brief number of gridpoints of the quadrature */
