@@ -13,7 +13,7 @@ Solver::Solver( Settings* settings ) : _NCells( 1 ) {
     _nq           = q->GetNq();
 
     // setup angular flux array (maybe directly call SetupIC() from physics class? )
-    _psi = Matrix( _NCells, _nq, 0.0 );
+    _psi = std::vector( _NCells, Vector( _nq, 0.0 ) );
 
     // build mesh and store all relevant information
     // Mesh* mesh = Mesh::Create();
@@ -41,12 +41,37 @@ double Solver::ComputeTimeStep( double cfl ) const {
     return cfl * maxEdge;
 }
 
+void Solver::ComputeSlopes( VectorVector& psiDerX, VectorVector& psiDerY, const VectorVector& psi ) const {
+    for( unsigned k = 0; k < _nq; ++k ) {
+        for( unsigned j = 0; j < _NCells; ++j ) {
+            // if( cell->IsBoundaryCell() ) continue; // skip ghost cells
+            // compute derivative by summing over cell boundary
+            for( unsigned l = 0; l < _neighbors[j].size(); ++l ) {
+                psiDerX[j][k] = psiDerX[j][k] + 0.5 * ( psi[j][k] + psi[_neighbors[j][l]][k] ) * _normals[j][l][0] / _areas[j];
+                psiDerY[j][k] = psiDerY[j][k] + 0.5 * ( psi[j][k] + psi[_neighbors[j][l]][k] ) * _normals[j][l][1] / _areas[j];
+            }
+        }
+    }
+}
+
 void Solver::LoadPatientDensity( std::string fileName ) {
     // @TODO
+    // _density = ... -> dim(_density) = _nCells
 }
 
 void Solver::LoadStoppingPower( std::string fileName ) {
     // @TODO
+    //_sH20 = ... -> dim(_sH20) = _nTimeSteps
+}
+
+void Solver::LoadSigmaS( std::string fileName ) {
+    // @TODO
+    //_sigmaSH20 = ... -> dim(_sigmaSH20) = (_nTimeSteps,_nq,_nq)
+}
+
+void Solver::LoadSigmaT( std::string fileName ) {
+    // @TODO
+    //_sigmaTH20 = ... -> dim(_sigmaTH20) = _nTimeSteps
 }
 
 Solver* Solver::Create( Settings* settings ) { return new SNSolver( settings ); }
