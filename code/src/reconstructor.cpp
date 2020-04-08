@@ -28,7 +28,7 @@ double LMinMod(double sL, double sR){
 
 }
 
-double LvanLeer(double sL, double sR){
+double LVanLeer(double sL, double sR){
 
     return (FortSign(1.0, sL) + FortSign(1.0, sR)) * abs(sL) * abs(sR) / (abs(sL) + abs(sR) + 0.0000001);
 
@@ -44,7 +44,7 @@ double LSuperBee(double sL, double sR){
 
 double LVanAlbaba(double sL, double sR){
 
-    return (sL* sL * sR + sL * sR * sR) / (sL * sL + sR * sR);
+    return (sL* sL * sR + sL * sR * sR) / (sL * sL + sR * sR + 0.0000001);
 
 }
 
