@@ -15,7 +15,7 @@ int main( int argc, char** argv ) {
     PrintLogHeader( settings->GetInputFile() );
 
     // playground and demo
-    Quadrature* Q = Quadrature::CreateQuadrature( "LDFESA quadrature", 2 );
+    Quadrature* Q = Quadrature::CreateQuadrature( QUAD_LDFESA, 2 );
     Q->PrintWeights();
     cout << "====================\n";
     std::cout << Q->Integrate( f ) << std::endl;
