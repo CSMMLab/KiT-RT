@@ -1,18 +1,11 @@
 #ifndef QUADRATURE_H
 #define QUADRATURE_H
 
-#include "typedef.h"
 #include <iostream>
 #include <string>
-using namespace std;
 
-enum QuadName{
-    QUAD_MonteCarlo,
-    QUAD_GaussLegendreTensorized,
-    QUAD_LevelSymmetric,
-    QUAD_Lebedev,
-    QUAD_LDFESA
-};
+#include "settings.h"
+#include "typedef.h"
 
 class Quadrature
 {
@@ -39,7 +32,7 @@ class Quadrature
      *  @param: std::string name: Name of the quadrature rule
      *  @param: unsigned order: Order of the quadrature rule
      *  @returns Quadrature* quadrature: returns pointer to instance of the given derived quadrature class */
-    static Quadrature* CreateQuadrature( QuadName name, unsigned order );
+    static Quadrature* CreateQuadrature( QUAD_NAME name, unsigned order );
 
     // Getter
     inline std::string GetName() const { return _name; }      /*! @returns std::string _name:  name of the quadrature */

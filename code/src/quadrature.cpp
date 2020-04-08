@@ -7,7 +7,7 @@
 
 Quadrature::Quadrature( unsigned order ) : _order( order ) {}
 
-Quadrature* Quadrature::CreateQuadrature( QuadName name, unsigned order ) {
+Quadrature* Quadrature::CreateQuadrature( QUAD_NAME name, unsigned order ) {
 
     /*
     if( name == "montecarlo" ) {

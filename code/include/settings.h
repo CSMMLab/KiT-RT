@@ -4,6 +4,8 @@
 #include <filesystem>
 #include <string>
 
+#include "option_structure.h"
+
 class Settings
 {
   private:
@@ -20,7 +22,7 @@ class Settings
 
     // Solver
     unsigned _quadOrder;
-    std::string _quadName;
+    QUAD_NAME _quadName;
     double _CFL;
     double _tEnd;
 
@@ -39,7 +41,7 @@ class Settings
 
     // solver Getters
     unsigned GetQuadOrder() const;
-    std::string GetQuadName() const;
+    QUAD_NAME GetQuadName() const;
     double GetCFL() const;
     double GetTEnd() const;
 

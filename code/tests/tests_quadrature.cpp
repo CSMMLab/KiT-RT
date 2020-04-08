@@ -1,7 +1,7 @@
 #include "catch.hpp"
 #include "quadrature.h"
 
-vector<std::string> quadraturenames = {"montecarlo"};
+vector<QUAD_NAME> quadraturenames = {QUAD_MonteCarlo};
 vector<int> quadratureorders        = {4, 5, 6, 7};
 
 bool approxequal( double a, double b ) {
