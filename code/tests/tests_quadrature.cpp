@@ -1,8 +1,10 @@
 #include "catch.hpp"
 #include "quadrature.h"
 
-vector<std::string> quadraturenames = {"montecarlo"};
-vector<int> quadratureorders        = {4, 5, 6, 7};
+#include <vector>
+
+std::vector<QUAD_NAME> quadraturenames = {QUAD_MonteCarlo};
+std::vector<int> quadratureorders        = {4, 5, 6, 7};
 
 bool approxequal( double a, double b ) {
     double tol = 1e-15;

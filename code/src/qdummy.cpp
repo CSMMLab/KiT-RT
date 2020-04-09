@@ -12,41 +12,28 @@
 #include "qdummy.h"
 
 QDummy::QDummy( unsigned order ) : Quadrature( order ) {
-    SetName( ComputeName() );
-    SetNq( ComputeNq() );
-    SetPoints( ComputePoints() );
-    SetWeights( ComputeWeights() );
-    SetConnectivity( ComputeConnectivity() );
+    SetName();
+    SetNq();
+    SetPointsAndWeights();
+    SetConnectivity();
 }
 
-std::string QDummy::ComputeName() {
-    std::string name = "";
+void QDummy::SetName() {
+    _name = "";
     // @TODO: DUMMYCOMPUTATION
-    return name;
 }
 
-unsigned QDummy::ComputeNq() {
-    unsigned nq = 0;
-    // @TODO: DUMMYCOMPUTATION
-    return nq;
-};
+void QDummy::SetNq() {
+    _nq = 0;
+}
 
-VectorVector QDummy::ComputePoints() {
-    unsigned nq = GetNq();
-    VectorVector points( nq );
+void QDummy::SetPointsAndWeights() {
+    _points = VectorVector( GetNq() );
+    _weights = Vector ( GetNq(), 4.0 * M_PI / GetNq() );
     // @TODO: DUMMYCOMPUTATION
-    return points;
-};
+}
 
-Vector QDummy::ComputeWeights() {
-    unsigned nq = GetNq();
-    Vector weights( nq, 4.0 * M_PI / nq );
-    // @TODO: DUMMYCOMPUTATION
-    return weights;
-};
-
-VectorVectorU QDummy::ComputeConnectivity() {
+void QDummy::SetConnectivity() { //TODO
     VectorVectorU connectivity;
-    // @TODO: DUMMYCOMPUTATION
-    return connectivity;
-};
+    _connectivity = connectivity;
+}

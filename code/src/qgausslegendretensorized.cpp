@@ -1,33 +1,23 @@
 #include "qgausslegendretensorized.h"
 
 QGaussLegendreTensorized::QGaussLegendreTensorized( unsigned order ) : Quadrature( order ) {
-    SetName( ComputeName() );
-    SetNq( ComputeNq() );
-    SetPoints( ComputePoints() );
-    SetWeights( ComputeWeights() );
-    SetConnectivity( ComputeConnectivity() );
+    SetName();
+    SetNq();
+    SetPointsAndWeights();
+    SetConnectivity();
 }
 
-std::string QGaussLegendreTensorized::ComputeName() { return "Tensorized Gauss-Legendre quadrature."; }
-
-unsigned QGaussLegendreTensorized::ComputeNq() { return pow( GetOrder(), 2 ); }
-
-VectorVector QGaussLegendreTensorized::ComputePoints() {
+void QGaussLegendreTensorized::SetPointsAndWeights(){ //TODO
+    //Compute Points
     // Nq random points on the sphere.
-    unsigned nq = GetNq();
-    VectorVector points( nq );
-    return points;
+    _points = VectorVector(GetNq());
+
+    //Compute Weights
+    _weights = Vector( GetNq(), 4.0 * M_PI / GetNq());
 }
 
-Vector QGaussLegendreTensorized::ComputeWeights() {
-    // Equal weights
-    unsigned nq = GetNq();
-    Vector weights( nq, 4.0 * M_PI / nq );
-    return weights;
-}
-
-VectorVectorU QGaussLegendreTensorized::ComputeConnectivity() {
+void QGaussLegendreTensorized::SetConnectivity() { //TODO
     // Not initialized for this quadrature.
     VectorVectorU connectivity;
-    return connectivity;
-};
+    _connectivity = connectivity;
+}

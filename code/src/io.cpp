@@ -1,4 +1,5 @@
 #include "io.h"
+#include <iostream>
 
 Settings* ReadInputFile( std::string inputFile ) {
     bool validConfig = true;
@@ -80,7 +81,13 @@ Settings* ReadInputFile( std::string inputFile ) {
         }
         auto quadType = solver->get_as<std::string>( "quadType" );
         if( quadType ) {
-            settings->_quadName = *quadType;
+            std::string quadTypeString = *quadType;
+            try{
+                settings->_quadName  = Quadrature_Map.at(quadTypeString);
+            }catch (const std::exception& e) {
+                std::cout << "Error: <" << quadTypeString << "> is not a feasible input. Please check the config template!\n";
+                exit(EXIT_FAILURE); // Quit RTSN
+            }
         }
         else {
             spdlog::error( "[inputfile] [solver] 'quadType' not set!" );
