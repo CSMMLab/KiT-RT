@@ -9,8 +9,10 @@ class QLDFESA : public QLookupQuadrature
     QLDFESA( unsigned order );
     virtual ~QLDFESA() {}
 
-    std::string ComputeName() override;
-    VectorVectorU ComputeConnectivity() override;
+    inline void SetName() override { _name =  "LDFESA quadrature"; }
+    void SetAvailOrders() override;
+    void SetDataInfo() override;
+    void SetConnectivity() override;
 };
 
 #endif // QLDFESA_H

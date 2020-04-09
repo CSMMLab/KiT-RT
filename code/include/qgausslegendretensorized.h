@@ -9,11 +9,10 @@ class QGaussLegendreTensorized : public Quadrature
     QGaussLegendreTensorized( unsigned order );
     virtual ~QGaussLegendreTensorized() {}
 
-    std::string ComputeName() override;
-    unsigned ComputeNq() override;
-    VectorVector ComputePoints() override;
-    Vector ComputeWeights() override;
-    VectorVectorU ComputeConnectivity() override;
+    inline void SetName() override { _name =  "Tensorized Gauss-Legendre quadrature."; }
+    inline void SetNq() override   { _nq = pow( GetOrder(), 2 ); }
+    void SetPointsAndWeights() override;
+    void SetConnectivity() override;
 };
 
 #endif    // QGAUSSLEGENDRETENSORIZED_H

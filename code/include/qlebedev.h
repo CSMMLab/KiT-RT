@@ -9,8 +9,11 @@ class QLebedev : public QLookupQuadrature
     QLebedev( unsigned order );
     virtual ~QLebedev() {}
 
-    std::string ComputeName() override;
-    VectorVectorU ComputeConnectivity() override;
+    inline void SetName() override { _name =  "Lebedev quadrature"; }
+    void SetAvailOrders() override;
+    void SetDataInfo() override;
+    void SetConnectivity() override;
+
 };
 
 #endif // QLEBEDEV_H

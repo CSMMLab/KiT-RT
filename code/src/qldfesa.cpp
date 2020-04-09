@@ -2,23 +2,27 @@
 
 QLDFESA::QLDFESA( unsigned order ) : QLookupQuadrature( order ){
 
-    _availableOrders = {1, 2, 3}; //Available orders in lookuptable
-    _nqByOrder = {32, 128, 512};
-    _dataFiles = "../ext/sphericalquadpy/sphericalquadpy/ldfesa/data/";
-    _dataFileSuffix = "_ldfesa.txt";
+    SetAvailOrders();
+    SetDataInfo();
 
-    SetName( ComputeName() );
-    CheckOrder();         //Check if order is available
-    SetNq( ComputeNq() ); //Set number of quadrature points
-
-    SetPoints(ComputePoints());
-    SetWeights(ComputeWeights());
-    SetConnectivity( ComputeConnectivity() );
+    SetName();
+    CheckOrder(); //Check if order is available
+    SetNq(); //Set number of quadrature points
+    SetPointsAndWeights();
+    SetConnectivity();
 }
 
-std::string QLDFESA::ComputeName() { return "LDFESA quadrature"; }
+void QLDFESA::SetAvailOrders() {
+    _availableOrders = {1, 2, 3};
+    _nqByOrder = {32, 128, 512};
+}
 
-VectorVectorU QLDFESA::ComputeConnectivity() { //TODO
+void QLDFESA::SetDataInfo() {
+    _dataFiles = "../ext/sphericalquadpy/sphericalquadpy/ldfesa/data/";
+    _dataFileSuffix = "_ldfesa.txt";
+}
+
+void QLDFESA::SetConnectivity() { //TODO
     VectorVectorU connectivity;
-    return connectivity;
+    _connectivity = connectivity;
 }

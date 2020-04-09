@@ -20,11 +20,10 @@ class QDummy : public Quadrature
     QDummy( unsigned order );
     virtual ~QDummy() {}
 
-    std::string ComputeName();
-    unsigned ComputeNq();
-    VectorVector ComputePoints();
-    Vector ComputeWeights();
-    VectorVectorU ComputeConnectivity();
+    void SetName() override;
+    void SetNq() override;
+    void SetPointsAndWeights() override;
+    void SetConnectivity()override;
 };
 
 #endif    // QDUMMY_H
