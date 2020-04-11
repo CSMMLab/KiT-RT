@@ -35,29 +35,29 @@ void SNSolver::Solve() {
 }
 
 void SNSolver::SolveMPI() {
+    /*
+        // setup MPI variables: mype is PE index, npes is number of PEs, ierr is MPI message flag
+        int mype, npes, ierr;
 
-    // setup MPI variables: mype is PE index, npes is number of PEs, ierr is MPI message flag
-    int mype, npes, ierr;
+        // determine mype and npes
+        ierr = MPI_Comm_rank( MPI_COMM_WORLD, &mype );
+        ierr = MPI_Comm_size( MPI_COMM_WORLD, &npes );
 
-    // determine mype and npes
-    ierr = MPI_Comm_rank( MPI_COMM_WORLD, &mype );
-    ierr = MPI_Comm_size( MPI_COMM_WORLD, &npes );
-
-    // determine size of quadrature array
-    int nqPE = int( ( _nq - 1 ) / npes ) + 1;
-    // nqPEMax needed for allocation
-    int nqPEMax = nqPE;
-    if( mype == npes - 1 ) {
-        nqPE = _nq - mype * nqPE;
-        if( nqPE < 0 ) {
-            nqPE = 0;
+        // determine size of quadrature array
+        int nqPE = int( ( _nq - 1 ) / npes ) + 1;
+        // nqPEMax needed for allocation
+        int nqPEMax = nqPE;
+        if( mype == npes - 1 ) {
+            nqPE = _nq - mype * nqPE;
+            if( nqPE < 0 ) {
+                nqPE = 0;
+            }
         }
-    }
 
-    int master = 0;    // define PE 0 to be master
-    int tag    = 0;
-    int kStart = mype * ( ( _nq - 1 ) / npes + 1.0 );
-    int kEnd   = kStart + nqPE - 1;
+        int master = 0;    // define PE 0 to be master
+        int tag    = 0;
+        int kStart = mype * ( ( _nq - 1 ) / npes + 1.0 );
+        int kEnd   = kStart + nqPE - 1;
 
     // TODO: store local psi: dim(psi) = (NCells,nqPE)
     // TODO: store local scattering matrix: dim(_sigmaSH20) = (nTimeSteps,_nq,nqPE)
@@ -90,5 +90,5 @@ void SNSolver::SolveMPI() {
         }
         _psi = psiNew;
         // psiNew.reset();
-    }
+    }*/
 }
