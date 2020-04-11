@@ -7,3 +7,10 @@ std::string Settings::GetInputDir() const { return _inputDir.string(); }
 std::string Settings::GetOutputFile() const { return _outputFile.string(); }
 std::string Settings::GetOutputDir() const { return _outputDir.string(); }
 std::string Settings::GetLogDir() const { return _logDir.string(); }
+std::string Settings::GetMeshFile() const { return GetInputDir() + _meshFile.string(); }
+BOUNDARY_TYPE Settings::GetBoundaryType( std::string name ) const {
+    for( unsigned i = 0; i < _boundaries.size(); ++i ) {
+        if( name == _boundaries[i].first ) return _boundaries[i].second;
+    }
+    return BOUNDARY_TYPE::INVALID;
+}

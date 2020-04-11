@@ -1,105 +1,5 @@
 #include "io.h"
 
-Settings* ReadInputFile( std::string inputFile ) {
-    bool validConfig = true;
-
-    Settings* settings = new Settings;
-
-    MPI_Comm_rank( MPI_COMM_WORLD, &settings->_comm_rank );
-    MPI_Comm_size( MPI_COMM_WORLD, &settings->_comm_size );
-
-    try {
-        auto file = cpptoml::parse_file( inputFile );
-
-        settings->_inputFile = std::filesystem::path( inputFile );
-
-        auto cwd        = std::filesystem::current_path();
-        std::string tmp = std::filesystem::path( inputFile ).parent_path().string();
-        if( !tmp.ends_with( "/" ) ) tmp.append( "/" );
-        settings->_inputDir = tmp;
-
-        // section IO
-        auto io       = file->get_table( "io" );
-        auto meshFile = io->get_as<std::string>( "meshFile" );
-        if( meshFile ) {
-            settings->_meshFile = std::filesystem::path( *meshFile );
-        }
-        else {
-            spdlog::error( "[inputfile] [io] 'meshFile' not set!" );
-            validConfig = false;
-        }
-
-        auto outputDir = io->get_as<std::string>( "outputDir" );
-        if( outputDir ) {
-            std::string tmp = *outputDir;
-            if( !tmp.ends_with( "/" ) ) tmp.append( "/" );
-            settings->_outputDir = std::filesystem::path( tmp );
-        }
-        else {
-            spdlog::error( "[inputfile] [io] 'outputDir' not set!" );
-            validConfig = false;
-        }
-
-        auto outputFile = io->get_as<std::string>( "outputFile" );
-        if( outputFile ) {
-            settings->_outputFile = std::filesystem::path( settings->_inputDir.string() + settings->_outputDir.string() + *outputFile );
-        }
-        else {
-            spdlog::error( "[inputfile] [io] 'outputFile' not set!" );
-            validConfig = false;
-        }
-
-        auto logDir = io->get_as<std::string>( "logDir" );
-        if( logDir ) {
-            std::string tmp = *logDir;
-            if( !tmp.ends_with( "/" ) ) tmp.append( "/" );
-            settings->_logDir = std::filesystem::path( tmp );
-        }
-        else {
-            spdlog::error( "[inputfile] [io] 'logDir' not set!" );
-            validConfig = false;
-        }
-
-        // section solver
-        auto solver = file->get_table( "solver" );
-        auto CFL    = solver->get_as<double>( "CFL" );
-        if( CFL ) {
-            settings->_CFL = *CFL;
-        }
-        else {
-            spdlog::error( "[inputfile] [solver] 'CFL' not set!" );
-            validConfig = false;
-        }
-        auto quadType = solver->get_as<std::string>( "quadType" );
-        if( quadType ) {
-            // TODO
-        }
-        else {
-            spdlog::error( "[inputfile] [solver] 'quadType' not set!" );
-            validConfig = false;
-        }
-
-        auto quadOrder = solver->get_as<unsigned>( "quadOrder" );
-        if( quadOrder ) {
-            settings->_quadOrder = *quadOrder;
-        }
-        else {
-            spdlog::error( "[inputfile] [solver] 'quadOrder' not set!" );
-            validConfig = false;
-        }
-
-    } catch( const cpptoml::parse_exception& e ) {
-        spdlog::error( "Failed to parse {0}: {1}", inputFile.c_str(), e.what() );
-        exit( EXIT_FAILURE );
-    }
-
-    if( !validConfig ) {
-        exit( EXIT_FAILURE );
-    }
-
-    return settings;
-}
-
 void ExportVTK( const std::string fileName,
                 const std::vector<std::vector<std::vector<double>>>& results,
                 const std::vector<std::string> fieldNames,
@@ -260,6 +160,166 @@ void InitLogger( std::string logDir, spdlog::level::level_enum terminalLogLvl, s
     spdlog::flush_every( std::chrono::seconds( 5 ) );
 }
 
+Mesh* LoadSU2MeshFromFile( const Settings* settings ) {
+    auto log = spdlog::get( "event" );
+
+    unsigned dim;
+    std::vector<Vector> nodes;
+    std::vector<std::vector<unsigned>> cells;
+    std::vector<std::pair<BOUNDARY_TYPE, std::vector<unsigned>>> boundaries;
+
+    if( !std::filesystem::exists( settings->GetMeshFile() ) ) exit( EXIT_FAILURE );
+    std::ifstream ifs( settings->GetMeshFile(), std::ios::in );
+    std::string line;
+
+    if( ifs.is_open() ) {
+        while( getline( ifs, line ) ) {
+            if( line.find( "NDIME", 0 ) != std::string::npos ) {
+                dim = static_cast<unsigned>( std::stoi( line.substr( line.find_first_of( "0123456789" ), line.length() - 1 ) ) );
+                break;
+            }
+        }
+        ifs.clear();
+        ifs.seekg( 0, std::ios::beg );
+        while( getline( ifs, line ) ) {
+            if( line.find( "NPOIN", 0 ) != std::string::npos ) {
+                unsigned numPoints = static_cast<unsigned>( std::stoi( line.substr( line.find_first_of( "0123456789" ), line.length() - 1 ) ) );
+                nodes.resize( numPoints, Vector( dim, 0.0 ) );
+                for( unsigned i = 0; i < numPoints; ++i ) {
+                    getline( ifs, line );
+                    std::stringstream ss;
+                    ss << line;
+                    unsigned id = 0;
+                    Vector coords( dim, 0.0 );
+                    while( !ss.eof() ) {
+                        for( unsigned d = 0; d < dim; ++d ) {
+                            ss >> coords[d];
+                        }
+                        ss >> id;
+                    }
+
+                    nodes[id] = Vector( coords );
+                }
+                break;
+            }
+        }
+        ifs.clear();
+        ifs.seekg( 0, std::ios::beg );
+        while( getline( ifs, line ) ) {
+            if( line.find( "NMARK", 0 ) != std::string::npos ) {
+                unsigned numBCs = static_cast<unsigned>( std::stoi( line.substr( line.find_first_of( "0123456789" ), line.length() - 1 ) ) );
+                boundaries.resize( numBCs );
+                for( unsigned i = 0; i < numBCs; ++i ) {
+                    std::string markerTag;
+                    BOUNDARY_TYPE btype;
+                    std::vector<unsigned> bnodes;
+                    for( unsigned k = 0; k < 2; ++k ) {
+                        getline( ifs, line );
+                        if( line.find( "MARKER_TAG", 0 ) != std::string::npos ) {
+                            markerTag    = line.substr( line.find( "=" ) + 1 );
+                            auto end_pos = std::remove_if( markerTag.begin(), markerTag.end(), isspace );
+                            markerTag.erase( end_pos, markerTag.end() );
+                            btype = settings->GetBoundaryType( markerTag );
+                            if( btype == BOUNDARY_TYPE::INVALID ) {
+                                log->error( "[LoadSU2MeshFromFile] No boundary condition found for boundary marker '{0}'!", markerTag );
+                                exit( EXIT_FAILURE );
+                            }
+                        }
+                        else if( line.find( "MARKER_ELEMS", 0 ) != std::string::npos ) {
+                            unsigned numMarkerElements =
+                                static_cast<unsigned>( std::stoi( line.substr( line.find_first_of( "0123456789" ), line.length() - 1 ) ) );
+                            for( unsigned j = 0; j < numMarkerElements; ++j ) {
+                                getline( ifs, line );
+                                std::stringstream ss;
+                                ss << line;
+                                unsigned type = 0, id = 0;
+                                while( !ss.eof() ) {
+                                    ss >> type;
+                                    for( unsigned d = 0; d < dim; ++d ) {
+                                        ss >> id;
+                                        bnodes.push_back( id );
+                                    }
+                                }
+                            }
+                        }
+                        else {
+                            exit( EXIT_FAILURE );
+                        }
+                    }
+                    boundaries[i] = std::make_pair( btype, bnodes );
+                }
+                break;
+            }
+        }
+        ifs.clear();
+        ifs.seekg( 0, std::ios::beg );
+        std::vector<unsigned> numNodesPerCell;
+        while( getline( ifs, line ) ) {
+            if( line.find( "NELEM", 0 ) != std::string::npos ) {
+                unsigned numCells = static_cast<unsigned>( std::stoi( line.substr( line.find_first_of( "0123456789" ), line.length() - 1 ) ) );
+                numNodesPerCell.resize( numCells, 0u );
+                for( unsigned i = 0; i < numCells; ++i ) {
+                    getline( ifs, line );
+                    std::stringstream ss;
+                    ss << line;
+                    unsigned type = 0;
+                    ss >> type;
+                    switch( type ) {
+                        case 5: {
+                            numNodesPerCell[i] = 3;
+                            break;
+                        }
+                        case 9: {
+                            numNodesPerCell[i] = 4;
+                            break;
+                        }
+                        default: {
+                            log->error( "[LoadSU2MeshFromFile] Unsupported mesh type!" );
+                            exit( EXIT_FAILURE );
+                        }
+                    }
+                }
+                break;
+            }
+        }
+        bool mixedElementMesh = !std::equal( numNodesPerCell.begin() + 1, numNodesPerCell.end(), numNodesPerCell.begin() );
+        if( mixedElementMesh ) {
+            log->error( "[LoadSU2MeshFromFile] Mixed element meshes are currently not supported!" );
+            exit( EXIT_FAILURE );
+        }
+        ifs.clear();
+        ifs.seekg( 0, std::ios::beg );
+        while( getline( ifs, line ) ) {
+            if( line.find( "NELEM", 0 ) != std::string::npos ) {
+                unsigned numCells = static_cast<unsigned>( std::stoi( line.substr( line.find_first_of( "0123456789" ), line.length() - 1 ) ) );
+                cells.resize( numCells, std::vector<unsigned>( numNodesPerCell[0], 0u ) );
+                for( unsigned i = 0; i < numCells; ++i ) {
+                    getline( ifs, line );
+                    std::stringstream ss;
+                    ss << line;
+                    unsigned type = 0, id = 0;
+                    std::vector<unsigned> buffer( numNodesPerCell[0], 0u );
+                    while( !ss.eof() ) {
+                        ss >> type;
+                        for( unsigned d = 0; d < numNodesPerCell[i]; ++d ) {
+                            ss >> buffer[d];
+                        }
+                        ss >> id;
+                    }
+                    std::copy( buffer.begin(), buffer.end(), cells[id].begin() );
+                }
+                break;
+            }
+        }
+    }
+    else {
+        log->error( "[LoadSU2MeshFromFile] File not found" );
+        exit( EXIT_FAILURE );
+    }
+    ifs.close();
+    return new Mesh( nodes, cells, boundaries );
+}
+
 std::string ParseArguments( int argc, char* argv[] ) {
     std::string inputFile;
     std::string usage_help = "\n"
@@ -311,4 +371,124 @@ void PrintLogHeader( std::string inputFile ) {
     }
     log->info( "================================================================" );
     log->info( "" );
+}
+
+Settings* ReadInputFile( std::string inputFile ) {
+    bool validConfig = true;
+
+    Settings* settings = new Settings;
+
+    MPI_Comm_rank( MPI_COMM_WORLD, &settings->_comm_rank );
+    MPI_Comm_size( MPI_COMM_WORLD, &settings->_comm_size );
+
+    try {
+        auto file = cpptoml::parse_file( inputFile );
+
+        settings->_inputFile = std::filesystem::path( inputFile );
+
+        auto cwd        = std::filesystem::current_path();
+        std::string tmp = std::filesystem::path( inputFile ).parent_path().string();
+        if( !tmp.ends_with( "/" ) ) tmp.append( "/" );
+        settings->_inputDir = tmp;
+
+        // section IO
+        auto io       = file->get_table( "io" );
+        auto meshFile = io->get_as<std::string>( "meshFile" );
+        if( meshFile ) {
+            settings->_meshFile = std::filesystem::path( *meshFile );
+        }
+        else {
+            spdlog::error( "[inputfile] [io] 'meshFile' not set!" );
+            validConfig = false;
+        }
+
+        auto outputDir = io->get_as<std::string>( "outputDir" );
+        if( outputDir ) {
+            std::string tmp = *outputDir;
+            if( !tmp.ends_with( "/" ) ) tmp.append( "/" );
+            settings->_outputDir = std::filesystem::path( tmp );
+        }
+        else {
+            spdlog::error( "[inputfile] [io] 'outputDir' not set!" );
+            validConfig = false;
+        }
+
+        auto outputFile = io->get_as<std::string>( "outputFile" );
+        if( outputFile ) {
+            settings->_outputFile = std::filesystem::path( settings->_inputDir.string() + settings->_outputDir.string() + *outputFile );
+        }
+        else {
+            spdlog::error( "[inputfile] [io] 'outputFile' not set!" );
+            validConfig = false;
+        }
+
+        auto logDir = io->get_as<std::string>( "logDir" );
+        if( logDir ) {
+            std::string tmp = *logDir;
+            if( !tmp.ends_with( "/" ) ) tmp.append( "/" );
+            settings->_logDir = std::filesystem::path( tmp );
+        }
+        else {
+            spdlog::error( "[inputfile] [io] 'logDir' not set!" );
+            validConfig = false;
+        }
+
+        // section solver
+        auto solver = file->get_table( "solver" );
+        auto CFL    = solver->get_as<double>( "CFL" );
+        if( CFL ) {
+            settings->_CFL = *CFL;
+        }
+        else {
+            spdlog::error( "[inputfile] [solver] 'CFL' not set!" );
+            validConfig = false;
+        }
+        auto quadType = solver->get_as<std::string>( "quadType" );
+        if( quadType ) {
+            // TODO
+        }
+        else {
+            spdlog::error( "[inputfile] [solver] 'quadType' not set!" );
+            validConfig = false;
+        }
+
+        auto quadOrder = solver->get_as<unsigned>( "quadOrder" );
+        if( quadOrder ) {
+            settings->_quadOrder = *quadOrder;
+        }
+        else {
+            spdlog::error( "[inputfile] [solver] 'quadOrder' not set!" );
+            validConfig = false;
+        }
+
+        auto BCStrings = solver->get_array_of<cpptoml::array>( "boundaryConditions" );
+        if( BCStrings ) {
+            for( unsigned i = 0; i < BCStrings->size(); ++i ) {
+                auto BCString = ( *BCStrings )[i]->get_array_of<std::string>();
+                BOUNDARY_TYPE type;
+                if( ( *BCString )[1].compare( "dirichlet" ) == 0 ) {
+                    type = BOUNDARY_TYPE::DIRICHLET;
+                }
+                else {
+                    spdlog::error( "[inputfile] [solver] Encountered invalid boundary type '" + ( *BCString )[0] + "'!" );
+                    exit( EXIT_FAILURE );
+                }
+                settings->_boundaries.push_back( std::make_pair( ( *BCString )[0], type ) );
+            }
+        }
+        else {
+            spdlog::error( "[inputfile] [solver] 'boundaryConditions' Not set!" );
+            exit( EXIT_FAILURE );
+        }
+
+    } catch( const cpptoml::parse_exception& e ) {
+        spdlog::error( "Failed to parse {0}: {1}", inputFile.c_str(), e.what() );
+        exit( EXIT_FAILURE );
+    }
+
+    if( !validConfig ) {
+        exit( EXIT_FAILURE );
+    }
+
+    return settings;
 }
