@@ -32,7 +32,7 @@ void Mesh::ComputeConnectivity() {
         sortedBoundaries.push_back( _boundaries[i].second );
         std::sort( sortedBoundaries[i].begin(), sortedBoundaries[i].end() );
     }
-
+#pragma omp parallel for
     for( unsigned i = mpiCellStart; i < mpiCellEnd; ++i ) {
         std::vector<unsigned>* cellsI = &sortedCells[i];
         for( unsigned j = 0; j < _numCells; ++j ) {

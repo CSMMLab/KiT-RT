@@ -25,9 +25,6 @@ include_directories( ${MPI_INCLUDE_PATH} )
 find_package( LAPACK REQUIRED )
 include_directories( ${LAPACK_INCLUDE_DIR} )
 
-find_package( GSL REQUIRED )
-include_directories( ${GSL_INCLUDE_DIR} )
-
 add_compile_definitions( BLAZE_USE_SHARED_MEMORY_PARALLELIZATION=0 )
 add_compile_definitions( BLAZE_BLAS_MODE=1 )
 message( "Automatic Cache Size Configuration" )
