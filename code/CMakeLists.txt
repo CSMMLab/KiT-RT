@@ -3,15 +3,15 @@ project( RTSN LANGUAGES C CXX VERSION 0.0.1 )
 set( CMAKE_CXX_STANDARD 20 )
 set( CMAKE_CXX_STANDARD_REQUIRED ON )
 
-set( CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -march=native" )
+set( CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -march=native -Wno-dev -DNDEBUG" )
 set( CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -O3 -march=native -pg -no-pie" )
-set( CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -Wall -Werror" )
+set( CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -g -Wall -Werror" )
 
 set( CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin" )
 
-file( GLOB_RECURSE SRCS RELATIVE ${CMAKE_SOURCE_DIR} "src/*.cpp" )
-include_directories( ${CMAKE_SOURCE_DIR}/include )
+file( GLOB_RECURSE SRCS RELATIVE ${CMAKE_SOURCE_DIR} "src/*.cpp" "include/*.h" )
 add_executable( ${CMAKE_PROJECT_NAME} ${SRCS} )
+target_include_directories( ${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/include )
 
 find_package( OpenMP REQUIRED )
 if( OPENMP_FOUND )
@@ -102,11 +102,11 @@ message( "Configuring Cache Size: ${BLAZE_CACHE_SIZE}" )
 include_directories( ${CMAKE_SOURCE_DIR}/ext/blaze )
 
 add_compile_definitions( METIS_EXPORT= )
-add_compile_definitions( IDXTYPEWIDTH=64 )
-add_compile_definitions( REALTYPEWIDTH=64 )
-include_directories( ${CMAKE_SOURCE_DIR}/ext/parmetis/include )
-include_directories( ${CMAKE_SOURCE_DIR}/ext/parmetis/metis/GKlib )
-add_subdirectory( ${CMAKE_SOURCE_DIR}/ext/parmetis/libparmetis )
+set( DISABLE_PARMETIS_PROGRAMS ON )
+set( ParMETIS_PATH ${CMAKE_CURRENT_SOURCE_DIR}/ext/parmetis)
+include_directories(${ParMETIS_PATH}/include)
+include_directories(${ParMETIS_PATH}/metis/include)
+add_subdirectory(${ParMETIS_PATH})
 
 find_package( VTK REQUIRED COMPONENTS vtkIOGeometry vtkFiltersCore )
 
