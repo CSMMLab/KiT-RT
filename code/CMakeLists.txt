@@ -10,8 +10,9 @@ set( CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -g -Wall -Werror" )
 set( CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin" )
 
 file( GLOB_RECURSE SRCS RELATIVE ${CMAKE_SOURCE_DIR} "src/*.cpp" "include/*.h" )
+include_directories( ${CMAKE_SOURCE_DIR}/include )
 add_executable( ${CMAKE_PROJECT_NAME} ${SRCS} )
-target_include_directories( ${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/include )
+
 
 find_package( OpenMP REQUIRED )
 if( OPENMP_FOUND )
