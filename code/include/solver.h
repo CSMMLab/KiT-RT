@@ -67,6 +67,11 @@ class Solver
      */
     void ComputeSlopes( VectorVector& psiDerX, VectorVector& psiDerY, const VectorVector& psi ) const;
 
+    /**
+     * @brief SetupIC writes intial condition onto _psi
+     */
+    void SetupIC();
+
   public:
     /**
      * @brief Solver constructor
