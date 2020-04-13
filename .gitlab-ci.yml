@@ -1,10 +1,5 @@
 image: rtsn/test:latest
 
-workflow:
-  rules:
-    - if: $CI_MERGE_REQUEST_ID
-    - if: $CI_COMMIT_BRANCH == 'master'
-
 stages:
   - build
   - unit_tests
@@ -20,6 +15,8 @@ build:
     - cmake -G Ninja -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=True -DCMAKE_EXPORT_COMPILE_COMMANDS=True ../../
     - ninja
   only:
+    - master
+    - merge_requests
     changes:
       - "code/include/**/*"
       - "code/tests/**/*"
