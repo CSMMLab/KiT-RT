@@ -75,6 +75,12 @@ void Mesh::ComputeConnectivity() {
     }
     for( auto it = neighborsFlat.begin(); it != neighborsFlat.end(); it += _numNodesPerCell )
         _cellNeighbors.push_back( std::vector<unsigned>( it, it + _numNodesPerCell ) );
+
+    _isBoundaryCell.resize( _numCells, false );
+    for( unsigned i = 0; i < _numCells; ++i ) {
+        if( std::any_of( _cellNeighbors[i].begin(), _cellNeighbors[i].end(), [this]( unsigned i ) { return i == this->_ghostCellID; } ) )
+            _isBoundaryCell[i] = true;
+    }
 }
 
 void Mesh::ComputeCellAreas() {
@@ -150,25 +156,53 @@ void Mesh::ComputePartitioning() {
     MPI_Comm_rank( comm, &comm_rank );
     unsigned ompNThreads = omp_get_max_threads();
 
-    unsigned long nPoint = _numNodes;
-
     if( ompNThreads > 1 ) {
-        blaze::CompressedMatrix<unsigned> adjMatrix( _numNodes, _numNodes );
+        unsigned long nPoint = _numNodes;
 
-        int* xadj = new int[_nodes.size() + 1];
-        std::vector<int> tmp_adjncy;
+        blaze::CompressedMatrix<bool> adjMatrix( _numNodes, _numNodes );
+        for( unsigned i = 0; i < _numNodes; ++i ) {
+            for( unsigned j = 0; j < _numCells; ++j ) {
+                for( unsigned k = 0; k < _numNodesPerCell; ++k ) {
+                    if( i == _cells[j][k] ) {
+                        if( k == 0 ) {
+                            adjMatrix.set( i, _cells[j][_numNodesPerCell - 1], true );
+                            adjMatrix.set( i, _cells[j][1], true );
+                        }
+                        else if( k == _numNodesPerCell - 1 ) {
+                            adjMatrix.set( i, _cells[j][_numNodesPerCell - 2], true );
+                            adjMatrix.set( i, _cells[j][0], true );
+                        }
+                        else {
+                            adjMatrix.set( i, _cells[j][k - 1], true );
+                            adjMatrix.set( i, _cells[j][k + 1], true );
+                        }
+                    }
+                }
+            }
+        }
+
+        std::vector<int> xadj( _numNodes + 1 );
+        std::vector<int> adjncy;
         int ctr = 0;
         for( unsigned i = 0; i < _numNodes; ++i ) {
             xadj[i] = ctr;
             for( unsigned j = 0; j < _numNodes; ++j ) {
-                if( adjMatrix( i, j ) == 1u ) {
-                    tmp_adjncy.push_back( static_cast<int>( j ) );
+                if( adjMatrix( i, j ) ) {
+                    adjncy.push_back( static_cast<int>( j ) );
                     ctr++;
                 }
             }
         }
-        int* adjncy = new int[static_cast<unsigned long>( xadj[_numNodes + 1] )];
-        std::copy( tmp_adjncy.begin(), tmp_adjncy.end(), adjncy );
+        xadj[_numNodes] = ctr;
+
+        real_t ubvec = static_cast<real_t>( 1.05 );
+
+        int* part;
+        int edgecut;
+        int ncon   = 1;
+        int nparts = ompNThreads;
+        int options[METIS_NOPTIONS];
+        METIS_SetDefaultOptions( options );
 
         if( comm_size > 1 ) {    // use parmetis
             std::vector<unsigned> npoint_procs( ompNThreads );
@@ -186,50 +220,54 @@ void Mesh::ComputePartitioning() {
                 ending_node[i]   = starting_node[i] + npoint_procs[i];
             }
 
-            int numflag, nparts, edgecut, wgtflag, ncon;
-
             int* vtxdist = new int[static_cast<unsigned>( ompNThreads ) + 1u];
-            int* part    = new int[nPoint];
+            part         = new int[nPoint];
 
-            real_t ubvec;
-            real_t* tpwgts = new real_t[ompNThreads];
-
-            wgtflag = 0;
-            numflag = 0;
-            ncon    = 1;
-            ubvec   = static_cast<real_t>( 1.05 );
-            nparts  = ompNThreads;
-            int options[METIS_NOPTIONS];
-            METIS_SetDefaultOptions( options );
-            options[1] = 0;
-
-            for( unsigned i = 0; i < ompNThreads; i++ ) {
-                tpwgts[i] = static_cast<real_t>( 1.0 ) / static_cast<real_t>( ompNThreads );
-            }
+            int wgtflag = 0;
+            int numflag = 0;
 
             vtxdist[0] = 0;
             for( unsigned i = 0; i < ompNThreads; i++ ) {
                 vtxdist[i + 1] = static_cast<int>( ending_node[i] );
             }
 
-            ParMETIS_V3_PartKway(
-                vtxdist, xadj, adjncy, nullptr, nullptr, &wgtflag, &numflag, &ncon, &nparts, tpwgts, &ubvec, options, &edgecut, part, &comm );
-
-            _colors.resize( nPoint );
-            for( unsigned i = 0; i < nPoint; ++i ) {
-                _colors[i] = static_cast<unsigned>( part[i] );
-            }
+            ParMETIS_V3_PartKway( vtxdist,
+                                  xadj.data(),
+                                  adjncy.data(),
+                                  nullptr,
+                                  nullptr,
+                                  &wgtflag,
+                                  &numflag,
+                                  &ncon,
+                                  &nparts,
+                                  nullptr,
+                                  &ubvec,
+                                  options,
+                                  &edgecut,
+                                  part,
+                                  &comm );
 
             delete[] vtxdist;
-            delete[] part;
-            delete[] tpwgts;
         }
         else {    // use metis
-            // METIS_PartGraphKway();
+            int nvtxs = _numNodes;
+            int vsize;
+            part = new int[_numNodes];
+            METIS_PartGraphKway(
+                &nvtxs, &ncon, xadj.data(), adjncy.data(), nullptr, &vsize, nullptr, &nparts, nullptr, &ubvec, options, &edgecut, part );
         }
+        _colors.resize( _numCells );
+        for( unsigned i = 0; i < _numCells; ++i ) {
+            std::map<unsigned, int> occurances;
+            for( unsigned j = 0; j < _numNodesPerCell; ++j ) {
+                ++occurances[part[_cells[i][j]]];
+            }
+            _colors[i] = occurances.rbegin()->first;
+        }
+        delete[] part;
     }
     else {
-        _colors.resize( nPoint, 0u );
+        _colors.resize( _numCells, 0u );
     }
 }
 
@@ -240,4 +278,5 @@ unsigned Mesh::GetNumNodesPerCell() const { return _numNodesPerCell; }
 
 const std::vector<Vector>& Mesh::GetNodes() const { return _nodes; }
 const std::vector<std::vector<unsigned>>& Mesh::GetCells() const { return _cells; }
-const std::vector<double>& Mesh::GetCellAreas() const { return _cellAreas; };
+const std::vector<double>& Mesh::GetCellAreas() const { return _cellAreas; }
+const std::vector<unsigned>& Mesh::GetPartitionIDs() const { return _colors; }

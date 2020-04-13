@@ -13,7 +13,6 @@ file( GLOB_RECURSE SRCS RELATIVE ${CMAKE_SOURCE_DIR} "src/*.cpp" "include/*.h" )
 include_directories( ${CMAKE_SOURCE_DIR}/include )
 add_executable( ${CMAKE_PROJECT_NAME} ${SRCS} )
 
-
 find_package( OpenMP REQUIRED )
 if( OPENMP_FOUND )
     set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}" )

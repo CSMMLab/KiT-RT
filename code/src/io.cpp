@@ -3,7 +3,9 @@
 void ExportVTK( const std::string fileName,
                 const std::vector<std::vector<std::vector<double>>>& results,
                 const std::vector<std::string> fieldNames,
+                const Settings* settings,
                 const Mesh* mesh ) {
+    unsigned dim             = mesh->GetDim();
     unsigned numCells        = mesh->GetNumCells();
     unsigned numNodes        = mesh->GetNumNodes();
     auto nodes               = mesh->GetNodes();
@@ -15,14 +17,22 @@ void ExportVTK( const std::string fileName,
     if( !fileNameWithExt.ends_with( ".vtk" ) ) {
         fileNameWithExt.append( ".vtk" );
     }
-    writer->SetFileName( fileNameWithExt.c_str() );
+    writer->SetFileName( ( settings->GetOutputDir() + fileNameWithExt ).c_str() );
     auto grid = vtkUnstructuredGridSP::New();
     auto pts  = vtkPointsSP::New();
     pts->SetDataTypeToDouble();
     pts->SetNumberOfPoints( static_cast<int>( numNodes ) );
     unsigned nodeID = 0;
     for( const auto& node : nodes ) {
-        pts->SetPoint( nodeID++, node[0], node[1], node[2] );
+        if( dim == 2 ) {
+            pts->SetPoint( nodeID++, node[0], node[1], 0.0 );
+        }
+        else if( dim == 3 ) {
+            pts->SetPoint( nodeID++, node[0], node[1], node[2] );
+        }
+        else {
+            exit( EXIT_FAILURE );
+        }
     }
     vtkCellArraySP cellArray = vtkCellArraySP::New();
     for( unsigned i = 0; i < numCells; ++i ) {
@@ -246,6 +256,9 @@ Mesh* LoadSU2MeshFromFile( const Settings* settings ) {
                             exit( EXIT_FAILURE );
                         }
                     }
+                    std::sort( bnodes.begin(), bnodes.end() );
+                    auto last = std::unique( bnodes.begin(), bnodes.end() );
+                    bnodes.erase( last, bnodes.end() );
                     boundaries[i] = std::make_pair( btype, bnodes );
                 }
                 break;

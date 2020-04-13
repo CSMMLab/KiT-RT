@@ -20,12 +20,12 @@ class Mesh
   protected:
     std::shared_ptr<spdlog::logger> _log;
 
-    unsigned _dim;
-    unsigned _numCells;
-    unsigned _numNodes;
-    unsigned _numNodesPerCell;
-    unsigned _numBoundaries;
-    unsigned _ghostCellID;
+    const unsigned _dim;
+    const unsigned _numCells;
+    const unsigned _numNodes;
+    const unsigned _numNodesPerCell;
+    const unsigned _numBoundaries;
+    const unsigned _ghostCellID;
 
     std::vector<Vector> _nodes;
     std::vector<std::vector<unsigned>> _cells;
@@ -34,6 +34,8 @@ class Mesh
     std::vector<double> _cellAreas;
     std::vector<std::vector<unsigned>> _cellNeighbors;
     std::vector<std::vector<Vector>> _cellNormals;
+    std::vector<bool> _isBoundaryCell;
+    blaze::CompressedMatrix<bool> _nodeNeighbors;
     std::vector<unsigned> _colors;
 
     void ComputeCellAreas();
@@ -56,6 +58,7 @@ class Mesh
     const std::vector<Vector>& GetNodes() const;
     const std::vector<std::vector<unsigned>>& GetCells() const;
     const std::vector<double>& GetCellAreas() const;
+    const std::vector<unsigned>& GetPartitionIDs() const;
 };
 
 #endif    // MESH_H
