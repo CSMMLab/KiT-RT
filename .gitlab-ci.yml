@@ -15,6 +15,9 @@ build:
     - cmake -G Ninja -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=True -DCMAKE_EXPORT_COMPILE_COMMANDS=True ../../
     - ninja
   only:
+    refs:
+      - master
+      - merge_requests
     changes:
       - "code/include/**/*"
       - "code/tests/**/*"

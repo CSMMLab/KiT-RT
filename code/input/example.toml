@@ -1,13 +1,12 @@
 [io]
-#this is a comment
-#outputDir is relative to the toml config file
 outputDir = "../result"
 outputFile = "example"
 logDir = "../result/logs"
-meshFile = "foo"
+meshFile = "checkerboard.su2"
 
 [solver]
 CFL = 0.9
 tEnd = 0.3
+boundaryConditions = [["void", "dirichlet"]]
 quadType = "MONTE_CARLO"
 quadOrder = 42 

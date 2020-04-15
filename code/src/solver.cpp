@@ -28,6 +28,11 @@ Solver::Solver( Settings* settings ) : _NCells( 1 ) {
     // TODO: load density and stopping power data
     LoadPatientDensity( "test" );
     LoadStoppingPower( "test" );
+    LoadSigmaS( "test" );
+    LoadSigmaT( "test" );
+
+    // TODO: setup initial condtion (distribution at initial energy for CSD)
+    SetupIC();
 }
 
 double Solver::ComputeTimeStep( double cfl ) const {
@@ -39,19 +44,6 @@ double Solver::ComputeTimeStep( double cfl ) const {
         }
     }
     return cfl * maxEdge;
-}
-
-void Solver::ComputeSlopes( VectorVector& psiDerX, VectorVector& psiDerY, const VectorVector& psi ) const {
-    for( unsigned k = 0; k < _nq; ++k ) {
-        for( unsigned j = 0; j < _NCells; ++j ) {
-            // if( cell->IsBoundaryCell() ) continue; // skip ghost cells
-            // compute derivative by summing over cell boundary
-            for( unsigned l = 0; l < _neighbors[j].size(); ++l ) {
-                psiDerX[j][k] = psiDerX[j][k] + 0.5 * ( psi[j][k] + psi[_neighbors[j][l]][k] ) * _normals[j][l][0] / _areas[j];
-                psiDerY[j][k] = psiDerY[j][k] + 0.5 * ( psi[j][k] + psi[_neighbors[j][l]][k] ) * _normals[j][l][1] / _areas[j];
-            }
-        }
-    }
 }
 
 void Solver::LoadPatientDensity( std::string fileName ) {
@@ -72,6 +64,12 @@ void Solver::LoadSigmaS( std::string fileName ) {
 void Solver::LoadSigmaT( std::string fileName ) {
     // @TODO
     //_sigmaTH20 = ... -> dim(_sigmaTH20) = _nTimeSteps
+}
+
+void Solver::SetupIC() {
+    // @TODO
+    // write initial condition
+    // _psi = ...
 }
 
 Solver* Solver::Create( Settings* settings ) { return new SNSolver( settings ); }

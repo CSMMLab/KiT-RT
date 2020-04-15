@@ -4,6 +4,7 @@
 #include <filesystem>
 #include <string>
 
+#include "mesh.h"
 #include "option_structure.h"
 
 class Settings
@@ -16,6 +17,8 @@ class Settings
     std::filesystem::path _outputDir;
     std::filesystem::path _logDir;
     std::filesystem::path _meshFile;
+
+    std::vector<std::pair<std::string, BOUNDARY_TYPE>> _boundaries;
 
     // Mesh
     unsigned _meshDimension;
@@ -38,6 +41,10 @@ class Settings
     std::string GetOutputFile() const;
     std::string GetOutputDir() const;
     std::string GetLogDir() const;
+    std::string GetMeshFile() const;
+
+    // mesh Getters
+    BOUNDARY_TYPE GetBoundaryType( std::string name ) const;
 
     // solver Getters
     unsigned GetQuadOrder() const;

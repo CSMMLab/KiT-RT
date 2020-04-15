@@ -60,12 +60,9 @@ class Solver
     double ComputeTimeStep( double cfl ) const;
 
     /**
-     * @brief ComputeSlopes calculates the slope in every cell into x and y direction
-     * @param psiDerX is slope in x direction
-     * @param psiDerY is slope in y direction
-     * @param psi is solution for which slope is computed
+     * @brief SetupIC writes intial condition onto _psi
      */
-    void ComputeSlopes( VectorVector& psiDerX, VectorVector& psiDerY, const VectorVector& psi ) const;
+    void SetupIC();
 
   public:
     /**

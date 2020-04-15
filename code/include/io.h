@@ -41,8 +41,10 @@ using vtkPointDataToCellDataSP    = vtkSmartPointer<vtkPointDataToCellData>;
 void ExportVTK( const std::string fileName,
                 const std::vector<std::vector<std::vector<double>>>& results,
                 const std::vector<std::string> fieldNames,
+                const Settings* settings,
                 const Mesh* mesh );
 void InitLogger( std::string logDir, spdlog::level::level_enum terminalLogLvl, spdlog::level::level_enum fileLogLvl );
+Mesh* LoadSU2MeshFromFile( const Settings* settings );
 std::string ParseArguments( int argc, char* argv[] );
 Settings* ReadInputFile( std::string inputFile );
 void PrintLogHeader( std::string inputFile );

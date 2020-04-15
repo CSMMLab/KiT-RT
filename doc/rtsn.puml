@@ -1,0 +1,316 @@
+@startuml
+
+
+
+
+
+/' Objects '/
+
+class LaxFriedrichsFlux {
+	+LaxFriedrichsFlux(Settings* settings)
+	+Flux(const Vector& Omega, double psiL, double psiR, const Vector& n) : double {query}
+	-_dt : double
+}
+
+
+class Mesh {
+	+Mesh()
+	+Mesh(std::vector<Vector> nodes, std::vector<std::vector<unsigned> > cells, std::vector<std::pair<BOUNDARY_TYPE, std::vector<unsigned> > > boundaries)
+	+~Mesh()
+	#ComputeOutwardFacingNormal(const Vector& nodeA, const Vector& nodeB, const Vector& cellCenter) : Vector
+	#_nodeNeighbors : blaze::CompressedMatrix<bool>
+	#_dim : const unsigned
+	#_ghostCellID : const unsigned
+	#_numBoundaries : const unsigned
+	#_numCells : const unsigned
+	#_numNodes : const unsigned
+	#_numNodesPerCell : const unsigned
+	#_log : std::shared_ptr<spdlog::logger>
+	#_nodes : std::vector<Vector>
+	+GetNodes() : std::vector<Vector>& {query}
+	#_isBoundaryCell : std::vector<bool>
+	#_cellAreas : std::vector<double>
+	+GetCellAreas() : std::vector<double>& {query}
+	#_boundaries : std::vector<std::pair<BOUNDARY_TYPE, std::vector<unsigned> > >
+	#_cellNormals : std::vector<std::vector<Vector> >
+	#_cellNeighbors : std::vector<std::vector<unsigned> >
+	#_cells : std::vector<std::vector<unsigned> >
+	+GetCells() : std::vector<std::vector<unsigned> >& {query}
+	#_colors : std::vector<unsigned>
+	+GetPartitionIDs() : std::vector<unsigned>& {query}
+	+GetDim() : unsigned {query}
+	+GetNumCells() : unsigned {query}
+	+GetNumNodes() : unsigned {query}
+	+GetNumNodesPerCell() : unsigned {query}
+	#ComputeCellAreas() : void
+	#ComputeConnectivity() : void
+	#ComputeNormals() : void
+	#ComputePartitioning() : void
+	+ComputeSlopes(unsigned nq, VectorVector& psiDerX, VectorVector& psiDerY, const VectorVector& psi) : void {query}
+}
+
+
+abstract class NumericalFlux {
+	+NumericalFlux(Settings* settings)
+	+{static} Create(Settings* settings) : NumericalFlux*
+	+{abstract} Flux(const Vector& Omega, double psiL, double psiR, const Vector& n) : double {query}
+}
+
+
+class Physics {
+	+Physics(Settings* settings)
+	-_totalxsH2O : Matrix
+	-_xsH2O : Matrix
+	+{static} Create(Settings* settings) : Physics*
+	+GetScatteringXS(std::vector<double> energies, std::vector<double> density, std::vector<double> Omegas) : VectorVector
+	+GetStoppingPower(std::vector<double> energies, std::vector<double> sH2O) : VectorVector
+	+GetTotalXS(std::vector<double> energies, std::vector<double> density) : VectorVector
+	-LoadXSH2O(std::string fileName1, std::string fileName2) : void
+}
+
+
+class QDummy {
+	+QDummy(unsigned order)
+	+~QDummy()
+	+SetConnectivity() : void
+	+SetName() : void
+	+SetNq() : void
+	+SetPointsAndWeights() : void
+}
+
+
+class QGaussLegendreTensorized {
+	+QGaussLegendreTensorized(unsigned order)
+	+~QGaussLegendreTensorized()
+	+SetConnectivity() : void
+	+SetName() : void
+	+SetNq() : void
+	+SetPointsAndWeights() : void
+}
+
+
+class QLDFESA {
+	+QLDFESA(unsigned order)
+	+~QLDFESA()
+	+SetAvailOrders() : void
+	+SetConnectivity() : void
+	+SetDataInfo() : void
+	+SetName() : void
+}
+
+
+class QLebedev {
+	+QLebedev(unsigned order)
+	+~QLebedev()
+	+SetAvailOrders() : void
+	+SetConnectivity() : void
+	+SetDataInfo() : void
+	+SetName() : void
+}
+
+
+class QLevelSymmetric {
+	+QLevelSymmetric(unsigned order)
+	+~QLevelSymmetric()
+	+SetAvailOrders() : void
+	+SetConnectivity() : void
+	+SetDataInfo() : void
+	+SetName() : void
+}
+
+
+abstract class QLookupQuadrature {
+	+QLookupQuadrature(unsigned order)
+	+~QLookupQuadrature()
+	#CheckOrder() : bool
+	#_dataFileSuffix : std::string
+	#_dataFiles : std::string
+	#_availableOrders : std::vector<unsigned>
+	#_nqByOrder : std::vector<unsigned>
+	+getAvailOrders() : std::vector<unsigned> {query}
+	#{abstract} SetAvailOrders() : void
+	#{abstract} SetDataInfo() : void
+	#SetNq() : void
+	#SetPointsAndWeights() : void
+}
+
+
+class QMonteCarlo {
+	+QMonteCarlo(unsigned order)
+	+~QMonteCarlo()
+	+SetConnectivity() : void
+	+SetName() : void
+	+SetNq() : void
+	+SetPointsAndWeights() : void
+}
+
+
+abstract class Quadrature {
+	+Quadrature(unsigned order)
+	+~Quadrature()
+	+{static} CreateQuadrature(QUAD_NAME name, unsigned order) : Quadrature*
+	+GetWeights() : Vector {query}
+	#_weights : Vector
+	+GetPoints() : VectorVector {query}
+	#_points : VectorVector
+	+GetConnectivity() : VectorVectorU {query}
+	#_connectivity : VectorVectorU
+	+Integrate(double(f)(doublex0,doublex1,doublex2)) : double
+	+SumUpWeights() : double
+	+GetName() : std::string {query}
+	#_name : std::string
+	+GetNq() : unsigned {query}
+	+GetOrder() : unsigned {query}
+	#_nq : unsigned
+	#_order : unsigned
+	+PrintPoints() : void
+	+PrintPointsAndWeights() : void
+	+PrintWeights() : void
+	#{abstract} SetConnectivity() : void
+	#{abstract} SetName() : void
+	#{abstract} SetNq() : void
+	#SetOrder(unsigned order) : void
+	#{abstract} SetPointsAndWeights() : void
+}
+
+
+class Reconstructor {
+	+Reconstructor(Settings* settings)
+	+Slope(const Vector& Omega, double psiL, double psiR, const Vector& n) : double {query}
+}
+
+
+class SNSolver {
+	+SNSolver(Settings* settings)
+	+Solve() : void
+	+SolveMPI() : void
+}
+
+
+class Settings {
+	+Settings()
+	+GetBoundaryType(std::string name) : BOUNDARY_TYPE {query}
+	+GetQuadName() : QUAD_NAME {query}
+	-_quadName : QUAD_NAME
+	+ReadInputFile(std::string fileName) : Settings*
+	+GetCFL() : double {query}
+	+GetTEnd() : double {query}
+	-_CFL : double
+	-_tEnd : double
+	-_comm_rank : int
+	-_comm_size : int
+	-_inputDir : std::filesystem::path
+	-_inputFile : std::filesystem::path
+	-_logDir : std::filesystem::path
+	-_meshFile : std::filesystem::path
+	-_outputDir : std::filesystem::path
+	-_outputFile : std::filesystem::path
+	+GetInputDir() : std::string {query}
+	+GetInputFile() : std::string {query}
+	+GetLogDir() : std::string {query}
+	+GetMeshFile() : std::string {query}
+	+GetOutputDir() : std::string {query}
+	+GetOutputFile() : std::string {query}
+	-_boundaries : std::vector<std::pair<std::string, BOUNDARY_TYPE> >
+	+GetQuadOrder() : unsigned {query}
+	-_meshDimension : unsigned
+	-_quadOrder : unsigned
+}
+
+
+abstract class Solver {
+	+Solver(Settings* settings)
+	#_g : NumericalFlux*
+	+{static} Create(Settings* settings) : Solver*
+	#_weights : Vector
+	#_psi : VectorVector
+	#_quadPoints : VectorVector
+	#_NCells : const unsigned
+	#ComputeTimeStep(double cfl) : double {query}
+	#_dt : double
+	#_sigmaSH20 : std::vector<Matrix>
+	#_density : std::vector<double>
+	#_sH20 : std::vector<double>
+	#_sigmaTH20 : std::vector<double>
+	#_normals : std::vector<std::vector<Vector> >
+	#_neighbors : std::vector<std::vector<unsigned> >
+	#_areas : std::vector<unsigned>
+	#_nTimeSteps : unsigned
+	#_nq : unsigned
+	#LoadPatientDensity(std::string fileName) : void
+	#LoadSigmaS(std::string fileName) : void
+	#LoadSigmaT(std::string fileName) : void
+	#LoadStoppingPower(std::string fileName) : void
+	#SetupIC() : void
+	+{abstract} Solve() : void
+}
+
+
+class UpwindFlux {
+	+UpwindFlux(Settings* settings)
+	+Flux(const Vector& Omega, double psiL, double psiR, const Vector& n) : double {query}
+}
+
+
+enum BOUNDARY_TYPE {
+	DIRICHLET
+	INVALID
+}
+
+
+enum QUAD_NAME {
+	QUAD_GaussLegendreTensorized
+	QUAD_LDFESA
+	QUAD_Lebedev
+	QUAD_LevelSymmetric
+	QUAD_MonteCarlo
+}
+
+
+
+
+
+/' Inheritance relationships '/
+
+NumericalFlux <|-- LaxFriedrichsFlux
+
+
+NumericalFlux <|-- UpwindFlux
+
+
+QLookupQuadrature <|-- QLDFESA
+
+
+QLookupQuadrature <|-- QLebedev
+
+
+QLookupQuadrature <|-- QLevelSymmetric
+
+
+Quadrature <|-- QDummy
+
+
+Quadrature <|-- QGaussLegendreTensorized
+
+
+Quadrature <|-- QLookupQuadrature
+
+
+Quadrature <|-- QMonteCarlo
+
+
+Solver <|-- SNSolver
+
+
+
+
+
+/' Aggregation relationships '/
+
+Solver o-- NumericalFlux
+
+
+
+
+
+@enduml
