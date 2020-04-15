@@ -30,6 +30,7 @@ double Quadrature::Integrate( double( f )( double x0, double x1, double x2 ) ) {
     }
     return result;
 }
+
 double Quadrature::SumUpWeights() { return sum( _weights ); }
 
 void Quadrature::PrintWeights() {

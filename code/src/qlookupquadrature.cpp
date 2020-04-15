@@ -1,6 +1,7 @@
 #include <fstream>
 #include <sstream>
 #include "qlookupquadrature.h"
+#include "option_structure.h" // for PI_NUMBER
 
 QLookupQuadrature::QLookupQuadrature( unsigned order ) : Quadrature( order ){
 }
@@ -9,11 +10,11 @@ bool QLookupQuadrature::CheckOrder(){
    std::vector<unsigned>::iterator it = std::find(_availableOrders.begin(), _availableOrders.end(), _order);
 
    if (it == _availableOrders.end()){
-        std::cout << "ERROR! Order "<< _order << " not available. (Replace this error message by a proper exeption handler!)" << std::endl; //TODO: throw proper error!
+        std::cout << "ERROR! Order "<< _order << " for " << GetName() << " not available. (Replace this error message by a proper exeption handler!)" << std::endl; //TODO: throw proper error!
         exit(1);
         return false;
     }
-    std::cout << _name << " with order " << _order << " chosen.\n";
+    // std::cout << _name << " with order " << _order << " chosen.\n";
     return true;
 }
 
@@ -31,6 +32,8 @@ void QLookupQuadrature::SetPointsAndWeights() {
     _weights.resize(_nq);
     _points.resize(_nq);
 
+    double sumWeights = 0;
+
     std::string filename =  _dataFiles + std::to_string(_order) + _dataFileSuffix;
     std::string line;
     unsigned count;
@@ -46,11 +49,19 @@ void QLookupQuadrature::SetPointsAndWeights() {
 
         for (double double_in; ss >> double_in;) { //parse line
             if(count <3) _points[idx_point][count] = double_in;
-            else _weights[idx_point] = double_in;
-
+            else{
+                sumWeights += double_in;
+                _weights[idx_point] = double_in;
+            }
             count ++;
             if (ss.peek() == ',') ss.ignore();
         }
     }
     in.close();
+
+    //Correct the scaling of the weights
+    for (unsigned idx =0; idx < _nq; idx ++){
+        _weights[idx] /= sumWeights;
+        _weights[idx] *= 4.0 * PI_NUMBER;
+    }
 }

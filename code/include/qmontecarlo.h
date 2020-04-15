@@ -10,7 +10,7 @@ class QMonteCarlo : public Quadrature
     virtual ~QMonteCarlo() {}
 
     inline void SetName() override { _name =  "Monte Carlo Quadrature."; }
-    void SetNq() override;
+    inline void SetNq() override   { _nq = GetOrder(); }
     void SetPointsAndWeights() override;
     void SetConnectivity()override;
 };

@@ -7,12 +7,6 @@ QMonteCarlo::QMonteCarlo( unsigned order ) : Quadrature( order ) {
     SetConnectivity();
 }
 
-
-void QMonteCarlo::SetNq() {
-    // For Monte Carlo Quadrature, nq = order.
-    _nq = GetOrder();
-}
-
 void QMonteCarlo::SetPointsAndWeights() {
     // Nq random points on the sphere.
     _points.resize(GetNq());
