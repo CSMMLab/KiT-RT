@@ -1,0 +1,202 @@
+@startuml
+
+
+
+
+
+/' Objects '/
+
+class LaxFriedrichsFlux {
+	+LaxFriedrichsFlux(Settings* settings)
+	+Flux(const Vector& Omega, double psiL, double psiR, const Vector& n) : double {query}
+	-_dt : double
+}
+
+
+class Mesh {
+	+Mesh()
+	+Mesh(std::vector<Vector> nodes, std::vector<std::vector<unsigned> > cells, std::vector<std::pair<BOUNDARY_TYPE, std::vector<unsigned> > > boundaries)
+	+~Mesh()
+	#ComputeOutwardFacingNormal(const Vector& nodeA, const Vector& nodeB, const Vector& cellCenter) : Vector
+	#_nodeNeighbors : blaze::CompressedMatrix<bool>
+	#_dim : const unsigned
+	#_ghostCellID : const unsigned
+	#_numBoundaries : const unsigned
+	#_numCells : const unsigned
+	#_numNodes : const unsigned
+	#_numNodesPerCell : const unsigned
+	#_log : std::shared_ptr<spdlog::logger>
+	#_nodes : std::vector<Vector>
+	+GetNodes() : std::vector<Vector>& {query}
+	#_isBoundaryCell : std::vector<bool>
+	#_cellAreas : std::vector<double>
+	+GetCellAreas() : std::vector<double>& {query}
+	#_boundaries : std::vector<std::pair<BOUNDARY_TYPE, std::vector<unsigned> > >
+	#_cellNormals : std::vector<std::vector<Vector> >
+	#_cellNeighbors : std::vector<std::vector<unsigned> >
+	#_cells : std::vector<std::vector<unsigned> >
+	+GetCells() : std::vector<std::vector<unsigned> >& {query}
+	#_colors : std::vector<unsigned>
+	+GetPartitionIDs() : std::vector<unsigned>& {query}
+	+GetDim() : unsigned {query}
+	+GetNumCells() : unsigned {query}
+	+GetNumNodes() : unsigned {query}
+	+GetNumNodesPerCell() : unsigned {query}
+	#ComputeCellAreas() : void
+	#ComputeConnectivity() : void
+	#ComputeNormals() : void
+	#ComputePartitioning() : void
+}
+
+
+abstract class NumericalFlux {
+	+NumericalFlux(Settings* settings)
+	+{static} Create(Settings* settings) : NumericalFlux*
+	+{abstract} Flux(const Vector& Omega, double psiL, double psiR, const Vector& n) : double {query}
+}
+
+
+class QMonteCarlo {
+	+QMonteCarlo(int order)
+	+~QMonteCarlo()
+	+ComputePoints() : blaze::DynamicVector<blaze::DynamicVector<double> >
+	+ComputeConnectivity() : blaze::DynamicVector<blaze::DynamicVector<int> >
+	+ComputeWeights() : blaze::DynamicVector<double>
+	+ComputeNq() : int
+	+ComputeName() : std::string
+}
+
+
+abstract class Quadrature {
+	+Quadrature(int order)
+	+~Quadrature()
+	+{static} CreateQuadrature(std::string name, int order) : Quadrature*
+	+{abstract} ComputePoints() : blaze::DynamicVector<blaze::DynamicVector<double> >
+	+GetPoints() : blaze::DynamicVector<blaze::DynamicVector<double> >
+	#_points : blaze::DynamicVector<blaze::DynamicVector<double> >
+	+{abstract} ComputeConnectivity() : blaze::DynamicVector<blaze::DynamicVector<int> >
+	+GetConnectivity() : blaze::DynamicVector<blaze::DynamicVector<int> >
+	#_connectivity : blaze::DynamicVector<blaze::DynamicVector<int> >
+	+{abstract} ComputeWeights() : blaze::DynamicVector<double>
+	+GetWeights() : blaze::DynamicVector<double>
+	#_weights : blaze::DynamicVector<double>
+	+SumUpWeights() : double
+	+{abstract} ComputeNq() : int
+	+GetNq() : int
+	+GetOrder() : int
+	#_nq : int
+	#_order : int
+	+{abstract} ComputeName() : std::string
+	+GetName() : std::string
+	#_name : std::string
+	+PrintPoints() : void
+	+PrintPointsAndWeights() : void
+	+PrintWeights() : void
+	+SetConnectivity(blaze::DynamicVector<blaze::DynamicVector<int> > connectivity) : void
+	+SetName(std::string name) : void
+	+SetNq(int nq) : void
+	+SetOrder(int order) : void
+	+SetPoints(blaze::DynamicVector<blaze::DynamicVector<double> > points) : void
+	+SetWeights(blaze::DynamicVector<double> weights) : void
+}
+
+
+class Reconstructor {
+	+Reconstructor(Settings* settings)
+	+Slope(const Vector& Omega, double psiL, double psiR, const Vector& n) : double {query}
+}
+
+
+class SNSolver {
+	+SNSolver(Settings* settings)
+	+Solve() : void
+}
+
+
+class Settings {
+	+Settings()
+	+GetBoundaryType(std::string name) : BOUNDARY_TYPE {query}
+	+ReadInputFile(std::string fileName) : Settings*
+	-_CFL : double
+	-_comm_rank : int
+	-_comm_size : int
+	-_inputDir : std::filesystem::path
+	-_inputFile : std::filesystem::path
+	-_logDir : std::filesystem::path
+	-_meshFile : std::filesystem::path
+	-_outputDir : std::filesystem::path
+	-_outputFile : std::filesystem::path
+	+GetInputDir() : std::string {query}
+	+GetInputFile() : std::string {query}
+	+GetLogDir() : std::string {query}
+	+GetMeshFile() : std::string {query}
+	+GetOutputDir() : std::string {query}
+	+GetOutputFile() : std::string {query}
+	-_boundaries : std::vector<std::pair<std::string, BOUNDARY_TYPE> >
+	-_meshDimension : unsigned
+	-_quadOrder : unsigned
+}
+
+
+abstract class Solver {
+	+Solver(Settings* settings)
+	-_psi : Matrix
+	-_g : NumericalFlux*
+	+{static} Create(Settings* settings) : Solver*
+	-_NCells : const unsigned
+	-_NTimeSteps : const unsigned
+	-_Q : const unsigned
+	-_normals : std::vector<Vector>
+	-_quadPoints : std::vector<Vector>
+	-_density : std::vector<double>
+	-_sH20 : std::vector<double>
+	-_weights : std::vector<double>
+	-_neighbors : std::vector<std::vector<unsigned> >
+	-_areas : std::vector<unsigned>
+	-LoadPatientDensity(std::string fileName) : void
+	-LoadStoppingPower(std::string fileName) : void
+	+{abstract} Solve() : void
+}
+
+
+class UpwindFlux {
+	+UpwindFlux(Settings* settings)
+	+Flux(const Vector& Omega, double psiL, double psiR, const Vector& n) : double {query}
+}
+
+
+enum BOUNDARY_TYPE {
+	DIRICHLET
+	INVALID
+}
+
+
+
+
+
+/' Inheritance relationships '/
+
+NumericalFlux <|-- LaxFriedrichsFlux
+
+
+NumericalFlux <|-- UpwindFlux
+
+
+Quadrature <|-- QMonteCarlo
+
+
+Solver <|-- SNSolver
+
+
+
+
+
+/' Aggregation relationships '/
+
+Solver o-- NumericalFlux
+
+
+
+
+
+@enduml
