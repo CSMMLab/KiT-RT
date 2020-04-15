@@ -46,6 +46,7 @@ class Mesh {
 	#ComputeConnectivity() : void
 	#ComputeNormals() : void
 	#ComputePartitioning() : void
+	+ComputeSlopes(unsigned nq, VectorVector& psiDerX, VectorVector& psiDerY, const VectorVector& psi) : void {query}
 }
 
 
@@ -56,48 +57,120 @@ abstract class NumericalFlux {
 }
 
 
+class Physics {
+	+Physics(Settings* settings)
+	-_totalxsH2O : Matrix
+	-_xsH2O : Matrix
+	+{static} Create(Settings* settings) : Physics*
+	+GetScatteringXS(std::vector<double> energies, std::vector<double> density, std::vector<double> Omegas) : VectorVector
+	+GetStoppingPower(std::vector<double> energies, std::vector<double> sH2O) : VectorVector
+	+GetTotalXS(std::vector<double> energies, std::vector<double> density) : VectorVector
+	-LoadXSH2O(std::string fileName1, std::string fileName2) : void
+}
+
+
+class QDummy {
+	+QDummy(unsigned order)
+	+~QDummy()
+	+SetConnectivity() : void
+	+SetName() : void
+	+SetNq() : void
+	+SetPointsAndWeights() : void
+}
+
+
+class QGaussLegendreTensorized {
+	+QGaussLegendreTensorized(unsigned order)
+	+~QGaussLegendreTensorized()
+	+SetConnectivity() : void
+	+SetName() : void
+	+SetNq() : void
+	+SetPointsAndWeights() : void
+}
+
+
+class QLDFESA {
+	+QLDFESA(unsigned order)
+	+~QLDFESA()
+	+SetAvailOrders() : void
+	+SetConnectivity() : void
+	+SetDataInfo() : void
+	+SetName() : void
+}
+
+
+class QLebedev {
+	+QLebedev(unsigned order)
+	+~QLebedev()
+	+SetAvailOrders() : void
+	+SetConnectivity() : void
+	+SetDataInfo() : void
+	+SetName() : void
+}
+
+
+class QLevelSymmetric {
+	+QLevelSymmetric(unsigned order)
+	+~QLevelSymmetric()
+	+SetAvailOrders() : void
+	+SetConnectivity() : void
+	+SetDataInfo() : void
+	+SetName() : void
+}
+
+
+abstract class QLookupQuadrature {
+	+QLookupQuadrature(unsigned order)
+	+~QLookupQuadrature()
+	#CheckOrder() : bool
+	#_dataFileSuffix : std::string
+	#_dataFiles : std::string
+	#_availableOrders : std::vector<unsigned>
+	#_nqByOrder : std::vector<unsigned>
+	+getAvailOrders() : std::vector<unsigned> {query}
+	#{abstract} SetAvailOrders() : void
+	#{abstract} SetDataInfo() : void
+	#SetNq() : void
+	#SetPointsAndWeights() : void
+}
+
+
 class QMonteCarlo {
-	+QMonteCarlo(int order)
+	+QMonteCarlo(unsigned order)
 	+~QMonteCarlo()
-	+ComputePoints() : blaze::DynamicVector<blaze::DynamicVector<double> >
-	+ComputeConnectivity() : blaze::DynamicVector<blaze::DynamicVector<int> >
-	+ComputeWeights() : blaze::DynamicVector<double>
-	+ComputeNq() : int
-	+ComputeName() : std::string
+	+SetConnectivity() : void
+	+SetName() : void
+	+SetNq() : void
+	+SetPointsAndWeights() : void
 }
 
 
 abstract class Quadrature {
-	+Quadrature(int order)
+	+Quadrature(unsigned order)
 	+~Quadrature()
-	+{static} CreateQuadrature(std::string name, int order) : Quadrature*
-	+{abstract} ComputePoints() : blaze::DynamicVector<blaze::DynamicVector<double> >
-	+GetPoints() : blaze::DynamicVector<blaze::DynamicVector<double> >
-	#_points : blaze::DynamicVector<blaze::DynamicVector<double> >
-	+{abstract} ComputeConnectivity() : blaze::DynamicVector<blaze::DynamicVector<int> >
-	+GetConnectivity() : blaze::DynamicVector<blaze::DynamicVector<int> >
-	#_connectivity : blaze::DynamicVector<blaze::DynamicVector<int> >
-	+{abstract} ComputeWeights() : blaze::DynamicVector<double>
-	+GetWeights() : blaze::DynamicVector<double>
-	#_weights : blaze::DynamicVector<double>
+	+{static} CreateQuadrature(QUAD_NAME name, unsigned order) : Quadrature*
+	+GetWeights() : Vector {query}
+	#_weights : Vector
+	+GetPoints() : VectorVector {query}
+	#_points : VectorVector
+	+GetConnectivity() : VectorVectorU {query}
+	#_connectivity : VectorVectorU
+	+Integrate(double(f)(doublex0,doublex1,doublex2)) : double
 	+SumUpWeights() : double
-	+{abstract} ComputeNq() : int
-	+GetNq() : int
-	+GetOrder() : int
-	#_nq : int
-	#_order : int
-	+{abstract} ComputeName() : std::string
-	+GetName() : std::string
+	+GetName() : std::string {query}
 	#_name : std::string
+	+GetNq() : unsigned {query}
+	+GetOrder() : unsigned {query}
+	#_nq : unsigned
+	#_order : unsigned
 	+PrintPoints() : void
 	+PrintPointsAndWeights() : void
 	+PrintWeights() : void
-	+SetConnectivity(blaze::DynamicVector<blaze::DynamicVector<int> > connectivity) : void
-	+SetName(std::string name) : void
-	+SetNq(int nq) : void
-	+SetOrder(int order) : void
-	+SetPoints(blaze::DynamicVector<blaze::DynamicVector<double> > points) : void
-	+SetWeights(blaze::DynamicVector<double> weights) : void
+	#{abstract} SetConnectivity() : void
+	#{abstract} SetName() : void
+	#{abstract} SetNq() : void
+	#SetOrder(unsigned order) : void
+	#{abstract} SetPointsAndWeights() : void
 }
 
 
@@ -110,14 +183,20 @@ class Reconstructor {
 class SNSolver {
 	+SNSolver(Settings* settings)
 	+Solve() : void
+	+SolveMPI() : void
 }
 
 
 class Settings {
 	+Settings()
 	+GetBoundaryType(std::string name) : BOUNDARY_TYPE {query}
+	+GetQuadName() : QUAD_NAME {query}
+	-_quadName : QUAD_NAME
 	+ReadInputFile(std::string fileName) : Settings*
+	+GetCFL() : double {query}
+	+GetTEnd() : double {query}
 	-_CFL : double
+	-_tEnd : double
 	-_comm_rank : int
 	-_comm_size : int
 	-_inputDir : std::filesystem::path
@@ -133,6 +212,7 @@ class Settings {
 	+GetOutputDir() : std::string {query}
 	+GetOutputFile() : std::string {query}
 	-_boundaries : std::vector<std::pair<std::string, BOUNDARY_TYPE> >
+	+GetQuadOrder() : unsigned {query}
 	-_meshDimension : unsigned
 	-_quadOrder : unsigned
 }
@@ -140,21 +220,28 @@ class Settings {
 
 abstract class Solver {
 	+Solver(Settings* settings)
-	-_psi : Matrix
-	-_g : NumericalFlux*
+	#_g : NumericalFlux*
 	+{static} Create(Settings* settings) : Solver*
-	-_NCells : const unsigned
-	-_NTimeSteps : const unsigned
-	-_Q : const unsigned
-	-_normals : std::vector<Vector>
-	-_quadPoints : std::vector<Vector>
-	-_density : std::vector<double>
-	-_sH20 : std::vector<double>
-	-_weights : std::vector<double>
-	-_neighbors : std::vector<std::vector<unsigned> >
-	-_areas : std::vector<unsigned>
-	-LoadPatientDensity(std::string fileName) : void
-	-LoadStoppingPower(std::string fileName) : void
+	#_weights : Vector
+	#_psi : VectorVector
+	#_quadPoints : VectorVector
+	#_NCells : const unsigned
+	#ComputeTimeStep(double cfl) : double {query}
+	#_dt : double
+	#_sigmaSH20 : std::vector<Matrix>
+	#_density : std::vector<double>
+	#_sH20 : std::vector<double>
+	#_sigmaTH20 : std::vector<double>
+	#_normals : std::vector<std::vector<Vector> >
+	#_neighbors : std::vector<std::vector<unsigned> >
+	#_areas : std::vector<unsigned>
+	#_nTimeSteps : unsigned
+	#_nq : unsigned
+	#LoadPatientDensity(std::string fileName) : void
+	#LoadSigmaS(std::string fileName) : void
+	#LoadSigmaT(std::string fileName) : void
+	#LoadStoppingPower(std::string fileName) : void
+	#SetupIC() : void
 	+{abstract} Solve() : void
 }
 
@@ -171,6 +258,15 @@ enum BOUNDARY_TYPE {
 }
 
 
+enum QUAD_NAME {
+	QUAD_GaussLegendreTensorized
+	QUAD_LDFESA
+	QUAD_Lebedev
+	QUAD_LevelSymmetric
+	QUAD_MonteCarlo
+}
+
+
 
 
 
@@ -180,6 +276,24 @@ NumericalFlux <|-- LaxFriedrichsFlux
 
 
 NumericalFlux <|-- UpwindFlux
+
+
+QLookupQuadrature <|-- QLDFESA
+
+
+QLookupQuadrature <|-- QLebedev
+
+
+QLookupQuadrature <|-- QLevelSymmetric
+
+
+Quadrature <|-- QDummy
+
+
+Quadrature <|-- QGaussLegendreTensorized
+
+
+Quadrature <|-- QLookupQuadrature
 
 
 Quadrature <|-- QMonteCarlo
