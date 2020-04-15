@@ -147,9 +147,16 @@ This last step requires a preceeding `docker login`. Ask Jannick for login crede
 ---
 
 ## Code structure
-![Can't load image](doc/uml.png "UML diagram")
+**WARNING: is not created automatically - might be out of date!**
+Reverse engineered plantuml diagram of the current code structure: 
+![Can't load image](doc/rtsn.svg "UML diagram")
 <br/><br/>
-The diagram can be modified by opening `doc/uml.zargo` with `ArgoUML`.
+Was created using [hpp2plantuml](https://github.com/thibaultmarin/hpp2plantuml) and [plantuml](https://plantuml.com/), e.g.:
+```bash
+cd code
+hpp2plantuml -i "../code/include/*.h" -o rtsn.puml 
+plantuml rtsn.puml -tsvg
+```
 
 ---
 
