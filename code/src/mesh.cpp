@@ -20,7 +20,7 @@ void Mesh::ComputeConnectivity() {
     MPI_Comm_rank( MPI_COMM_WORLD, &comm_rank );
     unsigned chunkSize    = std::ceil( static_cast<float>( _numCells ) / static_cast<float>( comm_size ) );
     unsigned mpiCellStart = comm_rank * chunkSize;
-    unsigned mpiCellEnd   = std::max( comm_rank + 1 * chunkSize, _numCells - 1 );
+    unsigned mpiCellEnd   = std::min( ( comm_rank + 1 ) * chunkSize, _numCells );
     std::vector<int> neighborsFlatPart( _numNodesPerCell * chunkSize, -1 );
 
     auto sortedCells( _cells );
@@ -42,7 +42,7 @@ void Mesh::ComputeConnectivity() {
             if( commonElements.size() == _dim ) {
                 unsigned pos0 = _numNodesPerCell * ( i - mpiCellStart );
                 unsigned pos  = pos0;
-                while( neighborsFlatPart[pos] != -1 && pos < pos0 + _numNodesPerCell && pos < _numCells * _numNodesPerCell - 1 ) pos++;
+                while( neighborsFlatPart[pos] != -1 && pos < pos0 + _numNodesPerCell && pos < chunkSize * _numNodesPerCell - 1 ) pos++;
                 neighborsFlatPart[pos] = j;
             }
         }
@@ -54,22 +54,29 @@ void Mesh::ComputeConnectivity() {
                 if( commonElements.size() == _dim ) {
                     unsigned pos0 = _numNodesPerCell * ( i - mpiCellStart );
                     unsigned pos  = pos0;
-                    while( neighborsFlatPart[pos] != -1 && pos < pos0 + _numNodesPerCell && pos < _numCells * _numNodesPerCell - 1 ) pos++;
+                    while( neighborsFlatPart[pos] != -1 && pos < pos0 + _numNodesPerCell && pos < chunkSize * _numNodesPerCell - 1 ) pos++;
                     neighborsFlatPart[pos] = _ghostCellID;
                 }
             }
         }
     }
-    std::vector<int> neighborsFlat( _numNodesPerCell * _numCells, -1 );
+    std::vector<int> neighborsFlat( _numNodesPerCell * chunkSize * comm_size, -1 );
     if( comm_size == 1 )
         neighborsFlat.assign( neighborsFlatPart.begin(), neighborsFlatPart.end() );
     else
-        MPI_Allgather(
-            neighborsFlatPart.data(), chunkSize, MPI::UNSIGNED, neighborsFlat.data(), _numNodesPerCell * _numCells, MPI::UNSIGNED, MPI_COMM_WORLD );
+        MPI_Allgather( neighborsFlatPart.data(),
+                       _numNodesPerCell * chunkSize,
+                       MPI_INT,
+                       neighborsFlat.data(),
+                       _numNodesPerCell * chunkSize,
+                       MPI_INT,
+                       MPI_COMM_WORLD );
+
     if( std::any_of( neighborsFlat.begin(), neighborsFlat.end(), []( int i ) { return i == -1; } ) ) {
         unsigned idx = 0;
         for( ; idx < neighborsFlat.size(); ++idx ) {
             if( neighborsFlat[idx] == -1 ) _log->error( "[mesh] Detected unassigned faces at index {0}", idx );
+            break;
         }
         exit( EXIT_FAILURE );
     }
@@ -157,8 +164,6 @@ void Mesh::ComputePartitioning() {
     unsigned ompNThreads = omp_get_max_threads();
 
     if( ompNThreads > 1 ) {
-        unsigned long nPoint = _numNodes;
-
         blaze::CompressedMatrix<bool> adjMatrix( _numNodes, _numNodes );
         for( unsigned i = 0; i < _numNodes; ++i ) {
             for( unsigned j = 0; j < _numCells; ++j ) {
@@ -182,8 +187,8 @@ void Mesh::ComputePartitioning() {
         }
 
         std::vector<int> xadj( _numNodes + 1 );
-        std::vector<int> adjncy;
         int ctr = 0;
+        std::vector<int> adjncy;
         for( unsigned i = 0; i < _numNodes; ++i ) {
             xadj[i] = ctr;
             for( unsigned j = 0; j < _numNodes; ++j ) {
@@ -195,76 +200,83 @@ void Mesh::ComputePartitioning() {
         }
         xadj[_numNodes] = ctr;
 
+        std::vector<int> partitions;
+        int edgecut  = 0;
+        int ncon     = 1;
+        int nparts   = ompNThreads;
         real_t ubvec = static_cast<real_t>( 1.05 );
 
-        int* part;
-        int edgecut;
-        int ncon   = 1;
-        int nparts = ompNThreads;
-        int options[METIS_NOPTIONS];
-        METIS_SetDefaultOptions( options );
-
         if( comm_size > 1 ) {    // use parmetis
-            std::vector<unsigned> npoint_procs( ompNThreads );
-            for( unsigned i = 0; i < npoint_procs.size() - 1u; ++i )
-                npoint_procs[i] = static_cast<unsigned>( std::round( static_cast<double>( _nodes.size() ) / static_cast<double>( ompNThreads ) ) );
-            npoint_procs.back() = static_cast<unsigned>( _numNodes ) - ( ompNThreads - 1u ) * npoint_procs[0];
+            std::vector<int> local_xadj{0};
+            unsigned xadjChunk = std::ceil( static_cast<float>( _numNodes ) / static_cast<float>( comm_size ) );
+            unsigned xadjStart = comm_rank * xadjChunk + 1;
+            unsigned adjncyStart;
+            for( unsigned i = 0; i < xadjChunk; ++i ) {
+                if( i == 0 ) adjncyStart = xadj[i + xadjStart - 1];
+                local_xadj.push_back( xadj[i + xadjStart] );
+            }
+            unsigned adjncyEnd = local_xadj.back();
+            for( unsigned i = 1; i < local_xadj.size(); ++i ) {
+                local_xadj[i] -= xadj[xadjStart - 1];
+            }
+            std::vector<int> local_adjncy( adjncy.begin() + adjncyStart, adjncy.begin() + adjncyEnd );
 
-            std::vector<unsigned> starting_node( ompNThreads, 0u );
-            std::vector<unsigned> ending_node( ompNThreads, 0u );
-            nPoint           = npoint_procs[comm_rank];
-            starting_node[0] = 0;
-            ending_node[0]   = starting_node[0] + npoint_procs[0];
-            for( unsigned i = 1; i < ompNThreads; i++ ) {
-                starting_node[i] = ending_node[i - 1];
-                ending_node[i]   = starting_node[i] + npoint_procs[i];
+            std::vector<int> vtxdist{0};
+            for( unsigned i = 1; i <= static_cast<unsigned>( comm_size ); i++ ) {
+                vtxdist.push_back( std::min( i * xadjChunk, _numNodes ) );
             }
 
-            int* vtxdist = new int[static_cast<unsigned>( ompNThreads ) + 1u];
-            part         = new int[nPoint];
+            real_t* tpwgts = new real_t[nparts];
+            for( unsigned i = 0; i < static_cast<unsigned>( nparts ); ++i ) {
+                tpwgts[i] = 1.0 / static_cast<real_t>( nparts );
+            }
 
             int wgtflag = 0;
             int numflag = 0;
 
-            vtxdist[0] = 0;
-            for( unsigned i = 0; i < ompNThreads; i++ ) {
-                vtxdist[i + 1] = static_cast<int>( ending_node[i] );
-            }
+            int options[1];
+            options[0] = 0;
 
-            ParMETIS_V3_PartKway( vtxdist,
-                                  xadj.data(),
-                                  adjncy.data(),
+            unsigned chunkSize = local_xadj.size() - 1;
+            int* part          = new int[chunkSize];
+            ParMETIS_V3_PartKway( vtxdist.data(),
+                                  local_xadj.data(),
+                                  local_adjncy.data(),
                                   nullptr,
                                   nullptr,
                                   &wgtflag,
                                   &numflag,
                                   &ncon,
                                   &nparts,
-                                  nullptr,
+                                  tpwgts,
                                   &ubvec,
                                   options,
                                   &edgecut,
                                   part,
                                   &comm );
+            partitions.resize( chunkSize * comm_size );
+            MPI_Allgather( part, chunkSize, MPI_INT, partitions.data(), chunkSize, MPI_INT, comm );
+            partitions.resize( _numNodes );
 
-            delete[] vtxdist;
+            delete[] tpwgts;
         }
         else {    // use metis
+            int options[METIS_NOPTIONS];
+            METIS_SetDefaultOptions( options );
             int nvtxs = _numNodes;
             int vsize;
-            part = new int[_numNodes];
+            partitions.resize( _numNodes );
             METIS_PartGraphKway(
-                &nvtxs, &ncon, xadj.data(), adjncy.data(), nullptr, &vsize, nullptr, &nparts, nullptr, &ubvec, options, &edgecut, part );
+                &nvtxs, &ncon, xadj.data(), adjncy.data(), nullptr, &vsize, nullptr, &nparts, nullptr, &ubvec, options, &edgecut, partitions.data() );
         }
         _colors.resize( _numCells );
         for( unsigned i = 0; i < _numCells; ++i ) {
             std::map<unsigned, int> occurances;
             for( unsigned j = 0; j < _numNodesPerCell; ++j ) {
-                ++occurances[part[_cells[i][j]]];
+                ++occurances[partitions[_cells[i][j]]];
             }
             _colors[i] = occurances.rbegin()->first;
         }
-        delete[] part;
     }
     else {
         _colors.resize( _numCells, 0u );

@@ -5,110 +5,115 @@ void ExportVTK( const std::string fileName,
                 const std::vector<std::string> fieldNames,
                 const Settings* settings,
                 const Mesh* mesh ) {
-    unsigned dim             = mesh->GetDim();
-    unsigned numCells        = mesh->GetNumCells();
-    unsigned numNodes        = mesh->GetNumNodes();
-    auto nodes               = mesh->GetNodes();
-    auto cells               = mesh->GetCells();
-    unsigned numNodesPerCell = mesh->GetNumNodesPerCell();
+    int rank;
+    MPI_Comm_rank( MPI_COMM_WORLD, &rank );
+    if( rank == 0 ) {
+        unsigned dim             = mesh->GetDim();
+        unsigned numCells        = mesh->GetNumCells();
+        unsigned numNodes        = mesh->GetNumNodes();
+        auto nodes               = mesh->GetNodes();
+        auto cells               = mesh->GetCells();
+        unsigned numNodesPerCell = mesh->GetNumNodesPerCell();
 
-    auto writer                 = vtkUnstructuredGridWriterSP::New();
-    std::string fileNameWithExt = fileName;
-    if( !fileNameWithExt.ends_with( ".vtk" ) ) {
-        fileNameWithExt.append( ".vtk" );
-    }
-    writer->SetFileName( ( settings->GetOutputDir() + fileNameWithExt ).c_str() );
-    auto grid = vtkUnstructuredGridSP::New();
-    auto pts  = vtkPointsSP::New();
-    pts->SetDataTypeToDouble();
-    pts->SetNumberOfPoints( static_cast<int>( numNodes ) );
-    unsigned nodeID = 0;
-    for( const auto& node : nodes ) {
-        if( dim == 2 ) {
-            pts->SetPoint( nodeID++, node[0], node[1], 0.0 );
+        auto writer                 = vtkUnstructuredGridWriterSP::New();
+        std::string fileNameWithExt = fileName;
+        if( !fileNameWithExt.ends_with( ".vtk" ) ) {
+            fileNameWithExt.append( ".vtk" );
         }
-        else if( dim == 3 ) {
-            pts->SetPoint( nodeID++, node[0], node[1], node[2] );
+        writer->SetFileName( ( settings->GetOutputDir() + fileNameWithExt ).c_str() );
+        auto grid = vtkUnstructuredGridSP::New();
+        auto pts  = vtkPointsSP::New();
+        pts->SetDataTypeToDouble();
+        pts->SetNumberOfPoints( static_cast<int>( numNodes ) );
+        unsigned nodeID = 0;
+        for( const auto& node : nodes ) {
+            if( dim == 2 ) {
+                pts->SetPoint( nodeID++, node[0], node[1], 0.0 );
+            }
+            else if( dim == 3 ) {
+                pts->SetPoint( nodeID++, node[0], node[1], node[2] );
+            }
+            else {
+                exit( EXIT_FAILURE );
+            }
         }
-        else {
-            exit( EXIT_FAILURE );
+        vtkCellArraySP cellArray = vtkCellArraySP::New();
+        for( unsigned i = 0; i < numCells; ++i ) {
+            if( numNodesPerCell == 3 ) {
+                auto tri = vtkTriangleSP::New();
+                for( unsigned j = 0; j < numNodesPerCell; ++j ) {
+                    tri->GetPointIds()->SetId( j, cells[i][j] );
+                }
+                cellArray->InsertNextCell( tri );
+            }
+            if( numNodesPerCell == 4 ) {
+                auto quad = vtkQuad::New();
+                for( unsigned j = 0; j < numNodesPerCell; ++j ) {
+                    quad->GetPointIds()->SetId( j, cells[i][j] );
+                }
+                cellArray->InsertNextCell( quad );
+            }
         }
-    }
-    vtkCellArraySP cellArray = vtkCellArraySP::New();
-    for( unsigned i = 0; i < numCells; ++i ) {
         if( numNodesPerCell == 3 ) {
-            auto tri = vtkTriangleSP::New();
-            for( unsigned j = 0; j < numNodesPerCell; ++j ) {
-                tri->GetPointIds()->SetId( j, cells[i][j] );
+            grid->SetCells( VTK_TRIANGLE, cellArray );
+        }
+        else if( numNodesPerCell == 4 ) {
+            grid->SetCells( VTK_QUAD, cellArray );
+        }
+
+        for( unsigned i = 0; i < results.size(); i++ ) {
+            auto cellData = vtkDoubleArraySP::New();
+            cellData->SetName( fieldNames[i].c_str() );
+            switch( results[i].size() ) {
+                case 1:
+                    for( unsigned j = 0; j < numCells; j++ ) {
+                        cellData->InsertNextValue( results[i][0][j] );
+                    }
+                    break;
+                case 2:
+                    cellData = vtkDoubleArraySP::New();
+                    cellData->SetName( "E(ρU)" );
+                    cellData->SetNumberOfComponents( 3 );
+                    cellData->SetComponentName( 0, "x" );
+                    cellData->SetComponentName( 1, "y" );
+                    cellData->SetComponentName( 2, "z" );
+                    cellData->SetNumberOfTuples( numCells );
+                    for( unsigned j = 0; j < numCells; j++ ) {
+                        cellData->SetTuple3( i, results[i][0][j], results[i][1][j], 0.0 );
+                    }
+                    break;
+                case 3:
+                    cellData = vtkDoubleArraySP::New();
+                    cellData->SetName( "E(ρU)" );
+                    cellData->SetNumberOfComponents( 3 );
+                    cellData->SetComponentName( 0, "x" );
+                    cellData->SetComponentName( 1, "y" );
+                    cellData->SetComponentName( 2, "z" );
+                    cellData->SetNumberOfTuples( numCells );
+                    for( unsigned j = 0; j < numCells; j++ ) {
+                        cellData->SetTuple3( i, results[i][0][j], results[i][1][j], results[i][2][j] );
+                    }
+                    break;
+                default: std::cout << "[ERROR][IO::ExportVTK] Invalid dimension" << std::endl;
             }
-            cellArray->InsertNextCell( tri );
+            grid->GetCellData()->AddArray( cellData );
         }
-        if( numNodesPerCell == 4 ) {
-            auto quad = vtkQuad::New();
-            for( unsigned j = 0; j < numNodesPerCell; ++j ) {
-                quad->GetPointIds()->SetId( j, cells[i][j] );
-            }
-            cellArray->InsertNextCell( quad );
-        }
+
+        grid->SetPoints( pts );
+        grid->Squeeze();
+
+        auto converter = vtkCellDataToPointDataSP::New();
+        converter->AddInputDataObject( grid );
+        converter->PassCellDataOn();
+        converter->Update();
+
+        auto conv_grid = converter->GetOutput();
+
+        writer->SetInputData( conv_grid );
+
+        writer->Write();
     }
-    if( numNodesPerCell == 3 ) {
-        grid->SetCells( VTK_TRIANGLE, cellArray );
-    }
-    else if( numNodesPerCell == 4 ) {
-        grid->SetCells( VTK_QUAD, cellArray );
-    }
-
-    for( unsigned i = 0; i < results.size(); i++ ) {
-        auto cellData = vtkDoubleArraySP::New();
-        cellData->SetName( fieldNames[i].c_str() );
-        switch( results[i].size() ) {
-            case 1:
-                for( unsigned j = 0; j < numCells; j++ ) {
-                    cellData->InsertNextValue( results[i][0][j] );
-                }
-                break;
-            case 2:
-                cellData = vtkDoubleArraySP::New();
-                cellData->SetName( "E(ρU)" );
-                cellData->SetNumberOfComponents( 3 );
-                cellData->SetComponentName( 0, "x" );
-                cellData->SetComponentName( 1, "y" );
-                cellData->SetComponentName( 2, "z" );
-                cellData->SetNumberOfTuples( numCells );
-                for( unsigned j = 0; j < numCells; j++ ) {
-                    cellData->SetTuple3( i, results[i][0][j], results[i][1][j], 0.0 );
-                }
-                break;
-            case 3:
-                cellData = vtkDoubleArraySP::New();
-                cellData->SetName( "E(ρU)" );
-                cellData->SetNumberOfComponents( 3 );
-                cellData->SetComponentName( 0, "x" );
-                cellData->SetComponentName( 1, "y" );
-                cellData->SetComponentName( 2, "z" );
-                cellData->SetNumberOfTuples( numCells );
-                for( unsigned j = 0; j < numCells; j++ ) {
-                    cellData->SetTuple3( i, results[i][0][j], results[i][1][j], results[i][2][j] );
-                }
-                break;
-            default: std::cout << "[ERROR][IO::ExportVTK] Invalid dimension" << std::endl;
-        }
-        grid->GetCellData()->AddArray( cellData );
-    }
-
-    grid->SetPoints( pts );
-    grid->Squeeze();
-
-    auto converter = vtkCellDataToPointDataSP::New();
-    converter->AddInputDataObject( grid );
-    converter->PassCellDataOn();
-    converter->Update();
-
-    auto conv_grid = converter->GetOutput();
-
-    writer->SetInputData( conv_grid );
-
-    writer->Write();
+    MPI_Barrier( MPI_COMM_WORLD );
 }
 
 void InitLogger( std::string logDir, spdlog::level::level_enum terminalLogLvl, spdlog::level::level_enum fileLogLvl ) {
@@ -362,28 +367,32 @@ std::string ParseArguments( int argc, char* argv[] ) {
 }
 
 void PrintLogHeader( std::string inputFile ) {
-    int nprocs;
+    int nprocs, rank;
     MPI_Comm_size( MPI_COMM_WORLD, &nprocs );
-    auto log = spdlog::get( "event" );
+    MPI_Comm_rank( MPI_COMM_WORLD, &rank );
+    if( rank == 0 ) {
+        auto log = spdlog::get( "event" );
 
-    log->info( "RTSN" );
-    log->info( "================================================================" );
-    log->info( "Git commit :\t{0}", GIT_HASH );
-    log->info( "Config file:\t{0}", inputFile );
-    log->info( "MPI Threads:\t{0}", nprocs );
-    log->info( "OMP Threads:\t{0}", omp_get_max_threads() );
-    log->info( "================================================================" );
-    // print file content while omitting comments
-    std::ifstream ifs( inputFile );
-    if( ifs.is_open() ) {
-        std::string line;
-        while( !ifs.eof() ) {
-            std::getline( ifs, line );
-            if( line[0] != '#' ) log->info( " {0}", line );
+        log->info( "RTSN" );
+        log->info( "================================================================" );
+        log->info( "Git commit :\t{0}", GIT_HASH );
+        log->info( "Config file:\t{0}", inputFile );
+        log->info( "MPI Threads:\t{0}", nprocs );
+        log->info( "OMP Threads:\t{0}", omp_get_max_threads() );
+        log->info( "================================================================" );
+        // print file content while omitting comments
+        std::ifstream ifs( inputFile );
+        if( ifs.is_open() ) {
+            std::string line;
+            while( !ifs.eof() ) {
+                std::getline( ifs, line );
+                if( line[0] != '#' ) log->info( " {0}", line );
+            }
         }
+        log->info( "================================================================" );
+        log->info( "" );
     }
-    log->info( "================================================================" );
-    log->info( "" );
+    MPI_Barrier( MPI_COMM_WORLD );
 }
 
 Settings* ReadInputFile( std::string inputFile ) {

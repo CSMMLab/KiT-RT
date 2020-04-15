@@ -19,6 +19,6 @@ int main( int argc, char** argv ) {
     std::vector<std::vector<std::vector<double>>> out{scalarField};
     std::vector<std::string> fieldNames{"color"};
     ExportVTK( "partitioning", out, fieldNames, settings, m );
-
+    MPI_Finalize();
     return EXIT_SUCCESS;
 }
