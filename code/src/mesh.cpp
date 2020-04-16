@@ -305,3 +305,5 @@ const std::vector<Vector>& Mesh::GetNodes() const { return _nodes; }
 const std::vector<std::vector<unsigned>>& Mesh::GetCells() const { return _cells; }
 const std::vector<double>& Mesh::GetCellAreas() const { return _cellAreas; }
 const std::vector<unsigned>& Mesh::GetPartitionIDs() const { return _colors; }
+const std::vector<std::vector<unsigned>>& Mesh::GetNeighbours() const { return _cellNeighbors; }
+const std::vector<std::vector<Vector>>& Mesh::GetNormals() const { return _cellNormals; }

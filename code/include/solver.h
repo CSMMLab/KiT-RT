@@ -12,11 +12,11 @@ class Solver
 {
   protected:
     unsigned _nq;                                     // number of quadrature points
-    const unsigned _NCells;                           // number of spatial cells
+    unsigned _nCells;                                 // number of spatial cells
     unsigned _nTimeSteps;                             // number of time steps, number of nodal energy values for CSD
     double _dt;                                       // time step size
     VectorVector _psi;                                // angular flux vector, dim(_psi) = (_NCells,_nq)
-    std::vector<unsigned> _areas;                     // surface area of all spatial cells, dim(_areas) = _NCells
+    std::vector<double> _areas;                       // surface area of all spatial cells, dim(_areas) = _NCells
     std::vector<std::vector<Vector>> _normals;        // edge normals multiplied by edge length, dim(_normals) = (_NCells,nEdgesPerCell,spatialDim)
     std::vector<std::vector<unsigned>> _neighbors;    // edge normals multiplied by edge length, dim(_neighbors) = (_NCells,nEdgesPerCell)
     std::vector<double> _density;                     // patient density, dim(_density) = _nCells
