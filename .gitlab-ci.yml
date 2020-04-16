@@ -33,6 +33,9 @@ unit_tests:
   script:
     - ./code/bin/unit_tests
   only:
+    refs:
+      - master
+      - merge_requests
     changes:
       - "code/include/**/*"
       - "code/tests/**/*"
