@@ -1,6 +1,6 @@
 #include <fstream>
 #include <sstream>
-#include "qlookupquadrature.h"
+#include "../../include/quadratures/qlookupquadrature.h"
 #include "option_structure.h" // for PI_NUMBER
 
 QLookupQuadrature::QLookupQuadrature( unsigned order ) : Quadrature( order ){

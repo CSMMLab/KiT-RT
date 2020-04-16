@@ -1,4 +1,4 @@
-#include "qlevelsymmetric.h"
+#include "../../include/quadratures/qlevelsymmetric.h"
 
 QLevelSymmetric::QLevelSymmetric( unsigned order ) : QLookupQuadrature( order ){
 

@@ -1,10 +1,10 @@
 #include "catch.hpp"
-#include "quadrature.h"
+#include "../../include/quadratures/quadrature.h"
 #include "option_structure.h"
 
 #include <vector>
 
-std::vector<QUAD_NAME> quadraturenames = {QUAD_MonteCarlo ,QUAD_LevelSymmetric, QUAD_Lebedev ,QUAD_LDFESA};
+std::vector<QUAD_NAME> quadraturenames = {QUAD_MonteCarlo , QUAD_LevelSymmetric, QUAD_Lebedev ,QUAD_LDFESA};
 std::vector<std::vector<int>> quadratureorders = {{4, 5, 6, 7}, //Monte Carlo
                                                   {},           //Gauss Legendre not working right now
                                                   {2, 4, 6 , 8, 10, 12, 14, 16, 18, 20}, //Available Orders for LevelSymmetric

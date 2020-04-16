@@ -1,4 +1,4 @@
-#include "qlebedev.h"
+#include "../../include/quadratures/qlebedev.h"
 
 QLebedev::QLebedev( unsigned order ) : QLookupQuadrature( order ){
 

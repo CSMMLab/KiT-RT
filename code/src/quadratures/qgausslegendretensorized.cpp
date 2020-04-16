@@ -1,4 +1,4 @@
-#include "qgausslegendretensorized.h"
+#include "../../include/quadratures/qgausslegendretensorized.h"
 
 QGaussLegendreTensorized::QGaussLegendreTensorized( unsigned order ) : Quadrature( order ) {
     SetName();

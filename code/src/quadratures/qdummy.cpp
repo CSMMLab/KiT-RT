@@ -9,7 +9,7 @@
  *
  */
 
-#include "qdummy.h"
+#include "../../include/quadratures/qdummy.h"
 
 QDummy::QDummy( unsigned order ) : Quadrature( order ) {
     SetName();

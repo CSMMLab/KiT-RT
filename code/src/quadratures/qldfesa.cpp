@@ -1,4 +1,4 @@
-#include "qldfesa.h"
+#include "../../include/quadratures/qldfesa.h"
 
 QLDFESA::QLDFESA( unsigned order ) : QLookupQuadrature( order ){
 
