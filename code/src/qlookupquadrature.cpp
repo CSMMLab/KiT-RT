@@ -6,15 +6,22 @@
 QLookupQuadrature::QLookupQuadrature( unsigned order ) : Quadrature( order ){
 }
 
+void QLookupQuadrature::printAvailOrders() const{
+    std::cout << "Available orders: (";
+    for(unsigned i = 0; i < _availableOrders.size()-1 ; i++){
+        std::cout << _availableOrders[i] << "|";
+    }
+    std::cout << _availableOrders[_availableOrders.size()-1] << ")\n";
+}
+
 bool QLookupQuadrature::CheckOrder(){
    std::vector<unsigned>::iterator it = std::find(_availableOrders.begin(), _availableOrders.end(), _order);
 
    if (it == _availableOrders.end()){
-        std::cout << "ERROR! Order "<< _order << " for " << GetName() << " not available. (Replace this error message by a proper exeption handler!)" << std::endl; //TODO: throw proper error!
-        exit(1);
-        return false;
+        std::cerr << "ERROR! Order "<< _order << " for " << GetName() << " not available. " << std::endl;
+        printAvailOrders();
+        exit(EXIT_FAILURE);
     }
-    // std::cout << _name << " with order " << _order << " chosen.\n";
     return true;
 }
 

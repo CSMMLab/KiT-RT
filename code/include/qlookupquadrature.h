@@ -11,6 +11,7 @@ class QLookupQuadrature : public Quadrature
 
     //helper
     inline std::vector<unsigned> getAvailOrders() const {return _availableOrders;}    /*! @returns: Vector with avalable orders for level symmetric quadrature */
+    void printAvailOrders() const; /*! @brief: prints available orders */
 
   protected:
     bool CheckOrder();        /*! @brief checks if given order is available for this quadrature rule. */
