@@ -14,7 +14,7 @@ std::vector<std::vector<int>> quadratureorders = {{4, 5, 6, 7}, //Monte Carlo
                                                  };
 
 bool approxequal( double a, double b ) {
-    double tol = 1e-5;//1e-15;
+    double tol = 1e-15;//1e-5//1e-15;
     return abs( a - b ) < tol;
 }
 
@@ -22,9 +22,9 @@ TEST_CASE( "Quadrature weights sum to 4*pi.", "[correctweightsum]" ) {
     for( auto quadraturename : quadraturenames ) {
         for( auto quadratureorder : quadratureorders[quadraturename] ) {
             Quadrature* Q = Quadrature::CreateQuadrature( quadraturename, quadratureorder );
-            /*if(! approxequal( Q->SumUpWeights(), 4 * M_PI )){
-                printf("Quadrature %d at order %d . Error : %.10f \n",quadraturename, quadratureorder, abs(  Q->SumUpWeights() - 4 * M_PI  )  );
-            }*/
+            if(! approxequal( Q->SumUpWeights(), 4 * M_PI )){
+                printf("Quadrature %d at order %d . Error : %.15f  \n",quadraturename, quadratureorder, abs(  Q->SumUpWeights() - 4 * M_PI  )  );
+            }
             REQUIRE( approxequal( Q->SumUpWeights(), 4 * M_PI ) );
         }
     }
@@ -36,9 +36,9 @@ TEST_CASE( "Quadrature points are on the unit sphere.", "[pointsonsphere]" ) {
             Quadrature* Q       = Quadrature::CreateQuadrature( quadraturename, quadratureorder );
             VectorVector points = Q->GetPoints();
             for( unsigned i = 0; i < Q->GetNq(); i++ ) {
-                /*if(! approxequal( 1.0, norm( points[i] )  )) {
-                    printf("Quadrature %d at order %d . Errorous index: %d | Error : %.10f \n",quadraturename, quadratureorder, i,abs( norm( points[i] ) - 1.0  )  );
-                }*/
+                if(! approxequal( 1.0, norm( points[i] )  )) {
+                    printf("Quadrature %d at order %d . Errorous index: %d | Error : %.15f  \n",quadraturename, quadratureorder, i,abs( norm( points[i] ) - 1.0  )  );
+                }
                 REQUIRE( approxequal( 1.0, norm( points[i] ) ) );
             }
         }
@@ -71,9 +71,9 @@ TEST_CASE( "Integrate a constant function.", "[integrateconstantfunction" ) {
     for( auto quadraturename : quadraturenames ) {
         for( auto quadratureorder : quadratureorders[quadraturename] ) {
             Quadrature* Q = Quadrature::CreateQuadrature( quadraturename, quadratureorder );
-            /*if(! approxequal( Q->Integrate( f ), 4.0 * M_PI ) ) {
-                printf("Quadrature %d at order %d :  Error : %.10f \n",quadraturename, quadratureorder, abs(  Q->Integrate( f ) - 4.0 * M_PI  )  );
-            }*/
+            if(! approxequal( Q->Integrate( f ), 4.0 * M_PI ) ) {
+                printf("Quadrature %d at order %d :  Error : %.15f \n",quadraturename, quadratureorder, abs(  Q->Integrate( f ) - 4.0 * M_PI  )  );
+            }
             REQUIRE( approxequal( Q->Integrate( f ), 4.0 * M_PI ) );
         }
     }
