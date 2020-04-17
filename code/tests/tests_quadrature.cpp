@@ -29,6 +29,7 @@ TEST_CASE( "Quadrature weights sum to 4*pi.", "[correctweightsum]" ) {
             Quadrature* Q = Quadrature::CreateQuadrature( quadraturename, quadratureorder );
             if(! approxequal( Q->SumUpWeights(), 4 * M_PI, lowAccuracyTesting )){
                 printf("Quadrature %d at order %d . Error : %.15f  (low accuracy testing was set to %d) \n",quadraturename, quadratureorder, abs(  Q->SumUpWeights() - 4 * M_PI  ), lowAccuracyTesting  );
+                printf("Computed result %.15f", Q->SumUpWeights());
             }
             REQUIRE( approxequal( Q->SumUpWeights(), 4 * M_PI , lowAccuracyTesting) );
         }
@@ -47,6 +48,7 @@ TEST_CASE( "Quadrature points are on the unit sphere.", "[pointsonsphere]" ) {
             for( unsigned i = 0; i < Q->GetNq(); i++ ) {
                 if(! approxequal( 1.0, norm( points[i] ) , lowAccuracyTesting )) {
                     printf("Quadrature %d at order %d . Errorous index: %d | Error : %.15f  (low accuracy testing was set to %d) \n",quadraturename, quadratureorder, i,abs( norm( points[i] ) - 1.0 ), lowAccuracyTesting );
+                    printf("Computed result %.15f", norm( points[i] ));
                 }
                 REQUIRE( approxequal( 1.0, norm( points[i] ), lowAccuracyTesting) );
             }
@@ -86,6 +88,7 @@ TEST_CASE( "Integrate a constant function.", "[integrateconstantfunction" ) {
             Quadrature* Q = Quadrature::CreateQuadrature( quadraturename, quadratureorder );
             if(! approxequal( Q->Integrate( f ), 4.0 * M_PI, lowAccuracyTesting ) ) {
                 printf("Quadrature %d at order %d :  Error : %.15f (low accuracy testing was set to %d)\n",quadraturename, quadratureorder, abs(  Q->Integrate( f ) - 4.0 * M_PI ), lowAccuracyTesting  );
+                printf("Computed result %.15f", Q->Integrate( f ));
             }
             REQUIRE( approxequal( Q->Integrate( f ), 4.0 * M_PI, lowAccuracyTesting ) );
         }
