@@ -46,6 +46,13 @@ void QLookupQuadrature::SetPointsAndWeights() {
     unsigned count;
 
     std::ifstream in(filename); //give file to filestream
+
+    // check, if file is empty
+    if (in.peek() == std::ifstream::traits_type::eof()){
+        std::cerr << "ERROR! Lookup table not found. Please check if externals are loaded correctly. \n" << std::endl;
+        exit(EXIT_FAILURE);
+    }
+
     for(unsigned idx_point = 0; idx_point < _nq ; idx_point++){
 
         count = 0;
