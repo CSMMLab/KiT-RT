@@ -13,33 +13,42 @@ std::vector<std::vector<int>> quadratureorders = {{4, 5, 6, 7}, //Monte Carlo
                                                   {1, 2, 3}  //Available Orders for LDFESA
                                                  };
 
-bool approxequal( double a, double b ) {
-    double tol = 1e-15;//1e-5//1e-15;
+bool approxequal( double a, double b, bool lowAccuracy = false) {
+    double tol = 1e-15;// For computed quadrature weights
+    if (lowAccuracy) tol = 5e-5; //Mainly for Lookup Quadratures
     return abs( a - b ) < tol;
 }
 
 TEST_CASE( "Quadrature weights sum to 4*pi.", "[correctweightsum]" ) {
+    bool lowAccuracyTesting = false;
     for( auto quadraturename : quadraturenames ) {
+        lowAccuracyTesting = false;
+        if(quadraturename == QUAD_LevelSymmetric ||quadraturename == QUAD_Lebedev ||quadraturename == QUAD_LDFESA) lowAccuracyTesting = true;
+
         for( auto quadratureorder : quadratureorders[quadraturename] ) {
             Quadrature* Q = Quadrature::CreateQuadrature( quadraturename, quadratureorder );
-            if(! approxequal( Q->SumUpWeights(), 4 * M_PI )){
-                printf("Quadrature %d at order %d . Error : %.15f  \n",quadraturename, quadratureorder, abs(  Q->SumUpWeights() - 4 * M_PI  )  );
+            if(! approxequal( Q->SumUpWeights(), 4 * M_PI, lowAccuracyTesting )){
+                printf("Quadrature %d at order %d . Error : %.15f  (low accuracy testing was set to %d) \n",quadraturename, quadratureorder, abs(  Q->SumUpWeights() - 4 * M_PI  ), lowAccuracyTesting  );
             }
-            REQUIRE( approxequal( Q->SumUpWeights(), 4 * M_PI ) );
+            REQUIRE( approxequal( Q->SumUpWeights(), 4 * M_PI , lowAccuracyTesting) );
         }
     }
 }
 
 TEST_CASE( "Quadrature points are on the unit sphere.", "[pointsonsphere]" ) {
+    bool lowAccuracyTesting = false;
     for( auto quadraturename : quadraturenames ) {
+        lowAccuracyTesting = false;
+        if(quadraturename == QUAD_LevelSymmetric ||quadraturename == QUAD_Lebedev ||quadraturename == QUAD_LDFESA) lowAccuracyTesting = true;
+
         for( auto quadratureorder : quadratureorders[quadraturename] ) {
             Quadrature* Q       = Quadrature::CreateQuadrature( quadraturename, quadratureorder );
             VectorVector points = Q->GetPoints();
             for( unsigned i = 0; i < Q->GetNq(); i++ ) {
-                if(! approxequal( 1.0, norm( points[i] )  )) {
-                    printf("Quadrature %d at order %d . Errorous index: %d | Error : %.15f  \n",quadraturename, quadratureorder, i,abs( norm( points[i] ) - 1.0  )  );
+                if(! approxequal( 1.0, norm( points[i] ) , lowAccuracyTesting )) {
+                    printf("Quadrature %d at order %d . Errorous index: %d | Error : %.15f  (low accuracy testing was set to %d) \n",quadraturename, quadratureorder, i,abs( norm( points[i] ) - 1.0 ), lowAccuracyTesting );
                 }
-                REQUIRE( approxequal( 1.0, norm( points[i] ) ) );
+                REQUIRE( approxequal( 1.0, norm( points[i] ), lowAccuracyTesting) );
             }
         }
     }
@@ -68,13 +77,17 @@ double f( double x, double y, double z ) {
 }
 
 TEST_CASE( "Integrate a constant function.", "[integrateconstantfunction" ) {
+    bool lowAccuracyTesting = false;
     for( auto quadraturename : quadraturenames ) {
+        lowAccuracyTesting = false;
+        if(quadraturename == QUAD_LevelSymmetric ||quadraturename == QUAD_Lebedev ||quadraturename == QUAD_LDFESA) lowAccuracyTesting = true;
+
         for( auto quadratureorder : quadratureorders[quadraturename] ) {
             Quadrature* Q = Quadrature::CreateQuadrature( quadraturename, quadratureorder );
-            if(! approxequal( Q->Integrate( f ), 4.0 * M_PI ) ) {
-                printf("Quadrature %d at order %d :  Error : %.15f \n",quadraturename, quadratureorder, abs(  Q->Integrate( f ) - 4.0 * M_PI  )  );
+            if(! approxequal( Q->Integrate( f ), 4.0 * M_PI, lowAccuracyTesting ) ) {
+                printf("Quadrature %d at order %d :  Error : %.15f (low accuracy testing was set to %d)\n",quadraturename, quadratureorder, abs(  Q->Integrate( f ) - 4.0 * M_PI ), lowAccuracyTesting  );
             }
-            REQUIRE( approxequal( Q->Integrate( f ), 4.0 * M_PI ) );
+            REQUIRE( approxequal( Q->Integrate( f ), 4.0 * M_PI, lowAccuracyTesting ) );
         }
     }
 }
