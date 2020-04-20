@@ -55,7 +55,7 @@ void QLookupQuadrature::SetPointsAndWeights() {
         in >> line; //Get line of lookupTable string
 
         if(line.empty()){
-            std::cout << _name << " with order " << _order << "\n";
+            std::cout << _name << " with order " << _order << ".\n";
             std::cerr << "Internal Error: Length of lookup table vector does not fit requested point vector length.\n";
             exit(EXIT_FAILURE);
         }
