@@ -1,7 +1,7 @@
 #include "solver.h"
 #include "io.h"
 #include "mesh.h"
-#include "quadrature.h"
+#include "../../include/quadratures/quadrature.h"
 #include "snsolver.h"
 
 Solver::Solver( Settings* settings ) {

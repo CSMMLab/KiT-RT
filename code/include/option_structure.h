@@ -10,8 +10,10 @@
 #define OPTION_STRUCTURE_H
 
 #include <map>
+#include <cmath>
 
 // Definition for global constants goes here
+const double PI_NUMBER = 4.0 * atan(1.0);  /*!< \brief Pi number. */
 
 
 // Definition of enums goes here
