@@ -59,6 +59,8 @@ class Mesh
     const std::vector<std::vector<unsigned>>& GetCells() const;
     const std::vector<double>& GetCellAreas() const;
     const std::vector<unsigned>& GetPartitionIDs() const;
+    const std::vector<std::vector<unsigned>>& GetNeighbours() const;
+    const std::vector<std::vector<Vector>>& GetNormals() const;
 
     /**
      * @brief ComputeSlopes calculates the slope in every cell into x and y direction

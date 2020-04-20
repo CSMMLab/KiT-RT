@@ -13,14 +13,14 @@ void SNSolver::Solve() {
     // loop over energies (pseudo-time)
     for( unsigned n = 0; n < _nTimeSteps; ++n ) {
         // loop over all spatial cells
-        for( unsigned j = 0; j < _NCells; ++j ) {
+        for( unsigned j = 0; j < _nCells; ++j ) {
 
             // loop over all ordinates
             for( unsigned k = 0; k < _nq; ++k ) {
                 psiNew[j][k] = 0.0;
                 // loop over all neighbor cells (edges) of cell j and compute numerical fluxes
                 for( unsigned l = 0; l < _neighbors[j].size(); ++l ) {
-                    // store flux contribution on psiNew to save memory
+                    // store flux contribution on psiNew_sigmaSH20 to save memory
                     psiNew[j][k] -= ( _dt / _areas[j] ) * _g->Flux( _quadPoints[k], _psi[j][k], _psi[_neighbors[j][l]][k], _normals[j][l] );
                 }
                 // time update angular flux with numerical flux and total scattering cross section
