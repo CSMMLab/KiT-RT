@@ -1,9 +1,8 @@
-#include "../../include/quadratures/qlevelsymmetric.h"
-
+#include "quadratures/qlevelsymmetric.h"
+#include "quadratures/lookuptable_levelsymmetric.h"
 QLevelSymmetric::QLevelSymmetric( unsigned order ) : QLookupQuadrature( order ){
 
     SetAvailOrders();
-    SetDataInfo();
 
     SetName();
     CheckOrder(); //Check if order is available
@@ -17,12 +16,41 @@ void QLevelSymmetric::SetAvailOrders() {
     _nqByOrder = {8, 24, 48, 80, 120, 168, 224, 288, 360, 432};
 }
 
-void QLevelSymmetric::SetDataInfo() {
-    _dataFiles = "../ext/sphericalquadpy/sphericalquadpy/levelsymmetric/data/";
-    _dataFileSuffix = "_levelsym.txt";
-}
-
 void QLevelSymmetric::SetConnectivity() { //TODO
     VectorVectorU connectivity;
     _connectivity = connectivity;
+}
+
+std::string QLevelSymmetric::GetLookupTable() {
+
+    unsigned char* lookupTable = nullptr;
+
+    switch (_order){
+     case 2: lookupTable = __2_levelsym_txt;
+        break;
+    case 4:  lookupTable = __4_levelsym_txt;
+        break;
+    case 6:  lookupTable = __6_levelsym_txt;
+        break;
+    case 8:  lookupTable = __8_levelsym_txt;
+        break;
+    case 10: lookupTable = __10_levelsym_txt;
+        break;
+    case 12: lookupTable = __12_levelsym_txt;
+        break;
+    case 14: lookupTable = __14_levelsym_txt;
+        break;
+    case 16: lookupTable = __16_levelsym_txt;
+        break;
+    case 18: lookupTable = __18_levelsym_txt;
+        break;
+    case 20: lookupTable = __20_levelsym_txt;
+        break;
+    default: std::cerr << "Error: Invalid order chosen" << std::endl;
+             exit(EXIT_FAILURE);
+    }
+
+    std::string lookupTableString( reinterpret_cast<char*>( lookupTable ) );
+
+    return lookupTableString;
 }

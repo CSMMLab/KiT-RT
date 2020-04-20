@@ -11,8 +11,9 @@ class QLDFESA : public QLookupQuadrature
 
     inline void SetName() override { _name =  "LDFESA quadrature"; }
     void SetAvailOrders() override;
-    void SetDataInfo() override;
     void SetConnectivity() override;
+
+    std::string GetLookupTable() override;
 };
 
 #endif // QLDFESA_H

@@ -19,12 +19,10 @@ class QLookupQuadrature : public Quadrature
     void SetPointsAndWeights() override; /*! @brief reads in n_points gridpoints and -weights from given filename. */
 
     virtual void SetAvailOrders() = 0; /*! @brief Sets vector with avaialbe Orders and corresponding vector with Nq. */
-    virtual void SetDataInfo() = 0;    /*! @brief Sets data path for lookup table */
+
+    virtual std::string GetLookupTable() = 0; /*! @brief returns lookuptable of _order. Assumes order is available */
 
     std::vector<unsigned> _availableOrders; /*! @brief: Vector with available orders for lookup table */
     std::vector<unsigned> _nqByOrder; /*! @brief: Vector with number of quadrature points of each listed order */
-    std::string _dataFiles; /*! path to the lookup table */
-    std::string _dataFileSuffix; /*! suffix to data files of this quadrature */
-
 };
 #endif // QLOOKUPQUADRATURE_H

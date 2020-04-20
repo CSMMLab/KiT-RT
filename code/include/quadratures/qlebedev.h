@@ -11,8 +11,9 @@ class QLebedev : public QLookupQuadrature
 
     inline void SetName() override { _name =  "Lebedev quadrature"; }
     void SetAvailOrders() override;
-    void SetDataInfo() override;
     void SetConnectivity() override;
+
+    std::string GetLookupTable() override;
 
 };
 

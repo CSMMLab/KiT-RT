@@ -41,24 +41,25 @@ void QLookupQuadrature::SetPointsAndWeights() {
 
     double sumWeights = 0;
 
-    std::string filename =  _dataFiles + std::to_string(_order) + _dataFileSuffix;
+    std::string lookupTable = GetLookupTable();
     std::string line;
     unsigned count;
 
-    std::ifstream in(filename); //give file to filestream
-
-    // check, if file is empty
-    if (in.peek() == std::ifstream::traits_type::eof()){
-        std::cerr << "ERROR! Lookup table not found. Please check if externals are loaded correctly. \n" << std::endl;
-        exit(EXIT_FAILURE);
-    }
+    std::stringstream in( lookupTable );
 
     for(unsigned idx_point = 0; idx_point < _nq ; idx_point++){
 
         count = 0;
         _points[idx_point].resize(3);
+        line.clear();
+        in >> line; //Get line of lookupTable string
 
-        in >> line; //Get line of CSV file
+        if(line.empty()){
+            std::cout << _name << " with order " << _order << "\n";
+            std::cerr << "Internal Error: Length of lookup table vector does not fit requested point vector length.\n";
+            exit(EXIT_FAILURE);
+        }
+
         std::stringstream ss(line); //give line to stringstream
 
         for (double double_in; ss >> double_in;) { //parse line
@@ -71,7 +72,6 @@ void QLookupQuadrature::SetPointsAndWeights() {
             if (ss.peek() == ',') ss.ignore();
         }
     }
-    in.close();
 
     //Correct the scaling of the weights
     for (unsigned idx =0; idx < _nq; idx ++){

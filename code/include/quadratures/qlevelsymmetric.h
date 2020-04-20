@@ -11,8 +11,9 @@ class QLevelSymmetric : public QLookupQuadrature
 
     inline void SetName() override { _name =  "Level Symmetric quadrature"; }
     void SetAvailOrders() override;
-    void SetDataInfo() override;
     void SetConnectivity() override;
+
+    std::string GetLookupTable() override;
 };
 
 #endif    // QLEVELSYMMETRIC_H

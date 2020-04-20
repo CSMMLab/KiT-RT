@@ -1,9 +1,9 @@
-#include "../../include/quadratures/quadrature.h"
-#include "../../include/quadratures/qmontecarlo.h"
-#include "../../include/quadratures/qgausslegendretensorized.h"
-#include "../../include/quadratures/qlevelsymmetric.h"
-#include "../../include/quadratures/qldfesa.h"
-#include "../../include/quadratures/qlebedev.h"
+#include "quadratures/quadrature.h"
+#include "quadratures/qmontecarlo.h"
+#include "quadratures/qgausslegendretensorized.h"
+#include "quadratures/qlevelsymmetric.h"
+#include "quadratures/qldfesa.h"
+#include "quadratures/qlebedev.h"
 
 Quadrature::Quadrature( unsigned order ) : _order( order ) {}
 
