@@ -25,9 +25,12 @@ class Solver
     std::vector<Matrix> _sigmaSH20;                   // scattering cross section, dim(_sigmaSH20) = (_nTimeSteps,_nq,_nq)
     VectorVector _quadPoints;                         // quadrature points, dim(_quadPoints) = (_nTimeSteps,spatialDim)
     Vector _weights;                                  // quadrature weights, dim(_weights) = (_NCells)
+    std::vector<bool> _boundaryCells;                 // boundary type for all cells, dim(_boundary) = (_NCells)
     // we will have to add a further dimension for quadPoints and weights once we start with multilevel SN
 
     NumericalFlux* _g;    // numerical flux function
+    Mesh* _mesh;          // mesh object for writing out information
+    Settings* _settings;
 
     /**
      * @brief LoadPatientDensity loads density of patient from MRT/CT scan and saves it in _density

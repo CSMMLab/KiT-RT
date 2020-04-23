@@ -1,7 +1,7 @@
 #include "solver.h"
+#include "../../include/quadratures/quadrature.h"
 #include "io.h"
 #include "mesh.h"
-#include "../../include/quadratures/quadrature.h"
 #include "snsolver.h"
 
 Solver::Solver( Settings* settings ) {
@@ -40,6 +40,12 @@ Solver::Solver( Settings* settings ) {
 
     // TODO: setup initial condtion (distribution at initial energy for CSD)
     SetupIC();
+
+    // setup numerical flux
+    _g = NumericalFlux::Create( settings );
+
+    // boundary type
+    _boundaryCells = mesh->GetBoundaryCellArray();
 }
 
 double Solver::ComputeTimeStep( double cfl ) const {
@@ -72,11 +78,13 @@ void Solver::LoadStoppingPower( std::string fileName ) {
 void Solver::LoadSigmaS( std::string fileName ) {
     // @TODO
     //_sigmaSH20 = ... -> dim(_sigmaSH20) = (_nTimeSteps,_nq,_nq)
+    _sigmaSH20 = std::vector( _nCells, Matrix( _nq, _nq, 1.0 ) );    // TODO: double check this!
 }
 
 void Solver::LoadSigmaT( std::string fileName ) {
     // @TODO
     //_sigmaTH20 = ... -> dim(_sigmaTH20) = _nTimeSteps
+    _sigmaTH20 = std::vector( _nCells, 1.0 );
 }
 
 void Solver::SetupIC() {

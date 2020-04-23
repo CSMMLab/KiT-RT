@@ -63,6 +63,11 @@ class Mesh
     const std::vector<std::vector<Vector>>& GetNormals() const;
 
     /**
+     * @brief GetBoundaryCellArray returns array with (dirichlet?) boundary cells
+     */
+    const std::vector<bool>& GetBoundaryCellArray() const;
+
+    /**
      * @brief ComputeSlopes calculates the slope in every cell into x and y direction
      * @param nq is number of quadrature points
      * @param psiDerX is slope in x direction

@@ -307,3 +307,4 @@ const std::vector<double>& Mesh::GetCellAreas() const { return _cellAreas; }
 const std::vector<unsigned>& Mesh::GetPartitionIDs() const { return _colors; }
 const std::vector<std::vector<unsigned>>& Mesh::GetNeighbours() const { return _cellNeighbors; }
 const std::vector<std::vector<Vector>>& Mesh::GetNormals() const { return _cellNormals; }
+const std::vector<bool>& Mesh::GetBoundaryCellArray() const { return _isBoundaryCell; }

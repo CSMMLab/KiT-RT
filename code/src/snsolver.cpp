@@ -14,7 +14,7 @@ void SNSolver::Solve() {
     for( unsigned n = 0; n < _nTimeSteps; ++n ) {
         // loop over all spatial cells
         for( unsigned j = 0; j < _nCells; ++j ) {
-
+            if( _boundaryCells[j] ) continue;
             // loop over all ordinates
             for( unsigned k = 0; k < _nq; ++k ) {
                 psiNew[j][k] = 0.0;
@@ -32,6 +32,10 @@ void SNSolver::Solve() {
         _psi = psiNew;
         // psiNew.reset();
     }
+
+    std::vector<std::string> fieldNames;
+    fieldNames.push_back( "test" );
+    // ExportVTK( "test", _psi, fieldNames, _settings, _mesh );
 }
 
 void SNSolver::SolveMPI() {
