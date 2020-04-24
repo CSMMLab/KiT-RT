@@ -16,6 +16,10 @@ class SNSolver : public Solver
      * @brief Solve functions runs main time loop
      */
     virtual void Solve();
+    /**
+     * @brief Output solution to VTK file
+     */
+    virtual void Save() const;
     void SolveMPI();    // can be deleated later
 };
 

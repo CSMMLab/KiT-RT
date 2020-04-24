@@ -4,6 +4,7 @@
 // include Matrix, Vector definitions
 #include "typedef.h"
 
+#include "io.h"
 #include "numericalflux.h"
 #include "settings.h"
 #include <string>
@@ -85,6 +86,11 @@ class Solver
      * @brief Solve functions runs main time loop
      */
     virtual void Solve() = 0;
+
+    /**
+     * @brief Output solution to VTK file
+     */
+    virtual void Save() const = 0;
 };
 
 #endif    // SOLVER_H

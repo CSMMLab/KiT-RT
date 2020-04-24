@@ -14,6 +14,7 @@ int main( int argc, char** argv ) {
     // build solver
     Solver* solver = Solver::Create( settings );
     solver->Solve();
+    solver->Save();
 
     // TODO: call solver
     MPI_Finalize();

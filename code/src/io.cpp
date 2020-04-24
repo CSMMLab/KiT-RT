@@ -466,7 +466,7 @@ Settings* ReadInputFile( std::string inputFile ) {
             validConfig = false;
         }
 
-	auto tEnd = solver->get_as<double>( "tEnd" );
+        auto tEnd = solver->get_as<double>( "tEnd" );
         if( tEnd ) {
             settings->_tEnd = *tEnd;
         }
@@ -475,14 +475,14 @@ Settings* ReadInputFile( std::string inputFile ) {
             validConfig = false;
         }
 
-	auto quadType = solver->get_as<std::string>( "quadType" );
+        auto quadType = solver->get_as<std::string>( "quadType" );
         if( quadType ) {
             std::string quadTypeString = *quadType;
-            try{
-                settings->_quadName  = Quadrature_Map.at(quadTypeString);
-            }catch (const std::exception& e) {
-                spdlog::error("Error: '{0}' is not a feasible quadrature type. Please check the config template!", quadTypeString);
-                exit(EXIT_FAILURE); // Quit RTSN
+            try {
+                settings->_quadName = Quadrature_Map.at( quadTypeString );
+            } catch( const std::exception& e ) {
+                spdlog::error( "Error: '{0}' is not a feasible quadrature type. Please check the config template!", quadTypeString );
+                exit( EXIT_FAILURE );    // Quit RTSN
             }
         }
         else {

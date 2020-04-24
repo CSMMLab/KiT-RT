@@ -485,3 +485,11 @@ code/build/*
 code/input/*
 code/result/*
 code/ext/*
+
+# vscode
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.history

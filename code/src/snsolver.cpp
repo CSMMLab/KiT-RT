@@ -32,10 +32,6 @@ void SNSolver::Solve() {
         _psi = psiNew;
         // psiNew.reset();
     }
-
-    std::vector<std::string> fieldNames;
-    fieldNames.push_back( "test" );
-    // ExportVTK( "test", _psi, fieldNames, _settings, _mesh );
 }
 
 void SNSolver::SolveMPI() {
@@ -95,4 +91,15 @@ void SNSolver::SolveMPI() {
         _psi = psiNew;
         // psiNew.reset();
     }*/
+}
+
+void SNSolver::Save() const {
+    std::vector<std::string> fieldNames{ "flux" };
+    std::vector<double> flux( _nCells, 0.0 );
+    for( unsigned i = 0; i < _nCells; ++i ) {
+        flux[i] = dot( _psi[i], _weights );
+    }
+    std::vector<std::vector<double>> scalarField( 1, flux );
+    std::vector<std::vector<std::vector<double>>> results{ scalarField };
+    ExportVTK( _settings->GetOutputFile(), results, fieldNames, _settings, _mesh );
 }
