@@ -4,7 +4,8 @@
 #include "mesh.h"
 #include "snsolver.h"
 
-Solver::Solver( Settings* settings ) : _settings( settings ) {
+
+Solver::Solver( CConfig* settings ) : _settings( settings ) {
     // @TODO save parameters from settings class
 
     // std::cout << "In Solver..." << std::endl;
@@ -93,4 +94,4 @@ void Solver::SetupIC() {
     // _psi = ...
 }
 
-Solver* Solver::Create( Settings* settings ) { return new SNSolver( settings ); }
+Solver* Solver::Create( CConfig* settings ) { return new SNSolver( settings ); }

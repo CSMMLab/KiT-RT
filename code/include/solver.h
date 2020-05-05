@@ -9,6 +9,8 @@
 #include "settings.h"
 #include <string>
 
+#include "settings/CConfig.h"
+
 class Solver
 {
   protected:
@@ -31,7 +33,7 @@ class Solver
 
     NumericalFlux* _g;    // numerical flux function
     Mesh* _mesh;          // mesh object for writing out information
-    Settings* _settings;
+    CConfig* _settings;
 
     /**
      * @brief LoadPatientDensity loads density of patient from MRT/CT scan and saves it in _density
@@ -73,14 +75,14 @@ class Solver
      * @brief Solver constructor
      * @param settings stores all needed information
      */
-    Solver( Settings* settings );
+    Solver( CConfig* settings );
 
     /**
      * @brief Create constructor
      * @param settings stores all needed information
      * @return pointer to Solver
      */
-    static Solver* Create( Settings* settings );
+    static Solver* Create( CConfig* settings );
 
     /**
      * @brief Solve functions runs main time loop

@@ -5,7 +5,7 @@
 #include <string>
 
 #include "mesh.h"
-#include "option_structure.h"
+#include "settings/GlobalConstants.h"
 
 class Settings
 {

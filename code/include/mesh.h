@@ -13,7 +13,7 @@
 
 #include "typedef.h"
 
-enum BOUNDARY_TYPE { DIRICHLET, INVALID };
+#include "settings/GlobalConstants.h"
 
 class Mesh
 {

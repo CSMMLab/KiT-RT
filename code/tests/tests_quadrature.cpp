@@ -1,6 +1,6 @@
 #include "catch.hpp"
-#include "../../include/quadratures/quadrature.h"
-#include "option_structure.h"
+#include "quadratures/quadrature.h"
+#include "settings/GlobalConstants.h"
 
 #include <vector>
 
