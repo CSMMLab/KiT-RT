@@ -32,6 +32,7 @@ class Mesh
     std::vector<std::pair<BOUNDARY_TYPE, std::vector<unsigned>>> _boundaries;
 
     std::vector<double> _cellAreas;
+    std::vector<Vector> _cellMidPoints;
     std::vector<std::vector<unsigned>> _cellNeighbors;
     std::vector<std::vector<Vector>> _cellNormals;
     std::vector<bool> _isBoundaryCell;
@@ -39,6 +40,7 @@ class Mesh
     std::vector<unsigned> _colors;
 
     void ComputeCellAreas();
+    void ComputeCellMidpoints();
     void ComputeConnectivity();
     void ComputeNormals();
     void ComputePartitioning();
@@ -56,6 +58,7 @@ class Mesh
     unsigned GetNumNodes() const;
     unsigned GetNumNodesPerCell() const;
     const std::vector<Vector>& GetNodes() const;
+    const std::vector<Vector>& GetCellMidPoints() const;
     const std::vector<std::vector<unsigned>>& GetCells() const;
     const std::vector<double>& GetCellAreas() const;
     const std::vector<unsigned>& GetPartitionIDs() const;

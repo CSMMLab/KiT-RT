@@ -26,7 +26,21 @@ Solver::Solver( Settings* settings ) : _settings( settings ) {
     // std::cout << "After Mesh..." << std::endl;
 
     // setup angular flux array (maybe directly call SetupIC() from physics class? )
-    _psi = std::vector( _nCells, Vector( _nq, 0.0 ) );
+    _psi = std::vector( _nCells, Vector( _nq, 1e-7 ) );
+
+    Vector midPoint( 2, 0.6 );
+    auto nodes = _mesh->GetCellMidPoints();
+    // write some IC
+    for( unsigned j = 0; j < nodes.size(); ++j ) {
+
+        // std::cout << norm( nodes[j] - midPoint ) << std::endl;
+        if( norm( nodes[j] - midPoint ) <= 0.1 ) {
+            // std::cout << nodes[j] << std::endl;
+            for( unsigned k = 0; k < _nq; ++k ) {
+                _psi[j][k] = 1e-7;
+            }
+        }
+    }
 
     // set time step
     _dt         = ComputeTimeStep( settings->GetCFL() );
@@ -78,13 +92,13 @@ void Solver::LoadStoppingPower( std::string fileName ) {
 void Solver::LoadSigmaS( std::string fileName ) {
     // @TODO
     //_sigmaSH20 = ... -> dim(_sigmaSH20) = (_nTimeSteps,_nq,_nq)
-    _sigmaSH20 = std::vector( _nCells, Matrix( _nq, _nq, 1.0 ) );    // TODO: double check this!
+    _sigmaSH20 = std::vector( _nTimeSteps, Matrix( _nq, _nq, 0.0 ) );    // TODO: double check this!
 }
 
 void Solver::LoadSigmaT( std::string fileName ) {
     // @TODO
     //_sigmaTH20 = ... -> dim(_sigmaTH20) = _nTimeSteps
-    _sigmaTH20 = std::vector( _nCells, 1.0 );
+    _sigmaTH20 = std::vector( _nTimeSteps, 0.0 );
 }
 
 void Solver::SetupIC() {

@@ -7,6 +7,7 @@ Mesh::Mesh( std::vector<Vector> nodes,
       _numNodesPerCell( cells[0].size() ), _numBoundaries( boundaries.size() ), _ghostCellID( _numCells ), _nodes( nodes ), _cells( cells ),
       _boundaries( boundaries ) {
     ComputeCellAreas();
+    ComputeCellMidpoints();
     ComputeNormals();
     ComputeConnectivity();
     ComputePartitioning();
@@ -124,6 +125,16 @@ void Mesh::ComputeCellAreas() {
                 exit( EXIT_FAILURE );
             }
         }
+    }
+}
+
+void Mesh::ComputeCellMidpoints() {
+    _cellMidPoints = std::vector( _numCells, Vector( _dim, 0.0 ) );
+    for( unsigned j = 0; j < _numCells; ++j ) {
+        for( unsigned l = 0; l < _cells[j].size(); ++l ) {
+            _cellMidPoints[j] = _cellMidPoints[j] + _nodes[_cells[j][l]];
+        }
+        _cellMidPoints[j] = _cellMidPoints[j] / double( _cells[j].size() );
     }
 }
 
@@ -302,6 +313,7 @@ unsigned Mesh::GetNumNodes() const { return _numNodes; }
 unsigned Mesh::GetNumNodesPerCell() const { return _numNodesPerCell; }
 
 const std::vector<Vector>& Mesh::GetNodes() const { return _nodes; }
+const std::vector<Vector>& Mesh::GetCellMidPoints() const { return _cellMidPoints; }
 const std::vector<std::vector<unsigned>>& Mesh::GetCells() const { return _cells; }
 const std::vector<double>& Mesh::GetCellAreas() const { return _cellAreas; }
 const std::vector<unsigned>& Mesh::GetPartitionIDs() const { return _colors; }

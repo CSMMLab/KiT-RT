@@ -12,6 +12,7 @@ void SNSolver::Solve() {
 
     // loop over energies (pseudo-time)
     for( unsigned n = 0; n < _nTimeSteps; ++n ) {
+        std::cout << "time " << n * _dt << std::endl;
         // loop over all spatial cells
         for( unsigned j = 0; j < _nCells; ++j ) {
             if( _boundaryCells[j] ) continue;
@@ -21,16 +22,17 @@ void SNSolver::Solve() {
                 // loop over all neighbor cells (edges) of cell j and compute numerical fluxes
                 for( unsigned l = 0; l < _neighbors[j].size(); ++l ) {
                     // store flux contribution on psiNew_sigmaSH20 to save memory
-                    psiNew[j][k] -= ( _dt / _areas[j] ) * _g->Flux( _quadPoints[k], _psi[j][k], _psi[_neighbors[j][l]][k], _normals[j][l] );
+                    psiNew[j][k] -= _g->Flux( _quadPoints[k], _psi[j][k], _psi[_neighbors[j][l]][k], _normals[j][l] );
+                    std::cout << _g->Flux( _quadPoints[k], _psi[j][k], _psi[_neighbors[j][l]][k], _normals[j][l] ) << " "
+                              << _g->Flux( _quadPoints[k], _psi[_neighbors[j][l]][k], _psi[j][k], -_normals[j][l] ) << std::endl;
                 }
                 // time update angular flux with numerical flux and total scattering cross section
-                psiNew[j][k] = _psi[j][k] + psiNew[j][k] + _dt * _sigmaTH20[n] * _psi[j][k];
+                psiNew[j][k] = _psi[j][k] + ( _dt / _areas[j] ) * psiNew[j][k] + _dt * _sigmaTH20[n] * _psi[j][k];
             }
             // compute scattering effects
             psiNew[j] += _sigmaSH20[n] * _psi[j] * _weights;    // multiply scattering matrix with psi
         }
         _psi = psiNew;
-        // psiNew.reset();
     }
 }
 
@@ -94,12 +96,12 @@ void SNSolver::SolveMPI() {
 }
 
 void SNSolver::Save() const {
-    std::vector<std::string> fieldNames{ "flux" };
+    std::vector<std::string> fieldNames{"flux"};
     std::vector<double> flux( _nCells, 0.0 );
     for( unsigned i = 0; i < _nCells; ++i ) {
         flux[i] = dot( _psi[i], _weights );
     }
     std::vector<std::vector<double>> scalarField( 1, flux );
-    std::vector<std::vector<std::vector<double>>> results{ scalarField };
+    std::vector<std::vector<std::vector<double>>> results{scalarField};
     ExportVTK( _settings->GetOutputFile(), results, fieldNames, _settings, _mesh );
 }
