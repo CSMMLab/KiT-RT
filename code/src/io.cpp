@@ -1,9 +1,10 @@
 #include "io.h"
+#include "toolboxes/CRTSNError.h"
 
 void ExportVTK( const std::string fileName,
                 const std::vector<std::vector<std::vector<double>>>& results,
                 const std::vector<std::string> fieldNames,
-                const Settings* settings,
+                const CConfig* settings,
                 const Mesh* mesh ) {
     int rank;
     MPI_Comm_rank( MPI_COMM_WORLD, &rank );
@@ -175,7 +176,7 @@ void InitLogger( std::string logDir, spdlog::level::level_enum terminalLogLvl, s
     spdlog::flush_every( std::chrono::seconds( 5 ) );
 }
 
-Mesh* LoadSU2MeshFromFile( const Settings* settings ) {
+Mesh* LoadSU2MeshFromFile( const CConfig* settings ) {
     auto log = spdlog::get( "event" );
 
     unsigned dim;
@@ -236,8 +237,8 @@ Mesh* LoadSU2MeshFromFile( const Settings* settings ) {
                             markerTag.erase( end_pos, markerTag.end() );
                             btype = settings->GetBoundaryType( markerTag );
                             if( btype == BOUNDARY_TYPE::INVALID ) {
-                                log->error( "[LoadSU2MeshFromFile] No boundary condition found for boundary marker '{0}'!", markerTag );
-                                exit( EXIT_FAILURE );
+                                std::string errorMsg = std::string("Invalid Boundary at marker \"" + markerTag + "\".");
+                                CRTSNError::Error(errorMsg,CURRENT_FUNCTION);
                             }
                         }
                         else if( line.find( "MARKER_ELEMS", 0 ) != std::string::npos ) {

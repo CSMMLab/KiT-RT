@@ -56,13 +56,13 @@ Execute the compiled binary and hand over a valid *TOML*-styled config file.
 Example from inside the `code` directory:
 
 ```bash
-./bin/RTSN input/example.toml
+./bin/RTSN input/example.cfg
 ```
 
 In order to run the code in parallel execute:
 
 ```bash
-OMP_NUM_THREADS=N mpirun -np J ./bin/RTSN input/example.toml
+OMP_NUM_THREADS=N mpirun -np J ./bin/RTSN input/example.cfg
 ```
 
 with `N` equal to the number of shared memory threads and `J` equal to the number of distrubuted memory threads.

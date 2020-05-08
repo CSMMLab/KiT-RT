@@ -1,7 +1,7 @@
 #include <fstream>
 #include <sstream>
-#include "../../include/quadratures/qlookupquadrature.h"
-#include "option_structure.h" // for PI_NUMBER
+#include "quadratures/qlookupquadrature.h"
+#include "settings/GlobalConstants.h" // for PI_NUMBER
 
 QLookupQuadrature::QLookupQuadrature( unsigned order ) : Quadrature( order ){
 }
