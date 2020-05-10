@@ -159,6 +159,7 @@ void Mesh::ComputeNormals() {
                 cellCenter[k] += _nodes[cellNodes[j]][k];
             }
         }
+        cellCenter = cellCenter / 3.0;
         for( unsigned j = 0; j < _numNodesPerCell - 1; ++j ) {
             _cellNormals[i][j] = ComputeOutwardFacingNormal( _nodes[cellNodes[j]], _nodes[cellNodes[j + 1]], cellCenter );
         }

@@ -10,6 +10,25 @@ void SNSolver::Solve() {
     // angular flux at next time step (maybe store angular flux at all time steps, since time becomes energy?)
     VectorVector psiNew = _psi;
 
+    // DEBUG: Summation to zero property
+    for( unsigned j = 0; j < _nCells; ++j ) {
+        Vector tmp( 2, 0.0 );
+        for( unsigned l = 0; l < _neighbors[j].size(); ++l ) {
+            tmp = tmp + _normals[j][l];
+            unsigned nghPosJ;
+            unsigned I = _neighbors[j][l];
+            if( I >= _nCells ) continue;
+            for( unsigned m = 0; m < _neighbors[I].size(); ++m ) {
+                if( _neighbors[I][m] == j ) nghPosJ = m;
+            }
+
+            std::cout << _normals[j][l] << std::endl << _normals[I][nghPosJ] << std::endl;
+            std::cout << "---------" << std::endl;
+        }
+        // std::cout << tmp << std::endl; // needs to sum up to 1
+    }
+    return;
+
     // loop over energies (pseudo-time)
     for( unsigned n = 0; n < _nTimeSteps; ++n ) {
         std::cout << "time " << n * _dt << std::endl;

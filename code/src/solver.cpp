@@ -37,7 +37,7 @@ Solver::Solver( Settings* settings ) : _settings( settings ) {
         if( norm( nodes[j] - midPoint ) <= 0.1 ) {
             // std::cout << nodes[j] << std::endl;
             for( unsigned k = 0; k < _nq; ++k ) {
-                _psi[j][k] = 1e-7;
+                _psi[j][k] = 1.0;
             }
         }
     }
