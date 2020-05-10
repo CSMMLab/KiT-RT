@@ -1,22 +1,32 @@
 /*!
- * \file option_structure.h
+ * \file GlobalConstants.h
  * \brief All global defined (physical) constants, enums etc
  * \author <blank>
  * \version 0.0
  *
  */
 
-#ifndef OPTION_STRUCTURE_H
-#define OPTION_STRUCTURE_H
+#ifndef GLOBAL_CONSTANTS_H
+#define GLOBAL_CONSTANTS_H
 
 #include <map>
 #include <cmath>
 
-// Definition for global constants goes here
-const double PI_NUMBER = 4.0 * atan(1.0);  /*!< \brief Pi number. */
+// --- Definition for global constants goes here ---
+
+const double PI_NUMBER = 4.0 * std::atan(1.0);  /*!< \brief Pi number. */
+const unsigned int MAX_STRING_SIZE = 200;     /*!< \brief Maximum size for strings. */
 
 
-// Definition of enums goes here
+// --- Definition of enums goes here ---
+
+enum BOUNDARY_TYPE{
+  DIRICHLET,
+  INVALID
+};
+
+// --- Definition of enums for EnumOptions goes here ---
+
 /*! \brief Enum for all currently available quadratures in rtsn.
  *         Option enums are written in capital letters with underscores as spaces (e.g option "time integration" has option enum "TIME_INTEGRATION")
  */
@@ -38,4 +48,4 @@ inline std::map <std::string,QUAD_NAME> Quadrature_Map {
   { "LDFESA",QUAD_LDFESA }
 };
 
-#endif // OPTION_STRUCTURE_H
+#endif // GLOBAL_CONSTANTS_H

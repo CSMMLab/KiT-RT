@@ -1,7 +1,7 @@
 #include "snsolver.h"
 #include <mpi.h>
 
-SNSolver::SNSolver( Settings* settings ) : Solver( settings ) {}
+SNSolver::SNSolver( CConfig* settings ) : Solver( settings ) {}
 
 void SNSolver::Solve() {
 

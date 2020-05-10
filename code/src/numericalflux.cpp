@@ -1,6 +1,6 @@
 #include "numericalflux.h"
 #include "upwindflux.h"
 
-NumericalFlux::NumericalFlux( Settings* settings ) {}
+NumericalFlux::NumericalFlux( CConfig* settings ) {}
 
-NumericalFlux* NumericalFlux::Create( Settings* settings ) { return new UpwindFlux( settings ); }
+NumericalFlux* NumericalFlux::Create( CConfig* settings ) { return new UpwindFlux( settings ); }
