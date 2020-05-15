@@ -12,7 +12,7 @@ def add_block(x0,y0,length,char_length,geom):
     ])
     return geom.add_polygon(coords, char_length)
 
-char_length = 0.1
+char_length = 0.05
 geom = pg.opencascade.Geometry()
 domain = add_block(0, 0, 1.2, char_length, geom)
 xpos = ypos = [0.1, 0.3, 0.5, 0.7, 0.9]

@@ -18,7 +18,7 @@ void ExportVTK( const std::string fileName,
 
         auto writer                 = vtkUnstructuredGridWriterSP::New();
         std::string fileNameWithExt = fileName;
-        if( !fileNameWithExt.ends_with( ".vtk" ) ) {
+        if( fileNameWithExt.substr( fileNameWithExt.find_last_of( "." ) + 1 ) != ".vtk" ) {
             fileNameWithExt.append( ".vtk" );
         }
         writer->SetFileName( ( settings->GetOutputDir() + fileNameWithExt ).c_str() );
@@ -237,8 +237,8 @@ Mesh* LoadSU2MeshFromFile( const CConfig* settings ) {
                             markerTag.erase( end_pos, markerTag.end() );
                             btype = settings->GetBoundaryType( markerTag );
                             if( btype == BOUNDARY_TYPE::INVALID ) {
-                                std::string errorMsg = std::string("Invalid Boundary at marker \"" + markerTag + "\".");
-                                CRTSNError::Error(errorMsg,CURRENT_FUNCTION);
+                                std::string errorMsg = std::string( "Invalid Boundary at marker \"" + markerTag + "\"." );
+                                CRTSNError::Error( errorMsg, CURRENT_FUNCTION );
                             }
                         }
                         else if( line.find( "MARKER_ELEMS", 0 ) != std::string::npos ) {
@@ -411,7 +411,7 @@ Settings* ReadInputFile( std::string inputFile ) {
 
         auto cwd        = std::filesystem::current_path();
         std::string tmp = std::filesystem::path( inputFile ).parent_path().string();
-        if( !tmp.ends_with( "/" ) ) tmp.append( "/" );
+        if( tmp.substr( tmp.size() - 1 ) != "/" ) tmp.append( "/" );
         settings->_inputDir = tmp;
 
         // section IO
@@ -428,7 +428,7 @@ Settings* ReadInputFile( std::string inputFile ) {
         auto outputDir = io->get_as<std::string>( "outputDir" );
         if( outputDir ) {
             std::string tmp = *outputDir;
-            if( !tmp.ends_with( "/" ) ) tmp.append( "/" );
+            if( tmp.substr( tmp.size() - 1 ) != "/" ) tmp.append( "/" );
             settings->_outputDir = std::filesystem::path( tmp );
         }
         else {
@@ -448,7 +448,7 @@ Settings* ReadInputFile( std::string inputFile ) {
         auto logDir = io->get_as<std::string>( "logDir" );
         if( logDir ) {
             std::string tmp = *logDir;
-            if( !tmp.ends_with( "/" ) ) tmp.append( "/" );
+            if( tmp.substr( tmp.size() - 1 ) != "/" ) tmp.append( "/" );
             settings->_logDir = std::filesystem::path( tmp );
         }
         else {

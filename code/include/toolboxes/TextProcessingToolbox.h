@@ -11,8 +11,8 @@
  * \brief utility function for converting strings to uppercase
  * \param[in,out] str - string we want to convert
  */
-inline void StringToUpperCase(std::string & str) {
-  std::transform(str.begin(), str.end(), str.begin(), ::toupper);
+inline void StringToUpperCase( std::string& str ) {
+    for( auto& c : str ) c = std::toupper( c );
 }
 
-#endif // TEXTPROCESSINGTOOLBOX_H
+#endif    // TEXTPROCESSINGTOOLBOX_H

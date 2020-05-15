@@ -9,7 +9,7 @@ int main( int argc, char** argv ) {
 
     MPI_Init( &argc, &argv );
 
-    /*std::string inputFile = ParseArguments( argc, argv );
+    /*
     Settings* settings    = ReadInputFile( inputFile );
     InitLogger( settings->GetLogDir(), spdlog::level::info, spdlog::level::info );
     PrintLogHeader( settings->GetInputFile() );
@@ -20,24 +20,21 @@ int main( int argc, char** argv ) {
     solver->Save();
     */
 
-    std::string filename = "default.cfg";
     char config_file_name[MAX_STRING_SIZE];
 
-    filename = ParseArguments( argc, argv );
+    std::string filename = ParseArguments( argc, argv );
 
     /*--- Load in the number of zones and spatial dimensions in the mesh file (If no config
      file is specified, default.cfg is used) ---*/
-    strcpy(config_file_name, filename.c_str());
+    strcpy( config_file_name, filename.c_str() );
 
-    //Load Settings from File
-    CConfig* config = new CConfig(config_file_name);
-
+    // Load Settings from File
+    CConfig* config = new CConfig( config_file_name );
 
     // build solver
     Solver* solver = Solver::Create( config );
     solver->Solve();
     solver->Save();
-
 
     // TODO: call solver
     MPI_Finalize();

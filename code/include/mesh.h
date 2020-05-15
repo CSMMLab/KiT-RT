@@ -42,7 +42,6 @@ class Mesh
     void ComputeCellAreas();
     void ComputeCellMidpoints();
     void ComputeConnectivity();
-    void ComputeNormals();
     void ComputePartitioning();
     Vector ComputeOutwardFacingNormal( const Vector& nodeA, const Vector& nodeB, const Vector& cellCenter );
 

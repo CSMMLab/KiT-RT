@@ -4,7 +4,6 @@
 #include "mesh.h"
 #include "snsolver.h"
 
-
 Solver::Solver( CConfig* settings ) : _settings( settings ) {
     // @TODO save parameters from settings class
 
@@ -17,7 +16,6 @@ Solver::Solver( CConfig* settings ) : _settings( settings ) {
     _nq           = q->GetNq();
 
     // build mesh and store all relevant information
-
     _mesh      = LoadSU2MeshFromFile( settings );
     _areas     = _mesh->GetCellAreas();
     _neighbors = _mesh->GetNeighbours();
@@ -42,7 +40,6 @@ Solver::Solver( CConfig* settings ) : _settings( settings ) {
             }
         }
     }
-
     // set time step
     _dt         = ComputeTimeStep( settings->GetCFL() );
     _nTimeSteps = unsigned( settings->GetTEnd() / _dt );
