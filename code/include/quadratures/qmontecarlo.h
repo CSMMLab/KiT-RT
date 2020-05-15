@@ -1,9 +1,9 @@
 #ifndef QMONTECARLO_H
 #define QMONTECARLO_H
 
-#include "quadrature.h"
+#include "quadraturebase.h"
 
-class QMonteCarlo : public Quadrature
+class QMonteCarlo : public QuadratureBase
 {
   public:
     QMonteCarlo( unsigned order );

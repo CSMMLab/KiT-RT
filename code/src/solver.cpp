@@ -1,17 +1,17 @@
 #include "solver.h"
-#include "../../include/quadratures/quadrature.h"
+#include "../../include/quadratures/quadraturebase.h"
 #include "io.h"
 #include "mesh.h"
 #include "snsolver.h"
 
 
-Solver::Solver( CConfig* settings ) : _settings( settings ) {
+Solver::Solver( Config* settings ) : _settings( settings ) {
     // @TODO save parameters from settings class
 
     // std::cout << "In Solver..." << std::endl;
 
     // build quadrature object and store quadrature points and weights
-    Quadrature* q = Quadrature::CreateQuadrature( settings->GetQuadName(), settings->GetQuadOrder() );
+    QuadratureBase* q = QuadratureBase::CreateQuadrature( settings->GetQuadName(), settings->GetQuadOrder() );
     _quadPoints   = q->GetPoints();
     _weights      = q->GetWeights();
     _nq           = q->GetNq();
@@ -108,4 +108,4 @@ void Solver::SetupIC() {
     // _psi = ...
 }
 
-Solver* Solver::Create( CConfig* settings ) { return new SNSolver( settings ); }
+Solver* Solver::Create( Config* settings ) { return new SNSolver( settings ); }

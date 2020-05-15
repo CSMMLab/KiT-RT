@@ -12,9 +12,9 @@
 #ifndef QDUMMY_H
 #define QDUMMY_H
 
-#include "quadrature.h"
+#include "quadraturebase.h"
 
-class QDummy : public Quadrature
+class QDummy : public QuadratureBase
 {
   public:
     QDummy( unsigned order );

@@ -1,9 +1,9 @@
 #include <fstream>
 #include <sstream>
 #include "quadratures/qlookupquadrature.h"
-#include "settings/GlobalConstants.h" // for PI_NUMBER
+#include "settings/globalconstants.h" // for PI_NUMBER
 
-QLookupQuadrature::QLookupQuadrature( unsigned order ) : Quadrature( order ){
+QLookupQuadrature::QLookupQuadrature( unsigned order ) : QuadratureBase( order ){
 }
 
 void QLookupQuadrature::printAvailOrders() const{

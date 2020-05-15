@@ -9,10 +9,10 @@
 
 #include <iostream>
 
-class CRTSNError
+class ErrorMessages
 {
 public:
-  CRTSNError();
+  ErrorMessages();
 
   inline static void Error(std::string ErrorMsg, std::string FunctionName){
     //if (Rank == 0){ //For MPI implementation later

@@ -3,7 +3,7 @@
 
 // include Matrix, Vector definitions
 #include "typedef.h"
-#include "settings.h"
+#include "settings/config.h"
 
 class Physics {
     
@@ -46,14 +46,14 @@ public:
      * @brief Physics constructor
      * @param settings stores all needed user information
      */
-    Physics ( Settings* settings );
+    Physics ( Config* settings );
 
     /**
      * @brief Create constructor
      * @param settings stores all needed information
      * @return pointer to Physics
      */
-    static Physics* Create (Settings* settings);
+    static Physics* Create (Config* settings);
 };
 
 

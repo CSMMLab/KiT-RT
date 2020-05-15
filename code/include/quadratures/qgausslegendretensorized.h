@@ -1,9 +1,9 @@
 #ifndef QGAUSSLEGENDRETENSORIZED_H
 #define QGAUSSLEGENDRETENSORIZED_H
 
-#include "quadrature.h"
+#include "quadraturebase.h"
 
-class QGaussLegendreTensorized : public Quadrature
+class QGaussLegendreTensorized : public QuadratureBase
 {
   public:
     QGaussLegendreTensorized( unsigned order );

@@ -3,7 +3,7 @@
 #include "io.h"
 #include "solver.h"
 
-#include "settings/CConfig.h"
+#include "settings/config.h"
 
 int main( int argc, char** argv ) {
 
@@ -30,7 +30,7 @@ int main( int argc, char** argv ) {
     strcpy(config_file_name, filename.c_str());
 
     //Load Settings from File
-    CConfig* config = new CConfig(config_file_name);
+    Config* config = new Config(config_file_name);
 
 
     // build solver

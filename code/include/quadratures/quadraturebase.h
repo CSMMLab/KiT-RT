@@ -3,15 +3,14 @@
 
 #include <iostream>
 #include <string>
-
-#include "settings.h"
+#include "settings/globalconstants.h"
 #include "typedef.h"
 
-class Quadrature
+class QuadratureBase
 {
   public:
-    Quadrature( unsigned order );
-    virtual ~Quadrature(){}
+    QuadratureBase( unsigned order );
+    virtual ~QuadratureBase(){}
 
     // Aux functions
     void PrintWeights();            /*! @brief prints: Weight vector */
@@ -32,7 +31,7 @@ class Quadrature
      *  @param: std::string name: Name of the quadrature rule
      *  @param: unsigned order: Order of the quadrature rule
      *  @returns Quadrature* quadrature: returns pointer to instance of the given derived quadrature class */
-    static Quadrature* CreateQuadrature( QUAD_NAME name, unsigned order );
+    static QuadratureBase* CreateQuadrature( QUAD_NAME name, unsigned order );
 
     // Getter
     inline std::string GetName() const { return _name; }      /*! @returns std::string _name:  name of the quadrature */

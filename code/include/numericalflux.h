@@ -2,13 +2,13 @@
 #define NUMERICALFLUX_H
 
 #include "typedef.h"
-#include "settings/CConfig.h"
+#include "settings/config.h"
 
 class NumericalFlux
 {
 public:
-    NumericalFlux(CConfig* settings);
-    static NumericalFlux* Create( CConfig* settings );
+    NumericalFlux(Config* settings);
+    static NumericalFlux* Create( Config* settings );
     /**
      * @brief Flux computes flux on edge for fixed ordinate at a given edge
      * @param Omega fixed ordinate for flux computation

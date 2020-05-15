@@ -13,7 +13,7 @@
 
 #include "typedef.h"
 
-#include "settings/GlobalConstants.h"
+#include "settings/globalconstants.h"
 
 class Mesh
 {

@@ -11,7 +11,7 @@
 
 #include "../../include/quadratures/qdummy.h"
 
-QDummy::QDummy( unsigned order ) : Quadrature( order ) {
+QDummy::QDummy( unsigned order ) : QuadratureBase( order ) {
     SetName();
     SetNq();
     SetPointsAndWeights();

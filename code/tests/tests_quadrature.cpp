@@ -1,6 +1,6 @@
 #include "catch.hpp"
-#include "quadratures/quadrature.h"
-#include "settings/GlobalConstants.h"
+#include "quadratures/quadraturebase.h"
+#include "settings/globalconstants.h"
 
 #include <vector>
 
@@ -26,7 +26,7 @@ TEST_CASE( "Quadrature weights sum to 4*pi.", "[correctweightsum]" ) {
         if(quadraturename == QUAD_LevelSymmetric ||quadraturename == QUAD_Lebedev ||quadraturename == QUAD_LDFESA) lowAccuracyTesting = true;
 
         for( auto quadratureorder : quadratureorders[quadraturename] ) {
-            Quadrature* Q = Quadrature::CreateQuadrature( quadraturename, quadratureorder );
+            QuadratureBase* Q = QuadratureBase::CreateQuadrature( quadraturename, quadratureorder );
             if(! approxequal( Q->SumUpWeights(), 4 * M_PI, lowAccuracyTesting )){
                 printf("Quadrature %d at order %d . Error : %.15f  (low accuracy testing was set to %d) \n",quadraturename, quadratureorder, abs(  Q->SumUpWeights() - 4 * M_PI  ), lowAccuracyTesting  );
                 printf("Computed result %.15f", Q->SumUpWeights());
@@ -43,7 +43,7 @@ TEST_CASE( "Quadrature points are on the unit sphere.", "[pointsonsphere]" ) {
         if(quadraturename == QUAD_LevelSymmetric ||quadraturename == QUAD_Lebedev ||quadraturename == QUAD_LDFESA) lowAccuracyTesting = true;
 
         for( auto quadratureorder : quadratureorders[quadraturename] ) {
-            Quadrature* Q       = Quadrature::CreateQuadrature( quadraturename, quadratureorder );
+            QuadratureBase* Q       = QuadratureBase::CreateQuadrature( quadraturename, quadratureorder );
             VectorVector points = Q->GetPoints();
             for( unsigned i = 0; i < Q->GetNq(); i++ ) {
                 if(! approxequal( 1.0, norm( points[i] ) , lowAccuracyTesting )) {
@@ -59,7 +59,7 @@ TEST_CASE( "Quadrature points are on the unit sphere.", "[pointsonsphere]" ) {
 TEST_CASE( "Nq is actually equal to the number of weights.", "[nqequallengthweights]" ) {
     for( auto quadraturename : quadraturenames ) {
         for( auto quadratureorder : quadratureorders[quadraturename] ) {
-            Quadrature* Q = Quadrature::CreateQuadrature( quadraturename, quadratureorder );
+            QuadratureBase* Q = QuadratureBase::CreateQuadrature( quadraturename, quadratureorder );
             REQUIRE( Q->GetNq() == size( Q->GetWeights() ) );
         }
     }
@@ -68,7 +68,7 @@ TEST_CASE( "Nq is actually equal to the number of weights.", "[nqequallengthweig
 TEST_CASE( "Nq is actually equal to the number of points.", "[nqequallengthpoints]" ) {
     for( auto quadraturename : quadraturenames ) {
         for( auto quadratureorder : quadratureorders[quadraturename] ) {
-            Quadrature* Q = Quadrature::CreateQuadrature( quadraturename, quadratureorder );
+            QuadratureBase* Q = QuadratureBase::CreateQuadrature( quadraturename, quadratureorder );
             REQUIRE( Q->GetNq() == size( Q->GetPoints() ) );
         }
     }
@@ -85,7 +85,7 @@ TEST_CASE( "Integrate a constant function.", "[integrateconstantfunction" ) {
         if(quadraturename == QUAD_LevelSymmetric ||quadraturename == QUAD_Lebedev ||quadraturename == QUAD_LDFESA) lowAccuracyTesting = true;
 
         for( auto quadratureorder : quadratureorders[quadraturename] ) {
-            Quadrature* Q = Quadrature::CreateQuadrature( quadraturename, quadratureorder );
+            QuadratureBase* Q = QuadratureBase::CreateQuadrature( quadraturename, quadratureorder );
             if(! approxequal( Q->Integrate( f ), 4.0 * M_PI, lowAccuracyTesting ) ) {
                 printf("Quadrature %d at order %d :  Error : %.15f (low accuracy testing was set to %d)\n",quadraturename, quadratureorder, abs(  Q->Integrate( f ) - 4.0 * M_PI ), lowAccuracyTesting  );
                 printf("Computed result %.15f", Q->Integrate( f ));
