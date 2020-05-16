@@ -26,9 +26,8 @@
 #include <vtkUnstructuredGridWriter.h>
 
 #include "mesh.h"
-#include "settings.h"
 
-#include "settings/CConfig.h"
+#include "settings/config.h"
 
 
 using vtkPointsSP                 = vtkSmartPointer<vtkPoints>;
@@ -44,12 +43,15 @@ using vtkPointDataToCellDataSP    = vtkSmartPointer<vtkPointDataToCellData>;
 void ExportVTK( const std::string fileName,
                 const std::vector<std::vector<std::vector<double>>>& results,
                 const std::vector<std::string> fieldNames,
-                const CConfig* settings,
+                const Config* settings,
                 const Mesh* mesh );
+
 void InitLogger( std::string logDir, spdlog::level::level_enum terminalLogLvl, spdlog::level::level_enum fileLogLvl );
-Mesh* LoadSU2MeshFromFile( const CConfig* settings );
+
+Mesh* LoadSU2MeshFromFile( const Config* settings );
+
 std::string ParseArguments( int argc, char* argv[] );
-Settings* ReadInputFile( std::string inputFile );
+
 void PrintLogHeader( std::string inputFile );
 
 #endif    // IO_H

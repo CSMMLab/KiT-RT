@@ -1,6 +1,6 @@
 #include "../../include/quadratures/qmontecarlo.h"
 
-QMonteCarlo::QMonteCarlo( unsigned order ) : Quadrature( order ) {
+QMonteCarlo::QMonteCarlo( unsigned order ) : QuadratureBase( order ) {
     SetName();
     SetNq();
     SetPointsAndWeights();

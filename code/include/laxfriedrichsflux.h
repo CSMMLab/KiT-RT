@@ -12,7 +12,7 @@ public:
      * @brief LaxFriedrichsFlux
      * @param settings
      */
-    LaxFriedrichsFlux(CConfig* settings);
+    LaxFriedrichsFlux(Config* settings);
 
     /**
      * @brief Flux computes flux on edge for fixed ordinate at a given edge

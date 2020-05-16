@@ -1,6 +1,6 @@
 #include "physics.h"
 
-Physics::Physics (Settings* settings){
+Physics::Physics (Config* settings){
     // @TODO set up physical model from settings?
     // @TODO What else belongs in physics class?
     // load H2O cross sections
@@ -29,4 +29,4 @@ VectorVector Physics::GetStoppingPower (std::vector<double> energies,std::vector
     return stopping_power;
 }
 
-Physics* Physics::Create( Settings* settings ) { return new Physics( settings ); }
+Physics* Physics::Create( Config* settings ) { return new Physics( settings ); }

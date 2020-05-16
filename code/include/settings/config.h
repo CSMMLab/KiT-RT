@@ -10,8 +10,8 @@
 #define CONFIG_H
 
 #include <map>
-#include "OptionStructure.h"
-#include "GlobalConstants.h"
+#include "optionstructure.h"
+#include "globalconstants.h"
 
 /*!
  * \class CConfig
@@ -19,12 +19,12 @@
  *        stores all the information.
  */
 
-class CConfig {
+class Config {
 private:
   std::string _fileName;                 /*!< \brief Name of the current file without extension */
-  bool _base_config;
+  bool _baseConfig;
 
-  int _comm_rank, _comm_size;                 /*!< \brief MPI rank and size.*/
+  int _commRank, _commSize;                 /*!< \brief MPI rank and size.*/ //Not yet used!!
 
   // --- Options ---
   // File Structure
@@ -44,7 +44,7 @@ private:
         Each Boundary Conditions must have an entry in enum BOUNDARY_TYPE*/
   std::vector<std::pair<std::string, BOUNDARY_TYPE>> _boundaries;
   unsigned short _nMarkerDirichlet; /*!< \brief Number of Dirichlet BC markers. Enum entry: DIRICHLET */
-  std::string *_MarkerDirichlet;    /*!< \brief Dirichlet BC markers. */
+  std::vector<std::string> _MarkerDirichlet;    /*!< \brief Dirichlet BC markers. */
 
 
   // --- Parsing Functionality and Initializing of Options ---
@@ -95,12 +95,12 @@ private:
    to track the options which have not been set (so the default values can be used). Without this map
    there would be no list of all the config file options. ---*/
 
-  std::map<std::string, bool> all_options;
+  std::map<std::string, bool> _allOptions;
 
   /*--- brief param is a map from the option name (config file string) to its decoder (the specific child
    class of COptionBase that turns the string into a value) ---*/
 
-  std::map<std::string, COptionBase*> option_map;
+  std::map<std::string, OptionBase*> _optionMap;
 
 
   // ---- Option Types ----
@@ -122,38 +122,38 @@ private:
    value can be represented by a su2double.*/
 
   // Simple Options
-  void addBoolOption(const std::string name, bool & option_field, bool default_value);
+  void AddBoolOption(const std::string name, bool & option_field, bool default_value);
 
-  void addDoubleOption(const std::string name, double & option_field, double default_value);
+  void AddDoubleOption(const std::string name, double & option_field, double default_value);
 
-  void addIntegerOption(const std::string name, int & option_field, int default_value);
+  void AddIntegerOption(const std::string name, int & option_field, int default_value);
 
-  void addLongOption(const std::string name, long & option_field, long default_value);
+  void AddLongOption(const std::string name, long & option_field, long default_value);
 
-  void addStringOption(const std::string name, std::string & option_field, std::string default_value);
+  void AddStringOption(const std::string name, std::string & option_field, std::string default_value);
 
-  void addUnsignedLongOption(const std::string name, unsigned long & option_field, unsigned long default_value);
+  void AddUnsignedLongOption(const std::string name, unsigned long & option_field, unsigned long default_value);
 
-  void addUnsignedShortOption(const std::string name, unsigned short & option_field, unsigned short default_value);
+  void AddUnsignedShortOption(const std::string name, unsigned short & option_field, unsigned short default_value);
 
   // enum types work differently than all of the others because there are a small number of valid
   // string entries for the type. One must also provide a list of all the valid strings of that type.
   template <class Tenum>
-  void addEnumOption(const std::string name, Tenum & option_field, const std::map<std::string, Tenum> & enum_map, Tenum default_value);
+  void AddEnumOption(const std::string name, Tenum & option_field, const std::map<std::string, Tenum> & enum_map, Tenum default_value);
 
   //List Options
-  void addStringListOption(const std::string name, unsigned short & num_marker, std::string* & option_field);
+  void AddStringListOption(const std::string name, unsigned short & num_marker, std::vector<std::string> & option_field);
 
 public:
   /*!
    * \brief Constructor of the class which reads the input file.
    */
-  CConfig(char case_filename[MAX_STRING_SIZE]);
+  Config(char case_filename[MAX_STRING_SIZE]);
 
   /*!
    * \brief Destructor of the class.
    */
-  ~CConfig(void);
+  ~Config(void);
 
   // ---- Getters for option values ----
 

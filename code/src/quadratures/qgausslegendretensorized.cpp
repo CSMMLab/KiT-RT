@@ -1,6 +1,6 @@
 #include "../../include/quadratures/qgausslegendretensorized.h"
 
-QGaussLegendreTensorized::QGaussLegendreTensorized( unsigned order ) : Quadrature( order ) {
+QGaussLegendreTensorized::QGaussLegendreTensorized( unsigned order ) : QuadratureBase( order ) {
     SetName();
     SetNq();
     SetPointsAndWeights();

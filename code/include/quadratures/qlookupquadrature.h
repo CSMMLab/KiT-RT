@@ -1,9 +1,9 @@
 #ifndef QLOOKUPQUADRATURE_H
 #define QLOOKUPQUADRATURE_H
 
-#include "quadrature.h"
+#include "quadraturebase.h"
 
-class QLookupQuadrature : public Quadrature
+class QLookupQuadrature : public QuadratureBase
 {
   public:
     QLookupQuadrature( unsigned order );

@@ -1,13 +1,13 @@
-#include "quadratures/quadrature.h"
+#include "quadratures/quadraturebase.h"
 #include "quadratures/qmontecarlo.h"
 #include "quadratures/qgausslegendretensorized.h"
 #include "quadratures/qlevelsymmetric.h"
 #include "quadratures/qldfesa.h"
 #include "quadratures/qlebedev.h"
 
-Quadrature::Quadrature( unsigned order ) : _order( order ) {}
+QuadratureBase::QuadratureBase( unsigned order ) : _order( order ) {}
 
-Quadrature* Quadrature::CreateQuadrature( QUAD_NAME name, unsigned order ) {
+QuadratureBase* QuadratureBase::CreateQuadrature( QUAD_NAME name, unsigned order ) {
 
     switch (name){
         case QUAD_MonteCarlo:               return new QMonteCarlo( order );
@@ -19,7 +19,7 @@ Quadrature* Quadrature::CreateQuadrature( QUAD_NAME name, unsigned order ) {
     }
 }
 
-double Quadrature::Integrate( double( f )( double x0, double x1, double x2 ) ) {
+double QuadratureBase::Integrate( double( f )( double x0, double x1, double x2 ) ) {
     double result = 0;
     for( unsigned i = 0; i < _nq; i++ ) {
         double x = _points[i][0];
@@ -31,16 +31,16 @@ double Quadrature::Integrate( double( f )( double x0, double x1, double x2 ) ) {
     return result;
 }
 
-double Quadrature::SumUpWeights() { return sum( _weights ); }
+double QuadratureBase::SumUpWeights() { return sum( _weights ); }
 
-void Quadrature::PrintWeights() {
+void QuadratureBase::PrintWeights() {
     for( unsigned i = 0; i < _nq; i++ ) {
         double w = _weights[i];
         std::cout << w << std::endl;
     }
 }
 
-void Quadrature::PrintPoints() {
+void QuadratureBase::PrintPoints() {
     for( unsigned i = 0; i < _nq; i++ ) {
         double x = _points[i][0];
         double y = _points[i][1];
@@ -48,7 +48,7 @@ void Quadrature::PrintPoints() {
         std::cout << x << ", " << y << ", " << z << std::endl;
     }
 }
-void Quadrature::PrintPointsAndWeights() {
+void QuadratureBase::PrintPointsAndWeights() {
     for( unsigned i = 0; i < _nq; i++ ) {
         double x = _points[i][0];
         double y = _points[i][1];

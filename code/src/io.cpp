@@ -1,10 +1,10 @@
 #include "io.h"
-#include "toolboxes/CRTSNError.h"
+#include "toolboxes/errormessages.h"
 
 void ExportVTK( const std::string fileName,
                 const std::vector<std::vector<std::vector<double>>>& results,
                 const std::vector<std::string> fieldNames,
-                const CConfig* settings,
+                const Config* settings,
                 const Mesh* mesh ) {
     int rank;
     MPI_Comm_rank( MPI_COMM_WORLD, &rank );
@@ -176,7 +176,7 @@ void InitLogger( std::string logDir, spdlog::level::level_enum terminalLogLvl, s
     spdlog::flush_every( std::chrono::seconds( 5 ) );
 }
 
-Mesh* LoadSU2MeshFromFile( const CConfig* settings ) {
+Mesh* LoadSU2MeshFromFile( const Config* settings ) {
     auto log = spdlog::get( "event" );
 
     unsigned dim;
@@ -238,7 +238,7 @@ Mesh* LoadSU2MeshFromFile( const CConfig* settings ) {
                             btype = settings->GetBoundaryType( markerTag );
                             if( btype == BOUNDARY_TYPE::INVALID ) {
                                 std::string errorMsg = std::string("Invalid Boundary at marker \"" + markerTag + "\".");
-                                CRTSNError::Error(errorMsg,CURRENT_FUNCTION);
+                                ErrorMessages::Error(errorMsg,CURRENT_FUNCTION);
                             }
                         }
                         else if( line.find( "MARKER_ELEMS", 0 ) != std::string::npos ) {
@@ -396,138 +396,3 @@ void PrintLogHeader( std::string inputFile ) {
     MPI_Barrier( MPI_COMM_WORLD );
 }
 
-Settings* ReadInputFile( std::string inputFile ) {
-    bool validConfig = true;
-
-    Settings* settings = new Settings;
-
-    MPI_Comm_rank( MPI_COMM_WORLD, &settings->_comm_rank );
-    MPI_Comm_size( MPI_COMM_WORLD, &settings->_comm_size );
-
-    try {
-        auto file = cpptoml::parse_file( inputFile );
-
-        settings->_inputFile = std::filesystem::path( inputFile );
-
-        auto cwd        = std::filesystem::current_path();
-        std::string tmp = std::filesystem::path( inputFile ).parent_path().string();
-        if( !tmp.ends_with( "/" ) ) tmp.append( "/" );
-        settings->_inputDir = tmp;
-
-        // section IO
-        auto io       = file->get_table( "io" );
-        auto meshFile = io->get_as<std::string>( "meshFile" );
-        if( meshFile ) {
-            settings->_meshFile = std::filesystem::path( *meshFile );
-        }
-        else {
-            spdlog::error( "[inputfile] [io] 'meshFile' not set!" );
-            validConfig = false;
-        }
-
-        auto outputDir = io->get_as<std::string>( "outputDir" );
-        if( outputDir ) {
-            std::string tmp = *outputDir;
-            if( !tmp.ends_with( "/" ) ) tmp.append( "/" );
-            settings->_outputDir = std::filesystem::path( tmp );
-        }
-        else {
-            spdlog::error( "[inputfile] [io] 'outputDir' not set!" );
-            validConfig = false;
-        }
-
-        auto outputFile = io->get_as<std::string>( "outputFile" );
-        if( outputFile ) {
-            settings->_outputFile = std::filesystem::path( settings->_inputDir.string() + settings->_outputDir.string() + *outputFile );
-        }
-        else {
-            spdlog::error( "[inputfile] [io] 'outputFile' not set!" );
-            validConfig = false;
-        }
-
-        auto logDir = io->get_as<std::string>( "logDir" );
-        if( logDir ) {
-            std::string tmp = *logDir;
-            if( !tmp.ends_with( "/" ) ) tmp.append( "/" );
-            settings->_logDir = std::filesystem::path( tmp );
-        }
-        else {
-            spdlog::error( "[inputfile] [io] 'logDir' not set!" );
-            validConfig = false;
-        }
-
-        // section solver
-        auto solver = file->get_table( "solver" );
-        auto CFL    = solver->get_as<double>( "CFL" );
-        if( CFL ) {
-            settings->_CFL = *CFL;
-        }
-        else {
-            spdlog::error( "[inputfile] [solver] 'CFL' not set!" );
-            validConfig = false;
-        }
-
-        auto tEnd = solver->get_as<double>( "tEnd" );
-        if( tEnd ) {
-            settings->_tEnd = *tEnd;
-        }
-        else {
-            spdlog::error( "[inputfile] [solver] 'tEnd' not set!" );
-            validConfig = false;
-        }
-
-        auto quadType = solver->get_as<std::string>( "quadType" );
-        if( quadType ) {
-            std::string quadTypeString = *quadType;
-            try {
-                settings->_quadName = Quadrature_Map.at( quadTypeString );
-            } catch( const std::exception& e ) {
-                spdlog::error( "Error: '{0}' is not a feasible quadrature type. Please check the config template!", quadTypeString );
-                exit( EXIT_FAILURE );    // Quit RTSN
-            }
-        }
-        else {
-            spdlog::error( "[inputfile] [solver] 'quadType' not set!" );
-            validConfig = false;
-        }
-
-        auto quadOrder = solver->get_as<unsigned>( "quadOrder" );
-        if( quadOrder ) {
-            settings->_quadOrder = *quadOrder;
-        }
-        else {
-            spdlog::error( "[inputfile] [solver] 'quadOrder' not set!" );
-            validConfig = false;
-        }
-
-        auto BCStrings = solver->get_array_of<cpptoml::array>( "boundaryConditions" );
-        if( BCStrings ) {
-            for( unsigned i = 0; i < BCStrings->size(); ++i ) {
-                auto BCString = ( *BCStrings )[i]->get_array_of<std::string>();
-                BOUNDARY_TYPE type;
-                if( ( *BCString )[1].compare( "dirichlet" ) == 0 ) {
-                    type = BOUNDARY_TYPE::DIRICHLET;
-                }
-                else {
-                    spdlog::error( "[inputfile] [solver] Encountered invalid boundary type '" + ( *BCString )[0] + "'!" );
-                    exit( EXIT_FAILURE );
-                }
-                settings->_boundaries.push_back( std::make_pair( ( *BCString )[0], type ) );
-            }
-        }
-        else {
-            spdlog::error( "[inputfile] [solver] 'boundaryConditions' Not set!" );
-            exit( EXIT_FAILURE );
-        }
-
-    } catch( const cpptoml::parse_exception& e ) {
-        spdlog::error( "Failed to parse {0}: {1}", inputFile.c_str(), e.what() );
-        exit( EXIT_FAILURE );
-    }
-
-    if( !validConfig ) {
-        exit( EXIT_FAILURE );
-    }
-
-    return settings;
-}

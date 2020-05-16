@@ -1,6 +1,6 @@
 #include "laxfriedrichsflux.h"
 
-LaxFriedrichsFlux::LaxFriedrichsFlux( CConfig* settings ) : NumericalFlux( settings ) {}
+LaxFriedrichsFlux::LaxFriedrichsFlux( Config* settings ) : NumericalFlux( settings ) {}
 
 double LaxFriedrichsFlux::Flux( const Vector& Omega, double psiL, double psiR, const Vector& n ) const {
     // double normN = norm( n );

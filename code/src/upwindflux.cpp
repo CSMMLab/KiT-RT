@@ -1,6 +1,6 @@
 #include "upwindflux.h"
 
-UpwindFlux::UpwindFlux( CConfig* settings ) : NumericalFlux( settings ) {}
+UpwindFlux::UpwindFlux( Config* settings ) : NumericalFlux( settings ) {}
 
 double UpwindFlux::Flux( const Vector& Omega, double psiL, double psiR, const Vector& n ) const {
     // if( inner( Omega, n ) > 0 ) {

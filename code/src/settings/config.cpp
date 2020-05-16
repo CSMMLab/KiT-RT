@@ -8,21 +8,21 @@
 
 #include <cassert>
 #include <fstream>
-#include "settings/CConfig.h"
-#include "settings/GlobalConstants.h"
-#include "toolboxes/NIoToolBox.h"
-#include "toolboxes/CRTSNError.h"
-#include "toolboxes/TextProcessingToolbox.h"
+#include <filesystem>
+#include "settings/config.h"
+#include "settings/globalconstants.h"
+#include "toolboxes/errormessages.h"
+#include "toolboxes/textprocessingtoolbox.h"
 
 using namespace std;
 
-CConfig::CConfig(char case_filename[MAX_STRING_SIZE] ){
+Config::Config(char case_filename[MAX_STRING_SIZE] ){
 
   /*--- Set the case name to the base config file name without extension ---*/
 
-  _fileName = NIoToolBox::split(string(case_filename),'.')[0];
+  _fileName = TextProcessingToolbox::Split(string(case_filename),'.')[0];
 
-  _base_config = true;
+  _baseConfig = true;
 
   /*--- Store MPI rank and size ---*/
   // TODO with MPI implementation
@@ -43,7 +43,7 @@ CConfig::CConfig(char case_filename[MAX_STRING_SIZE] ){
 
   SetDefault();
 
-  /*--- Get the Mesh Valueso--- */
+  /*--- Get the Mesh Value--- */
 
   //val_nDim = GetnDim(Mesh_FileName, Mesh_FileFormat);
  //TODO
@@ -63,99 +63,96 @@ CConfig::CConfig(char case_filename[MAX_STRING_SIZE] ){
 
 }
 
-CConfig::~CConfig(void){
+Config::~Config(void){
   // Delete all introduced arrays!
-
-  // Boundary Conditions
-  if (_MarkerDirichlet != NULL )              delete[] _MarkerDirichlet;
 }
 
 // ---- Add Options ----
 
 // Simple Options
-void CConfig::addBoolOption(const string name, bool & option_field, bool default_value) {
+void Config::AddBoolOption(const string name, bool & option_field, bool default_value) {
   // Check if the key is already in the map. If this fails, it is coder error
   // and not user error, so throw.
-  assert(option_map.find(name) == option_map.end());
+  assert(_optionMap.find(name) == _optionMap.end());
 
   // Add this option to the list of all the options
-  all_options.insert(pair<string, bool>(name, true));
+  _allOptions.insert(pair<string, bool>(name, true));
 
   // Create the parser for a bool option with a reference to the option_field and the desired
   // default value. This will take the string in the config file, convert it to a bool, and
   // place that bool in the memory location specified by the reference.
-  COptionBase* val = new COptionBool(name, option_field, default_value);
+  OptionBase* val = new OptionBool(name, option_field, default_value);
 
   // Create an association between the option name ("CFL") and the parser generated above.
   // During configuration, the parsing script will get the option name, and use this map
   // to find how to parse that option.
-  option_map.insert(pair<string, COptionBase *>(name, val));
+  _optionMap.insert(pair<string, OptionBase *>(name, val));
 }
 
-void CConfig::addDoubleOption(const string name, double & option_field, double default_value) {
-  assert(option_map.find(name) == option_map.end());
-  all_options.insert(pair<string, bool>(name, true));
-  COptionBase* val = new COptionDouble(name, option_field, default_value);
-  option_map.insert(pair<string, COptionBase *>(name, val));
+void Config::AddDoubleOption(const string name, double & option_field, double default_value) {
+  assert(_optionMap.find(name) == _optionMap.end());
+  _allOptions.insert(pair<string, bool>(name, true));
+  OptionBase* val = new OptionDouble(name, option_field, default_value);
+  _optionMap.insert(pair<string, OptionBase *>(name, val));
 }
 
-void CConfig::addIntegerOption(const string name, int & option_field, int default_value) {
-  assert(option_map.find(name) == option_map.end());
-  all_options.insert(pair<string, bool>(name, true));
-  COptionBase* val = new COptionInt(name, option_field, default_value);
-  option_map.insert(pair<string, COptionBase *>(name, val));
+void Config::AddIntegerOption(const string name, int & option_field, int default_value) {
+  assert(_optionMap.find(name) == _optionMap.end());
+  _allOptions.insert(pair<string, bool>(name, true));
+  OptionBase* val = new OptionInt(name, option_field, default_value);
+  _optionMap.insert(pair<string, OptionBase *>(name, val));
 }
 
-void CConfig::addLongOption(const string name, long & option_field, long default_value) {
-  assert(option_map.find(name) == option_map.end());
-  all_options.insert(pair<string, bool>(name, true));
-  COptionBase* val = new COptionLong(name, option_field, default_value);
-  option_map.insert(pair<string, COptionBase *>(name, val));
+void Config::AddLongOption(const string name, long & option_field, long default_value) {
+  assert(_optionMap.find(name) == _optionMap.end());
+  _allOptions.insert(pair<string, bool>(name, true));
+  OptionBase* val = new OptionLong(name, option_field, default_value);
+  _optionMap.insert(pair<string, OptionBase *>(name, val));
 }
 
-void CConfig::addStringOption(const string name, string & option_field, string default_value) {
-  assert(option_map.find(name) == option_map.end());
-  all_options.insert(pair<string, bool>(name, true));
-  COptionBase* val = new COptionString(name, option_field, default_value);
-  option_map.insert(pair<string, COptionBase *>(name, val));
+void Config::AddStringOption(const string name, string & option_field, string default_value) {
+  assert(_optionMap.find(name) == _optionMap.end());
+  _allOptions.insert(pair<string, bool>(name, true));
+  OptionBase* val = new OptionString(name, option_field, default_value);
+  _optionMap.insert(pair<string, OptionBase *>(name, val));
 }
 
-void CConfig::addUnsignedLongOption(const string name, unsigned long & option_field, unsigned long default_value) {
-  assert(option_map.find(name) == option_map.end());
-  all_options.insert(pair<string, bool>(name, true));
-  COptionBase* val = new COptionULong(name, option_field, default_value);
-  option_map.insert(pair<string, COptionBase *>(name, val));
+void Config::AddUnsignedLongOption(const string name, unsigned long & option_field, unsigned long default_value) {
+  assert(_optionMap.find(name) == _optionMap.end());
+  _allOptions.insert(pair<string, bool>(name, true));
+  OptionBase* val = new OptionULong(name, option_field, default_value);
+  _optionMap.insert(pair<string, OptionBase *>(name, val));
 }
 
-void CConfig::addUnsignedShortOption(const string name, unsigned short & option_field, unsigned short default_value) {
-  assert(option_map.find(name) == option_map.end());
-  all_options.insert(pair<string, bool>(name, true));
-  COptionBase* val = new COptionUShort(name, option_field, default_value);
-  option_map.insert(pair<string, COptionBase *>(name, val));
+void Config::AddUnsignedShortOption(const string name, unsigned short & option_field, unsigned short default_value) {
+  assert(_optionMap.find(name) == _optionMap.end());
+  _allOptions.insert(pair<string, bool>(name, true));
+  OptionBase* val = new COptionUShort(name, option_field, default_value);
+  _optionMap.insert(pair<string, OptionBase *>(name, val));
 }
 
 // enum types work differently than all of the others because there are a small number of valid
 // string entries for the type. One must also provide a list of all the valid strings of that type.
 template <class Tenum>
-void CConfig::addEnumOption(const string name, Tenum & option_field, const map<string, Tenum> & enum_map, Tenum default_value) {
-  assert(option_map.find(name) == option_map.end());
-  all_options.insert(pair<string, bool>(name, true));
-  COptionBase* val = new COptionEnum<Tenum>(name, enum_map, option_field, default_value);
-  option_map.insert(pair<string, COptionBase *>(name, val));
+void Config::AddEnumOption(const string name, Tenum & option_field, const map<string, Tenum> & enum_map, Tenum default_value) {
+  assert(_optionMap.find(name) == _optionMap.end());
+  _allOptions.insert(pair<string, bool>(name, true));
+  OptionBase* val = new OptionEnum<Tenum>(name, enum_map, option_field, default_value);
+  _optionMap.insert(pair<string, OptionBase *>(name, val));
   return;
 }
 
 // List Options
-void CConfig::addStringListOption(const string name, unsigned short & num_marker, std::string* & option_field) {
-  assert(option_map.find(name) == option_map.end());
-  all_options.insert(pair<string, bool>(name, true));
-  COptionBase* val = new COptionStringList(name, num_marker, option_field);
-  option_map.insert(pair<string, COptionBase *>(name, val));
+void Config::AddStringListOption(const string name, unsigned short & num_marker, std::vector<std::string> & option_field) {
+  assert(_optionMap.find(name) == _optionMap.end());
+  _allOptions.insert(pair<string, bool>(name, true));
+  OptionBase* val = new OptionStringList(name, num_marker, option_field);
+  _optionMap.insert(pair<string, OptionBase *>(name, val));
 }
 
 // ---- Getter Functions ----
 
-BOUNDARY_TYPE CConfig::GetBoundaryType( std::string name ) const {
+BOUNDARY_TYPE Config::GetBoundaryType( std::string name ) const {
     for( unsigned i = 0; i < _boundaries.size(); ++i ) {
         if( name == _boundaries[i].first ) return _boundaries[i].second;
     }
@@ -164,16 +161,16 @@ BOUNDARY_TYPE CConfig::GetBoundaryType( std::string name ) const {
 
 // ---- Setter Functions ----
 
-void CConfig::SetDefault(){
+void Config::SetDefault(){
   /*--- Set the default values for all of the options that weren't set ---*/
 
-  for (map<string, bool>::iterator iter = all_options.begin(); iter != all_options.end(); ++iter) {
-    if (option_map[iter->first]->GetValue().size() == 0)
-      option_map[iter->first]->SetDefault();
+  for (map<string, bool>::iterator iter = _allOptions.begin(); iter != _allOptions.end(); ++iter) {
+    if (_optionMap[iter->first]->GetValue().size() == 0)
+      _optionMap[iter->first]->SetDefault();
   }
 }
 
-void CConfig::SetConfigOptions() {
+void Config::SetConfigOptions() {
 
 
   /* BEGIN_CONFIG_OPTIONS */
@@ -183,33 +180,33 @@ void CConfig::SetConfigOptions() {
 
   // File Structure related options
   /*!\brief OUTPUT_DIR \n DESCRIPTION: Relative Directory of output files \n DEFAULT "/out" \ingroup Config.*/
-  addStringOption("OUTPUT_DIR", _outputDir, string("/out"));
+  AddStringOption("OUTPUT_DIR", _outputDir, string("/out"));
   /*!\brief OUTPUT_FILE \n DESCRIPTION: Name of output file \n DEFAULT "output" \ingroup Config.*/
-  addStringOption("OUTPUT_FILE", _outputFile, string("output"));
+  AddStringOption("OUTPUT_FILE", _outputFile, string("output"));
   /*!\brief LOG_DIR \n DESCRIPTION: Relative Directory of log files \n DEFAULT "/out" \ingroup Config.*/
-  addStringOption("LOG_DIR", _logDir, string("/out"));
+  AddStringOption("LOG_DIR", _logDir, string("/out"));
   /*!\brief MESH_FILE \n DESCRIPTION: Name of mesh file \n DEFAULT "" \ingroup Config.*/
-  addStringOption("MESH_FILE", _meshFile, string("mesh.su2"));
+  AddStringOption("MESH_FILE", _meshFile, string("mesh.su2"));
 
   // Quadrature relatated options
   /*!\brief QUAD_TYPE \n DESCRIPTION: Type of Quadrature rule \n Options: see \link QUAD_NAME \endlink \n DEFAULT: QUAD_MonteCarlo \ingroup Config*/
-  addEnumOption("QUAD_TYPE", _quadName, Quadrature_Map, QUAD_MonteCarlo);
+  AddEnumOption("QUAD_TYPE", _quadName, Quadrature_Map, QUAD_MonteCarlo);
   /*!\brief QUAD_ORDER \n DESCRIPTION: Order of Quadrature rule \n DEFAULT 2 \ingroup Config.*/
-  addUnsignedShortOption("QUAD_ORDER", _quadOrder, 2);
+  AddUnsignedShortOption("QUAD_ORDER", _quadOrder, 2);
 
   // Solver related options
   /*!\brief CFL \n DESCRIPTION: CFL number \n DEFAULT 1.0 \ingroup Config.*/
-  addDoubleOption("CFL_NUMBER", _CFL, 1.0);
+  AddDoubleOption("CFL_NUMBER", _CFL, 1.0);
   /*!\brief TIME_FINAL \n DESCRIPTION: Final time for simulation \n DEFAULT 1.0 \ingroup Config.*/
-  addDoubleOption("TIME_FINAL", _tEnd, 1.0);
+  AddDoubleOption("TIME_FINAL", _tEnd, 1.0);
 
   // Mesh related options
   // Boundary Markers
   /*!\brief BC_DIRICHLET\n DESCRIPTION: Dirichlet wall boundary marker(s) \ingroup Config*/
-  addStringListOption("BC_DIRICHLET", _nMarkerDirichlet, _MarkerDirichlet);
+  AddStringListOption("BC_DIRICHLET", _nMarkerDirichlet, _MarkerDirichlet);
 }
 
-void CConfig::SetConfigParsing(char case_filename[MAX_STRING_SIZE]){
+void Config::SetConfigParsing(char case_filename[MAX_STRING_SIZE]){
   string text_line, option_name;
   ifstream case_file;
   vector<string> option_value;
@@ -219,7 +216,7 @@ void CConfig::SetConfigParsing(char case_filename[MAX_STRING_SIZE]){
   case_file.open(case_filename, ios::in);
 
   if (case_file.fail()) {
-    CRTSNError::Error("The configuration file (.cfg) is missing!!", CURRENT_FUNCTION);
+    ErrorMessages::Error("The configuration file (.cfg) is missing!!", CURRENT_FUNCTION);
   }
 
   string errorString;
@@ -244,7 +241,7 @@ void CConfig::SetConfigParsing(char case_filename[MAX_STRING_SIZE]){
 
       /*--- See if it's a python option ---*/
 
-      if (option_map.find(option_name) == option_map.end()) {
+      if (_optionMap.find(option_name) == _optionMap.end()) {
           string newString;
           newString.append(option_name);
           newString.append(": invalid option name");
@@ -270,11 +267,11 @@ void CConfig::SetConfigParsing(char case_filename[MAX_STRING_SIZE]){
       /*--- New found option. Add it to the map, and delete from all options ---*/
 
       included_options.insert(pair<string, bool>(option_name, true));
-      all_options.erase(option_name);
+      _allOptions.erase(option_name);
 
       /*--- Set the value and check error ---*/
 
-      string out = option_map[option_name]->SetValue(option_value);
+      string out = _optionMap[option_name]->SetValue(option_value);
       if (out.compare("") != 0) {
         errorString.append(out);
         errorString.append("\n");
@@ -286,33 +283,36 @@ void CConfig::SetConfigParsing(char case_filename[MAX_STRING_SIZE]){
   /*--- See if there were any errors parsing the config file ---*/
 
   if (errorString.size() != 0) {
-    CRTSNError::Error(errorString, CURRENT_FUNCTION);
+    ErrorMessages::Error(errorString, CURRENT_FUNCTION);
   }
 
   case_file.close();
 }
 
-void CConfig::SetPointersNull(void) {
+void Config::SetPointersNull(void) {
   // All pointer valued options should be set to NULL here
-  _MarkerDirichlet = NULL;
 }
 
-void CConfig::SetPostprocessing(){
+void Config::SetPostprocessing(){
   // Check if there are contradictive or false options set.
 
   // Regroup Boundary Conditions to  std::vector<std::pair<std::string, BOUNDARY_TYPE>> _boundaries;
-  {
-    for(int i = 0; i < _nMarkerDirichlet; i++){
-      _boundaries.push_back(std::pair<std::string, BOUNDARY_TYPE>(_MarkerDirichlet[i],DIRICHLET));
-    }
+  for(int i = 0; i < _nMarkerDirichlet; i++){
+    _boundaries.push_back(std::pair<std::string, BOUNDARY_TYPE>(_MarkerDirichlet[i],DIRICHLET));
   }
+
+  // Check, if mesh file exists
+  if(!std::filesystem::exists( _meshFile )){
+    ErrorMessages::Error("Path to mesh file <" + _meshFile + "> does not exist. Please check your config file.", CURRENT_FUNCTION);
+  }
+
 }
 
-void CConfig::SetOutput(){
+void Config::SetOutput(){
   // Set Output for settings, i.e. feedback on what has been chosen
 }
 
-bool CConfig::TokenizeString(string & str, string & option_name,
+bool Config::TokenizeString(string & str, string & option_name,
                              vector<string> & option_value) {
   const string delimiters(" (){}:,\t\n\v\f\r");
   // check for comments or empty string
@@ -367,7 +367,7 @@ bool CConfig::TokenizeString(string & str, string & option_name,
     << endl;
     throw(-1);
   }
-  StringToUpperCase(option_name);
+  TextProcessingToolbox::StringToUpperCase(option_name);
 
   //cout << "option_name = |" << option_name << "|" << endl;
   //cout << "pos = " << pos << ": last_pos = " << last_pos << endl;

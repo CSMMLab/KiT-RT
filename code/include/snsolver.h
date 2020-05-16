@@ -4,7 +4,7 @@
 #include "solver.h"
 #include "typedef.h"
 
-#include "settings/CConfig.h"
+#include "settings/config.h"
 
 class SNSolver : public Solver
 {
@@ -13,7 +13,7 @@ class SNSolver : public Solver
      * @brief SNSolver constructor
      * @param settings stores all needed information
      */
-    SNSolver( CConfig* settings );
+    SNSolver( Config* settings );
     /**
      * @brief Solve functions runs main time loop
      */

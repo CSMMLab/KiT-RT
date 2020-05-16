@@ -1,7 +1,7 @@
 #include "typedef.h"
 #include "reconstructor.h"
 
-Reconstructor::Reconstructor(Settings* settings)
+Reconstructor::Reconstructor(Config* settings)
 {
 
 }

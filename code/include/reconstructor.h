@@ -1,7 +1,7 @@
 #ifndef RECONSTRUCTOR_H
 #define RECONSTRUCTOR_H
 
-#include "settings.h"
+#include "settings/config.h"
 #include "typedef.h"
 
 class Reconstructor
@@ -11,7 +11,7 @@ class Reconstructor
      * @brief Reconstruction
      * @param settings
      */
-    Reconstructor( Settings* settings );
+    Reconstructor( Config* settings );
 
     /** Method 1: structured developing
      * @brief Slope of angular flux psi inside a given cell

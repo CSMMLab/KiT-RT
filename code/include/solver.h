@@ -1,15 +1,13 @@
 #ifndef SOLVER_H
 #define SOLVER_H
 
-// include Matrix, Vector definitions
-#include "typedef.h"
-
-#include "io.h"
-#include "numericalflux.h"
-#include "settings.h"
 #include <string>
 
-#include "settings/CConfig.h"
+// include Matrix, Vector definitions
+#include "typedef.h"
+#include "io.h"
+#include "numericalflux.h"
+#include "settings/config.h"
 
 class Solver
 {
@@ -33,7 +31,7 @@ class Solver
 
     NumericalFlux* _g;    // numerical flux function
     Mesh* _mesh;          // mesh object for writing out information
-    CConfig* _settings;
+    Config* _settings;
 
     /**
      * @brief LoadPatientDensity loads density of patient from MRT/CT scan and saves it in _density
@@ -75,14 +73,14 @@ class Solver
      * @brief Solver constructor
      * @param settings stores all needed information
      */
-    Solver( CConfig* settings );
+    Solver( Config* settings );
 
     /**
      * @brief Create constructor
      * @param settings stores all needed information
      * @return pointer to Solver
      */
-    static Solver* Create( CConfig* settings );
+    static Solver* Create( Config* settings );
 
     /**
      * @brief Solve functions runs main time loop
