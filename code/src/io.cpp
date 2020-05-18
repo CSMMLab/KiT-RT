@@ -95,7 +95,10 @@ void ExportVTK( const std::string fileName,
                         cellData->SetTuple3( i, results[i][0][j], results[i][1][j], results[i][2][j] );
                     }
                     break;
-                default: std::cout << "[ERROR][IO::ExportVTK] Invalid dimension" << std::endl;
+                default:
+                    auto log = spdlog::get( "event" );
+                    log->error( "[ERROR][IO::ExportVTK] Invalid dimension" );
+                    exit( EXIT_FAILURE );
             }
             grid->GetCellData()->AddArray( cellData );
         }
@@ -411,7 +414,7 @@ Settings* ReadInputFile( std::string inputFile ) {
 
         auto cwd        = std::filesystem::current_path();
         std::string tmp = std::filesystem::path( inputFile ).parent_path().string();
-        if( tmp.substr( tmp.size() - 1 ) != "/" ) tmp.append( "/" );
+        if( tmp[tmp.size() - 1] != '/' ) tmp.append( "/" );
         settings->_inputDir = tmp;
 
         // section IO
@@ -428,7 +431,7 @@ Settings* ReadInputFile( std::string inputFile ) {
         auto outputDir = io->get_as<std::string>( "outputDir" );
         if( outputDir ) {
             std::string tmp = *outputDir;
-            if( tmp.substr( tmp.size() - 1 ) != "/" ) tmp.append( "/" );
+            if( tmp[tmp.size() - 1] != '/' ) tmp.append( "/" );
             settings->_outputDir = std::filesystem::path( tmp );
         }
         else {
@@ -448,7 +451,7 @@ Settings* ReadInputFile( std::string inputFile ) {
         auto logDir = io->get_as<std::string>( "logDir" );
         if( logDir ) {
             std::string tmp = *logDir;
-            if( tmp.substr( tmp.size() - 1 ) != "/" ) tmp.append( "/" );
+            if( tmp[tmp.size() - 1] != '/' ) tmp.append( "/" );
             settings->_logDir = std::filesystem::path( tmp );
         }
         else {

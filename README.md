@@ -10,7 +10,7 @@ TBD
 
 ## Build
 ### Required dependencies
- - Compiler with C++20 support (e.g. gcc/g++ version 9)
+ - Compiler with C++17 support
  - cmake >= v3.12.4
  - LAPACK
  - OpenMP

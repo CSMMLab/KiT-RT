@@ -168,6 +168,7 @@ class CConfig
             return _outputDir;
     }
     std::string inline GetOutputFile() const { return _outputFile; }
+    std::string inline GetLogDir() const { return _logDir; }
 
     // Quadrature Structure
     QUAD_NAME inline GetQuadName() const { return _quadName; }

@@ -18,17 +18,11 @@ void Mesh::ComputeConnectivity() {
     int comm_size, comm_rank;
     MPI_Comm_size( MPI_COMM_WORLD, &comm_size );
     MPI_Comm_rank( MPI_COMM_WORLD, &comm_rank );
-    // unsigned chunkSize    = std::ceil( static_cast<float>( _numCells ) / static_cast<float>( comm_size ) );
-    // unsigned mpiCellStart = comm_rank * chunkSize;
-    // unsigned mpiCellEnd   = std::min( ( comm_rank + 1 ) * chunkSize, _numCells );
-    // std::vector<int> neighborsFlatPart( _numNodesPerCell * chunkSize, -1 );
-    // std::vector<Vector> normalsFlatPart( _numNodesPerCell * chunkSize, Vector( _dim, -1.0 ) );
-
-    unsigned chunkSize    = _numCells;
-    unsigned mpiCellStart = 0u;
-    unsigned mpiCellEnd   = _numCells;
-    std::vector<int> neighborsFlatPart( _numNodesPerCell * _numCells, -1 );
-    std::vector<Vector> normalsFlatPart( _numNodesPerCell * _numCells, Vector( _dim, -1.0 ) );
+    unsigned chunkSize    = std::ceil( static_cast<float>( _numCells ) / static_cast<float>( comm_size ) );
+    unsigned mpiCellStart = comm_rank * chunkSize;
+    unsigned mpiCellEnd   = std::min( ( comm_rank + 1 ) * chunkSize, _numCells );
+    std::vector<int> neighborsFlatPart( _numNodesPerCell * chunkSize, -1 );
+    std::vector<Vector> normalsFlatPart( _numNodesPerCell * chunkSize, Vector( _dim, -1.0 ) );
 
     auto sortedCells( _cells );
     for( unsigned i = 0; i < _numCells; ++i ) {
@@ -113,32 +107,6 @@ void Mesh::ComputeConnectivity() {
             }
         }
     }
-
-    unsigned ctr = 0;
-    for( unsigned i = 0; i < _numCells; ++i ) {
-        if( _cellNeighbors[i].size() > _numNodesPerCell ) {
-            std::cout << i << "\t\t";
-            for( unsigned j = 0; j < _cellNeighbors[i].size(); ++j ) {
-                std::cout << _cellNeighbors[i][j] << "\t";
-            }
-            std::cout << std::endl;
-            ctr++;
-        }
-    }
-    std::cout << ctr << std::endl;
-
-    ctr = 0;
-    for( unsigned i = 0; i < _numCells; ++i ) {
-        if( _cellNeighbors[i].size() < _numNodesPerCell ) {
-            std::cout << i << "\t\t";
-            for( unsigned j = 0; j < _cellNeighbors[i].size(); ++j ) {
-                std::cout << _cellNeighbors[i][j] << "\t";
-            }
-            std::cout << std::endl;
-            ctr++;
-        }
-    }
-    std::cout << ctr << std::endl << std::endl << std::endl;
 
     _isBoundaryCell.resize( _numCells, false );
     for( unsigned i = 0; i < _numCells; ++i ) {

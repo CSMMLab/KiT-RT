@@ -30,7 +30,6 @@
 
 #include "settings/CConfig.h"
 
-
 using vtkPointsSP                 = vtkSmartPointer<vtkPoints>;
 using vtkUnstructuredGridSP       = vtkSmartPointer<vtkUnstructuredGrid>;
 using vtkTriangleSP               = vtkSmartPointer<vtkTriangle>;
