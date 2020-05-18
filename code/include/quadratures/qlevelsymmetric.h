@@ -9,7 +9,7 @@ class QLevelSymmetric : public QLookupQuadrature
     QLevelSymmetric( unsigned order );
     virtual ~QLevelSymmetric() {}
 
-    inline void SetName() override { _name =  "Level Symmetric quadrature"; }
+    inline void SetName() override { _name = "Level Symmetric quadrature"; }
     void SetAvailOrders() override;
     void SetConnectivity() override;
 

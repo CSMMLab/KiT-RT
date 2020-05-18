@@ -9,10 +9,10 @@ class QMonteCarlo : public QuadratureBase
     QMonteCarlo( unsigned order );
     virtual ~QMonteCarlo() {}
 
-    inline void SetName() override { _name =  "Monte Carlo Quadrature."; }
-    inline void SetNq() override   { _nq = GetOrder(); }
+    inline void SetName() override { _name = "Monte Carlo Quadrature."; }
+    inline void SetNq() override { _nq = GetOrder(); }
     void SetPointsAndWeights() override;
-    void SetConnectivity()override;
+    void SetConnectivity() override;
 };
 
 #endif    // QMONTECARLO_H

@@ -8,7 +8,6 @@ Mesh::Mesh( std::vector<Vector> nodes,
       _boundaries( boundaries ) {
     ComputeCellAreas();
     ComputeCellMidpoints();
-    ComputeNormals();
     ComputeConnectivity();
     ComputePartitioning();
 }
@@ -23,6 +22,7 @@ void Mesh::ComputeConnectivity() {
     unsigned mpiCellStart = comm_rank * chunkSize;
     unsigned mpiCellEnd   = std::min( ( comm_rank + 1 ) * chunkSize, _numCells );
     std::vector<int> neighborsFlatPart( _numNodesPerCell * chunkSize, -1 );
+    std::vector<Vector> normalsFlatPart( _numNodesPerCell * chunkSize, Vector( _dim, -1.0 ) );
 
     auto sortedCells( _cells );
     for( unsigned i = 0; i < _numCells; ++i ) {
@@ -33,18 +33,20 @@ void Mesh::ComputeConnectivity() {
         sortedBoundaries.push_back( _boundaries[i].second );
         std::sort( sortedBoundaries[i].begin(), sortedBoundaries[i].end() );
     }
-#pragma omp parallel for
+    //#pragma omp parallel for
     for( unsigned i = mpiCellStart; i < mpiCellEnd; ++i ) {
         std::vector<unsigned>* cellsI = &sortedCells[i];
         for( unsigned j = 0; j < _numCells; ++j ) {
+            if( i == j ) continue;
             std::vector<unsigned>* cellsJ = &sortedCells[j];
             std::vector<unsigned> commonElements;
             std::set_intersection( cellsI->begin(), cellsI->end(), cellsJ->begin(), cellsJ->end(), std::back_inserter( commonElements ) );
             if( commonElements.size() == _dim ) {
                 unsigned pos0 = _numNodesPerCell * ( i - mpiCellStart );
                 unsigned pos  = pos0;
-                while( neighborsFlatPart[pos] != -1 && pos < pos0 + _numNodesPerCell && pos < chunkSize * _numNodesPerCell - 1 ) pos++;
+                while( neighborsFlatPart[pos] != -1 && pos < pos0 + _numNodesPerCell - 1 && pos < chunkSize * _numNodesPerCell - 1 ) pos++;
                 neighborsFlatPart[pos] = j;
+                normalsFlatPart[pos]   = ComputeOutwardFacingNormal( _nodes[commonElements[0]], _nodes[commonElements[1]], _cellMidPoints[i] );
             }
         }
         for( unsigned k = 0; k < _boundaries.size(); ++k ) {
@@ -55,16 +57,20 @@ void Mesh::ComputeConnectivity() {
                 if( commonElements.size() == _dim ) {
                     unsigned pos0 = _numNodesPerCell * ( i - mpiCellStart );
                     unsigned pos  = pos0;
-                    while( neighborsFlatPart[pos] != -1 && pos < pos0 + _numNodesPerCell && pos < chunkSize * _numNodesPerCell - 1 ) pos++;
+                    while( neighborsFlatPart[pos] != -1 && pos < pos0 + _numNodesPerCell - 1 && pos < chunkSize * _numNodesPerCell - 1 ) pos++;
                     neighborsFlatPart[pos] = _ghostCellID;
+                    normalsFlatPart[pos]   = ComputeOutwardFacingNormal( _nodes[commonElements[0]], _nodes[commonElements[1]], _cellMidPoints[i] );
                 }
             }
         }
     }
     std::vector<int> neighborsFlat( _numNodesPerCell * chunkSize * comm_size, -1 );
-    if( comm_size == 1 )
+    std::vector<Vector> normalsFlat( _numNodesPerCell * chunkSize * comm_size, Vector( _dim, 0.0 ) );
+    if( comm_size == 1 ) {
         neighborsFlat.assign( neighborsFlatPart.begin(), neighborsFlatPart.end() );
-    else
+        normalsFlat.assign( normalsFlatPart.begin(), normalsFlatPart.end() );
+    }
+    else {
         MPI_Allgather( neighborsFlatPart.data(),
                        _numNodesPerCell * chunkSize,
                        MPI_INT,
@@ -72,17 +78,35 @@ void Mesh::ComputeConnectivity() {
                        _numNodesPerCell * chunkSize,
                        MPI_INT,
                        MPI_COMM_WORLD );
+    }
 
     if( std::any_of( neighborsFlat.begin(), neighborsFlat.end(), []( int i ) { return i == -1; } ) ) {
-        unsigned idx = 0;
-        for( ; idx < neighborsFlat.size(); ++idx ) {
+        for( unsigned idx = 0; idx < neighborsFlat.size(); ++idx ) {
             if( neighborsFlat[idx] == -1 ) _log->error( "[mesh] Detected unassigned faces at index {0}", idx );
             break;
         }
         exit( EXIT_FAILURE );
     }
-    for( auto it = neighborsFlat.begin(); it != neighborsFlat.end(); it += _numNodesPerCell )
-        _cellNeighbors.push_back( std::vector<unsigned>( it, it + _numNodesPerCell ) );
+
+    _cellNeighbors.resize( _numCells );
+    _cellNormals.resize( _numCells );
+    for( unsigned i = 0; i < neighborsFlat.size(); ++i ) {
+        unsigned IDi = static_cast<unsigned>( i / 3.0 );
+        unsigned IDj = neighborsFlat[i];
+        if( IDi == IDj ) continue;
+        if( IDj == _ghostCellID ) {
+            if( std::find( _cellNeighbors[IDi].begin(), _cellNeighbors[IDi].end(), _ghostCellID ) == _cellNeighbors[IDi].end() ) {
+                _cellNeighbors[IDi].push_back( _ghostCellID );
+                _cellNormals[IDi].push_back( normalsFlat[i] );
+            }
+        }
+        else {
+            if( std::find( _cellNeighbors[IDi].begin(), _cellNeighbors[IDi].end(), IDj ) == _cellNeighbors[IDi].end() ) {
+                _cellNeighbors[IDi].push_back( IDj );
+                _cellNormals[IDi].push_back( normalsFlat[i] );
+            }
+        }
+    }
 
     _isBoundaryCell.resize( _numCells, false );
     for( unsigned i = 0; i < _numCells; ++i ) {
@@ -103,10 +127,10 @@ void Mesh::ComputeCellAreas() {
                 break;
             }
             case 4: {
-                std::vector d1{_nodes[_cells[i][0]][0] - _nodes[_cells[i][1]][0], _nodes[_cells[i][0]][1] - _nodes[_cells[i][1]][1]};
-                std::vector d2{_nodes[_cells[i][1]][0] - _nodes[_cells[i][2]][0], _nodes[_cells[i][1]][1] - _nodes[_cells[i][2]][1]};
-                std::vector d3{_nodes[_cells[i][2]][0] - _nodes[_cells[i][3]][0], _nodes[_cells[i][2]][1] - _nodes[_cells[i][3]][1]};
-                std::vector d4{_nodes[_cells[i][3]][0] - _nodes[_cells[i][0]][0], _nodes[_cells[i][3]][1] - _nodes[_cells[i][0]][1]};
+                std::vector d1{ _nodes[_cells[i][0]][0] - _nodes[_cells[i][1]][0], _nodes[_cells[i][0]][1] - _nodes[_cells[i][1]][1] };
+                std::vector d2{ _nodes[_cells[i][1]][0] - _nodes[_cells[i][2]][0], _nodes[_cells[i][1]][1] - _nodes[_cells[i][2]][1] };
+                std::vector d3{ _nodes[_cells[i][2]][0] - _nodes[_cells[i][3]][0], _nodes[_cells[i][2]][1] - _nodes[_cells[i][3]][1] };
+                std::vector d4{ _nodes[_cells[i][3]][0] - _nodes[_cells[i][0]][0], _nodes[_cells[i][3]][1] - _nodes[_cells[i][0]][1] };
 
                 double a = std::sqrt( d1[0] * d1[0] + d1[1] * d1[1] );
                 double b = std::sqrt( d2[0] * d2[0] + d2[1] * d2[1] );
@@ -141,31 +165,12 @@ void Mesh::ComputeCellMidpoints() {
 Vector Mesh::ComputeOutwardFacingNormal( const Vector& nodeA, const Vector& nodeB, const Vector& cellCenter ) {
     double dx = nodeA[0] - nodeB[0];
     double dy = nodeA[1] - nodeB[1];
-    Vector n{-dy, dx};
-    Vector p{nodeA[0], nodeA[1]};
+    Vector n{ -dy, dx };
+    Vector p{ nodeA[0], nodeA[1] };
     if( dot( n, cellCenter - p ) > 0 ) {
         n *= -1.0;
     }
     return n;
-}
-
-void Mesh::ComputeNormals() {
-    _cellNormals.resize( _numCells, std::vector<Vector>( _numNodesPerCell, Vector( _dim, 0.0 ) ) );
-    for( unsigned i = 0; i < _numCells; ++i ) {
-        auto cellNodes = _cells[i];
-        Vector cellCenter( _dim, 0.0 );
-        for( unsigned j = 0; j < _numNodesPerCell; ++j ) {
-            for( unsigned k = 0; k < _dim; ++k ) {
-                cellCenter[k] += _nodes[cellNodes[j]][k];
-            }
-        }
-        cellCenter = cellCenter / 3.0;
-        for( unsigned j = 0; j < _numNodesPerCell - 1; ++j ) {
-            _cellNormals[i][j] = ComputeOutwardFacingNormal( _nodes[cellNodes[j]], _nodes[cellNodes[j + 1]], cellCenter );
-        }
-        _cellNormals[i][_numNodesPerCell - 1] =
-            ComputeOutwardFacingNormal( _nodes[cellNodes[_numNodesPerCell - 1]], _nodes[cellNodes[0]], cellCenter );
-    }
 }
 
 void Mesh::ComputePartitioning() {
@@ -219,7 +224,7 @@ void Mesh::ComputePartitioning() {
         real_t ubvec = static_cast<real_t>( 1.05 );
 
         if( comm_size > 1 ) {    // use parmetis
-            std::vector<int> local_xadj{0};
+            std::vector<int> local_xadj{ 0 };
             unsigned xadjChunk = std::ceil( static_cast<float>( _numNodes ) / static_cast<float>( comm_size ) );
             unsigned xadjStart = comm_rank * xadjChunk + 1;
             unsigned adjncyStart;
@@ -233,7 +238,7 @@ void Mesh::ComputePartitioning() {
             }
             std::vector<int> local_adjncy( adjncy.begin() + adjncyStart, adjncy.begin() + adjncyEnd );
 
-            std::vector<int> vtxdist{0};
+            std::vector<int> vtxdist{ 0 };
             for( unsigned i = 1; i <= static_cast<unsigned>( comm_size ); i++ ) {
                 vtxdist.push_back( std::min( i * xadjChunk, _numNodes ) );
             }

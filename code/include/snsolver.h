@@ -1,6 +1,8 @@
 #ifndef SNSOLVER_H
 #define SNSOLVER_H
 
+#include <mpi.h>
+
 #include "solver.h"
 #include "typedef.h"
 

@@ -23,17 +23,15 @@ void QDummy::SetName() {
     // @TODO: DUMMYCOMPUTATION
 }
 
-void QDummy::SetNq() {
-    _nq = 0;
-}
+void QDummy::SetNq() { _nq = 0; }
 
 void QDummy::SetPointsAndWeights() {
-    _points = VectorVector( GetNq() );
-    _weights = Vector ( GetNq(), 4.0 * M_PI / GetNq() );
+    _points  = VectorVector( GetNq() );
+    _weights = Vector( GetNq(), 4.0 * M_PI / GetNq() );
     // @TODO: DUMMYCOMPUTATION
 }
 
-void QDummy::SetConnectivity() { //TODO
+void QDummy::SetConnectivity() {    // TODO
     VectorVectorU connectivity;
     _connectivity = connectivity;
 }

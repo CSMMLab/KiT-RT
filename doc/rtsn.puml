@@ -7,7 +7,7 @@
 /' Objects '/
 
 class LaxFriedrichsFlux {
-	+LaxFriedrichsFlux(Settings* settings)
+	+LaxFriedrichsFlux(Config* settings)
 	+Flux(const Vector& Omega, double psiL, double psiR, const Vector& n) : double {query}
 	-_dt : double
 }
@@ -26,16 +26,21 @@ class Mesh {
 	#_numNodes : const unsigned
 	#_numNodesPerCell : const unsigned
 	#_log : std::shared_ptr<spdlog::logger>
+	#_cellMidPoints : std::vector<Vector>
 	#_nodes : std::vector<Vector>
+	+GetCellMidPoints() : std::vector<Vector>& {query}
 	+GetNodes() : std::vector<Vector>& {query}
 	#_isBoundaryCell : std::vector<bool>
+	+GetBoundaryCellArray() : std::vector<bool>& {query}
 	#_cellAreas : std::vector<double>
 	+GetCellAreas() : std::vector<double>& {query}
 	#_boundaries : std::vector<std::pair<BOUNDARY_TYPE, std::vector<unsigned> > >
 	#_cellNormals : std::vector<std::vector<Vector> >
+	+GetNormals() : std::vector<std::vector<Vector> >& {query}
 	#_cellNeighbors : std::vector<std::vector<unsigned> >
 	#_cells : std::vector<std::vector<unsigned> >
 	+GetCells() : std::vector<std::vector<unsigned> >& {query}
+	+GetNeighbours() : std::vector<std::vector<unsigned> >& {query}
 	#_colors : std::vector<unsigned>
 	+GetPartitionIDs() : std::vector<unsigned>& {query}
 	+GetDim() : unsigned {query}
@@ -43,25 +48,25 @@ class Mesh {
 	+GetNumNodes() : unsigned {query}
 	+GetNumNodesPerCell() : unsigned {query}
 	#ComputeCellAreas() : void
+	#ComputeCellMidpoints() : void
 	#ComputeConnectivity() : void
-	#ComputeNormals() : void
 	#ComputePartitioning() : void
 	+ComputeSlopes(unsigned nq, VectorVector& psiDerX, VectorVector& psiDerY, const VectorVector& psi) : void {query}
 }
 
 
 abstract class NumericalFlux {
-	+NumericalFlux(Settings* settings)
-	+{static} Create(Settings* settings) : NumericalFlux*
+	+NumericalFlux(Config* settings)
+	+{static} Create(Config* settings) : NumericalFlux*
 	+{abstract} Flux(const Vector& Omega, double psiL, double psiR, const Vector& n) : double {query}
 }
 
 
 class Physics {
-	+Physics(Settings* settings)
+	+Physics(Config* settings)
 	-_totalxsH2O : Matrix
 	-_xsH2O : Matrix
-	+{static} Create(Settings* settings) : Physics*
+	+{static} Create(Config* settings) : Physics*
 	+GetScatteringXS(std::vector<double> energies, std::vector<double> density, std::vector<double> Omegas) : VectorVector
 	+GetStoppingPower(std::vector<double> energies, std::vector<double> sH2O) : VectorVector
 	+GetTotalXS(std::vector<double> energies, std::vector<double> density) : VectorVector
@@ -92,9 +97,9 @@ class QGaussLegendreTensorized {
 class QLDFESA {
 	+QLDFESA(unsigned order)
 	+~QLDFESA()
+	+GetLookupTable() : std::string
 	+SetAvailOrders() : void
 	+SetConnectivity() : void
-	+SetDataInfo() : void
 	+SetName() : void
 }
 
@@ -102,9 +107,9 @@ class QLDFESA {
 class QLebedev {
 	+QLebedev(unsigned order)
 	+~QLebedev()
+	+GetLookupTable() : std::string
 	+SetAvailOrders() : void
 	+SetConnectivity() : void
-	+SetDataInfo() : void
 	+SetName() : void
 }
 
@@ -112,9 +117,9 @@ class QLebedev {
 class QLevelSymmetric {
 	+QLevelSymmetric(unsigned order)
 	+~QLevelSymmetric()
+	+GetLookupTable() : std::string
 	+SetAvailOrders() : void
 	+SetConnectivity() : void
-	+SetDataInfo() : void
 	+SetName() : void
 }
 
@@ -123,15 +128,14 @@ abstract class QLookupQuadrature {
 	+QLookupQuadrature(unsigned order)
 	+~QLookupQuadrature()
 	#CheckOrder() : bool
-	#_dataFileSuffix : std::string
-	#_dataFiles : std::string
+	#{abstract} GetLookupTable() : std::string
 	#_availableOrders : std::vector<unsigned>
 	#_nqByOrder : std::vector<unsigned>
 	+getAvailOrders() : std::vector<unsigned> {query}
 	#{abstract} SetAvailOrders() : void
-	#{abstract} SetDataInfo() : void
 	#SetNq() : void
 	#SetPointsAndWeights() : void
+	+printAvailOrders() : void {query}
 }
 
 
@@ -145,10 +149,10 @@ class QMonteCarlo {
 }
 
 
-abstract class Quadrature {
-	+Quadrature(unsigned order)
-	+~Quadrature()
-	+{static} CreateQuadrature(QUAD_NAME name, unsigned order) : Quadrature*
+abstract class QuadratureBase {
+	+QuadratureBase(unsigned order)
+	+~QuadratureBase()
+	+{static} CreateQuadrature(QUAD_NAME name, unsigned order) : QuadratureBase*
 	+GetWeights() : Vector {query}
 	#_weights : Vector
 	+GetPoints() : VectorVector {query}
@@ -175,95 +179,55 @@ abstract class Quadrature {
 
 
 class Reconstructor {
-	+Reconstructor(Settings* settings)
-	+Slope(const Vector& Omega, double psiL, double psiR, const Vector& n) : double {query}
+	+Reconstructor(Config* settings)
+	+ReconstructSlopeStruct(double uL, double uC, double uR, double dxL, double dxR, std::string limiter) : double {query}
+	+ReconstructSlopeUnstruct(unsigned nq, unsigned ncell, VectorVector& psi, VectorVector& psiDerX, VectorVector& psiDerY, Vector& area, VectorVector& neighbor, VectorVector& nx, VectorVector& ny) : void {query}
 }
 
 
 class SNSolver {
-	+SNSolver(Settings* settings)
+	+SNSolver(Config* settings)
+	+Save() : void {query}
 	+Solve() : void
 	+SolveMPI() : void
 }
 
 
-class Settings {
-	+Settings()
-	+GetBoundaryType(std::string name) : BOUNDARY_TYPE {query}
-	+GetQuadName() : QUAD_NAME {query}
-	-_quadName : QUAD_NAME
-	+ReadInputFile(std::string fileName) : Settings*
-	+GetCFL() : double {query}
-	+GetTEnd() : double {query}
-	-_CFL : double
-	-_tEnd : double
-	-_comm_rank : int
-	-_comm_size : int
-	-_inputDir : std::filesystem::path
-	-_inputFile : std::filesystem::path
-	-_logDir : std::filesystem::path
-	-_meshFile : std::filesystem::path
-	-_outputDir : std::filesystem::path
-	-_outputFile : std::filesystem::path
-	+GetInputDir() : std::string {query}
-	+GetInputFile() : std::string {query}
-	+GetLogDir() : std::string {query}
-	+GetMeshFile() : std::string {query}
-	+GetOutputDir() : std::string {query}
-	+GetOutputFile() : std::string {query}
-	-_boundaries : std::vector<std::pair<std::string, BOUNDARY_TYPE> >
-	+GetQuadOrder() : unsigned {query}
-	-_meshDimension : unsigned
-	-_quadOrder : unsigned
-}
-
-
 abstract class Solver {
-	+Solver(Settings* settings)
+	+Solver(Config* settings)
+	#_settings : Config*
+	#_mesh : Mesh*
 	#_g : NumericalFlux*
-	+{static} Create(Settings* settings) : Solver*
+	+{static} Create(Config* settings) : Solver*
 	#_weights : Vector
 	#_psi : VectorVector
 	#_quadPoints : VectorVector
-	#_NCells : const unsigned
 	#ComputeTimeStep(double cfl) : double {query}
 	#_dt : double
 	#_sigmaSH20 : std::vector<Matrix>
+	#_boundaryCells : std::vector<bool>
+	#_areas : std::vector<double>
 	#_density : std::vector<double>
 	#_sH20 : std::vector<double>
 	#_sigmaTH20 : std::vector<double>
 	#_normals : std::vector<std::vector<Vector> >
 	#_neighbors : std::vector<std::vector<unsigned> >
-	#_areas : std::vector<unsigned>
+	#_nCells : unsigned
 	#_nTimeSteps : unsigned
 	#_nq : unsigned
 	#LoadPatientDensity(std::string fileName) : void
 	#LoadSigmaS(std::string fileName) : void
 	#LoadSigmaT(std::string fileName) : void
 	#LoadStoppingPower(std::string fileName) : void
+	+{abstract} Save() : void {query}
 	#SetupIC() : void
 	+{abstract} Solve() : void
 }
 
 
 class UpwindFlux {
-	+UpwindFlux(Settings* settings)
+	+UpwindFlux(Config* settings)
 	+Flux(const Vector& Omega, double psiL, double psiR, const Vector& n) : double {query}
-}
-
-
-enum BOUNDARY_TYPE {
-	DIRICHLET
-	INVALID
-}
-
-
-enum QUAD_NAME {
-	QUAD_GaussLegendreTensorized
-	QUAD_LDFESA
-	QUAD_Lebedev
-	QUAD_LevelSymmetric
-	QUAD_MonteCarlo
 }
 
 
@@ -287,16 +251,16 @@ QLookupQuadrature <|-- QLebedev
 QLookupQuadrature <|-- QLevelSymmetric
 
 
-Quadrature <|-- QDummy
+QuadratureBase <|-- QDummy
 
 
-Quadrature <|-- QGaussLegendreTensorized
+QuadratureBase <|-- QGaussLegendreTensorized
 
 
-Quadrature <|-- QLookupQuadrature
+QuadratureBase <|-- QLookupQuadrature
 
 
-Quadrature <|-- QMonteCarlo
+QuadratureBase <|-- QMonteCarlo
 
 
 Solver <|-- SNSolver
@@ -306,6 +270,9 @@ Solver <|-- SNSolver
 
 
 /' Aggregation relationships '/
+
+Solver o-- Mesh
+
 
 Solver o-- NumericalFlux
 
