@@ -4,10 +4,10 @@
 #include <string>
 
 // include Matrix, Vector definitions
-#include "typedef.h"
 #include "io.h"
 #include "numericalflux.h"
 #include "settings/config.h"
+#include "typedef.h"
 
 class Solver
 {

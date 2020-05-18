@@ -4,7 +4,6 @@
 #include "mesh.h"
 #include "snsolver.h"
 
-
 Solver::Solver( Config* settings ) : _settings( settings ) {
     // @TODO save parameters from settings class
 
@@ -12,9 +11,9 @@ Solver::Solver( Config* settings ) : _settings( settings ) {
 
     // build quadrature object and store quadrature points and weights
     QuadratureBase* q = QuadratureBase::CreateQuadrature( settings->GetQuadName(), settings->GetQuadOrder() );
-    _quadPoints   = q->GetPoints();
-    _weights      = q->GetWeights();
-    _nq           = q->GetNq();
+    _quadPoints       = q->GetPoints();
+    _weights          = q->GetWeights();
+    _nq               = q->GetNq();
 
     // build mesh and store all relevant information
     _mesh      = LoadSU2MeshFromFile( settings );

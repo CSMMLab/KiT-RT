@@ -9,12 +9,11 @@ class QLebedev : public QLookupQuadrature
     QLebedev( unsigned order );
     virtual ~QLebedev() {}
 
-    inline void SetName() override { _name =  "Lebedev quadrature"; }
+    inline void SetName() override { _name = "Lebedev quadrature"; }
     void SetAvailOrders() override;
     void SetConnectivity() override;
 
     std::string GetLookupTable() override;
-
 };
 
-#endif // QLEBEDEV_H
+#endif    // QLEBEDEV_H

@@ -180,8 +180,8 @@ Mesh* LoadSU2MeshFromFile( const Config* settings ) {
                             markerTag.erase( end_pos, markerTag.end() );
                             btype = settings->GetBoundaryType( markerTag );
                             if( btype == BOUNDARY_TYPE::INVALID ) {
-                                std::string errorMsg = std::string("Invalid Boundary at marker \"" + markerTag + "\".");
-                                ErrorMessages::Error(errorMsg,CURRENT_FUNCTION);
+                                std::string errorMsg = std::string( "Invalid Boundary at marker \"" + markerTag + "\"." );
+                                ErrorMessages::Error( errorMsg, CURRENT_FUNCTION );
                             }
                         }
                         else if( line.find( "MARKER_ELEMS", 0 ) != std::string::npos ) {
@@ -338,4 +338,3 @@ void PrintLogHeader( std::string inputFile ) {
     }
     MPI_Barrier( MPI_COMM_WORLD );
 }
-

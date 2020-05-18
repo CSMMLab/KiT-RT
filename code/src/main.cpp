@@ -16,10 +16,10 @@ int main( int argc, char** argv ) {
 
     /*--- Load in the number of zones and spatial dimensions in the mesh file (If no config
      file is specified, default.cfg is used) ---*/
-    strcpy(config_file_name, filename.c_str());
+    strcpy( config_file_name, filename.c_str() );
 
-    //Load Settings from File
-    Config* config = new Config(config_file_name);
+    // Load Settings from File
+    Config* config = new Config( config_file_name );
 
     // Print input file and run info to file
     PrintLogHeader( config_file_name );

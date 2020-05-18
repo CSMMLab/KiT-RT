@@ -32,8 +32,15 @@ class Reconstructor
      */
 
     virtual double ReconstructSlopeStruct( double uL, double uC, double uR, double dxL, double dxR, std::string limiter ) const;
-    virtual void ReconstructSlopeUnstruct( unsigned nq, unsigned ncell, VectorVector& psi, VectorVector& psiDerX, VectorVector& psiDerY, Vector& area, VectorVector& neighbor, VectorVector& nx, VectorVector& ny ) const;
-
+    virtual void ReconstructSlopeUnstruct( unsigned nq,
+                                           unsigned ncell,
+                                           VectorVector& psi,
+                                           VectorVector& psiDerX,
+                                           VectorVector& psiDerY,
+                                           Vector& area,
+                                           VectorVector& neighbor,
+                                           VectorVector& nx,
+                                           VectorVector& ny ) const;
 };
 
-#endif // RECONSTRUCTOR_H
+#endif    // RECONSTRUCTOR_H

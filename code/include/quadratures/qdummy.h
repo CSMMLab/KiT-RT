@@ -23,7 +23,7 @@ class QDummy : public QuadratureBase
     void SetName() override;
     void SetNq() override;
     void SetPointsAndWeights() override;
-    void SetConnectivity()override;
+    void SetConnectivity() override;
 };
 
 #endif    // QDUMMY_H
