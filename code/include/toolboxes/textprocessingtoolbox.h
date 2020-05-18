@@ -38,6 +38,12 @@ inline std::vector<std::string> Split(const std::string& s, char delimiter)
   return tokens;
 }
 
+/*!
+ * \brief utility function for getting walltime
+ * \param
+ */
+//TODO
+
 }
 
 #endif // TEXTPROCESSINGTOOLBOX_H
