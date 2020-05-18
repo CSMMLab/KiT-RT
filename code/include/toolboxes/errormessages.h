@@ -9,19 +9,22 @@
 
 #include <iostream>
 
+#include "spdlog/spdlog.h"
+
 class ErrorMessages
 {
 public:
   ErrorMessages();
 
   inline static void Error(std::string ErrorMsg, std::string FunctionName){
-    //if (Rank == 0){ //For MPI implementation later
-      std::cout << std::endl << std::endl;
-      std::cout << "Error in \"" << FunctionName << "\": " << std::endl;
-      std::cout <<  "-------------------------------------------------------------------------" << std::endl;
-      std::cout << ErrorMsg << std::endl;
-      std::cout <<  "------------------------------ Error Exit -------------------------------" << std::endl;
-      std::cout << std::endl << std::endl;
+      auto log = spdlog::get( "event" );
+      // if (Rank == 0){ //For MPI implementation later
+      log->error( "\n" );
+      log->error( "Error in \"{0}\": ", FunctionName );
+      log->error( "-------------------------------------------------------------------------" );
+      log->error( ErrorMsg );
+      log->error( "------------------------------ Error Exit -------------------------------" );
+      log->error( "\n" );
     //}
     exit(EXIT_FAILURE);
   }

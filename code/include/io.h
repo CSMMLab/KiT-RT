@@ -7,9 +7,6 @@
 #include <string>
 
 #include "cpptoml.h"
-#include "spdlog/sinks/basic_file_sink.h"
-#include "spdlog/sinks/stdout_sinks.h"
-#include "spdlog/spdlog.h"
 #include <mpi.h>
 #include <omp.h>
 #include <vtkCellArray.h>
@@ -26,9 +23,7 @@
 #include <vtkUnstructuredGridWriter.h>
 
 #include "mesh.h"
-
 #include "settings/config.h"
-
 
 using vtkPointsSP                 = vtkSmartPointer<vtkPoints>;
 using vtkUnstructuredGridSP       = vtkSmartPointer<vtkUnstructuredGrid>;
@@ -43,10 +38,7 @@ using vtkPointDataToCellDataSP    = vtkSmartPointer<vtkPointDataToCellData>;
 void ExportVTK( const std::string fileName,
                 const std::vector<std::vector<std::vector<double>>>& results,
                 const std::vector<std::string> fieldNames,
-                const Config* settings,
                 const Mesh* mesh );
-
-void InitLogger( std::string logDir, spdlog::level::level_enum terminalLogLvl, spdlog::level::level_enum fileLogLvl );
 
 Mesh* LoadSU2MeshFromFile( const Config* settings );
 

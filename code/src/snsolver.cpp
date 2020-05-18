@@ -4,34 +4,17 @@
 SNSolver::SNSolver( Config* settings ) : Solver( settings ) {}
 
 void SNSolver::Solve() {
-
-    // TODO: set up initial condition
+    auto log = spdlog::get( "event" );
 
     // angular flux at next time step (maybe store angular flux at all time steps, since time becomes energy?)
     VectorVector psiNew = _psi;
 
-    // DEBUG: Summation to zero property
-    for( unsigned j = 0; j < _nCells; ++j ) {
-        Vector tmp( 2, 0.0 );
-        for( unsigned l = 0; l < _neighbors[j].size(); ++l ) {
-            tmp = tmp + _normals[j][l];
-            unsigned nghPosJ;
-            unsigned I = _neighbors[j][l];
-            if( I >= _nCells ) continue;
-            for( unsigned m = 0; m < _neighbors[I].size(); ++m ) {
-                if( _neighbors[I][m] == j ) nghPosJ = m;
-            }
-
-            std::cout << _normals[j][l] << std::endl << _normals[I][nghPosJ] << std::endl;
-            std::cout << "---------" << std::endl;
-        }
-        // std::cout << tmp << std::endl; // needs to sum up to 1
-    }
-    return;
+    int rank;
+    MPI_Comm_rank( MPI_COMM_WORLD, &rank );
+    if( rank == 0 ) log->info( "{:10}   {:10}", "t", "#placeholder" );
 
     // loop over energies (pseudo-time)
     for( unsigned n = 0; n < _nTimeSteps; ++n ) {
-        std::cout << "time " << n * _dt << std::endl;
         // loop over all spatial cells
         for( unsigned j = 0; j < _nCells; ++j ) {
             if( _boundaryCells[j] ) continue;
@@ -42,8 +25,6 @@ void SNSolver::Solve() {
                 for( unsigned l = 0; l < _neighbors[j].size(); ++l ) {
                     // store flux contribution on psiNew_sigmaSH20 to save memory
                     psiNew[j][k] -= _g->Flux( _quadPoints[k], _psi[j][k], _psi[_neighbors[j][l]][k], _normals[j][l] );
-                    std::cout << _g->Flux( _quadPoints[k], _psi[j][k], _psi[_neighbors[j][l]][k], _normals[j][l] ) << " "
-                              << _g->Flux( _quadPoints[k], _psi[_neighbors[j][l]][k], _psi[j][k], -_normals[j][l] ) << std::endl;
                 }
                 // time update angular flux with numerical flux and total scattering cross section
                 psiNew[j][k] = _psi[j][k] + ( _dt / _areas[j] ) * psiNew[j][k] + _dt * _sigmaTH20[n] * _psi[j][k];
@@ -52,6 +33,7 @@ void SNSolver::Solve() {
             psiNew[j] += _sigmaSH20[n] * _psi[j] * _weights;    // multiply scattering matrix with psi
         }
         _psi = psiNew;
+        if( rank == 0 ) log->info( "{:03.8f}   {:01.5e}", n * _dt, 0.0 );
     }
 }
 
@@ -115,12 +97,14 @@ void SNSolver::SolveMPI() {
 }
 
 void SNSolver::Save() const {
-    std::vector<std::string> fieldNames{"flux"};
+    std::vector<std::string> fieldNames{ "flux" };
     std::vector<double> flux( _nCells, 0.0 );
     for( unsigned i = 0; i < _nCells; ++i ) {
         flux[i] = dot( _psi[i], _weights );
     }
     std::vector<std::vector<double>> scalarField( 1, flux );
-    std::vector<std::vector<std::vector<double>>> results{scalarField};
-    ExportVTK( _settings->GetOutputFile(), results, fieldNames, _settings, _mesh );
+    std::vector<std::vector<std::vector<double>>> results{ scalarField };
+    ExportVTK( _settings->GetOutputFile(), results, fieldNames, _mesh );
+    auto log = spdlog::get( "event" );
+    log->info( "Result successfully exported to '{0}'!", _settings->GetOutputFile() );
 }

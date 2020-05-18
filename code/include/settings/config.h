@@ -10,11 +10,17 @@
 #define CONFIG_H
 
 #include <map>
+#include <mpi.h>
+
+#include "spdlog/sinks/basic_file_sink.h"
+#include "spdlog/sinks/stdout_sinks.h"
+#include "spdlog/spdlog.h"
+
 #include "optionstructure.h"
 #include "globalconstants.h"
 
 /*!
- * \class CConfig
+ * \class Config
  * \brief Main class for defining the problem; basically this class reads the configuration file, and
  *        stores all the information.
  */
@@ -28,6 +34,7 @@ private:
 
   // --- Options ---
   // File Structure
+  std::string _inputDir;   /*!< \brief Directory for input files*/
   std::string _outputDir;  /*!< \brief Directory for output files*/
   std::string _outputFile; /*!< \brief Name of output file*/
   std::string _logDir;     /*!< \brief Directory of log file*/
@@ -144,6 +151,9 @@ private:
   //List Options
   void AddStringListOption(const std::string name, unsigned short & num_marker, std::vector<std::string> & option_field);
 
+  // Initialize the cmdline and file logger
+  void InitLogger( spdlog::level::level_enum terminalLogLvl, spdlog::level::level_enum fileLogLvl );
+
 public:
   /*!
    * \brief Constructor of the class which reads the input file.
@@ -165,6 +175,7 @@ public:
   std::string inline GetMeshFile() const { return _meshFile; }
   std::string inline GetOutputDir() const { return _outputDir; }
   std::string inline GetOutputFile() const { return _outputFile; }
+  std::string inline GetLogDir() const { return _logDir; }
 
   // Quadrature Structure
   QUAD_NAME inline GetQuadName()  const {return _quadName;}

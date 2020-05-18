@@ -9,17 +9,6 @@ int main( int argc, char** argv ) {
 
     MPI_Init( &argc, &argv );
 
-    /*std::string inputFile = ParseArguments( argc, argv );
-    Settings* settings    = ReadInputFile( inputFile );
-    InitLogger( settings->GetLogDir(), spdlog::level::info, spdlog::level::info );
-    PrintLogHeader( settings->GetInputFile() );
-
-    // build solver
-    Solver* solver = Solver::Create( settings );
-    solver->Solve();
-    solver->Save();
-    */
-
     std::string filename = "default.cfg";
     char config_file_name[MAX_STRING_SIZE];
 
@@ -32,14 +21,16 @@ int main( int argc, char** argv ) {
     //Load Settings from File
     Config* config = new Config(config_file_name);
 
+    // Print input file and run info to file
+    PrintLogHeader( config_file_name );
 
-    // build solver
+    // Build solver
     Solver* solver = Solver::Create( config );
+
+    // Run solver and export
     solver->Solve();
     solver->Save();
 
-
-    // TODO: call solver
     MPI_Finalize();
     return EXIT_SUCCESS;
 }
