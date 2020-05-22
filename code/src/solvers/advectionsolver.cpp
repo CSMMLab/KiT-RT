@@ -1,6 +1,3 @@
-#include "solvers/advectionsolver.h"h"
-
-AdvectionSolver::AdvectionSolver()
-{
-
-}
+//#include "solvers/advectionsolver.h"
+//
+// AdvectionSolver::AdvectionSolver( Config* settings ) {}

@@ -1,6 +1,3 @@
-#include "dummydriver.h"
+//#include "drivers/dummydriver.h"
 
-DummyDriver::DummyDriver()
-{
-
-}
+// DummyDriver::DummyDriver( Config* settings ) {}
