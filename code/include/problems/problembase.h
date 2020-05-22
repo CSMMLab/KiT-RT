@@ -14,8 +14,6 @@ class ProblemBase
     Mesh* _mesh;
     Physics* _physics;
 
-    std::vector<double> _totalXS;
-    Matrix _scatteringXS;
     std::vector<double> _density;
     std::vector<double> _stoppingPower;
 
@@ -24,24 +22,20 @@ class ProblemBase
   public:
     /**
      * @brief GetScatteringXS gives back vector of vectors of scattering cross sections for materials defined by density and energies in vector energy
-     * @param energies is vector with energies
-     * @param density is vector with patient densities (at different spatial cells)
-     * @param Omega are scattering angles
+     * @param energy is the energy the cross section is queried for
      */
-    virtual std::vector<Matrix> GetScatteringXS( const double energy ) = 0;
+    virtual VectorVector GetScatteringXS( const std::vector<double>& energies ) = 0;
 
     /**
      * @brief GetTotalXS gives back vector of vectors of total cross sections for materials defined by density and energies in vector energy
-     * @param energies is vector with energies
+     * @param energy is the energy the cross section is queried for
      * @param density is vector with patient densities (at different spatial cells)
      */
-    virtual std::vector<double> GetTotalXS( const double energy ) = 0;
+    virtual VectorVector GetTotalXS( const std::vector<double>& energies ) = 0;
 
     /**
      * @brief GetStoppingPower gives back vector of vectors of stopping powers for materials defined by density and energies in vector energy
      * @param energies is vector with energies
-     * @param density is vector with patient densities (at different spatial cells)
-     * @param sH2O is vector of stopping powers in water
      */
     virtual std::vector<double> GetStoppingPower( const std::vector<double>& energies ) = 0;
 

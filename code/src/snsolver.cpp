@@ -14,8 +14,6 @@ void SNSolver::Solve() {
 
     // loop over energies (pseudo-time)
     for( unsigned n = 0; n < _nEnergies; ++n ) {
-        auto sigmaT = _problem->GetTotalXS( _energies[n] );
-        auto sigmaS = _problem->GetScatteringXS( _energies[n] );
         // loop over all spatial cells
         for( unsigned j = 0; j < _nCells; ++j ) {
             if( _boundaryCells[j] ) continue;
@@ -28,10 +26,10 @@ void SNSolver::Solve() {
                     psiNew[j][k] -= _g->Flux( _quadPoints[k], _psi[j][k], _psi[_neighbors[j][l]][k], _normals[j][l] );
                 }
                 // time update angular flux with numerical flux and total scattering cross section
-                psiNew[j][k] = _psi[j][k] + ( _dE / _areas[j] ) * psiNew[j][k] - _dE * sigmaT[j] * _psi[j][k];
+                psiNew[j][k] = _psi[j][k] + ( _dE / _areas[j] ) * psiNew[j][k] - _dE * _sigmaT[n][j] * _psi[j][k];
             }
             // compute scattering effects
-            psiNew[j] += sigmaS[j] * _psi[j] * _weights;    // multiply scattering matrix with psi
+            psiNew[j] += _scatteringKernel * _sigmaS[n][j] * _psi[j] * _weights;    // multiply scattering matrix with psi
         }
         _psi = psiNew;
         if( rank == 0 ) log->info( "{:03.8f}   {:01.5e}", _energies[n], 0.0 );

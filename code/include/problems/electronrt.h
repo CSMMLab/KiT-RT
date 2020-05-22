@@ -19,8 +19,8 @@ class ElectronRT : public ProblemBase
     ElectronRT( Config* settings, Mesh* mesh );
     virtual ~ElectronRT();
 
-    virtual std::vector<Matrix> GetScatteringXS( const double energy );
-    virtual std::vector<double> GetTotalXS( const double energy );
+    virtual VectorVector GetScatteringXS( const std::vector<double>& energies );
+    virtual VectorVector GetTotalXS( const std::vector<double>& energies );
     virtual std::vector<double> GetStoppingPower( const std::vector<double>& energies );
     virtual VectorVector SetupIC();
 };

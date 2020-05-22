@@ -2,7 +2,7 @@
 
 Checkerboard::Checkerboard( Config* settings, Mesh* mesh ) : ProblemBase( settings, mesh ) {
     _physics = nullptr;
-    _scatteringXS.resize( _mesh->GetNumCells(), Matrix( _settings->GetNQuadPoints(), _settings->GetNQuadPoints(), 0.0 ) );    // @TODO
+    _scatteringXS.resize( _mesh->GetNumCells(), 1.0 );
     _totalXS.resize( _mesh->GetNumCells(), 1.0 );
     auto cellMids = _mesh->GetCellMidPoints();
     for( unsigned j = 0; j < cellMids.size(); ++j ) {
@@ -15,9 +15,9 @@ Checkerboard::Checkerboard( Config* settings, Mesh* mesh ) : ProblemBase( settin
 
 Checkerboard::~Checkerboard() {}
 
-std::vector<Matrix> Checkerboard::GetScatteringXS( const double energy ) { return _scatteringXS; }
+VectorVector Checkerboard::GetScatteringXS( const std::vector<double>& energies ) { return VectorVector( energies.size(), _scatteringXS ); }
 
-std::vector<double> Checkerboard::GetTotalXS( const double energy ) { return _totalXS; }
+VectorVector Checkerboard::GetTotalXS( const std::vector<double>& energies ) { return VectorVector( energies.size(), _totalXS ); }
 
 std::vector<double> Checkerboard::GetStoppingPower( const std::vector<double>& energies ) {
     // @TODO

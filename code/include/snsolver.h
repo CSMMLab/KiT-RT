@@ -10,6 +10,7 @@
 
 class SNSolver : public Solver
 {
+  private:
   public:
     /**
      * @brief SNSolver constructor

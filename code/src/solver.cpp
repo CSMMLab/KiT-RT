@@ -21,16 +21,19 @@ Solver::Solver( Config* settings ) : _settings( settings ) {
     _weights          = q->GetWeights();
     _nq               = q->GetNq();
     _settings->SetNQuadPoints( _nq );
+    _scatteringKernel = ComputeScatteringKernel();
 
     // set time step
     _dE        = ComputeTimeStep( settings->GetCFL() );
     _nEnergies = unsigned( settings->GetTEnd() / _dE );
-    for( unsigned i = 0; i < _nEnergies; ++i ) _energies.push_back( i * _dE );
+    for( unsigned i = 0; i < _nEnergies; ++i ) _energies.push_back( ( i + 1 ) * _dE );
 
     // setup problem
     _problem = ProblemBase::Create( _settings, _mesh );
     _psi     = _problem->SetupIC();
     _s       = _problem->GetStoppingPower( _energies );
+    _sigmaT  = _problem->GetTotalXS( _energies );
+    _sigmaS  = _problem->GetScatteringXS( _energies );
 
     // setup numerical flux
     _g = NumericalFlux::Create( settings );
@@ -48,6 +51,27 @@ double Solver::ComputeTimeStep( double cfl ) const {
         }
     }
     return cfl * maxEdge;
+}
+
+Matrix Solver::ComputeScatteringKernel() const {
+    Matrix kernel( _nq, _nq, 0.0 );
+    for( unsigned i = 0; i < _nq; ++i ) {
+        auto omega = _quadPoints[i];
+        for( unsigned j = 0; j < _nq; ++j ) {
+            auto omegaprime = _quadPoints[j];
+            double eps      = 4.0 / _nq;
+            auto x          = ( 1 - dot( omega, omegaprime ) );
+            double val      = ( _weights[j] * 1.0 / eps * exp( -( x * x ) / ( eps * eps ) ) );
+            if( val < 1e-8 )
+                kernel( i, j ) = 0.0;
+            else
+                kernel( i, j ) = val;
+        }
+
+        column( kernel, i ) /= sum( column( kernel, i ) );
+        column( kernel, i ) /= _weights;
+    }
+    return kernel;
 }
 
 Solver* Solver::Create( Config* settings ) { return new SNSolver( settings ); }

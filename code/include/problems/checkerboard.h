@@ -6,8 +6,8 @@
 class Checkerboard : public ProblemBase
 {
   private:
-    std::vector<Matrix> _scatteringXS;
-    std::vector<double> _totalXS;
+    Vector _scatteringXS;
+    Vector _totalXS;
 
     Checkerboard() = delete;
 
@@ -17,8 +17,8 @@ class Checkerboard : public ProblemBase
     Checkerboard( Config* settings, Mesh* mesh );
     virtual ~Checkerboard();
 
-    virtual std::vector<Matrix> GetScatteringXS( const double energy );
-    virtual std::vector<double> GetTotalXS( const double energy );
+    virtual VectorVector GetScatteringXS( const std::vector<double>& energies );
+    virtual VectorVector GetTotalXS( const std::vector<double>& energies );
     virtual std::vector<double> GetStoppingPower( const std::vector<double>& energies );
     virtual VectorVector SetupIC();
 };

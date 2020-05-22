@@ -7,14 +7,14 @@ ElectronRT::ElectronRT( Config* settings, Mesh* mesh ) : ProblemBase( settings, 
 
 ElectronRT::~ElectronRT() {}
 
-std::vector<Matrix> ElectronRT::GetScatteringXS( const double energy ) {
+VectorVector ElectronRT::GetScatteringXS( const std::vector<double>& energies ) {
     // @TODO
-    return std::vector<Matrix>( _mesh->GetNumCells(), Matrix( _settings->GetNQuadPoints(), _settings->GetNQuadPoints(), 0.0 ) );
+    return VectorVector( energies.size(), Vector( _mesh->GetNumCells(), 0.0 ) );
 }
 
-std::vector<double> ElectronRT::GetTotalXS( const double energy ) {
+VectorVector ElectronRT::GetTotalXS( const std::vector<double>& energies ) {
     // @TODO
-    return std::vector<double>( _mesh->GetNumCells(), 0.0 );
+    return VectorVector( energies.size(), Vector( _mesh->GetNumCells(), 0.0 ) );
 }
 
 std::vector<double> ElectronRT::GetStoppingPower( const std::vector<double>& energies ) {

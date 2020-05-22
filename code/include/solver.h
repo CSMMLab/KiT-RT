@@ -24,6 +24,9 @@ class Solver
     std::vector<std::vector<unsigned>> _neighbors;    // edge normals multiplied by edge length, dim(_neighbors) = (_NCells,nEdgesPerCell)
     std::vector<double> _density;                     // patient density, dim(_density) = _nCells
     std::vector<double> _s;                           // stopping power, dim(_s) = _nTimeSteps
+    VectorVector _sigmaS;                             // scattering cross section for all energies
+    VectorVector _sigmaT;                             // total cross section for all energies
+    Matrix _scatteringKernel;                         // scattering kernel for the quadrature
     VectorVector _quadPoints;                         // quadrature points, dim(_quadPoints) = (_nTimeSteps,spatialDim)
     Vector _weights;                                  // quadrature weights, dim(_weights) = (_NCells)
     std::vector<bool> _boundaryCells;                 // boundary type for all cells, dim(_boundary) = (_NCells)
@@ -39,6 +42,7 @@ class Solver
      * @param cfl is cfl number
      */
     double ComputeTimeStep( double cfl ) const;
+    Matrix ComputeScatteringKernel() const;
 
   public:
     /**

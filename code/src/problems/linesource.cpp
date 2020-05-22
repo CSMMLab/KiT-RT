@@ -4,11 +4,13 @@ LineSource::LineSource( Config* settings, Mesh* mesh ) : ProblemBase( settings, 
 
 LineSource::~LineSource(){};
 
-std::vector<Matrix> LineSource::GetScatteringXS( const double energy ) {
-    return std::vector<Matrix>( _mesh->GetNumCells(), Matrix( _settings->GetNQuadPoints(), _settings->GetNQuadPoints(), 0.0 ) );
+VectorVector LineSource::GetScatteringXS( const std::vector<double>& energies ) {
+    return VectorVector( energies.size(), Vector( _mesh->GetNumCells(), 0.0 ) );
 }
 
-std::vector<double> LineSource::GetTotalXS( const double energy ) { return std::vector<double>( _mesh->GetNumCells(), 0.0 ); }
+VectorVector LineSource::GetTotalXS( const std::vector<double>& energies ) {
+    return VectorVector( energies.size(), Vector( _mesh->GetNumCells(), 0.0 ) );
+}
 
 std::vector<double> LineSource::GetStoppingPower( const std::vector<double>& energies ) {
     // @TODO
