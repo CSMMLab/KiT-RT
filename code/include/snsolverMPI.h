@@ -1,5 +1,5 @@
-#ifndef SNSOLVER_H
-#define SNSOLVER_H
+#ifndef SNSOLVERMPI_H
+#define SNSOLVERMPI_H
 
 #include <mpi.h>
 
@@ -8,14 +8,14 @@
 
 #include "settings/config.h"
 
-class SNSolver : public Solver
+class SNSolverMPI : public Solver
 {
   public:
     /**
      * @brief SNSolver constructor
      * @param settings stores all needed information
      */
-    SNSolver( Config* settings );
+    SNSolverMPI( Config* settings );
     /**
      * @brief Solve functions runs main time loop
      */
@@ -26,4 +26,4 @@ class SNSolver : public Solver
     virtual void Save() const;
 };
 
-#endif    // SNSOLVER_H
+#endif    // SNSOLVERMPI_H

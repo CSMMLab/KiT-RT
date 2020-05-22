@@ -1,0 +1,21 @@
+#ifndef LINESOURCE_H
+#define LINESOURCE_H
+
+#include "problembase.h"
+
+class LineSource : public ProblemBase
+{
+  private:
+    LineSource() = delete;
+
+  public:
+    LineSource( Config* settings, Mesh* mesh );
+    virtual ~LineSource();
+
+    virtual std::vector<Matrix> GetScatteringXS( const double energy );
+    virtual std::vector<double> GetTotalXS( const double energy );
+    virtual std::vector<double> GetStoppingPower( const std::vector<double>& energies );
+    virtual VectorVector SetupIC();
+};
+
+#endif    // LINESOURCE_H

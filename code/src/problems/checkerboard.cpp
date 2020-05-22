@@ -1,0 +1,50 @@
+#include "problems/checkerboard.h"
+
+Checkerboard::Checkerboard( Config* settings, Mesh* mesh ) : ProblemBase( settings, mesh ) {
+    _physics = nullptr;
+    _scatteringXS.resize( _mesh->GetNumCells(), Matrix( _settings->GetNQuadPoints(), _settings->GetNQuadPoints(), 0.0 ) );    // @TODO
+    _totalXS.resize( _mesh->GetNumCells(), 1.0 );
+    auto cellMids = _mesh->GetCellMidPoints();
+    for( unsigned j = 0; j < cellMids.size(); ++j ) {
+        if( isAbsorption( cellMids[j] ) ) {
+            _scatteringXS[j] = 0.0;
+            _totalXS[j]      = 10.0;
+        }
+    }
+}
+
+Checkerboard::~Checkerboard() {}
+
+std::vector<Matrix> Checkerboard::GetScatteringXS( const double energy ) { return _scatteringXS; }
+
+std::vector<double> Checkerboard::GetTotalXS( const double energy ) { return _totalXS; }
+
+std::vector<double> Checkerboard::GetStoppingPower( const std::vector<double>& energies ) {
+    // @TODO
+    return std::vector<double>( energies.size(), 0.0 );
+}
+
+VectorVector Checkerboard::SetupIC() {
+    VectorVector psi = std::vector( _mesh->GetNumCells(), Vector( _settings->GetNQuadPoints(), 1e-7 ) );
+    auto cellMids    = _mesh->GetCellMidPoints();
+    for( unsigned j = 0; j < cellMids.size(); ++j ) {
+        if( cellMids[j][0] >= 2.5 && cellMids[j][0] <= 3.5 && cellMids[j][1] >= 2.5 && cellMids[j][1] <= 3.5 ) {
+            psi[j] = 1.0;
+        }
+    }
+    return psi;
+}
+
+bool Checkerboard::isAbsorption( const Vector& pos ) {
+    std::vector<double> lbounds{ 0.5, 1.5, 2.5, 3.5, 4.5 };
+    std::vector<double> ubounds{ 1.5, 2.5, 3.5, 4.5, 5.5 };
+    for( unsigned k = 0; k < lbounds.size(); ++k ) {
+        for( unsigned l = 0; l < lbounds.size(); ++l ) {
+            if( ( l + k ) % 2 == 1 || ( k == 2 && l == 2 ) || ( k == 4 && l == 2 ) ) continue;
+            if( pos[0] >= lbounds[k] && pos[0] <= ubounds[k] && pos[1] >= lbounds[l] && pos[1] <= ubounds[l] ) {
+                return true;
+            }
+        }
+    }
+    return false;
+}

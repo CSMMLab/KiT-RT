@@ -198,6 +198,8 @@ void Config::SetConfigOptions() {
     AddDoubleOption( "CFL_NUMBER", _CFL, 1.0 );
     /*!\brief TIME_FINAL \n DESCRIPTION: Final time for simulation \n DEFAULT 1.0 \ingroup Config.*/
     AddDoubleOption( "TIME_FINAL", _tEnd, 1.0 );
+    /*!\brief Problem \n DESCRIPTION: Type of problem setting \n DEFAULT PROBLEM_ElectronRT \ingroup Config.*/
+    AddEnumOption( "PROBLEM", _problemName, Problem_Map, PROBLEM_ElectronRT );
 
     // Mesh related options
     // Boundary Markers
