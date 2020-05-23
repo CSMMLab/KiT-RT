@@ -53,8 +53,8 @@ double Solver::ComputeTimeStep( double cfl ) const {
     return cfl * maxEdge;
 }
 
-Matrix Solver::ComputeScatteringKernel() const {
-    Matrix kernel( _nq, _nq, 0.0 );    // @TODO use sparse matrix
+SparseMatrix Solver::ComputeScatteringKernel() const {
+    SparseMatrix kernel( _nq, _nq );
     for( unsigned i = 0; i < _nq; ++i ) {
         auto omega = _quadPoints[i];
         for( unsigned j = 0; j < _nq; ++j ) {
@@ -62,10 +62,7 @@ Matrix Solver::ComputeScatteringKernel() const {
             double eps      = 4.0 / _nq;    // @TODO: double check 'convolutionwidth'
             double x        = 1 - dot( omega, omegaprime );
             double val      = _weights[j] * 1.0 / eps * std::exp( -( x * x ) / ( eps * eps ) );
-            if( val < 1e-8 )
-                kernel( i, j ) = 0.0;
-            else
-                kernel( i, j ) = val;
+            if( val > 1e-8 ) kernel( i, j ) = val;
         }
         row( kernel, i ) /= sum( row( kernel, i ) );
         for( unsigned j = 0; j < _nq; ++j ) kernel( i, j ) /= _weights[j];

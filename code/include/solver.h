@@ -42,7 +42,7 @@ class Solver
      * @param cfl is cfl number
      */
     double ComputeTimeStep( double cfl ) const;
-    Matrix ComputeScatteringKernel() const;
+    SparseMatrix ComputeScatteringKernel() const;
 
   public:
     /**
