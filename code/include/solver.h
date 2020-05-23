@@ -26,6 +26,7 @@ class Solver
     std::vector<double> _s;                           // stopping power, dim(_s) = _nTimeSteps
     VectorVector _sigmaS;                             // scattering cross section for all energies
     VectorVector _sigmaT;                             // total cross section for all energies
+    VectorVector _Q;                                  // external source term
     Matrix _scatteringKernel;                         // scattering kernel for the quadrature
     VectorVector _quadPoints;                         // quadrature points, dim(_quadPoints) = (_nTimeSteps,spatialDim)
     Vector _weights;                                  // quadrature weights, dim(_weights) = (_NCells)

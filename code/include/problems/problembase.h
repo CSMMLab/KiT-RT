@@ -34,6 +34,12 @@ class ProblemBase
     virtual VectorVector GetTotalXS( const std::vector<double>& energies ) = 0;
 
     /**
+     * @brief GetStoppingPower gives back vector of vectors of source terms for each energy and cell
+     * @param energies is vector with energies
+     */
+    virtual VectorVector GetExternalSource( const std::vector<double>& energies ) = 0;
+
+    /**
      * @brief GetStoppingPower gives back vector of vectors of stopping powers for materials defined by density and energies in vector energy
      * @param energies is vector with energies
      */

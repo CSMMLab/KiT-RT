@@ -34,6 +34,7 @@ Solver::Solver( Config* settings ) : _settings( settings ) {
     _s       = _problem->GetStoppingPower( _energies );
     _sigmaT  = _problem->GetTotalXS( _energies );
     _sigmaS  = _problem->GetScatteringXS( _energies );
+    _Q       = _problem->GetExternalSource( _energies );
 
     // setup numerical flux
     _g = NumericalFlux::Create( settings );

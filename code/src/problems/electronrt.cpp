@@ -17,6 +17,11 @@ VectorVector ElectronRT::GetTotalXS( const std::vector<double>& energies ) {
     return VectorVector( energies.size(), Vector( _mesh->GetNumCells(), 0.0 ) );
 }
 
+VectorVector ElectronRT::GetExternalSource( const std::vector<double>& energies ) {
+    // @TODO
+    return VectorVector( energies.size(), Vector( _mesh->GetNumCells(), 0.0 ) );
+}
+
 std::vector<double> ElectronRT::GetStoppingPower( const std::vector<double>& energies ) {
     // @TODO
     return std::vector<double>( energies.size(), 0.0 );

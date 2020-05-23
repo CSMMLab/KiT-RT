@@ -29,7 +29,7 @@ void SNSolver::Solve() {
                 psiNew[j][k] = _psi[j][k] + ( _dE / _areas[j] ) * psiNew[j][k] - _dE * _sigmaT[n][j] * _psi[j][k];
             }
             // compute scattering effects
-            psiNew[j] += _scatteringKernel * _sigmaS[n][j] * _psi[j] * _weights;    // multiply scattering matrix with psi
+            psiNew[j] += _scatteringKernel * _sigmaS[n][j] * _psi[j] * _weights + _Q[n][j];    // multiply scattering matrix with psi
         }
         _psi = psiNew;
         if( rank == 0 ) log->info( "{:03.8f}   {:01.5e}", _energies[n], 0.0 );
