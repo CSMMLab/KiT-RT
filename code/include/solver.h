@@ -30,7 +30,7 @@ class Solver
     Matrix _scatteringKernel;                         // scattering kernel for the quadrature
     VectorVector _quadPoints;                         // quadrature points, dim(_quadPoints) = (_nTimeSteps,spatialDim)
     Vector _weights;                                  // quadrature weights, dim(_weights) = (_NCells)
-    std::vector<bool> _boundaryCells;                 // boundary type for all cells, dim(_boundary) = (_NCells)
+    std::vector<BOUNDARY_TYPE> _boundaryCells;        // boundary type for all cells, dim(_boundary) = (_NCells)
     // we will have to add a further dimension for quadPoints and weights once we start with multilevel SN
 
     NumericalFlux* _g;    // numerical flux function

@@ -205,6 +205,7 @@ void Config::SetConfigOptions() {
     // Boundary Markers
     /*!\brief BC_DIRICHLET\n DESCRIPTION: Dirichlet wall boundary marker(s) \ingroup Config*/
     AddStringListOption( "BC_DIRICHLET", _nMarkerDirichlet, _MarkerDirichlet );
+    AddStringListOption( "BC_NEUMANN", _nMarkerNeumann, _MarkerNeumann );
 }
 
 void Config::SetConfigParsing( char case_filename[MAX_STRING_SIZE] ) {
@@ -317,6 +318,9 @@ void Config::SetPostprocessing() {
     // Regroup Boundary Conditions to  std::vector<std::pair<std::string, BOUNDARY_TYPE>> _boundaries;
     for( int i = 0; i < _nMarkerDirichlet; i++ ) {
         _boundaries.push_back( std::pair<std::string, BOUNDARY_TYPE>( _MarkerDirichlet[i], DIRICHLET ) );
+    }
+    for( int i = 0; i < _nMarkerNeumann; i++ ) {
+        _boundaries.push_back( std::pair<std::string, BOUNDARY_TYPE>( _MarkerNeumann[i], NEUMANN ) );
     }
 
     // Check, if mesh file exists

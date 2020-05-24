@@ -59,7 +59,9 @@ class Config
          Each Boundary Conditions must have an entry in enum BOUNDARY_TYPE*/
     std::vector<std::pair<std::string, BOUNDARY_TYPE>> _boundaries;
     unsigned short _nMarkerDirichlet;          /*!< \brief Number of Dirichlet BC markers. Enum entry: DIRICHLET */
+    unsigned short _nMarkerNeumann;            /*!< \brief Number of Neumann BC markers. Enum entry: Neumann */
     std::vector<std::string> _MarkerDirichlet; /*!< \brief Dirichlet BC markers. */
+    std::vector<std::string> _MarkerNeumann;   /*!< \brief Neumann BC markers. */
 
     // --- Parsing Functionality and Initializing of Options ---
     /*!

@@ -40,7 +40,7 @@ Solver::Solver( Config* settings ) : _settings( settings ) {
     _g = NumericalFlux::Create( settings );
 
     // boundary type
-    _boundaryCells = _mesh->GetBoundaryCellArray();
+    _boundaryCells = _mesh->GetBoundaryTypes();
 }
 
 double Solver::ComputeTimeStep( double cfl ) const {
