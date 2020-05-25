@@ -12,12 +12,12 @@ def add_block(x0,y0,length,char_length,geom):
     ])
     return geom.add_polygon(coords, char_length)
 
-char_length = 0.06
+char_length = 0.075
 geom = pg.opencascade.Geometry()
-domain = add_block(0, 0, 6, char_length, geom)
-xpos = ypos = [0.5, 1.5, 2.5, 3.5, 4.5]
+domain = add_block(0, 0, 7, char_length, geom)
+xpos = ypos = [1, 2, 3, 4, 5]
 pattern = list(itertools.product(xpos, ypos))[::2]
-pattern.pop(len(pattern)-2)
+pattern.pop(7)
 boxes = [domain]
 for pos in pattern:
     boxes.append(add_block(pos[0], pos[1], 1, char_length, geom))

@@ -22,7 +22,7 @@ std::vector<double> LineSource::GetStoppingPower( const std::vector<double>& ene
 }
 
 VectorVector LineSource::SetupIC() {
-    VectorVector psi( _mesh->GetNumCells(), Vector( _settings->GetNQuadPoints(), 1e-7 ) );
+    VectorVector psi( _mesh->GetNumCells(), Vector( _settings->GetNQuadPoints(), 1e-10 ) );
     auto cellMids = _mesh->GetCellMidPoints();
     Vector midPoint( 2, 0.5 );
     for( unsigned j = 0; j < cellMids.size(); ++j ) {

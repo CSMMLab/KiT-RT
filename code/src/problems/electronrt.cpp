@@ -29,7 +29,7 @@ std::vector<double> ElectronRT::GetStoppingPower( const std::vector<double>& ene
 
 VectorVector ElectronRT::SetupIC() {
     // @TODO
-    return VectorVector( _mesh->GetNumCells(), Vector( _settings->GetNQuadPoints(), 1e-7 ) );
+    return VectorVector( _mesh->GetNumCells(), Vector( _settings->GetNQuadPoints(), 1e-10 ) );
 }
 
 void ElectronRT::LoadXSH20( std::string fileSigmaS, std::string fileSigmaT ) {

@@ -108,11 +108,17 @@ void Mesh::ComputeConnectivity() {
         }
     }
 
-    _cellBoundaryTypes.resize( _numCells, BOUNDARY_TYPE::INVALID );
+    _cellBoundaryTypes.resize( _numCells, BOUNDARY_TYPE::NONE );
     for( unsigned i = 0; i < _numCells; ++i ) {
-        if( std::any_of( _cellNeighbors[i].begin(), _cellNeighbors[i].end(), [this]( unsigned i ) { return i == this->_ghostCellID; } ) )
-            for( auto bc : _boundaries )
-                if( std::find( bc.second.begin(), bc.second.end(), i ) != bc.second.end() ) _cellBoundaryTypes[i] = bc.first;
+        if( std::any_of( _cellNeighbors[i].begin(), _cellNeighbors[i].end(), [this]( unsigned i ) { return i == _ghostCellID; } ) ) {
+            for( auto bc : _boundaries ) {
+                for( auto cNodes : _cells[i] ) {
+                    if( std::find( bc.second.begin(), bc.second.end(), cNodes ) != bc.second.end() ) {
+                        _cellBoundaryTypes[i] = bc.first;
+                    }
+                }
+            }
+        }
     }
 }
 

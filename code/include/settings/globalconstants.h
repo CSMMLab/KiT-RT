@@ -20,7 +20,7 @@ const unsigned int MAX_STRING_SIZE = 200;  /*!< \brief Maximum size for strings.
 
 // --- Definition of enums goes here ---
 
-enum BOUNDARY_TYPE { DIRICHLET, NEUMANN, INVALID };
+enum BOUNDARY_TYPE { DIRICHLET, NEUMANN, NONE, INVALID };
 
 // --- Definition of enums for EnumOptions goes here ---
 
