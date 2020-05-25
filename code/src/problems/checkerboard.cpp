@@ -1,9 +1,9 @@
 #include "problems/checkerboard.h"
 
 Checkerboard::Checkerboard( Config* settings, Mesh* mesh ) : ProblemBase( settings, mesh ) {
-    _physics = nullptr;
-    _scatteringXS.resize( _mesh->GetNumCells(), 1.0 );
-    _totalXS.resize( _mesh->GetNumCells(), 1.0 );
+    _physics      = nullptr;
+    _scatteringXS = Vector( _mesh->GetNumCells(), 1.0 );
+    _totalXS      = Vector( _mesh->GetNumCells(), 1.0 );
     auto cellMids = _mesh->GetCellMidPoints();
     for( unsigned j = 0; j < cellMids.size(); ++j ) {
         if( isAbsorption( cellMids[j] ) ) {
