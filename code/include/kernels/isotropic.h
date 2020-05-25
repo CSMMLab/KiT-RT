@@ -9,7 +9,7 @@ class Isotropic : public ScatteringKernel
     Isotropic() = delete;
 
   public:
-    Isotropic( unsigned nq );
+    Isotropic( QuadratureBase* q );
     ~Isotropic();
 
     virtual SparseMatrix GetScatteringKernel();

@@ -23,7 +23,7 @@ VectorVector Checkerboard::GetExternalSource( const std::vector<double>& energie
     Vector Q( _mesh->GetNumCells(), 0.0 );
     auto cellMids = _mesh->GetCellMidPoints();
     for( unsigned j = 0; j < cellMids.size(); ++j ) {
-        if( cellMids[j][0] >= 3 && cellMids[j][0] <= 4 && cellMids[j][1] >= 3 && cellMids[j][1] <= 4 ) Q[j] = 1.0;
+        if( isSource( cellMids[j] ) ) Q[j] = 1.0;
     }
     return VectorVector( energies.size(), Q );
 }
@@ -37,12 +37,12 @@ VectorVector Checkerboard::SetupIC() {
     VectorVector psi( _mesh->GetNumCells(), Vector( _settings->GetNQuadPoints(), 1e-10 ) );
     auto cellMids = _mesh->GetCellMidPoints();
     for( unsigned j = 0; j < cellMids.size(); ++j ) {
-        if( cellMids[j][0] >= 3 && cellMids[j][0] <= 4 && cellMids[j][1] >= 3 && cellMids[j][1] <= 4 ) psi[j] = 1.0;
+        if( isSource( cellMids[j] ) ) psi[j] = 1.0;
     }
     return psi;
 }
 
-bool Checkerboard::isAbsorption( const Vector& pos ) {
+bool Checkerboard::isAbsorption( const Vector& pos ) const {
     std::vector<double> lbounds{ 1, 2, 3, 4, 5 };
     std::vector<double> ubounds{ 2, 3, 4, 5, 6 };
     for( unsigned k = 0; k < lbounds.size(); ++k ) {
@@ -54,4 +54,11 @@ bool Checkerboard::isAbsorption( const Vector& pos ) {
         }
     }
     return false;
+}
+
+bool Checkerboard::isSource( const Vector& pos ) const {
+    if( pos[0] >= 3 && pos[0] <= 4 && pos[1] >= 3 && pos[1] <= 4 )
+        return true;
+    else
+        return false;
 }

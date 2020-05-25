@@ -11,7 +11,8 @@ class Checkerboard : public ProblemBase
 
     Checkerboard() = delete;
 
-    bool isAbsorption( const Vector& pos );
+    bool isAbsorption( const Vector& pos ) const;
+    bool isSource( const Vector& pos ) const;
 
   public:
     Checkerboard( Config* settings, Mesh* mesh );

@@ -21,7 +21,7 @@ Solver::Solver( Config* settings ) : _settings( settings ) {
     _weights          = q->GetWeights();
     _nq               = q->GetNq();
     _settings->SetNQuadPoints( _nq );
-    ScatteringKernel* k = ScatteringKernel::CreateScatteringKernel( settings->GetKernelName(), _nq );
+    ScatteringKernel* k = ScatteringKernel::CreateScatteringKernel( settings->GetKernelName(), q );
     _scatteringKernel   = k->GetScatteringKernel();
 
     // set time step

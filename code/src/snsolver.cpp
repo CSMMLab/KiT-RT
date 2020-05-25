@@ -27,15 +27,18 @@ void SNSolver::Solve() {
                 // loop over all neighbor cells (edges) of cell j and compute numerical fluxes
                 for( unsigned l = 0; l < _neighbors[j].size(); ++l ) {
                     // store flux contribution on psiNew_sigmaS to save memory
-                    psiNew[j][k] -= _g->Flux( _quadPoints[k], _psi[j][k], _psi[_neighbors[j][l]][k], _normals[j][l] );
+                    if( _boundaryCells[j] == BOUNDARY_TYPE::NEUMANN && _neighbors[j][l] == _nCells )
+                        psiNew[j][k] += _g->Flux( _quadPoints[k], _psi[j][k], _psi[j][k], _normals[j][l] );
+                    else
+                        psiNew[j][k] += _g->Flux( _quadPoints[k], _psi[j][k], _psi[_neighbors[j][l]][k], _normals[j][l] );
                 }
                 // time update angular flux with numerical flux and total scattering cross section
-                // psiNew[j][k] = _psi[j][k] + ( _dE / _areas[j] ) * psiNew[j][k] - _dE * _sigmaT[n][j] * _psi[j][k];
-                psiNew[j][k] = _psi[j][k] + ( _dE / _areas[j] ) * psiNew[j][k] - _dE * _sigmaT[0][j] * _psi[j][k];
+                // psiNew[j][k] = _psi[j][k] - ( _dE / _areas[j] ) * psiNew[j][k] - _dE * _sigmaT[n][j] * _psi[j][k];
+                psiNew[j][k] = _psi[j][k] - ( _dE / _areas[j] ) * psiNew[j][k] - _dE * _sigmaT[0][j] * _psi[j][k];
             }
             // compute scattering effects
             // psiNew[j] += _dE * _scatteringKernel * _sigmaS[n][j] * _psi[j] * _weights;    // multiply scattering matrix with psi
-            psiNew[j] += _dE * _scatteringKernel * _sigmaS[0][j] * _psi[j] * _weights;    // multiply scattering matrix with psi
+            psiNew[j] += _dE * _sigmaS[0][j] * _scatteringKernel * _psi[j] * _weights;    // multiply scattering matrix with psi
             // add external source contribution
             // psiNew[j] += _Q[n][j] * _areas[j];
             psiNew[j] += _Q[0][j] * _areas[j];
