@@ -33,7 +33,7 @@ void SNSolver::Solve() {
             // compute scattering effects
             psiNew[j] += _scatteringKernel * _sigmaS[n][j] * _psi[j] * _weights;    // multiply scattering matrix with psi
             // add external source contribution
-            psiNew[j] += _Q[n][j];
+            psiNew[j] += _dE * _Q[n][j];
         }
         _psi = psiNew;
         for( unsigned i = 0; i < _nCells; ++i ) {
