@@ -20,13 +20,18 @@ VectorVector Checkerboard::GetScatteringXS( const std::vector<double>& energies 
 VectorVector Checkerboard::GetTotalXS( const std::vector<double>& energies ) { return VectorVector( energies.size(), _totalXS ); }
 
 VectorVector Checkerboard::GetExternalSource( const std::vector<double>& energies ) {
-    VectorVector Q( energies.size(), Vector( _mesh->GetNumCells(), 0.0 ) );
+    std::vector<unsigned> marker;
     auto cellMids = _mesh->GetCellMidPoints();
+    auto cellArea = _mesh->GetCellAreas();
+    for( unsigned j = 0; j < _mesh->GetNumCells(); ++j ) {
+        if( cellMids[j][0] >= 2.5 && cellMids[j][0] <= 3.5 && cellMids[j][1] >= 2.5 && cellMids[j][1] <= 3.5 ) {
+            marker.push_back( j );
+        }
+    }
+    VectorVector Q( energies.size(), Vector( _mesh->GetNumCells(), 0.0 ) );
     for( unsigned i = 0; i < energies.size(); ++i ) {
-        for( unsigned j = 0; j < _mesh->GetNumCells(); ++j ) {
-            if( cellMids[j][0] >= 2.5 && cellMids[j][0] <= 3.5 && cellMids[j][1] >= 2.5 && cellMids[j][1] <= 3.5 ) {
-                Q[i][j] = 1.0;
-            }
+        for( auto j : marker ) {
+            Q[i][j] = cellArea[j];
         }
     }
     return Q;

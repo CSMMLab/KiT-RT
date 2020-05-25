@@ -63,6 +63,9 @@ class Config
     std::vector<std::string> _MarkerDirichlet; /*!< \brief Dirichlet BC markers. */
     std::vector<std::string> _MarkerNeumann;   /*!< \brief Neumann BC markers. */
 
+    // Scattering Kernel
+    KERNEL_NAME _kernelName; /*!< \brief Scattering Kernel Name*/
+
     // --- Parsing Functionality and Initializing of Options ---
     /*!
      * \brief Set default values for all options not yet set.
@@ -199,6 +202,9 @@ class Config
 
     // Boundary Conditions
     BOUNDARY_TYPE GetBoundaryType( std::string nameMarker ) const; /*! \brief Get Boundary Type of given marker */
+
+    // Scattering Kernel
+    KERNEL_NAME inline GetKernelName() const { return _kernelName; }
 
     // Output Structure
 };

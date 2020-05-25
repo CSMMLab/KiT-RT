@@ -21,7 +21,8 @@ Solver::Solver( Config* settings ) : _settings( settings ) {
     _weights          = q->GetWeights();
     _nq               = q->GetNq();
     _settings->SetNQuadPoints( _nq );
-    _scatteringKernel = ComputeScatteringKernel();
+    ScatteringKernel* k = ScatteringKernel::CreateScatteringKernel( settings->GetKernelName(), _nq );
+    _scatteringKernel   = k->GetScatteringKernel();
 
     // set time step
     _dE        = ComputeTimeStep( settings->GetCFL() );
@@ -52,23 +53,6 @@ double Solver::ComputeTimeStep( double cfl ) const {
         }
     }
     return cfl * maxEdge;
-}
-
-SparseMatrix Solver::ComputeScatteringKernel() const {
-    SparseMatrix kernel( _nq, _nq );
-    for( unsigned i = 0; i < _nq; ++i ) {
-        auto omega = _quadPoints[i];
-        for( unsigned j = 0; j < _nq; ++j ) {
-            auto omegaprime = _quadPoints[j];
-            double eps      = 4.0 / _nq;    // @TODO: double check 'convolutionwidth'
-            double x        = 1 - dot( omega, omegaprime );
-            double val      = _weights[j] * 1.0 / eps * std::exp( -( x * x ) / ( eps * eps ) );
-            if( val > 1e-8 ) kernel( i, j ) = val;
-        }
-        row( kernel, i ) /= sum( row( kernel, i ) );
-        for( unsigned j = 0; j < _nq; ++j ) kernel( i, j ) /= _weights[j];
-    }
-    return kernel;
 }
 
 Solver* Solver::Create( Config* settings ) { return new SNSolver( settings ); }

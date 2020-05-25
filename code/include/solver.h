@@ -5,8 +5,10 @@
 
 // include Matrix, Vector definitions
 #include "io.h"
+#include "kernels/scatteringkernelbase.h"
 #include "numericalflux.h"
 #include "problems/problembase.h"
+#include "quadratures/quadraturebase.h"
 #include "settings/config.h"
 #include "typedef.h"
 
@@ -43,7 +45,6 @@ class Solver
      * @param cfl is cfl number
      */
     double ComputeTimeStep( double cfl ) const;
-    SparseMatrix ComputeScatteringKernel() const;
 
   public:
     /**

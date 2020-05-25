@@ -206,6 +206,8 @@ void Config::SetConfigOptions() {
     /*!\brief BC_DIRICHLET\n DESCRIPTION: Dirichlet wall boundary marker(s) \ingroup Config*/
     AddStringListOption( "BC_DIRICHLET", _nMarkerDirichlet, _MarkerDirichlet );
     AddStringListOption( "BC_NEUMANN", _nMarkerNeumann, _MarkerNeumann );
+
+    AddEnumOption( "KERNEL", _kernelName, Kernel_Map, KERNEL_Isotropic );
 }
 
 void Config::SetConfigParsing( char case_filename[MAX_STRING_SIZE] ) {

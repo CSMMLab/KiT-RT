@@ -8,7 +8,6 @@ void SNSolver::Solve() {
     // angular flux at next time step (maybe store angular flux at all time steps, since time becomes energy?)
     VectorVector psiNew = _psi;
     double error        = 1e10;
-    double error_prev   = 0;
     Vector fluxNew( _nCells, 0.0 );
     Vector fluxOld( _nCells, 0.0 );
     int rank;
@@ -18,8 +17,7 @@ void SNSolver::Solve() {
     // loop over energies (pseudo-time)
     // for( unsigned n = 0; n < _nEnergies; ++n ) {
     unsigned ctr = 0;
-    while( std::fabs( error - error_prev ) > 1e-6 ) {
-        error_prev = error;
+    while( error > 1e-6 ) {
         // loop over all spatial cells
         for( unsigned j = 0; j < _nCells; ++j ) {
             if( _boundaryCells[j] == BOUNDARY_TYPE::DIRICHLET ) continue;
@@ -45,9 +43,8 @@ void SNSolver::Solve() {
         }
         error   = blaze::l2Norm( fluxNew - fluxOld );
         fluxOld = fluxNew;
-        ctr++;
         // if( rank == 0 ) log->info( "{:03.8f}   {:01.5e}", _energies[n], error );
-        if( rank == 0 ) log->info( "{:03.8f}   {:01.5e}", ctr * _dE, std::fabs( error - error_prev ) );
+        if( rank == 0 ) log->info( "{:03.8f}   {:01.5e}", ++ctr * _dE, error );
     }
 }
 
