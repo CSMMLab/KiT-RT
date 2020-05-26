@@ -12,8 +12,8 @@ VectorVector LineSource::GetTotalXS( const std::vector<double>& energies ) {
     return VectorVector( energies.size(), Vector( _mesh->GetNumCells(), 1.0 ) );
 }
 
-VectorVector LineSource::GetExternalSource( const std::vector<double>& energies ) {
-    return VectorVector( energies.size(), Vector( _mesh->GetNumCells(), 0.0 ) );
+std::vector<VectorVector> LineSource::GetExternalSource( const std::vector<double>& energies ) {
+    return std::vector<VectorVector>( 1u, std::vector<Vector>( _mesh->GetNumCells(), Vector( 1u, 0.0 ) ) );
 }
 
 std::vector<double> LineSource::GetStoppingPower( const std::vector<double>& energies ) {

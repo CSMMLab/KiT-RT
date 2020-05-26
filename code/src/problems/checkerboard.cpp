@@ -19,13 +19,13 @@ VectorVector Checkerboard::GetScatteringXS( const std::vector<double>& energies 
 
 VectorVector Checkerboard::GetTotalXS( const std::vector<double>& energies ) { return VectorVector( energies.size(), _totalXS ); }
 
-VectorVector Checkerboard::GetExternalSource( const std::vector<double>& energies ) {
-    Vector Q( _mesh->GetNumCells(), 0.0 );
+std::vector<VectorVector> Checkerboard::GetExternalSource( const std::vector<double>& energies ) {
+    VectorVector Q( _mesh->GetNumCells(), Vector( 1u, 0.0 ) );
     auto cellMids = _mesh->GetCellMidPoints();
     for( unsigned j = 0; j < cellMids.size(); ++j ) {
         if( isSource( cellMids[j] ) ) Q[j] = 1.0 / ( 4 * M_PI );    // isotropic source
     }
-    return VectorVector( energies.size(), Q );
+    return std::vector<VectorVector>( 1u, Q );
 }
 
 std::vector<double> Checkerboard::GetStoppingPower( const std::vector<double>& energies ) {

@@ -36,8 +36,20 @@ void SNSolver::Solve() {
             // compute scattering effects
             psiNew[j] += _dE * _sigmaS[n][j] * _scatteringKernel * _psi[j];    // multiply scattering matrix with psi
 
+            // TODO: figure out a more elegant way
             // add external source contribution
-            psiNew[j] += _dE * _Q[n][j];
+            if( _Q.size() == 1u ) {            // constant source for all energies
+                if( _Q[0][j].size() == 1u )    // isotropic source
+                    psiNew[j] += _dE * _Q[0][j][0];
+                else
+                    psiNew[j] += _dE * _Q[0][j];
+            }
+            else {
+                if( _Q[0][j].size() == 1u )    // isotropic source
+                    psiNew[j] += _dE * _Q[n][j][0];
+                else
+                    psiNew[j] += _dE * _Q[n][j];
+            }
         }
         _psi = psiNew;
         for( unsigned i = 0; i < _nCells; ++i ) {
@@ -58,6 +70,4 @@ void SNSolver::Save() const {
     std::vector<std::vector<double>> scalarField( 1, flux );
     std::vector<std::vector<std::vector<double>>> results{ scalarField };
     ExportVTK( _settings->GetOutputFile(), results, fieldNames, _mesh );
-    auto log = spdlog::get( "event" );
-    log->info( "Result successfully exported to '{0}'!", _settings->GetOutputFile() );
 }

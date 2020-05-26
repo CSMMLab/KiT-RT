@@ -32,11 +32,10 @@ Solver::Solver( Config* settings ) : _settings( settings ) {
     // setup problem
     _problem = ProblemBase::Create( _settings, _mesh );
     _psi     = _problem->SetupIC();
-    // for( unsigned j = 0; j < _nCells; ++j ) _psi[j] *= _weights;
-    _s      = _problem->GetStoppingPower( _energies );
-    _sigmaT = _problem->GetTotalXS( _energies );
-    _sigmaS = _problem->GetScatteringXS( _energies );
-    _Q      = _problem->GetExternalSource( _energies );
+    _s       = _problem->GetStoppingPower( _energies );
+    _sigmaT  = _problem->GetTotalXS( _energies );
+    _sigmaS  = _problem->GetScatteringXS( _energies );
+    _Q       = _problem->GetExternalSource( _energies );
 
     // setup numerical flux
     _g = NumericalFlux::Create( settings );

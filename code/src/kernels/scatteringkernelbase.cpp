@@ -1,13 +1,13 @@
 #include "kernels/scatteringkernelbase.h"
 #include "kernels/isotropic.h"
 
-ScatteringKernel::ScatteringKernel( QuadratureBase* q ) : _q( q ) {}
+ScatteringKernel::ScatteringKernel( QuadratureBase* quad ) : _quad( quad ) {}
 
 ScatteringKernel::~ScatteringKernel() {}
 
-ScatteringKernel* ScatteringKernel::CreateScatteringKernel( KERNEL_NAME name, QuadratureBase* q ) {
+ScatteringKernel* ScatteringKernel::CreateScatteringKernel( KERNEL_NAME name, QuadratureBase* quad ) {
     switch( name ) {
-        case KERNEL_Isotropic: return new Isotropic( q );
-        default: return new Isotropic( q );
+        case KERNEL_Isotropic: return new Isotropic( quad );
+        default: return new Isotropic( quad );
     }
 }

@@ -11,15 +11,15 @@ class ScatteringKernel
     ScatteringKernel() = delete;
 
   protected:
-    QuadratureBase* _q;
+    QuadratureBase* _quad;
 
   public:
-    ScatteringKernel( QuadratureBase* q );
+    ScatteringKernel( QuadratureBase* quad );
     ~ScatteringKernel();
 
-    virtual SparseMatrix GetScatteringKernel() = 0;
+    virtual Matrix GetScatteringKernel() = 0;
 
-    static ScatteringKernel* CreateScatteringKernel( KERNEL_NAME name, QuadratureBase* q );
+    static ScatteringKernel* CreateScatteringKernel( KERNEL_NAME name, QuadratureBase* quad );
 };
 
 #endif    // SCATTERINGKERNELBASE_CPP

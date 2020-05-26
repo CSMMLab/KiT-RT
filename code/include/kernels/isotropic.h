@@ -12,7 +12,7 @@ class Isotropic : public ScatteringKernel
     Isotropic( QuadratureBase* q );
     ~Isotropic();
 
-    virtual SparseMatrix GetScatteringKernel();
+    virtual Matrix GetScatteringKernel();
 };
 
 #endif
