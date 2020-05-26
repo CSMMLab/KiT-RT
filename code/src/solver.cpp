@@ -16,12 +16,12 @@ Solver::Solver( Config* settings ) : _settings( settings ) {
     _settings->SetNCells( _nCells );
 
     // build quadrature object and store quadrature points and weights
-    QuadratureBase* q = QuadratureBase::CreateQuadrature( settings->GetQuadName(), settings->GetQuadOrder() );
-    _quadPoints       = q->GetPoints();
-    _weights          = q->GetWeights();
-    _nq               = q->GetNq();
+    QuadratureBase* quad = QuadratureBase::CreateQuadrature( settings->GetQuadName(), settings->GetQuadOrder() );
+    _quadPoints          = quad->GetPoints();
+    _weights             = quad->GetWeights();
+    _nq                  = quad->GetNq();
     _settings->SetNQuadPoints( _nq );
-    ScatteringKernel* k = ScatteringKernel::CreateScatteringKernel( settings->GetKernelName(), q );
+    ScatteringKernel* k = ScatteringKernel::CreateScatteringKernel( settings->GetKernelName(), quad );
     _scatteringKernel   = k->GetScatteringKernel();
 
     // set time step
@@ -32,10 +32,11 @@ Solver::Solver( Config* settings ) : _settings( settings ) {
     // setup problem
     _problem = ProblemBase::Create( _settings, _mesh );
     _psi     = _problem->SetupIC();
-    _s       = _problem->GetStoppingPower( _energies );
-    _sigmaT  = _problem->GetTotalXS( _energies );
-    _sigmaS  = _problem->GetScatteringXS( _energies );
-    _Q       = _problem->GetExternalSource( _energies );
+    // for( unsigned j = 0; j < _nCells; ++j ) _psi[j] *= _weights;
+    _s      = _problem->GetStoppingPower( _energies );
+    _sigmaT = _problem->GetTotalXS( _energies );
+    _sigmaS = _problem->GetScatteringXS( _energies );
+    _Q      = _problem->GetExternalSource( _energies );
 
     // setup numerical flux
     _g = NumericalFlux::Create( settings );

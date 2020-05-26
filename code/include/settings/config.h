@@ -9,6 +9,7 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
+#include <filesystem>
 #include <map>
 #include <mpi.h>
 
@@ -180,10 +181,10 @@ class Config
      *        Please keep alphabetical order within each subcategory
      */
     // File structure
-    std::string inline GetMeshFile() const { return _meshFile; }
-    std::string inline GetOutputDir() const { return _outputDir; }
-    std::string inline GetOutputFile() const { return _outputFile; }
-    std::string inline GetLogDir() const { return _logDir; }
+    std::string inline GetMeshFile() const { return std::filesystem::path( _meshFile ).lexically_normal(); }
+    std::string inline GetOutputDir() const { return std::filesystem::path( _outputDir ).lexically_normal(); }
+    std::string inline GetOutputFile() const { return std::filesystem::path( _outputFile ).lexically_normal(); }
+    std::string inline GetLogDir() const { return std::filesystem::path( _logDir ).lexically_normal(); }
 
     // Quadrature Structure
     QUAD_NAME inline GetQuadName() const { return _quadName; }
