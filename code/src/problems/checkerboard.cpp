@@ -23,7 +23,7 @@ VectorVector Checkerboard::GetExternalSource( const std::vector<double>& energie
     Vector Q( _mesh->GetNumCells(), 0.0 );
     auto cellMids = _mesh->GetCellMidPoints();
     for( unsigned j = 0; j < cellMids.size(); ++j ) {
-        if( isSource( cellMids[j] ) ) Q[j] = 1.0;
+        if( isSource( cellMids[j] ) ) Q[j] = 1.0 / ( 4 * M_PI );    // isotropic source
     }
     return VectorVector( energies.size(), Q );
 }
@@ -35,10 +35,6 @@ std::vector<double> Checkerboard::GetStoppingPower( const std::vector<double>& e
 
 VectorVector Checkerboard::SetupIC() {
     VectorVector psi( _mesh->GetNumCells(), Vector( _settings->GetNQuadPoints(), 1e-10 ) );
-    auto cellMids = _mesh->GetCellMidPoints();
-    for( unsigned j = 0; j < cellMids.size(); ++j ) {
-        if( isSource( cellMids[j] ) ) psi[j] = 1.0;
-    }
     return psi;
 }
 
