@@ -165,7 +165,7 @@ void Mesh::ComputeCellMidpoints() {
         for( unsigned l = 0; l < _cells[j].size(); ++l ) {
             _cellMidPoints[j] = _cellMidPoints[j] + _nodes[_cells[j][l]];
         }
-        _cellMidPoints[j] = _cellMidPoints[j] / double( _cells[j].size() );
+        _cellMidPoints[j] = _cellMidPoints[j] / static_cast<double>( _cells[j].size() );
     }
 }
 

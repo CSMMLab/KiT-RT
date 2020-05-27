@@ -126,6 +126,7 @@ set( CORE_LIBRARIES ${LAPACK_LIBRARIES} ${MPI_LIBRARIES} ${VTK_LIBRARIES} parmet
 target_link_libraries( ${CMAKE_PROJECT_NAME} ${CORE_LIBRARIES} )
 
 if( BUILD_TESTING )
+    add_compile_definitions( BUILD_TESTING=1 )
     add_subdirectory( ${CMAKE_SOURCE_DIR}/ext/Catch2 )
     include_directories( ${CMAKE_SOURCE_DIR}/ext/Catch2/single_include/catch2 )
     file( GLOB_RECURSE TEST_SRCS RELATIVE ${CMAKE_SOURCE_DIR} "tests/*.cpp" )

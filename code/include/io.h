@@ -19,7 +19,6 @@
 #include <vtkSmartPointer.h>
 #include <vtkTriangle.h>
 #include <vtkUnstructuredGrid.h>
-#include <vtkUnstructuredGridReader.h>
 #include <vtkUnstructuredGridWriter.h>
 
 #include "mesh.h"
@@ -31,7 +30,6 @@ using vtkTriangleSP               = vtkSmartPointer<vtkTriangle>;
 using vtkCellArraySP              = vtkSmartPointer<vtkCellArray>;
 using vtkDoubleArraySP            = vtkSmartPointer<vtkDoubleArray>;
 using vtkUnstructuredGridWriterSP = vtkSmartPointer<vtkUnstructuredGridWriter>;
-using vtkUnstructuredGridReaderSP = vtkSmartPointer<vtkUnstructuredGridReader>;
 using vtkCellDataToPointDataSP    = vtkSmartPointer<vtkCellDataToPointData>;
 using vtkPointDataToCellDataSP    = vtkSmartPointer<vtkPointDataToCellData>;
 

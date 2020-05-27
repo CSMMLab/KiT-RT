@@ -312,8 +312,12 @@ void Config::SetPostprocessing() {
     // create directories if they dont exist
     if( !std::filesystem::exists( _outputDir ) ) std::filesystem::create_directory( _outputDir );
 
-    // init logger
+        // init logger
+#ifdef BUILD_TESTING
+    InitLogger( spdlog::level::off, spdlog::level::off );
+#else
     InitLogger( spdlog::level::info, spdlog::level::info );
+#endif
 
     // Check if there are contradictive or false options set.
 
@@ -491,55 +495,57 @@ void Config::InitLogger( spdlog::level::level_enum terminalLogLvl, spdlog::level
         std::filesystem::create_directory( _logDir );
     }
 
-    // create sinks if level is not off
-    std::vector<spdlog::sink_ptr> sinks;
-    if( terminalLogLvl != spdlog::level::off ) {
-        // create spdlog terminal sink
-        auto terminalSink = std::make_shared<spdlog::sinks::stdout_sink_mt>();
-        terminalSink->set_level( terminalLogLvl );
-        terminalSink->set_pattern( "%v" );
-        sinks.push_back( terminalSink );
-    }
-    if( fileLogLvl != spdlog::level::off ) {
-        // define filename on root
-        int pe;
-        MPI_Comm_rank( MPI_COMM_WORLD, &pe );
-        char cfilename[1024];
-        if( pe == 0 ) {
-            // get date and time
-            time_t now = time( nullptr );
-            struct tm tstruct;
-            char buf[80];
-            tstruct = *localtime( &now );
-            strftime( buf, sizeof( buf ), "%Y-%m-%d_%X", &tstruct );
-
-            // set filename to date and time
-            std::string filename = buf;
-
-            // in case of existing files append '_#'
-            int ctr = 0;
-            if( std::filesystem::exists( _logDir + filename ) ) {
-                filename += "_" + std::to_string( ++ctr );
-            }
-            while( std::filesystem::exists( _logDir + filename ) ) {
-                filename.pop_back();
-                filename += std::to_string( ++ctr );
-            }
-            strncpy( cfilename, filename.c_str(), sizeof( cfilename ) );
-            cfilename[sizeof( cfilename ) - 1] = 0;
+    if( spdlog::get( "event" ) == nullptr ) {
+        // create sinks if level is not off
+        std::vector<spdlog::sink_ptr> sinks;
+        if( terminalLogLvl != spdlog::level::off ) {
+            // create spdlog terminal sink
+            auto terminalSink = std::make_shared<spdlog::sinks::stdout_sink_mt>();
+            terminalSink->set_level( terminalLogLvl );
+            terminalSink->set_pattern( "%v" );
+            sinks.push_back( terminalSink );
         }
-        MPI_Bcast( &cfilename, sizeof( cfilename ), MPI_CHAR, 0, MPI_COMM_WORLD );
-        MPI_Barrier( MPI_COMM_WORLD );
+        if( fileLogLvl != spdlog::level::off ) {
+            // define filename on root
+            int pe;
+            MPI_Comm_rank( MPI_COMM_WORLD, &pe );
+            char cfilename[1024];
+            if( pe == 0 ) {
+                // get date and time
+                time_t now = time( nullptr );
+                struct tm tstruct;
+                char buf[80];
+                tstruct = *localtime( &now );
+                strftime( buf, sizeof( buf ), "%Y-%m-%d_%X", &tstruct );
 
-        // create spdlog file sink
-        auto fileSink = std::make_shared<spdlog::sinks::basic_file_sink_mt>( _logDir + cfilename );
-        fileSink->set_level( fileLogLvl );
-        fileSink->set_pattern( "%Y-%m-%d %H:%M:%S.%f | %v" );
-        sinks.push_back( fileSink );
+                // set filename to date and time
+                std::string filename = buf;
+
+                // in case of existing files append '_#'
+                int ctr = 0;
+                if( std::filesystem::exists( _logDir + filename ) ) {
+                    filename += "_" + std::to_string( ++ctr );
+                }
+                while( std::filesystem::exists( _logDir + filename ) ) {
+                    filename.pop_back();
+                    filename += std::to_string( ++ctr );
+                }
+                strncpy( cfilename, filename.c_str(), sizeof( cfilename ) );
+                cfilename[sizeof( cfilename ) - 1] = 0;
+            }
+            MPI_Bcast( &cfilename, sizeof( cfilename ), MPI_CHAR, 0, MPI_COMM_WORLD );
+            MPI_Barrier( MPI_COMM_WORLD );
+
+            // create spdlog file sink
+            auto fileSink = std::make_shared<spdlog::sinks::basic_file_sink_mt>( _logDir + cfilename );
+            fileSink->set_level( fileLogLvl );
+            fileSink->set_pattern( "%Y-%m-%d %H:%M:%S.%f | %v" );
+            sinks.push_back( fileSink );
+        }
+
+        // register all sinks
+        auto event_logger = std::make_shared<spdlog::logger>( "event", begin( sinks ), end( sinks ) );
+        spdlog::register_logger( event_logger );
+        spdlog::flush_every( std::chrono::seconds( 5 ) );
     }
-
-    // register all sinks
-    auto event_logger = std::make_shared<spdlog::logger>( "event", begin( sinks ), end( sinks ) );
-    spdlog::register_logger( event_logger );
-    spdlog::flush_every( std::chrono::seconds( 5 ) );
 }

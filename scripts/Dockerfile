@@ -4,7 +4,7 @@ ENV CXX=/usr/bin/g++ \
     CC=/usr/bin/gcc \
     LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/lib"
 
-RUN apt-get update -qq \
+RUN apt-get update \
     && apt-get install -qq software-properties-common \
     && add-apt-repository ppa:ubuntu-toolchain-r/test \
     && apt-get update \
@@ -21,10 +21,13 @@ RUN apt-get update -qq \
        libssl-dev \
        libxt-dev \
        libgl1-mesa-dev \
+       libgsl-dev \
     && update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-9 100 \
     && update-alternatives --install /usr/bin/c++ c++ /usr/bin/g++-9 100 \
     && update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-9 100 \
     && update-alternatives --install /usr/bin/cc cc /usr/bin/gcc-9 100 \
+    && apt-get clean && \
+    && apt-get autoremove --purge && \
     && rm -rf /var/lib/apt/lists/* 
 
 RUN wget --no-check-certificate --quiet https://cmake.org/files/v3.16/cmake-3.16.4.tar.gz \
