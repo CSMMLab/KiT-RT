@@ -20,7 +20,7 @@ const unsigned int MAX_STRING_SIZE = 200;  /*!< \brief Maximum size for strings.
 
 // --- Definition of enums goes here ---
 
-enum BOUNDARY_TYPE { DIRICHLET, INVALID };
+enum BOUNDARY_TYPE { DIRICHLET, NEUMANN, NONE, INVALID };
 
 // --- Definition of enums for EnumOptions goes here ---
 
@@ -36,5 +36,14 @@ inline std::map<std::string, QUAD_NAME> Quadrature_Map{ { "MONTE_CARLO", QUAD_Mo
                                                         { "LEVEL_SYMMETRIC", QUAD_LevelSymmetric },
                                                         { "LEBEDEV", QUAD_Lebedev },
                                                         { "LDFESA", QUAD_LDFESA } };
+
+enum PROBLEM_NAME { PROBLEM_LineSource, PROBLEM_Checkerboard, PROBLEM_ElectronRT };
+
+inline std::map<std::string, PROBLEM_NAME> Problem_Map{
+    { "LINESOURCE", PROBLEM_LineSource }, { "CHECKERBOARD", PROBLEM_Checkerboard }, { "ELECTRONRT", PROBLEM_ElectronRT } };
+
+enum KERNEL_NAME { KERNEL_Isotropic };
+
+inline std::map<std::string, KERNEL_NAME> Kernel_Map{ { "ISOTROPIC", KERNEL_Isotropic } };
 
 #endif    // GLOBAL_CONSTANTS_H

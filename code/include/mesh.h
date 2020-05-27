@@ -35,7 +35,7 @@ class Mesh
     std::vector<Vector> _cellMidPoints;
     std::vector<std::vector<unsigned>> _cellNeighbors;
     std::vector<std::vector<Vector>> _cellNormals;
-    std::vector<bool> _isBoundaryCell;
+    std::vector<BOUNDARY_TYPE> _cellBoundaryTypes;
     blaze::CompressedMatrix<bool> _nodeNeighbors;
     std::vector<unsigned> _colors;
 
@@ -64,10 +64,7 @@ class Mesh
     const std::vector<std::vector<unsigned>>& GetNeighbours() const;
     const std::vector<std::vector<Vector>>& GetNormals() const;
 
-    /**
-     * @brief GetBoundaryCellArray returns array with (dirichlet?) boundary cells
-     */
-    const std::vector<bool>& GetBoundaryCellArray() const;
+    const std::vector<BOUNDARY_TYPE>& GetBoundaryTypes() const;
 
     /**
      * @brief ComputeSlopes calculates the slope in every cell into x and y direction

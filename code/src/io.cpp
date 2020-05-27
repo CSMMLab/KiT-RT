@@ -115,6 +115,9 @@ void ExportVTK( const std::string fileName,
         writer->SetInputData( conv_grid );
 
         writer->Write();
+
+        auto log = spdlog::get( "event" );
+        log->info( "Result successfully exported to '{0}'!", fileNameWithExt );
     }
     MPI_Barrier( MPI_COMM_WORLD );
 }
