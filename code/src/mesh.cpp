@@ -108,10 +108,17 @@ void Mesh::ComputeConnectivity() {
         }
     }
 
-    _isBoundaryCell.resize( _numCells, false );
+    _cellBoundaryTypes.resize( _numCells, BOUNDARY_TYPE::NONE );
     for( unsigned i = 0; i < _numCells; ++i ) {
-        if( std::any_of( _cellNeighbors[i].begin(), _cellNeighbors[i].end(), [this]( unsigned i ) { return i == this->_ghostCellID; } ) )
-            _isBoundaryCell[i] = true;
+        if( std::any_of( _cellNeighbors[i].begin(), _cellNeighbors[i].end(), [this]( unsigned i ) { return i == _ghostCellID; } ) ) {
+            for( auto bc : _boundaries ) {
+                for( auto cNodes : _cells[i] ) {
+                    if( std::find( bc.second.begin(), bc.second.end(), cNodes ) != bc.second.end() ) {
+                        _cellBoundaryTypes[i] = bc.first;
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -325,4 +332,4 @@ const std::vector<double>& Mesh::GetCellAreas() const { return _cellAreas; }
 const std::vector<unsigned>& Mesh::GetPartitionIDs() const { return _colors; }
 const std::vector<std::vector<unsigned>>& Mesh::GetNeighbours() const { return _cellNeighbors; }
 const std::vector<std::vector<Vector>>& Mesh::GetNormals() const { return _cellNormals; }
-const std::vector<bool>& Mesh::GetBoundaryCellArray() const { return _isBoundaryCell; }
+const std::vector<BOUNDARY_TYPE>& Mesh::GetBoundaryTypes() const { return _cellBoundaryTypes; }

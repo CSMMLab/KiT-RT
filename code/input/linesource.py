@@ -12,20 +12,14 @@ def add_block(x0,y0,length,char_length,geom):
     ])
     return geom.add_polygon(coords, char_length)
 
-char_length = 0.075
+char_length = 0.015
 geom = pg.opencascade.Geometry()
-domain = add_block(0, 0, 7, char_length, geom)
-xpos = ypos = [1, 2, 3, 4, 5]
-pattern = list(itertools.product(xpos, ypos))[::2]
-pattern.pop(7)
-boxes = [domain]
-for pos in pattern:
-    boxes.append(add_block(pos[0], pos[1], 1, char_length, geom))
-geom.boolean_fragments(boxes,[])
+domain = add_block(-0.6, -0.6, 1.2, char_length, geom)
+geom.add_raw_code('psource = newp;\nPoint(psource) = {0.0, 0.0, 0.0, '+str(char_length)+'};\nPoint{psource} In Surface{'+domain.id+'};')
 geom.add_physical(domain.lines, label="void")
 
 mesh_code = geom.get_code()
-with open("checkerboard.geo","w") as mesh_file:
+with open("linesource.geo","w") as mesh_file:
     mesh_file.write(mesh_code)
-os.system('gmsh checkerboard.geo -2 -format su2 -save_all')
-os.system('rm checkerboard.geo')
+os.system('gmsh linesource.geo -2 -format su2 -save_all')
+os.system('rm linesource.geo')

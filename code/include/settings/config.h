@@ -9,6 +9,7 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
+#include <filesystem>
 #include <map>
 #include <mpi.h>
 
@@ -44,15 +45,27 @@ class Config
     // Quadrature
     QUAD_NAME _quadName;       /*!< \brief Quadrature Name*/
     unsigned short _quadOrder; /*!< \brief Quadrature Order*/
+    unsigned _nQuadPoints;
+
+    // Mesh
+    unsigned _nCells;
+
     // Solver
     double _CFL;  /*!< \brief CFL Number for Solver*/
     double _tEnd; /*!< \brief Final Time for Simulation */
+    PROBLEM_NAME _problemName;
+
     // Boundary Conditions
     /*!< \brief List of all Pairs (marker, BOUNDARY_TYPE), e.g. (farfield,DIRICHLET).
          Each Boundary Conditions must have an entry in enum BOUNDARY_TYPE*/
     std::vector<std::pair<std::string, BOUNDARY_TYPE>> _boundaries;
     unsigned short _nMarkerDirichlet;          /*!< \brief Number of Dirichlet BC markers. Enum entry: DIRICHLET */
+    unsigned short _nMarkerNeumann;            /*!< \brief Number of Neumann BC markers. Enum entry: Neumann */
     std::vector<std::string> _MarkerDirichlet; /*!< \brief Dirichlet BC markers. */
+    std::vector<std::string> _MarkerNeumann;   /*!< \brief Neumann BC markers. */
+
+    // Scattering Kernel
+    KERNEL_NAME _kernelName; /*!< \brief Scattering Kernel Name*/
 
     // --- Parsing Functionality and Initializing of Options ---
     /*!
@@ -168,21 +181,31 @@ class Config
      *        Please keep alphabetical order within each subcategory
      */
     // File structure
-    std::string inline GetMeshFile() const { return _meshFile; }
-    std::string inline GetOutputDir() const { return _outputDir; }
-    std::string inline GetOutputFile() const { return _outputFile; }
-    std::string inline GetLogDir() const { return _logDir; }
+    std::string inline GetMeshFile() const { return std::filesystem::path( _meshFile ).lexically_normal(); }
+    std::string inline GetOutputDir() const { return std::filesystem::path( _outputDir ).lexically_normal(); }
+    std::string inline GetOutputFile() const { return std::filesystem::path( _outputFile ).lexically_normal(); }
+    std::string inline GetLogDir() const { return std::filesystem::path( _logDir ).lexically_normal(); }
 
     // Quadrature Structure
     QUAD_NAME inline GetQuadName() const { return _quadName; }
     unsigned short inline GetQuadOrder() const { return _quadOrder; }
+    void SetNQuadPoints( unsigned nq ) { _nQuadPoints = nq; }
+    unsigned GetNQuadPoints() { return _nQuadPoints; }
+
+    // Mesh Structure
+    void SetNCells( unsigned nCells ) { _nCells = nCells; }
+    unsigned GetNCells() { return _nCells; }
 
     // Solver Structure
     double inline GetCFL() const { return _CFL; }
     double inline GetTEnd() const { return _tEnd; }
+    PROBLEM_NAME inline GetProblemName() const { return _problemName; }
 
     // Boundary Conditions
     BOUNDARY_TYPE GetBoundaryType( std::string nameMarker ) const; /*! \brief Get Boundary Type of given marker */
+
+    // Scattering Kernel
+    KERNEL_NAME inline GetKernelName() const { return _kernelName; }
 
     // Output Structure
 };

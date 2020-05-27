@@ -198,11 +198,16 @@ void Config::SetConfigOptions() {
     AddDoubleOption( "CFL_NUMBER", _CFL, 1.0 );
     /*!\brief TIME_FINAL \n DESCRIPTION: Final time for simulation \n DEFAULT 1.0 \ingroup Config.*/
     AddDoubleOption( "TIME_FINAL", _tEnd, 1.0 );
+    /*!\brief Problem \n DESCRIPTION: Type of problem setting \n DEFAULT PROBLEM_ElectronRT \ingroup Config.*/
+    AddEnumOption( "PROBLEM", _problemName, Problem_Map, PROBLEM_ElectronRT );
 
     // Mesh related options
     // Boundary Markers
     /*!\brief BC_DIRICHLET\n DESCRIPTION: Dirichlet wall boundary marker(s) \ingroup Config*/
     AddStringListOption( "BC_DIRICHLET", _nMarkerDirichlet, _MarkerDirichlet );
+    AddStringListOption( "BC_NEUMANN", _nMarkerNeumann, _MarkerNeumann );
+
+    AddEnumOption( "KERNEL", _kernelName, Kernel_Map, KERNEL_Isotropic );
 }
 
 void Config::SetConfigParsing( char case_filename[MAX_STRING_SIZE] ) {
@@ -315,6 +320,9 @@ void Config::SetPostprocessing() {
     // Regroup Boundary Conditions to  std::vector<std::pair<std::string, BOUNDARY_TYPE>> _boundaries;
     for( int i = 0; i < _nMarkerDirichlet; i++ ) {
         _boundaries.push_back( std::pair<std::string, BOUNDARY_TYPE>( _MarkerDirichlet[i], DIRICHLET ) );
+    }
+    for( int i = 0; i < _nMarkerNeumann; i++ ) {
+        _boundaries.push_back( std::pair<std::string, BOUNDARY_TYPE>( _MarkerNeumann[i], NEUMANN ) );
     }
 
     // Check, if mesh file exists
