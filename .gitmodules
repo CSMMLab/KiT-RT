@@ -10,6 +10,3 @@
 [submodule "code/ext/blaze"]
 	path = code/ext/blaze
 	url = https://bitbucket.org/blaze-lib/blaze.git
-[submodule "code/ext/parmetis"]
-	path = code/ext/parmetis
-	url = git://github.com/scibuilder/parmetis.git
