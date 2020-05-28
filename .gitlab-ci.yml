@@ -6,14 +6,10 @@ stages:
 
 build:
   stage: build
-  artifacts:
-    expire_in: 1 day
-    paths:
-      - code/bin/
   script:
     - git submodule update --init --recursive
     - cd code/build/debug
-    - cmake -G Ninja -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=True -DCMAKE_EXPORT_COMPILE_COMMANDS=True ../../
+    - cmake -G Ninja -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=True ../../
     - ninja
   only:
     refs:
@@ -29,10 +25,13 @@ build:
       
 unit_tests:
   stage: unit_tests
-  dependencies:
-    - build
   script:
-    - ./code/bin/unit_tests
+    - git submodule update --init --recursive
+    - cd code/build/release
+    - cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=True ../../
+    - ninja
+    - cd ../../bin
+    - ./unit_tests
   only:
     refs:
       - master
