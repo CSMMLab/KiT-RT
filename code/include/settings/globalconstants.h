@@ -37,13 +37,20 @@ inline std::map<std::string, QUAD_NAME> Quadrature_Map{ { "MONTE_CARLO", QUAD_Mo
                                                         { "LEBEDEV", QUAD_Lebedev },
                                                         { "LDFESA", QUAD_LDFESA } };
 
+// Problem name
 enum PROBLEM_NAME { PROBLEM_LineSource, PROBLEM_Checkerboard, PROBLEM_ElectronRT };
 
 inline std::map<std::string, PROBLEM_NAME> Problem_Map{
     { "LINESOURCE", PROBLEM_LineSource }, { "CHECKERBOARD", PROBLEM_Checkerboard }, { "ELECTRONRT", PROBLEM_ElectronRT } };
 
+// Kernel name
 enum KERNEL_NAME { KERNEL_Isotropic };
 
 inline std::map<std::string, KERNEL_NAME> Kernel_Map{ { "ISOTROPIC", KERNEL_Isotropic } };
+
+// Solver name
+enum SOLVER_NAME { SN_SOLVER, PN_SOLVER };
+
+inline std::map<std::string, SOLVER_NAME> Solver_Map{ { "SN_SOLVER", SN_SOLVER }, { "PN_SOLVER", PN_SOLVER } };
 
 #endif    // GLOBAL_CONSTANTS_H

@@ -54,6 +54,7 @@ class Config
     double _CFL;  /*!< \brief CFL Number for Solver*/
     double _tEnd; /*!< \brief Final Time for Simulation */
     PROBLEM_NAME _problemName;
+    SOLVER_NAME _solverName;
 
     // Boundary Conditions
     /*!< \brief List of all Pairs (marker, BOUNDARY_TYPE), e.g. (farfield,DIRICHLET).
@@ -200,6 +201,7 @@ class Config
     double inline GetCFL() const { return _CFL; }
     double inline GetTEnd() const { return _tEnd; }
     PROBLEM_NAME inline GetProblemName() const { return _problemName; }
+    SOLVER_NAME inline GetSolverName() const { return _solverName; }
 
     // Boundary Conditions
     BOUNDARY_TYPE GetBoundaryType( std::string nameMarker ) const; /*! \brief Get Boundary Type of given marker */

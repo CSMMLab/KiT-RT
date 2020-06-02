@@ -2,6 +2,8 @@
 #include "../../include/quadratures/quadraturebase.h"
 #include "io.h"
 #include "mesh.h"
+#include "pnsolver.h"
+#include "settings/globalconstants.h"
 #include "snsolver.h"
 
 Solver::Solver( Config* settings ) : _settings( settings ) {
@@ -55,4 +57,10 @@ double Solver::ComputeTimeStep( double cfl ) const {
     return cfl * maxEdge;
 }
 
-Solver* Solver::Create( Config* settings ) { return new SNSolver( settings ); }
+Solver* Solver::Create( Config* settings ) {
+    switch( settings->GetSolverName() ) {
+        case SN_SOLVER: return new SNSolver( settings );
+        case PN_SOLVER: return new PNSolver( settings );
+        default: return new SNSolver( settings );
+    }
+}
