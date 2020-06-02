@@ -66,15 +66,17 @@ class PNSolver : public Solver
     int kMinus( int k ) const;
     int GlobalIndex( int l, int k ) const;
 
-    // function for setting up system matrices
+    // function for computing and setting up system matrices
     void ComputeSystemMatrices();
-    // funcktion for computing flux matrices for upwinding
+    // function for computing and setting up flux matrices for upwinding
     void ComputeFluxComponents();
-
-    // Scattering Kernel
+    // fucntion for computing and setting up diagonal matrix for scattering kernel
     void ComputeScatterMatrix();
-    // Legendre Polynomial
+    // Computes Legedre polinomial of oder l at point x
     double Legendre( double x, int l );
+
+    // Computes Moments for given zeroth moment initial conditions
+    void ComputeICMoments();
 };
 
 #endif    // PNSOLVER_H

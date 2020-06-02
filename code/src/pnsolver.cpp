@@ -115,67 +115,67 @@ void PNSolver::ComputeSystemMatrices() {
     unsigned i = 0;
 
     // loop over columns of A
-    for( int l = 0; l <= int( _nq ); ++l ) {    // index of legendre polynom
-        for( int k = -l; k <= l; ++k ) {        // second index of legendre function
-            i = unsigned( GlobalIndex( l, k ) );
+    for( int idx_lOrder = 0; idx_lOrder <= int( _nq ); idx_lOrder++ ) {                  // index of legendre polynom
+        for( int idx_kOrder = -idx_lOrder; idx_kOrder <= idx_lOrder; idx_kOrder++ ) {    // second index of legendre function
+            i = unsigned( GlobalIndex( idx_lOrder, idx_kOrder ) );
 
             // flux matrix in direction x
-            if( k != -1 ) {
-                j = GlobalIndex( l - 1, kMinus( k ) );
+            if( idx_kOrder != -1 ) {
+                j = GlobalIndex( idx_lOrder - 1, kMinus( idx_kOrder ) );
                 if( j >= 0 && j < int( _nTotalEntries ) ) {
-                    _Ax( i, unsigned( j ) ) = 0.5 * CTilde( l - 1, std::abs( k ) - 1 );
+                    _Ax( i, unsigned( j ) ) = 0.5 * CTilde( idx_lOrder - 1, std::abs( idx_kOrder ) - 1 );
                 }
 
-                j = GlobalIndex( l + 1, kMinus( k ) );
+                j = GlobalIndex( idx_lOrder + 1, kMinus( idx_kOrder ) );
                 if( j >= 0 && j < int( _nTotalEntries ) ) {
-                    _Ax( i, unsigned( j ) ) = -0.5 * DTilde( l + 1, std::abs( k ) - 1 );
+                    _Ax( i, unsigned( j ) ) = -0.5 * DTilde( idx_lOrder + 1, std::abs( idx_kOrder ) - 1 );
                 }
             }
 
-            j = GlobalIndex( l - 1, kPlus( k ) );
+            j = GlobalIndex( idx_lOrder - 1, kPlus( idx_kOrder ) );
             if( j >= 0 && j < int( _nTotalEntries ) ) {
-                _Ax( i, unsigned( j ) ) = -0.5 * ETilde( l - 1, std::abs( k ) + 1 );
+                _Ax( i, unsigned( j ) ) = -0.5 * ETilde( idx_lOrder - 1, std::abs( idx_kOrder ) + 1 );
             }
 
-            j = GlobalIndex( l + 1, kPlus( k ) );
+            j = GlobalIndex( idx_lOrder + 1, kPlus( idx_kOrder ) );
             if( j >= 0 && j < int( _nTotalEntries ) ) {
-                _Ax( i, unsigned( j ) ) = 0.5 * FTilde( l + 1, std::abs( k ) + 1 );
+                _Ax( i, unsigned( j ) ) = 0.5 * FTilde( idx_lOrder + 1, std::abs( idx_kOrder ) + 1 );
             }
 
             //
             // flux matrix in direction y
-            if( k != 1 ) {
-                j = GlobalIndex( l - 1, -kMinus( k ) );
+            if( idx_kOrder != 1 ) {
+                j = GlobalIndex( idx_lOrder - 1, -kMinus( idx_kOrder ) );
                 if( j >= 0 && j < int( _nTotalEntries ) ) {
-                    _Ay( i, unsigned( j ) ) = -0.5 * Sgn( k ) * CTilde( l - 1, std::abs( k ) - 1 );
+                    _Ay( i, unsigned( j ) ) = -0.5 * Sgn( idx_kOrder ) * CTilde( idx_lOrder - 1, std::abs( idx_kOrder ) - 1 );
                 }
 
-                j = GlobalIndex( l + 1, -kMinus( k ) );
+                j = GlobalIndex( idx_lOrder + 1, -kMinus( idx_kOrder ) );
                 if( j >= 0 && j < int( _nTotalEntries ) ) {
-                    _Ay( i, unsigned( j ) ) = 0.5 * Sgn( k ) * DTilde( l + 1, std::abs( k ) - 1 );
+                    _Ay( i, unsigned( j ) ) = 0.5 * Sgn( idx_kOrder ) * DTilde( idx_lOrder + 1, std::abs( idx_kOrder ) - 1 );
                 }
             }
 
-            j = GlobalIndex( l - 1, -kPlus( k ) );
+            j = GlobalIndex( idx_lOrder - 1, -kPlus( idx_kOrder ) );
             if( j >= 0 && j < int( _nTotalEntries ) ) {
-                _Ay( i, unsigned( j ) ) = -0.5 * Sgn( k ) * ETilde( l - 1, std::abs( k ) + 1 );
+                _Ay( i, unsigned( j ) ) = -0.5 * Sgn( idx_kOrder ) * ETilde( idx_lOrder - 1, std::abs( idx_kOrder ) + 1 );
             }
 
-            j = GlobalIndex( l + 1, -kPlus( k ) );
+            j = GlobalIndex( idx_lOrder + 1, -kPlus( idx_kOrder ) );
             if( j >= 0 && j < int( _nTotalEntries ) ) {
-                _Ay( i, unsigned( j ) ) = 0.5 * Sgn( k ) * FTilde( l + 1, std::abs( k ) + 1 );
+                _Ay( i, unsigned( j ) ) = 0.5 * Sgn( idx_kOrder ) * FTilde( idx_lOrder + 1, std::abs( idx_kOrder ) + 1 );
             }
 
             //
             // flux matrix in direction z
-            j = GlobalIndex( l - 1, k );
+            j = GlobalIndex( idx_lOrder - 1, idx_kOrder );
             if( j >= 0 && j < int( _nTotalEntries ) ) {
-                _Az( i, unsigned( j ) ) = AParam( l - 1, k );
+                _Az( i, unsigned( j ) ) = AParam( idx_lOrder - 1, idx_kOrder );
             }
 
-            j = GlobalIndex( l + 1, k );
+            j = GlobalIndex( idx_lOrder + 1, idx_kOrder );
             if( j >= 0 && j < int( _nTotalEntries ) ) {
-                _Az( i, unsigned( j ) ) = BParam( l + 1, k );
+                _Az( i, unsigned( j ) ) = BParam( idx_lOrder + 1, idx_kOrder );
             }
         }
     }
@@ -259,9 +259,10 @@ void PNSolver::ComputeScatterMatrix() {
     double integralSum  = 0;
     unsigned idx_global = 0;
 
-    for( int idx_lOrder = 0; idx_lOrder < int( _nq ); ++idx_lOrder ) {
-        for( int idx_kOrder = -idx_lOrder; idx_kOrder < idx_lOrder; ++idx_lOrder ) {
-
+    for( int idx_lOrder = 0; idx_lOrder <= int( _nq ); idx_lOrder++ ) {
+        std::cout << "l: " << idx_lOrder << std::endl;
+        for( int idx_kOrder = -idx_lOrder; idx_kOrder <= idx_lOrder; idx_kOrder++ ) {
+            std::cout << "k :" << idx_kOrder << std::endl;
             idx_global                  = unsigned( GlobalIndex( idx_lOrder, idx_kOrder ) );
             _scatterMatDiag[idx_global] = 0;
 
@@ -279,6 +280,8 @@ void PNSolver::ComputeScatterMatrix() {
         }
     }
 }
+
+void PNSolver::ComputeICMoments() {}
 
 double PNSolver::Legendre( double x, int l ) {
     // Pre computed low order polynomials for faster computation
@@ -316,22 +319,22 @@ void PNSolver::Solve() {
     if( rank == 0 ) log->info( "{:10}   {:10}", "t", "dFlux" );
 
     // Loop over energies (pseudo-time of continuous slowing down approach)
-    for( unsigned idx_energy = 0; idx_energy < _nEnergies; ++idx_energy ) {
+    for( unsigned idx_energy = 0; idx_energy < _nEnergies; idx_energy++ ) {
 
         // Loop over all spatial cells
-        for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
+        for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
             if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::DIRICHLET ) continue;    // Dirichlet cells stay at IC, farfield assumption
 
             // Reset temporary variable psiNew
-            for( int idx_lOrder = 0; idx_lOrder < int( _nq ); ++idx_lOrder ) {
-                for( int idx_kOrder = -idx_lOrder; idx_kOrder < idx_lOrder; ++idx_lOrder ) {
+            for( int idx_lOrder = 0; idx_lOrder < int( _nq ); idx_lOrder++ ) {
+                for( int idx_kOrder = -idx_lOrder; idx_kOrder < idx_lOrder; idx_kOrder++ ) {
                     idx_system                   = unsigned( GlobalIndex( idx_lOrder, idx_kOrder ) );
                     psiNew[idx_cell][idx_system] = 0.0;
                 }
             }
 
             // Loop over all neighbor cells (edges) of cell j and compute numerical fluxes
-            for( unsigned idx_neighbor = 0; idx_neighbor < _neighbors[idx_cell].size(); ++idx_neighbor ) {
+            for( unsigned idx_neighbor = 0; idx_neighbor < _neighbors[idx_cell].size(); idx_neighbor++ ) {
 
                 // Compute flux contribution and store in psiNew to save memory
                 if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::NEUMANN && _neighbors[idx_cell][idx_neighbor] == _nCells )
@@ -359,8 +362,8 @@ void PNSolver::Solve() {
             }
 
             // time update angular flux with numerical flux and total scattering cross section
-            for( unsigned idx_lOrder = 0; idx_lOrder < _nq; ++idx_lOrder ) {
-                for( int idx_kOrder = -idx_lOrder; idx_kOrder < int( idx_lOrder ); ++idx_lOrder ) {
+            for( int idx_lOrder = 0; idx_lOrder < int( _nq ); idx_lOrder++ ) {
+                for( int idx_kOrder = -idx_lOrder; idx_kOrder < idx_lOrder; idx_kOrder++ ) {
                     idx_system = unsigned( GlobalIndex( idx_lOrder, idx_kOrder ) );
 
                     psiNew[idx_cell][idx_system] = _psi[idx_cell][idx_system]                                  /* value at last time */
