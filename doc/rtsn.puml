@@ -6,10 +6,131 @@
 
 /' Objects '/
 
+abstract class COptionUShort {
+	+COptionUShort(std::string option_field_name, unsigned short& option_field, unsigned short default_value)
+	+~COptionUShort()
+	+SetValue(std::vector<std::string> option_value) : std::string
+	-_name : std::string
+	-_def : unsigned short
+	-_field : unsigned short&
+	+SetDefault() : void
+}
+
+
+class Checkerboard {
+	-Checkerboard()
+	+Checkerboard(Config* settings, Mesh* mesh)
+	+~Checkerboard()
+	-_scatteringXS : Vector
+	-_totalXS : Vector
+	+GetScatteringXS(const std::vector<double>& energies) : VectorVector
+	+GetTotalXS(const std::vector<double>& energies) : VectorVector
+	+SetupIC() : VectorVector
+	-isAbsorption(const Vector& pos) : bool {query}
+	-isSource(const Vector& pos) : bool {query}
+	+GetExternalSource(const std::vector<double>& energies) : std::vector<VectorVector>
+	+GetStoppingPower(const std::vector<double>& energies) : std::vector<double>
+}
+
+
+class Config {
+	+Config(char case_filename)
+	+~Config(void)
+	+GetBoundaryType(std::string nameMarker) : BOUNDARY_TYPE {query}
+	+GetKernelName() : KERNEL_NAME {query}
+	-_kernelName : KERNEL_NAME
+	+GetProblemName() : PROBLEM_NAME {query}
+	-_problemName : PROBLEM_NAME
+	+GetQuadName() : QUAD_NAME {query}
+	-_quadName : QUAD_NAME
+	-TokenizeString(std::string& str, std::string& option_name, std::vector<std::string>& option_value) : bool
+	-_baseConfig : bool
+	+GetCFL() : double {query}
+	+GetTEnd() : double {query}
+	-_CFL : double
+	-_tEnd : double
+	-_commRank : int
+	-_commSize : int
+	-_optionMap : std::map<std::string, OptionBase*>
+	-_allOptions : std::map<std::string, bool>
+	+GetLogDir() : std::string {query}
+	+GetMeshFile() : std::string {query}
+	+GetOutputDir() : std::string {query}
+	+GetOutputFile() : std::string {query}
+	-_fileName : std::string
+	-_inputDir : std::string
+	-_logDir : std::string
+	-_meshFile : std::string
+	-_outputDir : std::string
+	-_outputFile : std::string
+	-_boundaries : std::vector<std::pair<std::string, BOUNDARY_TYPE> >
+	-_MarkerDirichlet : std::vector<std::string>
+	-_MarkerNeumann : std::vector<std::string>
+	+GetNCells() : unsigned
+	+GetNQuadPoints() : unsigned
+	-_nCells : unsigned
+	-_nQuadPoints : unsigned
+	+GetQuadOrder() : unsigned short {query}
+	-_nMarkerDirichlet : unsigned short
+	-_nMarkerNeumann : unsigned short
+	-_quadOrder : unsigned short
+	-AddBoolOption(const std::string name, bool& option_field, bool default_value) : void
+	-AddDoubleOption(const std::string name, double& option_field, double default_value) : void
+	-AddEnumOption(const std::string name, Tenum& option_field, const std::map<std::string, Tenum>& enum_map, Tenum default_value) : void
+	-AddIntegerOption(const std::string name, int& option_field, int default_value) : void
+	-AddLongOption(const std::string name, long& option_field, long default_value) : void
+	-AddStringListOption(const std::string name, unsigned short& num_marker, std::vector<std::string>& option_field) : void
+	-AddStringOption(const std::string name, std::string& option_field, std::string default_value) : void
+	-AddUnsignedLongOption(const std::string name, unsigned long& option_field, unsigned long default_value) : void
+	-AddUnsignedShortOption(const std::string name, unsigned short& option_field, unsigned short default_value) : void
+	-InitLogger(spdlog::level::level_enum terminalLogLvl, spdlog::level::level_enum fileLogLvl) : void
+	-SetConfigOptions(void) : void
+	-SetConfigParsing(char case_filename) : void
+	-SetDefault(void) : void
+	+SetNCells(unsigned nCells) : void
+	+SetNQuadPoints(unsigned nq) : void
+	-SetOutput(void) : void
+	-SetPointersNull(void) : void
+	-SetPostprocessing(void) : void
+}
+
+
+class ElectronRT {
+	-ElectronRT()
+	+ElectronRT(Config* settings, Mesh* mesh)
+	+~ElectronRT()
+	+GetScatteringXS(const std::vector<double>& energies) : VectorVector
+	+GetTotalXS(const std::vector<double>& energies) : VectorVector
+	+SetupIC() : VectorVector
+	+GetExternalSource(const std::vector<double>& energies) : std::vector<VectorVector>
+	+GetStoppingPower(const std::vector<double>& energies) : std::vector<double>
+	-LoadXSH20(std::string fileSigmaS, std::string fileSigmaT) : void
+}
+
+
+class ErrorMessages {
+	+ErrorMessages()
+	+{static} Error(std::string ErrorMsg, std::string FunctionName) : void
+	+{static} OptionNotSetError(std::string OptionName, std::string FunctionName) : void
+}
+
+
 class LaxFriedrichsFlux {
 	+LaxFriedrichsFlux(Config* settings)
 	+Flux(const Vector& Omega, double psiL, double psiR, const Vector& n) : double {query}
 	-_dt : double
+}
+
+
+class LineSource {
+	-LineSource()
+	+LineSource(Config* settings, Mesh* mesh)
+	+~LineSource()
+	+GetScatteringXS(const std::vector<double>& energies) : VectorVector
+	+GetTotalXS(const std::vector<double>& energies) : VectorVector
+	+SetupIC() : VectorVector
+	+GetExternalSource(const std::vector<double>& energies) : std::vector<VectorVector>
+	+GetStoppingPower(const std::vector<double>& energies) : std::vector<double>
 }
 
 
@@ -26,12 +147,12 @@ class Mesh {
 	#_numNodes : const unsigned
 	#_numNodesPerCell : const unsigned
 	#_log : std::shared_ptr<spdlog::logger>
+	#_cellBoundaryTypes : std::vector<BOUNDARY_TYPE>
+	+GetBoundaryTypes() : std::vector<BOUNDARY_TYPE>& {query}
 	#_cellMidPoints : std::vector<Vector>
 	#_nodes : std::vector<Vector>
 	+GetCellMidPoints() : std::vector<Vector>& {query}
 	+GetNodes() : std::vector<Vector>& {query}
-	#_isBoundaryCell : std::vector<bool>
-	+GetBoundaryCellArray() : std::vector<bool>& {query}
 	#_cellAreas : std::vector<double>
 	+GetCellAreas() : std::vector<double>& {query}
 	#_boundaries : std::vector<std::pair<BOUNDARY_TYPE, std::vector<unsigned> > >
@@ -62,6 +183,107 @@ abstract class NumericalFlux {
 }
 
 
+abstract class OptionBase {
+	+OptionBase()
+	+{abstract} ~OptionBase()
+	+SetValue(std::vector<std::string> value) : std::string
+	+badValue(std::vector<std::string>& option_value, std::string type_id, std::string option_name) : std::string
+	+optionCheckMultipleValues(std::vector<std::string>& option_value, std::string type_id, std::string option_name) : std::string
+	+GetValue() : std::vector<std::string>
+	-_value : std::vector<std::string>
+	+{abstract} SetDefault() : void
+}
+
+
+abstract class OptionBool {
+	+OptionBool(std::string option_field_name, bool& option_field, bool default_value)
+	+~OptionBool()
+	-_def : bool
+	-_field : bool&
+	+SetValue(std::vector<std::string> option_value) : std::string
+	-_name : std::string
+	+SetDefault() : void
+}
+
+
+abstract class OptionDouble {
+	+OptionDouble(std::string option_field_name, double& option_field, double default_value)
+	+~OptionDouble()
+	-_def : double
+	-_field : double&
+	+SetValue(std::vector<std::string> option_value) : std::string
+	-_name : std::string
+	+SetDefault() : void
+}
+
+
+abstract class OptionEnum <template <class Tenum>> {
+	+OptionEnum(std::string option_field_name, const std::map<std::string, Tenum> m, Tenum& option_field, Tenum default_value)
+	+~OptionEnum()
+	-_def : Tenum
+	-_field : Tenum&
+	-_map : std::map<std::string, Tenum>
+	+SetValue(std::vector<std::string> option_value) : std::string
+	-_name : std::string
+	+SetDefault() : void
+}
+
+
+abstract class OptionInt {
+	+OptionInt(std::string option_field_name, int& option_field, int default_value)
+	+~OptionInt()
+	-_def : int
+	-_field : int&
+	+SetValue(std::vector<std::string> option_value) : std::string
+	-_name : std::string
+	+SetDefault() : void
+}
+
+
+abstract class OptionLong {
+	+OptionLong(std::string option_field_name, long& option_field, long default_value)
+	+~OptionLong()
+	-_def : long
+	-_field : long&
+	+SetValue(std::vector<std::string> option_value) : std::string
+	-_name : std::string
+	+SetDefault() : void
+}
+
+
+abstract class OptionString {
+	+OptionString(std::string option_field_name, std::string& option_field, std::string default_value)
+	+~OptionString()
+	+SetValue(std::vector<std::string> option_value) : std::string
+	-_def : std::string
+	-_name : std::string
+	-_field : std::string&
+	+SetDefault() : void
+}
+
+
+abstract class OptionStringList {
+	+OptionStringList(std::string option_field_name, unsigned short& list_size, std::vector<std::string>& option_field)
+	+~OptionStringList()
+	+SetValue(std::vector<std::string> option_value) : std::string
+	-_name : std::string
+	-_field : std::vector<std::string>&
+	-_size : unsigned short&
+	+SetDefault() : void
+}
+
+
+abstract class OptionULong {
+	+OptionULong(std::string option_field_name, unsigned long& option_field, unsigned long default_value)
+	+~OptionULong()
+	+SetValue(std::vector<std::string> option_value) : std::string
+	-_name : std::string
+	-_def : unsigned long
+	-_field : unsigned long&
+	+SetDefault() : void
+}
+
+
 class Physics {
 	+Physics(Config* settings)
 	-_totalxsH2O : Matrix
@@ -71,6 +293,24 @@ class Physics {
 	+GetStoppingPower(std::vector<double> energies, std::vector<double> sH2O) : VectorVector
 	+GetTotalXS(std::vector<double> energies, std::vector<double> density) : VectorVector
 	-LoadXSH2O(std::string fileName1, std::string fileName2) : void
+}
+
+
+abstract class ProblemBase {
+	+ProblemBase(Config* settings, Mesh* mesh)
+	#ProblemBase()
+	+~ProblemBase()
+	#_settings : Config*
+	#_mesh : Mesh*
+	#_physics : Physics*
+	+{static} Create(Config* settings, Mesh* mesh) : ProblemBase*
+	+{abstract} GetScatteringXS(const std::vector<double>& energies) : VectorVector
+	+{abstract} GetTotalXS(const std::vector<double>& energies) : VectorVector
+	+{abstract} SetupIC() : VectorVector
+	+{abstract} GetExternalSource(const std::vector<double>& energies) : std::vector<VectorVector>
+	+{abstract} GetStoppingPower(const std::vector<double>& energies) : std::vector<double>
+	#_density : std::vector<double>
+	#_stoppingPower : std::vector<double>
 }
 
 
@@ -189,38 +429,43 @@ class SNSolver {
 	+SNSolver(Config* settings)
 	+Save() : void {query}
 	+Solve() : void
-	+SolveMPI() : void
+}
+
+
+class SNSolverMPI {
+	+SNSolverMPI(Config* settings)
+	+Save() : void {query}
+	+Solve() : void
 }
 
 
 abstract class Solver {
 	+Solver(Config* settings)
 	#_settings : Config*
+	#_scatteringKernel : Matrix
 	#_mesh : Mesh*
 	#_g : NumericalFlux*
+	#_problem : ProblemBase*
 	+{static} Create(Config* settings) : Solver*
 	#_weights : Vector
 	#_psi : VectorVector
 	#_quadPoints : VectorVector
+	#_sigmaS : VectorVector
+	#_sigmaT : VectorVector
 	#ComputeTimeStep(double cfl) : double {query}
-	#_dt : double
-	#_sigmaSH20 : std::vector<Matrix>
-	#_boundaryCells : std::vector<bool>
+	#_dE : double
+	#_boundaryCells : std::vector<BOUNDARY_TYPE>
+	#_Q : std::vector<VectorVector>
 	#_areas : std::vector<double>
 	#_density : std::vector<double>
-	#_sH20 : std::vector<double>
-	#_sigmaTH20 : std::vector<double>
+	#_energies : std::vector<double>
+	#_s : std::vector<double>
 	#_normals : std::vector<std::vector<Vector> >
 	#_neighbors : std::vector<std::vector<unsigned> >
 	#_nCells : unsigned
-	#_nTimeSteps : unsigned
+	#_nEnergies : unsigned
 	#_nq : unsigned
-	#LoadPatientDensity(std::string fileName) : void
-	#LoadSigmaS(std::string fileName) : void
-	#LoadSigmaT(std::string fileName) : void
-	#LoadStoppingPower(std::string fileName) : void
 	+{abstract} Save() : void {query}
-	#SetupIC() : void
 	+{abstract} Solve() : void
 }
 
@@ -228,6 +473,35 @@ abstract class Solver {
 class UpwindFlux {
 	+UpwindFlux(Config* settings)
 	+Flux(const Vector& Omega, double psiL, double psiR, const Vector& n) : double {query}
+}
+
+
+enum BOUNDARY_TYPE {
+	DIRICHLET
+	INVALID
+	NEUMANN
+	NONE
+}
+
+
+enum KERNEL_NAME {
+	KERNEL_Isotropic
+}
+
+
+enum PROBLEM_NAME {
+	PROBLEM_Checkerboard
+	PROBLEM_ElectronRT
+	PROBLEM_LineSource
+}
+
+
+enum QUAD_NAME {
+	QUAD_GaussLegendreTensorized
+	QUAD_LDFESA
+	QUAD_Lebedev
+	QUAD_LevelSymmetric
+	QUAD_MonteCarlo
 }
 
 
@@ -240,6 +514,42 @@ NumericalFlux <|-- LaxFriedrichsFlux
 
 
 NumericalFlux <|-- UpwindFlux
+
+
+OptionBase <|-- COptionUShort
+
+
+OptionBase <|-- OptionBool
+
+
+OptionBase <|-- OptionDouble
+
+
+OptionBase <|-- OptionEnum
+
+
+OptionBase <|-- OptionInt
+
+
+OptionBase <|-- OptionLong
+
+
+OptionBase <|-- OptionString
+
+
+OptionBase <|-- OptionStringList
+
+
+OptionBase <|-- OptionULong
+
+
+ProblemBase <|-- Checkerboard
+
+
+ProblemBase <|-- ElectronRT
+
+
+ProblemBase <|-- LineSource
 
 
 QLookupQuadrature <|-- QLDFESA
@@ -266,15 +576,36 @@ QuadratureBase <|-- QMonteCarlo
 Solver <|-- SNSolver
 
 
+Solver <|-- SNSolverMPI
+
+
 
 
 
 /' Aggregation relationships '/
 
+Config o-- OptionBase
+
+
+ProblemBase o-- Config
+
+
+ProblemBase o-- Mesh
+
+
+ProblemBase o-- Physics
+
+
+Solver o-- Config
+
+
 Solver o-- Mesh
 
 
 Solver o-- NumericalFlux
+
+
+Solver o-- ProblemBase
 
 
 

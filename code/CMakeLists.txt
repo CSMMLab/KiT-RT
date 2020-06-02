@@ -3,9 +3,9 @@ project( RTSN VERSION 0.1.0 LANGUAGES CXX )
 set( CMAKE_CXX_STANDARD 17 )
 set( CMAKE_CXX_STANDARD_REQUIRED ON )
 
-set( CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -march=native -Wno-dev" CACHE STRING "Flags used by the compiler during release builds." FORCE )
-set( CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -march=native -pg -no-pie" CACHE STRING "Flags used by the compiler during release builds with debug information." FORCE )
-set( CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -Wall -Werror" CACHE STRING "Flags used by the compiler during debug builds." FORCE )
+set( CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -march=native -Wno-dev" )
+set( CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -march=native -pg -no-pie" )
+set( CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -Wall -Werror" )
 
 set( CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin" )
 
@@ -25,8 +25,18 @@ include_directories( ${MPI_INCLUDE_PATH} )
 find_package( LAPACK REQUIRED )
 include_directories( ${LAPACK_INCLUDE_DIR} )
 
+find_package( BLAS )
+if( BLAS_FOUND )
+    message( STATUS "Blaze: BLAS mode enabled" )
+    add_compile_definitions( BLAZE_BLAS_MODE=1 )
+    include_directories( ${BLAS_INCLUDE_DIR} )
+else()
+    message( STATUS "Blaze: BLAS mode disabled" )
+    add_compile_definitions( BLAZE_BLAS_MODE=0 )
+endif()
+
 add_compile_definitions( BLAZE_USE_SHARED_MEMORY_PARALLELIZATION=0 )
-add_compile_definitions( BLAZE_BLAS_MODE=1 )
+
 set(flag 1)
 if (WIN32)
     execute_process(COMMAND wmic cpu get L3CacheSize
@@ -97,7 +107,7 @@ endif (flag)
 string( REGEX MATCH "([0-9][0-9]+)" tmp ${tmp} )
 math( EXPR BLAZE_CACHE_SIZE ${tmp}*1024 )
 add_compile_definitions( BLAZE_CACHE_SIZE=${BLAZE_CACHE_SIZE}UL )
-message( "-- Blaze: Automatic Cache Size Configuration = ${BLAZE_CACHE_SIZE} KiB" )
+message( STATUS "Blaze: Automatic Cache Size Configuration = ${BLAZE_CACHE_SIZE} KiB" )
 include_directories( ${CMAKE_SOURCE_DIR}/ext/blaze )
 
 add_compile_definitions( METIS_EXPORT= )
@@ -120,7 +130,7 @@ execute_process(
 )
 add_compile_definitions( GIT_HASH="${GIT_HASH}" )
 
-set( CORE_LIBRARIES ${LAPACK_LIBRARIES} ${MPI_LIBRARIES} ${VTK_LIBRARIES} parmetis -lstdc++fs )
+set( CORE_LIBRARIES ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} ${MPI_LIBRARIES} ${VTK_LIBRARIES} parmetis -lstdc++fs )
 
 target_link_libraries( ${CMAKE_PROJECT_NAME} ${CORE_LIBRARIES} )
 
