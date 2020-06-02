@@ -70,30 +70,6 @@ void ExportVTK( const std::string fileName,
                         cellData->InsertNextValue( results[i][0][j] );
                     }
                     break;
-                case 2:
-                    cellData = vtkDoubleArraySP::New();
-                    cellData->SetName( "E(ρU)" );
-                    cellData->SetNumberOfComponents( 3 );
-                    cellData->SetComponentName( 0, "x" );
-                    cellData->SetComponentName( 1, "y" );
-                    cellData->SetComponentName( 2, "z" );
-                    cellData->SetNumberOfTuples( numCells );
-                    for( unsigned j = 0; j < numCells; j++ ) {
-                        cellData->SetTuple3( i, results[i][0][j], results[i][1][j], 0.0 );
-                    }
-                    break;
-                case 3:
-                    cellData = vtkDoubleArraySP::New();
-                    cellData->SetName( "E(ρU)" );
-                    cellData->SetNumberOfComponents( 3 );
-                    cellData->SetComponentName( 0, "x" );
-                    cellData->SetComponentName( 1, "y" );
-                    cellData->SetComponentName( 2, "z" );
-                    cellData->SetNumberOfTuples( numCells );
-                    for( unsigned j = 0; j < numCells; j++ ) {
-                        cellData->SetTuple3( i, results[i][0][j], results[i][1][j], results[i][2][j] );
-                    }
-                    break;
                 default:
                     auto log = spdlog::get( "event" );
                     log->error( "[ERROR][IO::ExportVTK] Invalid dimension" );
