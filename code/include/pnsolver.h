@@ -19,11 +19,11 @@ class PNSolver : public Solver
     /**
      * @brief Solve functions runs main time loop
      */
-    virtual void Solve();
+    void Solve() override;
     /**
      * @brief Output solution to VTK file
      */
-    virtual void Save() const;
+    void Save() const override;
 
   protected:
     // moment orders for P_N
@@ -64,15 +64,15 @@ class PNSolver : public Solver
     int Sgn( int k ) const;
     int kPlus( int k ) const;
     int kMinus( int k ) const;
-    unsigned GlobalIndex( int l, int k ) const;
+    int GlobalIndex( int l, int k ) const;
 
     // function for setting up system matrices
-    void SetupSystemMatrices();
+    void ComputeSystemMatrices();
     // funcktion for computing flux matrices for upwinding
     void ComputeFluxComponents();
 
     // Scattering Kernel
-    double ComputeScatterMatrix( int l );
+    void ComputeScatterMatrix();
     // Legendre Polynomial
     double Legendre( double x, int l );
 };

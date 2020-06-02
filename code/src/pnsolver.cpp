@@ -6,10 +6,10 @@
 #include <mpi.h>
 
 PNSolver::PNSolver( Config* settings ) : Solver( settings ) {
-    _nTotalEntries = GlobalIndex( _nq, _nq ) + 1;
+    _nTotalEntries = GlobalIndex( _nq, int( _nq ) ) + 1;
 
     // transform sigmaT and sigmaS in sigmaA.
-    _sigmaA = VectorVector( _nEnergies, Vector( _nCells ) );    // Get rid of this extra vektor!
+    _sigmaA = VectorVector( _nEnergies, Vector( _nCells, 0 ) );    // Get rid of this extra vektor!
     for( unsigned n = 0; n < _nEnergies; n++ ) {
         for( unsigned j = 0; j < _nCells; j++ ) {
             _sigmaA[n][j] = _sigmaT[n][j] - _sigmaS[n][j];
@@ -28,13 +28,19 @@ PNSolver::PNSolver( Config* settings ) : Solver( settings ) {
     _AzPlus  = Matrix( _nTotalEntries, _nTotalEntries, 0 );
     _AzMinus = Matrix( _nTotalEntries, _nTotalEntries, 0 );
 
+    // Initialize Scatter Matrix
+    _scatterMatDiag = Vector( _nq, 0 );
+
     // Fill System Matrices
-    SetupSystemMatrices();
+    ComputeSystemMatrices();
 
     std::cout << "System Matrix Set UP!" << std::endl;
 
-    // Compute Eigenvalues of the system matrices
+    // Compute Decomposition in positive and negative (eigenvalue) parts of flux jacobians
     ComputeFluxComponents();
+
+    // Compute diagonal of the scatter matrix (it's a diagonal matrix)
+    ComputeScatterMatrix();
 }
 
 double PNSolver::CTilde( int l, int k ) const {
@@ -91,10 +97,10 @@ int PNSolver::kPlus( int k ) const { return k + Sgn( k ); }
 
 int PNSolver::kMinus( int k ) const { return k - Sgn( k ); }
 
-unsigned PNSolver::GlobalIndex( int l, int k ) const {
+int PNSolver::GlobalIndex( int l, int k ) const {
     int numIndicesPrevLevel  = l * l;    // number of previous indices untill level l-1
     int prevIndicesThisLevel = k + l;    // number of previous indices in current level
-    return unsigned( numIndicesPrevLevel + prevIndicesThisLevel );
+    return numIndicesPrevLevel + prevIndicesThisLevel;
 }
 
 int PNSolver::Sgn( int k ) const {
@@ -104,7 +110,7 @@ int PNSolver::Sgn( int k ) const {
         return -1;
 }
 
-void PNSolver::SetupSystemMatrices() {
+void PNSolver::ComputeSystemMatrices() {
     int j      = 0;
     unsigned i = 0;
 
@@ -180,8 +186,6 @@ void PNSolver::ComputeFluxComponents() {
     MatrixCol eigenVectors( _nTotalEntries, _nTotalEntries, 0 );    // ColumnMatrix for _AxPlus * eigenVectors Multiplication via SIMD
     // --- For x Direction ---
     {
-        std::cout << "A_x = \n" << _Ax << std::endl;
-
         blaze::eigen( _Ax, eigenValues, eigenVectors );    // Compute Eigenvalues and Eigenvectors
 
         // Compute Flux Matrices A+ and A-
@@ -199,10 +203,6 @@ void PNSolver::ComputeFluxComponents() {
         blaze::transpose( eigenVectors );
         _AxPlus  = _AxPlus * eigenVectors;    // row*col maximum performance
         _AxMinus = _AxMinus * eigenVectors;
-
-        std::cout << " _AxPlus = \n" << _AxPlus << "\n";
-        std::cout << " _AxMinus = \n" << _AxMinus << "\n";
-        std::cout << "A_x = \n" << _AxPlus + _AxMinus << std::endl;
     }
     // --- For y Direction -------
     {
@@ -246,26 +246,38 @@ void PNSolver::ComputeFluxComponents() {
     }
 }
 
-double PNSolver::ComputeScatterMatrix( int l ) {
+void PNSolver::ComputeScatterMatrix() {
     // right now independent of spatial coordinates
     // G[i][i] = 1- g_l
     // g_l = 2*pi*\int_-1 ^1 k(x,my)P_l(my)dmy
     // use midpoint rule.
     // Here is room for optimization!
 
-    // Only isotropic scattering: k = 1/(2pi) in 2d
-    unsigned nSteps    = 50;
-    double integralSum = 0.5 * ( Legendre( -1.0, l ) + Legendre( 1.0, l ) );
+    // Only isotropic scattering: k = 1/(2pi) in 2d !!!
 
-    for( unsigned i = 1; i < nSteps - 1; i++ ) {
-        integralSum += Legendre( -1.0 + double( i ) * 2 / double( nSteps ), l );
+    unsigned nSteps     = 50;
+    double integralSum  = 0;
+    unsigned idx_global = 0;
+
+    for( int idx_lOrder = 0; idx_lOrder < int( _nq ); ++idx_lOrder ) {
+        for( int idx_kOrder = -idx_lOrder; idx_kOrder < idx_lOrder; ++idx_lOrder ) {
+
+            idx_global                  = unsigned( GlobalIndex( idx_lOrder, idx_kOrder ) );
+            _scatterMatDiag[idx_global] = 0;
+
+            // compute value of diagonal
+            integralSum = 0.5 * ( Legendre( -1.0, idx_lOrder ) + Legendre( 1.0, idx_lOrder ) );    // Boundary terms
+
+            for( unsigned i = 1; i < nSteps - 1; i++ ) {
+                integralSum += Legendre( -1.0 + double( i ) * 2 / double( nSteps ), idx_lOrder );
+            }
+            integralSum *= 2 / double( nSteps );
+
+            // isotropic scattering and prefactor of eigenvalue
+            integralSum *= 0.5;    // 2pi/4pi
+            _scatterMatDiag[idx_global] = 1 - integralSum;
+        }
     }
-    integralSum *= 2 / double( nSteps );
-
-    // isotropic scattering and prefactor of eigenvalue
-    integralSum *= 0.5;    // 2pi/4pi
-
-    return 1 - integralSum;
 }
 
 double PNSolver::Legendre( double x, int l ) {
@@ -298,48 +310,67 @@ void PNSolver::Solve() {
 
     int rank;
 
-    int idx_system = 0;
+    unsigned idx_system = 0;
 
     MPI_Comm_rank( MPI_COMM_WORLD, &rank );
     if( rank == 0 ) log->info( "{:10}   {:10}", "t", "dFlux" );
 
-    // loop over energies (pseudo-time)
+    // Loop over energies (pseudo-time of continuous slowing down approach)
     for( unsigned idx_energy = 0; idx_energy < _nEnergies; ++idx_energy ) {
-        // loop over all spatial cells
+
+        // Loop over all spatial cells
         for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
-            if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::DIRICHLET ) continue;
-            // loop over all ordinates
-            for( unsigned idx_lOrder = 0; idx_lOrder < _nq; ++idx_lOrder ) {
-                for( int idx_kOrder = -idx_lOrder; idx_kOrder < int( idx_lOrder ); ++idx_lOrder ) {
+            if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::DIRICHLET ) continue;    // Dirichlet cells stay at IC, farfield assumption
 
-                    idx_system = GlobalIndex( idx_lOrder, idx_kOrder );
-
+            // Reset temporary variable psiNew
+            for( int idx_lOrder = 0; idx_lOrder < int( _nq ); ++idx_lOrder ) {
+                for( int idx_kOrder = -idx_lOrder; idx_kOrder < idx_lOrder; ++idx_lOrder ) {
+                    idx_system                   = unsigned( GlobalIndex( idx_lOrder, idx_kOrder ) );
                     psiNew[idx_cell][idx_system] = 0.0;
-
-                    // loop over all neighbor cells (edges) of cell j and compute numerical fluxes
-                    for( unsigned idx_neighbor = 0; idx_neighbor < _neighbors[idx_cell].size(); ++idx_neighbor ) {
-
-                        // store flux contribution on psiNew to save memory
-                        if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::NEUMANN && _neighbors[idx_cell][idx_neighbor] == _nCells )
-                            psiNew[idx_cell][idx_system] += _g->Flux( _quadPoints[idx_system],
-                                                                      _psi[idx_cell][idx_system],
-                                                                      _psi[idx_cell][idx_system],
-                                                                      _normals[idx_cell][idx_neighbor] );    // TODO Flux computation!
-                        else
-                            psiNew[idx_cell][idx_system] += _g->Flux( _quadPoints[idx_system],
-                                                                      _psi[idx_cell][idx_system],
-                                                                      _psi[_neighbors[idx_cell][idx_neighbor]][idx_system],
-                                                                      _normals[idx_cell][idx_neighbor] );    // TODO Flux computation!
-                    }
-                    // time update angular flux with numerical flux and total scattering cross section
-                    psiNew[idx_cell][idx_system] =
-                        _psi[idx_cell][idx_system] - ( _dE / _areas[idx_cell] ) * psiNew[idx_cell][idx_system] -
-                        _dE * ( _sigmaA[idx_energy][idx_cell] + _sigmaS[idx_energy][idx_cell] * ComputeScatterMatrix( int( idx_system ) ) ) *
-                            _psi[idx_cell][idx_system];
                 }
             }
-            // compute scattering effects
-            // psiNew[idx_cell] += _dE * _sigmaS[idx_energy][idx_cell] * _scatteringKernel * _psi[idx_cell];    // multiply scattering matrix with psi
+
+            // Loop over all neighbor cells (edges) of cell j and compute numerical fluxes
+            for( unsigned idx_neighbor = 0; idx_neighbor < _neighbors[idx_cell].size(); ++idx_neighbor ) {
+
+                // Compute flux contribution and store in psiNew to save memory
+                if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::NEUMANN && _neighbors[idx_cell][idx_neighbor] == _nCells )
+                    _g->Flux( _AxPlus,
+                              _AxMinus,
+                              _AyPlus,
+                              _AyMinus,
+                              _AzPlus,
+                              _AzMinus,
+                              _psi[idx_cell],
+                              _psi[idx_cell],
+                              _normals[idx_cell][idx_neighbor],
+                              psiNew[idx_cell] );
+                else
+                    _g->Flux( _AxPlus,
+                              _AxMinus,
+                              _AyPlus,
+                              _AyMinus,
+                              _AzPlus,
+                              _AzMinus,
+                              _psi[idx_cell],
+                              _psi[_neighbors[idx_cell][idx_neighbor]],
+                              _normals[idx_cell][idx_neighbor],
+                              psiNew[idx_cell] );
+            }
+
+            // time update angular flux with numerical flux and total scattering cross section
+            for( unsigned idx_lOrder = 0; idx_lOrder < _nq; ++idx_lOrder ) {
+                for( int idx_kOrder = -idx_lOrder; idx_kOrder < int( idx_lOrder ); ++idx_lOrder ) {
+                    idx_system = unsigned( GlobalIndex( idx_lOrder, idx_kOrder ) );
+
+                    psiNew[idx_cell][idx_system] = _psi[idx_cell][idx_system]                                  /* value at last time */
+                                                   - ( _dE / _areas[idx_cell] ) * psiNew[idx_cell][idx_system] /* cell averaged flux */
+                                                   - _dE * _psi[idx_cell][idx_system] *
+                                                         ( _sigmaA[idx_energy][idx_cell]                                 /* absorbtion influence */
+                                                           + _sigmaS[idx_energy][idx_cell] * _scatterMatDiag[idx_system] /* scattering influence */
+                                                         );
+                }
+            }
 
             // TODO: Adapt to PN
             // TODO: figure out a more elegant way
