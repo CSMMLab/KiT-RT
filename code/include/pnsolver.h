@@ -74,9 +74,6 @@ class PNSolver : public Solver
     void ComputeScatterMatrix();
     // Computes Legedre polinomial of oder l at point x
     double Legendre( double x, int l );
-
-    // Computes Moments for given zeroth moment initial conditions
-    void ComputeICMoments();
 };
 
 #endif    // PNSOLVER_H

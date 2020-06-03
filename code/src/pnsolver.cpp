@@ -247,6 +247,7 @@ void PNSolver::ComputeFluxComponents() {
 }
 
 void PNSolver::ComputeScatterMatrix() {
+
     // right now independent of spatial coordinates
     // G[i][i] = 1- g_l
     // g_l = 2*pi*\int_-1 ^1 k(x,my)P_l(my)dmy
@@ -260,9 +261,7 @@ void PNSolver::ComputeScatterMatrix() {
     unsigned idx_global = 0;
 
     for( int idx_lOrder = 0; idx_lOrder <= int( _nq ); idx_lOrder++ ) {
-        std::cout << "l: " << idx_lOrder << std::endl;
         for( int idx_kOrder = -idx_lOrder; idx_kOrder <= idx_lOrder; idx_kOrder++ ) {
-            std::cout << "k :" << idx_kOrder << std::endl;
             idx_global                  = unsigned( GlobalIndex( idx_lOrder, idx_kOrder ) );
             _scatterMatDiag[idx_global] = 0;
 
@@ -280,8 +279,6 @@ void PNSolver::ComputeScatterMatrix() {
         }
     }
 }
-
-void PNSolver::ComputeICMoments() {}
 
 double PNSolver::Legendre( double x, int l ) {
     // Pre computed low order polynomials for faster computation
@@ -369,31 +366,30 @@ void PNSolver::Solve() {
                     psiNew[idx_cell][idx_system] = _psi[idx_cell][idx_system]                                  /* value at last time */
                                                    - ( _dE / _areas[idx_cell] ) * psiNew[idx_cell][idx_system] /* cell averaged flux */
                                                    - _dE * _psi[idx_cell][idx_system] *
-                                                         ( _sigmaA[idx_energy][idx_cell]                                 /* absorbtion influence */
-                                                           + _sigmaS[idx_energy][idx_cell] * _scatterMatDiag[idx_system] /* scattering influence */
-                                                         );
+                                                         ( _sigmaA[idx_energy][idx_cell]                                    /* absorbtion influence */
+                                                           + _sigmaS[idx_energy][idx_cell] * _scatterMatDiag[idx_system] ); /* scattering influence */
                 }
             }
 
-            // TODO: Adapt to PN
+            // TODO: Add Source Term!!! (not neccessary in LineSource
             // TODO: figure out a more elegant way
             // add external source contribution
-            if( _Q.size() == 1u ) {                   // constant source for all energies
-                if( _Q[0][idx_cell].size() == 1u )    // isotropic source
-                    psiNew[idx_cell] += _dE * _Q[0][idx_cell][0];
-                else
-                    psiNew[idx_cell] += _dE * _Q[0][idx_cell];
-            }
-            else {
-                if( _Q[0][idx_cell].size() == 1u )    // isotropic source
-                    psiNew[idx_cell] += _dE * _Q[idx_energy][idx_cell][0];
-                else
-                    psiNew[idx_cell] += _dE * _Q[idx_energy][idx_cell];
-            }
+            // if( _Q.size() == 1u ) {                   // constant source for all energies
+            //    if( _Q[0][idx_cell].size() == 1u )    // isotropic source
+            //        psiNew[idx_cell] += _dE * _Q[0][idx_cell][0];
+            //    else
+            //        psiNew[idx_cell] += _dE * _Q[0][idx_cell];
+            //}
+            // else {
+            //    if( _Q[0][idx_cell].size() == 1u )    // isotropic source
+            //        psiNew[idx_cell] += _dE * _Q[idx_energy][idx_cell][0];
+            //    else
+            //        psiNew[idx_cell] += _dE * _Q[idx_energy][idx_cell];
+            //}
         }
         _psi = psiNew;
         for( unsigned i = 0; i < _nCells; ++i ) {
-            fluxNew[i] = dot( _psi[i], _weights );
+            fluxNew[i] = _psi[i][0];    // zeroth moment is raditation densitiy we are interested in
         }
         dFlux   = blaze::l2Norm( fluxNew - fluxOld );
         fluxOld = fluxNew;
@@ -405,7 +401,7 @@ void PNSolver::Save() const {
     std::vector<std::string> fieldNames{ "flux" };
     std::vector<double> flux( _nCells, 0.0 );
     for( unsigned i = 0; i < _nCells; ++i ) {
-        flux[i] = dot( _psi[i], _weights );
+        flux[i] = _psi[i][0];
     }
     std::vector<std::vector<double>> scalarField( 1, flux );
     std::vector<std::vector<std::vector<double>>> results{ scalarField };
