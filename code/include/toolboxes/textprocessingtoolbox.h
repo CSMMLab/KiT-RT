@@ -61,24 +61,6 @@ inline const void PrintVectorVector( const VectorVector vectorIn ) {
     }
 }
 
-/*!
- * \brief utility function for printing a Matrix
- * \param [in] matrixIn - Matrix we want to print
- */
-// inline const void PrintMatrix( const Matrix matrixIn ) {
-//    unsigned dimOuter = vectorIn.size();
-//    unsigned dimInner = vectorIn[0].size();
-//
-//    for( unsigned idx_Outer = 0; idx_Outer < dimOuter; idx_Outer++ ) {
-//        for( unsigned idx_Inner = 0; idx_Inner < dimInner; idx_Inner++ ) {
-//            if( vectorIn[idx_Outer][idx_Inner] > 0 )
-//                printf( "|  %.2f ", vectorIn[idx_Outer][idx_Inner] );
-//            else
-//                printf( "| %.2f ", vectorIn[idx_Outer][idx_Inner] );
-//        }
-//        std::cout << " |\n";
-//    }
-//}
 }    // namespace TextProcessingToolbox
 
 #endif    // TEXTPROCESSINGTOOLBOX_H

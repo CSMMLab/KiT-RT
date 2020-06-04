@@ -23,5 +23,11 @@ void UpwindFlux::Flux( const Matrix& AxPlus,
                        const Vector& n,
                        Vector& resultFlux ) const {
     // 2d only atm!!!
+    std::cout << "AxPlus" << AxPlus << std::endl;
+    std::cout << "psiL" << psiL << std::endl;
+    Vector temp = AxPlus * psiL;
+    std::cout << "AxPlus * psiL" << temp << std::endl;
+    std::cout << "n_x *AxPlus * psiL" << n[0] * temp << std::endl;
+
     resultFlux = ( n[0] * AxPlus + n[1] * AyPlus ) * psiL + ( n[0] * AxMinus + n[1] * AyMinus ) * psiR;
 }
