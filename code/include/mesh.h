@@ -6,7 +6,7 @@
 #include <omp.h>
 #include <vector>
 
-#include "blaze/Blaze.h"
+#include "blaze/math/CompressedMatrix.h"
 #include "metis.h"
 #include "parmetis.h"
 #include "spdlog/spdlog.h"
