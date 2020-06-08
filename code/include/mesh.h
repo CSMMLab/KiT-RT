@@ -66,6 +66,7 @@ class Mesh
 
     const std::vector<BOUNDARY_TYPE>& GetBoundaryTypes() const;
 
+    double GetDistanceToOrigin( unsigned idx_cell ) const;
     /**
      * @brief ComputeSlopes calculates the slope in every cell into x and y direction
      * @param nq is number of quadrature points

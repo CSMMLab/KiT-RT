@@ -33,7 +33,7 @@ void Mesh::ComputeConnectivity() {
         sortedBoundaries.push_back( _boundaries[i].second );
         std::sort( sortedBoundaries[i].begin(), sortedBoundaries[i].end() );
     }
-    //#pragma omp parallel for
+#pragma omp parallel for
     for( unsigned i = mpiCellStart; i < mpiCellEnd; ++i ) {
         std::vector<unsigned>* cellsI = &sortedCells[i];
         for( unsigned j = 0; j < _numCells; ++j ) {
@@ -333,3 +333,11 @@ const std::vector<unsigned>& Mesh::GetPartitionIDs() const { return _colors; }
 const std::vector<std::vector<unsigned>>& Mesh::GetNeighbours() const { return _cellNeighbors; }
 const std::vector<std::vector<Vector>>& Mesh::GetNormals() const { return _cellNormals; }
 const std::vector<BOUNDARY_TYPE>& Mesh::GetBoundaryTypes() const { return _cellBoundaryTypes; }
+
+double Mesh::GetDistanceToOrigin( unsigned idx_cell ) const {
+    double distance = 0.0;
+    for( unsigned idx_dim = 0; idx_dim < _dim; idx_dim++ ) {
+        distance += _cellMidPoints[idx_cell][idx_dim] * _cellMidPoints[idx_cell][idx_dim];
+    }
+    return sqrt( distance );
+}

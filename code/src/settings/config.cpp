@@ -323,7 +323,7 @@ void Config::SetPostprocessing() {
 #endif
 
     // Check if there are contradictive or false options set.
-
+    _boundaries.resize( _nMarkerDirichlet + _nMarkerNeumann );
     // Regroup Boundary Conditions to  std::vector<std::pair<std::string, BOUNDARY_TYPE>> _boundaries;
     for( int i = 0; i < _nMarkerDirichlet; i++ ) {
         _boundaries.push_back( std::pair<std::string, BOUNDARY_TYPE>( _MarkerDirichlet[i], DIRICHLET ) );

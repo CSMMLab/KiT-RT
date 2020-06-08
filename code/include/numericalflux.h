@@ -44,6 +44,17 @@ class NumericalFlux
                        const Vector&,
                        const Vector& n,
                        Vector& resultFlux ) const = 0;
+
+    virtual void FluxVanLeer( const Matrix& Ax,
+                              const Matrix& AxAbs,
+                              const Matrix& Ay,
+                              const Matrix& AyAbs,
+                              const Matrix& Az,
+                              const Matrix& AzAbs,
+                              const Vector& psiL,
+                              const Vector& psiR,
+                              const Vector& n,
+                              Vector& resultFlux ) const = 0;
 };
 
 #endif    // NUMERICALFLUX_H

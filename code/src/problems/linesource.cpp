@@ -30,7 +30,7 @@ VectorVector LineSource_SN::SetupIC() {
     for( unsigned j = 0; j < cellMids.size(); ++j ) {
         double x = cellMids[j][0];
         double y = cellMids[j][1];
-        psi[j]   = 1 / ( 4 * M_PI * t ) * std::exp( -( x * x + y * y ) / ( 4 * t ) ) / ( 4 * M_PI );
+        psi[j]   = 1.0 / ( 4.0 * M_PI * t ) * std::exp( -( x * x + y * y ) / ( 4 * t ) ) / ( 4 * M_PI );
     }
     return psi;
 }
@@ -76,7 +76,11 @@ VectorVector LineSource_PN::SetupIC() {
     for( unsigned j = 0; j < cellMids.size(); ++j ) {
         double x  = cellMids[j][0];
         double y  = cellMids[j][1];
-        psi[j][0] = 1 / ( 4 * M_PI * t ) * std::exp( -( x * x + y * y ) / ( 4 * t ) ) / ( 4 * M_PI );
+        psi[j][0] = 1.0 / ( 4.0 * M_PI * t ) * std::exp( -( x * x + y * y ) / ( 4 * t ) ) / ( 4 * M_PI );
     }
+
+    // for( unsigned j = 0; j < cellMids.size(); ++j ) {
+    //    psi[j][0] = 1;    // / ( 4.0 * M_PI * t ) * std::exp( -( x * x + y * y ) / ( 4 * t ) ) / ( 4 * M_PI );
+    //}
     return psi;
 }

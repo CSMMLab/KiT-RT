@@ -53,8 +53,10 @@ void SNSolver::Solve() {
         }
         _psi = psiNew;
         for( unsigned i = 0; i < _nCells; ++i ) {
-            fluxNew[i] = dot( _psi[i], _weights );
+            fluxNew[i]       = dot( _psi[i], _weights );
+            _solverOutput[i] = fluxNew[i];
         }
+        Save( n );
         dFlux   = blaze::l2Norm( fluxNew - fluxOld );
         fluxOld = fluxNew;
         if( rank == 0 ) log->info( "{:03.8f}   {:01.5e}", _energies[n], dFlux );
@@ -70,4 +72,11 @@ void SNSolver::Save() const {
     std::vector<std::vector<double>> scalarField( 1, flux );
     std::vector<std::vector<std::vector<double>>> results{ scalarField };
     ExportVTK( _settings->GetOutputFile(), results, fieldNames, _mesh );
+}
+
+void SNSolver::Save( int currEnergy ) const {
+    std::vector<std::string> fieldNames{ "flux" };
+    std::vector<std::vector<double>> scalarField( 1, _solverOutput );
+    std::vector<std::vector<std::vector<double>>> results{ scalarField };
+    ExportVTK( _settings->GetOutputFile() + "_" + std::to_string( currEnergy ), results, fieldNames, _mesh );
 }

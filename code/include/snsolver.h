@@ -25,6 +25,7 @@ class SNSolver : public Solver
      * @brief Output solution to VTK file
      */
     virtual void Save() const;
+    virtual void Save( int currEnergy ) const;
 };
 
 #endif    // SNSOLVER_H

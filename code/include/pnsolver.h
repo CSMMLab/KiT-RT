@@ -25,12 +25,13 @@ class PNSolver : public Solver
      */
     void Save() const override;
 
+    void Save( int currEnergy ) const;
+
   protected:
     // moment orders for P_N
     unsigned _nTotalEntries;    // total number of equations in the system
 
     VectorVector _sigmaA;    // absorbtion coefficient for all energies
-
     // System Matrix for x, y and z flux
     //    ==> not needed after computation of A+ and A- ==> maybe safe only temporarly and remove as member?
     SymMatrix _Ax;
@@ -40,10 +41,13 @@ class PNSolver : public Solver
     // Upwinding Matrices
     Matrix _AxPlus;
     Matrix _AxMinus;
+    Matrix _AxAbs;
     Matrix _AyPlus;
     Matrix _AyMinus;
+    Matrix _AyAbs;
     Matrix _AzPlus;
     Matrix _AzMinus;
+    Matrix _AzAbs;
 
     Vector _scatterMatDiag;    // diagonal of the scattering matrix (its a diagonal matrix by construction)
 
@@ -64,7 +68,18 @@ class PNSolver : public Solver
     int Sgn( int k ) const;
     int kPlus( int k ) const;
     int kMinus( int k ) const;
+
+    /*! @brief : computes the global index of the moment corresponding to basis function (l,k)
+     *  @param : degree l, it must hold: 0 <= l <=_nq
+     *  @param : order k, it must hold: -l <=k <= l
+     *  @returns : global index
+     */
     int GlobalIndex( int l, int k ) const;
+
+    /*! @brief : Checks, if index invariant for global index holds
+     *  @returns : True, if invariant holds, else false
+     */
+    bool CheckIndex( int l, int k ) const;
 
     // function for computing and setting up system matrices
     void ComputeSystemMatrices();
