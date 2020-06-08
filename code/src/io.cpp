@@ -34,7 +34,7 @@ void ExportVTK( const std::string fileName,
                 pts->SetPoint( nodeID++, node[0], node[1], node[2] );
             }
             else {
-                exit( EXIT_FAILURE );
+                ErrorMessages::Error( "Unsupported dimension (d=" + std::to_string( dim ) + ")!", CURRENT_FUNCTION );
             }
         }
         vtkCellArraySP cellArray = vtkCellArraySP::New();
@@ -72,8 +72,8 @@ void ExportVTK( const std::string fileName,
                     break;
                 default:
                     auto log = spdlog::get( "event" );
-                    log->error( "[ERROR][IO::ExportVTK] Invalid dimension" );
-                    exit( EXIT_FAILURE );
+                    ErrorMessages::Error( "Please implement output for results of size " + std::to_string( results[i].size() ) + "!",
+                                          CURRENT_FUNCTION );
             }
             grid->GetCellData()->AddArray( cellData );
         }
@@ -106,7 +106,8 @@ Mesh* LoadSU2MeshFromFile( const Config* settings ) {
     std::vector<std::vector<unsigned>> cells;
     std::vector<std::pair<BOUNDARY_TYPE, std::vector<unsigned>>> boundaries;
 
-    if( !std::filesystem::exists( settings->GetMeshFile() ) ) exit( EXIT_FAILURE );
+    if( !std::filesystem::exists( settings->GetMeshFile() ) )
+        ErrorMessages::Error( "Cannot find mesh file '" + settings->GetMeshFile() + "!", CURRENT_FUNCTION );
     std::ifstream ifs( settings->GetMeshFile(), std::ios::in );
     std::string line;
 
@@ -181,7 +182,7 @@ Mesh* LoadSU2MeshFromFile( const Config* settings ) {
                             }
                         }
                         else {
-                            exit( EXIT_FAILURE );
+                            ErrorMessages::Error( "Invalid mesh file detected! Make sure boundaries are provided.'", CURRENT_FUNCTION );
                         }
                     }
                     std::sort( bnodes.begin(), bnodes.end() );
@@ -215,8 +216,7 @@ Mesh* LoadSU2MeshFromFile( const Config* settings ) {
                             break;
                         }
                         default: {
-                            log->error( "[LoadSU2MeshFromFile] Unsupported mesh type!" );
-                            exit( EXIT_FAILURE );
+                            ErrorMessages::Error( "Unsupported mesh type!'", CURRENT_FUNCTION );
                         }
                     }
                 }
@@ -225,8 +225,7 @@ Mesh* LoadSU2MeshFromFile( const Config* settings ) {
         }
         bool mixedElementMesh = !std::equal( numNodesPerCell.begin() + 1, numNodesPerCell.end(), numNodesPerCell.begin() );
         if( mixedElementMesh ) {
-            log->error( "[LoadSU2MeshFromFile] Mixed element meshes are currently not supported!" );
-            exit( EXIT_FAILURE );
+            ErrorMessages::Error( "Mixed element meshes are currently not supported!'", CURRENT_FUNCTION );
         }
         ifs.clear();
         ifs.seekg( 0, std::ios::beg );
@@ -254,8 +253,7 @@ Mesh* LoadSU2MeshFromFile( const Config* settings ) {
         }
     }
     else {
-        log->error( "[LoadSU2MeshFromFile] File not found" );
-        exit( EXIT_FAILURE );
+        ErrorMessages::Error( "Cannot open mesh file '" + settings->GetMeshFile() + "!", CURRENT_FUNCTION );
     }
     ifs.close();
     return new Mesh( nodes, cells, boundaries );
@@ -281,8 +279,7 @@ std::string ParseArguments( int argc, char* argv[] ) {
             inputFile = std::string( argv[i] );
             std::ifstream f( inputFile );
             if( !f.is_open() ) {
-                std::cerr << "[ERROR] Unable to open inputfile '" << inputFile << "'!" << std::endl;
-                exit( EXIT_FAILURE );
+                ErrorMessages::OptionNotSetError( "Unable to open inputfile '" + inputFile + "' !", CURRENT_FUNCTION );
             }
         }
     }

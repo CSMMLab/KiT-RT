@@ -82,10 +82,9 @@ void Mesh::ComputeConnectivity() {
 
     if( std::any_of( neighborsFlat.begin(), neighborsFlat.end(), []( int i ) { return i == -1; } ) ) {
         for( unsigned idx = 0; idx < neighborsFlat.size(); ++idx ) {
-            if( neighborsFlat[idx] == -1 ) _log->error( "[mesh] Detected unassigned faces at index {0}", idx );
-            break;
+            if( neighborsFlat[idx] == -1 )
+                ErrorMessages::Error( "Detected unassigned faces at index " + std::to_string( idx ) + " !", CURRENT_FUNCTION );
         }
-        exit( EXIT_FAILURE );
     }
 
     _cellNeighbors.resize( _numCells );
@@ -153,7 +152,8 @@ void Mesh::ComputeCellAreas() {
                 break;
             }
             default: {
-                exit( EXIT_FAILURE );
+                ErrorMessages::Error( "Area computation for cells with " + std::to_string( _numNodesPerCell ) + " nodes is not implemented yet!",
+                                      CURRENT_FUNCTION );
             }
         }
     }

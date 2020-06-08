@@ -30,7 +30,7 @@ std::string QLDFESA::GetLookupTable() {
         case 1: lookupTable = __1_ldfesa_txt; break;
         case 2: lookupTable = __2_ldfesa_txt; break;
         case 3: lookupTable = __3_ldfesa_txt; break;
-        default: std::cerr << "Error: Invalid order chosen" << std::endl; exit( EXIT_FAILURE );
+        default: ErrorMessages::Error( "Invalid quadrature order chosen!", CURRENT_FUNCTION );
     }
 
     std::string lookupTableString( reinterpret_cast<char*>( lookupTable ) );
