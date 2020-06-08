@@ -320,11 +320,6 @@ void Mesh::ComputeSlopes( unsigned nq, VectorVector& psiDerX, VectorVector& psiD
     }
 }
 
-unsigned Mesh::GetDim() const { return _dim; }
-unsigned Mesh::GetNumCells() const { return _numCells; }
-unsigned Mesh::GetNumNodes() const { return _numNodes; }
-unsigned Mesh::GetNumNodesPerCell() const { return _numNodesPerCell; }
-
 const std::vector<Vector>& Mesh::GetNodes() const { return _nodes; }
 const std::vector<Vector>& Mesh::GetCellMidPoints() const { return _cellMidPoints; }
 const std::vector<std::vector<unsigned>>& Mesh::GetCells() const { return _cells; }

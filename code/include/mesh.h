@@ -52,18 +52,57 @@ class Mesh
           std::vector<std::pair<BOUNDARY_TYPE, std::vector<unsigned>>> boundaries );
     ~Mesh();
 
-    unsigned GetDim() const;
-    unsigned GetNumCells() const;
-    unsigned GetNumNodes() const;
-    unsigned GetNumNodesPerCell() const;
+    inline unsigned GetDim() const { return _dim; }
+    inline unsigned GetNumCells() const { return _numCells; }
+    inline unsigned GetNumNodes() const { return _numNodes; }
+    inline unsigned GetNumNodesPerCell() const { return _numNodesPerCell; }
+
+    /**
+     * @brief Returns all node coordinates
+     * @return dimension: numNodes x dim
+     */
     const std::vector<Vector>& GetNodes() const;
+
+    /**
+     * @brief  Returns the mid point coordinates of each cell
+     * @return dimension: numCells x dim
+     */
     const std::vector<Vector>& GetCellMidPoints() const;
+
+    /**
+     * @brief Returns all node IDs that construct up each cell
+     * @return dimension: numCells x numNodes
+     */
     const std::vector<std::vector<unsigned>>& GetCells() const;
+
+    /**
+     * @brief Returns the cell area of each cell
+     * @return dimension: numCells
+     */
     const std::vector<double>& GetCellAreas() const;
+
+    /**
+     * @brief Return the color/ID of the mesh partition
+     * @return dimension: numCells
+     */
     const std::vector<unsigned>& GetPartitionIDs() const;
+
+    /**
+     * @brief Returns the neighbor cell IDs for every cell
+     * @return dimension: numCells x numNodes
+     */
     const std::vector<std::vector<unsigned>>& GetNeighbours() const;
+
+    /**
+     * @brief Returns the edge length scaled normal vectors of each cell
+     * @return dimension: numCells x numNodes x dim
+     */
     const std::vector<std::vector<Vector>>& GetNormals() const;
 
+    /**
+     * @brief Returns the boundary enum for each cell. BOUNDARY_TYPE::NONE is the default.
+     * @return dimension: numCells
+     */
     const std::vector<BOUNDARY_TYPE>& GetBoundaryTypes() const;
 
     /**
