@@ -4,23 +4,13 @@
 
 TEST_CASE( "Read in Config Template" ) {
 
-    std::string filename = "input/configTest.cfg";
-    char config_file_name[MAX_STRING_SIZE];
-
-    /*--- Load in the number of zones and spatial dimensions in the mesh file (If no config
-     file is specified, default.cfg is used) ---*/
-    strcpy( config_file_name, filename.c_str() );
+    char filename[] = "../tests/input/configTest.cfg";
 
     // Load Settings from File
-    Config* config = new Config( config_file_name );
+    Config* config = new Config( filename );
 
     // Test all set configurations
     bool allSatisfied = true;
-
-    if( config->GetMeshFile().compare( "testMesh.su2" ) != 0 ) allSatisfied = false;
-    if( config->GetOutputDir().compare( "../result" ) != 0 ) allSatisfied = false;
-    if( config->GetOutputFile().compare( "testOutput" ) != 0 ) allSatisfied = false;
-    if( config->GetLogDir().compare( "../result/logs" ) != 0 ) allSatisfied = false;
 
     if( config->GetCFL() != 0.4 ) allSatisfied = false;
     if( config->GetTEnd() != 0.3 ) allSatisfied = false;
