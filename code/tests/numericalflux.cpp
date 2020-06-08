@@ -7,7 +7,7 @@
 #include "settings/config.h"
 #include "settings/globalconstants.h"
 
-TEST_CASE( "unit mesh tests", "[mesh]" ) {
+TEST_CASE( "unit numericalflux tests", "[numericalflux]" ) {
     char config_file_name[] = "../tests/input/unit.cfg";
 
     Config* config = new Config( config_file_name );
