@@ -61,7 +61,7 @@ std::string QLebedev::GetLookupTable() {
         case 119: lookupTable = __119_lebedev_txt; break;
         case 125: lookupTable = __125_lebedev_txt; break;
         case 131: lookupTable = __131_lebedev_txt; break;
-        default: std::cerr << "Error: Invalid order chosen" << std::endl; exit( EXIT_FAILURE );
+        default: ErrorMessages::Error( "Invalid quadrature order chosen!", CURRENT_FUNCTION );
     }
 
     std::string lookupTableString( reinterpret_cast<char*>( lookupTable ) );

@@ -5,6 +5,10 @@
 
 class QGaussLegendreTensorized : public QuadratureBase
 {
+  private:
+    double Pythag( const double a, const double b );
+    std::pair<Vector, Matrix> ComputeEigenValTriDiagMatrix( const Matrix& mat );
+
   public:
     QGaussLegendreTensorized( unsigned order );
     virtual ~QGaussLegendreTensorized() {}
