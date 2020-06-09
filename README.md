@@ -77,7 +77,7 @@ tar xzf VTK-8.2.0.tar.gz
 mkdir VTK-build
 cd VTK-build
 cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_DOCUMENTATION=OFF -DBUILD_TESTING=OFF -DCMAKE_INSTALL_PREFIX=~/VTK-install ../VTK-8.2.0
-make -j10
+make -j
 make install
 cd -
 rm -r VTK-8.2.0 VTK-build
@@ -95,10 +95,6 @@ Append `HINTS VTK_INSTALL_DIR` to the `find_package( VTK ... )` line in the CMak
 ```bash
 find_package( VTK REQUIRED COMPONENTS vtkIOGeometry vtkFiltersCore HINTS ~/VTK-install )
 ```
-As a temporary fix, also set the `BLAZE_BLAS_MODE` preprocessor definition to `0`
-```bash
-add_compile_definitions( BLAZE_BLAS_MODE=0 )
-```
 
 Compile it
 ```bash
@@ -107,7 +103,7 @@ module load compiler/gnu/9.2
 module load mpi/openmpi/4.0
 cd code/build/release/
 cmake -DCMAKE_BUILD_TYPE=Release ../../
-make -j10
+make -j
 ```
 
 ---

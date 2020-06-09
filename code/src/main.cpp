@@ -6,7 +6,6 @@
 #include "settings/config.h"
 
 int main( int argc, char** argv ) {
-
     MPI_Init( &argc, &argv );
 
     std::string filename = "default.cfg";

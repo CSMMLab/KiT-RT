@@ -21,93 +21,93 @@
 #include "optionstructure.h"
 
 /*!
- * \class Config
- * \brief Main class for defining the problem; basically this class reads the configuration file, and
+ * @class Config
+ * @brief Main class for defining the problem; basically this class reads the configuration file, and
  *        stores all the information.
  */
 
 class Config
 {
   private:
-    std::string _fileName; /*!< \brief Name of the current file without extension */
+    std::string _fileName; /*!< @rief Name of the current file without extension */
     bool _baseConfig;
 
-    int _commRank, _commSize; /*!< \brief MPI rank and size.*/    // Not yet used!!
+    int _commRank, _commSize; /*!< @brief MPI rank and size.*/    // Not yet used!!
 
     // --- Options ---
     // File Structure
-    std::string _inputDir;   /*!< \brief Directory for input files*/
-    std::string _outputDir;  /*!< \brief Directory for output files*/
-    std::string _outputFile; /*!< \brief Name of output file*/
-    std::string _logDir;     /*!< \brief Directory of log file*/
-    std::string _meshFile;   /*!< \brief Name of mesh file*/
+    std::string _inputDir;   /*!< @brief Directory for input files*/
+    std::string _outputDir;  /*!< @brief Directory for output files*/
+    std::string _outputFile; /*!< @brief Name of output file*/
+    std::string _logDir;     /*!< @brief Directory of log file*/
+    std::string _meshFile;   /*!< @brief Name of mesh file*/
 
     // Quadrature
-    QUAD_NAME _quadName;       /*!< \brief Quadrature Name*/
-    unsigned short _quadOrder; /*!< \brief Quadrature Order*/
+    QUAD_NAME _quadName;       /*!< @brief Quadrature Name*/
+    unsigned short _quadOrder; /*!< @brief Quadrature Order*/
     unsigned _nQuadPoints;
 
     // Mesh
     unsigned _nCells;
 
     // Solver
-    double _CFL;  /*!< \brief CFL Number for Solver*/
-    double _tEnd; /*!< \brief Final Time for Simulation */
+    double _CFL;  /*!< @brief CFL Number for Solver*/
+    double _tEnd; /*!< @brief Final Time for Simulation */
     PROBLEM_NAME _problemName;
     SOLVER_NAME _solverName;
 
     bool _cleanFluxMat;
 
     // Boundary Conditions
-    /*!< \brief List of all Pairs (marker, BOUNDARY_TYPE), e.g. (farfield,DIRICHLET).
+    /*!< @brief List of all Pairs (marker, BOUNDARY_TYPE), e.g. (farfield,DIRICHLET).
          Each Boundary Conditions must have an entry in enum BOUNDARY_TYPE*/
     std::vector<std::pair<std::string, BOUNDARY_TYPE>> _boundaries;
-    unsigned short _nMarkerDirichlet;          /*!< \brief Number of Dirichlet BC markers. Enum entry: DIRICHLET */
-    unsigned short _nMarkerNeumann;            /*!< \brief Number of Neumann BC markers. Enum entry: Neumann */
-    std::vector<std::string> _MarkerDirichlet; /*!< \brief Dirichlet BC markers. */
-    std::vector<std::string> _MarkerNeumann;   /*!< \brief Neumann BC markers. */
+    unsigned short _nMarkerDirichlet;          /*!< @brief Number of Dirichlet BC markers. Enum entry: DIRICHLET */
+    unsigned short _nMarkerNeumann;            /*!< @brief Number of Neumann BC markers. Enum entry: Neumann */
+    std::vector<std::string> _MarkerDirichlet; /*!< @brief Dirichlet BC markers. */
+    std::vector<std::string> _MarkerNeumann;   /*!< @brief Neumann BC markers. */
 
     // Scattering Kernel
-    KERNEL_NAME _kernelName; /*!< \brief Scattering Kernel Name*/
+    KERNEL_NAME _kernelName; /*!< @brief Scattering Kernel Name*/
 
     // --- Parsing Functionality and Initializing of Options ---
     /*!
-     * \brief Set default values for all options not yet set.
+     * @brief Set default values for all options not yet set.
      */
     void SetDefault( void );
 
     /*!
-     * \brief Set the config options.
+     * @brief Set the config options.
      *        ==> Set new config options here.
      */
     void SetConfigOptions( void );
 
     /*!
-     * \brief Set the config file parsing.
+     * @brief Set the config file parsing.
      */
     void SetConfigParsing( char case_filename[MAX_STRING_SIZE] );
 
     /*!
-     * \brief Config file screen output.
+     * @brief Config file screen output.
      */
     void SetOutput( void );
 
     /*!
-     * \brief Initializes pointers to null
+     * @brief Initializes pointers to null
      */
     void SetPointersNull( void );
 
     /*!
-     * \brief Config file postprocessing.
+     * @brief Config file postprocessing.
      */
     void SetPostprocessing( void );
 
     /*!
-     * \brief breaks an input line from the config file into a set of tokens
-     * \param[in] str - the input line string
-     * \param[out] option_name - the name of the option found at the beginning of the line
-     * \param[out] option_value - the tokens found after the "=" sign on the line
-     * \return false if the line is empty or a commment, true otherwise
+     * @brief breaks an input line from the config file into a set of tokens
+     * @param[in] str - the input line string
+     * @param[out] option_name - the name of the option found at the beginning of the line
+     * @param[out] option_value - the tokens found after the "=" sign on the line
+     * @return false if the line is empty or a commment, true otherwise
      */
     bool TokenizeString( std::string& str, std::string& option_name, std::vector<std::string>& option_value );
 
@@ -137,7 +137,7 @@ class Config
     // List and Array options should also be able to be specified with the string "NONE" indicating that there
     // are no elements. This allows the option to be present in a config file but left blank.
 
-    /*!< \brief addDoubleOption creates a config file parser for an option with the given name whose
+    /*!< @brief addDoubleOption creates a config file parser for an option with the given name whose
      value can be represented by a su2double.*/
 
     // Simple Options
@@ -168,19 +168,19 @@ class Config
 
   public:
     /*!
-     * \brief Constructor of the class which reads the input file.
+     * @brief Constructor of the class which reads the input file.
      */
     Config( char case_filename[MAX_STRING_SIZE] );
 
     /*!
-     * \brief Destructor of the class.
+     * @brief Destructor of the class.
      */
     ~Config( void );
 
     // ---- Getters for option values ----
 
     /*!
-     * \brief Get Value of this option.
+     * @brief Get Value of this option.
      *        Please keep alphabetical order within each subcategory
      */
     // File structure
@@ -206,7 +206,7 @@ class Config
     SOLVER_NAME inline GetSolverName() const { return _solverName; }
 
     // Boundary Conditions
-    BOUNDARY_TYPE GetBoundaryType( std::string nameMarker ) const; /*! \brief Get Boundary Type of given marker */
+    BOUNDARY_TYPE GetBoundaryType( std::string nameMarker ) const; /*! @brief Get Boundary Type of given marker */
 
     // Scattering Kernel
     KERNEL_NAME inline GetKernelName() const { return _kernelName; }

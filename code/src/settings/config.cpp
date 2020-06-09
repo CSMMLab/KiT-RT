@@ -374,8 +374,6 @@ bool Config::TokenizeString( string& str, string& option_name, vector<string>& o
     }
     name_part  = str.substr( 0, pos );
     value_part = str.substr( pos + 1, string::npos );
-    // cout << "name_part  = |" << name_part  << "|" << endl;
-    // cout << "value_part = |" << value_part << "|" << endl;
 
     // the first_part should consist of one string with no interior delimiters
     last_pos = name_part.find_first_not_of( delimiters, 0 );
@@ -395,9 +393,6 @@ bool Config::TokenizeString( string& str, string& option_name, vector<string>& o
     }
     TextProcessingToolbox::StringToUpperCase( option_name );
 
-    // cout << "option_name = |" << option_name << "|" << endl;
-    // cout << "pos = " << pos << ": last_pos = " << last_pos << endl;
-
     // now fill the option value vector
     option_value.clear();
     last_pos = value_part.find_first_not_of( delimiters, 0 );
@@ -415,13 +410,6 @@ bool Config::TokenizeString( string& str, string& option_name, vector<string>& o
              << "option " << option_name << " in configuration file with no value assigned." << endl;
         throw( -1 );
     }
-
-#if 0
-  cout << "option value(s) = ";
-  for (unsigned int i = 0; i < option_value.size(); i++)
-    cout << option_value[i] << " ";
-  cout << endl;
-#endif
 
     // look for ';' DV delimiters attached to values
     vector<string>::iterator it;
@@ -456,12 +444,7 @@ bool Config::TokenizeString( string& str, string& option_name, vector<string>& o
             it++;
         }
     }
-#if 0
-  cout << "option value(s) = ";
-  for (unsigned int i = 0; i < option_value.size(); i++)
-    cout << option_value[i] << " ";
-  cout << endl;
-#endif
+
     // remove any consecutive ";"
     it                = option_value.begin();
     bool semi_at_prev = false;
@@ -483,12 +466,6 @@ bool Config::TokenizeString( string& str, string& option_name, vector<string>& o
         it++;
     }
 
-#if 0
-  cout << "option value(s) = ";
-  for (unsigned int i = 0; i < option_value.size(); i++)
-    cout << option_value[i] << " ";
-  cout << endl;
-#endif
     return true;
 }
 

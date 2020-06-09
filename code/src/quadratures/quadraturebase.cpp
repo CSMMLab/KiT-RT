@@ -34,26 +34,29 @@ double QuadratureBase::Integrate( double( f )( double x0, double x1, double x2 )
 double QuadratureBase::SumUpWeights() { return sum( _weights ); }
 
 void QuadratureBase::PrintWeights() {
+    auto log = spdlog::get( "event" );
     for( unsigned i = 0; i < _nq; i++ ) {
         double w = _weights[i];
-        std::cout << w << std::endl;
+        log->info( w );
     }
 }
 
 void QuadratureBase::PrintPoints() {
+    auto log = spdlog::get( "event" );
     for( unsigned i = 0; i < _nq; i++ ) {
         double x = _points[i][0];
         double y = _points[i][1];
         double z = _points[i][2];
-        std::cout << x << ", " << y << ", " << z << std::endl;
+        log->info( "{0}, {1}, {2}", x, y, z );
     }
 }
 void QuadratureBase::PrintPointsAndWeights() {
+    auto log = spdlog::get( "event" );
     for( unsigned i = 0; i < _nq; i++ ) {
         double x = _points[i][0];
         double y = _points[i][1];
         double z = _points[i][2];
         double w = _weights[i];
-        std::cout << x << ", " << y << ", " << z << ", " << w << std::endl;
+        log->info( "{0}, {1}, {2}, {3}", x, y, z, w );
     }
 }
