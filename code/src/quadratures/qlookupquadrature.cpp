@@ -6,20 +6,20 @@
 QLookupQuadrature::QLookupQuadrature( unsigned order ) : QuadratureBase( order ) {}
 
 void QLookupQuadrature::printAvailOrders() const {
-    std::cout << "Available orders: (";
+    auto log                    = spdlog::get( "event" );
+    std::string availableOrders = "";
     for( unsigned i = 0; i < _availableOrders.size() - 1; i++ ) {
-        std::cout << _availableOrders[i] << "|";
+        availableOrders += std::to_string( _availableOrders[i] ) + "|";
     }
-    std::cout << _availableOrders[_availableOrders.size() - 1] << ")\n";
+    availableOrders += std::to_string( _availableOrders[_availableOrders.size() - 1] ) + ")";
+    log->info( "Available orders: ({0})", availableOrders );
 }
 
 bool QLookupQuadrature::CheckOrder() {
     std::vector<unsigned>::iterator it = std::find( _availableOrders.begin(), _availableOrders.end(), _order );
-
     if( it == _availableOrders.end() ) {
-        std::cerr << "ERROR! Order " << _order << " for " << GetName() << " not available. " << std::endl;
         printAvailOrders();
-        exit( EXIT_FAILURE );
+        ErrorMessages::Error( "ERROR! Order " + std::to_string( _order ) + " for " + GetName() + " not available. ", CURRENT_FUNCTION );
     }
     return true;
 }
@@ -54,9 +54,7 @@ void QLookupQuadrature::SetPointsAndWeights() {
         in >> line;    // Get line of lookupTable string
 
         if( line.empty() ) {
-            std::cout << _name << " with order " << _order << ".\n";
-            std::cerr << "Internal Error: Length of lookup table vector does not fit requested point vector length.\n";
-            exit( EXIT_FAILURE );
+            ErrorMessages::Error( "Length of lookup table vector does not fit requested point vector length!", CURRENT_FUNCTION );
         }
 
         std::stringstream ss( line );    // give line to stringstream

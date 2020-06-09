@@ -2,6 +2,7 @@
 #define QUADRATURE_H
 
 #include "settings/globalconstants.h"
+#include "toolboxes/errormessages.h"
 #include "typedef.h"
 #include <iostream>
 #include <string>

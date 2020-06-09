@@ -1,6 +1,7 @@
 #ifndef TYPEDEFS_H
 #define TYPEDEFS_H
 
+#include <blaze/math/CompressedMatrix.h>
 #include <blaze/math/DynamicMatrix.h>
 #include <blaze/math/DynamicVector.h>
 

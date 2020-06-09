@@ -36,7 +36,7 @@ std::string QLevelSymmetric::GetLookupTable() {
         case 16: lookupTable = __16_levelsym_txt; break;
         case 18: lookupTable = __18_levelsym_txt; break;
         case 20: lookupTable = __20_levelsym_txt; break;
-        default: std::cerr << "Error: Invalid order chosen" << std::endl; exit( EXIT_FAILURE );
+        default: ErrorMessages::Error( "Invalid quadrature order chosen!", CURRENT_FUNCTION );
     }
 
     std::string lookupTableString( reinterpret_cast<char*>( lookupTable ) );
