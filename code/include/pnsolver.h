@@ -48,6 +48,7 @@ class PNSolver : public Solver
     Matrix _AzPlus;
     Matrix _AzMinus;
     Matrix _AzAbs;
+    double _combinedSpectralRadius;
 
     Vector _scatterMatDiag;    // diagonal of the scattering matrix (its a diagonal matrix by construction)
 
@@ -89,6 +90,11 @@ class PNSolver : public Solver
     void ComputeScatterMatrix();
     // Computes Legedre polinomial of oder l at point x
     double Legendre( double x, int l );
+    // Adapt the TimeStep according to the CFL number of  the velocities in the AdvectionMatrices
+    void AdaptTimeStep();
+    // Sets Entries of FluxMatrices to zero, if they are below double accuracy, to prevent floating point
+    // inaccuracies lateron
+    void CleanFluxMatrices();
 };
 
 #endif    // PNSOLVER_H

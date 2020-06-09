@@ -56,6 +56,8 @@ class Config
     PROBLEM_NAME _problemName;
     SOLVER_NAME _solverName;
 
+    bool _cleanFluxMat;
+
     // Boundary Conditions
     /*!< \brief List of all Pairs (marker, BOUNDARY_TYPE), e.g. (farfield,DIRICHLET).
          Each Boundary Conditions must have an entry in enum BOUNDARY_TYPE*/

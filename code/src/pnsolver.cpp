@@ -10,6 +10,7 @@ PNSolver::PNSolver( Config* settings ) : Solver( settings ) {
 
     // transform sigmaT and sigmaS in sigmaA.
     _sigmaA = VectorVector( _nEnergies, Vector( _nCells, 0 ) );    // Get rid of this extra vektor!
+
     for( unsigned n = 0; n < _nEnergies; n++ ) {
         for( unsigned j = 0; j < _nCells; j++ ) {
             _sigmaA[n][j] = 0;    //_sigmaT[n][j] - _sigmaS[n][j];
@@ -41,6 +42,17 @@ PNSolver::PNSolver( Config* settings ) : Solver( settings ) {
     std::cout << "System Matrix Set UP!" << std::endl;
     // Compute Decomposition in positive and negative (eigenvalue) parts of flux jacobians
     ComputeFluxComponents();
+
+    // Compute diagonal of the scatter matrix (it's a diagonal matrix)
+    ComputeScatterMatrix();
+
+    std::cout << "scatterMatrix : " << _scatterMatDiag << "\n";
+
+    AdaptTimeStep();
+
+    if( settings->GetCleanFluxMat() ) CleanFluxMatrices();
+
+    std::cout << "--------\n";
     std::cout << "_Ax :\n" << _Ax << "\n ";    // _AxP \n" << _AxPlus << "\n _AxM \n" << _AxMinus << "\n";
     std::cout << "_Ay :\n" << _Ay << "\n ";    //_AyP \n" << _AyPlus << "\n _AyM \n" << _AyMinus << "\n";
     std::cout << "_Az :\n" << _Az << "\n ";    //_AzP \n" << _AzPlus << "\n _AzM \n" << _AzMinus << "\n";
@@ -49,16 +61,30 @@ PNSolver::PNSolver( Config* settings ) : Solver( settings ) {
     std::cout << "_AyA :\n" << _AyAbs << "\n ";    //_AyP \n" << _AyPlus << "\n _AyM \n" << _AyMinus << "\n";
     std::cout << "_AzA :\n" << _AzAbs << "\n ";
 
-    std::cout << "_AxA :\n" << _AxPlus - _AxMinus << "\n ";    // _AxP \n" << _AxPlus << "\n _AxM \n" << _AxMinus << "\n";
-    std::cout << "_AyA :\n" << _AyPlus - _AyMinus << "\n ";    //_AyP \n" << _AyPlus << "\n _AyM \n" << _AyMinus << "\n";
-    std::cout << "_AzA :\n" << _AzPlus - _AzMinus << "\n ";
-
-    // Compute diagonal of the scatter matrix (it's a diagonal matrix)
-    ComputeScatterMatrix();
-
-    std::cout << "scatterMatrix : " << _scatterMatDiag << "\n";
+    std::cout << "_AxAR :\n" << _AxPlus - _AxMinus << "\n ";    // _AxP \n" << _AxPlus << "\n _AxM \n" << _AxMinus << "\n";
+    std::cout << "_AyAR :\n" << _AyPlus - _AyMinus << "\n ";    //_AyP \n" << _AyPlus << "\n _AyM \n" << _AyMinus << "\n";
+    std::cout << "_AzAR :\n" << _AzPlus - _AzMinus << "\n ";
 }
 
+void PNSolver::AdaptTimeStep() { _dE = _dE / _combinedSpectralRadius; }
+
+void PNSolver::CleanFluxMatrices() {
+    for( unsigned idx_row = 0; idx_row < _nTotalEntries; idx_row++ ) {
+        for( unsigned idx_col = 0; idx_col < _nTotalEntries; idx_col++ ) {
+            if( _AxAbs( idx_row, idx_col ) < 0.00000000001 ) _AxAbs( idx_row, idx_col ) = 0.0;
+            if( _AxPlus( idx_row, idx_col ) < 0.00000000001 ) _AxPlus( idx_row, idx_col ) = 0.0;
+            if( _AxMinus( idx_row, idx_col ) < 0.00000000001 ) _AxMinus( idx_row, idx_col ) = 0.0;
+
+            if( _AyAbs( idx_row, idx_col ) < 0.00000000001 ) _AyAbs( idx_row, idx_col ) = 0.0;
+            if( _AyPlus( idx_row, idx_col ) < 0.00000000001 ) _AyPlus( idx_row, idx_col ) = 0.0;
+            if( _AyMinus( idx_row, idx_col ) < 0.00000000001 ) _AyMinus( idx_row, idx_col ) = 0.0;
+
+            if( _AzAbs( idx_row, idx_col ) < 0.00000000001 ) _AzAbs( idx_row, idx_col ) = 0.0;
+            if( _AzPlus( idx_row, idx_col ) < 0.00000000001 ) _AzPlus( idx_row, idx_col ) = 0.0;
+            if( _AzMinus( idx_row, idx_col ) < 0.00000000001 ) _AzMinus( idx_row, idx_col ) = 0.0;
+        }
+    }
+}
 double PNSolver::CTilde( int l, int k ) const {
     if( k < 0 ) return 0.0;
     if( k == 0 )
@@ -301,7 +327,8 @@ void PNSolver::ComputeFluxComponents() {
     std::cout << "Spectral Radius Y " << blaze::max( blaze::abs( eigenValuesY ) ) << "\n";
     std::cout << "Spectral Radius Z " << blaze::max( blaze::abs( eigenValues ) ) << "\n";
 
-    std::cout << "Spectral Radius combined " << blaze::max( blaze::abs( eigenValues + eigenValuesX + eigenValuesY ) ) << "\n";
+    _combinedSpectralRadius = blaze::max( blaze::abs( eigenValues + eigenValuesX + eigenValuesY ) );
+    std::cout << "Spectral Radius combined " << _combinedSpectralRadius << "\n";
 }
 
 void PNSolver::ComputeScatterMatrix() {
