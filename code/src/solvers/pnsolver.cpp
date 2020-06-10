@@ -53,17 +53,19 @@ PNSolver::PNSolver( Config* settings ) : Solver( settings ) {
     if( settings->GetCleanFluxMat() ) CleanFluxMatrices();
 
     std::cout << "--------\n";
-    std::cout << "_Ax :\n" << _Ax << "\n ";    // _AxP \n" << _AxPlus << "\n _AxM \n" << _AxMinus << "\n";
-    std::cout << "_Ay :\n" << _Ay << "\n ";    //_AyP \n" << _AyPlus << "\n _AyM \n" << _AyMinus << "\n";
-    std::cout << "_Az :\n" << _Az << "\n ";    //_AzP \n" << _AzPlus << "\n _AzM \n" << _AzMinus << "\n";
+    // std::cout << "_Ax :\n" << _Ax << "\n ";    // _AxP \n" << _AxPlus << "\n _AxM \n" << _AxMinus << "\n";
+    // std::cout << "_Ay :\n" << _Ay << "\n ";    //_AyP \n" << _AyPlus << "\n _AyM \n" << _AyMinus << "\n";
+    // std::cout << "_Az :\n" << _Az << "\n ";    //_AzP \n" << _AzPlus << "\n _AzM \n" << _AzMinus << "\n";
+    //
+    // std::cout << "_AxA :\n" << _AxAbs << "\n ";    // _AxP \n" << _AxPlus << "\n _AxM \n" << _AxMinus << "\n";
+    // std::cout << "_AyA :\n" << _AyAbs << "\n ";    //_AyP \n" << _AyPlus << "\n _AyM \n" << _AyMinus << "\n";
+    // std::cout << "_AzA :\n" << _AzAbs << "\n ";
+    //
+    // std::cout << "_AxAR :\n" << _AxPlus - _AxMinus << "\n ";    // _AxP \n" << _AxPlus << "\n _AxM \n" << _AxMinus << "\n";
+    // std::cout << "_AyAR :\n" << _AyPlus - _AyMinus << "\n ";    //_AyP \n" << _AyPlus << "\n _AyM \n" << _AyMinus << "\n";
+    // std::cout << "_AzAR :\n" << _AzPlus - _AzMinus << "\n ";
 
-    std::cout << "_AxA :\n" << _AxAbs << "\n ";    // _AxP \n" << _AxPlus << "\n _AxM \n" << _AxMinus << "\n";
-    std::cout << "_AyA :\n" << _AyAbs << "\n ";    //_AyP \n" << _AyPlus << "\n _AyM \n" << _AyMinus << "\n";
-    std::cout << "_AzA :\n" << _AzAbs << "\n ";
-
-    std::cout << "_AxAR :\n" << _AxPlus - _AxMinus << "\n ";    // _AxP \n" << _AxPlus << "\n _AxM \n" << _AxMinus << "\n";
-    std::cout << "_AyAR :\n" << _AyPlus - _AyMinus << "\n ";    //_AyP \n" << _AyPlus << "\n _AyM \n" << _AyMinus << "\n";
-    std::cout << "_AzAR :\n" << _AzPlus - _AzMinus << "\n ";
+    std::cout << "_nCells: " << _nCells << "\n";
 }
 
 void PNSolver::AdaptTimeStep() { _dE = _dE / _combinedSpectralRadius; }
@@ -341,27 +343,34 @@ void PNSolver::ComputeScatterMatrix() {
 
     // Only isotropic scattering: k = 1/(2pi) in 2d !!!
 
-    unsigned nSteps     = 500000;
-    double integralSum  = 0;
-    unsigned idx_global = 0;
+    // --- Ansatz for general scattering for later! ---
+    // unsigned nSteps     = 500000;
+    // double integralSum  = 0;
+    // unsigned idx_global = 0;
+    //
+    // for( int idx_lOrder = 0; idx_lOrder <= int( _nq ); idx_lOrder++ ) {
+    //    for( int idx_kOrder = -idx_lOrder; idx_kOrder <= idx_lOrder; idx_kOrder++ ) {
+    //        idx_global                  = unsigned( GlobalIndex( idx_lOrder, idx_kOrder ) );
+    //        _scatterMatDiag[idx_global] = 0;
+    //
+    //        // compute value of diagonal
+    //        integralSum = 0.5 * ( Legendre( -1.0, idx_lOrder ) + Legendre( 1.0, idx_lOrder ) );    // Boundary terms
+    //
+    //        for( unsigned i = 1; i < nSteps - 1; i++ ) {
+    //            integralSum += Legendre( -1.0 + double( i ) * 2 / double( nSteps ), idx_lOrder );
+    //        }
+    //        integralSum *= 2 / double( nSteps );
+    //
+    //        // isotropic scattering and prefactor of eigenvalue
+    //        integralSum *= 0.5;    // 2pi/4pi
+    //        _scatterMatDiag[idx_global] = 1 - integralSum;
+    //    }
+    //}
 
-    for( int idx_lOrder = 0; idx_lOrder <= int( _nq ); idx_lOrder++ ) {
-        for( int idx_kOrder = -idx_lOrder; idx_kOrder <= idx_lOrder; idx_kOrder++ ) {
-            idx_global                  = unsigned( GlobalIndex( idx_lOrder, idx_kOrder ) );
-            _scatterMatDiag[idx_global] = 0;
-
-            // compute value of diagonal
-            integralSum = 0.5 * ( Legendre( -1.0, idx_lOrder ) + Legendre( 1.0, idx_lOrder ) );    // Boundary terms
-
-            for( unsigned i = 1; i < nSteps - 1; i++ ) {
-                integralSum += Legendre( -1.0 + double( i ) * 2 / double( nSteps ), idx_lOrder );
-            }
-            integralSum *= 2 / double( nSteps );
-
-            // isotropic scattering and prefactor of eigenvalue
-            integralSum *= 0.5;    // 2pi/4pi
-            _scatterMatDiag[idx_global] = 1 - integralSum;
-        }
+    // --- Isotropic ---
+    _scatterMatDiag[0] = 0.0;
+    for( unsigned idx_diag = 1; idx_diag < _nTotalEntries; idx_diag++ ) {
+        _scatterMatDiag[idx_diag] = 1.0;
     }
 }
 

@@ -69,7 +69,7 @@ TEST_CASE( "unit numericalflux tests", "[numericalflux]" ) {
 
             double inner = omega[0] * n[0] + omega[1] * n[1];
 
-            REQUIRE( std::fabs( g->Flux( omega, psi, psi, n ) - inner * psi ) < std::numeric_limits<double>::epsilon() );
+            REQUIRE( std::fabs( g->Flux( omega, psi, psi, n ) - inner * psi ) < 1e2 * std::numeric_limits<double>::epsilon() );
         }
     }
 }
