@@ -3,7 +3,7 @@
 
 #include <cmath>
 
-#include "solvers/solver.h"
+#include "solvers/solverbase.h"
 
 class PNSolver : public Solver
 {
