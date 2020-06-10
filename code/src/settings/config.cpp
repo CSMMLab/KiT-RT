@@ -16,7 +16,7 @@
 
 using namespace std;
 
-Config::Config( char case_filename[MAX_STRING_SIZE] ) {
+Config::Config( string case_filename ) {
 
     /*--- Set the case name to the base config file name without extension ---*/
 
@@ -216,7 +216,7 @@ void Config::SetConfigOptions() {
     AddEnumOption( "KERNEL", _kernelName, Kernel_Map, KERNEL_Isotropic );
 }
 
-void Config::SetConfigParsing( char case_filename[MAX_STRING_SIZE] ) {
+void Config::SetConfigParsing( string case_filename ) {
     string text_line, option_name;
     ifstream case_file;
     vector<string> option_value;
@@ -325,8 +325,6 @@ void Config::SetPostprocessing() {
     InitLogger( spdlog::level::info, spdlog::level::info );
 #endif
 
-    // Check if there are contradictive or false options set.
-    _boundaries.resize( _nMarkerDirichlet + _nMarkerNeumann );
     // Regroup Boundary Conditions to  std::vector<std::pair<std::string, BOUNDARY_TYPE>> _boundaries;
     for( int i = 0; i < _nMarkerDirichlet; i++ ) {
         _boundaries.push_back( std::pair<std::string, BOUNDARY_TYPE>( _MarkerDirichlet[i], DIRICHLET ) );
