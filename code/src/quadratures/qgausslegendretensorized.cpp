@@ -150,7 +150,7 @@ double QGaussLegendreTensorized::Pythag( const double a, const double b ) {
 }
 
 bool QGaussLegendreTensorized::CheckOrder() {
-    if( _order % 2 == 0 ) {    // order needs to be even
+    if( _order % 2 == 1 ) {    // order needs to be even
         ErrorMessages::Error( "ERROR! Order " + std::to_string( _order ) + " for " + GetName() + " not available. ", CURRENT_FUNCTION );
     }
     return true;

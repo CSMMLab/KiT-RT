@@ -308,11 +308,10 @@ void Mesh::ComputePartitioning() {
                                   &comm );
             partitions.resize( chunkSize * comm_size );
             MPI_Allgather( part, chunkSize, MPI_INT, partitions.data(), chunkSize, MPI_INT, comm );    // gather all information in partitions
-            // partitions.resize( _numNodes );
+            partitions.resize( _numNodes );
 
             // free memory
             delete[] tpwgts;
-            delete[] part;
         }
         else {    // with a singular MPI thread -> use metis
             int options[METIS_NOPTIONS];
