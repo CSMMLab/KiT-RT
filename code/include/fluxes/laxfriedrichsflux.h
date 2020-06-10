@@ -2,7 +2,6 @@
 #define LAXFRIEDRICHSFLUX_H
 
 #include "numericalflux.h"
-#include "typedef.h"
 
 class LaxFriedrichsFlux : public NumericalFlux
 {

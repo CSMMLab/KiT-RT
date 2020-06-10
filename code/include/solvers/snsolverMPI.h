@@ -3,10 +3,7 @@
 
 #include <mpi.h>
 
-#include "solver.h"
-#include "typedef.h"
-
-#include "settings/config.h"
+#include "solvers/solverbase.h"
 
 class SNSolverMPI : public Solver
 {

@@ -1,8 +1,10 @@
-#include "solver.h"
-#include "../../include/quadratures/quadraturebase.h"
+#include "solvers/solverbase.h"
 #include "io.h"
 #include "mesh.h"
-#include "snsolver.h"
+#include "quadratures/quadraturebase.h"
+#include "settings/globalconstants.h"
+#include "solvers/pnsolver.h"
+#include "solvers/snsolver.h"
 
 Solver::Solver( Config* settings ) : _settings( settings ) {
     // @TODO save parameters from settings class
@@ -42,6 +44,9 @@ Solver::Solver( Config* settings ) : _settings( settings ) {
 
     // boundary type
     _boundaryCells = _mesh->GetBoundaryTypes();
+
+    // Solver Output
+    _solverOutput.resize( _nCells );    // Currently only Flux
 }
 
 double Solver::ComputeTimeStep( double cfl ) const {
@@ -55,4 +60,23 @@ double Solver::ComputeTimeStep( double cfl ) const {
     return cfl * maxEdge;
 }
 
-Solver* Solver::Create( Config* settings ) { return new SNSolver( settings ); }
+Solver* Solver::Create( Config* settings ) {
+    switch( settings->GetSolverName() ) {
+        case SN_SOLVER: return new SNSolver( settings );
+        case PN_SOLVER: return new PNSolver( settings );
+        default: return new SNSolver( settings );
+    }
+}
+
+void Solver::Save() const {
+    std::vector<std::string> fieldNames{ "flux" };
+    std::vector<double> flux;
+    flux.resize( _nCells );
+
+    for( unsigned i = 0; i < _nCells; ++i ) {
+        flux[i] = _psi[i][0];
+    }
+    std::vector<std::vector<double>> scalarField( 1, flux );
+    std::vector<std::vector<std::vector<double>>> results{ scalarField };
+    ExportVTK( _settings->GetOutputFile() + "_" + std::to_string( _nEnergies ), results, fieldNames, _mesh );
+}

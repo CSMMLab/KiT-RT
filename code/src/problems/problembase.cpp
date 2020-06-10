@@ -10,7 +10,12 @@ ProblemBase::~ProblemBase() {}
 ProblemBase* ProblemBase::Create( Config* settings, Mesh* mesh ) {
     auto name = settings->GetProblemName();
     switch( name ) {
-        case PROBLEM_LineSource: return new LineSource( settings, mesh );
+        case PROBLEM_LineSource: {
+            if( settings->GetSolverName() == PN_SOLVER )
+                return new LineSource_PN( settings, mesh );
+            else
+                return new LineSource_SN( settings, mesh );    // default
+        }
         case PROBLEM_Checkerboard: return new Checkerboard( settings, mesh );
         case PROBLEM_ElectronRT: return new ElectronRT( settings, mesh );
         default: return new ElectronRT( settings, mesh );    // Use RadioTherapy as dummy

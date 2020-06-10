@@ -2,7 +2,7 @@
 #define RECONSTRUCTOR_H
 
 #include "settings/config.h"
-#include "typedef.h"
+#include "settings/typedef.h"
 
 class Reconstructor
 {

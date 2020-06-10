@@ -4,7 +4,7 @@
 #include "mesh.h"
 #include "physics.h"
 #include "settings/config.h"
-#include "typedef.h"
+#include "settings/typedef.h"
 
 class ProblemBase
 {
@@ -21,26 +21,31 @@ class ProblemBase
 
   public:
     /**
-     * @brief GetScatteringXS gives back vector of vectors of scattering cross sections for materials defined by density and energies in vector energy
+     * @brief GetScatteringXS gives back vector (each energy) of vectors (each grid cell)
+     *        of scattering cross sections for materials defined by density and energies
+     *        in vector energy
      * @param energy is the energy the cross section is queried for
      */
     virtual VectorVector GetScatteringXS( const std::vector<double>& energies ) = 0;
 
     /**
-     * @brief GetTotalXS gives back vector of vectors of total cross sections for materials defined by density and energies in vector energy
+     * @brief GetTotalXS gives back vector of vectors of total cross sections for
+     *        materials defined by density and energies in vector energy
      * @param energy is the energy the cross section is queried for
      * @param density is vector with patient densities (at different spatial cells)
      */
     virtual VectorVector GetTotalXS( const std::vector<double>& energies ) = 0;
 
     /**
-     * @brief GetStoppingPower gives back vector of vectors of source terms for each energy, cell and angle
+     * @brief GetExternalSource gives back vector of vectors of source terms for each
+     *        energy, cell and angle
      * @param energies is vector with energies
      */
     virtual std::vector<VectorVector> GetExternalSource( const std::vector<double>& energies ) = 0;
 
     /**
-     * @brief GetStoppingPower gives back vector of vectors of stopping powers for materials defined by density and energies in vector energy
+     * @brief GetStoppingPower gives back vector of vectors of stopping powers for
+     *        materials defined by density and energies in vector energy
      * @param energies is vector with energies
      */
     virtual std::vector<double> GetStoppingPower( const std::vector<double>& energies ) = 0;

@@ -32,7 +32,7 @@ class Config
     std::string _fileName; /*!< @rief Name of the current file without extension */
     bool _baseConfig;
 
-    int _commRank, _commSize; /*!< @brief MPI rank and size.*/    // Not yet used!!
+    // int _commRank, _commSize; /*!< @brief MPI rank and size.*/    // Not yet used!!
 
     // --- Options ---
     // File Structure
@@ -51,9 +51,14 @@ class Config
     unsigned _nCells;
 
     // Solver
-    double _CFL;  /*!< @brief CFL Number for Solver*/
-    double _tEnd; /*!< @brief Final Time for Simulation */
-    PROBLEM_NAME _problemName;
+    double _CFL;               /*!< @brief CFL Number for Solver*/
+    double _tEnd;              /*!< @brief Final Time for Simulation */
+    PROBLEM_NAME _problemName; /*!< @brief Name of predefined Problem   */
+    SOLVER_NAME _solverName;   /*!< @brief Name of the used Solver */
+
+    /*!< @brief If true, very low entries (10^-10 or smaller) of the flux matrices will be set to zero,
+     * to improve floating point accuracy */
+    bool _cleanFluxMat;
 
     // Boundary Conditions
     /*!< @brief List of all Pairs (marker, BOUNDARY_TYPE), e.g. (farfield,DIRICHLET).
@@ -82,7 +87,7 @@ class Config
     /*!
      * @brief Set the config file parsing.
      */
-    void SetConfigParsing( char case_filename[MAX_STRING_SIZE] );
+    void SetConfigParsing( std::string case_filename );
 
     /*!
      * @brief Config file screen output.
@@ -167,7 +172,7 @@ class Config
     /*!
      * @brief Constructor of the class which reads the input file.
      */
-    Config( char case_filename[MAX_STRING_SIZE] );
+    Config( std::string case_filename );
 
     /*!
      * @brief Destructor of the class.
@@ -200,7 +205,8 @@ class Config
     double inline GetCFL() const { return _CFL; }
     double inline GetTEnd() const { return _tEnd; }
     PROBLEM_NAME inline GetProblemName() const { return _problemName; }
-
+    SOLVER_NAME inline GetSolverName() const { return _solverName; }
+    bool inline GetCleanFluxMat() const { return _cleanFluxMat; }
     // Boundary Conditions
     BOUNDARY_TYPE GetBoundaryType( std::string nameMarker ) const; /*! @brief Get Boundary Type of given marker */
 

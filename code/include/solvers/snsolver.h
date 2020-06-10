@@ -3,10 +3,7 @@
 
 #include <mpi.h>
 
-#include "solver.h"
-#include "typedef.h"
-
-#include "settings/config.h"
+#include "solvers/solverbase.h"
 
 class SNSolver : public Solver
 {
@@ -25,6 +22,7 @@ class SNSolver : public Solver
      * @brief Output solution to VTK file
      */
     virtual void Save() const;
+    virtual void Save( int currEnergy ) const;
 };
 
 #endif    // SNSOLVER_H

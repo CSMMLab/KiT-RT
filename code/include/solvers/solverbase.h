@@ -4,13 +4,13 @@
 #include <string>
 
 // include Matrix, Vector definitions
+#include "fluxes/numericalflux.h"
 #include "io.h"
 #include "kernels/scatteringkernelbase.h"
-#include "numericalflux.h"
 #include "problems/problembase.h"
 #include "quadratures/quadraturebase.h"
 #include "settings/config.h"
-#include "typedef.h"
+#include "settings/typedef.h"
 
 class Solver
 {
@@ -33,6 +33,8 @@ class Solver
     VectorVector _quadPoints;                         // quadrature points, dim(_quadPoints) = (_nTimeSteps,spatialDim)
     Vector _weights;                                  // quadrature weights, dim(_weights) = (_NCells)
     std::vector<BOUNDARY_TYPE> _boundaryCells;        // boundary type for all cells, dim(_boundary) = (_NCells)
+    std::vector<double> _solverOutput;                // PROTOTYPE: Outputfield for solver
+
     // we will have to add a further dimension for quadPoints and weights once we start with multilevel SN
 
     NumericalFlux* _g;    // numerical flux function
@@ -69,6 +71,8 @@ class Solver
      * @brief Output solution to VTK file
      */
     virtual void Save() const = 0;
+
+    virtual void Save( int currEnergy ) const = 0;
 };
 
 #endif    // SOLVER_H

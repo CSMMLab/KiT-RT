@@ -1,5 +1,5 @@
 /*!
- * \file CConfig.cpp
+ * \file Config.cpp
  * \brief Classes for different Options in rtsn
  * \author S. Schotthoefer
  *
@@ -16,7 +16,7 @@
 
 using namespace std;
 
-Config::Config( char case_filename[MAX_STRING_SIZE] ) {
+Config::Config( string case_filename ) {
 
     /*--- Set the case name to the base config file name without extension ---*/
 
@@ -174,32 +174,38 @@ void Config::SetConfigOptions() {
 
     /* BEGIN_CONFIG_OPTIONS */
 
-    /*!\par CONFIG_CATEGORY: Problem Definition \ingroup Config */
+    /*! @par CONFIG_CATEGORY: Problem Definition @ingroup Config */
     /*--- Options related to problem definition and partitioning ---*/
 
     // File Structure related options
-    /*!\brief OUTPUT_DIR \n DESCRIPTION: Relative Directory of output files \n DEFAULT "/out" \ingroup Config.*/
+    /*! @brief OUTPUT_DIR \n DESCRIPTION: Relative Directory of output files \n DEFAULT "/out" @ingroup Config.*/
     AddStringOption( "OUTPUT_DIR", _outputDir, string( "/out" ) );
-    /*!\brief OUTPUT_FILE \n DESCRIPTION: Name of output file \n DEFAULT "output" \ingroup Config.*/
+    /*! @brief OUTPUT_FILE \n DESCRIPTION: Name of output file \n DEFAULT "output" @ingroup Config.*/
     AddStringOption( "OUTPUT_FILE", _outputFile, string( "output" ) );
-    /*!\brief LOG_DIR \n DESCRIPTION: Relative Directory of log files \n DEFAULT "/out" \ingroup Config.*/
+    /*! @brief LOG_DIR \n DESCRIPTION: Relative Directory of log files \n DEFAULT "/out" @ingroup Config.*/
     AddStringOption( "LOG_DIR", _logDir, string( "/out" ) );
     /*!\brief MESH_FILE \n DESCRIPTION: Name of mesh file \n DEFAULT "" \ingroup Config.*/
     AddStringOption( "MESH_FILE", _meshFile, string( "mesh.su2" ) );
 
     // Quadrature relatated options
-    /*!\brief QUAD_TYPE \n DESCRIPTION: Type of Quadrature rule \n Options: see \link QUAD_NAME \endlink \n DEFAULT: QUAD_MonteCarlo \ingroup Config*/
+    /*! @brief QUAD_TYPE \n DESCRIPTION: Type of Quadrature rule \n Options: see @link QUAD_NAME \endlink \n DEFAULT: QUAD_MonteCarlo \ingroup
+     * Config*/
     AddEnumOption( "QUAD_TYPE", _quadName, Quadrature_Map, QUAD_MonteCarlo );
     /*!\brief QUAD_ORDER \n DESCRIPTION: Order of Quadrature rule \n DEFAULT 2 \ingroup Config.*/
     AddUnsignedShortOption( "QUAD_ORDER", _quadOrder, 2 );
 
     // Solver related options
-    /*!\brief CFL \n DESCRIPTION: CFL number \n DEFAULT 1.0 \ingroup Config.*/
+    /*! @brief CFL \n DESCRIPTION: CFL number \n DEFAULT 1.0 @ingroup Config.*/
     AddDoubleOption( "CFL_NUMBER", _CFL, 1.0 );
-    /*!\brief TIME_FINAL \n DESCRIPTION: Final time for simulation \n DEFAULT 1.0 \ingroup Config.*/
+    /*! @brief TIME_FINAL \n DESCRIPTION: Final time for simulation \n DEFAULT 1.0 @ingroup Config.*/
     AddDoubleOption( "TIME_FINAL", _tEnd, 1.0 );
-    /*!\brief Problem \n DESCRIPTION: Type of problem setting \n DEFAULT PROBLEM_ElectronRT \ingroup Config.*/
+    /*! @brief Problem \n DESCRIPTION: Type of problem setting \n DEFAULT PROBLEM_ElectronRT @ingroup Config.*/
     AddEnumOption( "PROBLEM", _problemName, Problem_Map, PROBLEM_ElectronRT );
+    /*! @brief Solver \n DESCRIPTION: Solver used for problem \n DEFAULT SN_SOLVER @ingroup Config. */
+    AddEnumOption( "SOLVER", _solverName, Solver_Map, SN_SOLVER );
+    /*! @brief CleanFluxMatrices \n DESCRIPTION:  If true, very low entries (10^-10 or smaller) of the flux matrices will be set to zero,
+     * to improve floating point accuracy \n DEFAULT false \ingroup Config */
+    AddBoolOption( "CLEAN_FLUX_MATRICES", _cleanFluxMat, false );
 
     // Mesh related options
     // Boundary Markers
@@ -210,7 +216,7 @@ void Config::SetConfigOptions() {
     AddEnumOption( "KERNEL", _kernelName, Kernel_Map, KERNEL_Isotropic );
 }
 
-void Config::SetConfigParsing( char case_filename[MAX_STRING_SIZE] ) {
+void Config::SetConfigParsing( string case_filename ) {
     string text_line, option_name;
     ifstream case_file;
     vector<string> option_value;
@@ -318,8 +324,6 @@ void Config::SetPostprocessing() {
 #else
     InitLogger( spdlog::level::info, spdlog::level::info );
 #endif
-
-    // Check if there are contradictive or false options set.
 
     // Regroup Boundary Conditions to  std::vector<std::pair<std::string, BOUNDARY_TYPE>> _boundaries;
     for( int i = 0; i < _nMarkerDirichlet; i++ ) {

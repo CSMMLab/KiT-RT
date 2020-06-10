@@ -3,20 +3,46 @@
 
 #include "problembase.h"
 
-class LineSource : public ProblemBase
+class LineSource_SN : public ProblemBase
 {
   private:
-    LineSource() = delete;
+    LineSource_SN() = delete;
 
   public:
-    LineSource( Config* settings, Mesh* mesh );
-    virtual ~LineSource();
+    LineSource_SN( Config* settings, Mesh* mesh );
+    virtual ~LineSource_SN();
 
     virtual VectorVector GetScatteringXS( const std::vector<double>& energies );
     virtual VectorVector GetTotalXS( const std::vector<double>& energies );
     virtual std::vector<VectorVector> GetExternalSource( const std::vector<double>& energies );
     virtual std::vector<double> GetStoppingPower( const std::vector<double>& energies );
     virtual VectorVector SetupIC();
+};
+
+class LineSource_PN : public ProblemBase
+{
+  private:
+    LineSource_PN() = delete;
+
+    /**
+     * @brief Gets the global index for given order l of Legendre polynomials and given
+     *        order k of Legendre functions.
+     *        Note: This is code doubling from PNSolver::GlobalIndex
+     * @param l : order of Legendre polynomial
+     * @param k : order of Legendre function
+     * @returns global index
+     */
+    int GlobalIndex( int l, int k ) const;
+
+  public:
+    LineSource_PN( Config* settings, Mesh* mesh );
+    virtual ~LineSource_PN();
+
+    virtual VectorVector GetScatteringXS( const std::vector<double>& energies ) override;
+    virtual VectorVector GetTotalXS( const std::vector<double>& energies ) override;
+    virtual std::vector<VectorVector> GetExternalSource( const std::vector<double>& energies ) override;
+    virtual std::vector<double> GetStoppingPower( const std::vector<double>& energies ) override;
+    virtual VectorVector SetupIC() override;
 };
 
 #endif    // LINESOURCE_H

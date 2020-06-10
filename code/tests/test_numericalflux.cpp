@@ -1,9 +1,9 @@
 #include <numeric>
 
 #include "catch.hpp"
+#include "fluxes/numericalflux.h"
 #include "io.h"
 #include "mesh.h"
-#include "numericalflux.h"
 #include "settings/config.h"
 #include "settings/globalconstants.h"
 

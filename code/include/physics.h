@@ -3,7 +3,7 @@
 
 // include Matrix, Vector definitions
 #include "settings/config.h"
-#include "typedef.h"
+#include "settings/typedef.h"
 
 class Physics
 {

@@ -1,4 +1,4 @@
-#include "laxfriedrichsflux.h"
+#include "fluxes/laxfriedrichsflux.h"
 
 LaxFriedrichsFlux::LaxFriedrichsFlux( Config* settings ) : NumericalFlux( settings ) {}
 
