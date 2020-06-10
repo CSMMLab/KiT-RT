@@ -39,7 +39,8 @@ TEST_CASE( "unit numericalflux tests", "[numericalflux]" ) {
             omega[0] = uni( generator );
             omega[1] = uni( generator );
 
-            REQUIRE( std::fabs( g->Flux( omega, psiL, psiR, n ) - ( -g->Flux( omega, psiR, psiL, -n ) ) ) < std::numeric_limits<double>::epsilon() );
+            REQUIRE( std::fabs( g->Flux( omega, psiL, psiR, n ) - ( -g->Flux( omega, psiR, psiL, -n ) ) ) <
+                     1e2 * std::numeric_limits<double>::epsilon() );
         }
     }
 
