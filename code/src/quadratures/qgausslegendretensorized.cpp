@@ -2,63 +2,69 @@
 
 QGaussLegendreTensorized::QGaussLegendreTensorized( unsigned order ) : QuadratureBase( order ) {
     SetName();
+    CheckOrder();
     SetNq();
     SetPointsAndWeights();
     SetConnectivity();
 }
 
 void QGaussLegendreTensorized::SetPointsAndWeights() {
-    Vector nodes( _order ), weights( _order );
+    Vector nodes1D( _order ), weights1D( _order );
 
     // construct companion matrix
     Matrix CM( _order, _order, 0.0 );
-
     for( unsigned i = 0; i < _order - 1; ++i ) {
         CM( i + 1, i ) = std::sqrt( 1 / ( 4 - 1 / std::pow( static_cast<double>( i + 1 ), 2 ) ) );
         CM( i, i + 1 ) = std::sqrt( 1 / ( 4 - 1 / std::pow( static_cast<double>( i + 1 ), 2 ) ) );
     }
 
+    // compute eigenvalues and -vectors of the companion matrix
     auto evSys = ComputeEigenValTriDiagMatrix( CM );
 
     for( unsigned i = 0; i < _order; ++i ) {
-        if( std::fabs( evSys.first[i] ) < 1e-15 )
-            nodes[i] = 0;
+        if( std::fabs( evSys.first[i] ) < 1e-15 )    // avoid rounding errors
+            nodes1D[i] = 0;
         else
-            nodes[i] = evSys.first[i];
-        weights[i] = 2 * std::pow( evSys.second( 0, i ), 2 );
+            nodes1D[i] = evSys.first[i];
+        weights1D[i] = 2 * std::pow( evSys.second( 0, i ), 2 );
     }
     for( unsigned i = 0; i < _order; ++i ) {
-        nodes[i] = ( nodes[i] + 1.0 ) * 0.5;
+        nodes1D[i] = ( nodes1D[i] + 1.0 ) * 0.5;
     }
 
-    std::vector<unsigned> p( nodes.size() );
-    std::iota( p.begin(), p.end(), 0 );
-    std::sort( p.begin(), p.end(), [&]( unsigned i, unsigned j ) { return nodes[i] < nodes[j]; } );
-    Vector sorted_nodes( static_cast<unsigned>( p.size() ) ), sorted_weights( static_cast<unsigned>( p.size() ) );
-    std::transform( p.begin(), p.end(), sorted_nodes.begin(), [&]( unsigned i ) { return nodes[i]; } );
-    std::transform( p.begin(), p.end(), sorted_weights.begin(), [&]( unsigned i ) { return weights[i]; } );
-    nodes   = sorted_nodes;
-    weights = sorted_weights;
+    // sort nodes increasingly and also reorder weigths for consistency
+    std::vector<unsigned> sortOrder( nodes1D.size() );
+    std::iota( sortOrder.begin(), sortOrder.end(), 0 );
+    std::sort( sortOrder.begin(), sortOrder.end(), [&]( unsigned i, unsigned j ) { return nodes1D[i] < nodes1D[j]; } );
+    Vector sorted_nodes( static_cast<unsigned>( sortOrder.size() ) ), sorted_weights( static_cast<unsigned>( sortOrder.size() ) );
+    std::transform( sortOrder.begin(), sortOrder.end(), sorted_nodes.begin(), [&]( unsigned i ) { return nodes1D[i]; } );
+    std::transform( sortOrder.begin(), sortOrder.end(), sorted_weights.begin(), [&]( unsigned i ) { return weights1D[i]; } );
+    nodes1D   = sorted_nodes;
+    weights1D = sorted_weights;
 
+    // setup equidistant angle phi around z axis
     Vector phi( 2 * _order );
     for( unsigned i = 0; i < 2 * _order; ++i ) {
         phi[i] = ( i + 0.5 ) * M_PI / _order;
     }
 
+    // only use the spheres upper half
     unsigned range = std::floor( _order / 2.0 );
 
+    // resize points and weights
     _points.resize( _nq );
     for( auto& p : _points ) {
         p.resize( 3 );
     }
     _weights.resize( _nq );
 
+    // transform tensorized (x,y,z)-grid to spherical grid points
     for( unsigned j = 0; j < range; ++j ) {
         for( unsigned i = 0; i < 2 * _order; ++i ) {
-            _points[j * ( 2 * _order ) + i][0] = sqrt( 1 - nodes[j] * nodes[j] ) * std::cos( phi[i] );
-            _points[j * ( 2 * _order ) + i][1] = sqrt( 1 - nodes[j] * nodes[j] ) * std::sin( phi[i] );
-            _points[j * ( 2 * _order ) + i][2] = nodes[j];
-            _weights[j * ( 2 * _order ) + i]   = 2.0 * M_PI / _order * weights[j];
+            _points[j * ( 2 * _order ) + i][0] = sqrt( 1 - nodes1D[j] * nodes1D[j] ) * std::cos( phi[i] );
+            _points[j * ( 2 * _order ) + i][1] = sqrt( 1 - nodes1D[j] * nodes1D[j] ) * std::sin( phi[i] );
+            _points[j * ( 2 * _order ) + i][2] = nodes1D[j];
+            _weights[j * ( 2 * _order ) + i]   = 2.0 * M_PI / _order * weights1D[j];
         }
     }
 }
@@ -70,6 +76,7 @@ void QGaussLegendreTensorized::SetConnectivity() {    // TODO
 }
 
 std::pair<Vector, Matrix> QGaussLegendreTensorized::ComputeEigenValTriDiagMatrix( const Matrix& mat ) {
+    // copied from 'Numerical Recipes' and updated + modified to work with blaze
     unsigned n = mat.rows();
 
     Vector d( n, 0.0 ), e( n, 0.0 );
@@ -84,7 +91,8 @@ std::pair<Vector, Matrix> QGaussLegendreTensorized::ComputeEigenValTriDiagMatrix
     m = l = iter = i = k = 0;
     double s, r, p, g, f, dd, c, b;
     s = r = p = g = f = dd = c = b = 0.0;
-    const double eps               = std::numeric_limits<double>::epsilon();
+
+    const double eps = std::numeric_limits<double>::epsilon();
     for( i = 1; i < static_cast<int>( n ); i++ ) e[i - 1] = e[i];
     e[n - 1] = 0.0;
     for( l = 0; l < static_cast<int>( n ); l++ ) {
@@ -135,7 +143,15 @@ std::pair<Vector, Matrix> QGaussLegendreTensorized::ComputeEigenValTriDiagMatrix
 }
 
 double QGaussLegendreTensorized::Pythag( const double a, const double b ) {
+    // copied from 'Numerical Recipes'
     double absa = std::fabs( a ), absb = std::fabs( b );
     return ( absa > absb ? absa * std::sqrt( 1.0 + ( absb / absa ) * ( absb / absa ) )
                          : ( absb == 0.0 ? 0.0 : absb * std::sqrt( 1.0 + ( absa / absb ) * ( absa / absb ) ) ) );
+}
+
+bool QGaussLegendreTensorized::CheckOrder() {
+    if( _order % 2 == 0 ) {    // order needs to be even
+        ErrorMessages::Error( "ERROR! Order " + std::to_string( _order ) + " for " + GetName() + " not available. ", CURRENT_FUNCTION );
+    }
+    return true;
 }

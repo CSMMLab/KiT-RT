@@ -9,7 +9,6 @@
 #include "blaze/math/CompressedMatrix.h"
 #include "metis.h"
 #include "parmetis.h"
-#include "spdlog/spdlog.h"
 
 #include "settings/globalconstants.h"
 #include "settings/typedef.h"
@@ -18,38 +17,38 @@
 class Mesh
 {
   protected:
-    std::shared_ptr<spdlog::logger> _log;
-
     const unsigned _dim;
     const unsigned _numCells;
     const unsigned _numNodes;
     const unsigned _numNodesPerCell;
     const unsigned _numBoundaries;
-    const unsigned _ghostCellID;
+    const unsigned _ghostCellID;    // equal to _numCells and therefore has the ID of the last cell + 1
 
-    std::vector<Vector> _nodes;
-    std::vector<std::vector<unsigned>> _cells;
-    std::vector<std::pair<BOUNDARY_TYPE, std::vector<unsigned>>> _boundaries;
-
-    std::vector<double> _cellAreas;
-    std::vector<Vector> _cellMidPoints;
-    std::vector<std::vector<unsigned>> _cellNeighbors;
-    std::vector<std::vector<Vector>> _cellNormals;
-    std::vector<BOUNDARY_TYPE> _cellBoundaryTypes;
-    blaze::CompressedMatrix<bool> _nodeNeighbors;
-    std::vector<unsigned> _colors;
+    std::vector<Vector> _nodes;                                                  // dimension: numNodes<dim>
+    std::vector<std::vector<unsigned>> _cells;                                   // dimension: numCells<numNodesPerCell>
+    std::vector<std::pair<BOUNDARY_TYPE, std::vector<unsigned>>> _boundaries;    // dimension: numBoundaries<(1,numBoundaryNodes)>
+    std::vector<double> _cellAreas;                                              // dimension: numCells
+    std::vector<Vector> _cellMidPoints;                                          // dimension: numCells<dim>
+    std::vector<std::vector<unsigned>> _cellNeighbors;                           // dimension: numCells<numNodesPerCell>
+    std::vector<std::vector<Vector>> _cellNormals;    // dimension: numCells<numNodesPerCell<dim>>, all normals are facing away from the cell center
+                                                      // and scaled with the edge length
+    std::vector<BOUNDARY_TYPE> _cellBoundaryTypes;    // dimension: numCells, default type is NONE
+    std::vector<unsigned> _colors;                    // dimension: numCells
+    blaze::CompressedMatrix<bool> _nodeNeighbors;     // neighborshood relationship of nodes for (par-)metis
 
     void ComputeCellAreas();
     void ComputeCellMidpoints();
     void ComputeConnectivity();
     void ComputePartitioning();
-    Vector ComputeOutwardFacingNormal( const Vector& nodeA, const Vector& nodeB, const Vector& cellCenter );
+    Vector ComputeOutwardFacingNormal( const Vector& nodeA,
+                                       const Vector& nodeB,
+                                       const Vector& cellCenter );    // normals are scaled with their respective edge length
 
   public:
     Mesh() = delete;
     Mesh( std::vector<Vector> nodes,
           std::vector<std::vector<unsigned>> cells,
-          std::vector<std::pair<BOUNDARY_TYPE, std::vector<unsigned>>> boundaries );
+          std::vector<std::pair<BOUNDARY_TYPE, std::vector<unsigned>>> boundaries );    // see LoadSU2MeshFromFile in io.cpp for setup information
     ~Mesh();
 
     inline unsigned GetDim() const { return _dim; }
