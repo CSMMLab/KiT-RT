@@ -8,6 +8,7 @@ class QGaussLegendreTensorized : public QuadratureBase
   private:
     double Pythag( const double a, const double b );
     std::pair<Vector, Matrix> ComputeEigenValTriDiagMatrix( const Matrix& mat );
+    bool CheckOrder();
 
   public:
     QGaussLegendreTensorized( unsigned order );

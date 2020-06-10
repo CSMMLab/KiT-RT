@@ -3,9 +3,8 @@
 Mesh::Mesh( std::vector<Vector> nodes,
             std::vector<std::vector<unsigned>> cells,
             std::vector<std::pair<BOUNDARY_TYPE, std::vector<unsigned>>> boundaries )
-    : _log( spdlog::get( "event" ) ), _dim( nodes[0].size() ), _numCells( cells.size() ), _numNodes( nodes.size() ),
-      _numNodesPerCell( cells[0].size() ), _numBoundaries( boundaries.size() ), _ghostCellID( _numCells ), _nodes( nodes ), _cells( cells ),
-      _boundaries( boundaries ) {
+    : _dim( nodes[0].size() ), _numCells( cells.size() ), _numNodes( nodes.size() ), _numNodesPerCell( cells[0].size() ),
+      _numBoundaries( boundaries.size() ), _ghostCellID( _numCells ), _nodes( nodes ), _cells( cells ), _boundaries( boundaries ) {
     ComputeCellAreas();
     ComputeCellMidpoints();
     ComputeConnectivity();
@@ -15,15 +14,22 @@ Mesh::Mesh( std::vector<Vector> nodes,
 Mesh::~Mesh() {}
 
 void Mesh::ComputeConnectivity() {
+    // get MPI info
     int comm_size, comm_rank;
     MPI_Comm_size( MPI_COMM_WORLD, &comm_size );
     MPI_Comm_rank( MPI_COMM_WORLD, &comm_rank );
+
+    // determine number/chunk size and indices of cells treated by each mpi thread
     unsigned chunkSize    = std::ceil( static_cast<float>( _numCells ) / static_cast<float>( comm_size ) );
     unsigned mpiCellStart = comm_rank * chunkSize;
     unsigned mpiCellEnd   = std::min( ( comm_rank + 1 ) * chunkSize, _numCells );
+
+    // 'flat' vectors are a flattened representation of the neighbors numCells<numNodesPerCell> nested vectors; easier for MPI
+    // 'part' vectors store information for each single MPI thread
     std::vector<int> neighborsFlatPart( _numNodesPerCell * chunkSize, -1 );
     std::vector<Vector> normalsFlatPart( _numNodesPerCell * chunkSize, Vector( _dim, -1.0 ) );
 
+    // pre sort cells and boundaries; sorting is needed for std::set_intersection
     auto sortedCells( _cells );
     for( unsigned i = 0; i < _numCells; ++i ) {
         std::sort( sortedCells[i].begin(), sortedCells[i].end() );
@@ -33,6 +39,8 @@ void Mesh::ComputeConnectivity() {
         sortedBoundaries.push_back( _boundaries[i].second );
         std::sort( sortedBoundaries[i].begin(), sortedBoundaries[i].end() );
     }
+
+    // determine neighbor cells and normals with MPI and OpenMP
     //#pragma omp parallel for
     for( unsigned i = mpiCellStart; i < mpiCellEnd; ++i ) {
         std::vector<unsigned>* cellsI = &sortedCells[i];
@@ -40,15 +48,22 @@ void Mesh::ComputeConnectivity() {
             if( i == j ) continue;
             std::vector<unsigned>* cellsJ = &sortedCells[j];
             std::vector<unsigned> commonElements;
-            std::set_intersection( cellsI->begin(), cellsI->end(), cellsJ->begin(), cellsJ->end(), std::back_inserter( commonElements ) );
-            if( commonElements.size() == _dim ) {
+            std::set_intersection( cellsI->begin(),
+                                   cellsI->end(),
+                                   cellsJ->begin(),
+                                   cellsJ->end(),
+                                   std::back_inserter( commonElements ) );    // find common nodes of two cells
+            if( commonElements.size() == _dim ) {                             // in 2D cells are neighbors if they share two nodes
+                // determine unused index
                 unsigned pos0 = _numNodesPerCell * ( i - mpiCellStart );
                 unsigned pos  = pos0;
                 while( neighborsFlatPart[pos] != -1 && pos < pos0 + _numNodesPerCell - 1 && pos < chunkSize * _numNodesPerCell - 1 ) pos++;
                 neighborsFlatPart[pos] = j;
-                normalsFlatPart[pos]   = ComputeOutwardFacingNormal( _nodes[commonElements[0]], _nodes[commonElements[1]], _cellMidPoints[i] );
+                // compute normal vector
+                normalsFlatPart[pos] = ComputeOutwardFacingNormal( _nodes[commonElements[0]], _nodes[commonElements[1]], _cellMidPoints[i] );
             }
         }
+        // boundaries are treated similarly to normal cells, but need a special treatment due to the absence of a neighboring cell
         for( unsigned k = 0; k < _boundaries.size(); ++k ) {
             std::vector<unsigned>* bNodes = &sortedBoundaries[k];
             for( unsigned j = 0; j < _boundaries[k].second.size(); ++j ) {
@@ -64,9 +79,11 @@ void Mesh::ComputeConnectivity() {
             }
         }
     }
+
+    // gather distributed data on all MPI threads
     std::vector<int> neighborsFlat( _numNodesPerCell * chunkSize * comm_size, -1 );
     std::vector<Vector> normalsFlat( _numNodesPerCell * chunkSize * comm_size, Vector( _dim, 0.0 ) );
-    if( comm_size == 1 ) {
+    if( comm_size == 1 ) {    // can be done directly if there is only one MPI thread
         neighborsFlat.assign( neighborsFlatPart.begin(), neighborsFlatPart.end() );
         normalsFlat.assign( normalsFlatPart.begin(), normalsFlatPart.end() );
     }
@@ -80,6 +97,7 @@ void Mesh::ComputeConnectivity() {
                        MPI_COMM_WORLD );
     }
 
+    // check for any unassigned faces
     if( std::any_of( neighborsFlat.begin(), neighborsFlat.end(), []( int i ) { return i == -1; } ) ) {
         for( unsigned idx = 0; idx < neighborsFlat.size(); ++idx ) {
             if( neighborsFlat[idx] == -1 )
@@ -87,19 +105,20 @@ void Mesh::ComputeConnectivity() {
         }
     }
 
+    // reorder neighbors and normals into nested structure
     _cellNeighbors.resize( _numCells );
     _cellNormals.resize( _numCells );
     for( unsigned i = 0; i < neighborsFlat.size(); ++i ) {
-        unsigned IDi = static_cast<unsigned>( i / 3.0 );
+        unsigned IDi = static_cast<unsigned>( i / static_cast<double>( _numNodesPerCell ) );
         unsigned IDj = neighborsFlat[i];
-        if( IDi == IDj ) continue;
-        if( IDj == _ghostCellID ) {
+        if( IDi == IDj ) continue;     // avoid self assignment
+        if( IDj == _ghostCellID ) {    // cell is boundary cell
             if( std::find( _cellNeighbors[IDi].begin(), _cellNeighbors[IDi].end(), _ghostCellID ) == _cellNeighbors[IDi].end() ) {
                 _cellNeighbors[IDi].push_back( _ghostCellID );
                 _cellNormals[IDi].push_back( normalsFlat[i] );
             }
         }
-        else {
+        else {    // normal cell neighbor
             if( std::find( _cellNeighbors[IDi].begin(), _cellNeighbors[IDi].end(), IDj ) == _cellNeighbors[IDi].end() ) {
                 _cellNeighbors[IDi].push_back( IDj );
                 _cellNormals[IDi].push_back( normalsFlat[i] );
@@ -107,10 +126,13 @@ void Mesh::ComputeConnectivity() {
         }
     }
 
+    // assign boundary types to all cells
     _cellBoundaryTypes.resize( _numCells, BOUNDARY_TYPE::NONE );
     for( unsigned i = 0; i < _numCells; ++i ) {
-        if( std::any_of( _cellNeighbors[i].begin(), _cellNeighbors[i].end(), [this]( unsigned i ) { return i == _ghostCellID; } ) ) {
-            for( auto bc : _boundaries ) {
+        if( std::any_of( _cellNeighbors[i].begin(), _cellNeighbors[i].end(), [this]( unsigned i ) {
+                return i == _ghostCellID;
+            } ) ) {                           // cell is boundary cell
+            for( auto bc : _boundaries ) {    // loop over all boundaries and boundary nodes and search for the respective nodeID
                 for( auto cNodes : _cells[i] ) {
                     if( std::find( bc.second.begin(), bc.second.end(), cNodes ) != bc.second.end() ) {
                         _cellBoundaryTypes[i] = bc.first;
@@ -125,14 +147,14 @@ void Mesh::ComputeCellAreas() {
     _cellAreas.resize( _numCells );
     for( unsigned i = 0; i < _numCells; ++i ) {
         switch( _numNodesPerCell ) {
-            case 3: {
+            case 3: {    // triangular cells
                 _cellAreas[i] = std::abs( ( _nodes[_cells[i][0]][0] * ( _nodes[_cells[i][1]][1] - _nodes[_cells[i][2]][1] ) +
                                             _nodes[_cells[i][1]][0] * ( _nodes[_cells[i][2]][1] - _nodes[_cells[i][0]][1] ) +
                                             _nodes[_cells[i][2]][0] * ( _nodes[_cells[i][0]][1] - _nodes[_cells[i][1]][1] ) ) /
                                           2 );
                 break;
             }
-            case 4: {
+            case 4: {    // quadrilateral cells
                 std::vector d1{ _nodes[_cells[i][0]][0] - _nodes[_cells[i][1]][0], _nodes[_cells[i][0]][1] - _nodes[_cells[i][1]][1] };
                 std::vector d2{ _nodes[_cells[i][1]][0] - _nodes[_cells[i][2]][0], _nodes[_cells[i][1]][1] - _nodes[_cells[i][2]][1] };
                 std::vector d3{ _nodes[_cells[i][2]][0] - _nodes[_cells[i][3]][0], _nodes[_cells[i][2]][1] - _nodes[_cells[i][3]][1] };
@@ -172,10 +194,10 @@ void Mesh::ComputeCellMidpoints() {
 Vector Mesh::ComputeOutwardFacingNormal( const Vector& nodeA, const Vector& nodeB, const Vector& cellCenter ) {
     double dx = nodeA[0] - nodeB[0];
     double dy = nodeA[1] - nodeB[1];
-    Vector n{ -dy, dx };
-    Vector p{ nodeA[0], nodeA[1] };
-    if( dot( n, cellCenter - p ) > 0 ) {
-        n *= -1.0;
+    Vector n{ -dy, dx };                    // normal vector
+    Vector p{ nodeA[0], nodeA[1] };         // take arbitrary node
+    if( dot( n, cellCenter - p ) > 0 ) {    // dot product is negative for outward facing normals
+        n *= -1.0;                          // if dot product is positive -> flip normal
     }
     return n;
 }
@@ -187,7 +209,9 @@ void Mesh::ComputePartitioning() {
     MPI_Comm_rank( comm, &comm_rank );
     unsigned ompNThreads = omp_get_max_threads();
 
+    // only run coloring if multiple OpenMP threads are present
     if( ompNThreads > 1 ) {
+        // setup adjacency relationship of nodes
         blaze::CompressedMatrix<bool> adjMatrix( _numNodes, _numNodes );
         for( unsigned i = 0; i < _numNodes; ++i ) {
             for( unsigned j = 0; j < _numCells; ++j ) {
@@ -210,6 +234,7 @@ void Mesh::ComputePartitioning() {
             }
         }
 
+        // for xadj and adjncy structure see parmetis documentation
         std::vector<int> xadj( _numNodes + 1 );
         int ctr = 0;
         std::vector<int> adjncy;
@@ -228,9 +253,10 @@ void Mesh::ComputePartitioning() {
         int edgecut  = 0;
         int ncon     = 1;
         int nparts   = ompNThreads;
-        real_t ubvec = static_cast<real_t>( 1.05 );
+        real_t ubvec = static_cast<real_t>( 1.05 );    // parameter taken from SU2
 
-        if( comm_size > 1 ) {    // use parmetis
+        if( comm_size > 1 ) {    // if multiple MPI threads -> use parmetis
+            // split adjacency information for each MPI thread -> see 'local' variables
             std::vector<int> local_xadj{ 0 };
             unsigned xadjChunk = std::ceil( static_cast<float>( _numNodes ) / static_cast<float>( comm_size ) );
             unsigned xadjStart = comm_rank * xadjChunk + 1;
@@ -245,19 +271,21 @@ void Mesh::ComputePartitioning() {
             }
             std::vector<int> local_adjncy( adjncy.begin() + adjncyStart, adjncy.begin() + adjncyEnd );
 
+            // vtxdist describes what nodes are on which processor - see parmetis doc
             std::vector<int> vtxdist{ 0 };
             for( unsigned i = 1; i <= static_cast<unsigned>( comm_size ); i++ ) {
                 vtxdist.push_back( std::min( i * xadjChunk, _numNodes ) );
             }
 
+            // weights setup set as in SU2
             real_t* tpwgts = new real_t[nparts];
             for( unsigned i = 0; i < static_cast<unsigned>( nparts ); ++i ) {
                 tpwgts[i] = 1.0 / static_cast<real_t>( nparts );
             }
 
+            // setup as in SU2
             int wgtflag = 0;
             int numflag = 0;
-
             int options[1];
             options[0] = 0;
 
@@ -279,12 +307,14 @@ void Mesh::ComputePartitioning() {
                                   part,
                                   &comm );
             partitions.resize( chunkSize * comm_size );
-            MPI_Allgather( part, chunkSize, MPI_INT, partitions.data(), chunkSize, MPI_INT, comm );
-            partitions.resize( _numNodes );
+            MPI_Allgather( part, chunkSize, MPI_INT, partitions.data(), chunkSize, MPI_INT, comm );    // gather all information in partitions
+            // partitions.resize( _numNodes );
 
+            // free memory
             delete[] tpwgts;
+            delete[] part;
         }
-        else {    // use metis
+        else {    // with a singular MPI thread -> use metis
             int options[METIS_NOPTIONS];
             METIS_SetDefaultOptions( options );
             int nvtxs = _numNodes;
@@ -293,6 +323,8 @@ void Mesh::ComputePartitioning() {
             METIS_PartGraphKway(
                 &nvtxs, &ncon, xadj.data(), adjncy.data(), nullptr, &vsize, nullptr, &nparts, nullptr, &ubvec, options, &edgecut, partitions.data() );
         }
+
+        // extract coloring information
         _colors.resize( _numCells );
         for( unsigned i = 0; i < _numCells; ++i ) {
             std::map<unsigned, int> occurances;
