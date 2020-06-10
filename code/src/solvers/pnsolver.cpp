@@ -1,5 +1,5 @@
 
-#include "pnsolver.h"
+#include "solvers/pnsolver.h"
 #include "../ext/blaze/blaze/math/blas/cblas/gemm.h"
 #include "toolboxes/errormessages.h"
 #include "toolboxes/textprocessingtoolbox.h"
@@ -71,17 +71,17 @@ void PNSolver::AdaptTimeStep() { _dE = _dE / _combinedSpectralRadius; }
 void PNSolver::CleanFluxMatrices() {
     for( unsigned idx_row = 0; idx_row < _nTotalEntries; idx_row++ ) {
         for( unsigned idx_col = 0; idx_col < _nTotalEntries; idx_col++ ) {
-            if( _AxAbs( idx_row, idx_col ) < 0.00000000001 ) _AxAbs( idx_row, idx_col ) = 0.0;
-            if( _AxPlus( idx_row, idx_col ) < 0.00000000001 ) _AxPlus( idx_row, idx_col ) = 0.0;
-            if( _AxMinus( idx_row, idx_col ) < 0.00000000001 ) _AxMinus( idx_row, idx_col ) = 0.0;
+            if( std::abs( _AxAbs( idx_row, idx_col ) ) < 0.00000000001 ) _AxAbs( idx_row, idx_col ) = 0.0;
+            if( std::abs( _AxPlus( idx_row, idx_col ) ) < 0.00000000001 ) _AxPlus( idx_row, idx_col ) = 0.0;
+            if( std::abs( _AxMinus( idx_row, idx_col ) ) < 0.00000000001 ) _AxMinus( idx_row, idx_col ) = 0.0;
 
-            if( _AyAbs( idx_row, idx_col ) < 0.00000000001 ) _AyAbs( idx_row, idx_col ) = 0.0;
-            if( _AyPlus( idx_row, idx_col ) < 0.00000000001 ) _AyPlus( idx_row, idx_col ) = 0.0;
-            if( _AyMinus( idx_row, idx_col ) < 0.00000000001 ) _AyMinus( idx_row, idx_col ) = 0.0;
+            if( std::abs( _AyAbs( idx_row, idx_col ) ) < 0.00000000001 ) _AyAbs( idx_row, idx_col ) = 0.0;
+            if( std::abs( _AyPlus( idx_row, idx_col ) ) < 0.00000000001 ) _AyPlus( idx_row, idx_col ) = 0.0;
+            if( std::abs( _AyMinus( idx_row, idx_col ) ) < 0.00000000001 ) _AyMinus( idx_row, idx_col ) = 0.0;
 
-            if( _AzAbs( idx_row, idx_col ) < 0.00000000001 ) _AzAbs( idx_row, idx_col ) = 0.0;
-            if( _AzPlus( idx_row, idx_col ) < 0.00000000001 ) _AzPlus( idx_row, idx_col ) = 0.0;
-            if( _AzMinus( idx_row, idx_col ) < 0.00000000001 ) _AzMinus( idx_row, idx_col ) = 0.0;
+            if( std::abs( _AzAbs( idx_row, idx_col ) ) < 0.00000000001 ) _AzAbs( idx_row, idx_col ) = 0.0;
+            if( std::abs( _AzPlus( idx_row, idx_col ) ) < 0.00000000001 ) _AzPlus( idx_row, idx_col ) = 0.0;
+            if( std::abs( _AzMinus( idx_row, idx_col ) ) < 0.00000000001 ) _AzMinus( idx_row, idx_col ) = 0.0;
         }
     }
 }

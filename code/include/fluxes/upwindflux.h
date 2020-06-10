@@ -2,7 +2,6 @@
 #define UPWINDFLUX_H
 
 #include "numericalflux.h"
-#include "typedef.h"
 
 class UpwindFlux : public NumericalFlux
 {

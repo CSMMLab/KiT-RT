@@ -4,7 +4,7 @@
 #include "mesh.h"
 #include "physics.h"
 #include "settings/config.h"
-#include "typedef.h"
+#include "settings/typedef.h"
 
 class ProblemBase
 {

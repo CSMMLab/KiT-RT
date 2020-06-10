@@ -1,5 +1,4 @@
 #include "reconstructor.h"
-#include "typedef.h"
 
 Reconstructor::Reconstructor( Config* settings ) {}
 

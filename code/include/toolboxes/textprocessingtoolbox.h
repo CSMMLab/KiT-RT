@@ -11,7 +11,7 @@
 #include <string>
 #include <vector>
 
-#include "typedef.h"
+#include "settings/typedef.h"
 
 namespace TextProcessingToolbox {
 

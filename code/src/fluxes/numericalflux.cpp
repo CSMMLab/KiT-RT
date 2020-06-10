@@ -1,5 +1,5 @@
-#include "numericalflux.h"
-#include "upwindflux.h"
+#include "fluxes/numericalflux.h"
+#include "fluxes/upwindflux.h"
 
 NumericalFlux::NumericalFlux( Config* settings ) {}
 

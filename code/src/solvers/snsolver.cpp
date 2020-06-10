@@ -1,4 +1,4 @@
-#include "snsolver.h"
+#include "solvers/snsolver.h"
 
 SNSolver::SNSolver( Config* settings ) : Solver( settings ) {}
 

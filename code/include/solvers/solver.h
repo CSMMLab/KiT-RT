@@ -4,13 +4,13 @@
 #include <string>
 
 // include Matrix, Vector definitions
+#include "fluxes/numericalflux.h"
 #include "io.h"
 #include "kernels/scatteringkernelbase.h"
-#include "numericalflux.h"
 #include "problems/problembase.h"
 #include "quadratures/quadraturebase.h"
 #include "settings/config.h"
-#include "typedef.h"
+#include "settings/typedef.h"
 
 class Solver
 {

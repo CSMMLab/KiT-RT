@@ -1,4 +1,4 @@
-#include "snsolverMPI.h"
+#include "solvers/snsolverMPI.h"
 #include <mpi.h>
 
 SNSolverMPI::SNSolverMPI( Config* settings ) : Solver( settings ) {}

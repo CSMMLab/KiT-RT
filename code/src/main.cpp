@@ -1,7 +1,7 @@
 #include <mpi.h>
 
 #include "io.h"
-#include "solver.h"
+#include "solvers/solver.h"
 
 #include "settings/config.h"
 

@@ -17,7 +17,7 @@ std::vector<std::vector<int>> quadratureorders = {
 bool approxequal( double a, double b, bool lowAccuracy = false ) {
     double tol = 1e-15;              // For computed quadrature weights
     if( lowAccuracy ) tol = 5e-5;    // Mainly for Lookup Quadratures
-    return abs( a - b ) < tol;
+    return std::abs( a - b ) < tol;
 }
 
 TEST_CASE( "Quadrature weights sum to 4*pi.", "[quadrature]" ) {
@@ -34,7 +34,7 @@ TEST_CASE( "Quadrature weights sum to 4*pi.", "[quadrature]" ) {
                 printf( "Quadrature %d at order %d . Error : %.15f  (low accuracy testing was set to %d) \n",
                         quadraturename,
                         quadratureorder,
-                        abs( Q->SumUpWeights() - 4 * M_PI ),
+                        std::abs( Q->SumUpWeights() - 4 * M_PI ),
                         lowAccuracyTesting );
                 printf( "Computed result %.15f", Q->SumUpWeights() );
             }
@@ -60,7 +60,7 @@ TEST_CASE( "Quadrature points are on the unit sphere.", "[quadrature]" ) {
                             quadraturename,
                             quadratureorder,
                             i,
-                            abs( norm( points[i] ) - 1.0 ),
+                            std::abs( norm( points[i] ) - 1.0 ),
                             lowAccuracyTesting );
                     printf( "Computed result %.15f", norm( points[i] ) );
                 }
@@ -106,7 +106,7 @@ TEST_CASE( "Integrate a constant function.", "[quadrature]" ) {
                 printf( "Quadrature %d at order %d :  Error : %.15f (low accuracy testing was set to %d)\n",
                         quadraturename,
                         quadratureorder,
-                        abs( Q->Integrate( f ) - 4.0 * M_PI ),
+                        std::abs( Q->Integrate( f ) - 4.0 * M_PI ),
                         lowAccuracyTesting );
                 printf( "Computed result %.15f", Q->Integrate( f ) );
             }

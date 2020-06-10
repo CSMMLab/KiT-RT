@@ -1,10 +1,10 @@
-#include "solver.h"
-#include "../../include/quadratures/quadraturebase.h"
+#include "solvers/solver.h"
 #include "io.h"
 #include "mesh.h"
-#include "pnsolver.h"
+#include "quadratures/quadraturebase.h"
 #include "settings/globalconstants.h"
-#include "snsolver.h"
+#include "solvers/pnsolver.h"
+#include "solvers/snsolver.h"
 
 Solver::Solver( Config* settings ) : _settings( settings ) {
     // @TODO save parameters from settings class

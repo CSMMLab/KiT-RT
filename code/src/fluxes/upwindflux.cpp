@@ -1,4 +1,4 @@
-#include "upwindflux.h"
+#include "fluxes/upwindflux.h"
 
 UpwindFlux::UpwindFlux( Config* settings ) : NumericalFlux( settings ) {}
 
@@ -57,6 +57,7 @@ void UpwindFlux::FluxVanLeer( const Matrix& Ax,
                               const Vector& psiR,
                               const Vector& n,
                               Vector& resultFlux ) const {
-    resultFlux += n[0] * 0.5 * Ax * ( psiL + psiR ) - abs( n[0] ) * AxAbs * ( psiR - psiL ) + n[1] * 0.5 * Az * ( psiL + psiR ) -
-                  abs( n[1] ) * AzAbs * ( psiR - psiL );
+
+    resultFlux += n[0] * 0.5 * Ax * ( psiL + psiR ) - std::abs( n[0] ) * AxAbs * ( psiR - psiL ) + n[1] * 0.5 * Az * ( psiL + psiR ) -
+                  std::abs( n[1] ) * AzAbs * ( psiR - psiL );
 }

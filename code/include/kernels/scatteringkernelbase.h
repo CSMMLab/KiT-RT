@@ -3,7 +3,7 @@
 
 #include "quadratures/quadraturebase.h"
 #include "settings/globalconstants.h"
-#include "typedef.h"
+#include "settings/typedef.h"
 
 class ScatteringKernel
 {

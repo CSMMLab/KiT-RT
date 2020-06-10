@@ -12,8 +12,8 @@
 #include "spdlog/spdlog.h"
 
 #include "settings/globalconstants.h"
+#include "settings/typedef.h"
 #include "toolboxes/errormessages.h"
-#include "typedef.h"
 
 class Mesh
 {
