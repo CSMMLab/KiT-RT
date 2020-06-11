@@ -335,7 +335,7 @@ class OptionStringList : public OptionBase
         // Parse all of the options
         this->_field.resize( this->_size );
         for( unsigned long i = 0; i < option_size; i++ ) {
-            this->_field.insert( this->_field.begin() + i, option_value[i] );
+            this->_field.at( i ) = option_value[i];
         }
         return "";
     }
