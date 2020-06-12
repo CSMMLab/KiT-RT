@@ -72,15 +72,18 @@ VectorVector LineSource_PN::SetupIC() {
     VectorVector cellMids = _mesh->GetCellMidPoints();
 
     // Initial condition is dirac impulse at (x,y) = (0,0) ==> constant in angle ==> all moments are zero.
-    double t = 3.2e-4;    // pseudo time for gaussian smoothing (Approx to dirac impulse)
-    for( unsigned j = 0; j < cellMids.size(); ++j ) {
-        double x  = cellMids[j][0];
-        double y  = cellMids[j][1];
-        psi[j][0] = 1.0 / ( 4.0 * M_PI * t ) * std::exp( -( x * x + y * y ) / ( 4 * t ) ) / ( 4 * M_PI );
-    }
-
+    // double t = 3.2e-4;    // pseudo time for gaussian smoothing (Approx to dirac impulse)
     // for( unsigned j = 0; j < cellMids.size(); ++j ) {
-    //    psi[j][0] = 1;    // / ( 4.0 * M_PI * t ) * std::exp( -( x * x + y * y ) / ( 4 * t ) ) / ( 4 * M_PI );
+    //    double x  = cellMids[j][0];
+    //    double y  = cellMids[j][1];
+    //    psi[j][0] = 1.0 / ( 4.0 * M_PI * t ) * std::exp( -( x * x + y * y ) / ( 4 * t ) ) / ( 4 * M_PI );
     //}
+
+    for( unsigned j = 0; j < cellMids.size(); ++j ) {
+        if( cellMids[j][0] < 0 && cellMids[j][1] < 0 )
+            psi[j][0] = 1.0;    // / ( 4.0 * M_PI * t ) * std::exp( -( x * x + y * y ) / ( 4 * t ) ) / ( 4 * M_PI );
+        else
+            psi[j][0] = 0.0;
+    }
     return psi;
 }

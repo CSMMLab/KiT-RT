@@ -37,7 +37,12 @@ PNSolver::PNSolver( Config* settings ) : Solver( settings ) {
     _scatterMatDiag = Vector( _nTotalEntries, 0 );
 
     // Fill System Matrices
-    ComputeSystemMatrices();
+    // ComputeSystemMatrices();
+    for( unsigned i = 0; i < _nTotalEntries; i++ ) {
+        _Ax( i, i ) = 1.0;
+        _Ay( i, i ) = 1.0;
+        _Az( i, i ) = 1.0;
+    }
 
     std::cout << "System Matrix Set UP!" << std::endl;
     // Compute Decomposition in positive and negative (eigenvalue) parts of flux jacobians
@@ -48,18 +53,18 @@ PNSolver::PNSolver( Config* settings ) : Solver( settings ) {
 
     std::cout << "scatterMatrix : " << _scatterMatDiag << "\n";
 
-    AdaptTimeStep();
+    // AdaptTimeStep();
 
     if( settings->GetCleanFluxMat() ) CleanFluxMatrices();
 
     std::cout << "--------\n";
-    // std::cout << "_Ax :\n" << _Ax << "\n ";    // _AxP \n" << _AxPlus << "\n _AxM \n" << _AxMinus << "\n";
-    // std::cout << "_Ay :\n" << _Ay << "\n ";    //_AyP \n" << _AyPlus << "\n _AyM \n" << _AyMinus << "\n";
-    // std::cout << "_Az :\n" << _Az << "\n ";    //_AzP \n" << _AzPlus << "\n _AzM \n" << _AzMinus << "\n";
-    //
-    // std::cout << "_AxA :\n" << _AxAbs << "\n ";    // _AxP \n" << _AxPlus << "\n _AxM \n" << _AxMinus << "\n";
-    // std::cout << "_AyA :\n" << _AyAbs << "\n ";    //_AyP \n" << _AyPlus << "\n _AyM \n" << _AyMinus << "\n";
-    // std::cout << "_AzA :\n" << _AzAbs << "\n ";
+    std::cout << "_Ax :\n" << _Ax << "\n ";    // _AxP \n" << _AxPlus << "\n _AxM \n" << _AxMinus << "\n";
+    std::cout << "_Ay :\n" << _Ay << "\n ";    //_AyP \n" << _AyPlus << "\n _AyM \n" << _AyMinus << "\n";
+    std::cout << "_Az :\n" << _Az << "\n ";    //_AzP \n" << _AzPlus << "\n _AzM \n" << _AzMinus << "\n";
+
+    std::cout << "_AxA :\n" << _AxAbs << "\n ";    // _AxP \n" << _AxPlus << "\n _AxM \n" << _AxMinus << "\n";
+    std::cout << "_AyA :\n" << _AyAbs << "\n ";    //_AyP \n" << _AyPlus << "\n _AyM \n" << _AyMinus << "\n";
+    std::cout << "_AzA :\n" << _AzAbs << "\n ";
     //
     // std::cout << "_AxAR :\n" << _AxPlus - _AxMinus << "\n ";    // _AxP \n" << _AxPlus << "\n _AxM \n" << _AxMinus << "\n";
     // std::cout << "_AyAR :\n" << _AyPlus - _AyMinus << "\n ";    //_AyP \n" << _AyPlus << "\n _AyM \n" << _AyMinus << "\n";
@@ -374,7 +379,7 @@ void PNSolver::ComputeScatterMatrix() {
     }
 }
 
-double PNSolver::Legendre( double x, int l ) {
+double PNSolver::LegendrePoly( double x, int l ) {
     // Pre computed low order polynomials for faster computation
     switch( l ) {
         case 0: return 1;
@@ -420,7 +425,6 @@ void PNSolver::Solve() {
     // Loop over energies (pseudo-time of continuous slowing down approach)
 
     for( unsigned idx_energy = 0; idx_energy < _nEnergies; idx_energy++ ) {
-
         // Loop over all spatial cells
         for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
             if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::DIRICHLET ) continue;    // Dirichlet cells stay at IC, farfield assumption
@@ -437,34 +441,42 @@ void PNSolver::Solve() {
                 // std::cout << "Distance to origin: " << _mesh->GetDistanceToOrigin( idx_cell ) << "\n";
                 // std::cout << "Old Cell value: \n " << _psi[idx_cell] << "\n" << psiNew[idx_cell] << "\n";
             }
+
+            // std::cout << "--------\n";
+            // std::cout << "_AxPlus :\n" << _AxPlus << "\n ";      // _AxP \n" << _AxPlus << "\n _AxM \n" << _AxMinus << "\n";
+            // std::cout << "_AxMinus :\n" << _AxMinus << "\n ";    //_AyP \n" << _AyPlus << "\n _AyM \n" << _AyMinus << "\n";
+            //
+            // std::cout << "_AyPlus :\n" << _AyPlus << "\n ";      // _AxP \n" << _AxPlus << "\n _AxM \n" << _AxMinus << "\n";
+            // std::cout << "_AyMinus :\n" << _AyMinus << "\n ";    //_AyP \n" << _AyPlus << "\n _AyM \n" << _AyMinus << "\n";
+
             // Loop over all neighbor cells (edges) of cell j and compute numerical fluxes
             for( unsigned idx_neighbor = 0; idx_neighbor < _neighbors[idx_cell].size(); idx_neighbor++ ) {
 
                 // Compute flux contribution and store in psiNew to save memory
                 if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::NEUMANN && _neighbors[idx_cell][idx_neighbor] == _nCells )
-                    _g->FluxVanLeer(
-                        _Ax, _AxAbs, _Ay, _AyAbs, _Az, _AzAbs, _psi[idx_cell], _psi[idx_cell], _normals[idx_cell][idx_neighbor], psiNew[idx_cell] );
-                // _g->Flux( _AxPlus,
-                //           _AxMinus,
-                //           _AyPlus,
-                //           _AyMinus,
-                //           _AzPlus,
-                //           _AzMinus,
-                //           _psi[idx_cell],
-                //           _psi[idx_cell],
-                //           _normals[idx_cell][idx_neighbor],
-                //           psiNew[idx_cell] );
+                    _g->Flux( _AxPlus,
+                              _AxMinus,
+                              _AyPlus,
+                              _AyMinus,
+                              _AzPlus,
+                              _AzMinus,
+                              _psi[idx_cell],
+                              _psi[idx_cell],
+                              _normals[idx_cell][idx_neighbor],
+                              psiNew[idx_cell] );
                 else
-                    _g->FluxVanLeer( _Ax,
-                                     _AxAbs,
-                                     _Ay,
-                                     _AyAbs,
-                                     _Az,
-                                     _AzAbs,
-                                     _psi[idx_cell],
-                                     _psi[_neighbors[idx_cell][idx_neighbor]],
-                                     _normals[idx_cell][idx_neighbor],
-                                     psiNew[idx_cell] );
+                    _g->Flux( _AxPlus,
+                              _AxMinus,
+                              _AyPlus,
+                              _AyMinus,
+                              _AzPlus,
+                              _AzMinus,
+                              _psi[idx_cell],
+                              _psi[_neighbors[idx_cell][idx_neighbor]],
+                              _normals[idx_cell][idx_neighbor],
+                              psiNew[idx_cell] );
+                //  std::cout << "psiNew[idx_cell] :\n" << psiNew[idx_cell] << "\n ";
+
                 //_g->Flux( _AxPlus,
                 //          _AxMinus,
                 //          _AyPlus,
@@ -485,11 +497,11 @@ void PNSolver::Solve() {
                 for( int idx_kOrder = -idx_lOrder; idx_kOrder <= idx_lOrder; idx_kOrder++ ) {
                     idx_system = unsigned( GlobalIndex( idx_lOrder, idx_kOrder ) );
 
-                    psiNew[idx_cell][idx_system] = _psi[idx_cell][idx_system] -
-                                                   ( _dE / _areas[idx_cell] ) * psiNew[idx_cell][idx_system] /* cell averaged flux */
-                                                   - _dE * _psi[idx_cell][idx_system] *
-                                                         ( _sigmaA[idx_energy][idx_cell]                                    /* absorbtion influence */
-                                                           + _sigmaS[idx_energy][idx_cell] * _scatterMatDiag[idx_system] ); /* scattering influence */
+                    psiNew[idx_cell][idx_system] =
+                        _psi[idx_cell][idx_system] - ( _dE / _areas[idx_cell] ) * psiNew[idx_cell][idx_system]; /* cell averaged flux */
+                    //  -_dE* _psi[idx_cell][idx_system] * ( _sigmaA[idx_energy][idx_cell]                         /* absorbtion influence */
+                    //                                       + _sigmaS[idx_energy][idx_cell] * _scatterMatDiag[idx_system] ); /* scattering influence
+                    //                                       */
                 }
             }
         }

@@ -29,7 +29,7 @@ void UpwindFlux::Flux( const Matrix& AxPlus,
     // std::cout << "AxPlus * psiL" << temp << std::endl;
     // std::cout << "n_x *AxPlus * psiL" << n[0] * temp << std::endl;
 
-    resultFlux += ( n[0] * AyPlus + n[1] * AzPlus ) * psiL + ( n[0] * AyMinus + n[1] * AzMinus ) * psiR;
+    resultFlux += ( n[0] * AxPlus + n[1] * AyPlus ) * psiL + ( n[0] * AxMinus + n[1] * AyMinus ) * psiR;
 }
 
 /**
@@ -58,6 +58,6 @@ void UpwindFlux::FluxVanLeer( const Matrix& Ax,
                               const Vector& n,
                               Vector& resultFlux ) const {
 
-    resultFlux += n[0] * 0.5 * Ax * ( psiL + psiR ) - std::abs( n[0] ) * AxAbs * ( psiR - psiL ) + n[1] * 0.5 * Az * ( psiL + psiR ) -
-                  std::abs( n[1] ) * AzAbs * ( psiR - psiL );
+    // resultFlux += n[0] * ( AxPlus * psiL + AxMinus * psiR ) + n[1] * ( AyPlus * psiL + AyMinus * psiR );
+    resultFlux += 0.5 * ( n[0] * ( Ax * ( psiL + psiR ) - AxAbs * ( psiR - psiL ) ) + n[1] * ( Az * ( psiL + psiR ) - AzAbs * ( psiR - psiL ) ) );
 }

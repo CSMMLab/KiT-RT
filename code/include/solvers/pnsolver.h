@@ -86,7 +86,7 @@ class PNSolver : public Solver
     // fucntion for computing and setting up diagonal matrix for scattering kernel
     void ComputeScatterMatrix();
     // Computes Legedre polinomial of oder l at point x
-    double Legendre( double x, int l );
+    double LegendrePoly( double x, int l );
     // Adapt the TimeStep according to the CFL number of  the velocities in the AdvectionMatrices
     void AdaptTimeStep();
     // Sets Entries of FluxMatrices to zero, if they are below double accuracy, to prevent floating point
