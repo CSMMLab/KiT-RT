@@ -11,6 +11,7 @@ build:
     - cd code/build/debug
     - cmake -G Ninja -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=True ../../
     - ninja
+  timeout: 2h
   only:
     refs:
       - master
@@ -32,6 +33,7 @@ unit_tests:
     - ninja
     - cd ../../bin
     - ./unit_tests
+  timeout: 2h
   only:
     refs:
       - master

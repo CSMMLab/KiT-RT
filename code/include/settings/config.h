@@ -32,7 +32,7 @@ class Config
     std::string _fileName; /*!< @rief Name of the current file without extension */
     bool _baseConfig;
 
-    int _commRank, _commSize; /*!< @brief MPI rank and size.*/    // Not yet used!!
+    // int _commRank, _commSize; /*!< @brief MPI rank and size.*/    // Not yet used!!
 
     // --- Options ---
     // File Structure
@@ -87,7 +87,7 @@ class Config
     /*!
      * @brief Set the config file parsing.
      */
-    void SetConfigParsing( char case_filename[MAX_STRING_SIZE] );
+    void SetConfigParsing( std::string case_filename );
 
     /*!
      * @brief Config file screen output.
@@ -172,7 +172,7 @@ class Config
     /*!
      * @brief Constructor of the class which reads the input file.
      */
-    Config( char case_filename[MAX_STRING_SIZE] );
+    Config( std::string case_filename );
 
     /*!
      * @brief Destructor of the class.
