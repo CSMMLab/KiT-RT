@@ -15,12 +15,13 @@ std::vector<double> readVTKFile( std::string filename ) {
     reader->ReadAllVectorsOn();
     reader->Update();
 
-    auto grid     = reader->GetOutput();
-    auto cellData = grid->GetCellData()->GetArray( 0 );
+    auto grid         = reader->GetOutput();
+    unsigned numCells = grid->GetNumberOfCells();
+    auto cellData     = grid->GetCellData()->GetArray( 0 );
 
-    std::vector<double> data( cellData->GetSize(), 0.0 );
+    std::vector<double> data( numCells, 0.0 );
 
-    for( unsigned i = 0; i < cellData->GetSize(); ++i ) {
+    for( unsigned i = 0; i < numCells; ++i ) {
         data[i] = cellData->GetTuple1( static_cast<int>( i ) );
     }
 
@@ -28,7 +29,7 @@ std::vector<double> readVTKFile( std::string filename ) {
 }
 
 TEST_CASE( "checkerboard_SN", "[testcases]" ) {
-    char config_file_name[MAX_STRING_SIZE] = "../tests/input/checkerboard.cfg";
+    std::string config_file_name = "../tests/input/checkerboard.cfg";
 
     Config* config = new Config( config_file_name );
     Solver* solver = Solver::Create( config );
@@ -40,13 +41,13 @@ TEST_CASE( "checkerboard_SN", "[testcases]" ) {
 
     double eps = 1e-3;
     REQUIRE( test.size() == reference.size() );
-    for( unsigned i = 0; i < test.size() - 1; ++i ) {    // somehow the last entry of the reference vtk file has a unfitting entry. Take care here
+    for( unsigned i = 0; i < test.size(); ++i ) {
         REQUIRE( std::fabs( test[i] - reference[i] ) < eps );
     }
 }
 
 TEST_CASE( "linesource_SN", "[testcases]" ) {
-    char config_file_name[MAX_STRING_SIZE] = "../tests/input/linesource.cfg";
+    std::string config_file_name = "../tests/input/linesource.cfg";
 
     Config* config = new Config( config_file_name );
     Solver* solver = Solver::Create( config );
