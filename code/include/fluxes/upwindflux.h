@@ -37,16 +37,15 @@ class UpwindFlux : public NumericalFlux
      * @param resultFlux: Vector with resulting flux.
      * @return          : void
      */
-    void Flux( const Matrix& AxPlus,
-               const Matrix& AxMinus,
-               const Matrix& AyPlus,
-               const Matrix& AyMinus,
-               const Matrix& AzPlus,
-               const Matrix& AzMinus,
-               const Vector& psiL,
-               const Vector& psiR,
-               const Vector& n,
-               Vector& resultFlux ) const override;
+    Vector Flux( const Matrix AxPlus,
+                 const Matrix AxMinus,
+                 const Matrix AyPlus,
+                 const Matrix AyMinus,
+                 const Matrix AzPlus,
+                 const Matrix AzMinus,
+                 const Vector psiL,
+                 const Vector psiR,
+                 const Vector n ) const override;
 
     /**
      * @brief Flux      : Computes <VanLeer> upwinding scheme for given flux jacobians of the PN Solver at a given edge and stores it in

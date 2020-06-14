@@ -37,12 +37,7 @@ PNSolver::PNSolver( Config* settings ) : Solver( settings ) {
     _scatterMatDiag = Vector( _nTotalEntries, 0 );
 
     // Fill System Matrices
-    // ComputeSystemMatrices();
-    for( unsigned i = 0; i < _nTotalEntries; i++ ) {
-        _Ax( i, i ) = 1.0;
-        _Ay( i, i ) = 1.0;
-        _Az( i, i ) = 1.0;
-    }
+    ComputeSystemMatrices();
 
     std::cout << "System Matrix Set UP!" << std::endl;
     // Compute Decomposition in positive and negative (eigenvalue) parts of flux jacobians
@@ -53,7 +48,7 @@ PNSolver::PNSolver( Config* settings ) : Solver( settings ) {
 
     std::cout << "scatterMatrix : " << _scatterMatDiag << "\n";
 
-    // AdaptTimeStep();
+    AdaptTimeStep();
 
     if( settings->GetCleanFluxMat() ) CleanFluxMatrices();
 
@@ -62,109 +57,119 @@ PNSolver::PNSolver( Config* settings ) : Solver( settings ) {
     std::cout << "_Ay :\n" << _Ay << "\n ";    //_AyP \n" << _AyPlus << "\n _AyM \n" << _AyMinus << "\n";
     std::cout << "_Az :\n" << _Az << "\n ";    //_AzP \n" << _AzPlus << "\n _AzM \n" << _AzMinus << "\n";
 
-    std::cout << "_AxA :\n" << _AxAbs << "\n ";    // _AxP \n" << _AxPlus << "\n _AxM \n" << _AxMinus << "\n";
-    std::cout << "_AyA :\n" << _AyAbs << "\n ";    //_AyP \n" << _AyPlus << "\n _AyM \n" << _AyMinus << "\n";
-    std::cout << "_AzA :\n" << _AzAbs << "\n ";
-    //
-    // std::cout << "_AxAR :\n" << _AxPlus - _AxMinus << "\n ";    // _AxP \n" << _AxPlus << "\n _AxM \n" << _AxMinus << "\n";
-    // std::cout << "_AyAR :\n" << _AyPlus - _AyMinus << "\n ";    //_AyP \n" << _AyPlus << "\n _AyM \n" << _AyMinus << "\n";
-    // std::cout << "_AzAR :\n" << _AzPlus - _AzMinus << "\n ";
+    std::cout << "_AxPlus :\n" << _AxPlus << "\n ";    // _AxP \n" << _AxPlus << "\n _AxM \n" << _AxMinus << "\n";
+    std::cout << "_AyPlus :\n" << _AyPlus << "\n ";    //_AyP \n" << _AyPlus << "\n _AyM \n" << _AyMinus << "\n";
+    std::cout << "_AzPlus :\n" << _AzPlus << "\n ";
+
+    std::cout << "_AxMinus :\n" << _AxMinus << "\n ";    // _AxP \n" << _AxPlus << "\n _AxM \n" << _AxMinus << "\n";
+    std::cout << "_AyMinus :\n" << _AyMinus << "\n ";    //_AyP \n" << _AyPlus << "\n _AyM \n" << _AyMinus << "\n";
+    std::cout << "_AzMinus :\n" << _AzMinus << "\n ";
 
     std::cout << "_nCells: " << _nCells << "\n";
 }
 
-void PNSolver::AdaptTimeStep() { _dE = _dE / _combinedSpectralRadius; }
+void PNSolver::Solve() {
+    auto log = spdlog::get( "event" );
 
-void PNSolver::CleanFluxMatrices() {
-    for( unsigned idx_row = 0; idx_row < _nTotalEntries; idx_row++ ) {
-        for( unsigned idx_col = 0; idx_col < _nTotalEntries; idx_col++ ) {
-            if( std::abs( _AxAbs( idx_row, idx_col ) ) < 0.00000000001 ) _AxAbs( idx_row, idx_col ) = 0.0;
-            if( std::abs( _AxPlus( idx_row, idx_col ) ) < 0.00000000001 ) _AxPlus( idx_row, idx_col ) = 0.0;
-            if( std::abs( _AxMinus( idx_row, idx_col ) ) < 0.00000000001 ) _AxMinus( idx_row, idx_col ) = 0.0;
+    // angular flux at next time step (maybe store angular flux at all time steps, since time becomes energy?)
+    VectorVector psiNew = _psi;
+    double dFlux        = 1e10;
+    Vector fluxNew( _nCells, 0.0 );
+    Vector fluxOld( _nCells, 0.0 );
 
-            if( std::abs( _AyAbs( idx_row, idx_col ) ) < 0.00000000001 ) _AyAbs( idx_row, idx_col ) = 0.0;
-            if( std::abs( _AyPlus( idx_row, idx_col ) ) < 0.00000000001 ) _AyPlus( idx_row, idx_col ) = 0.0;
-            if( std::abs( _AyMinus( idx_row, idx_col ) ) < 0.00000000001 ) _AyMinus( idx_row, idx_col ) = 0.0;
+    double mass1 = 0;
+    for( unsigned i = 0; i < _nCells; ++i ) {
+        _solverOutput[i] = _psi[i][0];
+        mass1 += _psi[i][0];
+    }
 
-            if( std::abs( _AzAbs( idx_row, idx_col ) ) < 0.00000000001 ) _AzAbs( idx_row, idx_col ) = 0.0;
-            if( std::abs( _AzPlus( idx_row, idx_col ) ) < 0.00000000001 ) _AzPlus( idx_row, idx_col ) = 0.0;
-            if( std::abs( _AzMinus( idx_row, idx_col ) ) < 0.00000000001 ) _AzMinus( idx_row, idx_col ) = 0.0;
+    dFlux   = blaze::l2Norm( fluxNew - fluxOld );
+    fluxOld = fluxNew;
+
+    Save( -1 );    // Save initial condition
+
+    VectorVector cellMids = _mesh->GetCellMidPoints();
+
+    int rank;
+
+    unsigned idx_system = 0;
+
+    MPI_Comm_rank( MPI_COMM_WORLD, &rank );
+    if( rank == 0 ) log->info( "{:10}   {:10}", "t", "dFlux" );
+
+    if( rank == 0 ) log->info( "{:03.8f}   {:01.5e} {:01.5e}", -1.0, dFlux, mass1 );
+
+    // Loop over energies (pseudo-time of continuous slowing down approach)
+
+    for( unsigned idx_energy = 0; idx_energy < _nEnergies; idx_energy++ ) {
+        // Loop over all spatial cells
+        for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
+            if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::DIRICHLET ) continue;    // Dirichlet cells stay at IC, farfield assumption
+
+            // Reset temporary variable psiNew
+            for( int idx_lOrder = 0; idx_lOrder <= int( _nq ); idx_lOrder++ ) {
+                for( int idx_kOrder = -idx_lOrder; idx_kOrder <= idx_lOrder; idx_kOrder++ ) {
+                    idx_system                   = unsigned( GlobalIndex( idx_lOrder, idx_kOrder ) );
+                    psiNew[idx_cell][idx_system] = 0.0;
+                }
+            }
+
+            // Loop over all neighbor cells (edges) of cell j and compute numerical fluxes
+            for( unsigned idx_neighbor = 0; idx_neighbor < _neighbors[idx_cell].size(); idx_neighbor++ ) {
+
+                // Compute flux contribution and store in psiNew to save memory
+                if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::NEUMANN && _neighbors[idx_cell][idx_neighbor] == _nCells )
+                    psiNew[idx_cell] += _g->Flux(
+                        _AxPlus, _AxMinus, _AyPlus, _AyMinus, _AzPlus, _AzMinus, _psi[idx_cell], _psi[idx_cell], _normals[idx_cell][idx_neighbor] );
+                else
+                    psiNew[idx_cell] += _g->Flux( _AxPlus,
+                                                  _AxMinus,
+                                                  _AyPlus,
+                                                  _AyMinus,
+                                                  _AzPlus,
+                                                  _AzMinus,
+                                                  _psi[idx_cell],
+                                                  _psi[_neighbors[idx_cell][idx_neighbor]],
+                                                  _normals[idx_cell][idx_neighbor] );
+
+                // std::cout << "psiNew   is " << psiNew[idx_cell] << "\n ";
+            }
+
+            // time update angular flux with numerical flux and total scattering cross section
+            for( int idx_lOrder = 0; idx_lOrder <= int( _nq ); idx_lOrder++ ) {
+                for( int idx_kOrder = -idx_lOrder; idx_kOrder <= idx_lOrder; idx_kOrder++ ) {
+                    idx_system = unsigned( GlobalIndex( idx_lOrder, idx_kOrder ) );
+
+                    // std::cout << "psi_old " << _psi[idx_cell][idx_system] << " de " << _dE << " _areas[idx_cell] " << _areas[idx_cell] << " Flux "
+                    //          << psiNew[idx_cell][idx_system] << "\n";
+                    psiNew[idx_cell][idx_system] = _psi[idx_cell][idx_system] -
+                                                   ( _dE / _areas[idx_cell] ) * psiNew[idx_cell][idx_system] /* cell averaged flux */
+                                                   - _dE * _psi[idx_cell][idx_system] *
+                                                         ( _sigmaA[idx_energy][idx_cell]                                    /* absorbtion influence */
+                                                           + _sigmaS[idx_energy][idx_cell] * _scatterMatDiag[idx_system] ); /* scattering influence */
+
+                    // std::cout << "psi_new " << psiNew[idx_cell][idx_system] << "\n";
+                }
+            }
         }
+        _psi = psiNew;
+
+        double mass = 0.0;
+        for( unsigned i = 0; i < _nCells; ++i ) {
+            fluxNew[i]       = _psi[i][0];    // zeroth moment is raditation densitiy we are interested in
+            _solverOutput[i] = _psi[i][0];
+            mass += _psi[i][0];
+        }
+
+        dFlux   = blaze::l2Norm( fluxNew - fluxOld );
+        fluxOld = fluxNew;
+        if( rank == 0 ) log->info( "{:03.8f}   {:01.5e} {:01.5e}", _energies[idx_energy], dFlux, mass );
+
+        Save( idx_energy );
     }
 }
-double PNSolver::CTilde( int l, int k ) const {
-    if( k < 0 ) return 0.0;
-    if( k == 0 )
-        return std::sqrt( 2 ) * CParam( l, k );
-    else
-        return CParam( l, k );
-}
 
-double PNSolver::DTilde( int l, int k ) const {
-    if( k < 0 ) return 0.0;
-    if( k == 0 )
-        return std::sqrt( 2 ) * DParam( l, k );
-    else
-        return DParam( l, k );
-}
-
-double PNSolver::ETilde( int l, int k ) const {
-    if( k == 1 )
-        return std::sqrt( 2 ) * EParam( l, k );
-    else
-        return EParam( l, k );
-}
-
-double PNSolver::FTilde( int l, int k ) const {
-    if( k == 1 )
-        return std::sqrt( 2 ) * FParam( l, k );
-    else
-        return FParam( l, k );
-}
-
-double PNSolver::AParam( int l, int k ) const {
-    return std::sqrt( double( ( l - k + 1 ) * ( l + k + 1 ) ) / double( ( 2 * l + 3 ) * ( 2 * l + 1 ) ) );
-}
-
-double PNSolver::BParam( int l, int k ) const { return std::sqrt( double( ( l - k ) * ( l + k ) ) / double( ( ( 2 * l + 1 ) * ( 2 * l - 1 ) ) ) ); }
-
-double PNSolver::CParam( int l, int k ) const {
-    return std::sqrt( double( ( l + k + 1 ) * ( l + k + 2 ) ) / double( ( ( 2 * l + 3 ) * ( 2 * l + 1 ) ) ) );
-}
-
-double PNSolver::DParam( int l, int k ) const {
-    return std::sqrt( double( ( l - k ) * ( l - k - 1 ) ) / double( ( ( 2 * l + 1 ) * ( 2 * l - 1 ) ) ) );
-}
-
-double PNSolver::EParam( int l, int k ) const {
-    return std::sqrt( double( ( l - k + 1 ) * ( l - k + 2 ) ) / double( ( ( 2 * l + 3 ) * ( 2 * l + 1 ) ) ) );
-}
-
-double PNSolver::FParam( int l, int k ) const { return std::sqrt( double( ( l + k ) * ( l + k - 1 ) ) / double( ( 2 * l + 1 ) * ( 2 * l - 1 ) ) ); }
-
-int PNSolver::kPlus( int k ) const { return k + Sgn( k ); }
-
-int PNSolver::kMinus( int k ) const { return k - Sgn( k ); }
-
-int PNSolver::GlobalIndex( int l, int k ) const {
-    int numIndicesPrevLevel  = l * l;    // number of previous indices untill level l-1
-    int prevIndicesThisLevel = k + l;    // number of previous indices in current level
-    return numIndicesPrevLevel + prevIndicesThisLevel;
-}
-
-bool PNSolver::CheckIndex( int l, int k ) const {
-    if( l >= 0 && l <= int( _nq ) ) {
-        if( k >= -l && k <= l ) return true;
-    }
-    return false;
-}
-
-int PNSolver::Sgn( int k ) const {
-    if( k >= 0 )
-        return 1;
-    else
-        return -1;
-}
+void PNSolver::AdaptTimeStep() { _dE = _dE / _combinedSpectralRadius; }
 
 void PNSolver::ComputeSystemMatrices() {
     int idx_col      = 0;
@@ -398,130 +403,6 @@ double PNSolver::LegendrePoly( double x, int l ) {
     }
 }
 
-void PNSolver::Solve() {
-    auto log = spdlog::get( "event" );
-
-    // angular flux at next time step (maybe store angular flux at all time steps, since time becomes energy?)
-    VectorVector psiNew = _psi;
-    double dFlux        = 1e10;
-    Vector fluxNew( _nCells, 0.0 );
-    Vector fluxOld( _nCells, 0.0 );
-
-    for( unsigned i = 0; i < _nCells; ++i ) {
-        _solverOutput[i] = _psi[i][0];
-    }
-
-    Save( -1 );    // Save initial condition
-
-    VectorVector cellMids = _mesh->GetCellMidPoints();
-
-    int rank;
-
-    unsigned idx_system = 0;
-
-    MPI_Comm_rank( MPI_COMM_WORLD, &rank );
-    if( rank == 0 ) log->info( "{:10}   {:10}", "t", "dFlux" );
-
-    // Loop over energies (pseudo-time of continuous slowing down approach)
-
-    for( unsigned idx_energy = 0; idx_energy < _nEnergies; idx_energy++ ) {
-        // Loop over all spatial cells
-        for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
-            if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::DIRICHLET ) continue;    // Dirichlet cells stay at IC, farfield assumption
-
-            // Reset temporary variable psiNew
-            for( int idx_lOrder = 0; idx_lOrder <= int( _nq ); idx_lOrder++ ) {
-                for( int idx_kOrder = -idx_lOrder; idx_kOrder <= idx_lOrder; idx_kOrder++ ) {
-                    idx_system                   = unsigned( GlobalIndex( idx_lOrder, idx_kOrder ) );
-                    psiNew[idx_cell][idx_system] = 0.0;
-                }
-            }
-
-            if( _mesh->GetDistanceToOrigin( idx_cell ) <= 0.1 ) {
-                // std::cout << "Distance to origin: " << _mesh->GetDistanceToOrigin( idx_cell ) << "\n";
-                // std::cout << "Old Cell value: \n " << _psi[idx_cell] << "\n" << psiNew[idx_cell] << "\n";
-            }
-
-            // std::cout << "--------\n";
-            // std::cout << "_AxPlus :\n" << _AxPlus << "\n ";      // _AxP \n" << _AxPlus << "\n _AxM \n" << _AxMinus << "\n";
-            // std::cout << "_AxMinus :\n" << _AxMinus << "\n ";    //_AyP \n" << _AyPlus << "\n _AyM \n" << _AyMinus << "\n";
-            //
-            // std::cout << "_AyPlus :\n" << _AyPlus << "\n ";      // _AxP \n" << _AxPlus << "\n _AxM \n" << _AxMinus << "\n";
-            // std::cout << "_AyMinus :\n" << _AyMinus << "\n ";    //_AyP \n" << _AyPlus << "\n _AyM \n" << _AyMinus << "\n";
-
-            // Loop over all neighbor cells (edges) of cell j and compute numerical fluxes
-            for( unsigned idx_neighbor = 0; idx_neighbor < _neighbors[idx_cell].size(); idx_neighbor++ ) {
-
-                // Compute flux contribution and store in psiNew to save memory
-                if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::NEUMANN && _neighbors[idx_cell][idx_neighbor] == _nCells )
-                    _g->Flux( _AxPlus,
-                              _AxMinus,
-                              _AyPlus,
-                              _AyMinus,
-                              _AzPlus,
-                              _AzMinus,
-                              _psi[idx_cell],
-                              _psi[idx_cell],
-                              _normals[idx_cell][idx_neighbor],
-                              psiNew[idx_cell] );
-                else
-                    _g->Flux( _AxPlus,
-                              _AxMinus,
-                              _AyPlus,
-                              _AyMinus,
-                              _AzPlus,
-                              _AzMinus,
-                              _psi[idx_cell],
-                              _psi[_neighbors[idx_cell][idx_neighbor]],
-                              _normals[idx_cell][idx_neighbor],
-                              psiNew[idx_cell] );
-                //  std::cout << "psiNew[idx_cell] :\n" << psiNew[idx_cell] << "\n ";
-
-                //_g->Flux( _AxPlus,
-                //          _AxMinus,
-                //          _AyPlus,
-                //          _AyMinus,
-                //          _AzPlus,
-                //          _AzMinus,
-                //          _psi[idx_cell],
-                //          _psi[_neighbors[idx_cell][idx_neighbor]],
-                //          _normals[idx_cell][idx_neighbor],
-                //          psiNew[idx_cell] );
-
-                // if( _mesh->GetDistanceToOrigin( idx_cell ) <= 0.1 ) std::cout << "FluxPart " << idx_neighbor << " : \n" << psiNew[idx_cell] <<
-                // "\n";
-            }
-
-            // time update angular flux with numerical flux and total scattering cross section
-            for( int idx_lOrder = 0; idx_lOrder <= int( _nq ); idx_lOrder++ ) {
-                for( int idx_kOrder = -idx_lOrder; idx_kOrder <= idx_lOrder; idx_kOrder++ ) {
-                    idx_system = unsigned( GlobalIndex( idx_lOrder, idx_kOrder ) );
-
-                    psiNew[idx_cell][idx_system] =
-                        _psi[idx_cell][idx_system] - ( _dE / _areas[idx_cell] ) * psiNew[idx_cell][idx_system]; /* cell averaged flux */
-                    //  -_dE* _psi[idx_cell][idx_system] * ( _sigmaA[idx_energy][idx_cell]                         /* absorbtion influence */
-                    //                                       + _sigmaS[idx_energy][idx_cell] * _scatterMatDiag[idx_system] ); /* scattering influence
-                    //                                       */
-                }
-            }
-        }
-        _psi = psiNew;
-
-        double mass = 0.0;
-        for( unsigned i = 0; i < _nCells; ++i ) {
-            fluxNew[i]       = _psi[i][0];    // zeroth moment is raditation densitiy we are interested in
-            _solverOutput[i] = _psi[i][0];
-            mass += _psi[i][0];
-        }
-
-        dFlux   = blaze::l2Norm( fluxNew - fluxOld );
-        fluxOld = fluxNew;
-        if( rank == 0 ) log->info( "{:03.8f}   {:01.5e} {:01.5e}", _energies[idx_energy], dFlux, mass );
-
-        Save( idx_energy );
-    }
-}
-
 void PNSolver::Save() const {
     std::vector<std::string> fieldNames{ "flux" };
     std::vector<double> flux;
@@ -540,4 +421,96 @@ void PNSolver::Save( int currEnergy ) const {
     std::vector<std::vector<double>> scalarField( 1, _solverOutput );
     std::vector<std::vector<std::vector<double>>> results{ scalarField };
     ExportVTK( _settings->GetOutputFile() + "_" + std::to_string( currEnergy ), results, fieldNames, _mesh );
+}
+
+void PNSolver::CleanFluxMatrices() {
+    for( unsigned idx_row = 0; idx_row < _nTotalEntries; idx_row++ ) {
+        for( unsigned idx_col = 0; idx_col < _nTotalEntries; idx_col++ ) {
+            if( std::abs( _AxAbs( idx_row, idx_col ) ) < 0.00000000001 ) _AxAbs( idx_row, idx_col ) = 0.0;
+            if( std::abs( _AxPlus( idx_row, idx_col ) ) < 0.00000000001 ) _AxPlus( idx_row, idx_col ) = 0.0;
+            if( std::abs( _AxMinus( idx_row, idx_col ) ) < 0.00000000001 ) _AxMinus( idx_row, idx_col ) = 0.0;
+
+            if( std::abs( _AyAbs( idx_row, idx_col ) ) < 0.00000000001 ) _AyAbs( idx_row, idx_col ) = 0.0;
+            if( std::abs( _AyPlus( idx_row, idx_col ) ) < 0.00000000001 ) _AyPlus( idx_row, idx_col ) = 0.0;
+            if( std::abs( _AyMinus( idx_row, idx_col ) ) < 0.00000000001 ) _AyMinus( idx_row, idx_col ) = 0.0;
+
+            if( std::abs( _AzAbs( idx_row, idx_col ) ) < 0.00000000001 ) _AzAbs( idx_row, idx_col ) = 0.0;
+            if( std::abs( _AzPlus( idx_row, idx_col ) ) < 0.00000000001 ) _AzPlus( idx_row, idx_col ) = 0.0;
+            if( std::abs( _AzMinus( idx_row, idx_col ) ) < 0.00000000001 ) _AzMinus( idx_row, idx_col ) = 0.0;
+        }
+    }
+}
+
+double PNSolver::CTilde( int l, int k ) const {
+    if( k < 0 ) return 0.0;
+    if( k == 0 )
+        return std::sqrt( 2 ) * CParam( l, k );
+    else
+        return CParam( l, k );
+}
+
+double PNSolver::DTilde( int l, int k ) const {
+    if( k < 0 ) return 0.0;
+    if( k == 0 )
+        return std::sqrt( 2 ) * DParam( l, k );
+    else
+        return DParam( l, k );
+}
+
+double PNSolver::ETilde( int l, int k ) const {
+    if( k == 1 )
+        return std::sqrt( 2 ) * EParam( l, k );
+    else
+        return EParam( l, k );
+}
+
+double PNSolver::FTilde( int l, int k ) const {
+    if( k == 1 )
+        return std::sqrt( 2 ) * FParam( l, k );
+    else
+        return FParam( l, k );
+}
+
+double PNSolver::AParam( int l, int k ) const {
+    return std::sqrt( double( ( l - k + 1 ) * ( l + k + 1 ) ) / double( ( 2 * l + 3 ) * ( 2 * l + 1 ) ) );
+}
+
+double PNSolver::BParam( int l, int k ) const { return std::sqrt( double( ( l - k ) * ( l + k ) ) / double( ( ( 2 * l + 1 ) * ( 2 * l - 1 ) ) ) ); }
+
+double PNSolver::CParam( int l, int k ) const {
+    return std::sqrt( double( ( l + k + 1 ) * ( l + k + 2 ) ) / double( ( ( 2 * l + 3 ) * ( 2 * l + 1 ) ) ) );
+}
+
+double PNSolver::DParam( int l, int k ) const {
+    return std::sqrt( double( ( l - k ) * ( l - k - 1 ) ) / double( ( ( 2 * l + 1 ) * ( 2 * l - 1 ) ) ) );
+}
+
+double PNSolver::EParam( int l, int k ) const {
+    return std::sqrt( double( ( l - k + 1 ) * ( l - k + 2 ) ) / double( ( ( 2 * l + 3 ) * ( 2 * l + 1 ) ) ) );
+}
+
+double PNSolver::FParam( int l, int k ) const { return std::sqrt( double( ( l + k ) * ( l + k - 1 ) ) / double( ( 2 * l + 1 ) * ( 2 * l - 1 ) ) ); }
+
+int PNSolver::kPlus( int k ) const { return k + Sgn( k ); }
+
+int PNSolver::kMinus( int k ) const { return k - Sgn( k ); }
+
+int PNSolver::GlobalIndex( int l, int k ) const {
+    int numIndicesPrevLevel  = l * l;    // number of previous indices untill level l-1
+    int prevIndicesThisLevel = k + l;    // number of previous indices in current level
+    return numIndicesPrevLevel + prevIndicesThisLevel;
+}
+
+bool PNSolver::CheckIndex( int l, int k ) const {
+    if( l >= 0 && l <= int( _nq ) ) {
+        if( k >= -l && k <= l ) return true;
+    }
+    return false;
+}
+
+int PNSolver::Sgn( int k ) const {
+    if( k >= 0 )
+        return 1;
+    else
+        return -1;
 }

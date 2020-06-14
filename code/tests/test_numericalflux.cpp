@@ -14,21 +14,21 @@ TEST_CASE( "unit numericalflux tests", "[numericalflux]" ) {
     Config* config = new Config( config_file_name );
 
     // Test Flux Jacobians
-    Matrix Ax( 4, 4, 0 );
-    Matrix AxAbs( 4, 4, 0 );
-    Matrix Ay( 4, 4, 0 );
-    Matrix AyAbs( 4, 4, 0 );
+    Matrix AxP( 4, 4, 0 );
+    Matrix AxM( 4, 4, 0 );
+    Matrix AyP( 4, 4, 0 );
+    Matrix AyM( 4, 4, 0 );
 
     // Fill Matrices with used values
-    Ax( 0, 3 ) = 0.57735;
-    Ax( 3, 0 ) = 0.57735;
-    Ay( 0, 1 ) = 0.57735;
-    Ay( 1, 0 ) = 0.57735;
+    AxP( 0, 0 ) = 1;    // 0.5;
+    AxP( 1, 1 ) = 0;    // 0.25;
+    AyP( 0, 0 ) = 0;    // 0.25;
+    AyP( 1, 1 ) = 1;    // 0.125;
 
-    AxAbs( 0, 0 ) = 0.57735;
-    AxAbs( 3, 3 ) = 0.57735;
-    AyAbs( 0, 0 ) = 0.57735;
-    AyAbs( 1, 1 ) = 0.57735;
+    AxM( 2, 2 ) = -1;    // -0.25;
+    AxM( 3, 3 ) = 0;     // -0.125;
+    AyM( 2, 2 ) = 0;     // -0.5;
+    AyM( 3, 3 ) = -1;    // -0.25;
 
     SECTION( "test symmetry" ) {
         for( unsigned l = 0; l < 10; ++l ) {
@@ -61,14 +61,20 @@ TEST_CASE( "unit numericalflux tests", "[numericalflux]" ) {
             REQUIRE( std::fabs( g.Flux( omega, psiL, psiR, n ) - ( -g.Flux( omega, psiR, psiL, -n ) ) ) <
                      1e2 * std::numeric_limits<double>::epsilon() );
 
-            // b) Upwinding methods - VanLeer  MatrixFlux, 4x4 Matrices, i.e. P1 case;
-            Vector resultFluxPlus( 4, 0 );
-            Vector resultFluxMinus( 4, 0 );
+            // b) Upwinding methods - Systems  MatrixFlux, 4x4 Matrices, i.e. P1 case;
+            Vector resultFluxPlus( 4, 0.0 );
+            Vector resultFluxMinus( 4, 0.0 );
             Vector psiLVect{ 1.0, 2.0, 3.0, 4.0 };
             Vector psiRVect{ 3.0, 4.0, 1.0, 2.0 };
+            // n[0] = 1.0;
+            // n[1] = 1.0;
+            // std::cout << "resultFluxPlus " << resultFluxPlus << " \n resultFluxMinus " << resultFluxMinus << "\n";
+            // std::cout << " n " << n << "\n";
 
-            g.FluxVanLeer( Ax, AxAbs, Ay, AyAbs, Ay, AyAbs, psiLVect, psiRVect, n, resultFluxPlus );
-            g.FluxVanLeer( Ax, AxAbs, Ay, AyAbs, Ay, AyAbs, psiLVect, psiRVect, -n, resultFluxMinus );
+            // std::cout << "AxP \n" << AxP << "\n AxM \n" << AxM << "\n AyP \n" << AyP << "\n AyM \n" << AyM << "\n";
+            resultFluxPlus  = g.Flux( AxP, AxM, AyP, AyM, AyP, AyM, psiLVect, psiRVect, n );
+            resultFluxMinus = g.Flux( AxP, AxM, AyP, AyM, AyP, AyM, psiRVect, psiLVect, -n );
+            // std::cout << "resultFluxPlus " << resultFluxPlus << " \n resultFluxMinus " << resultFluxMinus << "\n";
 
             REQUIRE( blaze::norm( resultFluxPlus + resultFluxMinus ) < 1e2 * std::numeric_limits<double>::epsilon() );
         }
@@ -106,13 +112,17 @@ TEST_CASE( "unit numericalflux tests", "[numericalflux]" ) {
 
             REQUIRE( std::fabs( g.Flux( omega, psi, psi, n ) - inner * psi ) < 1e2 * std::numeric_limits<double>::epsilon() );
 
-            // b) Upwinding methods - VanLeer  MatrixFlux, 4x4 Matrices, i.e. P1 case;
+            // b) Upwinding methods -  MatrixFlux, 4x4 Matrices, i.e. P1 case;
             Vector resultFlux( 4, 0 );
             Vector resultFluxOrig( 4, 0 );
             Vector psiLVect{ 1.0, 2.0, 3.0, 4.0 };
 
-            resultFluxOrig = ( n[0] * Ax * psiLVect + n[1] * Ay * psiLVect );
-            g.FluxVanLeer( Ax, AxAbs, Ay, AyAbs, Ay, AyAbs, psiLVect, psiLVect, n, resultFlux );
+            // std::cout << "resultFluxPlus " << resultFlux << "resOrig " << resultFluxOrig << "\n";
+            // std::cout << " n " << n << "\n";
+            // std::cout << "Ax \n" << AxP + AxM << "\n Ay \n" << AyP + AyM << "\n";
+
+            resultFluxOrig = ( n[0] * ( AxP + AxM ) * psiLVect + +n[1] * ( AyP + AyM ) * psiLVect );
+            resultFlux     = g.Flux( AxP, AxM, AyP, AyM, AyP, AyM, psiLVect, psiLVect, n );
 
             REQUIRE( blaze::norm( resultFlux - resultFluxOrig ) < 1e2 * std::numeric_limits<double>::epsilon() );
         }
