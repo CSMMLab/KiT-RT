@@ -50,11 +50,11 @@ Solver::Solver( Config* settings ) : _settings( settings ) {
 }
 
 double Solver::ComputeTimeStep( double cfl ) const {
-    double maxEdge = -1.0;
+    double maxEdge = 1000.;
     for( unsigned j = 0; j < _nCells; ++j ) {
         for( unsigned l = 0; l < _normals[j].size(); ++l ) {
             double currentEdge = _areas[j] / norm( _normals[j][l] );
-            if( currentEdge > maxEdge ) maxEdge = currentEdge;
+            if( currentEdge < maxEdge ) maxEdge = currentEdge;
         }
     }
     return cfl * maxEdge;

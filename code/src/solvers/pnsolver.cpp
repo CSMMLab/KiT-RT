@@ -48,7 +48,7 @@ PNSolver::PNSolver( Config* settings ) : Solver( settings ) {
 
     std::cout << "scatterMatrix : " << _scatterMatDiag << "\n";
 
-    AdaptTimeStep();
+    // AdaptTimeStep();
 
     if( settings->GetCleanFluxMat() ) CleanFluxMatrices();
 
