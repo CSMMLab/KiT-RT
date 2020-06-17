@@ -52,8 +52,8 @@ int main( int argc, char** argv ) {
                << ","
                << "v4" << std::endl;
 
-    for( int my_idx = 0; my_idx < 50; my_idx++ ) {
-        for( int phi_idx = 0; phi_idx < 50; phi_idx++ ) {
+    for( int my_idx = -25; my_idx <= 25; my_idx++ ) {
+        for( int phi_idx = 0; phi_idx <= 50; phi_idx++ ) {
             erg = testBase.ComputeSphericalBasis( my_idx * d_my, phi_idx * d_phi );
             outputFile << my_idx * d_my << "," << phi_idx * d_phi << "," << erg[0] << "," << erg[1] << "," << erg[2] << "," << erg[3] << "," << erg[4]
                        << std::endl;

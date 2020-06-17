@@ -62,11 +62,11 @@ void SphericalHarmonics::ComputeAssLegendrePoly( const double my ) {
                     ( my * _assLegendreP[GlobalIdxAssLegendreP( l_idx - 1, k_idx )] +
                       _bParam[GlobalIdxAssLegendreP( l_idx, k_idx )] * _assLegendreP[GlobalIdxAssLegendreP( l_idx - 2, k_idx )] );
             }
-            _assLegendreP[l_idx, l_idx - 1] = my * std::sqrt( 2 * ( l_idx - 1 ) + 3 ) * temp;
+            _assLegendreP[GlobalIdxAssLegendreP( l_idx, l_idx - 1 )] = my * std::sqrt( 2 * ( l_idx - 1 ) + 3 ) * temp;
 
             temp = -std::sqrt( 1.0 + 0.5 / l_idx ) * sintheta * temp;
 
-            _assLegendreP[l_idx, l_idx - 1] = temp;
+            _assLegendreP[GlobalIdxAssLegendreP( l_idx, l_idx - 1 )] = temp;
         }
     }
 }
