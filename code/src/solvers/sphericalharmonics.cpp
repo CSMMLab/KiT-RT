@@ -1,6 +1,5 @@
-#include <math.h>
-
 #include "solvers/sphericalharmonics.h"
+#include <math.h>
 
 SphericalHarmonics::SphericalHarmonics( unsigned L_degree ) {
     _LMaxDegree = L_degree;
@@ -50,9 +49,9 @@ void SphericalHarmonics::ComputeAssLegendrePoly( const double my ) {
     if( _LMaxDegree > 0 ) {
         const double SQRT3                           = std::sqrt( 3 );       // 1.7320508075688772935
         _assLegendreP[GlobalIdxAssLegendreP( 1, 0 )] = my * SQRT3 * temp;    // 1.224744871391589
-        const double SQRT3DIV2                       = std::sqrt( 3. / 2. );
+        const double SQRT3DIV2                       = -std::sqrt( 3. / 2. );
 
-        temp                                         = -SQRT3DIV2 * sintheta * temp;
+        temp                                         = SQRT3DIV2 * sintheta * temp;
         _assLegendreP[GlobalIdxAssLegendreP( 1, 1 )] = temp;
 
         for( unsigned l_idx = 2; l_idx <= _LMaxDegree; l_idx++ ) {
@@ -66,7 +65,7 @@ void SphericalHarmonics::ComputeAssLegendrePoly( const double my ) {
 
             temp = -std::sqrt( 1.0 + 0.5 / l_idx ) * sintheta * temp;
 
-            _assLegendreP[GlobalIdxAssLegendreP( l_idx, l_idx - 1 )] = temp;
+            _assLegendreP[GlobalIdxAssLegendreP( l_idx, l_idx )] = temp;
         }
     }
 }

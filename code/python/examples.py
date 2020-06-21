@@ -39,3 +39,24 @@ ax.plot_wireframe(X, Y, Z, color='black')
 ax.set_title('wireframe');
 
 plt.show()
+
+
+x = [1, 2, 3]
+y = [4, 5, 6]
+
+x1 = np.linspace(0, 10, 1000)
+
+figure, axes = plt.subplots(nrows=2, ncols=2)
+
+axes[0, 0].plot(x, y)
+
+#create specific subplots
+
+axes[0, 1].plot(x1, np.sin(x1))
+axes[1, 0].plot(x1, np.cos(x1))
+axes[1, 1].plot(range(10))
+
+
+figure.tight_layout()
+
+plt.show()
