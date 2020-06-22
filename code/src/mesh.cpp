@@ -342,6 +342,7 @@ void Mesh::ComputeSlopes( unsigned nq, VectorVector& psiDerX, VectorVector& psiD
     for( unsigned k = 0; k < nq; ++k ) {
         for( unsigned j = 0; j < _numCells; ++j ) {
             // if( cell->IsBoundaryCell() ) continue; // skip ghost cells
+            if( _cellBoundaryTypes[j] == 0 || _cellBoundaryTypes[j] == 1 ) continue; // skip ghost cells
             // compute derivative by summing over cell boundary
             for( unsigned l = 0; l < _cellNeighbors[j].size(); ++l ) {
                 psiDerX[j][k] = psiDerX[j][k] + 0.5 * ( psi[j][k] + psi[_cellNeighbors[j][l]][k] ) * _cellNormals[j][l][0] / _cellAreas[j];
