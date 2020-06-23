@@ -4,11 +4,16 @@
 // include Matrix, Vector definitions
 #include "settings/config.h"
 #include "settings/typedef.h"
+#include <list>
 
 class Physics
 {
 
   private:
+    // prototype physics data
+    std::list<std::vector<std::vector<double>>> _data;
+    std::list<std::vector<std::vector<double>>> _headers;
+
     Matrix _xsH2O;
     Matrix _totalxsH2O;
     /**
@@ -19,6 +24,9 @@ class Physics
     void LoadXSH2O( std::string fileName1, std::string fileName2 );
 
   public:
+    // prototype data loader
+    void ReadENDL_H( std::string filename );
+
     /**
      * @brief GetScatteringXS gives back vector of vectors of scattering cross sections for materials defined by density and energies in vector energy
      * @param energies is vector with energies
