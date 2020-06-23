@@ -21,3 +21,5 @@ ProblemBase* ProblemBase::Create( Config* settings, Mesh* mesh ) {
         default: return new ElectronRT( settings, mesh );    // Use RadioTherapy as dummy
     }
 }
+
+std::vector<double> ProblemBase::GetDensity( const VectorVector& cellMidPoints ) { return std::vector<double>( cellMidPoints.size(), 1.0 ); }
