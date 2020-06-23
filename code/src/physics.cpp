@@ -122,5 +122,5 @@ void Physics::ReadENDL_H( string filename ) {
             curr_HeaderLine = 0;
         }
     }
-    cout << pack_idx;
+    case_file.close();
 }
