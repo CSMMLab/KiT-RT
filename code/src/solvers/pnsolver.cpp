@@ -1,6 +1,5 @@
 
 #include "solvers/pnsolver.h"
-#include "../ext/blaze/blaze/math/blas/cblas/gemm.h"
 #include "toolboxes/errormessages.h"
 #include "toolboxes/textprocessingtoolbox.h"
 #include <mpi.h>
@@ -107,9 +106,9 @@ void PNSolver::Solve() {
             if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::DIRICHLET ) continue;    // Dirichlet cells stay at IC, farfield assumption
 
             // Reset temporary variable psiNew
-            for( int idx_lOrder = 0; idx_lOrder <= int( _nq ); idx_lOrder++ ) {
-                for( int idx_kOrder = -idx_lOrder; idx_kOrder <= idx_lOrder; idx_kOrder++ ) {
-                    idx_system                   = unsigned( GlobalIndex( idx_lOrder, idx_kOrder ) );
+            for( int idx_lDegree = 0; idx_lDegree <= int( _nq ); idx_lDegree++ ) {
+                for( int idx_kOrder = -idx_lDegree; idx_kOrder <= idx_lDegree; idx_kOrder++ ) {
+                    idx_system                   = unsigned( GlobalIndex( idx_lDegree, idx_kOrder ) );
                     psiNew[idx_cell][idx_system] = 0.0;
                 }
             }
@@ -131,8 +130,6 @@ void PNSolver::Solve() {
                                                   _psi[idx_cell],
                                                   _psi[_neighbors[idx_cell][idx_neighbor]],
                                                   _normals[idx_cell][idx_neighbor] );
-
-                // std::cout << "psiNew   is " << psiNew[idx_cell] << "\n ";
             }
 
             // time update angular flux with numerical flux and total scattering cross section
@@ -140,15 +137,11 @@ void PNSolver::Solve() {
                 for( int idx_kOrder = -idx_lOrder; idx_kOrder <= idx_lOrder; idx_kOrder++ ) {
                     idx_system = unsigned( GlobalIndex( idx_lOrder, idx_kOrder ) );
 
-                    // std::cout << "psi_old " << _psi[idx_cell][idx_system] << " de " << _dE << " _areas[idx_cell] " << _areas[idx_cell] << " Flux "
-                    //          << psiNew[idx_cell][idx_system] << "\n";
                     psiNew[idx_cell][idx_system] = _psi[idx_cell][idx_system] -
                                                    ( _dE / _areas[idx_cell] ) * psiNew[idx_cell][idx_system] /* cell averaged flux */
                                                    - _dE * _psi[idx_cell][idx_system] *
                                                          ( _sigmaA[idx_energy][idx_cell]                                    /* absorbtion influence */
                                                            + _sigmaS[idx_energy][idx_cell] * _scatterMatDiag[idx_system] ); /* scattering influence */
-
-                    // std::cout << "psi_new " << psiNew[idx_cell][idx_system] << "\n";
                 }
             }
         }
@@ -168,8 +161,6 @@ void PNSolver::Solve() {
         Save( idx_energy );
     }
 }
-
-void PNSolver::AdaptTimeStep() { _dE = _dE / _combinedSpectralRadius; }
 
 void PNSolver::ComputeSystemMatrices() {
     int idx_col      = 0;
@@ -344,38 +335,6 @@ void PNSolver::ComputeFluxComponents() {
 }
 
 void PNSolver::ComputeScatterMatrix() {
-
-    // right now independent of spatial coordinates
-    // G[i][i] = 1- g_l
-    // g_l = 2*pi*\int_-1 ^1 k(x,my)P_l(my)dmy
-    // use midpoint rule.
-    // Here is room for optimization!
-
-    // Only isotropic scattering: k = 1/(2pi) in 2d !!!
-
-    // --- Ansatz for general scattering for later! ---
-    // unsigned nSteps     = 500000;
-    // double integralSum  = 0;
-    // unsigned idx_global = 0;
-    //
-    // for( int idx_lOrder = 0; idx_lOrder <= int( _nq ); idx_lOrder++ ) {
-    //    for( int idx_kOrder = -idx_lOrder; idx_kOrder <= idx_lOrder; idx_kOrder++ ) {
-    //        idx_global                  = unsigned( GlobalIndex( idx_lOrder, idx_kOrder ) );
-    //        _scatterMatDiag[idx_global] = 0;
-    //
-    //        // compute value of diagonal
-    //        integralSum = 0.5 * ( Legendre( -1.0, idx_lOrder ) + Legendre( 1.0, idx_lOrder ) );    // Boundary terms
-    //
-    //        for( unsigned i = 1; i < nSteps - 1; i++ ) {
-    //            integralSum += Legendre( -1.0 + double( i ) * 2 / double( nSteps ), idx_lOrder );
-    //        }
-    //        integralSum *= 2 / double( nSteps );
-    //
-    //        // isotropic scattering and prefactor of eigenvalue
-    //        integralSum *= 0.5;    // 2pi/4pi
-    //        _scatterMatDiag[idx_global] = 1 - integralSum;
-    //    }
-    //}
 
     // --- Isotropic ---
     _scatterMatDiag[0] = 0.0;

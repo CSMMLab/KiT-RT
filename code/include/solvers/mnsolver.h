@@ -2,15 +2,53 @@
 #define MNSOLVER_H
 
 #include <pnsolver.h>
+#include <sphericalharmonics.h>
 
-class MNSolver : PNSolver
+class MNSolver : Solver
 {
-    /*! @brief: compute the legendre function of degree l and order k  at point x using the lth degree
-     *          legendre polynomial
-     * @param: [in] double x : spatial point, -1 <= x <= 1
-     *         [in] int    l : degree of associated legendre polynomial, 0 <= l
-     *         [in] int    k : order of associated legendre polynomial, -l <= k <= l
-     *         [ou] double   : value of legendre polynomial of degree l and order k  at point x
+  public:
+    /**
+     * @brief MNSolver constructor
+     * @param settings stores all needed information
      */
-    double AssociatedLegendrePoly( double x, int l, int k );
+    MNSolver( Config* settings );
+
+    /**
+     * @brief Solve functions runs main time loop
+     */
+    void Solve() override;
+
+  private:
+    /*! @brief: Total number of equations in the system */
+    unsigned _nTotalEntries;
+
+    /*! @brief: Absorbtion coefficient for all energies */
+    VectorVector _sigmaA;
+
+    /*! @brief: Class to compute and store current spherical harmonics basis */
+    SphericalHarmonics _basis;
+
+    /*! @brief: Diagonal of the scattering matrix (its a diagonal matrix by construction) */
+    Vector _scatterMatDiag;
+
+    /*! @brief: Diagonal of the system matrix in x direction (its a diagonal matrix by construction) */
+    Vector _Ax;
+
+    /*! @brief: Diagonal of the system matrix in y direction (its a diagonal matrix by construction) */
+    Vector _Ay;
+
+    /*! @brief: Diagonal of the system matrix in z direction (its a diagonal matrix by construction) */
+    Vector _Az;
+
+    /*! @brief : computes the global index of the moment corresponding to basis function (l,k)
+     *  @param : degree l, it must hold: 0 <= l <=_nq
+     *  @param : order k, it must hold: -l <=k <= l
+     *  @returns : global index
+     */
+    int GlobalIndex( int l, int k ) const;
+
+    /*! @brief : function for computing and setting up the System Matrices.
+                 The System Matrices are diagonal, so there is no need to diagonalize*/
+    void ComputeSystemMatrices();
+};
 #endif    // MNSOLVER_H

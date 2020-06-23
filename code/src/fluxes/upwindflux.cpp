@@ -13,7 +13,7 @@ double UpwindFlux::Flux( const Vector& Omega, double psiL, double psiR, const Ve
 }
 
 /**
- * @brief Flux      : Computes <VanLeer> upwinding scheme for given flux jacobians of the PN Solver at a given edge and stores it in
+ * @brief Flux      : Computes <Linear> upwinding scheme for given flux jacobians of the PN Solver at a given edge and stores it in
  *                    resultFlux
  * @param AxPlus    : Positive part of the flux jacobian in x direction
  * @param AxMinus   : Negative part of the flux jacobian in x direction

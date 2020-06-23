@@ -16,7 +16,7 @@ class SphericalHarmonics
 {
   public:
     /*! @brief : Sets up class for spherical harmonics basis based on legendre
-     *           polynoms and associated legendre polynoms up to degree l.
+     *           polynoms and associated legendre polynoms up to degree L.
      *           The basis then consists of N = L² +2L basis functions.
      *  @param : L_degree - maximum degree of spherical harmonics basis, 0 <= L <= 1000 (upper bound
      *                      due to numerical stability)
@@ -31,6 +31,7 @@ class SphericalHarmonics
     std::vector<double> ComputeSphericalBasis( double my, double phi );
 
   private:
+    /*! @brief: maximal degree of the spherical harmonics basis (this is "L" in the comments)*/
     unsigned _LMaxDegree;
 
     /*! @brief: coefficients for the computations of the basis

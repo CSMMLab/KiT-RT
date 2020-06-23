@@ -16,13 +16,13 @@ class PNSolver : public Solver
     /**
      * @brief Solve functions runs main time loop
      */
-    void Solve() override;
+    virtual void Solve() override;
     /**
      * @brief Output solution to VTK file
      */
     void Save() const override;
 
-    void Save( int currEnergy ) const;
+    void Save( int currEnergy ) const override;
 
   protected:
     // moment orders for P_N
@@ -87,8 +87,6 @@ class PNSolver : public Solver
     void ComputeScatterMatrix();
     // Computes Legedre polinomial of oder l at point x
     double LegendrePoly( double x, int l );
-    // Adapt the TimeStep according to the CFL number of  the velocities in the AdvectionMatrices
-    void AdaptTimeStep();
     // Sets Entries of FluxMatrices to zero, if they are below double accuracy, to prevent floating point
     // inaccuracies lateron
     void CleanFluxMatrices();
