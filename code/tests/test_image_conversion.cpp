@@ -11,8 +11,10 @@ TEST_CASE( "convert image to grayscale matrix and generate suitable mesh", "[ima
     std::string testImage = "../tests/input/phantom.png";
     std::string testMesh  = "../result/test.su2";
     Matrix gsImage        = createSU2MeshFromImage( testImage, testMesh );
+
     REQUIRE( std::filesystem::exists( testMesh ) );
-    REQUIRE( blaze::max( gsImage ) > 0 );
+    REQUIRE( blaze::max( gsImage ) <= 1.0 );
+    REQUIRE( blaze::min( gsImage ) >= 0 );
     REQUIRE( gsImage.rows() > 0 );
     REQUIRE( gsImage.columns() > 0 );
 }

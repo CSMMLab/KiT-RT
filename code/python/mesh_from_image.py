@@ -18,7 +18,7 @@ def generate(image_name, mesh_name):
         mesh_name = os.path.splitext(mesh_name)[0]
     gsImage, dimensions = egs.extract(image_name)
 
-    char_length = 1.0#np.min(1.0, np.min(dimensions)/10.0) #arbitrary
+    char_length = min(1.0, min(dimensions)/10.0) #arbitrary
     geom = pg.opencascade.Geometry()
     domain = add_rectangle(0.0, 0.0, dimensions[0], dimensions[1], char_length, geom)
     geom.add_physical(domain.lines, label="void")
