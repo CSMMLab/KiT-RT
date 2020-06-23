@@ -184,8 +184,10 @@ void Config::SetConfigOptions() {
     AddStringOption( "OUTPUT_FILE", _outputFile, string( "output" ) );
     /*! @brief LOG_DIR \n DESCRIPTION: Relative Directory of log files \n DEFAULT "/out" @ingroup Config.*/
     AddStringOption( "LOG_DIR", _logDir, string( "/out" ) );
-    /*!\brief MESH_FILE \n DESCRIPTION: Name of mesh file \n DEFAULT "" \ingroup Config.*/
+    /*! @brief MESH_FILE \n DESCRIPTION: Name of mesh file \n DEFAULT "" \ingroup Config.*/
     AddStringOption( "MESH_FILE", _meshFile, string( "mesh.su2" ) );
+    /*! @brief MESH_FILE \n DESCRIPTION: Name of mesh file \n DEFAULT "" \ingroup Config.*/
+    AddStringOption( "CT_FILE", _ctFile, string( "phantom.png" ) );
 
     // Quadrature relatated options
     /*! @brief QUAD_TYPE \n DESCRIPTION: Type of Quadrature rule \n Options: see @link QUAD_NAME \endlink \n DEFAULT: QUAD_MonteCarlo \ingroup
@@ -314,6 +316,7 @@ void Config::SetPostprocessing() {
     _outputDir  = _inputDir + _outputDir;
     _meshFile   = _inputDir + _meshFile;
     _outputFile = _outputDir + _outputFile;
+    _ctFile     = _inputDir + _ctFile;
 
     // create directories if they dont exist
     if( !std::filesystem::exists( _outputDir ) ) std::filesystem::create_directory( _outputDir );

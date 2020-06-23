@@ -41,6 +41,7 @@ class Config
     std::string _outputFile; /*!< @brief Name of output file*/
     std::string _logDir;     /*!< @brief Directory of log file*/
     std::string _meshFile;   /*!< @brief Name of mesh file*/
+    std::string _ctFile;     /*!< @brief Name of CT file*/
 
     // Quadrature
     QUAD_NAME _quadName;       /*!< @brief Quadrature Name*/
@@ -190,6 +191,7 @@ class Config
     std::string inline GetOutputDir() const { return std::filesystem::path( _outputDir ).lexically_normal(); }
     std::string inline GetOutputFile() const { return std::filesystem::path( _outputFile ).lexically_normal(); }
     std::string inline GetLogDir() const { return std::filesystem::path( _logDir ).lexically_normal(); }
+    std::string inline GetCTFile() const { return std::filesystem::path( _ctFile ).lexically_normal(); }
 
     // Quadrature Structure
     QUAD_NAME inline GetQuadName() const { return _quadName; }
