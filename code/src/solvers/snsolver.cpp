@@ -63,7 +63,8 @@ void SNSolver::Solve() {
     // loop over energies (pseudo-time)
     for( unsigned n = 0; n < _nEnergies; ++n ) {
         //_mesh->ComputeSlopes( _nq, psiDx, psiDy, _psi ); // slope without limiter
-        _mesh->ReconstructSlopes( _nq, psiDx, psiDy, _psi );    // slope with limiter
+        //_mesh->ReconstructSlopesU( _nq, psiDx, psiDy, _psi );    // slope with limiter
+        _mesh->ReconstructSlopesS( _nq, psiDx, psiDy, _psi );    // slope with limiter
 
         std::cout << "step: " << n << "/" << _nEnergies << std::endl;
 

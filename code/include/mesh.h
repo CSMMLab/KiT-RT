@@ -14,6 +14,8 @@
 #include "settings/typedef.h"
 #include "toolboxes/errormessages.h"
 
+#include "reconstructor.h"
+
 class Mesh
 {
   protected:
@@ -114,7 +116,8 @@ class Mesh
      */
     void ComputeSlopes( unsigned nq, VectorVector& psiDerX, VectorVector& psiDerY, const VectorVector& psi ) const;
 
-    void ReconstructSlopes( unsigned nq, VectorVector& psiDerX, VectorVector& psiDerY, const VectorVector& psi ) const;
+    void ReconstructSlopesS( unsigned nq, VectorVector& psiDerX, VectorVector& psiDerY, const VectorVector& psi ) const;
+    void ReconstructSlopesU( unsigned nq, VectorVector& psiDerX, VectorVector& psiDerY, const VectorVector& psi ) const;
 
 };
 
