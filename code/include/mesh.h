@@ -113,6 +113,9 @@ class Mesh
      * @param psi is solution for which slope is computed
      */
     void ComputeSlopes( unsigned nq, VectorVector& psiDerX, VectorVector& psiDerY, const VectorVector& psi ) const;
+
+    void ReconstructSlopes( unsigned nq, VectorVector& psiDerX, VectorVector& psiDerY, const VectorVector& psi ) const;
+
 };
 
 #endif    // MESH_H

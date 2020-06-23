@@ -155,10 +155,10 @@ void Mesh::ComputeCellAreas() {
                 break;
             }
             case 4: {    // quadrilateral cells
-                std::vector d1{ _nodes[_cells[i][0]][0] - _nodes[_cells[i][1]][0], _nodes[_cells[i][0]][1] - _nodes[_cells[i][1]][1] };
-                std::vector d2{ _nodes[_cells[i][1]][0] - _nodes[_cells[i][2]][0], _nodes[_cells[i][1]][1] - _nodes[_cells[i][2]][1] };
-                std::vector d3{ _nodes[_cells[i][2]][0] - _nodes[_cells[i][3]][0], _nodes[_cells[i][2]][1] - _nodes[_cells[i][3]][1] };
-                std::vector d4{ _nodes[_cells[i][3]][0] - _nodes[_cells[i][0]][0], _nodes[_cells[i][3]][1] - _nodes[_cells[i][0]][1] };
+                std::vector d1{_nodes[_cells[i][0]][0] - _nodes[_cells[i][1]][0], _nodes[_cells[i][0]][1] - _nodes[_cells[i][1]][1]};
+                std::vector d2{_nodes[_cells[i][1]][0] - _nodes[_cells[i][2]][0], _nodes[_cells[i][1]][1] - _nodes[_cells[i][2]][1]};
+                std::vector d3{_nodes[_cells[i][2]][0] - _nodes[_cells[i][3]][0], _nodes[_cells[i][2]][1] - _nodes[_cells[i][3]][1]};
+                std::vector d4{_nodes[_cells[i][3]][0] - _nodes[_cells[i][0]][0], _nodes[_cells[i][3]][1] - _nodes[_cells[i][0]][1]};
 
                 double a = std::sqrt( d1[0] * d1[0] + d1[1] * d1[1] );
                 double b = std::sqrt( d2[0] * d2[0] + d2[1] * d2[1] );
@@ -194,8 +194,8 @@ void Mesh::ComputeCellMidpoints() {
 Vector Mesh::ComputeOutwardFacingNormal( const Vector& nodeA, const Vector& nodeB, const Vector& cellCenter ) {
     double dx = nodeA[0] - nodeB[0];
     double dy = nodeA[1] - nodeB[1];
-    Vector n{ -dy, dx };                    // normal vector
-    Vector p{ nodeA[0], nodeA[1] };         // take arbitrary node
+    Vector n{-dy, dx};                      // normal vector
+    Vector p{nodeA[0], nodeA[1]};           // take arbitrary node
     if( dot( n, cellCenter - p ) > 0 ) {    // dot product is negative for outward facing normals
         n *= -1.0;                          // if dot product is positive -> flip normal
     }
@@ -257,7 +257,7 @@ void Mesh::ComputePartitioning() {
 
         if( comm_size > 1 ) {    // if multiple MPI threads -> use parmetis
             // split adjacency information for each MPI thread -> see 'local' variables
-            std::vector<int> local_xadj{ 0 };
+            std::vector<int> local_xadj{0};
             unsigned xadjChunk = std::ceil( static_cast<float>( _numNodes ) / static_cast<float>( comm_size ) );
             unsigned xadjStart = comm_rank * xadjChunk + 1;
             unsigned adjncyStart;
@@ -272,7 +272,7 @@ void Mesh::ComputePartitioning() {
             std::vector<int> local_adjncy( adjncy.begin() + adjncyStart, adjncy.begin() + adjncyEnd );
 
             // vtxdist describes what nodes are on which processor - see parmetis doc
-            std::vector<int> vtxdist{ 0 };
+            std::vector<int> vtxdist{0};
             for( unsigned i = 1; i <= static_cast<unsigned>( comm_size ); i++ ) {
                 vtxdist.push_back( std::min( i * xadjChunk, _numNodes ) );
             }
@@ -342,11 +342,71 @@ void Mesh::ComputeSlopes( unsigned nq, VectorVector& psiDerX, VectorVector& psiD
     for( unsigned k = 0; k < nq; ++k ) {
         for( unsigned j = 0; j < _numCells; ++j ) {
             // if( cell->IsBoundaryCell() ) continue; // skip ghost cells
-            if( _cellBoundaryTypes[j] == 0 || _cellBoundaryTypes[j] == 1 ) continue; // skip ghost cells
+            if( _cellBoundaryTypes[j] != 2 ) continue;    // skip ghost cells
             // compute derivative by summing over cell boundary
             for( unsigned l = 0; l < _cellNeighbors[j].size(); ++l ) {
                 psiDerX[j][k] = psiDerX[j][k] + 0.5 * ( psi[j][k] + psi[_cellNeighbors[j][l]][k] ) * _cellNormals[j][l][0] / _cellAreas[j];
                 psiDerY[j][k] = psiDerY[j][k] + 0.5 * ( psi[j][k] + psi[_cellNeighbors[j][l]][k] ) * _cellNormals[j][l][1] / _cellAreas[j];
+            }
+        }
+    }
+}
+
+void Mesh::ReconstructSlopes( unsigned nq, VectorVector& psiDerX, VectorVector& psiDerY, const VectorVector& psi ) const {
+
+    double phi;
+    VectorVector dPsiMax = std::vector( _numCells, Vector( nq, 0.0 ) );
+    VectorVector dPsiMin = std::vector( _numCells, Vector( nq, 0.0 ) );
+    std::vector<std::vector<Vector>> psiSample( _numCells, std::vector<Vector>( nq, Vector( _numNodesPerCell, 0.0 ) ) );
+    std::vector<std::vector<Vector>> phiSample( _numCells, std::vector<Vector>( nq, Vector( _numNodesPerCell, 0.0 ) ) );
+
+    for( unsigned k = 0; k < nq; ++k ) {
+
+        for( unsigned j = 0; j < _numCells; ++j ) {
+            // reset derivatives
+            psiDerX[j][k] = 0.0;
+            psiDerY[j][k] = 0.0;
+
+            // skip boundary cells
+            if( _cellBoundaryTypes[j] != 2 ) continue;
+
+            // step 1: calculate psi difference around neighbors
+            for( unsigned l = 0; l < _cellNeighbors[j].size(); ++l ) {
+                if( psi[_cellNeighbors[j][l]][k] - psi[j][k] > dPsiMax[j][k] ) dPsiMax[j][k] = psi[_cellNeighbors[j][l]][k] - psi[j][k];
+                if( psi[_cellNeighbors[j][l]][k] - psi[j][k] < dPsiMin[j][k] ) dPsiMin[j][k] = psi[_cellNeighbors[j][l]][k] - psi[j][k];
+
+                psiDerX[j][k] += 0.5 * ( psi[j][k] + psi[_cellNeighbors[j][l]][k] ) * _cellNormals[j][l][0] / _cellAreas[j];
+                psiDerY[j][k] += 0.5 * ( psi[j][k] + psi[_cellNeighbors[j][l]][k] ) * _cellNormals[j][l][1] / _cellAreas[j];
+            }
+
+            for( unsigned l = 0; l < _cellNeighbors[j].size(); ++l ) {
+                // step 2: choose sample points
+                //psiSample[j][k][l] = 0.5 * ( psi[j][k] + psi[_cellNeighbors[j][l]][k] ); // interface central points
+                psiSample[j][k][l] = psi[j][k] 
+                + psiDerX[j][k] * (_nodes[_cells[j][l]][0] - _cellMidPoints[j][0]) 
+                + psiDerY[j][k] * (_nodes[_cells[j][l]][1] - _cellMidPoints[j][1]); // vertex points
+
+                // step 3: calculate Phi_ij at sample points
+                if( psiSample[j][k][l] > psi[j][k] ) {
+                    phiSample[j][k][l] = fmin( 0.5, dPsiMax[j][k] / ( psiSample[j][k][l] - psi[j][k] ) );
+                }
+                else if( psiSample[j][l][k] < psi[j][k] ) {
+                    phiSample[j][k][l] = fmin( 0.5, dPsiMin[j][k] / ( psiSample[j][k][l] - psi[j][k] ) );
+                }
+                else {
+                    phiSample[j][k][l] = 0.5;
+                }
+            }
+
+            // step 4: find minimum limiter function Phi
+            phi = min( phiSample[j][k] );
+
+            // step 5: reconstruct slopes via Gauss theorem
+            for( unsigned l = 0; l < _cellNeighbors[j].size(); ++l ) {
+                //psiDerX[j][k] += phi * 0.5 * ( psi[j][k] + psi[_cellNeighbors[j][l]][k] ) * _cellNormals[j][l][0] / _cellAreas[j];
+                //psiDerY[j][k] += phi * 0.5 * ( psi[j][k] + psi[_cellNeighbors[j][l]][k] ) * _cellNormals[j][l][1] / _cellAreas[j];
+                psiDerX[j][k] *= phi;
+                psiDerY[j][k] *= phi;
             }
         }
     }

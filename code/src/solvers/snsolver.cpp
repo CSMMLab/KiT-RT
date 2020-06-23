@@ -12,19 +12,19 @@ void SNSolver::Solve() {
     VectorVector psiDx( _nCells, Vector( _nq, 0.0 ) );
     VectorVector psiDy( _nCells, Vector( _nq, 0.0 ) );
 
-    //unsigned dims = _mesh->GetDim();
+    // unsigned dims = _mesh->GetDim();
     auto nodes         = _mesh->GetNodes();
     auto cells         = _mesh->GetCells();
     auto cellMidPoints = _mesh->GetCellMidPoints();
 
     // center location of cell interfaces
-    std::vector<std::vector<Vector>> interfaceMidPoints(_nCells, std::vector<Vector>(_mesh->GetNumNodesPerCell(), Vector(2, 1e-10)));
+    std::vector<std::vector<Vector>> interfaceMidPoints( _nCells, std::vector<Vector>( _mesh->GetNumNodesPerCell(), Vector( 2, 1e-10 ) ) );
     for( unsigned i = 0; i < _nCells; ++i ) {
         for( unsigned k = 0; k < _mesh->GetDim(); ++k ) {
-            for( unsigned j = 0; j < _neighbors[i].size()-1; ++j ) {
-                interfaceMidPoints[i][j][k] = 0.5 * (nodes[cells[i][j]][k] + nodes[cells[i][j+1]][k]);
+            for( unsigned j = 0; j < _neighbors[i].size() - 1; ++j ) {
+                interfaceMidPoints[i][j][k] = 0.5 * ( nodes[cells[i][j]][k] + nodes[cells[i][j + 1]][k] );
             }
-            interfaceMidPoints[i][_neighbors[i].size()-1][k] = 0.5 * (nodes[cells[i][_neighbors[i].size()-1]][k] + nodes[cells[i][0]][k]);
+            interfaceMidPoints[i][_neighbors[i].size() - 1][k] = 0.5 * ( nodes[cells[i][_neighbors[i].size() - 1]][k] + nodes[cells[i][0]][k] );
         }
     }
 
@@ -38,17 +38,22 @@ void SNSolver::Solve() {
         }
     }
 
-    std::cout << "cell: " << cells[100][0] << ";" << cells[100][1] << ";" << cells[100][2] << std::endl;
-    std::cout << "neighbor 1: " << cells[_neighbors[100][0]][0] << ";" << cells[_neighbors[100][0]][1] << ";" << cells[_neighbors[1][0]][2] << ";" << std::endl;
-    std::cout << "neighbor 2: " << cells[_neighbors[100][1]][0] << ";" << cells[_neighbors[100][1]][1] << ";" << cells[_neighbors[1][1]][2] << ";" << std::endl;
-    std::cout << "neighbor 3: " << cells[_neighbors[100][2]][0] << ";" << cells[_neighbors[100][2]][1] << ";" << cells[_neighbors[1][2]][2] << ";" << std::endl;
+    std::cout << "cell: " << cells[1][0] << ";" << cells[1][1] << ";" << cells[1][2] << std::endl;
+    std::cout << "neighbor 1: " << cells[_neighbors[1][0]][0] << ";" << cells[_neighbors[1][0]][1] << ";" << cells[_neighbors[1][0]][2] << ";"
+              << std::endl;
+    std::cout << "neighbor 2: " << cells[_neighbors[1][1]][0] << ";" << cells[_neighbors[1][1]][1] << ";" << cells[_neighbors[1][1]][2] << ";"
+              << std::endl;
+    std::cout << "neighbor 3: " << cells[_neighbors[1][2]][0] << ";" << cells[_neighbors[1][2]][1] << ";" << cells[_neighbors[1][2]][2] << ";"
+              << std::endl;
 
     std::cout << BOUNDARY_TYPE::DIRICHLET << ";" << BOUNDARY_TYPE::NEUMANN << endl;
     std::cout << _boundaryCells[1] << ";" << _boundaryCells[100] << endl;
     auto cellBoundaryTypes = _mesh->GetBoundaryTypes();
     std::cout << cellBoundaryTypes[1] << endl;
 
-    double dFlux        = 1e10;
+    std::cout << nodes[3756][0] << nodes[3786][0] << endl;
+
+    double dFlux = 1e10;
     Vector fluxNew( _nCells, 0.0 );
     Vector fluxOld( _nCells, 0.0 );
     int rank;
@@ -57,7 +62,9 @@ void SNSolver::Solve() {
 
     // loop over energies (pseudo-time)
     for( unsigned n = 0; n < _nEnergies; ++n ) {
-        _mesh->ComputeSlopes( _nq, psiDx, psiDy, _psi ); // slope without limiter
+        //_mesh->ComputeSlopes( _nq, psiDx, psiDy, _psi ); // slope without limiter
+        _mesh->ReconstructSlopes( _nq, psiDx, psiDy, _psi );    // slope with limiter
+
         std::cout << "step: " << n << "/" << _nEnergies << std::endl;
 
         // loop over all spatial cells
@@ -72,15 +79,15 @@ void SNSolver::Solve() {
                     if( _boundaryCells[j] == BOUNDARY_TYPE::NEUMANN && _neighbors[j][l] == _nCells )
                         psiNew[j][k] += _g->Flux( _quadPoints[k], _psi[j][k], _psi[j][k], _normals[j][l] );
                     else
-                        //psiNew[j][k] += _g->Flux( _quadPoints[k], _psi[j][k], _psi[_neighbors[j][l]][k], _normals[j][l] );
-                        psiNew[j][k] += _g->Flux( _quadPoints[k], 
-                            _psi[j][k] 
-                            + psiDx[j][k] * (interfaceMidPoints[j][l][0] - cellMidPoints[j][0])
-                            + psiDy[j][k] * (interfaceMidPoints[j][l][1] - cellMidPoints[j][1]), 
-                            _psi[_neighbors[j][l]][k] 
-                            + psiDx[_neighbors[j][l]][k] * (interfaceMidPoints[j][l][0] - cellMidPoints[_neighbors[j][l]][0])
-                            + psiDy[_neighbors[j][l]][k] * (interfaceMidPoints[j][l][1] - cellMidPoints[_neighbors[j][l]][1]), 
-                            _normals[j][l] );
+                        // psiNew[j][k] += _g->Flux( _quadPoints[k], _psi[j][k], _psi[_neighbors[j][l]][k], _normals[j][l] );
+                        psiNew[j][k] +=
+                            _g->Flux( _quadPoints[k],
+                                      _psi[j][k] + psiDx[j][k] * ( interfaceMidPoints[j][l][0] - cellMidPoints[j][0] ) +
+                                          psiDy[j][k] * ( interfaceMidPoints[j][l][1] - cellMidPoints[j][1] ),
+                                      _psi[_neighbors[j][l]][k] +
+                                          psiDx[_neighbors[j][l]][k] * ( interfaceMidPoints[j][l][0] - cellMidPoints[_neighbors[j][l]][0] ) +
+                                          psiDy[_neighbors[j][l]][k] * ( interfaceMidPoints[j][l][1] - cellMidPoints[_neighbors[j][l]][1] ),
+                                      _normals[j][l] );
                 }
                 // time update angular flux with numerical flux and total scattering cross section
                 psiNew[j][k] = _psi[j][k] - ( _dE / _areas[j] ) * psiNew[j][k] - _dE * _sigmaT[n][j] * _psi[j][k];
@@ -116,19 +123,19 @@ void SNSolver::Solve() {
 }
 
 void SNSolver::Save() const {
-    std::vector<std::string> fieldNames{ "flux" };
+    std::vector<std::string> fieldNames{"flux"};
     std::vector<double> flux( _nCells, 0.0 );
     for( unsigned i = 0; i < _nCells; ++i ) {
         flux[i] = dot( _psi[i], _weights );
     }
     std::vector<std::vector<double>> scalarField( 1, flux );
-    std::vector<std::vector<std::vector<double>>> results{ scalarField };
+    std::vector<std::vector<std::vector<double>>> results{scalarField};
     ExportVTK( _settings->GetOutputFile(), results, fieldNames, _mesh );
 }
 
 void SNSolver::Save( int currEnergy ) const {
-    std::vector<std::string> fieldNames{ "flux" };
+    std::vector<std::string> fieldNames{"flux"};
     std::vector<std::vector<double>> scalarField( 1, _solverOutput );
-    std::vector<std::vector<std::vector<double>>> results{ scalarField };
+    std::vector<std::vector<std::vector<double>>> results{scalarField};
     ExportVTK( _settings->GetOutputFile() + "_" + std::to_string( currEnergy ), results, fieldNames, _mesh );
 }
