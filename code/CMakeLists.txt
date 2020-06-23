@@ -117,7 +117,8 @@ include_directories( ${ParMETIS_PATH}/include )
 include_directories( ${ParMETIS_PATH}/metis/include )
 add_subdirectory( ${ParMETIS_PATH} )
 
-find_package( VTK REQUIRED COMPONENTS vtkIOGeometry vtkFiltersCore )
+find_package( VTK REQUIRED COMPONENTS vtkIOGeometry vtkFiltersCore HINTS /home/pia/vtk-inst/include/vtk-8.2)
+include(${VTK_USE_FILE})
 
 include_directories( ${CMAKE_SOURCE_DIR}/ext/cpptoml/include )
 include_directories( ${CMAKE_SOURCE_DIR}/ext/spdlog/include )
