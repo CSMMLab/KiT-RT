@@ -4,9 +4,12 @@
 // include Matrix, Vector definitions
 #include "settings/config.h"
 #include "settings/typedef.h"
-
+#include <list>
+#include <tuple>
 #include "math.h"
 #include <fstream>
+#include <boost/range/combine.hpp>
+#include <boost/foreach.hpp>
 
 
 class Physics
@@ -17,22 +20,23 @@ class Physics
     VectorVector _xsTotalH2O;
     VectorVector _xsTransportH2O;
 	VectorVector _stpowH2O;
-    /**
-     * @brief LoadDatabase loads required physics data from file in ENDL format (default IAEA EEDL database)
-     * @param fileName is name of cross section file
-     */
 
   public:
  
-    void LoadDatabase (std::string fileName);
     
-     /**
-     * @brief GetScatteringXS gives back vector of vectors of scattering cross sections for materials defined by density and energies in vector energy
+	//prototype data reader
+    std::tuple<std::list<VectorVector>,std::list<VectorVector>> ReadENDL( std::string filename );
+	
+	//load and prepare data from database
+	void LoadDatabase (std::string fileName_H, std::string fileName_O, std::string fileName_stppower);
+
+
+    /** @brief GetScatteringXS gives back vector of vectors of scattering cross sections for materials defined by density and energies in vector energy
      * @param energies is vector with energies
      * @param density is vector with patient densities (at different spatial cells)
      * @param Omega are scattering angles
      */
-    VectorVector GetScatteringXS (Vector energies,Vector density, Vector Omegas);
+    VectorVector GetScatteringXS (Vector energies,Vector density, Vector angle);
 
     /**
      * @brief GetTotalXS gives back vector of vectors of total cross sections for materials defined by density and energies in vector energy
@@ -47,7 +51,7 @@ class Physics
      * @param density is vector with patient densities (at different spatial cells)
      * @param sH2O is vector of stopping powers in water
      */
-    VectorVector GetStoppingPower (Vector energies,Vector density,Vector sH2O);
+    VectorVector GetStoppingPower (Vector energies,Vector density);
 
     /**
      * @brief GetTransportXS gives back vector of vectors of stopping powers for materials defined by density and energies in vector energy
