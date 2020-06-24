@@ -5,13 +5,17 @@ set( CMAKE_CXX_STANDARD_REQUIRED ON )
 
 set( CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -march=native -Wno-dev" )
 set( CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -march=native -pg -no-pie" )
-set( CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -Wall -Werror" )
+set( CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -Wall" )
 
 set( CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin" )
 
 file( GLOB_RECURSE SRCS RELATIVE ${CMAKE_SOURCE_DIR} "src/*.cpp" "include/*.h" )
 include_directories( ${CMAKE_SOURCE_DIR}/include )
 add_executable( ${CMAKE_PROJECT_NAME} ${SRCS} )
+
+find_package( Python3 COMPONENTS Interpreter Development NumPy REQUIRED )
+include_directories( ${Python3_INCLUDE_DIRS} ${Python3_NumPy_INCLUDE_DIRS} )
+add_compile_definitions( RTSN_PYTHON_PATH="${CMAKE_SOURCE_DIR}/python" )
 
 find_package( OpenMP REQUIRED )
 if( OPENMP_FOUND )
@@ -130,7 +134,7 @@ execute_process(
 )
 add_compile_definitions( GIT_HASH="${GIT_HASH}" )
 
-set( CORE_LIBRARIES ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} ${MPI_LIBRARIES} ${VTK_LIBRARIES} parmetis -lstdc++fs )
+set( CORE_LIBRARIES ${Python3_LIBRARIES} ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} ${MPI_LIBRARIES} ${VTK_LIBRARIES} parmetis -lstdc++fs )
 
 target_link_libraries( ${CMAKE_PROJECT_NAME} ${CORE_LIBRARIES} )
 
