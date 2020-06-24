@@ -20,7 +20,7 @@ std::vector<VectorVector> LineSource_SN::GetExternalSource( const std::vector<do
 
 std::vector<double> LineSource_SN::GetStoppingPower( const std::vector<double>& energies ) {
     // @TODO
-    return std::vector<double>( energies.size(), 0.0 );
+    return std::vector<double>( energies.size(), 1.0 );
 }
 
 VectorVector LineSource_SN::SetupIC() {
