@@ -61,6 +61,9 @@ class Config
      * to improve floating point accuracy */
     bool _cleanFluxMat;
 
+    /*!< @brief If true, continuous slowing down approximation will be used */
+    bool _csd;
+
     // Boundary Conditions
     /*!< @brief List of all Pairs (marker, BOUNDARY_TYPE), e.g. (farfield,DIRICHLET).
          Each Boundary Conditions must have an entry in enum BOUNDARY_TYPE*/
@@ -209,6 +212,7 @@ class Config
     PROBLEM_NAME inline GetProblemName() const { return _problemName; }
     SOLVER_NAME inline GetSolverName() const { return _solverName; }
     bool inline GetCleanFluxMat() const { return _cleanFluxMat; }
+    bool inline IsCSD() const { return _csd; }
     // Boundary Conditions
     BOUNDARY_TYPE GetBoundaryType( std::string nameMarker ) const; /*! @brief Get Boundary Type of given marker */
 

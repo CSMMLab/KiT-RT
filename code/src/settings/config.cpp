@@ -208,6 +208,9 @@ void Config::SetConfigOptions() {
     /*! @brief CleanFluxMatrices \n DESCRIPTION:  If true, very low entries (10^-10 or smaller) of the flux matrices will be set to zero,
      * to improve floating point accuracy \n DEFAULT false \ingroup Config */
     AddBoolOption( "CLEAN_FLUX_MATRICES", _cleanFluxMat, false );
+    /*! @brief ContinuousSlowingDown \n DESCRIPTION: If true, the program uses the continuous slowing down approximation to treat energy dependent
+     * problems. \n DEFAULT false \ingroup Config */
+    AddBoolOption( "CONTINUOUS_SLOWING_DOWN", _csd, false );
 
     // Mesh related options
     // Boundary Markers
