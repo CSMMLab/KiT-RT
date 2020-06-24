@@ -80,7 +80,7 @@ void SNSolver::Solve() {
                         
                         //+ psiDx[j][k] * ( interfaceMidPoints[j][l][0] - cellMidPoints[j][0] ) +
                                 //psiDy[j][k] * ( interfaceMidPoints[j][l][1] - cellMidPoints[j][1] );
-                        psiR = _psi[_neighbors[j][l]][k];//+psiDx[_neighbors[j][l]][k];//+psiDy[_neighbors[j][l]][k]; 
+                        psiR = _psi[_neighbors[j][l]][k]+psiDx[_neighbors[j][l]][k];//+psiDy[_neighbors[j][l]][k]; 
                         //+
                                 //psiDx[_neighbors[j][l]][k] * ( interfaceMidPoints[j][l][0] - cellMidPoints[_neighbors[j][l]][0] ) +
                                 //psiDy[_neighbors[j][l]][k] * ( interfaceMidPoints[j][l][1] - cellMidPoints[_neighbors[j][l]][1] );
