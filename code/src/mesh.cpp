@@ -368,11 +368,11 @@ void Mesh::ReconstructSlopesS( unsigned nq, VectorVector& psiDerX, VectorVector&
             // skip boundary cells
             if( _cellBoundaryTypes[j] != 2 ) continue;
 
-            duxL = ( psi[j][k] - psi[_cellNeighbors[j][0]][k] ) / ( _cellMidPoints[j][0] - _cellMidPoints[_cellNeighbors[j][0]][0] );
-            duyL = ( psi[j][k] - psi[_cellNeighbors[j][0]][k] ) / ( _cellMidPoints[j][1] - _cellMidPoints[_cellNeighbors[j][0]][1] );
+            duxL = ( psi[j][k] - psi[_cellNeighbors[j][0]][k] ) / ( _cellMidPoints[j][0] - _cellMidPoints[_cellNeighbors[j][0]][0] + 1e-8 );
+            duyL = ( psi[j][k] - psi[_cellNeighbors[j][0]][k] ) / ( _cellMidPoints[j][1] - _cellMidPoints[_cellNeighbors[j][0]][1] + 1e-8 );
 
-            duxR = ( psi[_cellNeighbors[j][1]][k] - psi[j][k] ) / ( _cellMidPoints[_cellNeighbors[j][1]][0] - _cellMidPoints[j][0] );
-            duyR = ( psi[_cellNeighbors[j][1]][k] - psi[j][k] ) / ( _cellMidPoints[_cellNeighbors[j][1]][1] - _cellMidPoints[j][1] );
+            duxR = ( psi[_cellNeighbors[j][1]][k] - psi[j][k] ) / ( _cellMidPoints[_cellNeighbors[j][1]][0] - _cellMidPoints[j][0] + 1e-8 );
+            duyR = ( psi[_cellNeighbors[j][1]][k] - psi[j][k] ) / ( _cellMidPoints[_cellNeighbors[j][1]][1] - _cellMidPoints[j][1] + 1e-8 );
 
             psiDerX[j][k] = LMinMod( duxL, duxR ) * 0.5;
             psiDerY[j][k] = LMinMod( duyL, duyR ) * 0.5;
