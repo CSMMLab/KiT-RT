@@ -9,6 +9,7 @@ Mesh::Mesh( std::vector<Vector> nodes,
     ComputeCellMidpoints();
     ComputeConnectivity();
     ComputePartitioning();
+    ComputeBounds();
 }
 
 Mesh::~Mesh() {}
@@ -351,6 +352,16 @@ void Mesh::ComputeSlopes( unsigned nq, VectorVector& psiDerX, VectorVector& psiD
     }
 }
 
+void Mesh::ComputeBounds() {
+    _bounds = std::vector( _dim, std::make_pair( std::numeric_limits<double>::infinity(), -std::numeric_limits<double>::infinity() ) );
+    for( unsigned i = 0; i < _numNodes; ++i ) {
+        for( unsigned j = 0; j < _dim; ++j ) {
+            if( _nodes[i][j] < _bounds[j].first ) _bounds[j].first = _nodes[i][j];
+            if( _nodes[i][j] > _bounds[j].second ) _bounds[j].second = _nodes[i][j];
+        }
+    }
+}
+
 const std::vector<Vector>& Mesh::GetNodes() const { return _nodes; }
 const std::vector<Vector>& Mesh::GetCellMidPoints() const { return _cellMidPoints; }
 const std::vector<std::vector<unsigned>>& Mesh::GetCells() const { return _cells; }
@@ -359,6 +370,7 @@ const std::vector<unsigned>& Mesh::GetPartitionIDs() const { return _colors; }
 const std::vector<std::vector<unsigned>>& Mesh::GetNeighbours() const { return _cellNeighbors; }
 const std::vector<std::vector<Vector>>& Mesh::GetNormals() const { return _cellNormals; }
 const std::vector<BOUNDARY_TYPE>& Mesh::GetBoundaryTypes() const { return _cellBoundaryTypes; }
+const std::vector<std::pair<double, double>> Mesh::GetBounds() const { return _bounds; }
 
 double Mesh::GetDistanceToOrigin( unsigned idx_cell ) const {
     double distance = 0.0;

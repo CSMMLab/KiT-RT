@@ -328,7 +328,9 @@ Matrix createSU2MeshFromImage( std::string imageName, std::string SU2Filename ) 
         exit( EXIT_FAILURE );
     }
 
+    std::cout << getenv( "PYTHONPATH" ) << std::endl;
     setenv( "PYTHONPATH", RTSN_PYTHON_PATH, 1 );
+    std::cout << getenv( "PYTHONPATH" ) << std::endl << std::flush;
     Py_Initialize();
     PyObject *pArgs, *pReturn, *pModule, *pFunc;
     PyArrayObject* np_ret;

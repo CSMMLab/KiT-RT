@@ -1,6 +1,10 @@
 #include "cubic2dspline.h"
 
-Cubic2DSpline::Cubic2DSpline( const Vector& x, const Vector& y, const Matrix& data ) : _x( x ), _y( y ) { _data = addGhostLayers( data ); }
+#include <iostream>
+
+Cubic2DSpline::Cubic2DSpline( const Vector& x, const Vector& y, const Matrix& data ) : _x( x ), _y( y ), _data( data ) {
+    //_data = addGhostLayers( data );
+}
 Cubic2DSpline::~Cubic2DSpline() {}
 
 inline double Cubic2DSpline::interpolate1D( double param[4], double x ) {
@@ -16,16 +20,42 @@ double Cubic2DSpline::operator()( double x, double y ) {
 
     // store all 16 interpolation points needed
     double points[4][4];
-    for( int i = -1; i < 3; i++ )
-        for( int j = -1; j < 3; j++ ) points[i + 1][j + 1] = _data( xId + j, yId + i );
+    for( int i = -1; i < 3; ++i ) {
+        unsigned idx_y;
+        idx_y = yId + i < 0 ? 0 : yId + i;
+        idx_y = yId + i > _data.rows() - 1 ? _data.rows() - 1 : yId + i;
+        for( int j = -1; j < 3; ++j ) {
+            unsigned idx_x;
+            idx_x = xId + j < 0 ? 0 : xId + j;
+            idx_x = xId + j > _data.columns() - 1 ? _data.columns() - 1 : xId + j;
+
+            points[i + 1][j + 1] = _data( idx_x, idx_y );
+        }
+    }
+
+    // rescale data to [0,1]
+    double t = ( x - _x[xId] ) / ( _x[xId + 1] - _x[xId] );
+    double u = ( y - _y[yId] ) / ( _y[yId + 1] - _y[yId] );
 
     // first interpolate in x-direction and store the results on which the final interpolation in y will be done
     double interpolationBuffer[4];
-    interpolationBuffer[0] = interpolate1D( points[0], x );
-    interpolationBuffer[1] = interpolate1D( points[1], x );
-    interpolationBuffer[2] = interpolate1D( points[2], x );
-    interpolationBuffer[3] = interpolate1D( points[3], x );
-    return interpolate1D( interpolationBuffer, y );
+    interpolationBuffer[0] = interpolate1D( points[0], t );
+    interpolationBuffer[1] = interpolate1D( points[1], t );
+    interpolationBuffer[2] = interpolate1D( points[2], t );
+    interpolationBuffer[3] = interpolate1D( points[3], t );
+    /*
+    if( interpolate1D( interpolationBuffer, y ) < 0 || interpolate1D( interpolationBuffer, y ) > 1 ) {
+        std::cerr << points[0][0] << " " << points[0][1] << " " << points[0][2] << " " << points[0][3] << std::endl;
+        std::cerr << points[1][0] << " " << points[1][1] << " " << points[1][2] << " " << points[1][3] << std::endl;
+        std::cerr << points[2][0] << " " << points[2][1] << " " << points[2][2] << " " << points[2][3] << std::endl;
+        std::cerr << points[3][0] << " " << points[3][1] << " " << points[3][2] << " " << points[3][3] << std::endl;
+        std::cerr << std::endl;
+        std::cerr << interpolationBuffer[0] << " " << interpolationBuffer[1] << " " << interpolationBuffer[2] << " " << interpolationBuffer[3] << " "
+                  << x << std::endl;
+        std::cerr << std::endl << std::endl;
+    }
+    */
+    return std::clamp( interpolate1D( interpolationBuffer, u ), 0.0, 1.0 );
 }
 
 Matrix Cubic2DSpline::addGhostLayers( const Matrix& m ) {
@@ -35,18 +65,18 @@ Matrix Cubic2DSpline::addGhostLayers( const Matrix& m ) {
 
     // x-direction
     for( unsigned i = 0; i < m.rows(); ++i ) {
-        paddedMatrix( i, 0 )            = m( i, 0 );
-        paddedMatrix( i, 1 )            = m( i, 0 );
-        paddedMatrix( i, m.rows() )     = m( i, m.rows() - 1 );
-        paddedMatrix( i, m.rows() + 1 ) = m( i, m.rows() - 1 );
+        paddedMatrix( i, 0 )               = m( i, 0 );
+        paddedMatrix( i, 1 )               = m( i, 0 );
+        paddedMatrix( i, m.columns() )     = m( i, m.columns() - 1 );
+        paddedMatrix( i, m.columns() + 1 ) = m( i, m.columns() - 1 );
     }
 
     // y-direction
     for( unsigned i = 0; i < m.columns(); ++i ) {
-        paddedMatrix( 0, i )               = m( 0, i );
-        paddedMatrix( 1, i )               = m( 0, i );
-        paddedMatrix( m.columns(), i )     = m( m.rows() - 1, i );
-        paddedMatrix( m.columns() + 1, i ) = m( m.rows() - 1, i );
+        paddedMatrix( 0, i )            = m( 0, i );
+        paddedMatrix( 1, i )            = m( 0, i );
+        paddedMatrix( m.rows(), i )     = m( m.rows() - 1, i );
+        paddedMatrix( m.rows() + 1, i ) = m( m.rows() - 1, i );
     }
 
     // ascending diagonal
