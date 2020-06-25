@@ -134,7 +134,7 @@ execute_process(
 )
 add_compile_definitions( GIT_HASH="${GIT_HASH}" )
 
-set( CORE_LIBRARIES ${Python3_LIBRARIES} ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} ${MPI_LIBRARIES} ${VTK_LIBRARIES} parmetis -lstdc++fs )
+set( CORE_LIBRARIES ${Python3_LIBRARIES} ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} ${MPI_LIBRARIES} ${VTK_LIBRARIES} OpenMP::OpenMP_CXX parmetis -lstdc++fs )
 
 target_link_libraries( ${CMAKE_PROJECT_NAME} ${CORE_LIBRARIES} )
 
