@@ -11,11 +11,15 @@ void SNSolver::Solve() {
     // derivatives of angular flux in x and y directions
     VectorVector psiDx = _psi;
     VectorVector psiDy = _psi;
-    //VectorVector psiDx( _nCells, Vector( _nq, 0.0 ) );
-    //VectorVector psiDy( _nCells, Vector( _nq, 0.0 ) );
+    // VectorVector psiDx( _nCells, Vector( _nq, 0.0 ) );
+    // VectorVector psiDy( _nCells, Vector( _nq, 0.0 ) );
+    // std::vector<std::vector<double>> psiDx( _nCells, std::vector<double>( _nq, 0.0 ) );
+    // std::vector<std::vector<double>> psiDy( _nCells, std::vector<double>( _nq, 0.0 ) );
+    // auto psiDx = _psi;
+    // auto psiDy = _psi;
 
-    std::cout << _psi.size() << ";" << _psi[1].size() << std::endl;
-    std::cout << psiDx.size() << ";" << psiDx[1].size() << std::endl;
+    // std::cout << _psi.size() << ";" << _psi[1].size() << std::endl;
+    // std::cout << psiDx.size() << ";" << psiDx[1].size() << std::endl;
 
     // unsigned dims = _mesh->GetDim();
     auto nodes         = _mesh->GetNodes();
@@ -50,14 +54,13 @@ void SNSolver::Solve() {
     MPI_Comm_rank( MPI_COMM_WORLD, &rank );
     if( rank == 0 ) log->info( "{:10}   {:10}", "t", "dFlux" );
 
-
     double psiL;
     double psiR;
 
     // loop over energies (pseudo-time)
     for( unsigned n = 0; n < _nEnergies; ++n ) {
         //_mesh->ComputeSlopes( _nq, psiDx, psiDy, _psi ); // slope without limiter
-        //_mesh->ReconstructSlopesU( _nq, psiDx, psiDy, _psi );    // slope with limiter
+        _mesh->ReconstructSlopesU( _nq, psiDx, psiDy, _psi );    // slope with limiter
         //_mesh->ReconstructSlopesS( _nq, psiDx, psiDy, _psi );    // slope with limiter
 
         std::cout << "step: " << n << "/" << _nEnergies << std::endl;
@@ -73,29 +76,23 @@ void SNSolver::Solve() {
                     // store flux contribution on psiNew_sigmaS to save memory
                     if( _boundaryCells[j] == BOUNDARY_TYPE::NEUMANN && _neighbors[j][l] == _nCells )
                         psiNew[j][k] += _g->Flux( _quadPoints[k], _psi[j][k], _psi[j][k], _normals[j][l] );
-                    else
-                        //psiNew[j][k] += _g->Flux( _quadPoints[k], _psi[j][k], _psi[_neighbors[j][l]][k], _normals[j][l] );
-                        
-                        psiL = _psi[j][k];//+ psiDx[j][k];//+psiDy[j][k]; 
-                        
-                        //+ psiDx[j][k] * ( interfaceMidPoints[j][l][0] - cellMidPoints[j][0] ) +
-                                //psiDy[j][k] * ( interfaceMidPoints[j][l][1] - cellMidPoints[j][1] );
-                        psiR = _psi[_neighbors[j][l]][k]+psiDx[_neighbors[j][l]][k];//+psiDy[_neighbors[j][l]][k]; 
-                        //+
-                                //psiDx[_neighbors[j][l]][k] * ( interfaceMidPoints[j][l][0] - cellMidPoints[_neighbors[j][l]][0] ) +
-                                //psiDy[_neighbors[j][l]][k] * ( interfaceMidPoints[j][l][1] - cellMidPoints[_neighbors[j][l]][1] );
-                        //if( psiL < 0.0 || psiR < 0.0 )
-                        //{
-                        //    psiL = _psi[j][k];
-                        //    psiR = _psi[_neighbors[j][l]][k];
-                        //}
+                    // else if ( _boundaryCells[j] == 2 && _neighbors[j][l] != _nCells ){
+                    else {
+                        // psiNew[j][k] += _g->Flux( _quadPoints[k], _psi[j][k], _psi[_neighbors[j][l]][k], _normals[j][l] );
 
-                        psiNew[j][k] += 
-                            _g->Flux( _quadPoints[k],
-                                      psiL,
-                                      psiR,
-                                      _normals[j][l] );
+                        psiL = _psi[j][k] + psiDx[j][k] * ( interfaceMidPoints[j][l][0] - cellMidPoints[j][0] ) +
+                               psiDy[j][k] * ( interfaceMidPoints[j][l][1] - cellMidPoints[j][1] );
 
+                        psiR = _psi[_neighbors[j][l]][k] +
+                               psiDx[_neighbors[j][l]][k] * ( interfaceMidPoints[j][l][0] - cellMidPoints[_neighbors[j][l]][0] ) +
+                               psiDy[_neighbors[j][l]][k] * ( interfaceMidPoints[j][l][1] - cellMidPoints[_neighbors[j][l]][1] );
+                        if( psiL < 0.0 || psiR < 0.0 ) {
+                            psiL = _psi[j][k];
+                            psiR = _psi[_neighbors[j][l]][k];
+                        }
+
+                        psiNew[j][k] += _g->Flux( _quadPoints[k], psiL, psiR, _normals[j][l] );
+                    }
                 }
                 // time update angular flux with numerical flux and total scattering cross section
                 psiNew[j][k] = _psi[j][k] - ( _dE / _areas[j] ) * psiNew[j][k] - _dE * _sigmaT[n][j] * _psi[j][k];
