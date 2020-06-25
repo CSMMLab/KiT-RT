@@ -51,10 +51,11 @@ class Config
     unsigned _nCells;
 
     // Solver
-    double _CFL;               /*!< @brief CFL Number for Solver*/
-    double _tEnd;              /*!< @brief Final Time for Simulation */
-    PROBLEM_NAME _problemName; /*!< @brief Name of predefined Problem   */
-    SOLVER_NAME _solverName;   /*!< @brief Name of the used Solver */
+    double _CFL;                    /*!< @brief CFL Number for Solver*/
+    double _tEnd;                   /*!< @brief Final Time for Simulation */
+    PROBLEM_NAME _problemName;      /*!< @brief Name of predefined Problem   */
+    SOLVER_NAME _solverName;        /*!< @brief Name of the used Solver */
+    unsigned short _maxMomentOrder; /*!< @brief Maximal Order of Moments for PN and MN Solver */
 
     /*!< @brief If true, very low entries (10^-10 or smaller) of the flux matrices will be set to zero,
      * to improve floating point accuracy */
@@ -202,6 +203,7 @@ class Config
     unsigned GetNCells() { return _nCells; }
 
     // Solver Structure
+    unsigned short inline GetMaxMomentOrder() const { return _maxMomentOrder; }
     double inline GetCFL() const { return _CFL; }
     double inline GetTEnd() const { return _tEnd; }
     PROBLEM_NAME inline GetProblemName() const { return _problemName; }

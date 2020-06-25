@@ -1,11 +1,9 @@
 #include <mnsolver.h>
 
-MNSolver::MNSolver( Config* settings )
-    : Solver( settings ), _basis( _nq ) /* We need max degree +1, since we need the N+1st moment to reconstruct phi */
-{
+MNSolver::MNSolver( Config* settings ) : Solver( settings ), _nMaxMomentsOrder( settings->GetMaxMomentOrder() ), _basis( _nMaxMomentsOrder ) {
     // Is this good (fast) code using a constructor list?
 
-    _nTotalEntries = GlobalIndex( _nq, int( _nq ) ) + 1;
+    _nTotalEntries = GlobalIndex( _nMaxMomentsOrder, int( _nMaxMomentsOrder ) ) + 1;
 
     // transform sigmaT and sigmaS in sigmaA.
     _sigmaA = VectorVector( _nEnergies, Vector( _nCells, 0 ) );    // Get rid of this extra vektor!
@@ -22,9 +20,7 @@ MNSolver::MNSolver( Config* settings )
     _scatterMatDiag[0] = 0.0;    // First entry is zero by construction.
 
     // Initialize System Matrices
-    _Ax = Vector( _nTotalEntries, 0.0 );
-    _Ay = Vector( _nTotalEntries, 0.0 );
-    _Az = Vector( _nTotalEntries, 0.0 );
+    _A = VectorVector( _nTotalEntries );
 
     // Fill System Matrices
     ComputeSystemMatrices();
@@ -36,8 +32,14 @@ int MNSolver::GlobalIndex( int l, int k ) const {
     return numIndicesPrevLevel + prevIndicesThisLevel;
 }
 
-void MNSolver::ComputeSystemMatrices() {}
-
+void MNSolver::ComputeSystemMatrices() {
+    for( int l_idx = 0; l_idx <= _nMaxMomentsOrder; l_idx++ ) {
+        for( unsigned k_idx = -l_idx; k_idx <= l_idx; k_idx++ ) {
+            _A[idx_sys] = Vector( 2, 0 );
+            // compute entries. =<Omega_i*m^(l,k)>
+        }
+    }
+}
 void MNSolver::Solve() {
 
     int rank;
@@ -73,7 +75,7 @@ void MNSolver::Solve() {
             if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::DIRICHLET ) continue;    // Dirichlet cells stay at IC, farfield assumption
 
             // Loop over all equations of the system.
-            for( int idx_lDegree = 0; idx_lDegree <= int( _nq ); idx_lDegree++ ) {
+            for( int idx_lDegree = 0; idx_lDegree <= int( _nMaxMomentsOrder ); idx_lDegree++ ) {
                 for( int idx_kOrder = -idx_lDegree; idx_kOrder <= idx_lDegree; idx_kOrder++ ) {
                     idx_system                   = unsigned( GlobalIndex( idx_lDegree, idx_kOrder ) );
                     psiNew[idx_cell][idx_system] = 0.0;

@@ -21,6 +21,8 @@ class MNSolver : Solver
   private:
     /*! @brief: Total number of equations in the system */
     unsigned _nTotalEntries;
+    /*! @brief: Max Order of Moments */
+    unsigned short _nMaxMomentsOrder;
 
     /*! @brief: Absorbtion coefficient for all energies */
     VectorVector _sigmaA;
@@ -31,14 +33,17 @@ class MNSolver : Solver
     /*! @brief: Diagonal of the scattering matrix (its a diagonal matrix by construction) */
     Vector _scatterMatDiag;
 
-    /*! @brief: Diagonal of the system matrix in x direction (its a diagonal matrix by construction) */
-    Vector _Ax;
-
-    /*! @brief: Diagonal of the system matrix in y direction (its a diagonal matrix by construction) */
-    Vector _Ay;
-
-    /*! @brief: Diagonal of the system matrix in z direction (its a diagonal matrix by construction) */
-    Vector _Az;
+    /*! @brief: Diagonals of the system matrices  (each sysmatric is a diagonal matrix by construction)
+                layout: Nx2 (in 2d), N = size of system */
+    VectorVector _A;
+    ///*! @brief: Diagonal of the system matrix in x direction (its a diagonal matrix by construction) */
+    // Vector _Ax;
+    //
+    ///*! @brief: Diagonal of the system matrix in y direction (its a diagonal matrix by construction) */
+    // Vector _Ay;
+    //
+    ///*! @brief: Diagonal of the system matrix in z direction (its a diagonal matrix by construction) */
+    // Vector _Az;
 
     /*! @brief : computes the global index of the moment corresponding to basis function (l,k)
      *  @param : degree l, it must hold: 0 <= l <=_nq
