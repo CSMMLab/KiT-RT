@@ -361,11 +361,16 @@ Matrix createSU2MeshFromImage( std::string imageName, std::string SU2Filename ) 
     double* c_out = reinterpret_cast<double*>( PyArray_DATA( np_ret ) );
 
     Matrix gsImage( m, n, c_out );
+    // for( unsigned i = 0; i < m; ++i ) {
+    //    for( unsigned j = 0; j < n; ++j ) {
+    //        gsImage( i, j ) = c_out[j * m + i];
+    //    }
+    //}
 
     // Finalizing
     Py_CLEAR( pFunc );
     Py_CLEAR( pModule );
     Py_CLEAR( np_ret );
 
-    return gsImage;
+    return gsImage.transpose();
 }
