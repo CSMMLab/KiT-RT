@@ -11,15 +11,6 @@ void SNSolver::Solve() {
     // derivatives of angular flux in x and y directions
     VectorVector psiDx = _psi;
     VectorVector psiDy = _psi;
-    // VectorVector psiDx( _nCells, Vector( _nq, 0.0 ) );
-    // VectorVector psiDy( _nCells, Vector( _nq, 0.0 ) );
-    // std::vector<std::vector<double>> psiDx( _nCells, std::vector<double>( _nq, 0.0 ) );
-    // std::vector<std::vector<double>> psiDy( _nCells, std::vector<double>( _nq, 0.0 ) );
-    // auto psiDx = _psi;
-    // auto psiDy = _psi;
-
-    // std::cout << _psi.size() << ";" << _psi[1].size() << std::endl;
-    // std::cout << psiDx.size() << ";" << psiDx[1].size() << std::endl;
 
     // unsigned dims = _mesh->GetDim();
     auto nodes         = _mesh->GetNodes();
@@ -59,11 +50,8 @@ void SNSolver::Solve() {
 
     // loop over energies (pseudo-time)
     for( unsigned n = 0; n < _nEnergies; ++n ) {
-        //_mesh->ComputeSlopes( _nq, psiDx, psiDy, _psi ); // slope without limiter
         _mesh->ReconstructSlopesU( _nq, psiDx, psiDy, _psi );    // slope with limiter
         //_mesh->ReconstructSlopesS( _nq, psiDx, psiDy, _psi );    // slope with limiter
-
-        std::cout << "step: " << n << "/" << _nEnergies << std::endl;
 
         // loop over all spatial cells
         for( unsigned j = 0; j < _nCells; ++j ) {
