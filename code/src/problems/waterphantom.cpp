@@ -19,7 +19,6 @@ std::vector<double> WaterPhantom::GetStoppingPower( const std::vector<double>& e
 VectorVector WaterPhantom::SetupIC() {
     VectorVector psi( _mesh->GetNumCells(), Vector( _settings->GetNQuadPoints(), 1e-10 ) );
     auto cellMids = _mesh->GetCellMidPoints();
-    double t      = 3.2e-4;    // pseudo time for gaussian smoothing
     double s      = 0.1;
     for( unsigned j = 0; j < cellMids.size(); ++j ) {
         double x = cellMids[j][0];
