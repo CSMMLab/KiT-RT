@@ -8,6 +8,8 @@
 class CSDSNSolver : public Solver
 {
   private:
+    std::vector<double> _dose;
+
   public:
     /**
      * @brief CSDSNSolver constructor

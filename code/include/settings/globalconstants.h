@@ -38,10 +38,12 @@ inline std::map<std::string, QUAD_NAME> Quadrature_Map{ { "MONTE_CARLO", QUAD_Mo
                                                         { "LDFESA", QUAD_LDFESA } };
 
 // Problem name
-enum PROBLEM_NAME { PROBLEM_LineSource, PROBLEM_Checkerboard, PROBLEM_ElectronRT };
+enum PROBLEM_NAME { PROBLEM_LineSource, PROBLEM_Checkerboard, PROBLEM_ElectronRT, PROBLEM_WaterPhantom };
 
-inline std::map<std::string, PROBLEM_NAME> Problem_Map{
-    { "LINESOURCE", PROBLEM_LineSource }, { "CHECKERBOARD", PROBLEM_Checkerboard }, { "ELECTRONRT", PROBLEM_ElectronRT } };
+inline std::map<std::string, PROBLEM_NAME> Problem_Map{ { "LINESOURCE", PROBLEM_LineSource },
+                                                        { "CHECKERBOARD", PROBLEM_Checkerboard },
+                                                        { "ELECTRONRT", PROBLEM_ElectronRT },
+                                                        { "WATERPHANTOM", PROBLEM_WaterPhantom } };
 
 // Kernel name
 enum KERNEL_NAME { KERNEL_Isotropic };

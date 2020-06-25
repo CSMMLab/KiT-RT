@@ -1,6 +1,6 @@
 #include "solvers/csdsnsolver.h"
 
-CSDSNSolver::CSDSNSolver( Config* settings ) : Solver( settings ) {}
+CSDSNSolver::CSDSNSolver( Config* settings ) : Solver( settings ) { _dose = std::vector<double>( _settings->GetNCells(), 0.0 ); }
 
 void CSDSNSolver::Solve() {
     auto log = spdlog::get( "event" );
@@ -10,6 +10,9 @@ void CSDSNSolver::Solve() {
     double dFlux        = 1e10;
     Vector fluxNew( _nCells, 0.0 );
     Vector fluxOld( _nCells, 0.0 );
+    for( unsigned j = 0; j < _nCells; ++j ) {
+        fluxOld[j] = dot( _psi[j], _weights );
+    }
     int rank;
     MPI_Comm_rank( MPI_COMM_WORLD, &rank );
     if( rank == 0 ) log->info( "{:10}   {:10}", "E", "dFlux" );
@@ -35,7 +38,7 @@ void CSDSNSolver::Solve() {
 
     // loop over energies (pseudo-time)
     for( unsigned n = 1; n < _nEnergies; ++n ) {
-        _dE = _energies[n] - _energies[n - 1];
+        _dE = fabs( _energies[n] - _energies[n - 1] );    // is the sign correct here?
         // loop over all spatial cells
         for( unsigned j = 0; j < _nCells; ++j ) {
             if( _boundaryCells[j] == BOUNDARY_TYPE::DIRICHLET ) continue;
@@ -60,15 +63,15 @@ void CSDSNSolver::Solve() {
             // add external source contribution
             if( _Q.size() == 1u ) {            // constant source for all energies
                 if( _Q[0][j].size() == 1u )    // isotropic source
-                    psiNew[j] += _dE * _Q[0][j][0] * _s[n];
+                    psiNew[j] += _dE * _Q[0][j][0] * _s[_nEnergies - n - 1];
                 else
-                    psiNew[j] += _dE * _Q[0][j] * _s[n];
+                    psiNew[j] += _dE * _Q[0][j] * _s[_nEnergies - n - 1];
             }
             else {
                 if( _Q[0][j].size() == 1u )    // isotropic source
-                    psiNew[j] += _dE * _Q[n][j][0] * _s[n];
+                    psiNew[j] += _dE * _Q[n][j][0] * _s[_nEnergies - n - 1];
                 else
-                    psiNew[j] += _dE * _Q[n][j] * _s[n];
+                    psiNew[j] += _dE * _Q[n][j] * _s[_nEnergies - n - 1];
             }
         }
         _psi = psiNew;
@@ -76,13 +79,14 @@ void CSDSNSolver::Solve() {
         // do backsubstitution from psiTildeHat to psi (cf. Dissertation Kerstion Kuepper, Eq. 1.23)
         for( unsigned j = 0; j < _nCells; ++j ) {
             for( unsigned k = 0; k < _nq; ++k ) {
-                psiNew[j][k] = _psi[j][k] * _density[j] * _s[0];    // note that _s[0] is stopping power at highest energy
+                psiNew[j][k] = _psi[j][k] * _density[j] * _s[_nEnergies - n - 1];    // note that _s[0] is stopping power at lowest energy
             }
         }
 
-        for( unsigned i = 0; i < _nCells; ++i ) {
-            fluxNew[i]       = dot( psiNew[i], _weights );
-            _solverOutput[i] = fluxNew[i];
+        for( unsigned j = 0; j < _nCells; ++j ) {
+            fluxNew[j] = dot( psiNew[j], _weights );
+            _dose[j] += 0.5 * _dE * ( fluxNew[j] + fluxOld[j] ) / _density[j];    // update dose with trapezoidal rule
+            _solverOutput[j] = fluxNew[j];
         }
         Save( n );
         dFlux   = blaze::l2Norm( fluxNew - fluxOld );
@@ -92,12 +96,8 @@ void CSDSNSolver::Solve() {
 }
 
 void CSDSNSolver::Save() const {
-    std::vector<std::string> fieldNames{ "flux" };
-    std::vector<double> flux( _nCells, 0.0 );
-    for( unsigned i = 0; i < _nCells; ++i ) {
-        flux[i] = dot( _psi[i], _weights );
-    }
-    std::vector<std::vector<double>> scalarField( 1, flux );
+    std::vector<std::string> fieldNames{ "dose" };
+    std::vector<std::vector<double>> scalarField( 1, _dose );
     std::vector<std::vector<std::vector<double>>> results{ scalarField };
     ExportVTK( _settings->GetOutputFile(), results, fieldNames, _mesh );
 }
