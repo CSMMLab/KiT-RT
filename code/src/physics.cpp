@@ -23,7 +23,11 @@ void Physics::LoadDatabase( std::string fileName_H, std::string fileName_O, std:
 	
 	VectorVector header;
 	VectorVector data;
-    
+    std::list<VectorVector> headers_H;
+	std::list<VectorVector> data_H;
+	std::list<VectorVector> headers_O;
+	std::list<VectorVector> data_O;
+	
 	//Read data for H
 	[headers_H,data_H] = ReadENDL(filename_H);
 	
@@ -84,22 +88,22 @@ VectorVector Physics::GetTotalXS (Vector energies,Vector density) {
 	
 	for (int i=0; i< energies.size(); i++){
 		
-		if (energies(i) < Physics::_xsTotalH2O(1)(0)) {
-		xs_H2O_i = Physics::_xsTotalH2O(1)(0);
+		if (energies[i] < Physics::_xsTotalH2O[1][0]) {
+		xsH2O_i = Physics::_xsTotalH2O[1][0];
 		}
-		else if (energies(i) > Physics::_xsTotalH2O(1)(energies.size()-1)) {
-		xs_H2O_i = 	_xsTotalH2O(1)(energies.size()-1);
+		else if (energies[i] > Physics::_xsTotalH2O[1][energies.size()-1]) {
+		xsH2O_i = 	_xsTotalH2O[1][energies.size()-1];
 		}
 		else {
 		//Find upper and lower bound of energy value in table	
-		CompressedVector<int>::Iterator upper( Physics::_xsTotalH2O(0).upperBound(energies(i)));
-		CompressedVector<int>::Iterator lower( Physics::_xsTotalH2O(0).lowerBound(energies(i)));
+		CompressedVector<int>::Iterator upper( Physics::_xsTotalH2O[0].upperBound(energies[i]));
+		CompressedVector<int>::Iterator lower( Physics::_xsTotalH2O[0].lowerBound(energies[i]));
 		
 		//Linear interpolation between upper and lower bound
-		xsH2O_i = Physics::_xsTotalH2O(1)((lower - Physics::_xsTotalH2O(0).begin())) + (energies(i) - Physics::_xsTotalH2O(0)((lower - Physics::_xsTotalH2O(0).begin()))) * (Physics::_xsTotalH2O(1)((upper - Physics::_xsTotalH2O(0).begin())) - Physics::_xsTotalH2O(1)((lower - Physics::_xsTotalH2O(0).begin()))) / (Physics::_xsTotalH2O(0)((upper - Physics::_xsTotalH2O(0).begin())) - Physics::_xsTotalH2O(0)((lower - Physics::_xsTotalH2O(0).begin())));
+		xsH2O_i = Physics::_xsTotalH2O[1]((lower - Physics::_xsTotalH2O[0].begin())) + (energies[i] - Physics::_xsTotalH2O[0]((lower - Physics::_xsTotalH2O[0].begin()))) * (Physics::_xsTotalH2O[1]((upper - Physics::_xsTotalH2O[0].begin())) - Physics::_xsTotalH2O[1]((lower - Physics::_xsTotalH2O[0].begin()))) / (Physics::_xsTotalH2O[0]((upper - Physics::_xsTotalH2O[0].begin())) - Physics::_xsTotalH2O[0]((lower - Physics::_xsTotalH2O[0].begin())));
 		}
 		
-		totalXS(i) = xsH2O_i*density;
+		totalXS[i] = xsH2O_i*density;
 	
 	}
 	
@@ -112,22 +116,22 @@ VectorVector Physics::GetStoppingPower(Vector energies,Vector density) {
 	
 	for (int i=0; i< energies.size(); i++){
 		
-		if (energies(i) < Physics::_stpowH2O(1)(0)) {
-		stpw_H2O_i = Physics::_stpowH2O(1)(0);
+		if (energies[i] < Physics::_stpowH2O[1][0]) {
+		stpw_H2O_i = Physics::_stpowH2O[1][0];
 		}
-		else if (energies(i) > Physics::_stpowH2O(1)(energies.size()-1)) {
-		stpw_H2O_i = Physics::_stpowH2O(1)(energies.size()-1);
+		else if (energies[i] > Physics::_stpowH2O[1](energies.size()-1)) {
+		stpw_H2O_i = Physics::_stpowH2O[1](energies.size()-1);
 		}
 		else {
 		//Find upper and lower bound of energy value in table	
-		CompressedVector<int>::Iterator upper( Physics::_stpowH2O(0).upperBound(energies(i)));
-		CompressedVector<int>::Iterator lower( Physics::_stpowH2O(0).lowerBound(energies(i)));
+		CompressedVector<int>::Iterator upper( Physics::_stpowH2O[0].upperBound(energies[i]));
+		CompressedVector<int>::Iterator lower( Physics::_stpowH2O[0].lowerBound(energies[i]));
 		
 		//Linear interpolation between upper and lower bound
-		stpw_H2O_i = Physics::_stpowH2O(1)((lower - Physics::_stpowH2O(0).begin())) + (energies(i) - Physics::_stpowH2O(0)((lower - Physics::_stpowH2O(0).begin()))) * (Physics::_stpowH2O(1)((upper - Physics::_stpowH2O(0).begin())) - Physics::_stpowH2O(1)((lower - Physics::_stpowH2O(0).begin()))) / (Physics::_stpowH2O(0)((upper - Physics::_stpowH2O(0).begin())) - Physics::_stpowH2O(0)((lower - Physics::_stpowH2O(0).begin())));
+		stpw_H2O_i = Physics::_stpowH2O[1]((lower - Physics::_stpowH2O[0].begin())) + (energies[i] - Physics::_stpowH2O[0]((lower - Physics::_stpowH2O[0].begin()))) * (Physics::_stpowH2O[1]((upper - Physics::_stpowH2O[0].begin())) - Physics::_stpowH2O[1]((lower - Physics::_stpowH2O[0].begin()))) / (Physics::_stpowH2O[0]((upper - Physics::_stpowH2O[0].begin())) - Physics::_stpowH2O[0]((lower - Physics::_stpowH2O[0].begin())));
 		}
 		
-		stopping_power(i) = stpw_H2O_i*density;
+		stopping_power[i] = stpw_H2O_i*density;
 	
 	}
     return stopping_power;
@@ -140,22 +144,22 @@ VectorVector Physics::GetTransportXS (Vector energies,Vector density){
 	
 	for (int i=0; i< energies.size(); i++){
 		
-		if (energies(i) < Physics::_xsTransportH2O(1)(0)) {
-		xs_H2O_i = Physics::_xsTransportH2O(1)(0);
+		if (energies[i] < Physics::_xsTransportH2O[1][0]) {
+		xsH2O_i = Physics::_xsTransportH2O[1][0];
 		}
-		else if (energies(i) > Physics::_xsTransportH2O(1)(energies.size()-1)) {
-		xs_H2O_i = 	Physics::_xsTransportH2O(1)(energies.size()-1);
+		else if (energies[i] > Physics::_xsTransportH2O[1](energies.size()-1)) {
+		xsH2O_i = 	Physics::_xsTransportH2O[1](energies.size()-1);
 		}
 		else {
 		//Find upper and lower bound of energy value in table	
-		CompressedVector<int>::Iterator upper( Physics::_xsTransportH2O(0).upperBound(energies(i)));
-		CompressedVector<int>::Iterator lower( Physics::_xsTransportH2O(0).lowerBound(energies(i)));
+		CompressedVector<int>::Iterator upper( Physics::_xsTransportH2O[0].upperBound(energies[i]));
+		CompressedVector<int>::Iterator lower( Physics::_xsTransportH2O[0].lowerBound(energies[i]));
 		
 		//Linear interpolation between upper and lower bound
-		xsH2O_i = Physics::_xsTransportH2O(1)((lower - Physics::_xsTransportH2O(0).begin())) + (energies(i) - Physics::_xsTransportH2O(0)((lower - Physics::_xsTransportH2O(0).begin()))) * (Physics::_xsTransportH2O(1)((upper - Physics::_xsTransportH2O(0).begin())) - Physics::_xsTransportH2O(1)((lower - Physics::_xsTransportH2O(0).begin()))) / (Physics::_xsTransportH2O(0)((upper - _Physics::_xsTransportH2O(0).begin())) - Physics::_xsTransportH2O(0)((lower - Physics::_xsTransportH2O(0).begin())));
+		xsH2O_i = Physics::_xsTransportH2O[1]((lower - Physics::_xsTransportH2O[0].begin())) + (energies[i] - Physics::_xsTransportH2O[0]((lower - Physics::_xsTransportH2O[0].begin()))) * (Physics::_xsTransportH2O[1]((upper - Physics::_xsTransportH2O[0].begin())) - Physics::_xsTransportH2O[1]((lower - Physics::_xsTransportH2O[0].begin()))) / (Physics::_xsTransportH2O[0]((upper - Physics::_xsTransportH2O[0].begin())) - Physics::_xsTransportH2O[0]((lower - Physics::_xsTransportH2O[0].begin())));
 		}
 		
-		transport_XS(i) = xsH2O_i*density;
+		transport_XS[i] = xsH2O_i*density;
 	
 	}
     return transport_XS;
@@ -164,7 +168,10 @@ VectorVector Physics::GetTransportXS (Vector energies,Vector density){
 Physics* Physics::Create() { return new Physics(); }
 
 std::tuple<std::list<VectorVector>,std::list<VectorVector>> Physics::ReadENDL( string filename ) {
-    // open txt file
+    std::list<VectorVector> _headers;
+	std::list<VectorVector> _data;
+	
+	// open txt file
     string text_line, option_name;
     ifstream case_file;
     vector<string> option_value;
@@ -275,6 +282,8 @@ VectorVector Physics::ReadStoppingPowers(std::string fileName) {
 		linelist.pop_front();	
         
     }
-    case_file.close();
+    file_stream.close();
+	
+	return stp_powers;
 }
 
