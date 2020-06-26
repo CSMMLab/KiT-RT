@@ -73,7 +73,7 @@ TEST_CASE( "convert image data to grayscale matrix", "[image I/O]" ) {
         Cubic2DSpline interp( x, y, gsImage );
         std::vector<double> result( mesh->GetNumCells(), 0.0 );
         for( unsigned i = 0; i < mesh->GetNumCells(); ++i ) {
-            result[i] = interp( cellCenters[i][0], cellCenters[i][1] );
+            result[i] = std::clamp( interp( cellCenters[i][0], cellCenters[i][1] ), 0.0, 1.0 );
         }
 
         std::vector<std::string> fieldNames{ "CT Data" };

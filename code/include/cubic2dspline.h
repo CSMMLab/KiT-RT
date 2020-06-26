@@ -19,13 +19,6 @@ class Cubic2DSpline
     inline double interpolate1D( double param[4], double x );
 
     /*
-     * adds equal valued ghostlayer to the matrix in order to freely interpolate
-     * @param[in]: Matrix m - raw matrix
-     * @param[out]: Matrix - resulting padded matrix
-     */
-    Matrix addGhostLayers( const Matrix& m );
-
-    /*
      * finds index of the closest distance to provided value in a given vector
      * @param[in]: double value - value to search for
      * @param[in]: Vector v - sorted vector holding the data
