@@ -18,14 +18,17 @@ def generate(image_name, mesh_name):
         mesh_name = os.path.splitext(mesh_name)[0]
     gsImage, dimensions = egs.extract(image_name)
 
-    char_length = 1.0#np.min(1.0, np.min(dimensions)/10.0) #arbitrary
+    width, height = gsImage.shape
+    xRes = dimensions[0]/width
+    yRes = dimensions[1]/height
+    char_length = min(xRes,yRes)*5 #arbitrary
     geom = pg.opencascade.Geometry()
     domain = add_rectangle(0.0, 0.0, dimensions[0], dimensions[1], char_length, geom)
     geom.add_physical(domain.lines, label="void")
 
     mesh_code = geom.get_code()
     with open(mesh_name+".geo","w") as mesh_file:
-        mesh_file.write(mesh_code,) 
+        mesh_file.write(mesh_code,)
     os.system('gmsh '+mesh_name+'.geo -2 -format su2 -save_all > /dev/null')
     os.system('rm '+mesh_name+'.geo > /dev/null')
 
