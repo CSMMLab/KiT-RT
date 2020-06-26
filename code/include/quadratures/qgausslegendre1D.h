@@ -15,7 +15,7 @@ class QGaussLegendre1D : public QuadratureBase
     virtual ~QGaussLegendre1D() {}
 
     inline void SetName() override { _name = "Tensorized Gauss-Legendre quadrature."; }
-    inline void SetNq() override { _nq = pow( GetOrder(), 2 ); }
+    inline void SetNq() override { _nq = _order; }
     void SetPointsAndWeights() override;
     void SetConnectivity() override;
 };

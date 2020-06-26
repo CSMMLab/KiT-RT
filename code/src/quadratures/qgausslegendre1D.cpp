@@ -28,9 +28,9 @@ void QGaussLegendre1D::SetPointsAndWeights() {
             nodes1D[i] = evSys.first[i];
         weights1D[i] = 2 * std::pow( evSys.second( 0, i ), 2 );
     }
-    for( unsigned i = 0; i < _order; ++i ) {
-        nodes1D[i] = ( nodes1D[i] + 1.0 ) * 0.5;
-    }
+    // for( unsigned i = 0; i < _order; ++i ) {
+    // nodes1D[i] = ( nodes1D[i] + 1.0 ) * 0.5;
+    //}
 
     // sort nodes increasingly and also reorder weigths for consistency
     std::vector<unsigned> sortOrder( nodes1D.size() );
@@ -42,30 +42,15 @@ void QGaussLegendre1D::SetPointsAndWeights() {
     nodes1D   = sorted_nodes;
     weights1D = sorted_weights;
 
-    // setup equidistant angle phi around z axis
-    Vector phi( 2 * _order );
-    for( unsigned i = 0; i < 2 * _order; ++i ) {
-        phi[i] = ( i + 0.5 ) * M_PI / _order;
-    }
-
-    // only use the spheres upper half
-    unsigned range = std::floor( _order / 2.0 );
-
     // resize points and weights
     _points.resize( _nq );
-    for( auto& p : _points ) {
-        p.resize( 3 );
-    }
     _weights.resize( _nq );
-
-    // transform tensorized (x,y,z)-grid to spherical grid points
-    for( unsigned j = 0; j < range; ++j ) {
-        for( unsigned i = 0; i < 2 * _order; ++i ) {
-            _points[j * ( 2 * _order ) + i][0] = sqrt( 1 - nodes1D[j] * nodes1D[j] ) * std::cos( phi[i] );
-            _points[j * ( 2 * _order ) + i][1] = sqrt( 1 - nodes1D[j] * nodes1D[j] ) * std::sin( phi[i] );
-            _points[j * ( 2 * _order ) + i][2] = nodes1D[j];
-            _weights[j * ( 2 * _order ) + i]   = 2.0 * M_PI / _order * weights1D[j];
-        }
+    unsigned dim = 3;
+    for( unsigned k = 0; k < _nq; ++k ) {
+        _points[k].resize( dim );
+        std::cout << nodes1D[k] << std::endl;
+        _points[k][0] = nodes1D[k];
+        _weights[k]   = weights1D[k];
     }
 }
 
@@ -149,9 +134,4 @@ double QGaussLegendre1D::Pythag( const double a, const double b ) {
                          : ( absb == 0.0 ? 0.0 : absb * std::sqrt( 1.0 + ( absa / absb ) * ( absa / absb ) ) ) );
 }
 
-bool QGaussLegendre1D::CheckOrder() {
-    if( _order % 2 == 1 ) {    // order needs to be even
-        ErrorMessages::Error( "ERROR! Order " + std::to_string( _order ) + " for " + GetName() + " not available. ", CURRENT_FUNCTION );
-    }
-    return true;
-}
+bool QGaussLegendre1D::CheckOrder() { return true; }
