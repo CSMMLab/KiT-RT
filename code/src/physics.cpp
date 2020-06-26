@@ -260,6 +260,7 @@ std::tuple<std::list<VectorVector>,std::list<VectorVector>> Physics::ReadENDL( s
 VectorVector Physics::ReadStoppingPowers(std::string fileName) {
 	VectorVector stp_powers;
 	string text_line;
+	unsigned idx = 0;
 	
 	ifstream file_stream;
 	file_stream.open( fileName, ios::in );
@@ -276,10 +277,11 @@ VectorVector Physics::ReadStoppingPowers(std::string fileName) {
             linelist.push_back( double_in );
         }
 	
-		stp_powers[0].append(linelist.front());   //append elements from line to column vectors 
+		stp_powers[0].insert(idx,linelist.front());   //append elements from line to column vectors 
 		linelist.pop_front();
-		stp_powers[1].append(linelist.front());
+		stp_powers[1].insert(idx,linelist.front());
 		linelist.pop_front();	
+		idx++;
         
     }
     file_stream.close();
