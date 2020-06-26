@@ -48,9 +48,9 @@ inline std::map<std::string, PROBLEM_NAME> Problem_Map{ { "LINESOURCE", PROBLEM_
                                                         { "LINESOURCE_PSEUDO_1D", PROBLEM_LineSource_Pseudo_1D } };
 
 // Kernel name
-enum KERNEL_NAME { KERNEL_Isotropic };
+enum KERNEL_NAME { KERNEL_Isotropic, KERNEL_Isotropic1D };
 
-inline std::map<std::string, KERNEL_NAME> Kernel_Map{ { "ISOTROPIC", KERNEL_Isotropic } };
+inline std::map<std::string, KERNEL_NAME> Kernel_Map{ { "ISOTROPIC", KERNEL_Isotropic }, { "ISOTROPIC_1D", KERNEL_Isotropic1D } };
 
 // Solver name
 enum SOLVER_NAME { SN_SOLVER, PN_SOLVER };

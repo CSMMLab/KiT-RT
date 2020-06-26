@@ -62,7 +62,7 @@ void SNSolver::Solve() {
         for( unsigned i = 0; i < _nCells; ++i ) {
             fluxNew[i]       = dot( _psi[i], _weights );
             _solverOutput[i] = fluxNew[i];
-            mass += fluxNew[i];
+            mass += _areas[i] * fluxNew[i];
         }
         Save( idx_energy );
         dFlux   = blaze::l2Norm( fluxNew - fluxOld );
