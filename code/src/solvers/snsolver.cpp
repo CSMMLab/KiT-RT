@@ -15,40 +15,46 @@ void SNSolver::Solve() {
     if( rank == 0 ) log->info( "{:10}   {:10}", "t", "dFlux" );
 
     // loop over energies (pseudo-time)
-    for( unsigned n = 0; n < _nEnergies; ++n ) {
+    for( unsigned idx_energy = 0; idx_energy < _nEnergies; ++idx_energy ) {
         // loop over all spatial cells
-        for( unsigned j = 0; j < _nCells; ++j ) {
-            if( _boundaryCells[j] == BOUNDARY_TYPE::DIRICHLET ) continue;
+        for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
+            if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::DIRICHLET ) continue;
             // loop over all ordinates
-            for( unsigned k = 0; k < _nq; ++k ) {
-                psiNew[j][k] = 0.0;
+            for( unsigned idx_ord = 0; idx_ord < _nq; ++idx_ord ) {
+                psiNew[idx_cell][idx_ord] = 0.0;
                 // loop over all neighbor cells (edges) of cell j and compute numerical fluxes
-                for( unsigned l = 0; l < _neighbors[j].size(); ++l ) {
+                for( unsigned idx_neighbor = 0; idx_neighbor < _neighbors[idx_cell].size(); ++idx_neighbor ) {
                     // store flux contribution on psiNew_sigmaS to save memory
-                    if( _boundaryCells[j] == BOUNDARY_TYPE::NEUMANN && _neighbors[j][l] == _nCells )
-                        psiNew[j][k] += _g->Flux( _quadPoints[k], _psi[j][k], _psi[j][k], _normals[j][l] );
+                    if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::NEUMANN && _neighbors[idx_cell][idx_neighbor] == _nCells )
+                        continue;    // adiabatic wall, add nothing
+                    // psiNew[idx_cell][idx_ord] +=
+                    //    _g->Flux( _quadPoints[idx_ord], _psi[idx_cell][idx_ord], _psi[idx_cell][idx_ord], _normals[idx_cell][idx_neighbor] );
                     else
-                        psiNew[j][k] += _g->Flux( _quadPoints[k], _psi[j][k], _psi[_neighbors[j][l]][k], _normals[j][l] );
+                        psiNew[idx_cell][idx_ord] += _g->Flux( _quadPoints[idx_ord],
+                                                               _psi[idx_cell][idx_ord],
+                                                               _psi[_neighbors[idx_cell][idx_neighbor]][idx_ord],
+                                                               _normals[idx_cell][idx_neighbor] );
                 }
                 // time update angular flux with numerical flux and total scattering cross section
-                psiNew[j][k] = _psi[j][k] - ( _dE / _areas[j] ) * psiNew[j][k] - _dE * _sigmaT[n][j] * _psi[j][k];
+                psiNew[idx_cell][idx_ord] = _psi[idx_cell][idx_ord] - ( _dE / _areas[idx_cell] ) * psiNew[idx_cell][idx_ord] -
+                                            _dE * _sigmaT[idx_energy][idx_cell] * _psi[idx_cell][idx_ord];
             }
             // compute scattering effects
-            psiNew[j] += _dE * _sigmaS[n][j] * _scatteringKernel * _psi[j];    // multiply scattering matrix with psi
+            psiNew[idx_cell] += _dE * _sigmaS[idx_energy][idx_cell] * _scatteringKernel * _psi[idx_cell];    // multiply scattering matrix with psi
 
             // TODO: figure out a more elegant way
             // add external source contribution
-            if( _Q.size() == 1u ) {            // constant source for all energies
-                if( _Q[0][j].size() == 1u )    // isotropic source
-                    psiNew[j] += _dE * _Q[0][j][0];
+            if( _Q.size() == 1u ) {                   // constant source for all energies
+                if( _Q[0][idx_cell].size() == 1u )    // isotropic source
+                    psiNew[idx_cell] += _dE * _Q[0][idx_cell][0];
                 else
-                    psiNew[j] += _dE * _Q[0][j];
+                    psiNew[idx_cell] += _dE * _Q[0][idx_cell];
             }
             else {
-                if( _Q[0][j].size() == 1u )    // isotropic source
-                    psiNew[j] += _dE * _Q[n][j][0];
+                if( _Q[0][idx_cell].size() == 1u )    // isotropic source
+                    psiNew[idx_cell] += _dE * _Q[idx_energy][idx_cell][0];
                 else
-                    psiNew[j] += _dE * _Q[n][j];
+                    psiNew[idx_cell] += _dE * _Q[idx_energy][idx_cell];
             }
         }
         _psi = psiNew;
@@ -59,7 +65,7 @@ void SNSolver::Solve() {
         // Save( n );
         dFlux   = blaze::l2Norm( fluxNew - fluxOld );
         fluxOld = fluxNew;
-        if( rank == 0 ) log->info( "{:03.8f}   {:01.5e}", _energies[n], dFlux );
+        if( rank == 0 ) log->info( "{:03.8f}   {:01.5e}", _energies[idx_energy], dFlux );
     }
 }
 

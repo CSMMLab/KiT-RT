@@ -14,9 +14,9 @@ int main( int argc, char** argv ) {
     Config* config = new Config( filename );
 
     // Test the physics reader
-    Physics testPhysic( config );
+    // Physics testPhysic( config );
 
-    testPhysic.ReadENDL_H( "ENDL_H.txt" );
+    // testPhysic.ReadENDL_H( "ENDL_H.txt" );
 
     // Print input file and run info to file
     PrintLogHeader( filename );
