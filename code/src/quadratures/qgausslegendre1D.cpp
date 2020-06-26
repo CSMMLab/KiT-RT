@@ -1,6 +1,6 @@
-#include "../../include/quadratures/qgausslegendretensorized.h"
+#include "../../include/quadratures/qgausslegendre1D.h"
 
-QGaussLegendreTensorized::QGaussLegendreTensorized( unsigned order ) : QuadratureBase( order ) {
+QGaussLegendre1D::QGaussLegendre1D( unsigned order ) : QuadratureBase( order ) {
     SetName();
     CheckOrder();
     SetNq();
@@ -8,7 +8,7 @@ QGaussLegendreTensorized::QGaussLegendreTensorized( unsigned order ) : Quadratur
     SetConnectivity();
 }
 
-void QGaussLegendreTensorized::SetPointsAndWeights() {
+void QGaussLegendre1D::SetPointsAndWeights() {
     Vector nodes1D( _order ), weights1D( _order );
 
     // construct companion matrix
@@ -69,13 +69,13 @@ void QGaussLegendreTensorized::SetPointsAndWeights() {
     }
 }
 
-void QGaussLegendreTensorized::SetConnectivity() {    // TODO
+void QGaussLegendre1D::SetConnectivity() {    // TODO
     // Not initialized for this quadrature.
     VectorVectorU connectivity;
     _connectivity = connectivity;
 }
 
-std::pair<Vector, Matrix> QGaussLegendreTensorized::ComputeEigenValTriDiagMatrix( const Matrix& mat ) {
+std::pair<Vector, Matrix> QGaussLegendre1D::ComputeEigenValTriDiagMatrix( const Matrix& mat ) {
     // copied from 'Numerical Recipes' and updated + modified to work with blaze
     unsigned n = mat.rows();
 
@@ -142,14 +142,14 @@ std::pair<Vector, Matrix> QGaussLegendreTensorized::ComputeEigenValTriDiagMatrix
     return std::make_pair( d, z );
 }
 
-double QGaussLegendreTensorized::Pythag( const double a, const double b ) {
+double QGaussLegendre1D::Pythag( const double a, const double b ) {
     // copied from 'Numerical Recipes'
     double absa = std::fabs( a ), absb = std::fabs( b );
     return ( absa > absb ? absa * std::sqrt( 1.0 + ( absb / absa ) * ( absb / absa ) )
                          : ( absb == 0.0 ? 0.0 : absb * std::sqrt( 1.0 + ( absa / absb ) * ( absa / absb ) ) ) );
 }
 
-bool QGaussLegendreTensorized::CheckOrder() {
+bool QGaussLegendre1D::CheckOrder() {
     if( _order % 2 == 1 ) {    // order needs to be even
         ErrorMessages::Error( "ERROR! Order " + std::to_string( _order ) + " for " + GetName() + " not available. ", CURRENT_FUNCTION );
     }
