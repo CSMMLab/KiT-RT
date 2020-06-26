@@ -314,3 +314,61 @@ void PrintLogHeader( std::string inputFile ) {
     }
     MPI_Barrier( MPI_COMM_WORLD );
 }
+
+Matrix createSU2MeshFromImage( std::string imageName, std::string SU2Filename ) {
+    auto log = spdlog::get( "event" );
+
+    if( !std::filesystem::exists( imageName ) ) {
+        ErrorMessages::Error( "Can not open image '" + imageName + "'!", CURRENT_FUNCTION );
+        exit( EXIT_FAILURE );
+    }
+    std::filesystem::path outDir( std::filesystem::path( SU2Filename ).parent_path() );
+    if( !std::filesystem::exists( outDir ) ) {
+        ErrorMessages::Error( "Output directory '" + outDir.string() + "' does not exists!", CURRENT_FUNCTION );
+        exit( EXIT_FAILURE );
+    }
+
+    setenv( "PYTHONPATH", RTSN_PYTHON_PATH, 1 );
+    Py_Initialize();
+    PyObject *pArgs, *pReturn, *pModule, *pFunc;
+    PyArrayObject* np_ret;
+
+    auto image = PyUnicode_FromString( imageName.c_str() );
+    auto su2   = PyUnicode_FromString( SU2Filename.c_str() );
+
+    PyObject* pName = PyUnicode_FromString( "mesh_from_image" );
+    pModule         = PyImport_Import( pName );
+    Py_DECREF( pName );
+    if( !pModule ) {
+        ErrorMessages::Error( "'mesh_from_image.py' can not be imported!", CURRENT_FUNCTION );
+        exit( EXIT_FAILURE );
+    }
+
+    pFunc = PyObject_GetAttrString( pModule, "generate" );
+    if( !pFunc || !PyCallable_Check( pFunc ) ) {
+        Py_DECREF( pModule );
+        Py_XDECREF( pFunc );
+        ErrorMessages::Error( "'generate' is null or not callable!", CURRENT_FUNCTION );
+        exit( EXIT_FAILURE );
+    }
+
+    pArgs = PyTuple_New( 2 );
+    PyTuple_SetItem( pArgs, 0, reinterpret_cast<PyObject*>( image ) );
+    PyTuple_SetItem( pArgs, 1, reinterpret_cast<PyObject*>( su2 ) );
+    pReturn = PyObject_CallObject( pFunc, pArgs );
+    np_ret  = reinterpret_cast<PyArrayObject*>( pReturn );
+
+    size_t m{ static_cast<size_t>( PyArray_SHAPE( np_ret )[0] ) };
+    size_t n{ static_cast<size_t>( PyArray_SHAPE( np_ret )[1] ) };
+    double* c_out = reinterpret_cast<double*>( PyArray_DATA( np_ret ) );
+
+    Matrix gsImage( m, n, c_out );
+
+    // Finalizing
+    Py_DECREF( pFunc );
+    Py_DECREF( pModule );
+    Py_DECREF( np_ret );
+    Py_Finalize();
+
+    return gsImage;
+}

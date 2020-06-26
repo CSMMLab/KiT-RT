@@ -51,6 +51,12 @@ class ProblemBase
     virtual std::vector<double> GetStoppingPower( const std::vector<double>& energies ) = 0;
 
     /**
+     * @brief GetDensity gives back vector of densities for every spatial cell
+     * @param cellMidPoints is vector with cell mid points
+     */
+    virtual std::vector<double> GetDensity( const VectorVector& cellMidPoints );
+
+    /**
      * @brief Setup the initial condition for the flux psi
      */
     virtual VectorVector SetupIC() = 0;
