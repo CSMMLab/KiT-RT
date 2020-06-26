@@ -28,9 +28,6 @@ void QGaussLegendre1D::SetPointsAndWeights() {
             nodes1D[i] = evSys.first[i];
         weights1D[i] = 2 * std::pow( evSys.second( 0, i ), 2 );
     }
-    // for( unsigned i = 0; i < _order; ++i ) {
-    // nodes1D[i] = ( nodes1D[i] + 1.0 ) * 0.5;
-    //}
 
     // sort nodes increasingly and also reorder weigths for consistency
     std::vector<unsigned> sortOrder( nodes1D.size() );
@@ -48,7 +45,6 @@ void QGaussLegendre1D::SetPointsAndWeights() {
     unsigned dim = 3;
     for( unsigned k = 0; k < _nq; ++k ) {
         _points[k].resize( dim );
-        std::cout << nodes1D[k] << std::endl;
         _points[k][0] = nodes1D[k];
         _weights[k]   = weights1D[k];
     }
