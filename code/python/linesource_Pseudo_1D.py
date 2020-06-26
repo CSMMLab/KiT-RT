@@ -12,9 +12,9 @@ def add_block(x0,y0,lengthX, lengthY,char_length,geom):
     ])
     return geom.add_polygon(coords, char_length)
 
-char_length = 0.1
+char_length = 0.03
 geom = pg.opencascade.Geometry()
-domain = add_block(-1, -3, 2,6, char_length, geom)
+domain = add_block(-2.5, 0, 10,0.3, char_length, geom)
 #geom.add_raw_code('psource = newp;\nPoint(psource) = {0.0, 0.0, 0.0, '+str(char_length)+'};\nPoint{psource} In Surface{'+domain.id+'};')
 
 adiabatic = list()
