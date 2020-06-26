@@ -205,6 +205,8 @@ void Config::SetConfigOptions() {
     AddEnumOption( "PROBLEM", _problemName, Problem_Map, PROBLEM_ElectronRT );
     /*! @brief Solver \n DESCRIPTION: Solver used for problem \n DEFAULT SN_SOLVER @ingroup Config. */
     AddEnumOption( "SOLVER", _solverName, Solver_Map, SN_SOLVER );
+    /*!\brief RECONS_ORDER \n DESCRIPTION: Reconstruction order for solver \n DEFAULT 1 \ingroup Config.*/
+    AddUnsignedShortOption( "RECONS_ORDER", _reconsOrder, 1 );
     /*! @brief CleanFluxMatrices \n DESCRIPTION:  If true, very low entries (10^-10 or smaller) of the flux matrices will be set to zero,
      * to improve floating point accuracy \n DEFAULT false \ingroup Config */
     AddBoolOption( "CLEAN_FLUX_MATRICES", _cleanFluxMat, false );
@@ -326,7 +328,7 @@ void Config::SetPostprocessing() {
 
         // init logger
 #ifdef BUILD_TESTING
-    InitLogger( spdlog::level::off, spdlog::level::off );
+    InitLogger( spdlog::level::err, spdlog::level::off );
 #else
     InitLogger( spdlog::level::info, spdlog::level::info );
 #endif
@@ -340,9 +342,9 @@ void Config::SetPostprocessing() {
     }
 
     // Check, if mesh file exists
-    if( !std::filesystem::exists( _meshFile ) ) {
-        ErrorMessages::Error( "Path to mesh file <" + _meshFile + "> does not exist. Please check your config file.", CURRENT_FUNCTION );
-    }
+    // if( !std::filesystem::exists( _meshFile ) ) {
+    //    ErrorMessages::Error( "Path to mesh file <" + _meshFile + "> does not exist. Please check your config file.", CURRENT_FUNCTION );
+    //}
 }
 
 void Config::SetOutput() {

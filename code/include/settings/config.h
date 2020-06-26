@@ -52,10 +52,11 @@ class Config
     unsigned _nCells;
 
     // Solver
-    double _CFL;               /*!< @brief CFL Number for Solver*/
-    double _tEnd;              /*!< @brief Final Time for Simulation */
-    PROBLEM_NAME _problemName; /*!< @brief Name of predefined Problem   */
-    SOLVER_NAME _solverName;   /*!< @brief Name of the used Solver */
+    double _CFL;                 /*!< @brief CFL Number for Solver*/
+    double _tEnd;                /*!< @brief Final Time for Simulation */
+    PROBLEM_NAME _problemName;   /*!< @brief Name of predefined Problem   */
+    SOLVER_NAME _solverName;     /*!< @brief Name of the used Solver */
+    unsigned short _reconsOrder; /*!< @brief Spatial Order of Accuracy for Solver */
 
     /*!< @brief If true, very low entries (10^-10 or smaller) of the flux matrices will be set to zero,
      * to improve floating point accuracy */
@@ -211,6 +212,7 @@ class Config
     double inline GetTEnd() const { return _tEnd; }
     PROBLEM_NAME inline GetProblemName() const { return _problemName; }
     SOLVER_NAME inline GetSolverName() const { return _solverName; }
+    unsigned GetReconsOrder() { return _reconsOrder; }
     bool inline GetCleanFluxMat() const { return _cleanFluxMat; }
     bool inline IsCSD() const { return _csd; }
     // Boundary Conditions

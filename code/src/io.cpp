@@ -1,5 +1,6 @@
 #include "io.h"
 #include "toolboxes/errormessages.h"
+#include "toolboxes/textprocessingtoolbox.h"
 
 void ExportVTK( const std::string fileName,
                 const std::vector<std::vector<std::vector<double>>>& results,
@@ -17,7 +18,7 @@ void ExportVTK( const std::string fileName,
 
         auto writer                 = vtkUnstructuredGridWriterSP::New();
         std::string fileNameWithExt = fileName;
-        if( fileNameWithExt.substr( fileNameWithExt.find_last_of( "." ) + 1 ) != ".vtk" ) {
+        if( !TextProcessingToolbox::StringEndsWith( fileNameWithExt, ".vtk" ) ) {
             fileNameWithExt.append( ".vtk" );
         }
         writer->SetFileName( fileNameWithExt.c_str() );
@@ -114,7 +115,7 @@ Mesh* LoadSU2MeshFromFile( const Config* settings ) {
     if( ifs.is_open() ) {
         while( getline( ifs, line ) ) {
             if( line.find( "NDIME", 0 ) != std::string::npos ) {
-                dim = static_cast<unsigned>( std::stoi( line.substr( line.find_first_of( "0123456789" ), line.length() - 1 ) ) );
+                dim = static_cast<unsigned>( TextProcessingToolbox::GetTrailingNumber( line ) );
                 break;
             }
         }
@@ -122,7 +123,7 @@ Mesh* LoadSU2MeshFromFile( const Config* settings ) {
         ifs.seekg( 0, std::ios::beg );
         while( getline( ifs, line ) ) {
             if( line.find( "NPOIN", 0 ) != std::string::npos ) {
-                unsigned numPoints = static_cast<unsigned>( std::stoi( line.substr( line.find_first_of( "0123456789" ), line.length() - 1 ) ) );
+                unsigned numPoints = static_cast<unsigned>( TextProcessingToolbox::GetTrailingNumber( line ) );
                 nodes.resize( numPoints, Vector( dim, 0.0 ) );
                 for( unsigned i = 0; i < numPoints; ++i ) {
                     getline( ifs, line );
@@ -146,7 +147,7 @@ Mesh* LoadSU2MeshFromFile( const Config* settings ) {
         ifs.seekg( 0, std::ios::beg );
         while( getline( ifs, line ) ) {
             if( line.find( "NMARK", 0 ) != std::string::npos ) {
-                unsigned numBCs = static_cast<unsigned>( std::stoi( line.substr( line.find_first_of( "0123456789" ), line.length() - 1 ) ) );
+                unsigned numBCs = static_cast<unsigned>( TextProcessingToolbox::GetTrailingNumber( line ) );
                 boundaries.resize( numBCs );
                 for( unsigned i = 0; i < numBCs; ++i ) {
                     std::string markerTag;
@@ -165,8 +166,7 @@ Mesh* LoadSU2MeshFromFile( const Config* settings ) {
                             }
                         }
                         else if( line.find( "MARKER_ELEMS", 0 ) != std::string::npos ) {
-                            unsigned numMarkerElements =
-                                static_cast<unsigned>( std::stoi( line.substr( line.find_first_of( "0123456789" ), line.length() - 1 ) ) );
+                            unsigned numMarkerElements = static_cast<unsigned>( TextProcessingToolbox::GetTrailingNumber( line ) );
                             for( unsigned j = 0; j < numMarkerElements; ++j ) {
                                 getline( ifs, line );
                                 std::stringstream ss;
@@ -198,7 +198,7 @@ Mesh* LoadSU2MeshFromFile( const Config* settings ) {
         std::vector<unsigned> numNodesPerCell;
         while( getline( ifs, line ) ) {
             if( line.find( "NELEM", 0 ) != std::string::npos ) {
-                unsigned numCells = static_cast<unsigned>( std::stoi( line.substr( line.find_first_of( "0123456789" ), line.length() - 1 ) ) );
+                unsigned numCells = static_cast<unsigned>( TextProcessingToolbox::GetTrailingNumber( line ) );
                 numNodesPerCell.resize( numCells, 0u );
                 for( unsigned i = 0; i < numCells; ++i ) {
                     getline( ifs, line );
@@ -231,7 +231,7 @@ Mesh* LoadSU2MeshFromFile( const Config* settings ) {
         ifs.seekg( 0, std::ios::beg );
         while( getline( ifs, line ) ) {
             if( line.find( "NELEM", 0 ) != std::string::npos ) {
-                unsigned numCells = static_cast<unsigned>( std::stoi( line.substr( line.find_first_of( "0123456789" ), line.length() - 1 ) ) );
+                unsigned numCells = static_cast<unsigned>( TextProcessingToolbox::GetTrailingNumber( line ) );
                 cells.resize( numCells, std::vector<unsigned>( numNodesPerCell[0], 0u ) );
                 for( unsigned i = 0; i < numCells; ++i ) {
                     getline( ifs, line );
@@ -320,16 +320,16 @@ Matrix createSU2MeshFromImage( std::string imageName, std::string SU2Filename ) 
 
     if( !std::filesystem::exists( imageName ) ) {
         ErrorMessages::Error( "Can not open image '" + imageName + "'!", CURRENT_FUNCTION );
-        exit( EXIT_FAILURE );
     }
     std::filesystem::path outDir( std::filesystem::path( SU2Filename ).parent_path() );
     if( !std::filesystem::exists( outDir ) ) {
         ErrorMessages::Error( "Output directory '" + outDir.string() + "' does not exists!", CURRENT_FUNCTION );
-        exit( EXIT_FAILURE );
     }
 
-    setenv( "PYTHONPATH", RTSN_PYTHON_PATH, 1 );
-    Py_Initialize();
+    if( !Py_IsInitialized() ) {
+        setenv( "PYTHONPATH", RTSN_PYTHON_PATH, 1 );
+        Py_Initialize();
+    }
     PyObject *pArgs, *pReturn, *pModule, *pFunc;
     PyArrayObject* np_ret;
 
@@ -338,18 +338,16 @@ Matrix createSU2MeshFromImage( std::string imageName, std::string SU2Filename ) 
 
     PyObject* pName = PyUnicode_FromString( "mesh_from_image" );
     pModule         = PyImport_Import( pName );
-    Py_DECREF( pName );
+    Py_CLEAR( pName );
     if( !pModule ) {
         ErrorMessages::Error( "'mesh_from_image.py' can not be imported!", CURRENT_FUNCTION );
-        exit( EXIT_FAILURE );
     }
 
     pFunc = PyObject_GetAttrString( pModule, "generate" );
     if( !pFunc || !PyCallable_Check( pFunc ) ) {
-        Py_DECREF( pModule );
-        Py_XDECREF( pFunc );
+        Py_CLEAR( pModule );
+        Py_CLEAR( pFunc );
         ErrorMessages::Error( "'generate' is null or not callable!", CURRENT_FUNCTION );
-        exit( EXIT_FAILURE );
     }
 
     pArgs = PyTuple_New( 2 );
@@ -363,12 +361,16 @@ Matrix createSU2MeshFromImage( std::string imageName, std::string SU2Filename ) 
     double* c_out = reinterpret_cast<double*>( PyArray_DATA( np_ret ) );
 
     Matrix gsImage( m, n, c_out );
+    // for( unsigned i = 0; i < m; ++i ) {
+    //    for( unsigned j = 0; j < n; ++j ) {
+    //        gsImage( i, j ) = c_out[j * m + i];
+    //    }
+    //}
 
     // Finalizing
-    Py_DECREF( pFunc );
-    Py_DECREF( pModule );
-    Py_DECREF( np_ret );
-    Py_Finalize();
+    Py_CLEAR( pFunc );
+    Py_CLEAR( pModule );
+    Py_CLEAR( np_ret );
 
-    return gsImage;
+    return gsImage.transpose();
 }
