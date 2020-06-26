@@ -9,6 +9,6 @@ Matrix Isotropic::GetScatteringKernel() {
     auto w      = _quad->GetWeights();
     Matrix kernel( nq, nq );
     for( unsigned i = 0; i < nq; ++i )
-        for( unsigned j = 0; j < nq; ++j ) kernel( i, j ) = w[i] / ( 4 * M_PI );
+        for( unsigned j = 0; j < nq; ++j ) kernel( i, j ) = w[j] / ( 4 * M_PI );
     return kernel;
 }
