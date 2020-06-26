@@ -9,6 +9,7 @@ Mesh::Mesh( std::vector<Vector> nodes,
     ComputeCellMidpoints();
     ComputeConnectivity();
     ComputePartitioning();
+    ComputeBounds();
 }
 
 Mesh::~Mesh() {}
@@ -155,10 +156,10 @@ void Mesh::ComputeCellAreas() {
                 break;
             }
             case 4: {    // quadrilateral cells
-                std::vector d1{_nodes[_cells[i][0]][0] - _nodes[_cells[i][1]][0], _nodes[_cells[i][0]][1] - _nodes[_cells[i][1]][1]};
-                std::vector d2{_nodes[_cells[i][1]][0] - _nodes[_cells[i][2]][0], _nodes[_cells[i][1]][1] - _nodes[_cells[i][2]][1]};
-                std::vector d3{_nodes[_cells[i][2]][0] - _nodes[_cells[i][3]][0], _nodes[_cells[i][2]][1] - _nodes[_cells[i][3]][1]};
-                std::vector d4{_nodes[_cells[i][3]][0] - _nodes[_cells[i][0]][0], _nodes[_cells[i][3]][1] - _nodes[_cells[i][0]][1]};
+                std::vector d1{ _nodes[_cells[i][0]][0] - _nodes[_cells[i][1]][0], _nodes[_cells[i][0]][1] - _nodes[_cells[i][1]][1] };
+                std::vector d2{ _nodes[_cells[i][1]][0] - _nodes[_cells[i][2]][0], _nodes[_cells[i][1]][1] - _nodes[_cells[i][2]][1] };
+                std::vector d3{ _nodes[_cells[i][2]][0] - _nodes[_cells[i][3]][0], _nodes[_cells[i][2]][1] - _nodes[_cells[i][3]][1] };
+                std::vector d4{ _nodes[_cells[i][3]][0] - _nodes[_cells[i][0]][0], _nodes[_cells[i][3]][1] - _nodes[_cells[i][0]][1] };
 
                 double a = std::sqrt( d1[0] * d1[0] + d1[1] * d1[1] );
                 double b = std::sqrt( d2[0] * d2[0] + d2[1] * d2[1] );
@@ -194,8 +195,8 @@ void Mesh::ComputeCellMidpoints() {
 Vector Mesh::ComputeOutwardFacingNormal( const Vector& nodeA, const Vector& nodeB, const Vector& cellCenter ) {
     double dx = nodeA[0] - nodeB[0];
     double dy = nodeA[1] - nodeB[1];
-    Vector n{-dy, dx};                      // normal vector
-    Vector p{nodeA[0], nodeA[1]};           // take arbitrary node
+    Vector n{ -dy, dx };                    // normal vector
+    Vector p{ nodeA[0], nodeA[1] };         // take arbitrary node
     if( dot( n, cellCenter - p ) > 0 ) {    // dot product is negative for outward facing normals
         n *= -1.0;                          // if dot product is positive -> flip normal
     }
@@ -257,7 +258,7 @@ void Mesh::ComputePartitioning() {
 
         if( comm_size > 1 ) {    // if multiple MPI threads -> use parmetis
             // split adjacency information for each MPI thread -> see 'local' variables
-            std::vector<int> local_xadj{0};
+            std::vector<int> local_xadj{ 0 };
             unsigned xadjChunk = std::ceil( static_cast<float>( _numNodes ) / static_cast<float>( comm_size ) );
             unsigned xadjStart = comm_rank * xadjChunk + 1;
             unsigned adjncyStart;
@@ -272,7 +273,7 @@ void Mesh::ComputePartitioning() {
             std::vector<int> local_adjncy( adjncy.begin() + adjncyStart, adjncy.begin() + adjncyEnd );
 
             // vtxdist describes what nodes are on which processor - see parmetis doc
-            std::vector<int> vtxdist{0};
+            std::vector<int> vtxdist{ 0 };
             for( unsigned i = 1; i <= static_cast<unsigned>( comm_size ); i++ ) {
                 vtxdist.push_back( std::min( i * xadjChunk, _numNodes ) );
             }
@@ -437,6 +438,16 @@ void Mesh::ReconstructSlopesU( unsigned nq, VectorVector& psiDerX, VectorVector&
     }
 }
 
+void Mesh::ComputeBounds() {
+    _bounds = std::vector( _dim, std::make_pair( std::numeric_limits<double>::infinity(), -std::numeric_limits<double>::infinity() ) );
+    for( unsigned i = 0; i < _numNodes; ++i ) {
+        for( unsigned j = 0; j < _dim; ++j ) {
+            if( _nodes[i][j] < _bounds[j].first ) _bounds[j].first = _nodes[i][j];
+            if( _nodes[i][j] > _bounds[j].second ) _bounds[j].second = _nodes[i][j];
+        }
+    }
+}
+
 const std::vector<Vector>& Mesh::GetNodes() const { return _nodes; }
 const std::vector<Vector>& Mesh::GetCellMidPoints() const { return _cellMidPoints; }
 const std::vector<std::vector<unsigned>>& Mesh::GetCells() const { return _cells; }
@@ -445,6 +456,7 @@ const std::vector<unsigned>& Mesh::GetPartitionIDs() const { return _colors; }
 const std::vector<std::vector<unsigned>>& Mesh::GetNeighbours() const { return _cellNeighbors; }
 const std::vector<std::vector<Vector>>& Mesh::GetNormals() const { return _cellNormals; }
 const std::vector<BOUNDARY_TYPE>& Mesh::GetBoundaryTypes() const { return _cellBoundaryTypes; }
+const std::vector<std::pair<double, double>> Mesh::GetBounds() const { return _bounds; }
 
 double Mesh::GetDistanceToOrigin( unsigned idx_cell ) const {
     double distance = 0.0;
@@ -453,5 +465,3 @@ double Mesh::GetDistanceToOrigin( unsigned idx_cell ) const {
     }
     return sqrt( distance );
 }
-
-double Test( double a, double b ) { return FortSign( a, b ); }
