@@ -415,13 +415,13 @@ void Mesh::ReconstructSlopesU( unsigned nq, VectorVector& psiDerX, VectorVector&
 
                 // step 3: calculate Phi_ij at sample points
                 if( psiSample[j][k][l] > psi[j][k] ) {
-                    phiSample[j][k][l] = fmin( 1.0, dPsiMax[j][k] / ( psiSample[j][k][l] - psi[j][k] ) );
+                    phiSample[j][k][l] = fmin( 0.5, dPsiMax[j][k] / ( psiSample[j][k][l] - psi[j][k] ) );
                 }
                 else if( psiSample[j][l][k] < psi[j][k] ) {
-                    phiSample[j][k][l] = fmin( 1.0, dPsiMin[j][k] / ( psiSample[j][k][l] - psi[j][k] ) );
+                    phiSample[j][k][l] = fmin( 0.5, dPsiMin[j][k] / ( psiSample[j][k][l] - psi[j][k] ) );
                 }
                 else {
-                    phiSample[j][k][l] = 1.0;
+                    phiSample[j][k][l] = 0.5;
                 }
             }
 
