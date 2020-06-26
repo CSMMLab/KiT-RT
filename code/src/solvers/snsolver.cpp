@@ -57,15 +57,17 @@ void SNSolver::Solve() {
                     psiNew[idx_cell] += _dE * _Q[idx_energy][idx_cell];
             }
         }
-        _psi = psiNew;
+        _psi        = psiNew;
+        double mass = 0.0;
         for( unsigned i = 0; i < _nCells; ++i ) {
             fluxNew[i]       = dot( _psi[i], _weights );
             _solverOutput[i] = fluxNew[i];
+            mass += fluxNew[i];
         }
-        // Save( n );
+        Save( idx_energy );
         dFlux   = blaze::l2Norm( fluxNew - fluxOld );
         fluxOld = fluxNew;
-        if( rank == 0 ) log->info( "{:03.8f}   {:01.5e}", _energies[idx_energy], dFlux );
+        if( rank == 0 ) log->info( "{:03.8f}   {:01.5e} {:01.5e}", _energies[idx_energy], dFlux, mass );
     }
 }
 

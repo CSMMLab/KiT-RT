@@ -52,14 +52,23 @@ Solver::Solver( Config* settings ) : _settings( settings ) {
 }
 
 double Solver::ComputeTimeStep( double cfl ) const {
-    double minEdge = 100000.0;
-    for( unsigned j = 0; j < _nCells; ++j ) {
-        for( unsigned l = 0; l < _normals[j].size(); ++l ) {
+    double maxEdge = -1.0;
+    for( unsigned j = 0; j < _nCells; j++ ) {
+        for( unsigned l = 0; l < _normals[j].size(); l++ ) {
             double currentEdge = _areas[j] / norm( _normals[j][l] );
-            if( currentEdge < minEdge ) minEdge = currentEdge;
+            if( currentEdge > maxEdge ) maxEdge = currentEdge;
         }
     }
-    return cfl * minEdge;
+    return cfl * maxEdge;
+
+    // double minEdge = 100000.0;
+    // for( unsigned j = 0; j < _nCells; ++j ) {
+    //    for( unsigned l = 0; l < _normals[j].size(); ++l ) {
+    //        double currentEdge = _areas[j] / norm( _normals[j][l] );
+    //        if( currentEdge < minEdge ) minEdge = currentEdge;
+    //    }
+    //}
+    // return cfl * minEdge;
 }
 
 Solver* Solver::Create( Config* settings ) {
