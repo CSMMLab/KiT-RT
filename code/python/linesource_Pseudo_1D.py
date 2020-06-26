@@ -12,15 +12,21 @@ def add_block(x0,y0,lengthX, lengthY,char_length,geom):
     ])
     return geom.add_polygon(coords, char_length)
 
-char_length = 0.015
+char_length = 0.1
 geom = pg.opencascade.Geometry()
-domain = add_block(-10, -1, 20,2, char_length, geom)
+domain = add_block(-1, -3, 2,6, char_length, geom)
 #geom.add_raw_code('psource = newp;\nPoint(psource) = {0.0, 0.0, 0.0, '+str(char_length)+'};\nPoint{psource} In Surface{'+domain.id+'};')
 
-geom.add_physical(domain.lines[0], label="adiabatic")
-geom.add_physical(domain.lines[1], label="void")
-geom.add_physical(domain.lines[2], label="adiabatic")
-geom.add_physical(domain.lines[3], label="void")
+adiabatic = list()
+void = list()
+adiabatic.append(domain.lines[0])
+adiabatic.append(domain.lines[2])
+
+void.append(domain.lines[1])
+void.append(domain.lines[3])
+
+geom.add_physical(adiabatic, label="adiabatic")
+geom.add_physical(void, label="void")
 
 mesh_code = geom.get_code()
 with open("linesource_pseudo_1D.geo","w") as mesh_file:
