@@ -295,4 +295,3 @@ VectorVector Physics::ReadStoppingPowers( std::string fileName ) {
 
     return stp_powers;
 }
-

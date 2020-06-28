@@ -1,18 +1,8 @@
 #ifndef PHYSICS_H
 #define PHYSICS_H
 
-// include Matrix, Vector definitions
-#include "math.h"
-#include "settings/config.h"
 #include "settings/typedef.h"
-#include "spline.h"
-
-#include <blaze/Blaze.h>
-#include <boost/foreach.hpp>
-#include <boost/range/combine.hpp>
-#include <fstream>
 #include <list>
-#include <tuple>
 
 class Physics
 {
