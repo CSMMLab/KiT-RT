@@ -20,13 +20,30 @@ QuadratureBase* QuadratureBase::CreateQuadrature( QUAD_NAME name, unsigned order
 }
 
 double QuadratureBase::Integrate( double( f )( double x0, double x1, double x2 ) ) {
-    double result = 0;
+    double result = 0.0;
     for( unsigned i = 0; i < _nq; i++ ) {
         double x = _points[i][0];
         double y = _points[i][1];
         double z = _points[i][2];
         double w = _weights[i];
         result += w * f( x, y, z );
+    }
+    return result;
+}
+
+std::vector<double> QuadratureBase::Integrate( std::vector<double>( f )( double x0, double x1, double x2 ), unsigned len ) {
+    std::vector<double> result( len, 0.0 );
+    std::vector<double> funcEval( len, 0.0 );
+
+    for( unsigned i = 0; i < _nq; i++ ) {
+        double x = _points[i][0];
+        double y = _points[i][1];
+        double z = _points[i][2];
+        double w = _weights[i];
+        funcEval = f( x, y, z );
+        for( unsigned idx_len = 0; idx_len < len; idx_len++ ) {
+            result[idx_len] += w * funcEval[idx_len];
+        }
     }
     return result;
 }

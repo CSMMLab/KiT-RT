@@ -1,7 +1,7 @@
 /*!
- * \file CConfig.h
- * \brief Classes for different Options in rtsn
- * \author S. Schotthoefer
+ * @file CConfig.h
+ * @brief Classes for different Options in rtsn
+ * @author S. Schotthöfer
  *
  * Disclaimer: This class structure was copied and modifed with open source permission from SU2 v7.0.3 https://su2code.github.io/
  */
@@ -51,10 +51,11 @@ class Config
     unsigned _nCells;
 
     // Solver
-    double _CFL;               /*!< @brief CFL Number for Solver*/
-    double _tEnd;              /*!< @brief Final Time for Simulation */
-    PROBLEM_NAME _problemName; /*!< @brief Name of predefined Problem   */
-    SOLVER_NAME _solverName;   /*!< @brief Name of the used Solver */
+    double _CFL;                     /*!< @brief CFL Number for Solver*/
+    double _tEnd;                    /*!< @brief Final Time for Simulation */
+    PROBLEM_NAME _problemName;       /*!< @brief Name of predefined Problem   */
+    SOLVER_NAME _solverName;         /*!< @brief Name of the used Solver */
+    unsigned short _maxMomentDegree; /*!< @brief Maximal Order of Moments for PN and MN Solver */
 
     /*!< @brief If true, very low entries (10^-10 or smaller) of the flux matrices will be set to zero,
      * to improve floating point accuracy */
@@ -202,6 +203,7 @@ class Config
     unsigned GetNCells() { return _nCells; }
 
     // Solver Structure
+    unsigned short inline GetMaxMomentDegree() const { return _maxMomentDegree; }
     double inline GetCFL() const { return _CFL; }
     double inline GetTEnd() const { return _tEnd; }
     PROBLEM_NAME inline GetProblemName() const { return _problemName; }

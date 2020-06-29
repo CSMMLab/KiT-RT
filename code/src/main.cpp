@@ -5,6 +5,11 @@
 
 #include "settings/config.h"
 
+#include "solvers/sphericalharmonics.h"
+#include <fstream>
+#include <iostream>
+#include <string>
+
 int main( int argc, char** argv ) {
     MPI_Init( &argc, &argv );
 

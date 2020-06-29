@@ -30,7 +30,7 @@ class Solver
     VectorVector _sigmaT;                             // total cross section for all energies
     std::vector<VectorVector> _Q;                     // external source term
     Matrix _scatteringKernel;                         // scattering kernel for the quadrature
-    VectorVector _quadPoints;                         // quadrature points, dim(_quadPoints) = (_nTimeSteps,spatialDim)
+    VectorVector _quadPoints;                         // quadrature points, dim(_quadPoints) = (_nSystem,spatialDim)
     Vector _weights;                                  // quadrature weights, dim(_weights) = (_NCells)
     std::vector<BOUNDARY_TYPE> _boundaryCells;        // boundary type for all cells, dim(_boundary) = (_NCells)
     std::vector<double> _solverOutput;                // PROTOTYPE: Outputfield for solver
@@ -54,6 +54,8 @@ class Solver
      * @param settings stores all needed information
      */
     Solver( Config* settings );
+
+    ~Solver();
 
     /**
      * @brief Create constructor

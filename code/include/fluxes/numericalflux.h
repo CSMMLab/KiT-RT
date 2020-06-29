@@ -34,16 +34,15 @@ class NumericalFlux
      * @param resultFlux: Vector with resulting flux.
      * @return          : void
      */
-    virtual void Flux( const Matrix& AxPlus,
-                       const Matrix& AxMinus,
-                       const Matrix& AyPlus,
-                       const Matrix& AyMinus,
-                       const Matrix& AzPlus,
-                       const Matrix& AzMinus,
-                       const Vector&,
-                       const Vector&,
-                       const Vector& n,
-                       Vector& resultFlux ) const = 0;
+    virtual Vector Flux( const Matrix AxPlus,
+                         const Matrix AxMinus,
+                         const Matrix AyPlus,
+                         const Matrix AyMinus,
+                         const Matrix AzPlus,
+                         const Matrix AzMinus,
+                         const Vector,
+                         const Vector,
+                         const Vector n ) const = 0;
 
     virtual void FluxVanLeer( const Matrix& Ax,
                               const Matrix& AxAbs,
