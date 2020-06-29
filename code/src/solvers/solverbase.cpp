@@ -3,6 +3,7 @@
 #include "mesh.h"
 #include "quadratures/quadraturebase.h"
 #include "settings/globalconstants.h"
+#include "solvers/mnsolver.h"
 #include "solvers/pnsolver.h"
 #include "solvers/snsolver.h"
 
@@ -71,6 +72,7 @@ Solver* Solver::Create( Config* settings ) {
     switch( settings->GetSolverName() ) {
         case SN_SOLVER: return new SNSolver( settings );
         case PN_SOLVER: return new PNSolver( settings );
+        case MN_SOLVER: return new MNSolver( settings );
         default: return new SNSolver( settings );
     }
 }

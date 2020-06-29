@@ -1,8 +1,6 @@
 #ifndef SNSOLVER_H
 #define SNSOLVER_H
 
-#include <mpi.h>
-
 #include "solvers/solverbase.h"
 
 class SNSolver : public Solver

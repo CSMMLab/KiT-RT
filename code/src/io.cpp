@@ -279,7 +279,7 @@ std::string ParseArguments( int argc, char* argv[] ) {
             inputFile = std::string( argv[i] );
             std::ifstream f( inputFile );
             if( !f.is_open() ) {
-                ErrorMessages::OptionNotSetError( "Unable to open inputfile '" + inputFile + "' !", CURRENT_FUNCTION );
+                ErrorMessages::Error( "Unable to open inputfile '" + inputFile + "' !", CURRENT_FUNCTION );
             }
         }
     }

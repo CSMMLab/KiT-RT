@@ -1,4 +1,5 @@
 #include "solvers/snsolver.h"
+#include <mpi.h>
 
 SNSolver::SNSolver( Config* settings ) : Solver( settings ) {}
 

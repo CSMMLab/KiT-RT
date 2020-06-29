@@ -4,7 +4,7 @@
 #include "solverbase.h"
 #include "sphericalharmonics.h"
 
-class MNSolver : Solver
+class MNSolver : public Solver
 {
   public:
     /**
@@ -20,6 +20,8 @@ class MNSolver : Solver
      * @brief Solve functions runs main time loop
      */
     void Solve() override;
+    void Save() const override;                 /*! @brief Save Output solution to VTK file */
+    void Save( int currEnergy ) const override; /*! @brief Save Output solution at given energy (pseudo time) to VTK file */
 
   private:
     unsigned _nTotalEntries;          /*! @brief: Total number of equations in the system */

@@ -1,4 +1,6 @@
 #include "solvers/mnsolver.h"
+#include "toolboxes/textprocessingtoolbox.h"
+#include <mpi.h>
 
 MNSolver::MNSolver( Config* settings ) : Solver( settings ), _nMaxMomentsOrder( settings->GetMaxMomentDegree() ), _basis( _nMaxMomentsOrder ) {
     // Is this good (fast) code using a constructor list?
@@ -24,6 +26,7 @@ MNSolver::MNSolver( Config* settings ) : Solver( settings ), _nMaxMomentsOrder( 
 
     // Fill System Matrices
     ComputeSystemMatrices();
+    TextProcessingToolbox::PrintVectorVector( _A );
 }
 
 MNSolver::~MNSolver() { delete _quadrature; }
@@ -143,4 +146,24 @@ void MNSolver::Solve() {
         fluxOld = fluxNew;
         if( rank == 0 ) log->info( "{:03.8f}   {:01.5e}", _energies[idx_energy], dFlux );
     }
+}
+
+void MNSolver::Save() const {
+    std::vector<std::string> fieldNames{ "flux" };
+    std::vector<double> flux;
+    flux.resize( _nCells );
+
+    for( unsigned i = 0; i < _nCells; ++i ) {
+        flux[i] = _psi[i][0];
+    }
+    std::vector<std::vector<double>> scalarField( 1, flux );
+    std::vector<std::vector<std::vector<double>>> results{ scalarField };
+    ExportVTK( _settings->GetOutputFile(), results, fieldNames, _mesh );
+}
+
+void MNSolver::Save( int currEnergy ) const {
+    std::vector<std::string> fieldNames{ "flux" };
+    std::vector<std::vector<double>> scalarField( 1, _solverOutput );
+    std::vector<std::vector<std::vector<double>>> results{ scalarField };
+    ExportVTK( _settings->GetOutputFile() + "_" + std::to_string( currEnergy ), results, fieldNames, _mesh );
 }

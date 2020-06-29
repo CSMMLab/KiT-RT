@@ -49,8 +49,8 @@ enum KERNEL_NAME { KERNEL_Isotropic };
 inline std::map<std::string, KERNEL_NAME> Kernel_Map{ { "ISOTROPIC", KERNEL_Isotropic } };
 
 // Solver name
-enum SOLVER_NAME { SN_SOLVER, PN_SOLVER };
+enum SOLVER_NAME { SN_SOLVER, PN_SOLVER, MN_SOLVER };
 
-inline std::map<std::string, SOLVER_NAME> Solver_Map{ { "SN_SOLVER", SN_SOLVER }, { "PN_SOLVER", PN_SOLVER } };
+inline std::map<std::string, SOLVER_NAME> Solver_Map{ { "SN_SOLVER", SN_SOLVER }, { "PN_SOLVER", PN_SOLVER }, { "MN_SOLVER", MN_SOLVER } };
 
 #endif    // GLOBAL_CONSTANTS_H
