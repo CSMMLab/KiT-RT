@@ -38,33 +38,33 @@ PNSolver::PNSolver( Config* settings ) : Solver( settings ) {
     // Fill System Matrices
     ComputeSystemMatrices();
 
-    std::cout << "System Matrix Set UP!" << std::endl;
+    // std::cout << "System Matrix Set UP!" << std::endl;
     // Compute Decomposition in positive and negative (eigenvalue) parts of flux jacobians
     ComputeFluxComponents();
 
     // Compute diagonal of the scatter matrix (it's a diagonal matrix)
     ComputeScatterMatrix();
 
-    std::cout << "scatterMatrix : " << _scatterMatDiag << "\n";
+    // std::cout << "scatterMatrix : " << _scatterMatDiag << "\n";
 
     // AdaptTimeStep();
 
     if( settings->GetCleanFluxMat() ) CleanFluxMatrices();
 
-    std::cout << "--------\n";
-    std::cout << "_Ax :\n" << _Ax << "\n ";    // _AxP \n" << _AxPlus << "\n _AxM \n" << _AxMinus << "\n";
-    std::cout << "_Ay :\n" << _Ay << "\n ";    //_AyP \n" << _AyPlus << "\n _AyM \n" << _AyMinus << "\n";
-    std::cout << "_Az :\n" << _Az << "\n ";    //_AzP \n" << _AzPlus << "\n _AzM \n" << _AzMinus << "\n";
-
-    std::cout << "_AxPlus :\n" << _AxPlus << "\n ";    // _AxP \n" << _AxPlus << "\n _AxM \n" << _AxMinus << "\n";
-    std::cout << "_AyPlus :\n" << _AyPlus << "\n ";    //_AyP \n" << _AyPlus << "\n _AyM \n" << _AyMinus << "\n";
-    std::cout << "_AzPlus :\n" << _AzPlus << "\n ";
-
-    std::cout << "_AxMinus :\n" << _AxMinus << "\n ";    // _AxP \n" << _AxPlus << "\n _AxM \n" << _AxMinus << "\n";
-    std::cout << "_AyMinus :\n" << _AyMinus << "\n ";    //_AyP \n" << _AyPlus << "\n _AyM \n" << _AyMinus << "\n";
-    std::cout << "_AzMinus :\n" << _AzMinus << "\n ";
-
-    std::cout << "_nCells: " << _nCells << "\n";
+    // std::cout << "--------\n";
+    // std::cout << "_Ax :\n" << _Ax << "\n ";    // _AxP \n" << _AxPlus << "\n _AxM \n" << _AxMinus << "\n";
+    // std::cout << "_Ay :\n" << _Ay << "\n ";    //_AyP \n" << _AyPlus << "\n _AyM \n" << _AyMinus << "\n";
+    // std::cout << "_Az :\n" << _Az << "\n ";    //_AzP \n" << _AzPlus << "\n _AzM \n" << _AzMinus << "\n";
+    //
+    // std::cout << "_AxPlus :\n" << _AxPlus << "\n ";    // _AxP \n" << _AxPlus << "\n _AxM \n" << _AxMinus << "\n";
+    // std::cout << "_AyPlus :\n" << _AyPlus << "\n ";    //_AyP \n" << _AyPlus << "\n _AyM \n" << _AyMinus << "\n";
+    // std::cout << "_AzPlus :\n" << _AzPlus << "\n ";
+    //
+    // std::cout << "_AxMinus :\n" << _AxMinus << "\n ";    // _AxP \n" << _AxPlus << "\n _AxM \n" << _AxMinus << "\n";
+    // std::cout << "_AyMinus :\n" << _AyMinus << "\n ";    //_AyP \n" << _AyPlus << "\n _AyM \n" << _AyMinus << "\n";
+    // std::cout << "_AzMinus :\n" << _AzMinus << "\n ";
+    //
+    // std::cout << "_nCells: " << _nCells << "\n";
 }
 
 void PNSolver::Solve() {
@@ -151,13 +151,15 @@ void PNSolver::Solve() {
         for( unsigned i = 0; i < _nCells; ++i ) {
             fluxNew[i]       = _psi[i][0];    // zeroth moment is raditation densitiy we are interested in
             _solverOutput[i] = _psi[i][0];
-            mass += _psi[i][0];
+            mass += _psi[i][0] * _areas[i];
         }
 
         dFlux   = blaze::l2Norm( fluxNew - fluxOld );
         fluxOld = fluxNew;
-        if( rank == 0 ) log->info( "{:03.8f}   {:01.5e} {:01.5e}", _energies[idx_energy], dFlux, mass );
-
+        if( rank == 0 ) {
+            // std::cout << "PseudoTime: " << _energies[idx_energy] << " | Flux Change: " << dFlux << " | Mass: " << mass << "\n";
+            log->info( "{:03.8f}   {:01.5e} {:01.5e}", _energies[idx_energy], dFlux, mass );
+        }
         Save( idx_energy );
     }
 }
@@ -322,16 +324,16 @@ void PNSolver::ComputeFluxComponents() {
     }
 
     // Compute Spectral Radius
-    std::cout << "Eigenvalues x direction " << eigenValuesX << "\n";
-    std::cout << "Eigenvalues y direction " << eigenValuesY << "\n";
-    std::cout << "Eigenvalues z direction " << eigenValues << "\n";
-
-    std::cout << "Spectral Radius X " << blaze::max( blaze::abs( eigenValuesX ) ) << "\n";
-    std::cout << "Spectral Radius Y " << blaze::max( blaze::abs( eigenValuesY ) ) << "\n";
-    std::cout << "Spectral Radius Z " << blaze::max( blaze::abs( eigenValues ) ) << "\n";
+    // std::cout << "Eigenvalues x direction " << eigenValuesX << "\n";
+    // std::cout << "Eigenvalues y direction " << eigenValuesY << "\n";
+    // std::cout << "Eigenvalues z direction " << eigenValues << "\n";
+    //
+    // std::cout << "Spectral Radius X " << blaze::max( blaze::abs( eigenValuesX ) ) << "\n";
+    // std::cout << "Spectral Radius Y " << blaze::max( blaze::abs( eigenValuesY ) ) << "\n";
+    // std::cout << "Spectral Radius Z " << blaze::max( blaze::abs( eigenValues ) ) << "\n";
 
     _combinedSpectralRadius = blaze::max( blaze::abs( eigenValues + eigenValuesX + eigenValuesY ) );
-    std::cout << "Spectral Radius combined " << _combinedSpectralRadius << "\n";
+    // std::cout << "Spectral Radius combined " << _combinedSpectralRadius << "\n";
 }
 
 void PNSolver::ComputeScatterMatrix() {
@@ -372,7 +374,7 @@ void PNSolver::Save() const {
     }
     std::vector<std::vector<double>> scalarField( 1, flux );
     std::vector<std::vector<std::vector<double>>> results{ scalarField };
-    ExportVTK( _settings->GetOutputFile() + "_" + std::to_string( _nEnergies ), results, fieldNames, _mesh );
+    ExportVTK( _settings->GetOutputFile(), results, fieldNames, _mesh );
 }
 
 void PNSolver::Save( int currEnergy ) const {

@@ -25,6 +25,8 @@ Solver::Solver( Config* settings ) : _settings( settings ) {
     _settings->SetNQuadPoints( _nq );
     ScatteringKernel* k = ScatteringKernel::CreateScatteringKernel( settings->GetKernelName(), quad );
     _scatteringKernel   = k->GetScatteringKernel();
+    // delete QuadratureBase
+    delete quad;
 
     // set time step
     _dE        = ComputeTimeStep( settings->GetCFL() );
@@ -47,6 +49,11 @@ Solver::Solver( Config* settings ) : _settings( settings ) {
 
     // Solver Output
     _solverOutput.resize( _nCells );    // Currently only Flux
+}
+
+Solver::~Solver() {
+    delete _mesh;
+    delete _problem;
 }
 
 double Solver::ComputeTimeStep( double cfl ) const {

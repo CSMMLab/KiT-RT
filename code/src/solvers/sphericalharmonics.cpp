@@ -22,9 +22,23 @@ std::vector<double> SphericalHarmonics::ComputeSphericalBasis( double my, double
     return _YBasis;
 }
 
+std::vector<double> SphericalHarmonics::ComputeSphericalBasis( double x, double y, double z ) {
+
+    // transform (x,y,z) into (my,phi)
+    double my  = z;
+    double phi = 0.0;
+    if( y >= 0 )
+        phi = acos( x );
+    else
+        phi = acos( -x ) + M_PI;
+
+    ComputeAssLegendrePoly( my );
+    ComputeYBasis( phi );
+    return _YBasis;
+}
+
 void SphericalHarmonics::ComputeCoefficients() {
     // m in paper is here denoted by k
-
     double ls   = 0.0;    // l^2
     double lm1s = 0.0;    // (l-1)^2
     double ks   = 0.0;    // k^2
@@ -32,8 +46,7 @@ void SphericalHarmonics::ComputeCoefficients() {
         ls   = l_idx * l_idx;
         lm1s = ( l_idx - 1 ) * ( l_idx - 1 );
         for( unsigned k_idx = 0; k_idx < l_idx - 1; k_idx++ ) {
-            ks = k_idx * k_idx;
-
+            ks                                             = k_idx * k_idx;
             _aParam[GlobalIdxAssLegendreP( l_idx, k_idx )] = std::sqrt( ( 4 * ls - 1. ) / ( ls - ks ) );
             _bParam[GlobalIdxAssLegendreP( l_idx, k_idx )] = -std::sqrt( ( lm1s - ks ) / ( 4 * lm1s - 1. ) );
         }

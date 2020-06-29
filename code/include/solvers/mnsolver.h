@@ -1,8 +1,8 @@
 #ifndef MNSOLVER_H
 #define MNSOLVER_H
 
-#include <pnsolver.h>
-#include <sphericalharmonics.h>
+#include "solverbase.h"
+#include "sphericalharmonics.h"
 
 class MNSolver : Solver
 {
@@ -13,37 +13,24 @@ class MNSolver : Solver
      */
     MNSolver( Config* settings );
 
+    /*! @brief MNSolver destructor */
+    ~MNSolver();
+
     /**
      * @brief Solve functions runs main time loop
      */
     void Solve() override;
 
   private:
-    /*! @brief: Total number of equations in the system */
-    unsigned _nTotalEntries;
-    /*! @brief: Max Order of Moments */
-    unsigned short _nMaxMomentsOrder;
+    unsigned _nTotalEntries;          /*! @brief: Total number of equations in the system */
+    unsigned short _nMaxMomentsOrder; /*! @brief: Max Order of Moments */
 
-    /*! @brief: Absorbtion coefficient for all energies */
-    VectorVector _sigmaA;
-
-    /*! @brief: Class to compute and store current spherical harmonics basis */
-    SphericalHarmonics _basis;
-
-    /*! @brief: Diagonal of the scattering matrix (its a diagonal matrix by construction) */
-    Vector _scatterMatDiag;
-
-    /*! @brief: Diagonals of the system matrices  (each sysmatric is a diagonal matrix by construction)
-                layout: Nx2 (in 2d), N = size of system */
-    VectorVector _A;
-    ///*! @brief: Diagonal of the system matrix in x direction (its a diagonal matrix by construction) */
-    // Vector _Ax;
-    //
-    ///*! @brief: Diagonal of the system matrix in y direction (its a diagonal matrix by construction) */
-    // Vector _Ay;
-    //
-    ///*! @brief: Diagonal of the system matrix in z direction (its a diagonal matrix by construction) */
-    // Vector _Az;
+    VectorVector _sigmaA;        /*! @brief: Absorbtion coefficient for all energies */
+    SphericalHarmonics _basis;   /*! @brief: Class to compute and store current spherical harmonics basis */
+    Vector _scatterMatDiag;      /*! @brief: Diagonal of the scattering matrix (its a diagonal matrix by construction) */
+    VectorVector _A;             /*! @brief: Diagonals of the system matrices  (each sysmatric is a diagonal matrix by construction)
+                                             layout: Nx2 (in 2d), N = size of system */
+    QuadratureBase* _quadrature; /*! @brief: Quadrature rule to compute flux Jacobian */
 
     /*! @brief : computes the global index of the moment corresponding to basis function (l,k)
      *  @param : degree l, it must hold: 0 <= l <=_nq

@@ -30,6 +30,12 @@ class SphericalHarmonics
      */
     std::vector<double> ComputeSphericalBasis( double my, double phi );
 
+    /*! @brief  : Computes all N = L² +2L basis functions at point (x, y, z) on the unit sphere
+     *  @param  : x,y,z = coordinates on unit sphere
+     *  @return : vector of basis functions at point (x,y,z) with size N = L² +2L
+     */
+    std::vector<double> ComputeSphericalBasis( double x, double y, double z );
+
   private:
     /*! @brief: maximal degree of the spherical harmonics basis (this is "L" in the comments)*/
     unsigned _LMaxDegree;
