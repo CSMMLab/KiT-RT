@@ -1,6 +1,6 @@
 #include "solvers/mnsolver.h"
 
-MNSolver::MNSolver( Config* settings ) : Solver( settings ), _nMaxMomentsOrder( settings->GetMaxMomentOrder() ), _basis( _nMaxMomentsOrder ) {
+MNSolver::MNSolver( Config* settings ) : Solver( settings ), _nMaxMomentsOrder( settings->GetMaxMomentDegree() ), _basis( _nMaxMomentsOrder ) {
     // Is this good (fast) code using a constructor list?
 
     _nTotalEntries = GlobalIndex( _nMaxMomentsOrder, int( _nMaxMomentsOrder ) ) + 1;

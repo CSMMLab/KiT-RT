@@ -8,48 +8,45 @@
 class PNSolver : public Solver
 {
   public:
-    /**
-     * @brief PNSolver constructor
-     * @param settings stores all needed information
+    /*! @brief PNSolver constructor
+     *  @param settings stores all needed information
      */
     PNSolver( Config* settings );
-    /**
-     * @brief Solve functions runs main time loop
-     */
-    virtual void Solve() override;
-    /**
-     * @brief Output solution to VTK file
-     */
-    void Save() const override;
 
-    void Save( int currEnergy ) const override;
+    virtual void Solve() override;              /*! @brief Solve functions runs main time loop. (Run Solver) */
+    void Save() const override;                 /*! @brief Save Output solution to VTK file */
+    void Save( int currEnergy ) const override; /*! @brief Save Output solution at given energy (pseudo time) to VTK file */
 
   protected:
-    // moment orders for P_N
-    unsigned _nTotalEntries;    // total number of equations in the system
+    unsigned _nTotalEntries; /*! @brief: total number of equations in the system */
+    unsigned _LMaxDegree;    /*! @brief: maximal degree of the spherical harmonics basis*/
 
-    VectorVector _sigmaA;    // absorbtion coefficient for all energies
+    VectorVector _sigmaA; /*! @brief: Absorption coefficient for all energies*/
     // System Matrix for x, y and z flux
     //    ==> not needed after computation of A+ and A- ==> maybe safe only temporarly and remove as member?
-    SymMatrix _Ax;
-    SymMatrix _Ay;
-    SymMatrix _Az;
+    SymMatrix _Ax; /*! @brief:  Flux Jacbioan in x direction */
+    SymMatrix _Ay; /*! @brief:  Flux Jacbioan in x direction */
+    SymMatrix _Az; /*! @brief:  Flux Jacbioan in x direction */
 
     // Upwinding Matrices
-    Matrix _AxPlus;
-    Matrix _AxMinus;
-    Matrix _AxAbs;
-    Matrix _AyPlus;
-    Matrix _AyMinus;
-    Matrix _AyAbs;
-    Matrix _AzPlus;
-    Matrix _AzMinus;
-    Matrix _AzAbs;
-    double _combinedSpectralRadius;
+    Matrix _AxPlus;  /*! @brief:  Flux Jacbioan in x direction, positive part */
+    Matrix _AxMinus; /*! @brief:  Flux Jacbioan in x direction, negative part */
+    Matrix _AxAbs;   /*! @brief:  Flux Jacbioan in x direction, absolute part */
+    Matrix _AyPlus;  /*! @brief:  Flux Jacbioan in y direction, positive part */
+    Matrix _AyMinus; /*! @brief:  Flux Jacbioan in y direction, negative part */
+    Matrix _AyAbs;   /*! @brief:  Flux Jacbioan in y direction, absolute part */
+    Matrix _AzPlus;  /*! @brief:  Flux Jacbioan in z direction, positive part */
+    Matrix _AzMinus; /*! @brief:  Flux Jacbioan in z direction, negative part */
+    Matrix _AzAbs;   /*! @brief:  Flux Jacbioan in z direction, absolute part */
 
-    Vector _scatterMatDiag;    // diagonal of the scattering matrix (its a diagonal matrix by construction)
+    // double _combinedSpectralRadius; /*! @brief:  Combined spectral radius of sum of flux jacobians*/
 
-    // parameter functions for setting up system matrix
+    Vector _scatterMatDiag; /*! @brief: diagonal of the scattering matrix (its a diagonal matrix by construction) */
+
+    /*! @brief: parameter functions for setting up system matrix
+     *  @param: degree l, it must hold: 0 <= l <=_nq
+     *  @param : order k, it must hold: -l <=k <= l
+     */
     double AParam( int l, int k ) const;
     double BParam( int l, int k ) const;
     double CParam( int l, int k ) const;
@@ -62,7 +59,9 @@ class PNSolver : public Solver
     double ETilde( int l, int k ) const;
     double FTilde( int l, int k ) const;
 
-    // mathematical + index functions
+    /*! @brief: mathematical + index functions. Helper functions for setting up system matrix.
+     *  @param: k: arbitrary integer
+     */
     int Sgn( int k ) const;
     int kPlus( int k ) const;
     int kMinus( int k ) const;
@@ -79,16 +78,18 @@ class PNSolver : public Solver
      */
     bool CheckIndex( int l, int k ) const;
 
-    // function for computing and setting up system matrices
+    /*! @brief: function for computing and setting up system matrices */
     void ComputeSystemMatrices();
-    // function for computing and setting up flux matrices for upwinding
+    /*! @brief:  function for computing and setting up flux matrices for upwinding */
     void ComputeFluxComponents();
-    // fucntion for computing and setting up diagonal matrix for scattering kernel
+    /*! @brief:  fucntion for computing and setting up diagonal matrix for scattering kernel */
     void ComputeScatterMatrix();
-    // Computes Legedre polinomial of oder l at point x
+    /*! @brief:  Computes Legedre polinomial of oder l at point x */
     double LegendrePoly( double x, int l );
-    // Sets Entries of FluxMatrices to zero, if they are below double accuracy, to prevent floating point
-    // inaccuracies lateron
+
+    /*! @brief: Sets Entries of FluxMatrices to zero, if they are below double precision,
+     *          to prevent floating point inaccuracies later in the solver
+     */
     void CleanFluxMatrices();
 };
 

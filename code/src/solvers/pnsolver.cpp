@@ -5,7 +5,8 @@
 #include <mpi.h>
 
 PNSolver::PNSolver( Config* settings ) : Solver( settings ) {
-    _nTotalEntries = GlobalIndex( _nq, int( _nq ) ) + 1;
+    _LMaxDegree    = settings->GetMaxMomentDegree();
+    _nTotalEntries = GlobalIndex( int( _LMaxDegree ), int( _LMaxDegree ) ) + 1;
 
     // transform sigmaT and sigmaS in sigmaA.
     _sigmaA = VectorVector( _nEnergies, Vector( _nCells, 0 ) );    // Get rid of this extra vektor!
@@ -332,7 +333,7 @@ void PNSolver::ComputeFluxComponents() {
     // std::cout << "Spectral Radius Y " << blaze::max( blaze::abs( eigenValuesY ) ) << "\n";
     // std::cout << "Spectral Radius Z " << blaze::max( blaze::abs( eigenValues ) ) << "\n";
 
-    _combinedSpectralRadius = blaze::max( blaze::abs( eigenValues + eigenValuesX + eigenValuesY ) );
+    // _combinedSpectralRadius = blaze::max( blaze::abs( eigenValues + eigenValuesX + eigenValuesY ) );
     // std::cout << "Spectral Radius combined " << _combinedSpectralRadius << "\n";
 }
 
@@ -463,7 +464,7 @@ int PNSolver::GlobalIndex( int l, int k ) const {
 }
 
 bool PNSolver::CheckIndex( int l, int k ) const {
-    if( l >= 0 && l <= int( _nq ) ) {
+    if( l >= 0 && l <= int( _LMaxDegree ) ) {
         if( k >= -l && k <= l ) return true;
     }
     return false;
