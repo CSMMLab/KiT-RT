@@ -104,11 +104,11 @@ void MNSolver::Solve() {
     double dFlux        = 1e10;
     Vector fluxNew( _nCells, 0.0 );
     Vector fluxOld( _nCells, 0.0 );
-    unsigned idx_system = 0;
-    double mass1        = 0;
+
+    double mass1 = 0;
     for( unsigned i = 0; i < _nCells; ++i ) {
         _solverOutput[i] = _psi[i][0];
-        mass1 += _psi[i][0];
+        mass1 += _psi[i][0] * _areas[i];
     }
 
     if( rank == 0 ) log->info( "{:10}   {:10}", "t", "dFlux" );
