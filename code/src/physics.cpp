@@ -1,6 +1,4 @@
 #include "physics.h"
-using namespace std;
-using blaze::CompressedVector;
 
 #include "toolboxes/errormessages.h"
 #include <fstream>
@@ -8,7 +6,6 @@ using blaze::CompressedVector;
 #include <string>
 
 Physics::Physics() {
-    ;
     // LoadDatabase
 }
 
@@ -22,21 +19,17 @@ void Physics::LoadDatabase( std::string fileName_H, std::string fileName_O, std:
     VectorVector total_scat_XS_H;
     VectorVector total_scat_XS_O;
 
-    VectorVector header;
-    VectorVector data;
-    std::list<VectorVector> headers_H;
-    std::list<VectorVector> data_H;
-    std::list<VectorVector> headers_O;
-    std::list<VectorVector> data_O;
+    std::vector<VectorVector> headers_H;
+    std::vector<VectorVector> data_H;
+    std::vector<VectorVector> headers_O;
+    std::vector<VectorVector> data_O;
 
     // Read data for H
-    auto endlData = ReadENDL( fileName_H );
-    headers_H     = std::get<0>( endlData );
-    data_H        = std::get<1>( endlData );
+    std::tie( headers_H, data_H ) = ReadENDL( fileName_H );
 
-    // Find required quantities and transfer to matrix
-    BOOST_FOREACH( boost::tie( header, data ), boost::combine( headers_H, data_H ) ) {
-        // Integrated elastic transport XS
+    for( unsigned i = 0; i < headers_H.size(); ++i ) {
+        auto header = headers_H[i];
+        auto data   = data_H[i];
         if( header[1][0] == 7 && header[1][1] == 0 ) {
             transport_XS_H = data;
         }
@@ -51,24 +44,22 @@ void Physics::LoadDatabase( std::string fileName_H, std::string fileName_O, std:
     }
 
     // Read data for O
-    endlData  = ReadENDL( fileName_O );
-    headers_O = std::get<0>( endlData );
-    data_O    = std::get<1>( endlData );
+    std::tie( headers_O, data_O ) = ReadENDL( fileName_O );
 
     // Find required quantities and transfer to matrix
-    BOOST_FOREACH( boost::tie( header, data ), boost::combine( headers_O, data_O ) ) {
-
-        // Integrated elastic transport XS
+    for( unsigned i = 0; i < headers_H.size(); ++i ) {
+        auto header = headers_O[i];
+        auto data   = data_O[i];
         if( header[1][0] == 7 && header[1][1] == 0 ) {
-            transport_XS_O = data;
+            transport_XS_H = data;
         }
         // Integrated elastic scattering XS
         else if( header[1][0] == 10 && header[1][1] == 0 ) {
-            total_scat_XS_O = data;
+            total_scat_XS_H = data;
         }
         // Angular distribution large angle elastic scattering XS
         else if( header[1][0] == 8 && header[1][1] == 22 ) {
-            scattering_XS_O = data;
+            scattering_XS_H = data;
         }
     }
 
@@ -172,29 +163,29 @@ VectorVector Physics::GetTransportXS( Vector energies, Vector density ) {
 
 Physics* Physics::Create() { return new Physics(); }
 
-std::tuple<std::list<VectorVector>, std::list<VectorVector>> Physics::ReadENDL( std::string filename ) {
-    std::list<VectorVector> _headers;
-    std::list<VectorVector> _data;
+std::tuple<std::vector<VectorVector>, std::vector<VectorVector>> Physics::ReadENDL( std::string filename ) {
+    std::vector<VectorVector> _headers;
+    std::vector<VectorVector> _data;
 
     // open txt file
-    string text_line, option_name;
-    ifstream case_file;
-    vector<string> option_value;
+    std::string text_line, option_name;
+    std::ifstream case_file;
+    std::vector<std::string> option_value;
 
     /*--- Read the configuration file ---*/
 
-    case_file.open( filename, ios::in );
+    case_file.open( filename, std::ios::in );
 
     if( case_file.fail() ) {
         ErrorMessages::Error( "The ENDL file is missing!!", CURRENT_FUNCTION );
     }
 
-    map<string, bool> included_options;
+    std::map<std::string, bool> included_options;
 
     /*--- Parse the physics file and save the values ---*/
 
     // list of entries (dataLine) of a datapackage, later becomes one entry in the list _data;
-    list<Vector> dataPackList;
+    std::list<Vector> dataPackList;
     VectorVector headerPack( 2 );
 
     // indices
@@ -204,7 +195,7 @@ std::tuple<std::list<VectorVector>, std::list<VectorVector>> Physics::ReadENDL( 
     while( getline( case_file, text_line ) ) {
 
         std::stringstream ss( text_line );    // give line to stringstream
-        list<double> linelist;
+        std::list<double> linelist;
         for( double double_in; ss >> double_in; ) {    // parse line
             linelist.push_back( double_in );
         }
@@ -264,12 +255,12 @@ std::tuple<std::list<VectorVector>, std::list<VectorVector>> Physics::ReadENDL( 
 
 VectorVector Physics::ReadStoppingPowers( std::string fileName ) {
     VectorVector stp_powers;
-    string text_line;
+    std::string text_line;
 
     std::vector<double> e, stp_power;
 
-    ifstream file_stream;
-    file_stream.open( fileName, ios::in );
+    std::ifstream file_stream;
+    file_stream.open( fileName, std::ios::in );
 
     if( file_stream.fail() ) {
         ErrorMessages::Error( "The Stopping Power file is missing!!", CURRENT_FUNCTION );
@@ -278,7 +269,7 @@ VectorVector Physics::ReadStoppingPowers( std::string fileName ) {
     while( getline( file_stream, text_line ) ) {
 
         std::stringstream ss( text_line );    // give line to stringstream
-        list<double> linelist;
+        std::list<double> linelist;
         for( double double_in; ss >> double_in; ) {    // parse line
             linelist.push_back( double_in );
         }
@@ -295,4 +286,3 @@ VectorVector Physics::ReadStoppingPowers( std::string fileName ) {
 
     return stp_powers;
 }
-

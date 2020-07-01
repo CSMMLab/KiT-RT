@@ -7,9 +7,6 @@
 #include "settings/typedef.h"
 #include "spline.h"
 
-#include <blaze/Blaze.h>
-#include <boost/foreach.hpp>
-#include <boost/range/combine.hpp>
 #include <fstream>
 #include <list>
 #include <tuple>
@@ -25,7 +22,7 @@ class Physics
 
   public:
     // prototype data readers
-    std::tuple<std::list<VectorVector>, std::list<VectorVector>> ReadENDL( std::string filename );
+    std::tuple<std::vector<VectorVector>, std::vector<VectorVector>> ReadENDL( std::string filename );
     VectorVector ReadStoppingPowers( std::string fileName );
 
     // load and prepare data from database
