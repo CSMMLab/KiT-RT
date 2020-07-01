@@ -11,7 +11,7 @@ ProblemBase* ProblemBase::Create( Config* settings, Mesh* mesh ) {
     auto name = settings->GetProblemName();
     switch( name ) {
         case PROBLEM_LineSource: {
-            if( settings->GetSolverName() == PN_SOLVER )
+            if( settings->GetSolverName() == PN_SOLVER || settings->GetSolverName() == MN_SOLVER )
                 return new LineSource_PN( settings, mesh );
             else
                 return new LineSource_SN( settings, mesh );    // default

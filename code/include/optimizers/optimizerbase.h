@@ -10,6 +10,8 @@ class OptimizerBase
   public:
     OptimizerBase( Config* settings );
 
+    virtual inline ~OptimizerBase() { delete _entropy; }
+
     static OptimizerBase* Create( Config* settings );
 
     /*! @brief  : Computes the optimal Lagrange multilpiers for the dual entropy minimization problem

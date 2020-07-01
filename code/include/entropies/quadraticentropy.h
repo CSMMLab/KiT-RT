@@ -7,17 +7,19 @@
 class QuadraticEntropy : public EntropyBase
 {
   public:
-    inline QuadraticEntropy() : EntropyBase(){};
+    inline QuadraticEntropy() : EntropyBase() {}
 
-    inline double Entropy( double z ) override { return 0.5 * z * z; };
+    inline ~QuadraticEntropy() {}
 
-    inline double EntropyPrime( double z ) override { return z; };
+    inline double Entropy( double z ) override { return 0.5 * z * z; }
 
-    inline double EntropyDual( double y ) override { return 0.5 * y * y; };
+    inline double EntropyPrime( double z ) override { return z; }
 
-    inline double EntropyPrimeDual( double y ) override { return y; };
+    inline double EntropyDual( double y ) override { return 0.5 * y * y; }
 
-    inline bool CheckDomain( double z ) override { return std::isnan( z ); };
+    inline double EntropyPrimeDual( double y ) override { return y; }
+
+    inline bool CheckDomain( double z ) override { return std::isnan( z ); }
 };
 
 #endif    // QUADRATICENTROPY_H

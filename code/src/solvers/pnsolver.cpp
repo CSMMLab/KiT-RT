@@ -88,8 +88,6 @@ void PNSolver::Solve() {
 
     Save( -1 );    // Save initial condition
 
-    VectorVector cellMids = _mesh->GetCellMidPoints();
-
     int rank;
 
     unsigned idx_system = 0;

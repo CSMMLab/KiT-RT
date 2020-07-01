@@ -6,7 +6,9 @@
 class EntropyBase
 {
   public:
-    inline EntropyBase(){};
+    inline EntropyBase() {}
+
+    virtual inline ~EntropyBase() {}
 
     static EntropyBase* Create( Config* settings );
 

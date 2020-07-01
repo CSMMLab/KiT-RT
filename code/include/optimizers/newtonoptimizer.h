@@ -6,7 +6,9 @@
 class NewtonOptimizer : public OptimizerBase
 {
   public:
-    inline NewtonOptimizer( Config* settings ) : OptimizerBase( settings ){};
+    inline NewtonOptimizer( Config* settings ) : OptimizerBase( settings ) {}
+
+    inline ~NewtonOptimizer() {}
 
     virtual Vector Solve( Vector u ) override;
 };

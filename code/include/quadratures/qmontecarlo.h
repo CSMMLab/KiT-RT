@@ -7,7 +7,7 @@ class QMonteCarlo : public QuadratureBase
 {
   public:
     QMonteCarlo( unsigned order );
-    virtual ~QMonteCarlo() {}
+    inline ~QMonteCarlo() {}
 
     inline void SetName() override { _name = "Monte Carlo Quadrature."; }
     inline void SetNq() override { _nq = GetOrder(); }

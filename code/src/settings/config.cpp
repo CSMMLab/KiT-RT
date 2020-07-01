@@ -192,7 +192,7 @@ void Config::SetConfigOptions() {
      * Config*/
     AddEnumOption( "QUAD_TYPE", _quadName, Quadrature_Map, QUAD_MonteCarlo );
     /*!\brief QUAD_ORDER \n DESCRIPTION: Order of Quadrature rule \n DEFAULT 2 \ingroup Config.*/
-    AddUnsignedShortOption( "QUAD_ORDER", _quadOrder, 2 );
+    AddUnsignedShortOption( "QUAD_ORDER", _quadOrder, 1 );
 
     // Solver related options
     /*! @brief MAX_MOMENT_ORDER \n: DESCRIPTON: Specifies the maximal order of Moments for PN and SN Solver */

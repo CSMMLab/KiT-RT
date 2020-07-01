@@ -6,7 +6,7 @@ MNSolver::MNSolver( Config* settings ) : Solver( settings ), _nMaxMomentsOrder( 
     // Is this good (fast) code using a constructor list?
 
     _nTotalEntries = GlobalIndex( _nMaxMomentsOrder, int( _nMaxMomentsOrder ) ) + 1;
-    _quadrature    = QuadratureBase::CreateQuadrature( settings->GetQuadName(), settings->GetQuadOrder() );
+    _quadrature    = QuadratureBase::CreateQuadrature( _settings->GetQuadName(), settings->GetQuadOrder() );
     // transform sigmaT and sigmaS in sigmaA.
     _sigmaA = VectorVector( _nEnergies, Vector( _nCells, 0 ) );    // Get rid of this extra vektor!
 
@@ -21,10 +21,12 @@ MNSolver::MNSolver( Config* settings ) : Solver( settings ), _nMaxMomentsOrder( 
     _scatterMatDiag    = Vector( _nTotalEntries, 1.0 );
     _scatterMatDiag[0] = 0.0;    // First entry is zero by construction.
 
-    // Initialize System Matrices
-    _A = VectorVector( _nTotalEntries );
+    // Initialize Entropy
+    _entropy = EntropyBase::Create( _settings );
 
-    _entropy = EntropyBase::Create( settings );
+    // Initialize Optimizer
+    _optimizer = OptimizerBase::Create( _settings );
+
     // Initialize lagrange Multipliers
     _alpha = VectorVector( _nCells );
     for( unsigned idx_cells = 0; idx_cells < _nTotalEntries; idx_cells++ ) {
@@ -32,35 +34,16 @@ MNSolver::MNSolver( Config* settings ) : Solver( settings ), _nMaxMomentsOrder( 
     }
 }
 
-MNSolver::~MNSolver() { delete _quadrature; }
+MNSolver::~MNSolver() {
+    delete _quadrature;
+    delete _entropy;
+    delete _optimizer;
+}
 
 int MNSolver::GlobalIndex( int l, int k ) const {
     int numIndicesPrevLevel  = l * l;    // number of previous indices untill level l-1
     int prevIndicesThisLevel = k + l;    // number of previous indices in current level
     return numIndicesPrevLevel + prevIndicesThisLevel;
-}
-
-void MNSolver::ComputeSystemMatrices() {
-
-    // Initialize entries of _A
-    for( unsigned idx_sys = 0; idx_sys < _nTotalEntries; idx_sys++ ) {
-        Vector entry( 2, 0.0 );
-        _A[idx_sys] = entry;
-    }
-
-    // Compute Integrals _A[idx_system][i]=<Omega_i*m^(l,k)>
-    Vector funcEval( _nTotalEntries, 0.0 );
-    for( unsigned i = 0; i < _nq; i++ ) {
-        double x = _quadrature->GetPoints()[i][0];
-        double y = _quadrature->GetPoints()[i][1];
-        double z = _quadrature->GetPoints()[i][2];
-        double w = _quadrature->GetWeights()[i];
-        funcEval = _basis.ComputeSphericalBasis( x, y, z );    // = m_l^k
-        for( unsigned idx_system = 0; idx_system < _nTotalEntries; idx_system++ ) {
-            _A[idx_system][0] += w * x * funcEval[idx_system];
-            _A[idx_system][1] += w * y * funcEval[idx_system];
-        }
-    }
 }
 
 Vector MNSolver::ConstructFlux( unsigned idx_cell, unsigned idx_neigh ) {
@@ -116,16 +99,21 @@ void MNSolver::Solve() {
 
     // Loop over energies (pseudo-time of continuous slowing down approach)
 
-    for( unsigned idx_energy = 0; idx_energy < _nEnergies; ++idx_energy ) {
+    for( unsigned idx_energy = 0; idx_energy < _nEnergies; idx_energy++ ) {
 
         // Loop over the grid cells
         for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
+
+            // Reset temporary variable
+            for( unsigned idx_sys = 0; idx_sys < _nTotalEntries; idx_sys++ ) {
+                psiNew[idx_cell][idx_sys] = 0.0;
+            }
 
             // ------- Reconstruction Step -------
 
             _alpha[idx_cell] = _optimizer->Solve( _psi[idx_cell] );
 
-            // ------- Compute Fluxes ---------
+            // ------- Flux Computation Step ---------
 
             // Loop over neighbors
             for( unsigned idx_neigh = 0; idx_neigh < _neighbors[idx_cell].size(); idx_neigh++ ) {
@@ -134,6 +122,7 @@ void MNSolver::Solve() {
             }
 
             // ------ FVM Step ------
+
             // NEED TO VECTORIZE
             for( unsigned idx_system = 0; idx_system < _nTotalEntries; idx_system++ ) {
 
@@ -157,7 +146,7 @@ void MNSolver::Solve() {
         Save( idx_energy );
         dFlux   = blaze::l2Norm( fluxNew - fluxOld );
         fluxOld = fluxNew;
-        if( rank == 0 ) log->info( "{:03.8f}   {:01.5e}", _energies[idx_energy], dFlux );
+        if( rank == 0 ) log->info( "{:03.8f}   {:01.5e} {:01.5e}", _energies[idx_energy], dFlux, mass );
     }
 }
 
