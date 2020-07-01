@@ -24,9 +24,12 @@ MNSolver::MNSolver( Config* settings ) : Solver( settings ), _nMaxMomentsOrder( 
     // Initialize System Matrices
     _A = VectorVector( _nTotalEntries );
 
-    // Fill System Matrices
-    ComputeSystemMatrices();
-    TextProcessingToolbox::PrintVectorVector( _A );
+    _entropy = EntropyBase::Create( settings );
+    // Initialize lagrange Multipliers
+    _alpha = VectorVector( _nCells );
+    for( unsigned idx_cells = 0; idx_cells < _nTotalEntries; idx_cells++ ) {
+        _alpha[idx_cells] = Vector( _nTotalEntries, 0.0 );
+    }
 }
 
 MNSolver::~MNSolver() { delete _quadrature; }
@@ -46,7 +49,7 @@ void MNSolver::ComputeSystemMatrices() {
     }
 
     // Compute Integrals _A[idx_system][i]=<Omega_i*m^(l,k)>
-    std::vector<double> funcEval( _nTotalEntries, 0.0 );
+    Vector funcEval( _nTotalEntries, 0.0 );
     for( unsigned i = 0; i < _nq; i++ ) {
         double x = _quadrature->GetPoints()[i][0];
         double y = _quadrature->GetPoints()[i][1];
@@ -58,6 +61,34 @@ void MNSolver::ComputeSystemMatrices() {
             _A[idx_system][1] += w * y * funcEval[idx_system];
         }
     }
+}
+
+Vector MNSolver::ConstructFlux( unsigned idx_cell, unsigned idx_neigh ) {
+
+    // ---- Integration of Moment of flux ----
+    double x, y, z, w, entropy, velocity;
+    Vector moment( _nTotalEntries, 0.0 );
+    Vector flux( _nTotalEntries, 0.0 );
+    for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
+        x      = _quadrature->GetPoints()[idx_quad][0];
+        y      = _quadrature->GetPoints()[idx_quad][1];
+        z      = _quadrature->GetPoints()[idx_quad][2];
+        w      = _quadrature->GetWeights()[idx_quad];
+        moment = _basis.ComputeSphericalBasis( x, y, z );
+
+        // --- get upwinding direction (2D)
+        // DOUBLE CHECK IF WE NEED DIMENSION SPLITTIN!!!
+
+        velocity = _normals[idx_cell][idx_neigh][0] * x + _normals[idx_cell][idx_neigh][1] * y;
+
+        // Perform upwinding
+        ( velocity > 0 ) ? ( entropy = _entropy->EntropyPrimeDual( blaze::dot( _alpha[idx_cell], moment ) ) )
+                         : ( entropy = _entropy->EntropyPrimeDual( blaze::dot( _alpha[idx_neigh], moment ) ) );
+
+        // integrate
+        flux += moment * ( w * velocity * entropy );
+    }
+    return flux;
 }
 
 void MNSolver::Solve() {
@@ -86,62 +117,43 @@ void MNSolver::Solve() {
 
     for( unsigned idx_energy = 0; idx_energy < _nEnergies; ++idx_energy ) {
 
-        // ------- Reconstruction Step -------
-        // Todo
-        // ------- Advection Step ------------
+        // Loop over the grid cells
+        for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
 
-        // Loop over all spatial cells
-        for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
-            if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::DIRICHLET ) continue;    // Dirichlet cells stay at IC, farfield assumption
+            // ------- Reconstruction Step -------
 
-            // Loop over all equations of the system.
-            for( int idx_lDegree = 0; idx_lDegree <= int( _nMaxMomentsOrder ); idx_lDegree++ ) {
-                for( int idx_kOrder = -idx_lDegree; idx_kOrder <= idx_lDegree; idx_kOrder++ ) {
-                    idx_system                   = unsigned( GlobalIndex( idx_lDegree, idx_kOrder ) );
-                    psiNew[idx_cell][idx_system] = 0.0;
+            _alpha[idx_cell] = _optimizer->Solve( _psi[idx_cell] );
 
-                    // Loop over all neighbor cells (edges) of cell j and compute numerical fluxes
-                    for( unsigned l = 0; l < _neighbors[idx_cell].size(); ++l ) {
-                        // store flux contribution on psiNew_sigmaS to save memory
-                        if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::NEUMANN && _neighbors[idx_cell][l] == _nCells )
-                            psiNew[idx_cell][idx_system] +=
-                                _g->Flux( _A[idx_system], _psi[idx_cell][idx_system], _psi[idx_cell][idx_system], _normals[idx_cell][l] );
-                        else
-                            psiNew[idx_cell][idx_system] += _g->Flux(
-                                _A[idx_system], _psi[idx_cell][idx_system], _psi[_neighbors[idx_cell][l]][idx_system], _normals[idx_cell][l] );
-                    }
-                    // time update angular flux with numerical flux and total scattering cross section
-                    psiNew[idx_cell][idx_system] = _psi[idx_cell][idx_system] -
-                                                   ( _dE / _areas[idx_cell] ) * psiNew[idx_cell][idx_system] /* cell averaged flux */
-                                                   - _dE * _psi[idx_cell][idx_system] *
-                                                         ( _sigmaA[idx_energy][idx_cell]                                    /* absorbtion influence */
-                                                           + _sigmaS[idx_energy][idx_cell] * _scatterMatDiag[idx_system] ); /* scattering influence */
-                }
+            // ------- Compute Fluxes ---------
+
+            // Loop over neighbors
+            for( unsigned idx_neigh = 0; idx_neigh < _neighbors[idx_cell].size(); idx_neigh++ ) {
+                // Store fluxes in psiNew, to save memory
+                psiNew[idx_cell] += ConstructFlux( idx_cell, idx_neigh );
             }
 
-            // TODO: figure out a more elegant way
-            // add external source contribution
-            // if( _Q.size() == 1u ) {                   // constant source for all energies
-            //    if( _Q[0][idx_cell].size() == 1u )    // isotropic source
-            //        psiNew[idx_cell] += _dE * _Q[0][idx_cell][0];
-            //    else
-            //        psiNew[idx_cell] += _dE * _Q[0][idx_cell];
-            //}
-            // else {
-            //    if( _Q[0][idx_cell].size() == 1u )    // isotropic source
-            //        psiNew[idx_cell] += _dE * _Q[idx_energy][idx_cell][0];
-            //    else
-            //        psiNew[idx_cell] += _dE * _Q[idx_energy][idx_cell];
-            //}
+            // ------ FVM Step ------
+            // NEED TO VECTORIZE
+            for( unsigned idx_system = 0; idx_system < _nTotalEntries; idx_system++ ) {
+
+                psiNew[idx_cell][idx_system] = _psi[idx_cell][idx_system] -
+                                               ( _dE / _areas[idx_cell] ) * psiNew[idx_cell][idx_system] /* cell averaged flux */
+                                               - _dE * _psi[idx_cell][idx_system] *
+                                                     ( _sigmaA[idx_energy][idx_cell]                                    /* absorbtion influence */
+                                                       + _sigmaS[idx_energy][idx_cell] * _scatterMatDiag[idx_system] ); /* scattering influence */
+            }
         }
-        _psi        = psiNew;
+        _psi = psiNew;
+
+        // pseudo time iteration output
         double mass = 0.0;
         for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
             fluxNew[idx_cell]       = _psi[idx_cell][0];    // zeroth moment is raditation densitiy we are interested in
             _solverOutput[idx_cell] = _psi[idx_cell][0];
             mass += _psi[idx_cell][0] * _areas[idx_cell];
         }
-        // Save( n );
+
+        Save( idx_energy );
         dFlux   = blaze::l2Norm( fluxNew - fluxOld );
         fluxOld = fluxNew;
         if( rank == 0 ) log->info( "{:03.8f}   {:01.5e}", _energies[idx_energy], dFlux );

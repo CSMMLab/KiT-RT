@@ -208,6 +208,10 @@ void Config::SetConfigOptions() {
     /*! @brief CleanFluxMatrices \n DESCRIPTION:  If true, very low entries (10^-10 or smaller) of the flux matrices will be set to zero,
      * to improve floating point accuracy \n DEFAULT false \ingroup Config */
     AddBoolOption( "CLEAN_FLUX_MATRICES", _cleanFluxMat, false );
+    /*! @brief Entropy Functional \n DESCRIPTION: Entropy functional used for the MN_Solver \n DEFAULT QUADRTATIC @ingroup Config. */
+    AddEnumOption( "ENTROPY_FUNCTIONAL", _entropyName, Entropy_Map, QUADRATIC );
+    /*! @brief Optimizer Name \n DESCRIPTION:  Optimizer used to determine the minimal Entropy reconstruction \n DEFAULT NEWTON \ingroup Config */
+    AddEnumOption( "ENTROPY_OPTIMIZER", _entropyOptimizerName, Optimizer_Map, NEWTON );
 
     // Mesh related options
     // Boundary Markers

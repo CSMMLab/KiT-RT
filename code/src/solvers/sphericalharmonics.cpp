@@ -13,16 +13,16 @@ SphericalHarmonics::SphericalHarmonics( unsigned L_degree ) {
     ComputeCoefficients();
 
     unsigned basisSize = GlobalIdxBasis( _LMaxDegree, _LMaxDegree ) + 1;
-    _YBasis            = std::vector<double>( basisSize, 0.0 );
+    _YBasis            = Vector( basisSize, 0.0 );
 }
 
-std::vector<double> SphericalHarmonics::ComputeSphericalBasis( double my, double phi ) {
+Vector SphericalHarmonics::ComputeSphericalBasis( double my, double phi ) {
     ComputeAssLegendrePoly( my );
     ComputeYBasis( phi );
     return _YBasis;
 }
 
-std::vector<double> SphericalHarmonics::ComputeSphericalBasis( double x, double y, double z ) {
+Vector SphericalHarmonics::ComputeSphericalBasis( double x, double y, double z ) {
 
     // transform (x,y,z) into (my,phi)
     double my  = z;

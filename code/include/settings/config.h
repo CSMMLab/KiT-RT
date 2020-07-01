@@ -55,6 +55,7 @@ class Config
     double _tEnd;                    /*!< @brief Final Time for Simulation */
     PROBLEM_NAME _problemName;       /*!< @brief Name of predefined Problem   */
     SOLVER_NAME _solverName;         /*!< @brief Name of the used Solver */
+    ENTROPY_NAME _entropyName;       /*!< @brief Name of the used Entropy Functional */
     unsigned short _maxMomentDegree; /*!< @brief Maximal Order of Moments for PN and MN Solver */
 
     /*!< @brief If true, very low entries (10^-10 or smaller) of the flux matrices will be set to zero,
@@ -72,6 +73,9 @@ class Config
 
     // Scattering Kernel
     KERNEL_NAME _kernelName; /*!< @brief Scattering Kernel Name*/
+
+    // Optimizer
+    OPTIMIZER_NAME _entropyOptimizerName; /*!< @brief Choice of optimizer */
 
     // --- Parsing Functionality and Initializing of Options ---
     /*!
@@ -208,7 +212,12 @@ class Config
     double inline GetTEnd() const { return _tEnd; }
     PROBLEM_NAME inline GetProblemName() const { return _problemName; }
     SOLVER_NAME inline GetSolverName() const { return _solverName; }
+    ENTROPY_NAME inline GetEntropyName() const { return _entropyName; }
     bool inline GetCleanFluxMat() const { return _cleanFluxMat; }
+
+    // Optimizer
+    OPTIMIZER_NAME inline GetOptimizerName() const { return _entropyOptimizerName; }
+
     // Boundary Conditions
     BOUNDARY_TYPE GetBoundaryType( std::string nameMarker ) const; /*! @brief Get Boundary Type of given marker */
 
