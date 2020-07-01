@@ -14,8 +14,8 @@ TEST_CASE( "test the spherical harmonics basis computation", "[spherical harmoni
 
     double my  = 0.0;
     double phi = 0.0;
-    std::vector<double> values( 9, 0.0 );
-    std::vector<double> result( 4, 0.0 );
+    Vector values( 9, 0.0 );
+    Vector result( 4, 0.0 );
 
     case_file.open( "harmonicBasis_reference.csv", std::ios::in );
 

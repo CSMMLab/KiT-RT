@@ -88,6 +88,7 @@ Vector MNSolver::ConstructFlux( unsigned idx_cell, unsigned idx_neigh ) {
         // integrate
         flux += moment * ( w * velocity * entropy );
     }
+
     return flux;
 }
 
