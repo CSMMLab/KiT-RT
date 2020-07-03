@@ -52,12 +52,28 @@ int main( int argc, char** argv ) {
         moment = testBase.ComputeSphericalBasis( x, y, z );
 
         for( unsigned idx_sys = 0; idx_sys < 9; idx_sys++ ) {
-            moment[idx_sys] /= results[idx_sys];
-            resultsNormal[idx_sys] += w * moment[idx_sys] * moment[idx_sys];
+
+            resultsNormal[idx_sys] += w * moment[idx_sys] * moment[idx_sys] / results[idx_sys];
             // std::cout << idx_quad << ": " << results[0] << "\n";
         }
     }
     std::cout << "moment integration:\n " << resultsNormal << "\n";
+
+    Vector results2( moment.size(), 0.0 );
+
+    for( unsigned idx_quad = 0; idx_quad < quad.GetNq(); idx_quad++ ) {
+        x      = quad.GetPoints()[idx_quad][0];
+        y      = quad.GetPoints()[idx_quad][1];
+        z      = quad.GetPoints()[idx_quad][2];
+        w      = quad.GetWeights()[idx_quad];
+        moment = testBase.ComputeSphericalBasis( x, y, z );
+
+        for( unsigned idx_sys = 1; idx_sys < 9; idx_sys++ ) {
+            results2[idx_sys] += w * moment[idx_sys - 1] * moment[idx_sys];
+            // std::cout << idx_quad << ": " << results[0] << "\n";
+        }
+    }
+    std::cout << "moment integration:\n " << results2 << "\n";
 
     // std::string filename = ParseArguments( argc, argv );
     //

@@ -56,7 +56,7 @@ void SphericalHarmonics::ComputeCoefficients() {
 
 void SphericalHarmonics::ComputeAssLegendrePoly( const double my ) {
     const double sintheta = std::sqrt( 1. - my * my );
-    double temp           = 1.0;    // std::sqrt( .5 / M_PI );
+    double temp           = std::sqrt( .5 / M_PI );
 
     _assLegendreP[GlobalIdxAssLegendreP( 0, 0 )] = temp;
 
