@@ -108,7 +108,7 @@ void MNSolver::ComputeMoments() {
 
     for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
         for( unsigned idx_sys = 0; idx_sys < 9; idx_sys++ ) {
-            _moments[idx_quad][idx_sys] /= results[idx_sys];
+            _moments[idx_quad][idx_sys] /= sqrt( results[idx_sys] );
         }
     }
 }
