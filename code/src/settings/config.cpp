@@ -197,6 +197,8 @@ void Config::SetConfigOptions() {
     AddUnsignedShortOption( "QUAD_ORDER", _quadOrder, 2 );
 
     // Solver related options
+    /*! @brief MAX_MOMENT_ORDER \n: DESCRIPTON: Specifies the maximal order of Moments for PN and SN Solver */
+    AddUnsignedShortOption( "MAX_MOMENT_SOLVER", _maxMomentDegree, 1 );
     /*! @brief CFL \n DESCRIPTION: CFL number \n DEFAULT 1.0 @ingroup Config.*/
     AddDoubleOption( "CFL_NUMBER", _CFL, 1.0 );
     /*! @brief TIME_FINAL \n DESCRIPTION: Final time for simulation \n DEFAULT 1.0 @ingroup Config.*/

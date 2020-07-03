@@ -17,12 +17,12 @@ class SNSolver : public Solver
     /**
      * @brief Solve functions runs main time loop
      */
-    virtual void Solve();
+    void Solve() override;
     /**
      * @brief Output solution to VTK file
      */
-    virtual void Save() const;
-    virtual void Save( int currEnergy ) const;
+    void Save() const override;
+    void Save( int currEnergy ) const override;
 };
 
 #endif    // SNSOLVER_H

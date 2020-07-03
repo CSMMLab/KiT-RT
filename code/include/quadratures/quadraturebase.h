@@ -4,8 +4,6 @@
 #include "settings/globalconstants.h"
 #include "settings/typedef.h"
 #include "toolboxes/errormessages.h"
-#include <iostream>
-#include <string>
 
 class QuadratureBase
 {
@@ -26,6 +24,12 @@ class QuadratureBase
      *  @param double(f)( double x0, double x1, double x2 ) : density function that depends on a three spatial dimensions.
      *  @returns double result: result of the quadrature rule */
     double Integrate( double( f )( double x0, double x1, double x2 ) );
+
+    /*! @brief Integrates vector valued f(x,y,z) with the quadrature. Each dimension is integrated by itself.
+     *  @param : double(f)( double x0, double x1, double x2 ) : density function that depends on a three spatial dimensions.
+     *  @param :  len : lenght of vector
+     *  @returns double result: result of the quadrature rule (vector valued) */
+    std::vector<double> Integrate( std::vector<double>( f )( double x0, double x1, double x2 ), unsigned len );
 
     // Quadrature Hub
     /*! @brief Creates a quadrature rule with a given name and a given order.
