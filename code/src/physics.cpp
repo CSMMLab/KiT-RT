@@ -47,19 +47,19 @@ void Physics::LoadDatabase( std::string fileName_H, std::string fileName_O, std:
     std::tie( headers_O, data_O ) = ReadENDL( fileName_O );
 
     // Find required quantities and transfer to matrix
-    for( unsigned i = 0; i < headers_H.size(); ++i ) {
+    for( unsigned i = 0; i < headers_O.size(); ++i ) {
         auto header = headers_O[i];
         auto data   = data_O[i];
         if( header[1][0] == 7 && header[1][1] == 0 ) {
-            transport_XS_H = data;
+            transport_XS_O = data;
         }
         // Integrated elastic scattering XS
         else if( header[1][0] == 10 && header[1][1] == 0 ) {
-            total_scat_XS_H = data;
+            total_scat_XS_O = data;
         }
         // Angular distribution large angle elastic scattering XS
         else if( header[1][0] == 8 && header[1][1] == 22 ) {
-            scattering_XS_H = data;
+            scattering_XS_O = data;
         }
     }
 
