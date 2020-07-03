@@ -216,6 +216,7 @@ class Config
     bool inline GetCleanFluxMat() const { return _cleanFluxMat; }
     unsigned GetReconsOrder() { return _reconsOrder; }
     bool inline IsCSD() const { return _csd; }
+    unsigned inline GetMaxMomentDegree() { return _maxMomentDegree; }
 
     // Boundary Conditions
     BOUNDARY_TYPE GetBoundaryType( std::string nameMarker ) const; /*! @brief Get Boundary Type of given marker */
