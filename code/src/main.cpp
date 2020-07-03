@@ -90,6 +90,44 @@ int main( int argc, char** argv ) {
     // solver->Solve();
     // solver->Save();
 
+    //-----parity
+    Vector moment1 = testBase.ComputeSphericalBasis( 0, 0 );
+    Vector moment2 = testBase.ComputeSphericalBasis( 0, 0 );
+
+    bool parity_1, parity_21, parity_22;
+
+    for( unsigned idx_quad = 0; idx_quad < quad.GetNq(); idx_quad++ ) {
+        x       = quad.GetPoints()[idx_quad][0];
+        y       = quad.GetPoints()[idx_quad][1];
+        z       = quad.GetPoints()[idx_quad][2];
+        moment1 = testBase.ComputeSphericalBasis( x, y, z );
+        moment2 = testBase.ComputeSphericalBasis( -x, -y, -z );
+
+        std::cout << "(x,y,z) ="
+                  << "(" << x << "," << y << "," << z << ")\n";
+        for( unsigned idx_sys = 0; idx_sys < moment1.size(); idx_sys++ ) {
+            std::cout << idx_sys << " : " << moment2[idx_sys] << " | " << moment1[idx_sys] << "\n";
+        }
+        int idx_sys = 0, maxMomentDegree = 2;
+        double result = 0;
+
+        for( int l_idx = 0; l_idx <= int( maxMomentDegree ); l_idx++ ) {
+            for( int k_idx = -l_idx; k_idx <= l_idx; k_idx++ ) {
+                idx_sys = testBase.GlobalIdxBasis( l_idx, k_idx );
+
+                if( l_idx % 2 == 0 )
+                    result = moment2[idx_sys] - moment1[idx_sys];
+                else
+                    result = moment2[idx_sys] + moment1[idx_sys];
+            }
+        }
+        std::cout << "------------------------------\n";
+
+        parity_1  = moment2[1] == -moment1[3];
+        parity_22 = moment2[4] == moment1[8];
+        parity_21 = moment2[5] == -moment1[7];
+    }
+
     MPI_Finalize();
     return EXIT_SUCCESS;
 }

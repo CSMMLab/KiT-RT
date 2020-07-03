@@ -38,6 +38,13 @@ class SphericalHarmonics
      */
     Vector ComputeSphericalBasis( double x, double y, double z );
 
+    /*! @brief : helper function to get the global index for given k and l of
+     *           the basis function Y_k^l.
+     *  @param : l_degree - current degree of basis function, 0 <= l <= L
+     *  @param : k_order  - current order of basis function,  -l <= k <= l
+     */
+    unsigned inline GlobalIdxBasis( unsigned l_degree, unsigned k_order ) { return k_order + l_degree + l_degree * l_degree; }
+
   private:
     /*! @brief: maximal degree of the spherical harmonics basis (this is "L" in the comments)*/
     unsigned _LMaxDegree;
@@ -66,13 +73,6 @@ class SphericalHarmonics
      *  @param : k_order  - current order of basis function,  0 <= k <= l
      */
     unsigned inline GlobalIdxAssLegendreP( unsigned l_degree, unsigned k_order ) { return k_order + ( l_degree * ( l_degree + 1 ) ) / 2; }
-
-    /*! @brief : helper function to get the global index for given k and l of
-     *           the basis function Y_k^l.
-     *  @param : l_degree - current degree of basis function, 0 <= l <= L
-     *  @param : k_order  - current order of basis function,  -l <= k <= l
-     */
-    unsigned inline GlobalIdxBasis( unsigned l_degree, unsigned k_order ) { return k_order + l_degree + l_degree * l_degree; }
 
     /*! @brief : computes values of a_param and b_param
      */

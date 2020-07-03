@@ -11,19 +11,23 @@ TEST_CASE( "test the spherical harmonics basis computation", "[spherical harmoni
     std::string text_line;
     std::ifstream case_file;
 
-    SphericalHarmonics testBase( 2 );
+    unsigned maxMomentDegree = 2;
 
-    double my  = 0.0;
-    double phi = 0.0;
-    Vector values( 9, 0.0 );
-    Vector result( 4, 0.0 );
-
-    case_file.open( "harmonicBasis_reference.csv", std::ios::in );
+    SphericalHarmonics testBase( maxMomentDegree );
 
     // Remove title line
-    getline( case_file, text_line );
 
     SECTION( "test to reference solution" ) {
+
+        double my  = 0.0;
+        double phi = 0.0;
+
+        Vector values( 9, 0.0 );
+        Vector result( 4, 0.0 );
+
+        case_file.open( "harmonicBasis_reference.csv", std::ios::in );
+
+        getline( case_file, text_line );
 
         while( getline( case_file, text_line ) ) {
 
@@ -39,9 +43,8 @@ TEST_CASE( "test the spherical harmonics basis computation", "[spherical harmoni
                 REQUIRE( std::fabs( result[idx] - values[idx] ) < std::numeric_limits<double>::epsilon() );
             }
         }
+        case_file.close();
     }
-
-    case_file.close();
 
     SECTION( "test orthogonality" ) {
 
@@ -92,6 +95,71 @@ TEST_CASE( "test the spherical harmonics basis computation", "[spherical harmoni
         }
         for( unsigned idx_sys = 0; idx_sys < 9; idx_sys++ ) {
             REQUIRE( std::fabs( results[idx_sys] - 1 ) < std::numeric_limits<double>::epsilon() );
+        }
+    }
+
+    SECTION( "test parity - carthesian coordinates" ) {
+
+        Vector moment1 = testBase.ComputeSphericalBasis( 0, 0 );
+        Vector moment2 = testBase.ComputeSphericalBasis( 0, 0 );
+
+        // Parity in carthesian coordinates
+        QGaussLegendreTensorized quad( 6 );
+
+        double x, y, z;
+
+        for( unsigned idx_quad = 0; idx_quad < quad.GetNq(); idx_quad++ ) {
+            x       = quad.GetPoints()[idx_quad][0];
+            y       = quad.GetPoints()[idx_quad][1];
+            z       = quad.GetPoints()[idx_quad][2];
+            moment1 = testBase.ComputeSphericalBasis( x, y, z );
+            moment2 = testBase.ComputeSphericalBasis( -x, -y, -z );
+
+            int idx_sys;
+            double result = 0.;
+
+            for( int l_idx = 0; l_idx <= int( maxMomentDegree ); l_idx++ ) {
+                for( int k_idx = -l_idx; k_idx <= l_idx; k_idx++ ) {
+                    idx_sys = testBase.GlobalIdxBasis( l_idx, k_idx );
+
+                    if( l_idx % 2 == 0 )
+                        result = moment2[idx_sys] - moment1[idx_sys];
+                    else
+                        result = moment2[idx_sys] + moment1[idx_sys];
+
+                    REQUIRE( std::fabs( result ) < std::numeric_limits<double>::epsilon() );
+                }
+            }
+        }
+    }
+
+    SECTION( "test parity - polar coordinates" ) {
+
+        Vector moment1 = testBase.ComputeSphericalBasis( 0, 0 );
+        Vector moment2 = testBase.ComputeSphericalBasis( 0, 0 );
+
+        int idx_sys;
+        double result = 0.;
+
+        // // test in polar coordinates
+        for( double my = -1.0; my < 1.0; my += 0.1 ) {
+            for( double phi = 0.0; phi < 2 * M_PI; phi += 0.1 ) {
+                moment2 = testBase.ComputeSphericalBasis( my, phi );
+                moment1 = testBase.ComputeSphericalBasis( -my, M_PI + phi );
+
+                for( int l_idx = 0; l_idx <= int( maxMomentDegree ); l_idx++ ) {
+                    for( int k_idx = -l_idx; k_idx <= l_idx; k_idx++ ) {
+                        idx_sys = testBase.GlobalIdxBasis( l_idx, k_idx );
+
+                        if( l_idx % 2 == 0 )
+                            result = moment2[idx_sys] - moment1[idx_sys];
+                        else
+                            result = moment2[idx_sys] + moment1[idx_sys];
+
+                        REQUIRE( std::fabs( result ) < std::numeric_limits<double>::epsilon() );
+                    }
+                }
+            }
         }
     }
 }
