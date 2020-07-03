@@ -84,7 +84,7 @@ TEST_CASE( "convert image data to grayscale matrix", "[image I/O]" ) {
 
         delete mesh;
 
-        // std::remove( outputFile.c_str() );
+        std::remove( outputFile.c_str() );
     }
 
     std::remove( testMesh.c_str() );

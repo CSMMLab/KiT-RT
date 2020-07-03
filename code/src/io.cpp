@@ -326,27 +326,34 @@ Matrix createSU2MeshFromImage( std::string imageName, std::string SU2Filename ) 
         ErrorMessages::Error( "Output directory '" + outDir.string() + "' does not exists!", CURRENT_FUNCTION );
     }
 
+    std::string pyPath = RTSN_PYTHON_PATH;
+
     if( !Py_IsInitialized() ) {
-        setenv( "PYTHONPATH", RTSN_PYTHON_PATH, 1 );
-        Py_Initialize();
+        Py_InitializeEx( 0 );
+        if( !Py_IsInitialized() ) {
+            ErrorMessages::Error( "Python init failed!", CURRENT_FUNCTION );
+        }
+        PyRun_SimpleString( ( "import sys\nsys.path.append('" + pyPath + "')" ).c_str() );
     }
+
     PyObject *pArgs, *pReturn, *pModule, *pFunc;
     PyArrayObject* np_ret;
 
     auto image = PyUnicode_FromString( imageName.c_str() );
     auto su2   = PyUnicode_FromString( SU2Filename.c_str() );
 
-    PyObject* pName = PyUnicode_FromString( "mesh_from_image" );
-    pModule         = PyImport_Import( pName );
-    Py_CLEAR( pName );
+    std::string moduleName = "mesh_from_image";
+    pModule                = PyImport_ImportModule( moduleName.c_str() );
     if( !pModule ) {
-        ErrorMessages::Error( "'mesh_from_image.py' can not be imported!", CURRENT_FUNCTION );
+        PyErr_Print();
+        ErrorMessages::Error( "'" + moduleName + "' can not be imported!", CURRENT_FUNCTION );
     }
 
     pFunc = PyObject_GetAttrString( pModule, "generate" );
     if( !pFunc || !PyCallable_Check( pFunc ) ) {
-        Py_CLEAR( pModule );
-        Py_CLEAR( pFunc );
+        PyErr_Print();
+        Py_DecRef( pModule );
+        Py_DecRef( pFunc );
         ErrorMessages::Error( "'generate' is null or not callable!", CURRENT_FUNCTION );
     }
 
@@ -361,16 +368,11 @@ Matrix createSU2MeshFromImage( std::string imageName, std::string SU2Filename ) 
     double* c_out = reinterpret_cast<double*>( PyArray_DATA( np_ret ) );
 
     Matrix gsImage( m, n, c_out );
-    // for( unsigned i = 0; i < m; ++i ) {
-    //    for( unsigned j = 0; j < n; ++j ) {
-    //        gsImage( i, j ) = c_out[j * m + i];
-    //    }
-    //}
 
     // Finalizing
-    Py_CLEAR( pFunc );
-    Py_CLEAR( pModule );
-    Py_CLEAR( np_ret );
+    Py_DecRef( pFunc );
+    Py_DecRef( pModule );
+    Py_DECREF( np_ret );
 
     return gsImage.transpose();
 }

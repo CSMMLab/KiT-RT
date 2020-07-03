@@ -1,8 +1,15 @@
 #ifndef PHYSICS_H
 #define PHYSICS_H
 
+// include Matrix, Vector definitions
+#include "math.h"
+#include "settings/config.h"
 #include "settings/typedef.h"
+#include "spline.h"
+
+#include <fstream>
 #include <list>
+#include <tuple>
 
 class Physics
 {
@@ -15,7 +22,7 @@ class Physics
 
   public:
     // prototype data readers
-    std::tuple<std::list<VectorVector>, std::list<VectorVector>> ReadENDL( std::string filename );
+    std::tuple<std::vector<VectorVector>, std::vector<VectorVector>> ReadENDL( std::string filename );
     VectorVector ReadStoppingPowers( std::string fileName );
 
     // load and prepare data from database

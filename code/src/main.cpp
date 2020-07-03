@@ -30,6 +30,7 @@ int main( int argc, char** argv ) {
     solver->Solve();
     solver->Save();
 
+    if( Py_IsInitialized() ) Py_Finalize();
     MPI_Finalize();
     return EXIT_SUCCESS;
 }

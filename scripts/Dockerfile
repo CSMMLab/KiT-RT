@@ -35,6 +35,6 @@ RUN wget --no-check-certificate --quiet https://www.vtk.org/files/release/8.2/VT
     && cd - \
     && rm -rf VTK-*
 
-RUN pip3 install numpy pygmsh Pillow
+RUN pip3 install numpy pygmsh Pillow pydicom
 
 WORKDIR /home
