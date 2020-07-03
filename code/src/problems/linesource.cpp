@@ -85,5 +85,5 @@ VectorVector LineSource_PN::SetupIC() {
     //    else
     //        psi[j][0] = 0.0;
     //}
-    // return psi;
+    return psi;
 }

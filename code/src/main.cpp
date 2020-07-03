@@ -105,9 +105,9 @@ int main( int argc, char** argv ) {
 
         std::cout << "(x,y,z) ="
                   << "(" << x << "," << y << "," << z << ")\n";
-        for( unsigned idx_sys = 0; idx_sys < moment1.size(); idx_sys++ ) {
-            std::cout << idx_sys << " : " << moment2[idx_sys] << " | " << moment1[idx_sys] << "\n";
-        }
+        //  for( unsigned idx_sys = 0; idx_sys < moment1.size(); idx_sys++ ) {
+        //      std::cout << idx_sys << " : " << moment2[idx_sys] << " | " << moment1[idx_sys] << "\n";
+        //  }
         int idx_sys = 0, maxMomentDegree = 2;
         double result = 0;
 
@@ -119,6 +119,8 @@ int main( int argc, char** argv ) {
                     result = moment2[idx_sys] - moment1[idx_sys];
                 else
                     result = moment2[idx_sys] + moment1[idx_sys];
+
+                std::cout << idx_sys << " : " << result << "\n";
             }
         }
         std::cout << "------------------------------\n";
