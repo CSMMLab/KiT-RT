@@ -1,7 +1,9 @@
 #include <numeric>
 
 #include "catch.hpp"
+#include "cubic2dspline.h"
 #include "io.h"
+#include "toolboxes/textprocessingtoolbox.h"
 
 TEST_CASE( "convert image data to grayscale matrix", "[image I/O]" ) {
     std::string config_file_name = "../tests/input/image_conversion.cfg";
