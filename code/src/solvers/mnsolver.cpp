@@ -1,5 +1,6 @@
 #include "solvers/mnsolver.h"
 #include "toolboxes/textprocessingtoolbox.h"
+//#include <chrono>
 #include <mpi.h>
 
 MNSolver::MNSolver( Config* settings ) : Solver( settings ), _nMaxMomentsOrder( settings->GetMaxMomentDegree() ), _basis( _nMaxMomentsOrder ) {
@@ -7,6 +8,7 @@ MNSolver::MNSolver( Config* settings ) : Solver( settings ), _nMaxMomentsOrder( 
 
     _nTotalEntries = GlobalIndex( _nMaxMomentsOrder, int( _nMaxMomentsOrder ) ) + 1;
     _quadrature    = QuadratureBase::CreateQuadrature( _settings->GetQuadName(), settings->GetQuadOrder() );
+
     // transform sigmaT and sigmaS in sigmaA.
     _sigmaA = VectorVector( _nEnergies, Vector( _nCells, 0 ) );    // Get rid of this extra vektor!
 
@@ -32,6 +34,10 @@ MNSolver::MNSolver( Config* settings ) : Solver( settings ), _nMaxMomentsOrder( 
     for( unsigned idx_cells = 0; idx_cells < _nTotalEntries; idx_cells++ ) {
         _alpha[idx_cells] = Vector( _nTotalEntries, 0.0 );
     }
+
+    // Initialize and Pre-Compute Moments at quadrature points
+    _moments = VectorVector( _nq );
+    ComputeMoments();
 }
 
 MNSolver::~MNSolver() {
@@ -49,30 +55,62 @@ int MNSolver::GlobalIndex( int l, int k ) const {
 Vector MNSolver::ConstructFlux( unsigned idx_cell, unsigned idx_neigh ) {
 
     // ---- Integration of Moment of flux ----
-    double x, y, z, w, entropy, velocity;
-    Vector moment( _nTotalEntries, 0.0 );
+    double x, y, w, entropy, velocity;
+    // double z;
+
     Vector flux( _nTotalEntries, 0.0 );
     for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
-        x      = _quadrature->GetPoints()[idx_quad][0];
-        y      = _quadrature->GetPoints()[idx_quad][1];
-        z      = _quadrature->GetPoints()[idx_quad][2];
-        w      = _quadrature->GetWeights()[idx_quad];
-        moment = _basis.ComputeSphericalBasis( x, y, z );
+        x = _quadrature->GetPoints()[idx_quad][0];
+        y = _quadrature->GetPoints()[idx_quad][1];
+        // z = _quadrature->GetPoints()[idx_quad][2];
+        w = _quadrature->GetWeights()[idx_quad];
 
         // --- get upwinding direction (2D)
-        // DOUBLE CHECK IF WE NEED DIMENSION SPLITTIN!!!
+        // DOUBLE CHECK IF WE NEED DIMENSION SPLITTING!!!
 
         velocity = _normals[idx_cell][idx_neigh][0] * x + _normals[idx_cell][idx_neigh][1] * y;
 
         // Perform upwinding
-        ( velocity > 0 ) ? ( entropy = _entropy->EntropyPrimeDual( blaze::dot( _alpha[idx_cell], moment ) ) )
-                         : ( entropy = _entropy->EntropyPrimeDual( blaze::dot( _alpha[idx_neigh], moment ) ) );
+        ( velocity > 0 ) ? ( entropy = _entropy->EntropyPrimeDual( blaze::dot( _alpha[idx_cell], _moments[idx_quad] ) ) )
+                         : ( entropy = _entropy->EntropyPrimeDual( blaze::dot( _alpha[idx_neigh], _moments[idx_quad] ) ) );
 
         // integrate
-        flux += moment * ( w * velocity * entropy );
+        flux += _moments[idx_quad] * ( w * velocity * entropy );
     }
 
     return flux;
+}
+
+void MNSolver::ComputeMoments() {
+    double x, y, z, w;
+
+    for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
+        x                  = _quadrature->GetPoints()[idx_quad][0];
+        y                  = _quadrature->GetPoints()[idx_quad][1];
+        z                  = _quadrature->GetPoints()[idx_quad][2];
+        _moments[idx_quad] = _basis.ComputeSphericalBasis( x, y, z );
+    }
+
+    Vector results( _moments[0].size(), 0.0 );
+
+    // Normalize Moments
+
+    for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
+        x = _quadrature->GetPoints()[idx_quad][0];
+        y = _quadrature->GetPoints()[idx_quad][1];
+        z = _quadrature->GetPoints()[idx_quad][2];
+        w = _quadrature->GetWeights()[idx_quad];
+
+        for( unsigned idx_sys = 0; idx_sys < 9; idx_sys++ ) {
+            results[idx_sys] += w * _moments[idx_quad][idx_sys] * _moments[idx_quad][idx_sys];
+        }
+    }
+
+    for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
+        for( unsigned idx_sys = 0; idx_sys < 9; idx_sys++ ) {
+            _moments[idx_quad][idx_sys] /= results[idx_sys];
+        }
+    }
 }
 
 void MNSolver::Solve() {
@@ -97,6 +135,10 @@ void MNSolver::Solve() {
     if( rank == 0 ) log->info( "{:10}   {:10}", "t", "dFlux" );
     if( rank == 0 ) log->info( "{:03.8f}   {:01.5e} {:01.5e}", -1.0, dFlux, mass1 );
 
+    // Time measurement
+    // auto start = chrono::steady_clock::now();
+    // auto end   = chrono::steady_clock::now();
+
     // Loop over energies (pseudo-time of continuous slowing down approach)
 
     for( unsigned idx_energy = 0; idx_energy < _nEnergies; idx_energy++ ) {
@@ -119,18 +161,22 @@ void MNSolver::Solve() {
             for( unsigned idx_neigh = 0; idx_neigh < _neighbors[idx_cell].size(); idx_neigh++ ) {
                 // Store fluxes in psiNew, to save memory
                 psiNew[idx_cell] += ConstructFlux( idx_cell, idx_neigh );
+                //   std::cout << " psiNew[" << idx_cell << "] " << psiNew[idx_cell] << "\n";
             }
+
+            // std::cout << " TOTAL psiNew[" << idx_cell << "] " << psiNew[idx_cell] << "\n";
 
             // ------ FVM Step ------
 
             // NEED TO VECTORIZE
             for( unsigned idx_system = 0; idx_system < _nTotalEntries; idx_system++ ) {
 
-                psiNew[idx_cell][idx_system] = _psi[idx_cell][idx_system] -
-                                               ( _dE / _areas[idx_cell] ) * psiNew[idx_cell][idx_system] /* cell averaged flux */
-                                               - _dE * _psi[idx_cell][idx_system] *
-                                                     ( _sigmaA[idx_energy][idx_cell]                                    /* absorbtion influence */
-                                                       + _sigmaS[idx_energy][idx_cell] * _scatterMatDiag[idx_system] ); /* scattering influence */
+                psiNew[idx_cell][idx_system] =
+                    _psi[idx_cell][idx_system] - ( _dE / _areas[idx_cell] ) * psiNew[idx_cell][idx_system]; /* cell averaged flux */
+
+                //- _dE * _psi[idx_cell][idx_system] *
+                //      ( _sigmaA[idx_energy][idx_cell]                                    /* absorbtion influence */
+                //        + _sigmaS[idx_energy][idx_cell] * _scatterMatDiag[idx_system] ); /* scattering influence */
             }
         }
         _psi = psiNew;

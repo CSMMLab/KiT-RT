@@ -3,7 +3,10 @@
 #include "problems/electronrt.h"
 #include "problems/linesource.h"
 
-ProblemBase::ProblemBase( Config* settings, Mesh* mesh ) : _settings( settings ), _mesh( mesh ) {}
+ProblemBase::ProblemBase( Config* settings, Mesh* mesh ) {
+    _settings = settings;
+    _mesh     = mesh;
+}
 
 ProblemBase::~ProblemBase() {}
 

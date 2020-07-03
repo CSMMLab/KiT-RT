@@ -26,6 +26,7 @@ double UpwindFlux::Flux( const Vector& Omega, double psiL, double psiR, const Ve
  * @param n         : Normal vector at the edge between left and right control volume
  * @return resultFlux: Vector with resulting flux.
  */
+
 Vector UpwindFlux::Flux( const Matrix AxPlus,
                          const Matrix AxMinus,
                          const Matrix AyPlus,

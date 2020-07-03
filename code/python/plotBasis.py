@@ -19,6 +19,18 @@ X = np.zeros((ndimGrid, ndimGrid))
 Y = np.zeros((ndimGrid, ndimGrid))
 Z = np.zeros((ndimGrid, ndimGrid))
 
+X0 = np.zeros((ndimGrid, ndimGrid))
+Y0 = np.zeros((ndimGrid, ndimGrid))
+Z0 = np.zeros((ndimGrid, ndimGrid))
+
+X1 = np.zeros((ndimGrid, ndimGrid))
+Y1 = np.zeros((ndimGrid, ndimGrid))
+Z1 = np.zeros((ndimGrid, ndimGrid))
+
+X2 = np.zeros((ndimGrid, ndimGrid))
+Y2 = np.zeros((ndimGrid, ndimGrid))
+Z2 = np.zeros((ndimGrid, ndimGrid))
+
 Harm0 = np.zeros((ndimGrid, ndimGrid))
 Harm1 = np.zeros((ndimGrid, ndimGrid))
 Harm2 = np.zeros((ndimGrid, ndimGrid))
@@ -64,6 +76,19 @@ with open('harmonicTest.csv') as csv_file:
             Harm7[idx_row, idx_col] = row[9]
             Harm8[idx_row, idx_col] = row[10]
             line_count += 1
+
+            # radius version
+            X0[idx_row, idx_col] = X[idx_row, idx_col] * Harm0[idx_row, idx_col]
+            Y0[idx_row, idx_col] = Y[idx_row, idx_col] * Harm0[idx_row, idx_col]
+            Z0[idx_row, idx_col] = Z[idx_row, idx_col] * Harm0[idx_row, idx_col]
+
+            X1[idx_row, idx_col] = X[idx_row, idx_col] * Harm1[idx_row, idx_col]
+            Y1[idx_row, idx_col] = Y[idx_row, idx_col] * Harm1[idx_row, idx_col]
+            Z1[idx_row, idx_col] = Z[idx_row, idx_col] * Harm1[idx_row, idx_col]
+
+            X2[idx_row, idx_col] = X[idx_row, idx_col] * Harm2[idx_row, idx_col]
+            Y2[idx_row, idx_col] = Y[idx_row, idx_col] * Harm2[idx_row, idx_col]
+            Z2[idx_row, idx_col] = Z[idx_row, idx_col] * Harm2[idx_row, idx_col]
 
     print(f'Processed {line_count} lines.')
 

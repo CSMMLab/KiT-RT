@@ -19,6 +19,8 @@ class QuadraticEntropy : public EntropyBase
 
     inline double EntropyPrimeDual( double y ) override { return y; }
 
+    // inline double EntropyHessianDual( double y ) override { return y; }
+
     inline bool CheckDomain( double z ) override { return std::isnan( z ); }
 };
 

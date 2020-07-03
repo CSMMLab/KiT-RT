@@ -1,29 +1,49 @@
-import matplotlib.pyplot as plt
-from matplotlib import cm, colors
-from mpl_toolkits.mplot3d import Axes3D
 import numpy as np
+import matplotlib.pyplot as plt
 from scipy.special import sph_harm
 
-phi = np.linspace(0, np.pi, 100)
-theta = np.linspace(0, 2*np.pi, 100)
-phi, theta = np.meshgrid(phi, theta)
+# nur fuer den Seiteneffekt: plt.gca(projection = '3d') funktioniert sonst nicht
+from mpl_toolkits.mplot3d import Axes3D
+from matplotlib import cm
 
-# The Cartesian coordinates of the unit sphereslack
-x = np.sin(phi) * np.cos(theta)
-y = np.sin(phi) * np.sin(theta)
-z = np.cos(phi)
+theta_1d = np.linspace(0, np.pi, 91)  # 2 GRAD Schritte
+phi_1d = np.linspace(0, 2 * np.pi, 181)  # 2 GRAD Schritte
 
-m, l = 2, 3
+theta_2d, phi_2d = np.meshgrid(theta_1d, phi_1d)
+xyz_2d = np.array([np.sin(theta_2d) * np.sin(phi_2d),
+                   np.sin(theta_2d) * np.cos(phi_2d),
+                   np.cos(theta_2d)])
 
-# Calculate the spherical harmonic Y(l,m) and normalize to [0,1]
-fcolors = sph_harm(m, l, theta, phi).real
-fmax, fmin = fcolors.max(), fcolors.min()
-fcolors = (fcolors - fmin)/(fmax - fmin)
+colormap = cm.ScalarMappable(cmap=plt.get_cmap("cool"))
+colormap.set_clim(-.45, .45)
+limit = .5
 
-# Set the aspect ratio to 1 so our sphere looks spherical
-fig = plt.figure(figsize=plt.figaspect(1.))
-ax = fig.add_subplot(111, projection='3d')
-ax.plot_surface(x, y, z,  rstride=1, cstride=1, facecolors=cm.seismic(fcolors))
-# Turn off the axis planes
-ax.set_axis_off()
+
+def show_Y_lm(l, m):
+    print("Y_%i_%i" % (l, m))  # zeigen, dass was passiert
+    plt.figure()
+    ax = plt.gca(projection="3d")
+
+    plt.title("$Y^{%i}_{%i}$" % (m, l))
+    Y_lm = sph_harm(m, l, phi_2d, theta_2d)
+    r = np.abs(Y_lm.real) * xyz_2d
+    ax.plot_surface(r[0], r[1], r[2],
+                    facecolors=colormap.to_rgba(Y_lm.real),
+                    rstride=2, cstride=2)
+    ax.set_xlim(-limit, limit)
+    ax.set_ylim(-limit, limit)
+    ax.set_zlim(-limit, limit)
+    #ax.set_aspect("equal")
+    # ax.set_axis_off()
+
+
+# Vorsicht: diese Schleifen erzeugen 16 plots (in 16 Fenstern)!
+for l in range(0, 4):
+    for m in range(-l, l + 1):
+        show_Y_lm(l, m)
+
+show_Y_lm(l=5, m=0)
+show_Y_lm(l=5, m=4)
+show_Y_lm(l=6, m=6)
+
 plt.show()

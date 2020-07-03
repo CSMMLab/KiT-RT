@@ -36,6 +36,11 @@ class EntropyBase
      *  @returns: value of dual of the derivative at z */
     virtual double EntropyPrimeDual( double y ) = 0;
 
+    /*! @brief: computes the hessian of the dual entropy functional
+     *  @param: y = point where the hessian should be evaluated;
+     *  @returns: value of the hessian at y */
+    // virtual double EntropyHessianDual( double y ) = 0;
+
     /*! @brief: checks, if value is in domain of entropy */
     virtual bool CheckDomain( double z ) = 0;
 };

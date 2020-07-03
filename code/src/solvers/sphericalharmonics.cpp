@@ -46,7 +46,8 @@ void SphericalHarmonics::ComputeCoefficients() {
         ls   = l_idx * l_idx;
         lm1s = ( l_idx - 1 ) * ( l_idx - 1 );
         for( unsigned k_idx = 0; k_idx < l_idx - 1; k_idx++ ) {
-            ks                                             = k_idx * k_idx;
+            ks = k_idx * k_idx;
+
             _aParam[GlobalIdxAssLegendreP( l_idx, k_idx )] = std::sqrt( ( 4 * ls - 1. ) / ( ls - ks ) );
             _bParam[GlobalIdxAssLegendreP( l_idx, k_idx )] = -std::sqrt( ( lm1s - ks ) / ( 4 * lm1s - 1. ) );
         }
@@ -55,7 +56,7 @@ void SphericalHarmonics::ComputeCoefficients() {
 
 void SphericalHarmonics::ComputeAssLegendrePoly( const double my ) {
     const double sintheta = std::sqrt( 1. - my * my );
-    double temp           = std::sqrt( .5 / M_PI );
+    double temp           = 1.0;    // std::sqrt( .5 / M_PI );
 
     _assLegendreP[GlobalIdxAssLegendreP( 0, 0 )] = temp;
 

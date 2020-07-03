@@ -105,7 +105,7 @@ void PNSolver::Solve() {
             if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::DIRICHLET ) continue;    // Dirichlet cells stay at IC, farfield assumption
 
             // Reset temporary variable psiNew
-            for( int idx_lDegree = 0; idx_lDegree <= int( _nq ); idx_lDegree++ ) {
+            for( int idx_lDegree = 0; idx_lDegree <= int( _LMaxDegree ); idx_lDegree++ ) {
                 for( int idx_kOrder = -idx_lDegree; idx_kOrder <= idx_lDegree; idx_kOrder++ ) {
                     idx_system                   = unsigned( GlobalIndex( idx_lDegree, idx_kOrder ) );
                     psiNew[idx_cell][idx_system] = 0.0;
@@ -132,7 +132,7 @@ void PNSolver::Solve() {
             }
 
             // time update angular flux with numerical flux and total scattering cross section
-            for( int idx_lOrder = 0; idx_lOrder <= int( _nq ); idx_lOrder++ ) {
+            for( int idx_lOrder = 0; idx_lOrder <= int( _LMaxDegree ); idx_lOrder++ ) {
                 for( int idx_kOrder = -idx_lOrder; idx_kOrder <= idx_lOrder; idx_kOrder++ ) {
                     idx_system = unsigned( GlobalIndex( idx_lOrder, idx_kOrder ) );
 
@@ -168,7 +168,7 @@ void PNSolver::ComputeSystemMatrices() {
     unsigned idx_row = 0;
 
     // loop over columns of A
-    for( int idx_lOrder = 0; idx_lOrder <= int( _nq ); idx_lOrder++ ) {                  // index of legendre polynom
+    for( int idx_lOrder = 0; idx_lOrder <= int( _LMaxDegree ); idx_lOrder++ ) {          // index of legendre polynom
         for( int idx_kOrder = -idx_lOrder; idx_kOrder <= idx_lOrder; idx_kOrder++ ) {    // second index of legendre function
             idx_row = unsigned( GlobalIndex( idx_lOrder, idx_kOrder ) );
 
@@ -344,7 +344,7 @@ void PNSolver::ComputeScatterMatrix() {
     }
 }
 
-double PNSolver::LegendrePoly( double x, int l ) {
+double PNSolver::LegendrePoly( double x, int l ) {    // Legacy. TO BE DELETED
     // Pre computed low order polynomials for faster computation
     switch( l ) {
         case 0: return 1;
