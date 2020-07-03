@@ -1,15 +1,16 @@
-#include "kernels/isotropic.h"
+#include "kernels/isotropic1D.h"
 
-Isotropic::Isotropic( QuadratureBase* quad ) : ScatteringKernel( quad ) {}
+Isotropic1D::Isotropic1D( QuadratureBase* quad ) : ScatteringKernel( quad ) {}
 
-Isotropic::~Isotropic() {}
+Isotropic1D::~Isotropic1D() {}
 
-Matrix Isotropic::GetScatteringKernel() {
+Matrix Isotropic1D::GetScatteringKernel() {
     unsigned nq = _quad->GetNq();
     auto w      = _quad->GetWeights();
+
     Matrix kernel( nq, nq );
     for( unsigned i = 0; i < nq; ++i )
-        for( unsigned j = 0; j < nq; ++j ) kernel( i, j ) = w[j] / ( 4 * M_PI );
+        for( unsigned j = 0; j < nq; ++j ) kernel( i, j ) = w[j] / 2;
 
     // scale kernel to ensure mass conservation
     double tmp;

@@ -1,5 +1,4 @@
-#include <cstdio>
-#include <fstream>
+#include <numeric>
 
 #include "catch.hpp"
 #include "cubic2dspline.h"

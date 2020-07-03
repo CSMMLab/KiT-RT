@@ -1,8 +1,11 @@
 #include "physics.h"
 
+#include "spline.h"
 #include "toolboxes/errormessages.h"
+
 #include <fstream>
 #include <iostream>
+#include <map>
 #include <string>
 
 Physics::Physics() {

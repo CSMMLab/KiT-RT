@@ -1,6 +1,6 @@
-#include "../../include/quadratures/qgausslegendretensorized.h"
+#include "../../include/quadratures/qgausslegendre1D.h"
 
-QGaussLegendreTensorized::QGaussLegendreTensorized( unsigned order ) : QuadratureBase( order ) {
+QGaussLegendre1D::QGaussLegendre1D( unsigned order ) : QuadratureBase( order ) {
     SetName();
     CheckOrder();
     SetNq();
@@ -8,7 +8,7 @@ QGaussLegendreTensorized::QGaussLegendreTensorized( unsigned order ) : Quadratur
     SetConnectivity();
 }
 
-void QGaussLegendreTensorized::SetPointsAndWeights() {
+void QGaussLegendre1D::SetPointsAndWeights() {
     Vector nodes1D( _order ), weights1D( _order );
 
     // construct companion matrix
@@ -39,40 +39,24 @@ void QGaussLegendreTensorized::SetPointsAndWeights() {
     nodes1D   = sorted_nodes;
     weights1D = sorted_weights;
 
-    // setup equidistant angle phi around z axis
-    Vector phi( 2 * _order );
-    for( unsigned i = 0; i < 2 * _order; ++i ) {
-        phi[i] = ( i + 0.5 ) * M_PI / _order;
-    }
-
-    // only use the spheres upper half
-    unsigned range = std::floor( _order / 2.0 );
-
     // resize points and weights
     _points.resize( _nq );
-    for( auto& p : _points ) {
-        p.resize( 3 );
-    }
     _weights.resize( _nq );
-
-    // transform tensorized (x,y,z)-grid to spherical grid points
-    for( unsigned j = 0; j < range; ++j ) {
-        for( unsigned i = 0; i < 2 * _order; ++i ) {
-            _points[j * ( 2 * _order ) + i][0] = sqrt( 1 - nodes1D[j] * nodes1D[j] ) * std::cos( phi[i] );
-            _points[j * ( 2 * _order ) + i][1] = sqrt( 1 - nodes1D[j] * nodes1D[j] ) * std::sin( phi[i] );
-            _points[j * ( 2 * _order ) + i][2] = nodes1D[j];
-            _weights[j * ( 2 * _order ) + i]   = 2.0 * M_PI / _order * weights1D[j];
-        }
+    unsigned dim = 3;
+    for( unsigned k = 0; k < _nq; ++k ) {
+        _points[k].resize( dim );
+        _points[k][0] = nodes1D[k];
+        _weights[k]   = weights1D[k];
     }
 }
 
-void QGaussLegendreTensorized::SetConnectivity() {    // TODO
+void QGaussLegendre1D::SetConnectivity() {    // TODO
     // Not initialized for this quadrature.
     VectorVectorU connectivity;
     _connectivity = connectivity;
 }
 
-std::pair<Vector, Matrix> QGaussLegendreTensorized::ComputeEigenValTriDiagMatrix( const Matrix& mat ) {
+std::pair<Vector, Matrix> QGaussLegendre1D::ComputeEigenValTriDiagMatrix( const Matrix& mat ) {
     // copied from 'Numerical Recipes' and updated + modified to work with blaze
     unsigned n = mat.rows();
 
@@ -139,16 +123,11 @@ std::pair<Vector, Matrix> QGaussLegendreTensorized::ComputeEigenValTriDiagMatrix
     return std::make_pair( d, z );
 }
 
-double QGaussLegendreTensorized::Pythag( const double a, const double b ) {
+double QGaussLegendre1D::Pythag( const double a, const double b ) {
     // copied from 'Numerical Recipes'
     double absa = std::fabs( a ), absb = std::fabs( b );
     return ( absa > absb ? absa * std::sqrt( 1.0 + ( absb / absa ) * ( absb / absa ) )
                          : ( absb == 0.0 ? 0.0 : absb * std::sqrt( 1.0 + ( absa / absb ) * ( absa / absb ) ) ) );
 }
 
-bool QGaussLegendreTensorized::CheckOrder() {
-    if( _order % 2 == 1 ) {    // order needs to be even
-        ErrorMessages::Error( "ERROR! Order " + std::to_string( _order ) + " for " + GetName() + " not available. ", CURRENT_FUNCTION );
-    }
-    return true;
-}
+bool QGaussLegendre1D::CheckOrder() { return true; }

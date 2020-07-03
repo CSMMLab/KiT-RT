@@ -20,7 +20,7 @@ std::vector<VectorVector> LineSource_SN::GetExternalSource( const std::vector<do
 
 std::vector<double> LineSource_SN::GetStoppingPower( const std::vector<double>& energies ) {
     // @TODO
-    return std::vector<double>( energies.size(), 0.0 );
+    return std::vector<double>( energies.size(), 1.0 );
 }
 
 VectorVector LineSource_SN::SetupIC() {
@@ -31,6 +31,21 @@ VectorVector LineSource_SN::SetupIC() {
         double x = cellMids[j][0];
         double y = cellMids[j][1];
         psi[j]   = 1.0 / ( 4.0 * M_PI * t ) * std::exp( -( x * x + y * y ) / ( 4 * t ) ) / ( 4 * M_PI );
+    }
+    return psi;
+}
+
+// ---- LineSource_SN_peudo1D ----
+
+LineSource_SN_Pseudo1D::LineSource_SN_Pseudo1D( Config* settings, Mesh* mesh ) : LineSource_SN( settings, mesh ) {}
+
+VectorVector LineSource_SN_Pseudo1D::SetupIC() {
+    VectorVector psi( _mesh->GetNumCells(), Vector( _settings->GetNQuadPoints(), 1e-10 ) );
+    auto cellMids = _mesh->GetCellMidPoints();
+    double t      = 3.2e-4;    // pseudo time for gaussian smoothing
+    for( unsigned j = 0; j < cellMids.size(); ++j ) {
+        double x = cellMids[j][0];
+        psi[j]   = 1.0 / ( 4.0 * M_PI * t ) * std::exp( -( x * x ) / ( 4 * t ) );
     }
     return psi;
 }
