@@ -21,6 +21,7 @@ RUN apt-get update \
        libgl1-mesa-dev \
        python3 \
        python3-pip \
+       gmsh \
     && apt-get clean \
     && apt-get autoremove --purge \
     && rm -rf /var/lib/apt/lists/* 
