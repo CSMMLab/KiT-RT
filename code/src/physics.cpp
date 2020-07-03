@@ -3,9 +3,6 @@
 #include "spline.h"
 #include "toolboxes/errormessages.h"
 
-#include <boost/foreach.hpp>
-#include <boost/range/combine.hpp>
-
 #include <fstream>
 #include <iostream>
 #include <map>
