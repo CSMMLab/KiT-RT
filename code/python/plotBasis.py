@@ -182,7 +182,7 @@ x = np.sin(phi) * np.cos(theta)
 y = np.sin(phi) * np.sin(theta)
 z = np.cos(phi)
 
-m, l = -1, 1
+m, l = 0, 1
 
 # Calculate the spherical harmonic Y(l,m) and normalize to [0,1]
 fcolors = sph_harm(m, l, theta, phi).real
