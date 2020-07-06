@@ -50,11 +50,10 @@ class MNSolver : public Solver
      */
     int GlobalIndex( int l, int k ) const;
 
-    /*! @brief : Construct flux by computing the Moment of the FVM discretization at the interface of cell
+    /*! @brief : Construct flux by computing the Moment of the  sum of FVM discretization at the interface of cell
      *  @param : idx_cell = current cell id
-     *  @param : idx_neighbor = neighbor cell id
-     *  @returns : flux for all moments at interface of idx_cell,idx_neighbor */
-    Vector ConstructFlux( unsigned idx_cell, unsigned idx_neighbor );
+     *  @returns : sum over all neighbors of flux for all moments at interface of idx_cell, idx_neighbor */
+    Vector ConstructFlux( unsigned idx_cell );
 
     /*! @brief : Pre-Compute Moments at all quadrature points. */
     void ComputeMoments();

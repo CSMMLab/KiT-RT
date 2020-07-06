@@ -69,6 +69,10 @@ PNSolver::PNSolver( Config* settings ) : Solver( settings ) {
 }
 
 void PNSolver::Solve() {
+
+    int rank;
+    MPI_Comm_rank( MPI_COMM_WORLD, &rank );
+
     auto log = spdlog::get( "event" );
 
     // angular flux at next time step (maybe store angular flux at all time steps, since time becomes energy?)
@@ -88,13 +92,9 @@ void PNSolver::Solve() {
 
     Save( -1 );    // Save initial condition
 
-    int rank;
-
     unsigned idx_system = 0;
 
-    MPI_Comm_rank( MPI_COMM_WORLD, &rank );
     if( rank == 0 ) log->info( "{:10}   {:10}", "t", "dFlux" );
-
     if( rank == 0 ) log->info( "{:03.8f}   {:01.5e} {:01.5e}", -1.0, dFlux, mass1 );
 
     // Loop over energies (pseudo-time of continuous slowing down approach)
@@ -156,7 +156,6 @@ void PNSolver::Solve() {
         dFlux   = blaze::l2Norm( fluxNew - fluxOld );
         fluxOld = fluxNew;
         if( rank == 0 ) {
-            // std::cout << "PseudoTime: " << _energies[idx_energy] << " | Flux Change: " << dFlux << " | Mass: " << mass << "\n";
             log->info( "{:03.8f}   {:01.5e} {:01.5e}", _energies[idx_energy], dFlux, mass );
         }
         Save( idx_energy );

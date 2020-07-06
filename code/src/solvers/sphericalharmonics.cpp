@@ -27,10 +27,11 @@ Vector SphericalHarmonics::ComputeSphericalBasis( double x, double y, double z )
     // transform (x,y,z) into (my,phi)
     double my  = z;
     double phi = 0.0;
+
     if( y >= 0 )
         phi = acos( x );
     else
-        phi = acos( -x ) + M_PI;
+        phi = 2 * M_PI - acos( x );
 
     ComputeAssLegendrePoly( my );
     ComputeYBasis( phi );
