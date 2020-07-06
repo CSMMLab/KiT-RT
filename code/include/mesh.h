@@ -14,6 +14,8 @@
 #include "settings/typedef.h"
 #include "toolboxes/errormessages.h"
 
+#include "reconstructor.h"
+
 class Mesh
 {
   protected:
@@ -23,6 +25,8 @@ class Mesh
     const unsigned _numNodesPerCell;
     const unsigned _numBoundaries;
     const unsigned _ghostCellID;    // equal to _numCells and therefore has the ID of the last cell + 1
+
+    std::vector<std::pair<double, double>> _bounds;
 
     std::vector<Vector> _nodes;                                                  // dimension: numNodes<dim>
     std::vector<std::vector<unsigned>> _cells;                                   // dimension: numCells<numNodesPerCell>
@@ -43,6 +47,7 @@ class Mesh
     Vector ComputeOutwardFacingNormal( const Vector& nodeA,
                                        const Vector& nodeB,
                                        const Vector& cellCenter );    // normals are scaled with their respective edge length
+    void ComputeBounds();
 
   public:
     Mesh() = delete;
@@ -104,7 +109,18 @@ class Mesh
      */
     const std::vector<BOUNDARY_TYPE>& GetBoundaryTypes() const;
 
+    /**
+     * @brief Returns the minimal and maximal coordinates of all nodes for each dimension
+     * @return dimension: dim
+     */
+    const std::vector<std::pair<double, double>> GetBounds() const;
+
+    /**
+     * @brief Returns distance of a specified cells center to the coordinate systems origin
+     * @return dimension: scalar
+     */
     double GetDistanceToOrigin( unsigned idx_cell ) const;
+
     /**
      * @brief ComputeSlopes calculates the slope in every cell into x and y direction
      * @param nq is number of quadrature points
@@ -113,6 +129,10 @@ class Mesh
      * @param psi is solution for which slope is computed
      */
     void ComputeSlopes( unsigned nq, VectorVector& psiDerX, VectorVector& psiDerY, const VectorVector& psi ) const;
+
+    void ReconstructSlopesS( unsigned nq, VectorVector& psiDerX, VectorVector& psiDerY, const VectorVector& psi ) const;
+    void ReconstructSlopesU( unsigned nq, VectorVector& psiDerX, VectorVector& psiDerY, const VectorVector& psi ) const;
+
 };
 
 #endif    // MESH_H

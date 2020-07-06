@@ -25,8 +25,6 @@ Solver::Solver( Config* settings ) : _settings( settings ) {
     _settings->SetNQuadPoints( _nq );
     ScatteringKernel* k = ScatteringKernel::CreateScatteringKernel( settings->GetKernelName(), quad );
     _scatteringKernel   = k->GetScatteringKernel();
-    // delete QuadratureBase
-    delete quad;
 
     // set time step
     _dE        = ComputeTimeStep( settings->GetCFL() );
@@ -57,11 +55,11 @@ Solver::~Solver() {
 }
 
 double Solver::ComputeTimeStep( double cfl ) const {
-    double maxEdge = 1000.;
-    for( unsigned j = 0; j < _nCells; ++j ) {
-        for( unsigned l = 0; l < _normals[j].size(); ++l ) {
+    double maxEdge = -1.0;
+    for( unsigned j = 0; j < _nCells; j++ ) {
+        for( unsigned l = 0; l < _normals[j].size(); l++ ) {
             double currentEdge = _areas[j] / norm( _normals[j][l] );
-            if( currentEdge < maxEdge ) maxEdge = currentEdge;
+            if( currentEdge > maxEdge ) maxEdge = currentEdge;
         }
     }
     return cfl * maxEdge;

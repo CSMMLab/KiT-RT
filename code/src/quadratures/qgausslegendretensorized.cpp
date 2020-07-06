@@ -28,9 +28,6 @@ void QGaussLegendreTensorized::SetPointsAndWeights() {
             nodes1D[i] = evSys.first[i];
         weights1D[i] = 2 * std::pow( evSys.second( 0, i ), 2 );
     }
-    for( unsigned i = 0; i < _order; ++i ) {
-        nodes1D[i] = ( nodes1D[i] + 1.0 ) * 0.5;
-    }
 
     // sort nodes increasingly and also reorder weigths for consistency
     std::vector<unsigned> sortOrder( nodes1D.size() );

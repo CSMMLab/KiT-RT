@@ -184,8 +184,10 @@ void Config::SetConfigOptions() {
     AddStringOption( "OUTPUT_FILE", _outputFile, string( "output" ) );
     /*! @brief LOG_DIR \n DESCRIPTION: Relative Directory of log files \n DEFAULT "/out" @ingroup Config.*/
     AddStringOption( "LOG_DIR", _logDir, string( "/out" ) );
-    /*!\brief MESH_FILE \n DESCRIPTION: Name of mesh file \n DEFAULT "" \ingroup Config.*/
+    /*! @brief MESH_FILE \n DESCRIPTION: Name of mesh file \n DEFAULT "" \ingroup Config.*/
     AddStringOption( "MESH_FILE", _meshFile, string( "mesh.su2" ) );
+    /*! @brief MESH_FILE \n DESCRIPTION: Name of mesh file \n DEFAULT "" \ingroup Config.*/
+    AddStringOption( "CT_FILE", _ctFile, string( "phantom.png" ) );
 
     // Quadrature relatated options
     /*! @brief QUAD_TYPE \n DESCRIPTION: Type of Quadrature rule \n Options: see @link QUAD_NAME \endlink \n DEFAULT: QUAD_MonteCarlo \ingroup
@@ -205,9 +207,14 @@ void Config::SetConfigOptions() {
     AddEnumOption( "PROBLEM", _problemName, Problem_Map, PROBLEM_ElectronRT );
     /*! @brief Solver \n DESCRIPTION: Solver used for problem \n DEFAULT SN_SOLVER @ingroup Config. */
     AddEnumOption( "SOLVER", _solverName, Solver_Map, SN_SOLVER );
+    /*!\brief RECONS_ORDER \n DESCRIPTION: Reconstruction order for solver \n DEFAULT 1 \ingroup Config.*/
+    AddUnsignedShortOption( "RECONS_ORDER", _reconsOrder, 1 );
     /*! @brief CleanFluxMatrices \n DESCRIPTION:  If true, very low entries (10^-10 or smaller) of the flux matrices will be set to zero,
      * to improve floating point accuracy \n DEFAULT false \ingroup Config */
     AddBoolOption( "CLEAN_FLUX_MATRICES", _cleanFluxMat, false );
+    /*! @brief ContinuousSlowingDown \n DESCRIPTION: If true, the program uses the continuous slowing down approximation to treat energy dependent
+     * problems. \n DEFAULT false \ingroup Config */
+    AddBoolOption( "CONTINUOUS_SLOWING_DOWN", _csd, false );
 
     // Mesh related options
     // Boundary Markers
@@ -316,13 +323,14 @@ void Config::SetPostprocessing() {
     _outputDir  = _inputDir + _outputDir;
     _meshFile   = _inputDir + _meshFile;
     _outputFile = _outputDir + _outputFile;
+    _ctFile     = _inputDir + _ctFile;
 
     // create directories if they dont exist
     if( !std::filesystem::exists( _outputDir ) ) std::filesystem::create_directory( _outputDir );
 
         // init logger
 #ifdef BUILD_TESTING
-    InitLogger( spdlog::level::off, spdlog::level::off );
+    InitLogger( spdlog::level::err, spdlog::level::off );
 #else
     InitLogger( spdlog::level::info, spdlog::level::info );
 #endif
@@ -336,9 +344,9 @@ void Config::SetPostprocessing() {
     }
 
     // Check, if mesh file exists
-    if( !std::filesystem::exists( _meshFile ) ) {
-        ErrorMessages::Error( "Path to mesh file <" + _meshFile + "> does not exist. Please check your config file.", CURRENT_FUNCTION );
-    }
+    // if( !std::filesystem::exists( _meshFile ) ) {
+    //    ErrorMessages::Error( "Path to mesh file <" + _meshFile + "> does not exist. Please check your config file.", CURRENT_FUNCTION );
+    //}
 }
 
 void Config::SetOutput() {
