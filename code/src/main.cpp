@@ -19,13 +19,17 @@ int main( int argc, char** argv ) {
     MPI_Init( &argc, &argv );
 
     // QGaussLegendreTensorized quad( 4 );
-    // SphericalHarmonics testBase( 2 );
+    // int maxMomentDegree = 2;
+    // SphericalHarmonics testBase( maxMomentDegree );
     //
     // double x, y, z, w;
     // Vector moment = testBase.ComputeSphericalBasis( 0, 1, 0 );
-    // // 9 basis moments if degree = 2
+    //// 9 basis moments if degree = 2
+    //// unsigned nTotalMoments = moment.size();
     //
     // Vector results( moment.size(), 0.0 );
+    //
+    // int idx_basis = 0, idx_basisM = 0;
     //
     // for( unsigned idx_quad = 0; idx_quad < quad.GetNq(); idx_quad++ ) {
     //    x      = quad.GetPoints()[idx_quad][0];
@@ -34,51 +38,77 @@ int main( int argc, char** argv ) {
     //    w      = quad.GetWeights()[idx_quad];
     //    moment = testBase.ComputeSphericalBasis( x, y, z );
     //
-    //    for( unsigned idx_sys = 0; idx_sys < 9; idx_sys++ ) {
-    //        results[idx_sys] += w * moment[idx_sys];
-    //        // std::cout << idx_quad << ": " << results[0] << "\n";
+    //    for( int idx_l = 0; idx_l <= 2; idx_l++ ) {
+    //        idx_basis = testBase.GlobalIdxBasis( idx_l, 0 );
+    //
+    //        results[idx_basis] += w * moment[idx_basis] * moment[idx_basis];
+    //
+    //        for( int idx_k = 1; idx_k <= idx_l; idx_k++ ) {
+    //            idx_basis  = testBase.GlobalIdxBasis( idx_l, idx_k );
+    //            idx_basisM = testBase.GlobalIdxBasis( idx_l, -idx_k );
+    //            // std::cout << "(" << idx_basis << " | " << idx_basisM << ")\n";
+    //            results[idx_basis] += w * moment[idx_basis] * moment[idx_basis];
+    //            results[idx_basisM] += w * moment[idx_basisM] * moment[idx_basisM];
+    //        }
     //    }
     //}
-    // std::cout << "moment integration:\n " << results << "\n";
+    // std::cout << "Normalization integration:\n " << results << "\n";
     //
-    // // Normalized integration
-    // Vector resultsNormal( moment.size(), 0.0 );
+    //// Normalized integration
+    //// Vector resultsNormal( moment.size(), 0.0 );
+    ////
+    //// for( unsigned idx_quad = 0; idx_quad < quad.GetNq(); idx_quad++ ) {
+    ////     x      = quad.GetPoints()[idx_quad][0];
+    ////     y      = quad.GetPoints()[idx_quad][1];
+    ////     z      = quad.GetPoints()[idx_quad][2];
+    ////     w      = quad.GetWeights()[idx_quad];
+    ////     moment = testBase.ComputeSphericalBasis( x, y, z );
+    ////
+    ////     for( unsigned idx_sys = 0; idx_sys < 9; idx_sys++ ) {
+    ////
+    ////         resultsNormal[idx_sys] += w * moment[idx_sys] * moment[idx_sys] / results[idx_sys];
+    ////         // std::cout << idx_quad << ": " << results[0] << "\n";
+    ////     }
+    //// }
+    //// std::cout << "moment integration:\n " << resultsNormal << "\n";
     //
-    // for( unsigned idx_quad = 0; idx_quad < quad.GetNq(); idx_quad++ ) {
-    //     x      = quad.GetPoints()[idx_quad][0];
-    //     y      = quad.GetPoints()[idx_quad][1];
-    //     z      = quad.GetPoints()[idx_quad][2];
-    //     w      = quad.GetWeights()[idx_quad];
-    //     moment = testBase.ComputeSphericalBasis( x, y, z );
+    //// Vector results2( moment.size(), 0.0 );
+    ////
+    //// for( unsigned idx_quad = 0; idx_quad < quad.GetNq(); idx_quad++ ) {
+    ////     x      = quad.GetPoints()[idx_quad][0];
+    ////     y      = quad.GetPoints()[idx_quad][1];
+    ////     z      = quad.GetPoints()[idx_quad][2];
+    ////     w      = quad.GetWeights()[idx_quad];
+    ////     moment = testBase.ComputeSphericalBasis( x, y, z );
+    ////
+    ////     for( unsigned idx_sys = 1; idx_sys < 9; idx_sys++ ) {
+    ////         results2[idx_sys] += w * moment[idx_sys - 1] * moment[idx_sys];
+    ////         // std::cout << idx_quad << ": " << results[0] << "\n";
+    ////     }
+    //// }
+    //// std::cout << "moment integration:\n " << results2 << "\n";
     //
-    //     for( unsigned idx_sys = 0; idx_sys < 9; idx_sys++ ) {
+    // std::ofstream myfile;
+    // myfile.open( "assLegendre.csv" );
     //
-    //         resultsNormal[idx_sys] += w * moment[idx_sys] * moment[idx_sys] / results[idx_sys];
-    //         // std::cout << idx_quad << ": " << results[0] << "\n";
-    //     }
-    // }
-    // std::cout << "moment integration:\n " << resultsNormal << "\n";
-    //
-    // Vector results2( moment.size(), 0.0 );
-    //
-    // for( unsigned idx_quad = 0; idx_quad < quad.GetNq(); idx_quad++ ) {
-    //     x      = quad.GetPoints()[idx_quad][0];
-    //     y      = quad.GetPoints()[idx_quad][1];
-    //     z      = quad.GetPoints()[idx_quad][2];
-    //     w      = quad.GetWeights()[idx_quad];
-    //     moment = testBase.ComputeSphericalBasis( x, y, z );
-    //
-    //     for( unsigned idx_sys = 1; idx_sys < 9; idx_sys++ ) {
-    //         results2[idx_sys] += w * moment[idx_sys - 1] * moment[idx_sys];
-    //         // std::cout << idx_quad << ": " << results[0] << "\n";
-    //     }
-    // }
-    // std::cout << "moment integration:\n " << results2 << "\n";
+    // std::vector<double> results3;
+    // for( double dMy = -1.0; dMy <= 1.0; dMy += 0.01 ) {
+    //    results3 = testBase.GetAssLegendrePoly( dMy );
+    //    myfile << dMy;
+    //    //     std::cout << dMy;
+    //    for( unsigned idx_basis = 0; idx_basis < results3.size(); idx_basis++ ) {
+    //        myfile << "," << results3[idx_basis];
+    //        // std::cout << " | " << results3[idx_basis];
+    //    }
+    //    //     std::cout << "\n";
+    //    myfile << "\n";
+    //}
+    // myfile.close();
     //
 
     std::string filename = ParseArguments( argc, argv );
 
-    // Load Settings from File
+    // CD  Load Settings from File
     Config* config = new Config( filename );
 
     // Print input file and run info to file

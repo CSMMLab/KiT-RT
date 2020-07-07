@@ -45,6 +45,13 @@ class SphericalHarmonics
      */
     unsigned inline GlobalIdxBasis( unsigned l_degree, unsigned k_order ) { return k_order + l_degree + l_degree * l_degree; }
 
+    /*! @brief : Computes an entire set of (komplex congjugate) P_l^k and stores
+     *           it in the vector _assLegendreP
+     *  @param : my = cos(theta)  - spherical coordinate, -1 <=  my <= 1
+     *  @return : Associated Legendre Polynomial at my for all l and k
+     */
+    std::vector<double> GetAssLegendrePoly( const double my );
+
   private:
     /*! @brief: maximal degree of the spherical harmonics basis (this is "L" in the comments)*/
     unsigned _LMaxDegree;

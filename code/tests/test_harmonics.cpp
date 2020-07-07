@@ -6,18 +6,68 @@
 #include <fstream>
 #include <sstream>
 
-TEST_CASE( "test the spherical harmonics basis computation", "[spherical harmonics]" ) {
+double Y0_0( double my, double phi ) { return sqrt( 1 / ( 4 * M_PI ) ); }
 
-    std::string text_line;
-    std::ifstream case_file;
+double Y1_m1( double my, double phi ) { return -sqrt( 3 / ( 4 * M_PI ) ) * sqrt( 1 - my * my ) * sin( phi ); }
+double Y1_0( double my, double phi ) { return sqrt( 3 / ( 4 * M_PI ) ) * my; }
+double Y1_1( double my, double phi ) { return -sqrt( 3 / ( 4 * M_PI ) ) * sqrt( 1 - my * my ) * cos( phi ); }
+
+double Y2_m2( double my, double phi ) { return sqrt( 15 / ( 16 * M_PI ) ) * ( 1 - my * my ) * sin( 2 * phi ); }
+double Y2_m1( double my, double phi ) { return -1 * sqrt( 15 / ( 4 * M_PI ) ) * my * sqrt( 1 - my * my ) * sin( phi ); }
+double Y2_0( double my, double phi ) { return sqrt( 5 / ( 16 * M_PI ) ) * ( 3 * my * my - 1 ); }
+double Y2_1( double my, double phi ) { return -1 * sqrt( 15 / ( 4 * M_PI ) ) * my * sqrt( 1 - my * my ) * cos( phi ); }
+double Y2_2( double my, double phi ) { return sqrt( 15 / ( 16 * M_PI ) ) * ( 1 - my * my ) * cos( 2 * phi ); }
+
+double P0_0( double my ) { return sqrt( 1 / ( 2 * M_PI ) ); }
+double P1_0( double my ) { return sqrt( 3 / ( 2 * M_PI ) ) * my; }
+double P1_1( double my ) { return -sqrt( 3 / ( 4 * M_PI ) ) * sqrt( 1 - my * my ); }
+
+double P2_0( double my ) { return sqrt( 5 / ( 8 * M_PI ) ) * ( 3 * my * my - 1 ); }
+double P2_1( double my ) { return -1 * sqrt( 15 / ( 4 * M_PI ) ) * my * sqrt( 1 - my * my ); }
+double P2_2( double my ) { return sqrt( 15 / ( 16 * M_PI ) ) * ( 1 - my * my ); }
+
+TEST_CASE( "test the spherical harmonics basis computation", "[spherical harmonics]" ) {
 
     unsigned maxMomentDegree = 2;
 
     SphericalHarmonics testBase( maxMomentDegree );
 
+    SECTION( "Test against analytical solution" ) {
+        std::vector<double> legendre;
+        Vector moment;
+        for( double my = -1.0; my < 1.0; my += 0.1 ) {
+
+            legendre = testBase.GetAssLegendrePoly( my );
+
+            REQUIRE( std::fabs( legendre[0] - P0_0( my ) ) < 1e2 * std::numeric_limits<double>::epsilon() );
+            REQUIRE( std::fabs( legendre[1] - P1_0( my ) ) < 1e2 * std::numeric_limits<double>::epsilon() );
+            REQUIRE( std::fabs( legendre[2] - P1_1( my ) ) < 1e2 * std::numeric_limits<double>::epsilon() );
+            REQUIRE( std::fabs( legendre[3] - P2_0( my ) ) < 1e2 * std::numeric_limits<double>::epsilon() );
+            REQUIRE( std::fabs( legendre[4] - P2_1( my ) ) < 1e2 * std::numeric_limits<double>::epsilon() );
+            REQUIRE( std::fabs( legendre[5] - P2_2( my ) ) < 1e2 * std::numeric_limits<double>::epsilon() );
+
+            for( double phi = 0.0; phi < 2 * M_PI; phi += 0.1 ) {
+                moment = testBase.ComputeSphericalBasis( my, phi );
+
+                REQUIRE( std::fabs( moment[0] - Y0_0( my, phi ) ) < 1e2 * std::numeric_limits<double>::epsilon() );
+                REQUIRE( std::fabs( moment[1] - Y1_m1( my, phi ) ) < 1e2 * std::numeric_limits<double>::epsilon() );
+                REQUIRE( std::fabs( moment[2] - Y1_0( my, phi ) ) < 1e2 * std::numeric_limits<double>::epsilon() );
+                REQUIRE( std::fabs( moment[3] - Y1_1( my, phi ) ) < 1e2 * std::numeric_limits<double>::epsilon() );
+                REQUIRE( std::fabs( moment[4] - Y2_m2( my, phi ) ) < 1e2 * std::numeric_limits<double>::epsilon() );
+                REQUIRE( std::fabs( moment[5] - Y2_m1( my, phi ) ) < 1e2 * std::numeric_limits<double>::epsilon() );
+                REQUIRE( std::fabs( moment[6] - Y2_0( my, phi ) ) < 1e2 * std::numeric_limits<double>::epsilon() );
+                REQUIRE( std::fabs( moment[7] - Y2_1( my, phi ) ) < 1e2 * std::numeric_limits<double>::epsilon() );
+                REQUIRE( std::fabs( moment[8] - Y2_2( my, phi ) ) < 1e2 * std::numeric_limits<double>::epsilon() );
+            }
+        }
+    }
+
     // Remove title line
 
     SECTION( "test to reference solution" ) {
+
+        std::string text_line;
+        std::ifstream case_file;
 
         double my  = 0.0;
         double phi = 0.0;

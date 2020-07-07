@@ -38,6 +38,11 @@ Vector SphericalHarmonics::ComputeSphericalBasis( double x, double y, double z )
     return _YBasis;
 }
 
+std::vector<double> SphericalHarmonics::GetAssLegendrePoly( const double my ) {
+    ComputeAssLegendrePoly( my );
+    return _assLegendreP;
+}
+
 void SphericalHarmonics::ComputeCoefficients() {
     // m in paper is here denoted by k
     double ls   = 0.0;    // l^2
@@ -112,4 +117,12 @@ void SphericalHarmonics::ComputeYBasis( const double phi ) {
             _YBasis[GlobalIdxBasis( l_idx, k_idx )]  = _assLegendreP[GlobalIdxAssLegendreP( l_idx, k_idx )] * c;
         }
     }
+
+    // slower version
+    // for( int l_idx = 1; l_idx <= int( _LMaxDegree ); l_idx++ ) {
+    //     for( int k_idx = 1; k_idx <= l_idx; k_idx++ ) {
+    //         _YBasis[GlobalIdxBasis( l_idx, -k_idx )] = _assLegendreP[GlobalIdxAssLegendreP( l_idx, k_idx )] * sin( k_idx * phi );
+    //         _YBasis[GlobalIdxBasis( l_idx, k_idx )]  = _assLegendreP[GlobalIdxAssLegendreP( l_idx, k_idx )] * cos( k_idx * phi );
+    //     }
+    // }
 }
