@@ -31,6 +31,11 @@ double QuadratureBase::Integrate( double( f )( double x0, double x1, double x2 )
     return result;
 }
 
+VectorVector QuadratureBase::GetPointsSphere() const {
+    ErrorMessages::Error( "Quadrature points in spherical coordinates are not supported\nfor this quadrature. Exiting", CURRENT_FUNCTION );
+    return _pointsSphere;
+}
+
 std::vector<double> QuadratureBase::Integrate( std::vector<double>( f )( double x0, double x1, double x2 ), unsigned len ) {
     std::vector<double> result( len, 0.0 );
     std::vector<double> funcEval( len, 0.0 );

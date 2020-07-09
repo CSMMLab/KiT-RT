@@ -92,6 +92,8 @@ double f( double x, double y, double z ) {
     return x * x + y * y + z * z;    // == 1
 }
 
+double g( double x, double y, double z ) { return x + y + z; }
+
 TEST_CASE( "Integrate a constant function.", "[quadrature]" ) {
     bool lowAccuracyTesting = false;
     for( auto quadraturename : quadraturenames ) {
@@ -111,6 +113,17 @@ TEST_CASE( "Integrate a constant function.", "[quadrature]" ) {
                 printf( "Computed result %.15f", Q->Integrate( f ) );
             }
             REQUIRE( approxequal( Q->Integrate( f ), 4.0 * M_PI, lowAccuracyTesting ) );
+
+            // non constant function
+            // if( !approxequal( Q->Integrate( g ), -0.0997858, lowAccuracyTesting ) ) {
+            //     printf( "Quadrature %d at order %d :  Error : %.15f (low accuracy testing was set to %d)\n",
+            //             quadraturename,
+            //             quadratureorder,
+            //             std::abs( Q->Integrate( g ) + 0.0997858 ),
+            //             lowAccuracyTesting );
+            //     printf( "Computed result %.15f", Q->Integrate( g ) );
+            // }
+            // REQUIRE( approxequal( Q->Integrate( g ), -0.0997858, lowAccuracyTesting ) );
         }
     }
 }

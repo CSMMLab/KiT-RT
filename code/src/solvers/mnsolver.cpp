@@ -50,36 +50,33 @@ int MNSolver::GlobalIndex( int l, int k ) const {
 }
 
 void MNSolver::ComputeMoments() {
-    double x, y, z, w;
+    double my, phi, w;
 
     for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
-        x                  = _quadrature->GetPoints()[idx_quad][0];
-        y                  = _quadrature->GetPoints()[idx_quad][1];
-        z                  = _quadrature->GetPoints()[idx_quad][2];
-        _moments[idx_quad] = _basis.ComputeSphericalBasis( x, y, z );
+        phi = _quadrature->GetPointsSphere()[idx_quad][0];
+        my  = _quadrature->GetPointsSphere()[idx_quad][1];
+
+        _moments[idx_quad] = _basis.ComputeSphericalBasis( my, phi );
     }
 
     Vector normalizationFactor( _moments[0].size(), 0.0 );
 
     // Normalize Moments
 
-    for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
-        x = _quadrature->GetPoints()[idx_quad][0];
-        y = _quadrature->GetPoints()[idx_quad][1];
-        z = _quadrature->GetPoints()[idx_quad][2];
-        w = _quadrature->GetWeights()[idx_quad];
-
-        for( unsigned idx_sys = 0; idx_sys < _nTotalEntries; idx_sys++ ) {
-            normalizationFactor[idx_sys] += w * _moments[idx_quad][idx_sys] * _moments[idx_quad][idx_sys];
-        }
-    }
-    std::cout << "norm" << normalizationFactor << "\n";
-
-    for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
-        for( unsigned idx_sys = 0; idx_sys < _nTotalEntries; idx_sys++ ) {
-            _moments[idx_quad][idx_sys] /= sqrt( normalizationFactor[idx_sys] );
-        }
-    }
+    // for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
+    //    w = _quadrature->GetWeights()[idx_quad];
+    //
+    //    for( unsigned idx_sys = 0; idx_sys < _nTotalEntries; idx_sys++ ) {
+    //        normalizationFactor[idx_sys] += w * _moments[idx_quad][idx_sys] * _moments[idx_quad][idx_sys];
+    //    }
+    //}
+    // std::cout << "norm" << normalizationFactor << "\n";
+    //
+    // for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
+    //    for( unsigned idx_sys = 0; idx_sys < _nTotalEntries; idx_sys++ ) {
+    //        _moments[idx_quad][idx_sys] /= sqrt( normalizationFactor[idx_sys] );
+    //    }
+    //}
 }
 
 Vector MNSolver::ConstructFlux( unsigned idx_cell ) {

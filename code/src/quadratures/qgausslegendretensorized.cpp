@@ -53,9 +53,14 @@ void QGaussLegendreTensorized::SetPointsAndWeights() {
 
     // resize points and weights
     _points.resize( _nq );
+    _pointsSphere.resize( _nq );
     for( auto& p : _points ) {
         p.resize( 3 );
     }
+    for( auto& p : _pointsSphere ) {
+        p.resize( 2 );
+    }
+
     _weights.resize( _nq );
 
     // transform tensorized (x,y,z)-grid to spherical grid points
@@ -64,7 +69,11 @@ void QGaussLegendreTensorized::SetPointsAndWeights() {
             _points[j * ( 2 * _order ) + i][0] = sqrt( 1 - nodes1D[j] * nodes1D[j] ) * std::cos( phi[i] );
             _points[j * ( 2 * _order ) + i][1] = sqrt( 1 - nodes1D[j] * nodes1D[j] ) * std::sin( phi[i] );
             _points[j * ( 2 * _order ) + i][2] = nodes1D[j];
-            _weights[j * ( 2 * _order ) + i]   = 2.0 * M_PI / _order * weights1D[j];
+
+            _pointsSphere[j * ( 2 * _order ) + i][0] = nodes1D[j];
+            _pointsSphere[j * ( 2 * _order ) + i][0] = phi[i];
+
+            _weights[j * ( 2 * _order ) + i] = 2.0 * M_PI / _order * weights1D[j];
         }
     }
 }
