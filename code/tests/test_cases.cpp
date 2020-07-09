@@ -90,7 +90,7 @@ TEST_CASE( "linesource_MN", "[validation tests]" ) {
     solver->Solve();
     solver->Save();
 
-    auto test      = readVTKFile( "../result/rtsn_test_linesource_PN.vtk" );
+    auto test      = readVTKFile( "../result/rtsn_test_linesource_MN.vtk" );
     auto reference = readVTKFile( "../tests/input/linesource_MN_reference.vtk" );
 
     double eps = 1e-3;
