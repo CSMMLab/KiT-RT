@@ -15,7 +15,7 @@ std::vector<std::vector<int>> quadratureorders = {
 };
 
 bool approxequal( double a, double b, bool lowAccuracy = false ) {
-    double tol = 1e-15;              // For computed quadrature weights
+    double tol = 1e-12;              // For computed quadrature weights
     if( lowAccuracy ) tol = 5e-5;    // Mainly for Lookup Quadratures
     return std::abs( a - b ) < tol;
 }
@@ -36,7 +36,7 @@ TEST_CASE( "Quadrature weights sum to 4*pi.", "[quadrature]" ) {
                         quadratureorder,
                         std::abs( Q->SumUpWeights() - 4 * M_PI ),
                         lowAccuracyTesting );
-                printf( "Computed result %.15f", Q->SumUpWeights() );
+                printf( "Computed result %.15f \n", Q->SumUpWeights() );
             }
             REQUIRE( approxequal( Q->SumUpWeights(), 4 * M_PI, lowAccuracyTesting ) );
         }

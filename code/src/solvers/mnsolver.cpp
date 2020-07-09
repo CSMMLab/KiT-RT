@@ -53,30 +53,11 @@ void MNSolver::ComputeMoments() {
     double my, phi, w;
 
     for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
-        phi = _quadrature->GetPointsSphere()[idx_quad][0];
-        my  = _quadrature->GetPointsSphere()[idx_quad][1];
+        my  = _quadrature->GetPointsSphere()[idx_quad][0];
+        phi = _quadrature->GetPointsSphere()[idx_quad][1];
 
         _moments[idx_quad] = _basis.ComputeSphericalBasis( my, phi );
     }
-
-    Vector normalizationFactor( _moments[0].size(), 0.0 );
-
-    // Normalize Moments
-
-    // for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
-    //    w = _quadrature->GetWeights()[idx_quad];
-    //
-    //    for( unsigned idx_sys = 0; idx_sys < _nTotalEntries; idx_sys++ ) {
-    //        normalizationFactor[idx_sys] += w * _moments[idx_quad][idx_sys] * _moments[idx_quad][idx_sys];
-    //    }
-    //}
-    // std::cout << "norm" << normalizationFactor << "\n";
-    //
-    // for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
-    //    for( unsigned idx_sys = 0; idx_sys < _nTotalEntries; idx_sys++ ) {
-    //        _moments[idx_quad][idx_sys] /= sqrt( normalizationFactor[idx_sys] );
-    //    }
-    //}
 }
 
 Vector MNSolver::ConstructFlux( unsigned idx_cell ) {
@@ -87,18 +68,20 @@ Vector MNSolver::ConstructFlux( unsigned idx_cell ) {
     // std::cout << "--------\n";
     // std::cout << " alphas curr cell" << _alpha[idx_cell] << " alphas neigh cell:\n";
 
-    bool good = _alpha[idx_cell] == 0.0;
+    // bool good = _alpha[_neighbors[idx_cell][idx_neigh]] == 0.0;
 
-    int idx_good = 0;
-    for( unsigned idx_neigh = 0; idx_neigh < _neighbors[idx_cell].size(); idx_neigh++ ) {
-        // std::cout << _alpha[idx_neigh] << "\n";
-        if( _alpha[idx_neigh] == 0.0 ) idx_good++;
-    }
-    if( idx_good == 2 && good ) {
-        std::cout << "Candidate\n";
-    }
+    // int idx_good = 0;
+    // for( unsigned idx_neigh = 0; idx_neigh < _neighbors[idx_cell].size(); idx_neigh++ ) {
+    //    std::cout << _alpha[_neighbors[idx_cell][idx_neigh]] << "\n";
+    //    if( _alpha[_neighbors[idx_cell][idx_neigh]] == 0.0 ) idx_good++;
+    //}
+    // if( idx_good == 2 && good ) {
+    //    std::cout << "Candidate\n";
+    //}
 
     Vector flux( _nTotalEntries, 0.0 );
+    Vector omega( 3, 0.0 );
+
     for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
 
         w = _quadrature->GetWeights()[idx_quad];
@@ -107,24 +90,29 @@ Vector MNSolver::ConstructFlux( unsigned idx_cell ) {
 
         entropyL = dot( _alpha[idx_cell], _moments[idx_quad] );
         // _entropy->EntropyPrimeDual( blaze::dot( _alpha[idx_cell], _moments[idx_quad] ) );
-
+        omega = _quadrature->GetPoints()[idx_quad];
+        // std::cout << "omega " << omega << " ||omega|| " << omega[0] * omega[0] + omega[1] * omega[1] + omega[2] * omega[2] << " entropyL " <<
+        // entropyL
+        //           << "\n";
         for( unsigned idx_neigh = 0; idx_neigh < _neighbors[idx_cell].size(); idx_neigh++ ) {
             // Store fluxes in psiNew, to save memory
             if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::NEUMANN && _neighbors[idx_cell][idx_neigh] == _nCells )
                 entropyR = entropyL;
             else {
-                entropyR = dot( _alpha[idx_neigh], _moments[idx_quad] );
+                entropyR = dot( _alpha[_neighbors[idx_cell][idx_neigh]], _moments[idx_quad] );
                 //_entropy->EntropyPrimeDual( blaze::dot( _alpha[idx_neigh], _moments[idx_quad] ) );
             }
-            entropyFlux += _g->Flux( _quadrature->GetPoints()[idx_quad], entropyL, entropyR, _normals[idx_cell][idx_neigh] );
+            // std::cout << " entropyR " << entropyR << " flux " << _g->Flux( omega, entropyL, entropyR, _normals[idx_cell][idx_neigh] ) << " \n";
+            entropyFlux += _g->Flux( omega, entropyL, entropyR, _normals[idx_cell][idx_neigh] );
         }
 
-        //   std::cout << "\n entropy Flux at cell [" << idx_cell << "] and quad [" << idx_quad << "]: " << entropyFlux << "\n";
+        //  std::cout << "\n entropy Flux at cell [" << idx_cell << "] and quad [" << idx_quad << "]: " << entropyFlux << " with moment\n"
+        //            << _moments[idx_quad] << "\n";
         // integrate
         flux += _moments[idx_quad] * ( w * entropyFlux );
     }
-
-    // std::cout << "\n integrate entropy Flux at cell [" << idx_cell << "] and : " << flux << "\n";
+    // std::cout << std::endl;
+    // std::cout << " integrate entropy Flux at cell [" << idx_cell << "]  : " << flux << "\n";
 
     return flux;
 }

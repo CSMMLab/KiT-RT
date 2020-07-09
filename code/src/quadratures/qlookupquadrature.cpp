@@ -76,4 +76,6 @@ void QLookupQuadrature::SetPointsAndWeights() {
         _weights[idx] /= sumWeights;
         _weights[idx] *= 4.0 * PI_NUMBER;
     }
+
+    // Transform _points to _pointsSphere
 }

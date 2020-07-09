@@ -5,6 +5,7 @@
 
 class QGaussLegendreTensorized : public QuadratureBase
 {
+    // Implementation is done accordingly to Kendall Atkinson 1981, Australian Matematical Society.
   private:
     double Pythag( const double a, const double b );
     std::pair<Vector, Matrix> ComputeEigenValTriDiagMatrix( const Matrix& mat );

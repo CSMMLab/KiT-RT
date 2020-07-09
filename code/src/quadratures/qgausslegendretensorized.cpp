@@ -28,9 +28,6 @@ void QGaussLegendreTensorized::SetPointsAndWeights() {
             nodes1D[i] = evSys.first[i];
         weights1D[i] = 2 * std::pow( evSys.second( 0, i ), 2 );
     }
-    for( unsigned i = 0; i < _order; ++i ) {
-        nodes1D[i] = ( nodes1D[i] + 1.0 ) * 0.5;
-    }
 
     // sort nodes increasingly and also reorder weigths for consistency
     std::vector<unsigned> sortOrder( nodes1D.size() );
@@ -48,8 +45,8 @@ void QGaussLegendreTensorized::SetPointsAndWeights() {
         phi[i] = ( i + 0.5 ) * M_PI / _order;
     }
 
-    // only use the spheres upper half
-    unsigned range = std::floor( _order / 2.0 );
+    unsigned range = std::floor( _order / 2.0 );    // comment (steffen): why do we only need half of the points: => In 2D we would count everything
+                                                    // twice. (not wrong with scaling, but expensive)
 
     // resize points and weights
     _points.resize( _nq );
@@ -71,7 +68,7 @@ void QGaussLegendreTensorized::SetPointsAndWeights() {
             _points[j * ( 2 * _order ) + i][2] = nodes1D[j];
 
             _pointsSphere[j * ( 2 * _order ) + i][0] = nodes1D[j];
-            _pointsSphere[j * ( 2 * _order ) + i][0] = phi[i];
+            _pointsSphere[j * ( 2 * _order ) + i][1] = phi[i];
 
             _weights[j * ( 2 * _order ) + i] = 2.0 * M_PI / _order * weights1D[j];
         }

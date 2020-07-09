@@ -79,6 +79,7 @@ VectorVector LineSource_PN::SetupIC() {
         psi[j][0] = 1.0 / ( 4.0 * M_PI * t ) * std::exp( -( x * x + y * y ) / ( 4 * t ) );
     }
 
+    // Debugging jump test case
     // for( unsigned j = 0; j < cellMids.size(); ++j ) {
     //    if( cellMids[j][0] > -0.2 && cellMids[j][1] > -0.2 && cellMids[j][1] < 0.2 && cellMids[j][0] < 0.2 )
     //        psi[j][0] = 1.0;
