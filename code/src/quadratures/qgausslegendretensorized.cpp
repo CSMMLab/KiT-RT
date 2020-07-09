@@ -45,8 +45,8 @@ void QGaussLegendreTensorized::SetPointsAndWeights() {
         phi[i] = ( i + 0.5 ) * M_PI / _order;
     }
 
-    unsigned range = std::floor( _order / 2.0 );    // comment (steffen): why do we only need half of the points: => In 2D we would count everything
-                                                    // twice. (not wrong with scaling, but expensive)
+    unsigned range = std::floor( _order / 2.0 );    // comment (steffen): why do we only need half of the points:
+                                                    //=> In 2D we would count everything twice. (not wrong with scaling
 
     // resize points and weights
     _points.resize( _nq );

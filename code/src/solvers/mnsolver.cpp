@@ -50,7 +50,7 @@ int MNSolver::GlobalIndex( int l, int k ) const {
 }
 
 void MNSolver::ComputeMoments() {
-    double my, phi, w;
+    double my, phi;
 
     for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
         my  = _quadrature->GetPointsSphere()[idx_quad][0];
