@@ -28,7 +28,7 @@ std::vector<double> readVTKFile( std::string filename ) {
     return data;
 }
 
-TEST_CASE( "checkerboard_SN", "[validation tests]" ) {
+TEST_CASE( "checkerboard_SN", "[validation_tests]" ) {
     std::string config_file_name = "../tests/input/checkerboard.cfg";
 
     Config* config = new Config( config_file_name );
@@ -46,7 +46,7 @@ TEST_CASE( "checkerboard_SN", "[validation tests]" ) {
     }
 }
 
-TEST_CASE( "linesource_SN", "[validation tests]" ) {
+TEST_CASE( "linesource_SN", "[validation_tests]" ) {
     std::string config_file_name = "../tests/input/linesource_SN.cfg";
 
     Config* config = new Config( config_file_name );
@@ -64,7 +64,7 @@ TEST_CASE( "linesource_SN", "[validation tests]" ) {
     }
 }
 
-TEST_CASE( "linesource_PN", "[validation tests]" ) {
+TEST_CASE( "linesource_PN", "[validation_tests]" ) {
     char config_file_name[MAX_STRING_SIZE] = "../tests/input/linesource_PN.cfg";
 
     Config* config = new Config( config_file_name );
@@ -82,7 +82,7 @@ TEST_CASE( "linesource_PN", "[validation tests]" ) {
     }
 }
 
-TEST_CASE( "linesource_MN", "[validation tests]" ) {
+TEST_CASE( "linesource_MN", "[validation_tests]" ) {
     char config_file_name[MAX_STRING_SIZE] = "../tests/input/linesource_MN.cfg";
 
     Config* config = new Config( config_file_name );

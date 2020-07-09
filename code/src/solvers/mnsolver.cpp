@@ -64,20 +64,6 @@ Vector MNSolver::ConstructFlux( unsigned idx_cell ) {
 
     // ---- Integration of Moment of flux ----
     double w, entropyL, entropyR, entropyFlux;
-    // double x, y, z;
-    // std::cout << "--------\n";
-    // std::cout << " alphas curr cell" << _alpha[idx_cell] << " alphas neigh cell:\n";
-
-    // bool good = _alpha[_neighbors[idx_cell][idx_neigh]] == 0.0;
-
-    // int idx_good = 0;
-    // for( unsigned idx_neigh = 0; idx_neigh < _neighbors[idx_cell].size(); idx_neigh++ ) {
-    //    std::cout << _alpha[_neighbors[idx_cell][idx_neigh]] << "\n";
-    //    if( _alpha[_neighbors[idx_cell][idx_neigh]] == 0.0 ) idx_good++;
-    //}
-    // if( idx_good == 2 && good ) {
-    //    std::cout << "Candidate\n";
-    //}
 
     Vector flux( _nTotalEntries, 0.0 );
     Vector omega( 3, 0.0 );
@@ -88,32 +74,21 @@ Vector MNSolver::ConstructFlux( unsigned idx_cell ) {
 
         entropyFlux = 0.0;    // Reset temorary flux
 
-        entropyL = dot( _alpha[idx_cell], _moments[idx_quad] );
-        // _entropy->EntropyPrimeDual( blaze::dot( _alpha[idx_cell], _moments[idx_quad] ) );
-        omega = _quadrature->GetPoints()[idx_quad];
-        // std::cout << "omega " << omega << " ||omega|| " << omega[0] * omega[0] + omega[1] * omega[1] + omega[2] * omega[2] << " entropyL " <<
-        // entropyL
-        //           << "\n";
+        entropyL = _entropy->EntropyPrimeDual( blaze::dot( _alpha[idx_cell], _moments[idx_quad] ) );
+
+        omega = _quadrature->GetPoints()[idx_quad];    // Use Pointer!
+
         for( unsigned idx_neigh = 0; idx_neigh < _neighbors[idx_cell].size(); idx_neigh++ ) {
             // Store fluxes in psiNew, to save memory
             if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::NEUMANN && _neighbors[idx_cell][idx_neigh] == _nCells )
                 entropyR = entropyL;
             else {
-                entropyR = dot( _alpha[_neighbors[idx_cell][idx_neigh]], _moments[idx_quad] );
-                //_entropy->EntropyPrimeDual( blaze::dot( _alpha[idx_neigh], _moments[idx_quad] ) );
+                entropyR = _entropy->EntropyPrimeDual( blaze::dot( _alpha[_neighbors[idx_cell][idx_neigh]], _moments[idx_quad] ) );
             }
-            // std::cout << " entropyR " << entropyR << " flux " << _g->Flux( omega, entropyL, entropyR, _normals[idx_cell][idx_neigh] ) << " \n";
             entropyFlux += _g->Flux( omega, entropyL, entropyR, _normals[idx_cell][idx_neigh] );
         }
-
-        //  std::cout << "\n entropy Flux at cell [" << idx_cell << "] and quad [" << idx_quad << "]: " << entropyFlux << " with moment\n"
-        //            << _moments[idx_quad] << "\n";
-        // integrate
         flux += _moments[idx_quad] * ( w * entropyFlux );
     }
-    // std::cout << std::endl;
-    // std::cout << " integrate entropy Flux at cell [" << idx_cell << "]  : " << flux << "\n";
-
     return flux;
 }
 
@@ -171,12 +146,11 @@ void MNSolver::Solve() {
             // NEED TO VECTORIZE
             for( unsigned idx_system = 0; idx_system < _nTotalEntries; idx_system++ ) {
 
-                psiNew[idx_cell][idx_system] =
-                    _psi[idx_cell][idx_system] - ( _dE / _areas[idx_cell] ) * psiNew[idx_cell][idx_system]; /* cell averaged flux */
-
-                //- _dE * _psi[idx_cell][idx_system] *
-                //      ( _sigmaA[idx_energy][idx_cell]                                    /* absorbtion influence */
-                //        + _sigmaS[idx_energy][idx_cell] * _scatterMatDiag[idx_system] ); /* scattering influence */
+                psiNew[idx_cell][idx_system] = _psi[idx_cell][idx_system] -
+                                               ( _dE / _areas[idx_cell] ) * psiNew[idx_cell][idx_system] /* cell averaged flux */
+                                               - _dE * _psi[idx_cell][idx_system] *
+                                                     ( _sigmaA[idx_energy][idx_cell]                                    /* absorbtion influence */
+                                                       + _sigmaS[idx_energy][idx_cell] * _scatterMatDiag[idx_system] ); /* scattering influence */
             }
         }
         _psi = psiNew;
