@@ -47,14 +47,14 @@ TEST_CASE( "checkerboard_SN", "[testcases]" ) {
 }
 
 TEST_CASE( "linesource_SN", "[testcases]" ) {
-    std::string config_file_name = "../tests/input/linesource.cfg";
+    std::string config_file_name = "../tests/input/linesource_SN.cfg";
 
     Config* config = new Config( config_file_name );
     Solver* solver = Solver::Create( config );
     solver->Solve();
     solver->Save();
 
-    auto test      = readVTKFile( "../result/rtsn_test_linesource.vtk" );
+    auto test      = readVTKFile( "../result/rtsn_test_linesource_SN.vtk" );
     auto reference = readVTKFile( "../tests/input/linesource_SN_reference.vtk" );
 
     double eps = 1e-3;
