@@ -9,6 +9,7 @@ Mesh::Mesh( std::vector<Vector> nodes,
     ComputeCellMidpoints();
     ComputeConnectivity();
     ComputePartitioning();
+    ComputeBounds();
 }
 
 Mesh::~Mesh() {}
@@ -342,11 +343,107 @@ void Mesh::ComputeSlopes( unsigned nq, VectorVector& psiDerX, VectorVector& psiD
     for( unsigned k = 0; k < nq; ++k ) {
         for( unsigned j = 0; j < _numCells; ++j ) {
             // if( cell->IsBoundaryCell() ) continue; // skip ghost cells
+            if( _cellBoundaryTypes[j] != 2 ) continue;    // skip ghost cells
             // compute derivative by summing over cell boundary
             for( unsigned l = 0; l < _cellNeighbors[j].size(); ++l ) {
                 psiDerX[j][k] = psiDerX[j][k] + 0.5 * ( psi[j][k] + psi[_cellNeighbors[j][l]][k] ) * _cellNormals[j][l][0] / _cellAreas[j];
                 psiDerY[j][k] = psiDerY[j][k] + 0.5 * ( psi[j][k] + psi[_cellNeighbors[j][l]][k] ) * _cellNormals[j][l][1] / _cellAreas[j];
             }
+        }
+    }
+}
+
+void Mesh::ReconstructSlopesS( unsigned nq, VectorVector& psiDerX, VectorVector& psiDerY, const VectorVector& psi ) const {
+
+    double duxL;
+    double duyL;
+    double duxR;
+    double duyR;
+
+    for( unsigned k = 0; k < nq; ++k ) {
+        for( unsigned j = 0; j < _numCells; ++j ) {
+            // reset derivatives
+            psiDerX[j][k] = 0.0;
+            psiDerY[j][k] = 0.0;
+
+            // skip boundary cells
+            if( _cellBoundaryTypes[j] != 2 ) continue;
+
+            duxL = ( psi[j][k] - psi[_cellNeighbors[j][0]][k] ) / ( _cellMidPoints[j][0] - _cellMidPoints[_cellNeighbors[j][0]][0] + 1e-8 );
+            duyL = ( psi[j][k] - psi[_cellNeighbors[j][0]][k] ) / ( _cellMidPoints[j][1] - _cellMidPoints[_cellNeighbors[j][0]][1] + 1e-8 );
+
+            duxR = ( psi[j][k] - psi[_cellNeighbors[j][2]][k] ) / ( _cellMidPoints[j][0] - _cellMidPoints[_cellNeighbors[j][2]][0] + 1e-8 );
+            duyR = ( psi[j][k] - psi[_cellNeighbors[j][2]][k] ) / ( _cellMidPoints[j][1] - _cellMidPoints[_cellNeighbors[j][2]][1] + 1e-8 );
+
+            psiDerX[j][k] = LMinMod( duxL, duxR ) * 0.5;
+            psiDerY[j][k] = LMinMod( duyL, duyR ) * 0.5;
+        }
+    }
+}
+
+void Mesh::ReconstructSlopesU( unsigned nq, VectorVector& psiDerX, VectorVector& psiDerY, const VectorVector& psi ) const {
+
+    double phi;
+    VectorVector dPsiMax = std::vector( _numCells, Vector( nq, 0.0 ) );
+    VectorVector dPsiMin = std::vector( _numCells, Vector( nq, 0.0 ) );
+    std::vector<std::vector<Vector>> psiSample( _numCells, std::vector<Vector>( nq, Vector( _numNodesPerCell, 0.0 ) ) );
+    std::vector<std::vector<Vector>> phiSample( _numCells, std::vector<Vector>( nq, Vector( _numNodesPerCell, 0.0 ) ) );
+
+    for( unsigned k = 0; k < nq; ++k ) {
+
+        for( unsigned j = 0; j < _numCells; ++j ) {
+            // reset derivatives
+            psiDerX[j][k] = 0.0;
+            psiDerY[j][k] = 0.0;
+
+            // skip boundary cells
+            if( _cellBoundaryTypes[j] != 2 ) continue;
+
+            // step 1: calculate psi difference around neighbors and theoretical derivatives by Gauss theorem
+            for( unsigned l = 0; l < _cellNeighbors[j].size(); ++l ) {
+                if( psi[_cellNeighbors[j][l]][k] - psi[j][k] > dPsiMax[j][k] ) dPsiMax[j][k] = psi[_cellNeighbors[j][l]][k] - psi[j][k];
+                if( psi[_cellNeighbors[j][l]][k] - psi[j][k] < dPsiMin[j][k] ) dPsiMin[j][k] = psi[_cellNeighbors[j][l]][k] - psi[j][k];
+
+                psiDerX[j][k] += 0.5 * ( psi[j][k] + psi[_cellNeighbors[j][l]][k] ) * _cellNormals[j][l][0] / _cellAreas[j];
+                psiDerY[j][k] += 0.5 * ( psi[j][k] + psi[_cellNeighbors[j][l]][k] ) * _cellNormals[j][l][1] / _cellAreas[j];
+            }
+
+            for( unsigned l = 0; l < _cellNeighbors[j].size(); ++l ) {
+                // step 2: choose sample points
+                // psiSample[j][k][l] = 0.5 * ( psi[j][k] + psi[_cellNeighbors[j][l]][k] ); // interface central points
+                psiSample[j][k][l] = psi[j][k] + psiDerX[j][k] * ( _nodes[_cells[j][l]][0] - _cellMidPoints[j][0] ) +
+                                     psiDerY[j][k] * ( _nodes[_cells[j][l]][1] - _cellMidPoints[j][1] );    // vertex points
+
+                // step 3: calculate Phi_ij at sample points
+                if( psiSample[j][k][l] > psi[j][k] ) {
+                    phiSample[j][k][l] = fmin( 0.5, dPsiMax[j][k] / ( psiSample[j][k][l] - psi[j][k] ) );
+                }
+                else if( psiSample[j][l][k] < psi[j][k] ) {
+                    phiSample[j][k][l] = fmin( 0.5, dPsiMin[j][k] / ( psiSample[j][k][l] - psi[j][k] ) );
+                }
+                else {
+                    phiSample[j][k][l] = 0.5;
+                }
+            }
+
+            // step 4: find minimum limiter function phi
+            phi = min( phiSample[j][k] );
+
+            // step 5: limit the slope reconstructed from Gauss theorem
+            for( unsigned l = 0; l < _cellNeighbors[j].size(); ++l ) {
+                psiDerX[j][k] *= phi;
+                psiDerY[j][k] *= phi;
+            }
+        }
+    }
+}
+
+void Mesh::ComputeBounds() {
+    _bounds = std::vector( _dim, std::make_pair( std::numeric_limits<double>::infinity(), -std::numeric_limits<double>::infinity() ) );
+    for( unsigned i = 0; i < _numNodes; ++i ) {
+        for( unsigned j = 0; j < _dim; ++j ) {
+            if( _nodes[i][j] < _bounds[j].first ) _bounds[j].first = _nodes[i][j];
+            if( _nodes[i][j] > _bounds[j].second ) _bounds[j].second = _nodes[i][j];
         }
     }
 }
@@ -359,6 +456,7 @@ const std::vector<unsigned>& Mesh::GetPartitionIDs() const { return _colors; }
 const std::vector<std::vector<unsigned>>& Mesh::GetNeighbours() const { return _cellNeighbors; }
 const std::vector<std::vector<Vector>>& Mesh::GetNormals() const { return _cellNormals; }
 const std::vector<BOUNDARY_TYPE>& Mesh::GetBoundaryTypes() const { return _cellBoundaryTypes; }
+const std::vector<std::pair<double, double>> Mesh::GetBounds() const { return _bounds; }
 
 double Mesh::GetDistanceToOrigin( unsigned idx_cell ) const {
     double distance = 0.0;

@@ -4,10 +4,12 @@
 
 #include <vector>
 
-std::vector<QUAD_NAME> quadraturenames         = { QUAD_MonteCarlo, QUAD_GaussLegendreTensorized, QUAD_LevelSymmetric, QUAD_Lebedev, QUAD_LDFESA };
+std::vector<QUAD_NAME> quadraturenames = {
+    QUAD_MonteCarlo, QUAD_GaussLegendreTensorized, QUAD_GaussLegendre1D, QUAD_LevelSymmetric, QUAD_Lebedev, QUAD_LDFESA };
 std::vector<std::vector<int>> quadratureorders = {
     { 4, 5, 6, 7 },                            // Monte Carlo
     { 4, 6, 8, 10 },                           // Gauss Legendre
+    { 4, 6, 8, 10 },                           // Gauss Legendre 1D
     { 2, 4, 6, 8, 10, 12, 14, 16, 18, 20 },    // Available Orders for LevelSymmetric
     { 3,  5,  7,  9,  11, 13, 15, 17, 19, 21, 23,  25,  27,  29,  31,  35,
       41, 47, 53, 59, 65, 71, 77, 83, 89, 95, 101, 107, 113, 119, 125, 131 },    // Available orders for Lebedev
@@ -24,21 +26,35 @@ TEST_CASE( "Quadrature weights sum to 4*pi.", "[quadrature]" ) {
     bool lowAccuracyTesting = false;
     for( auto quadraturename : quadraturenames ) {
         lowAccuracyTesting = false;
-        if( quadraturename == QUAD_GaussLegendreTensorized || quadraturename == QUAD_LevelSymmetric || quadraturename == QUAD_Lebedev ||
-            quadraturename == QUAD_LDFESA )
+        if( quadraturename == QUAD_GaussLegendreTensorized || quadraturename == QUAD_GaussLegendre1D || quadraturename == QUAD_LevelSymmetric ||
+            quadraturename == QUAD_Lebedev || quadraturename == QUAD_LDFESA )
             lowAccuracyTesting = true;
 
         for( auto quadratureorder : quadratureorders[quadraturename] ) {
             QuadratureBase* Q = QuadratureBase::CreateQuadrature( quadraturename, quadratureorder );
-            if( !approxequal( Q->SumUpWeights(), 4 * M_PI, lowAccuracyTesting ) ) {
-                printf( "Quadrature %d at order %d . Error : %.15f  (low accuracy testing was set to %d) \n",
-                        quadraturename,
-                        quadratureorder,
-                        std::abs( Q->SumUpWeights() - 4 * M_PI ),
-                        lowAccuracyTesting );
-                printf( "Computed result %.15f \n", Q->SumUpWeights() );
+
+            if( quadraturename == QUAD_GaussLegendre1D ) {
+                if( !approxequal( Q->SumUpWeights(), 2, lowAccuracyTesting ) ) {
+                    printf( "Quadrature %d at order %d . Error : %.15f  (low accuracy testing was set to %d) ",
+                            quadraturename,
+                            quadratureorder,
+                            std::abs( Q->SumUpWeights() - 2 ),
+                            lowAccuracyTesting );
+                    printf( "Computed result %.15f \n", Q->SumUpWeights() );
+                }
+                REQUIRE( approxequal( Q->SumUpWeights(), 2, lowAccuracyTesting ) );    // 1D special case
             }
-            REQUIRE( approxequal( Q->SumUpWeights(), 4 * M_PI, lowAccuracyTesting ) );
+            else {
+                if( !approxequal( Q->SumUpWeights(), 4 * M_PI, lowAccuracyTesting ) ) {
+                    printf( "Quadrature %d at order %d . Error : %.15f  (low accuracy testing was set to %d) ",
+                            quadraturename,
+                            quadratureorder,
+                            std::abs( Q->SumUpWeights() - 4 * M_PI ),
+                            lowAccuracyTesting );
+                    printf( "Computed result %.15f \n", Q->SumUpWeights() );
+                }
+                REQUIRE( approxequal( Q->SumUpWeights(), 4 * M_PI, lowAccuracyTesting ) );
+            }
         }
     }
 }
@@ -47,9 +63,11 @@ TEST_CASE( "Quadrature points are on the unit sphere.", "[quadrature]" ) {
     bool lowAccuracyTesting = false;
     for( auto quadraturename : quadraturenames ) {
         lowAccuracyTesting = false;
-        if( quadraturename == QUAD_GaussLegendreTensorized || quadraturename == QUAD_LevelSymmetric || quadraturename == QUAD_Lebedev ||
-            quadraturename == QUAD_LDFESA )
+        if( quadraturename == QUAD_GaussLegendreTensorized || quadraturename == QUAD_GaussLegendre1D || quadraturename == QUAD_LevelSymmetric ||
+            quadraturename == QUAD_Lebedev || quadraturename == QUAD_LDFESA )
             lowAccuracyTesting = true;
+
+        if( quadraturename == QUAD_GaussLegendre1D ) continue;    // 1D test case not meaningful here
 
         for( auto quadratureorder : quadratureorders[quadraturename] ) {
             QuadratureBase* Q   = QuadratureBase::CreateQuadrature( quadraturename, quadratureorder );
@@ -92,38 +110,41 @@ double f( double x, double y, double z ) {
     return x * x + y * y + z * z;    // == 1
 }
 
-double g( double x, double y, double z ) { return x + y + z; }
+double sin( double x, double y, double z ) { return sin( x ); }
 
 TEST_CASE( "Integrate a constant function.", "[quadrature]" ) {
     bool lowAccuracyTesting = false;
     for( auto quadraturename : quadraturenames ) {
         lowAccuracyTesting = false;
-        if( quadraturename == QUAD_GaussLegendreTensorized || quadraturename == QUAD_LevelSymmetric || quadraturename == QUAD_Lebedev ||
-            quadraturename == QUAD_LDFESA )
+        if( quadraturename == QUAD_GaussLegendreTensorized || quadraturename == QUAD_GaussLegendre1D || quadraturename == QUAD_LevelSymmetric ||
+            quadraturename == QUAD_Lebedev || quadraturename == QUAD_LDFESA )
             lowAccuracyTesting = true;
 
         for( auto quadratureorder : quadratureorders[quadraturename] ) {
             QuadratureBase* Q = QuadratureBase::CreateQuadrature( quadraturename, quadratureorder );
-            if( !approxequal( Q->Integrate( f ), 4.0 * M_PI, lowAccuracyTesting ) ) {
-                printf( "Quadrature %d at order %d :  Error : %.15f (low accuracy testing was set to %d)\n",
-                        quadraturename,
-                        quadratureorder,
-                        std::abs( Q->Integrate( f ) - 4.0 * M_PI ),
-                        lowAccuracyTesting );
-                printf( "Computed result %.15f", Q->Integrate( f ) );
-            }
-            REQUIRE( approxequal( Q->Integrate( f ), 4.0 * M_PI, lowAccuracyTesting ) );
 
-            // non constant function
-            // if( !approxequal( Q->Integrate( g ), -0.0997858, lowAccuracyTesting ) ) {
-            //     printf( "Quadrature %d at order %d :  Error : %.15f (low accuracy testing was set to %d)\n",
-            //             quadraturename,
-            //             quadratureorder,
-            //             std::abs( Q->Integrate( g ) + 0.0997858 ),
-            //             lowAccuracyTesting );
-            //     printf( "Computed result %.15f", Q->Integrate( g ) );
-            // }
-            // REQUIRE( approxequal( Q->Integrate( g ), -0.0997858, lowAccuracyTesting ) );
+            if( quadraturename == QUAD_GaussLegendre1D ) {
+                if( !approxequal( Q->Integrate( sin ), 0, lowAccuracyTesting ) ) {
+                    printf( "Quadrature %d at order %d :  Error : %.15f (low accuracy testing was set to %d)\n",
+                            quadraturename,
+                            quadratureorder,
+                            std::abs( Q->Integrate( sin ) ),
+                            lowAccuracyTesting );
+                    printf( "Computed result %.15f", Q->Integrate( sin ) );
+                }
+                REQUIRE( approxequal( Q->Integrate( sin ), 0, lowAccuracyTesting ) );    // 1D special case
+            }
+            else {
+                if( !approxequal( Q->Integrate( f ), 4.0 * M_PI, lowAccuracyTesting ) ) {
+                    printf( "Quadrature %d at order %d :  Error : %.15f (low accuracy testing was set to %d)\n",
+                            quadraturename,
+                            quadratureorder,
+                            std::abs( Q->Integrate( f ) - 4.0 * M_PI ),
+                            lowAccuracyTesting );
+                    printf( "Computed result %.15f", Q->Integrate( f ) );
+                }
+                REQUIRE( approxequal( Q->Integrate( f ), 4.0 * M_PI, lowAccuracyTesting ) );
+            }
         }
     }
 }

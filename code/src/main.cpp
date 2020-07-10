@@ -1,3 +1,4 @@
+#include <Python.h>
 #include <mpi.h>
 
 #include "io.h"
@@ -21,6 +22,8 @@ double testFunc2( double x, double y, double z ) { return x + y + z; }
 
 int main( int argc, char** argv ) {
     MPI_Init( &argc, &argv );
+    wchar_t* program = Py_DecodeLocale( argv[0], NULL );
+    Py_SetProgramName( program );
 
     // QGaussLegendreTensorized quad( 8 );
     // int maxMomentDegree = 8;
@@ -127,6 +130,10 @@ int main( int argc, char** argv ) {
     // CD  Load Settings from File
     Config* config = new Config( filename );
 
+    // Test the physics reader
+    // Physics testPhysic();
+    // testPhysic.ReadENDL( "ENDL_H.txt" );
+
     // Print input file and run info to file
     PrintLogHeader( filename );
 
@@ -137,6 +144,7 @@ int main( int argc, char** argv ) {
     solver->Solve();
     solver->Save();
 
+    if( Py_IsInitialized() ) Py_Finalize();
     MPI_Finalize();
     return EXIT_SUCCESS;
 }
