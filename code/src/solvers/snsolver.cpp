@@ -1,18 +1,26 @@
 #include "solvers/snsolver.h"
 #include "fluxes/numericalflux.h"
 #include "io.h"
+#include "kernels/scatteringkernelbase.h"
 #include "mesh.h"
 #include "settings/config.h"
 
 #include <mpi.h>
 
-SNSolver::SNSolver( Config* settings ) : Solver( settings ) {}
+SNSolver::SNSolver( Config* settings ) : Solver( settings ) {
+
+    QuadratureBase* quad = QuadratureBase::CreateQuadrature( settings->GetQuadName(), settings->GetQuadOrder() );
+    ScatteringKernel* k  = ScatteringKernel::CreateScatteringKernel( settings->GetKernelName(), quad );
+    _scatteringKernel    = k->GetScatteringKernel();
+    delete k;
+    delete quad;
+}
 
 void SNSolver::Solve() {
     auto log = spdlog::get( "event" );
 
     // angular flux at next time step (maybe store angular flux at all time steps, since time becomes energy?)
-    VectorVector psiNew = _psi;
+    VectorVector psiNew = _sol;
 
     // reconstruction order
     unsigned reconsOrder = _settings->GetReconsOrder();
@@ -63,7 +71,7 @@ void SNSolver::Solve() {
 
         // reconstruct slopes for higher order solver
         if( reconsOrder > 1 ) {
-            _mesh->ReconstructSlopesU( _nq, psiDx, psiDy, _psi );    // unstructured reconstruction
+            _mesh->ReconstructSlopesU( _nq, psiDx, psiDy, _sol );    // unstructured reconstruction
             //_mesh->ReconstructSlopesS( _nq, psiDx, psiDy, _psi );    // structured reconstruction (not stable currently)
         }
 
@@ -77,24 +85,24 @@ void SNSolver::Solve() {
                 for( unsigned l = 0; l < _neighbors[j].size(); ++l ) {
                     // store flux contribution on psiNew_sigmaS to save memory
                     if( _boundaryCells[j] == BOUNDARY_TYPE::NEUMANN && _neighbors[j][l] == _nCells )
-                        psiNew[j][k] += _g->Flux( _quadPoints[k], _psi[j][k], _psi[j][k], _normals[j][l] );
+                        psiNew[j][k] += _g->Flux( _quadPoints[k], _sol[j][k], _sol[j][k], _normals[j][l] );
                     else {
                         switch( reconsOrder ) {
                             // first order solver
-                            case 1: psiNew[j][k] += _g->Flux( _quadPoints[k], _psi[j][k], _psi[_neighbors[j][l]][k], _normals[j][l] ); break;
+                            case 1: psiNew[j][k] += _g->Flux( _quadPoints[k], _sol[j][k], _sol[_neighbors[j][l]][k], _normals[j][l] ); break;
                             // second order solver
                             case 2:
                                 // left status of interface
-                                psiL = _psi[j][k] + psiDx[j][k] * ( interfaceMidPoints[j][l][0] - cellMidPoints[j][0] ) +
+                                psiL = _sol[j][k] + psiDx[j][k] * ( interfaceMidPoints[j][l][0] - cellMidPoints[j][0] ) +
                                        psiDy[j][k] * ( interfaceMidPoints[j][l][1] - cellMidPoints[j][1] );
                                 // right status of interface
-                                psiR = _psi[_neighbors[j][l]][k] +
+                                psiR = _sol[_neighbors[j][l]][k] +
                                        psiDx[_neighbors[j][l]][k] * ( interfaceMidPoints[j][l][0] - cellMidPoints[_neighbors[j][l]][0] ) +
                                        psiDy[_neighbors[j][l]][k] * ( interfaceMidPoints[j][l][1] - cellMidPoints[_neighbors[j][l]][1] );
                                 // positivity check (if not satisfied, deduce to first order)
                                 if( psiL < 0.0 || psiR < 0.0 ) {
-                                    psiL = _psi[j][k];
-                                    psiR = _psi[_neighbors[j][l]][k];
+                                    psiL = _sol[j][k];
+                                    psiR = _sol[_neighbors[j][l]][k];
                                 }
                                 // flux evaluation
                                 psiNew[j][k] += _g->Flux( _quadPoints[k], psiL, psiR, _normals[j][l] );
@@ -102,15 +110,15 @@ void SNSolver::Solve() {
                             // higher order solver
                             case 3: std::cout << "higher order is WIP" << std::endl; break;
                             // default: first order solver
-                            default: psiNew[j][k] += _g->Flux( _quadPoints[k], _psi[j][k], _psi[_neighbors[j][l]][k], _normals[j][l] );
+                            default: psiNew[j][k] += _g->Flux( _quadPoints[k], _sol[j][k], _sol[_neighbors[j][l]][k], _normals[j][l] );
                         }
                     }
                 }
                 // time update angular flux with numerical flux and total scattering cross section
-                psiNew[j][k] = _psi[j][k] - ( _dE / _areas[j] ) * psiNew[j][k] - _dE * _sigmaT[n][j] * _psi[j][k];
+                psiNew[j][k] = _sol[j][k] - ( _dE / _areas[j] ) * psiNew[j][k] - _dE * _sigmaT[n][j] * _sol[j][k];
             }
             // compute scattering effects
-            psiNew[j] += _dE * _sigmaS[n][j] * _scatteringKernel * _psi[j];    // multiply scattering matrix with psi
+            psiNew[j] += _dE * _sigmaS[n][j] * _scatteringKernel * _sol[j];    // multiply scattering matrix with psi
 
             // TODO: figure out a more elegant way
             // add external source contribution
@@ -127,9 +135,9 @@ void SNSolver::Solve() {
                     psiNew[j] += _dE * _Q[n][j];
             }
         }
-        _psi = psiNew;
+        _sol = psiNew;
         for( unsigned i = 0; i < _nCells; ++i ) {
-            fluxNew[i]       = dot( _psi[i], _weights );
+            fluxNew[i]       = dot( _sol[i], _weights );
             _solverOutput[i] = fluxNew[i];
         }
         // Save( n );
@@ -143,7 +151,7 @@ void SNSolver::Save() const {
     std::vector<std::string> fieldNames{ "flux" };
     std::vector<double> flux( _nCells, 0.0 );
     for( unsigned i = 0; i < _nCells; ++i ) {
-        flux[i] = dot( _psi[i], _weights );
+        flux[i] = dot( _sol[i], _weights );
     }
     std::vector<std::vector<double>> scalarField( 1, flux );
     std::vector<std::vector<std::vector<double>>> results{ scalarField };

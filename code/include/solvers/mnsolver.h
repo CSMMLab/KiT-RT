@@ -31,8 +31,7 @@ class MNSolver : public Solver
     unsigned _nTotalEntries;          /*! @brief: Total number of equations in the system */
     unsigned short _nMaxMomentsOrder; /*! @brief: Max Order of Moments */
 
-    VectorVector _sigmaA; /*! @brief: Absorbtion coefficient for all energies */
-
+    VectorVector _sigmaA;       /*!  @brief: Absorption coefficient for all energies*/
     SphericalHarmonics* _basis; /*! @brief: Class to compute and store current spherical harmonics basis */
     VectorVector _moments;      /*! @brief: Moment Vector pre-computed at each quadrature point: dim= _nq x _nTotalEntries */
 

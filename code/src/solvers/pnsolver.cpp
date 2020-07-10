@@ -79,15 +79,15 @@ void PNSolver::Solve() {
     auto log = spdlog::get( "event" );
 
     // angular flux at next time step (maybe store angular flux at all time steps, since time becomes energy?)
-    VectorVector psiNew = _psi;
+    VectorVector psiNew = _sol;
     double dFlux        = 1e10;
     Vector fluxNew( _nCells, 0.0 );
     Vector fluxOld( _nCells, 0.0 );
 
     double mass1 = 0;
     for( unsigned i = 0; i < _nCells; ++i ) {
-        _solverOutput[i] = _psi[i][0];
-        mass1 += _psi[i][0];
+        _solverOutput[i] = _sol[i][0];
+        mass1 += _sol[i][0];
     }
 
     dFlux   = blaze::l2Norm( fluxNew - fluxOld );
@@ -121,7 +121,7 @@ void PNSolver::Solve() {
                 // Compute flux contribution and store in psiNew to save memory
                 if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::NEUMANN && _neighbors[idx_cell][idx_neighbor] == _nCells )
                     psiNew[idx_cell] += _g->Flux(
-                        _AxPlus, _AxMinus, _AyPlus, _AyMinus, _AzPlus, _AzMinus, _psi[idx_cell], _psi[idx_cell], _normals[idx_cell][idx_neighbor] );
+                        _AxPlus, _AxMinus, _AyPlus, _AyMinus, _AzPlus, _AzMinus, _sol[idx_cell], _sol[idx_cell], _normals[idx_cell][idx_neighbor] );
                 else
                     psiNew[idx_cell] += _g->Flux( _AxPlus,
                                                   _AxMinus,
@@ -129,8 +129,8 @@ void PNSolver::Solve() {
                                                   _AyMinus,
                                                   _AzPlus,
                                                   _AzMinus,
-                                                  _psi[idx_cell],
-                                                  _psi[_neighbors[idx_cell][idx_neighbor]],
+                                                  _sol[idx_cell],
+                                                  _sol[_neighbors[idx_cell][idx_neighbor]],
                                                   _normals[idx_cell][idx_neighbor] );
             }
 
@@ -139,21 +139,21 @@ void PNSolver::Solve() {
                 for( int idx_kOrder = -idx_lOrder; idx_kOrder <= idx_lOrder; idx_kOrder++ ) {
                     idx_system = unsigned( GlobalIndex( idx_lOrder, idx_kOrder ) );
 
-                    psiNew[idx_cell][idx_system] = _psi[idx_cell][idx_system] -
+                    psiNew[idx_cell][idx_system] = _sol[idx_cell][idx_system] -
                                                    ( _dE / _areas[idx_cell] ) * psiNew[idx_cell][idx_system] /* cell averaged flux */
-                                                   - _dE * _psi[idx_cell][idx_system] *
+                                                   - _dE * _sol[idx_cell][idx_system] *
                                                          ( _sigmaA[idx_energy][idx_cell]                                    /* absorbtion influence */
                                                            + _sigmaS[idx_energy][idx_cell] * _scatterMatDiag[idx_system] ); /* scattering influence */
                 }
             }
         }
-        _psi = psiNew;
+        _sol = psiNew;
 
         double mass = 0.0;
         for( unsigned i = 0; i < _nCells; ++i ) {
-            fluxNew[i]       = _psi[i][0];    // zeroth moment is raditation densitiy we are interested in
-            _solverOutput[i] = _psi[i][0];
-            mass += _psi[i][0] * _areas[i];
+            fluxNew[i]       = _sol[i][0];    // zeroth moment is raditation densitiy we are interested in
+            _solverOutput[i] = _sol[i][0];
+            mass += _sol[i][0] * _areas[i];
         }
 
         dFlux   = blaze::l2Norm( fluxNew - fluxOld );
@@ -371,7 +371,7 @@ void PNSolver::Save() const {
     flux.resize( _nCells );
 
     for( unsigned i = 0; i < _nCells; ++i ) {
-        flux[i] = _psi[i][0];
+        flux[i] = _sol[i][0];
     }
     std::vector<std::vector<double>> scalarField( 1, flux );
     std::vector<std::vector<std::vector<double>>> results{ scalarField };

@@ -113,15 +113,15 @@ void MNSolver::Solve() {
     auto log = spdlog::get( "event" );
 
     // angular flux at next time step (maybe store angular flux at all time steps, since time becomes energy?)
-    VectorVector psiNew = _psi;
+    VectorVector psiNew = _sol;
     double dFlux        = 1e10;
     Vector fluxNew( _nCells, 0.0 );
     Vector fluxOld( _nCells, 0.0 );
 
     double mass1 = 0;
     for( unsigned i = 0; i < _nCells; ++i ) {
-        _solverOutput[i] = _psi[i][0];
-        mass1 += _psi[i][0] * _areas[i];
+        _solverOutput[i] = _sol[i][0];
+        mass1 += _sol[i][0] * _areas[i];
     }
 
     dFlux   = blaze::l2Norm( fluxNew - fluxOld );
@@ -145,7 +145,7 @@ void MNSolver::Solve() {
 
             // ------- Reconstruction Step -------
 
-            _alpha[idx_cell] = _psi[idx_cell];    // _optimizer->Solve( _psi[idx_cell] );
+            _alpha[idx_cell] = _sol[idx_cell];    // _optimizer->Solve( _psi[idx_cell] );
 
             // ------- Flux Computation Step ---------
 
@@ -159,21 +159,21 @@ void MNSolver::Solve() {
             // NEED TO VECTORIZE
             for( unsigned idx_system = 0; idx_system < _nTotalEntries; idx_system++ ) {
 
-                psiNew[idx_cell][idx_system] = _psi[idx_cell][idx_system] -
+                psiNew[idx_cell][idx_system] = _sol[idx_cell][idx_system] -
                                                ( _dE / _areas[idx_cell] ) * psiNew[idx_cell][idx_system] /* cell averaged flux */
-                                               - _dE * _psi[idx_cell][idx_system] *
+                                               - _dE * _sol[idx_cell][idx_system] *
                                                      ( _sigmaA[idx_energy][idx_cell]                                    /* absorbtion influence */
                                                        + _sigmaS[idx_energy][idx_cell] * _scatterMatDiag[idx_system] ); /* scattering influence */
             }
         }
-        _psi = psiNew;
+        _sol = psiNew;
 
         // pseudo time iteration output
         double mass = 0.0;
         for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
-            fluxNew[idx_cell]       = _psi[idx_cell][0];    // zeroth moment is raditation densitiy we are interested in
-            _solverOutput[idx_cell] = _psi[idx_cell][0];
-            mass += _psi[idx_cell][0] * _areas[idx_cell];
+            fluxNew[idx_cell]       = _sol[idx_cell][0];    // zeroth moment is raditation densitiy we are interested in
+            _solverOutput[idx_cell] = _sol[idx_cell][0];
+            mass += _sol[idx_cell][0] * _areas[idx_cell];
         }
 
         dFlux   = blaze::l2Norm( fluxNew - fluxOld );
@@ -189,7 +189,7 @@ void MNSolver::Save() const {
     flux.resize( _nCells );
 
     for( unsigned i = 0; i < _nCells; ++i ) {
-        flux[i] = _psi[i][0];
+        flux[i] = _sol[i][0];
     }
     std::vector<std::vector<double>> scalarField( 1, flux );
     std::vector<std::vector<std::vector<double>>> results{ scalarField };

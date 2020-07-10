@@ -7,6 +7,7 @@ class CSDSNSolver : public Solver
 {
   private:
     std::vector<double> _dose;
+    Matrix _scatteringKernel; /*!  @brief scattering kernel for the quadrature */
 
   public:
     /**

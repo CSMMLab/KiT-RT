@@ -1,7 +1,6 @@
 #include "solvers/solverbase.h"
 #include "fluxes/numericalflux.h"
 #include "io.h"
-#include "kernels/scatteringkernelbase.h"
 #include "mesh.h"
 #include "problems/problembase.h"
 #include "quadratures/quadraturebase.h"
@@ -27,8 +26,7 @@ Solver::Solver( Config* settings ) : _settings( settings ) {
     _weights             = quad->GetWeights();
     _nq                  = quad->GetNq();
     _settings->SetNQuadPoints( _nq );
-    ScatteringKernel* k = ScatteringKernel::CreateScatteringKernel( settings->GetKernelName(), quad );
-    _scatteringKernel   = k->GetScatteringKernel();
+    delete quad;
 
     // set time step
     _dE        = ComputeTimeStep( settings->GetCFL() );
@@ -37,7 +35,7 @@ Solver::Solver( Config* settings ) : _settings( settings ) {
 
     // setup problem
     _problem = ProblemBase::Create( _settings, _mesh );
-    _psi     = _problem->SetupIC();
+    _sol     = _problem->SetupIC();
     _s       = _problem->GetStoppingPower( _energies );
     _sigmaT  = _problem->GetTotalXS( _energies );
     _sigmaS  = _problem->GetScatteringXS( _energies );
@@ -84,7 +82,7 @@ void Solver::Save() const {
     flux.resize( _nCells );
 
     for( unsigned i = 0; i < _nCells; ++i ) {
-        flux[i] = _psi[i][0];
+        flux[i] = _sol[i][0];
     }
     std::vector<std::vector<double>> scalarField( 1, flux );
     std::vector<std::vector<std::vector<double>>> results{ scalarField };

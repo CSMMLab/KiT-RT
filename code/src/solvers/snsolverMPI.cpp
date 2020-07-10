@@ -69,7 +69,7 @@ void SNSolverMPI::Save() const {
     std::vector<std::string> fieldNames{ "flux" };
     std::vector<double> flux( _nCells, 0.0 );
     for( unsigned i = 0; i < _nCells; ++i ) {
-        flux[i] = dot( _psi[i], _weights );
+        flux[i] = dot( _sol[i], _weights );
     }
     std::vector<std::vector<double>> scalarField( 1, flux );
     std::vector<std::vector<std::vector<double>>> results{ scalarField };
