@@ -1,10 +1,12 @@
 #ifndef MNSOLVER_H
 #define MNSOLVER_H
 
-#include "entropies/entropybase.h"
-#include "optimizers/optimizerbase.h"
 #include "solverbase.h"
-#include "sphericalharmonics.h"
+
+class EntropyBase;
+class QuadratureBase;
+class SphericalHarmonics;
+class OptimizerBase;
 
 class MNSolver : public Solver
 {
@@ -31,8 +33,8 @@ class MNSolver : public Solver
 
     VectorVector _sigmaA; /*! @brief: Absorbtion coefficient for all energies */
 
-    SphericalHarmonics _basis; /*! @brief: Class to compute and store current spherical harmonics basis */
-    VectorVector _moments;     /*! @brief: Moment Vector pre-computed at each quadrature point: dim= _nq x _nTotalEntries */
+    SphericalHarmonics* _basis; /*! @brief: Class to compute and store current spherical harmonics basis */
+    VectorVector _moments;      /*! @brief: Moment Vector pre-computed at each quadrature point: dim= _nq x _nTotalEntries */
 
     Vector _scatterMatDiag; /*! @brief: Diagonal of the scattering matrix (its a diagonal matrix by construction) */
 

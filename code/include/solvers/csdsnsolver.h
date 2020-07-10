@@ -1,8 +1,6 @@
 #ifndef CSDSNSOLVER_H
 #define CSDSNSOLVER_H
 
-#include <mpi.h>
-
 #include "solvers/solverbase.h"
 
 class CSDSNSolver : public Solver

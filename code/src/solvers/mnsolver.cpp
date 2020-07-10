@@ -1,14 +1,23 @@
 #include "solvers/mnsolver.h"
+#include "entropies/entropybase.h"
+#include "fluxes/numericalflux.h"
+#include "io.h"
+#include "optimizers/optimizerbase.h"
+#include "quadratures/quadraturebase.h"
+#include "settings/config.h"
+#include "solvers/sphericalharmonics.h"
 #include "toolboxes/textprocessingtoolbox.h"
+
 #include <mpi.h>
 
 //#include <chrono>
 
-MNSolver::MNSolver( Config* settings ) : Solver( settings ), _nMaxMomentsOrder( settings->GetMaxMomentDegree() ), _basis( _nMaxMomentsOrder ) {
-    // Is this good (fast) code using a constructor list?
+MNSolver::MNSolver( Config* settings ) : Solver( settings ) {
 
-    _nTotalEntries = GlobalIndex( _nMaxMomentsOrder, int( _nMaxMomentsOrder ) ) + 1;
-    _quadrature    = QuadratureBase::CreateQuadrature( _settings->GetQuadName(), settings->GetQuadOrder() );
+    // Is this good (fast) code using a constructor list?
+    _nMaxMomentsOrder = settings->GetMaxMomentDegree();
+    _nTotalEntries    = GlobalIndex( _nMaxMomentsOrder, int( _nMaxMomentsOrder ) ) + 1;
+    _quadrature       = QuadratureBase::CreateQuadrature( _settings->GetQuadName(), settings->GetQuadOrder() );
 
     // transform sigmaT and sigmaS in sigmaA.
     _sigmaA = VectorVector( _nEnergies, Vector( _nCells, 0 ) );    // Get rid of this extra vektor!
@@ -34,6 +43,8 @@ MNSolver::MNSolver( Config* settings ) : Solver( settings ), _nMaxMomentsOrder( 
     _alpha = VectorVector( _nCells, Vector( _nTotalEntries, 0.0 ) );
 
     // Initialize and Pre-Compute Moments at quadrature points
+    _basis = new SphericalHarmonics( _nMaxMomentsOrder );
+
     _moments = VectorVector( _nq, Vector( _nTotalEntries, 0.0 ) );
     ComputeMoments();
 }
@@ -42,6 +53,7 @@ MNSolver::~MNSolver() {
     delete _quadrature;
     delete _entropy;
     delete _optimizer;
+    delete _basis;
 }
 
 int MNSolver::GlobalIndex( int l, int k ) const {
@@ -57,7 +69,7 @@ void MNSolver::ComputeMoments() {
         my  = _quadrature->GetPointsSphere()[idx_quad][0];
         phi = _quadrature->GetPointsSphere()[idx_quad][1];
 
-        _moments[idx_quad] = _basis.ComputeSphericalBasis( my, phi );
+        _moments[idx_quad] = _basis->ComputeSphericalBasis( my, phi );
     }
 }
 

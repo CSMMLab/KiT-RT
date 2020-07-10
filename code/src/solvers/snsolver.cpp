@@ -1,4 +1,9 @@
 #include "solvers/snsolver.h"
+#include "fluxes/numericalflux.h"
+#include "io.h"
+#include "mesh.h"
+#include "settings/config.h"
+
 #include <mpi.h>
 
 SNSolver::SNSolver( Config* settings ) : Solver( settings ) {}
@@ -135,19 +140,19 @@ void SNSolver::Solve() {
 }
 
 void SNSolver::Save() const {
-    std::vector<std::string> fieldNames{"flux"};
+    std::vector<std::string> fieldNames{ "flux" };
     std::vector<double> flux( _nCells, 0.0 );
     for( unsigned i = 0; i < _nCells; ++i ) {
         flux[i] = dot( _psi[i], _weights );
     }
     std::vector<std::vector<double>> scalarField( 1, flux );
-    std::vector<std::vector<std::vector<double>>> results{scalarField};
+    std::vector<std::vector<std::vector<double>>> results{ scalarField };
     ExportVTK( _settings->GetOutputFile(), results, fieldNames, _mesh );
 }
 
 void SNSolver::Save( int currEnergy ) const {
-    std::vector<std::string> fieldNames{"flux"};
+    std::vector<std::string> fieldNames{ "flux" };
     std::vector<std::vector<double>> scalarField( 1, _solverOutput );
-    std::vector<std::vector<std::vector<double>>> results{scalarField};
+    std::vector<std::vector<std::vector<double>>> results{ scalarField };
     ExportVTK( _settings->GetOutputFile() + "_" + std::to_string( currEnergy ), results, fieldNames, _mesh );
 }

@@ -1,3 +1,7 @@
+#include "fluxes/numericalflux.h"
+#include "io.h"
+#include "settings/config.h"
+
 #include "solvers/csdsnsolver.h"
 
 CSDSNSolver::CSDSNSolver( Config* settings ) : Solver( settings ) { _dose = std::vector<double>( _settings->GetNCells(), 0.0 ); }

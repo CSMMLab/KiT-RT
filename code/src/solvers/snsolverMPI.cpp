@@ -1,3 +1,6 @@
+#include "io.h"
+#include "settings/config.h"
+
 #include "solvers/snsolverMPI.h"
 #include <mpi.h>
 

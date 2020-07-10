@@ -1,7 +1,10 @@
-
 #include "solvers/pnsolver.h"
+#include "fluxes/numericalflux.h"
+#include "io.h"
+#include "settings/config.h"
 #include "toolboxes/errormessages.h"
 #include "toolboxes/textprocessingtoolbox.h"
+
 #include <mpi.h>
 
 PNSolver::PNSolver( Config* settings ) : Solver( settings ) {

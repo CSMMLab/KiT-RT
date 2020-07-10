@@ -1,23 +1,16 @@
 #ifndef SOLVER_H
 #define SOLVER_H
 
-#include <string>
-
 // include Matrix, Vector definitions
-#include "fluxes/numericalflux.h"
-#include "io.h"
-#include "kernels/scatteringkernelbase.h"
-#include "problems/problembase.h"
-#include "quadratures/quadraturebase.h"
-#include "settings/config.h"
+#include "settings/globalconstants.h"
 #include "settings/typedef.h"
 
 // Forward Declarations
-// class NumericalFlux;
-// class Mesh;
-// class Config;
-// class ProblemBase;
-// class QuadratureBase;
+class NumericalFlux;
+class Mesh;
+class Config;
+class ProblemBase;
+class QuadratureBase;
 
 class Solver
 {

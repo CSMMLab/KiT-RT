@@ -1,9 +1,7 @@
 #ifndef PNSOLVER_H
 #define PNSOLVER_H
 
-#include <cmath>
-
-#include "solvers/solverbase.h"
+#include "solverbase.h"
 
 class PNSolver : public Solver
 {
