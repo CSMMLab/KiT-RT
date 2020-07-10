@@ -1,5 +1,6 @@
 
 #include "optimizers/newtonoptimizer.h"
+#include "settings/config.h"
 
 Vector NewtonOptimizer::Solve( Vector u ) {
 

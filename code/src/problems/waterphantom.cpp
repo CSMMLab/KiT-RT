@@ -1,4 +1,5 @@
 #include "problems/waterphantom.h"
+#include "mesh.h"
 
 WaterPhantom::WaterPhantom( Config* settings, Mesh* mesh ) : ElectronRT( settings, mesh ) {
     // @TODO get pointer to correct physics class

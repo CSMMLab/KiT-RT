@@ -1,6 +1,7 @@
 #include "entropies/entropybase.h"
 #include "entropies/maxwellboltzmannentropy.h"
 #include "entropies/quadraticentropy.h"
+#include "settings/config.h"
 
 EntropyBase* EntropyBase::Create( Config* settings ) {
 

@@ -12,6 +12,13 @@
 #include "settings/config.h"
 #include "settings/typedef.h"
 
+// Forward Declarations
+// class NumericalFlux;
+// class Mesh;
+// class Config;
+// class ProblemBase;
+// class QuadratureBase;
+
 class Solver
 {
   protected:

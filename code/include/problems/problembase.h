@@ -1,10 +1,12 @@
 #ifndef PROBLEMBASE_H
 #define PROBLEMBASE_H
 
-#include "mesh.h"
-#include "physics.h"
-#include "settings/config.h"
 #include "settings/typedef.h"
+
+// Forward Declaration
+class Config;
+class Physics;
+class Mesh;
 
 class ProblemBase
 {

@@ -1,7 +1,8 @@
 #ifndef ENTROPYBASE_H
 #define ENTROPYBASE_H
 
-#include "settings/config.h"
+// Foward declaration
+class Config;
 
 class EntropyBase
 {

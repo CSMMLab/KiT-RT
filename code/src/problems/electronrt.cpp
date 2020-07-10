@@ -1,4 +1,5 @@
 #include "problems/electronrt.h"
+#include "mesh.h"
 
 ElectronRT::ElectronRT( Config* settings, Mesh* mesh ) : ProblemBase( settings, mesh ) {
     // @TODO

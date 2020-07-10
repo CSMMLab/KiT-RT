@@ -1,6 +1,6 @@
 #include "fluxes/upwindflux.h"
 
-UpwindFlux::UpwindFlux( Config* settings ) : NumericalFlux( settings ) {}
+UpwindFlux::UpwindFlux() : NumericalFlux() {}
 
 double UpwindFlux::Flux( const Vector& Omega, double psiL, double psiR, const Vector& n ) const {
     double inner = Omega[0] * n[0] + Omega[1] * n[1];

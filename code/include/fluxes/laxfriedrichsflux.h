@@ -12,7 +12,7 @@ class LaxFriedrichsFlux : public NumericalFlux
      * @brief LaxFriedrichsFlux
      * @param settings
      */
-    LaxFriedrichsFlux( Config* settings );
+    LaxFriedrichsFlux();
 
     /**
      * @brief Flux computes flux on edge for fixed ordinate at a given edge

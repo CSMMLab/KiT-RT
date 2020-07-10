@@ -1,5 +1,5 @@
 #include "quadratures/qlookupquadrature.h"
-#include "settings/globalconstants.h"    // for PI_NUMBER
+#include "toolboxes/errormessages.h"
 #include <fstream>
 #include <sstream>
 

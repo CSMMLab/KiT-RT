@@ -5,6 +5,7 @@
 #include "quadratures/qlebedev.h"
 #include "quadratures/qlevelsymmetric.h"
 #include "quadratures/qmontecarlo.h"
+#include "toolboxes/errormessages.h"
 
 QuadratureBase::QuadratureBase( unsigned order ) : _order( order ) {}
 

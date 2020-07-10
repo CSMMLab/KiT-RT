@@ -41,7 +41,7 @@ Solver::Solver( Config* settings ) : _settings( settings ) {
     _Q       = _problem->GetExternalSource( _energies );
 
     // setup numerical flux
-    _g = NumericalFlux::Create( settings );
+    _g = NumericalFlux::Create();
 
     // boundary type
     _boundaryCells = _mesh->GetBoundaryTypes();

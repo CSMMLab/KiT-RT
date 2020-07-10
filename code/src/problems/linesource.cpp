@@ -1,4 +1,5 @@
 #include "problems/linesource.h"
+#include "mesh.h"
 
 // ---- LineSource_SN ----
 

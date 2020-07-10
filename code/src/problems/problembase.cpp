@@ -4,6 +4,8 @@
 #include "problems/linesource.h"
 #include "problems/waterphantom.h"
 
+#include "settings/config.h"
+
 ProblemBase::ProblemBase( Config* settings, Mesh* mesh ) {
     _settings = settings;
     _mesh     = mesh;

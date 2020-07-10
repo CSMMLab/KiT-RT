@@ -18,7 +18,9 @@
 #include "spdlog/spdlog.h"
 
 #include "globalconstants.h"
-#include "optionstructure.h"
+
+// Forward declaration
+class OptionBase;
 
 /*!
  * @class Config

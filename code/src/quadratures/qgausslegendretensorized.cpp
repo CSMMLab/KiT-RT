@@ -1,4 +1,5 @@
 #include "../../include/quadratures/qgausslegendretensorized.h"
+#include "toolboxes/errormessages.h"
 
 QGaussLegendreTensorized::QGaussLegendreTensorized( unsigned order ) : QuadratureBase( order ) {
     SetName();

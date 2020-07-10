@@ -1,6 +1,6 @@
 /*!
  * \file Config.cpp
- * \brief Classes for different Options in rtsn
+ * \brief Class for different Options in rtsn
  * \author S. Schotthoefer
  *
  * Disclaimer: This class structure was copied and modifed with open source permission from SU2 v7.0.3 https://su2code.github.io/
@@ -8,6 +8,7 @@
 
 #include "settings/config.h"
 #include "settings/globalconstants.h"
+#include "settings/optionstructure.h"
 #include "toolboxes/errormessages.h"
 #include "toolboxes/textprocessingtoolbox.h"
 #include <cassert>
@@ -129,7 +130,7 @@ void Config::AddUnsignedLongOption( const string name, unsigned long& option_fie
 void Config::AddUnsignedShortOption( const string name, unsigned short& option_field, unsigned short default_value ) {
     assert( _optionMap.find( name ) == _optionMap.end() );
     _allOptions.insert( pair<string, bool>( name, true ) );
-    OptionBase* val = new COptionUShort( name, option_field, default_value );
+    OptionBase* val = new OptionUShort( name, option_field, default_value );
     _optionMap.insert( pair<string, OptionBase*>( name, val ) );
 }
 
@@ -215,7 +216,6 @@ void Config::SetConfigOptions() {
     /*! @brief ContinuousSlowingDown \n DESCRIPTION: If true, the program uses the continuous slowing down approximation to treat energy dependent
      * problems. \n DEFAULT false \ingroup Config */
     AddBoolOption( "CONTINUOUS_SLOWING_DOWN", _csd, false );
-
 
     /*! @brief Entropy Functional \n DESCRIPTION: Entropy functional used for the MN_Solver \n DEFAULT QUADRTATIC @ingroup Config. */
     AddEnumOption( "ENTROPY_FUNCTIONAL", _entropyName, Entropy_Map, QUADRATIC );

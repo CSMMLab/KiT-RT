@@ -1,4 +1,5 @@
-#include "../../include/quadratures/qgausslegendre1D.h"
+#include "quadratures/qgausslegendre1D.h"
+#include "toolboxes/errormessages.h"
 
 QGaussLegendre1D::QGaussLegendre1D( unsigned order ) : QuadratureBase( order ) {
     SetName();

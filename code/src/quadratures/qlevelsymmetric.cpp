@@ -1,5 +1,7 @@
 #include "quadratures/qlevelsymmetric.h"
 #include "quadratures/lookuptable_levelsymmetric.h"
+#include "toolboxes/errormessages.h"
+
 QLevelSymmetric::QLevelSymmetric( unsigned order ) : QLookupQuadrature( order ) {
 
     SetAvailOrders();

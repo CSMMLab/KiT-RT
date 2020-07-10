@@ -10,7 +10,7 @@ class UpwindFlux : public NumericalFlux
      * @brief UpwindFlux
      * @param settings
      */
-    UpwindFlux( Config* settings );
+    UpwindFlux();
 
     /**
      * @brief Flux computes flux on edge for fixed ordinate at a given edge

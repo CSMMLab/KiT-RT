@@ -1,5 +1,6 @@
 #include "quadratures/qlebedev.h"
 #include "quadratures/lookuptable_lebedev.h"
+#include "toolboxes/errormessages.h"
 
 QLebedev::QLebedev( unsigned order ) : QLookupQuadrature( order ) {
 
