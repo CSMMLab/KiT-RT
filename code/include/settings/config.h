@@ -82,7 +82,9 @@ class Config
     KERNEL_NAME _kernelName; /*!< @brief Scattering Kernel Name*/
 
     // Optimizer
-    OPTIMIZER_NAME _entropyOptimizerName; /*!< @brief Choice of optimizer */
+    OPTIMIZER_NAME _entropyOptimizerName;   /*!< @brief Choice of optimizer */
+    double _optimizerEpsilon;               /*!< @brief termination criterion epsilon for Newton Optmizer */
+    unsigned short _maxIterNewtonOptimizer; /*!< @brief Maximal Number of newton iterations */
 
     // --- Parsing Functionality and Initializing of Options ---
     /*!
@@ -228,7 +230,8 @@ class Config
 
     // Optimizer
     OPTIMIZER_NAME inline GetOptimizerName() const { return _entropyOptimizerName; }
-
+    double inline GetNewtonOptimizerEpsilon() const { return _optimizerEpsilon; }
+    unsigned inline GetMaxIterNewtonOptimizer() const { return _maxIterNewtonOptimizer; }
     // Boundary Conditions
     BOUNDARY_TYPE GetBoundaryType( std::string nameMarker ) const; /*! @brief Get Boundary Type of given marker */
 

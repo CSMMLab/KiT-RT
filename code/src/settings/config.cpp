@@ -221,6 +221,10 @@ void Config::SetConfigOptions() {
     AddEnumOption( "ENTROPY_FUNCTIONAL", _entropyName, Entropy_Map, QUADRATIC );
     /*! @brief Optimizer Name \n DESCRIPTION:  Optimizer used to determine the minimal Entropy reconstruction \n DEFAULT NEWTON \ingroup Config */
     AddEnumOption( "ENTROPY_OPTIMIZER", _entropyOptimizerName, Optimizer_Map, NEWTON );
+    /*! @brief Newton Optimizer Epsilon \n DESCRIPTION:  Convergencce Epsilon for Newton Optimizer \n DEFAULT 1e-3 \ingroup Config */
+    AddDoubleOption( "NEWTON_EPSILON", _optimizerEpsilon, 1e-3 );
+    /*! @brief Max Iter Newton Optmizers \n DESCRIPTION: Max number of newton iterations \n DEFAULT 10 \ingroup Config */
+    AddUnsignedShortOption( "MAX_ITER_NEWTON_OPTIMIZER", _maxIterNewtonOptimizer, 10 );
 
     // Mesh related options
     // Boundary Markers

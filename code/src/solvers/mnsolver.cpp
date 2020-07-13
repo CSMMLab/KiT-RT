@@ -81,20 +81,15 @@ void MNSolver::ComputeMoments() {
 Vector MNSolver::ConstructFlux( unsigned idx_cell ) {
 
     // ---- Integration of Moment of flux ----
-    double w, entropyL, entropyR, entropyFlux;
+    double entropyL, entropyR, entropyFlux;
 
     Vector flux( _nTotalEntries, 0.0 );
-    Vector omega( 3, 0.0 );
 
     for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
-
-        w = _weights[idx_quad];
 
         entropyFlux = 0.0;    // Reset temorary flux
 
         entropyL = _entropy->EntropyPrimeDual( blaze::dot( _alpha[idx_cell], _moments[idx_quad] ) );
-
-        omega = _quadPoints[idx_quad];    // Use Pointer!
 
         for( unsigned idx_neigh = 0; idx_neigh < _neighbors[idx_cell].size(); idx_neigh++ ) {
             // Store fluxes in psiNew, to save memory
@@ -103,9 +98,9 @@ Vector MNSolver::ConstructFlux( unsigned idx_cell ) {
             else {
                 entropyR = _entropy->EntropyPrimeDual( blaze::dot( _alpha[_neighbors[idx_cell][idx_neigh]], _moments[idx_quad] ) );
             }
-            entropyFlux += _g->Flux( omega, entropyL, entropyR, _normals[idx_cell][idx_neigh] );
+            entropyFlux += _g->Flux( _quadPoints[idx_quad], entropyL, entropyR, _normals[idx_cell][idx_neigh] );
         }
-        flux += _moments[idx_quad] * ( w * entropyFlux );
+        flux += _moments[idx_quad] * ( _weights[idx_quad] * entropyFlux );
     }
     return flux;
 }
@@ -150,7 +145,8 @@ void MNSolver::Solve() {
 
             // ------- Reconstruction Step -------
 
-            _alpha[idx_cell] = _sol[idx_cell];    // _optimizer->Solve( _psi[idx_cell] );
+            // _alpha[idx_cell] = _sol[idx_cell];
+            _optimizer->Solve( _alpha[idx_cell], _sol[idx_cell], _moments );
 
             // ------- Flux Computation Step ---------
 
