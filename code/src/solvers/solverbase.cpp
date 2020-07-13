@@ -1,6 +1,8 @@
 #include "solvers/solverbase.h"
+#include "fluxes/numericalflux.h"
 #include "io.h"
 #include "mesh.h"
+#include "problems/problembase.h"
 #include "quadratures/quadraturebase.h"
 #include "settings/globalconstants.h"
 #include "solvers/mnsolver.h"
@@ -24,9 +26,6 @@ Solver::Solver( Config* settings ) : _settings( settings ) {
     _weights             = quad->GetWeights();
     _nq                  = quad->GetNq();
     _settings->SetNQuadPoints( _nq );
-    ScatteringKernel* k = ScatteringKernel::CreateScatteringKernel( settings->GetKernelName(), quad );
-    _scatteringKernel   = k->GetScatteringKernel();
-    // delete QuadratureBase
     delete quad;
 
     // set time step
@@ -36,14 +35,14 @@ Solver::Solver( Config* settings ) : _settings( settings ) {
 
     // setup problem
     _problem = ProblemBase::Create( _settings, _mesh );
-    _psi     = _problem->SetupIC();
+    _sol     = _problem->SetupIC();
     _s       = _problem->GetStoppingPower( _energies );
     _sigmaT  = _problem->GetTotalXS( _energies );
     _sigmaS  = _problem->GetScatteringXS( _energies );
     _Q       = _problem->GetExternalSource( _energies );
 
     // setup numerical flux
-    _g = NumericalFlux::Create( settings );
+    _g = NumericalFlux::Create();
 
     // boundary type
     _boundaryCells = _mesh->GetBoundaryTypes();
@@ -58,11 +57,11 @@ Solver::~Solver() {
 }
 
 double Solver::ComputeTimeStep( double cfl ) const {
-    double maxEdge = 1000.;
-    for( unsigned j = 0; j < _nCells; ++j ) {
-        for( unsigned l = 0; l < _normals[j].size(); ++l ) {
+    double maxEdge = -1.0;
+    for( unsigned j = 0; j < _nCells; j++ ) {
+        for( unsigned l = 0; l < _normals[j].size(); l++ ) {
             double currentEdge = _areas[j] / norm( _normals[j][l] );
-            if( currentEdge < maxEdge ) maxEdge = currentEdge;
+            if( currentEdge > maxEdge ) maxEdge = currentEdge;
         }
     }
     return cfl * maxEdge;
@@ -83,7 +82,7 @@ void Solver::Save() const {
     flux.resize( _nCells );
 
     for( unsigned i = 0; i < _nCells; ++i ) {
-        flux[i] = _psi[i][0];
+        flux[i] = _sol[i][0];
     }
     std::vector<std::vector<double>> scalarField( 1, flux );
     std::vector<std::vector<std::vector<double>>> results{ scalarField };

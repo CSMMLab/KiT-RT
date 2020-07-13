@@ -149,8 +149,8 @@ Reverse engineered plantuml diagram of the current code structure:
 <br/><br/>
 Was created using [hpp2plantuml](https://github.com/thibaultmarin/hpp2plantuml) and [plantuml](https://plantuml.com/), e.g.:
 ```bash
-cd code
-hpp2plantuml -i "../code/include/*.h" -o rtsn.puml 
+cd doc 
+hpp2plantuml -i "../code/include/*.h" -i "../code/include/*/*.h" -o rtsn.puml
 plantuml rtsn.puml -tsvg
 ```
 

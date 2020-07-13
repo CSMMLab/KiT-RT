@@ -1,4 +1,5 @@
 #include "problems/checkerboard.h"
+#include "mesh.h"
 
 Checkerboard::Checkerboard( Config* settings, Mesh* mesh ) : ProblemBase( settings, mesh ) {
     _physics      = nullptr;

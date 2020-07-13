@@ -1,4 +1,5 @@
 #include "problems/electronrt.h"
+#include "mesh.h"
 
 ElectronRT::ElectronRT( Config* settings, Mesh* mesh ) : ProblemBase( settings, mesh ) {
     // @TODO
@@ -24,7 +25,7 @@ std::vector<VectorVector> ElectronRT::GetExternalSource( const std::vector<doubl
 
 std::vector<double> ElectronRT::GetStoppingPower( const std::vector<double>& energies ) {
     // @TODO
-    return std::vector<double>( energies.size(), 0.0 );
+    return std::vector<double>( energies.size(), 1.0 );
 }
 
 VectorVector ElectronRT::SetupIC() {
@@ -35,3 +36,5 @@ VectorVector ElectronRT::SetupIC() {
 void ElectronRT::LoadXSH20( std::string fileSigmaS, std::string fileSigmaT ) {
     // @TODO
 }
+
+std::vector<double> ElectronRT::GetDensity( const VectorVector& cellMidPoints ) { return std::vector<double>( cellMidPoints.size(), 1.0 ); }

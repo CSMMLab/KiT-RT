@@ -19,6 +19,17 @@ class LineSource_SN : public ProblemBase
     virtual VectorVector SetupIC();
 };
 
+class LineSource_SN_Pseudo1D : public LineSource_SN
+{
+  private:
+    LineSource_SN_Pseudo1D() = delete;
+
+  public:
+    LineSource_SN_Pseudo1D( Config* settings, Mesh* mesh );
+
+    VectorVector SetupIC() override;
+};
+
 class LineSource_PN : public ProblemBase
 {
   private:

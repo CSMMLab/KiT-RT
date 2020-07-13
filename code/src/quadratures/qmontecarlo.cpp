@@ -1,4 +1,4 @@
-#include "../../include/quadratures/qmontecarlo.h"
+#include "quadratures/qmontecarlo.h"
 
 QMonteCarlo::QMonteCarlo( unsigned order ) : QuadratureBase( order ) {
     SetName();

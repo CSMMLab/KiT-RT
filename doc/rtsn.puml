@@ -17,6 +17,15 @@ abstract class COptionUShort {
 }
 
 
+class CSDSNSolver {
+	+CSDSNSolver(Config* settings)
+	-_dose : std::vector<double>
+	+Save() : void {query}
+	+Save(int currEnergy) : void {query}
+	+Solve() : void
+}
+
+
 class Checkerboard {
 	-Checkerboard()
 	+Checkerboard(Config* settings, Mesh* mesh)
@@ -34,7 +43,7 @@ class Checkerboard {
 
 
 class Config {
-	+Config(char case_filename)
+	+Config(std::string case_filename)
 	+~Config(void)
 	+GetBoundaryType(std::string nameMarker) : BOUNDARY_TYPE {query}
 	+GetKernelName() : KERNEL_NAME {query}
@@ -43,20 +52,26 @@ class Config {
 	-_problemName : PROBLEM_NAME
 	+GetQuadName() : QUAD_NAME {query}
 	-_quadName : QUAD_NAME
+	+GetSolverName() : SOLVER_NAME {query}
+	-_solverName : SOLVER_NAME
+	+GetCleanFluxMat() : bool {query}
+	+IsCSD() : bool {query}
 	-TokenizeString(std::string& str, std::string& option_name, std::vector<std::string>& option_value) : bool
 	-_baseConfig : bool
+	-_cleanFluxMat : bool
+	-_csd : bool
 	+GetCFL() : double {query}
 	+GetTEnd() : double {query}
 	-_CFL : double
 	-_tEnd : double
-	-_commRank : int
-	-_commSize : int
 	-_optionMap : std::map<std::string, OptionBase*>
 	-_allOptions : std::map<std::string, bool>
+	+GetCTFile() : std::string {query}
 	+GetLogDir() : std::string {query}
 	+GetMeshFile() : std::string {query}
 	+GetOutputDir() : std::string {query}
 	+GetOutputFile() : std::string {query}
+	-_ctFile : std::string
 	-_fileName : std::string
 	-_inputDir : std::string
 	-_logDir : std::string
@@ -66,14 +81,18 @@ class Config {
 	-_boundaries : std::vector<std::pair<std::string, BOUNDARY_TYPE> >
 	-_MarkerDirichlet : std::vector<std::string>
 	-_MarkerNeumann : std::vector<std::string>
+	+GetMaxMomentDegree() : unsigned
 	+GetNCells() : unsigned
 	+GetNQuadPoints() : unsigned
+	+GetReconsOrder() : unsigned
 	-_nCells : unsigned
 	-_nQuadPoints : unsigned
 	+GetQuadOrder() : unsigned short {query}
+	-_maxMomentDegree : unsigned short
 	-_nMarkerDirichlet : unsigned short
 	-_nMarkerNeumann : unsigned short
 	-_quadOrder : unsigned short
+	-_reconsOrder : unsigned short
 	-AddBoolOption(const std::string name, bool& option_field, bool default_value) : void
 	-AddDoubleOption(const std::string name, double& option_field, double default_value) : void
 	-AddEnumOption(const std::string name, Tenum& option_field, const std::map<std::string, Tenum>& enum_map, Tenum default_value) : void
@@ -85,13 +104,26 @@ class Config {
 	-AddUnsignedShortOption(const std::string name, unsigned short& option_field, unsigned short default_value) : void
 	-InitLogger(spdlog::level::level_enum terminalLogLvl, spdlog::level::level_enum fileLogLvl) : void
 	-SetConfigOptions(void) : void
-	-SetConfigParsing(char case_filename) : void
+	-SetConfigParsing(std::string case_filename) : void
 	-SetDefault(void) : void
 	+SetNCells(unsigned nCells) : void
 	+SetNQuadPoints(unsigned nq) : void
 	-SetOutput(void) : void
 	-SetPointersNull(void) : void
 	-SetPostprocessing(void) : void
+}
+
+
+class Cubic2DSpline {
+	-Cubic2DSpline()
+	+Cubic2DSpline(const Vector& x, const Vector& y, const Matrix& data)
+	+~Cubic2DSpline()
+	-_data : Matrix
+	-_x : Vector
+	-_y : Vector
+	-interpolate1D(double param, double x) : double
+	+operator()(double x, double y) : double
+	-indexOfClosestValue(double value, const Vector& v) : unsigned
 }
 
 
@@ -103,6 +135,7 @@ class ElectronRT {
 	+GetTotalXS(const std::vector<double>& energies) : VectorVector
 	+SetupIC() : VectorVector
 	+GetExternalSource(const std::vector<double>& energies) : std::vector<VectorVector>
+	+GetDensity(const VectorVector& cellMidPoints) : std::vector<double>
 	+GetStoppingPower(const std::vector<double>& energies) : std::vector<double>
 	-LoadXSH20(std::string fileSigmaS, std::string fileSigmaT) : void
 }
@@ -115,6 +148,22 @@ class ErrorMessages {
 }
 
 
+class Isotropic {
+	-Isotropic()
+	+Isotropic(QuadratureBase* q)
+	+~Isotropic()
+	+GetScatteringKernel() : Matrix
+}
+
+
+class Isotropic1D {
+	-Isotropic1D()
+	+Isotropic1D(QuadratureBase* q)
+	+~Isotropic1D()
+	+GetScatteringKernel() : Matrix
+}
+
+
 class LaxFriedrichsFlux {
 	+LaxFriedrichsFlux(Config* settings)
 	+Flux(const Vector& Omega, double psiL, double psiR, const Vector& n) : double {query}
@@ -122,15 +171,51 @@ class LaxFriedrichsFlux {
 }
 
 
-class LineSource {
-	-LineSource()
-	+LineSource(Config* settings, Mesh* mesh)
-	+~LineSource()
+class LineSource_PN {
+	-LineSource_PN()
+	+LineSource_PN(Config* settings, Mesh* mesh)
+	+~LineSource_PN()
+	+GetScatteringXS(const std::vector<double>& energies) : VectorVector
+	+GetTotalXS(const std::vector<double>& energies) : VectorVector
+	+SetupIC() : VectorVector
+	-GlobalIndex(int l, int k) : int {query}
+	+GetExternalSource(const std::vector<double>& energies) : std::vector<VectorVector>
+	+GetStoppingPower(const std::vector<double>& energies) : std::vector<double>
+}
+
+
+class LineSource_SN {
+	-LineSource_SN()
+	+LineSource_SN(Config* settings, Mesh* mesh)
+	+~LineSource_SN()
 	+GetScatteringXS(const std::vector<double>& energies) : VectorVector
 	+GetTotalXS(const std::vector<double>& energies) : VectorVector
 	+SetupIC() : VectorVector
 	+GetExternalSource(const std::vector<double>& energies) : std::vector<VectorVector>
 	+GetStoppingPower(const std::vector<double>& energies) : std::vector<double>
+}
+
+
+class LineSource_SN_Pseudo1D {
+	-LineSource_SN_Pseudo1D()
+	+LineSource_SN_Pseudo1D(Config* settings, Mesh* mesh)
+	+SetupIC() : VectorVector
+}
+
+
+class MNSolver {
+	+MNSolver(Config* settings)
+	+~MNSolver()
+	-_quadrature : QuadratureBase*
+	-_basis : SphericalHarmonics
+	-_scatterMatDiag : Vector
+	-_A : VectorVector
+	-_sigmaA : VectorVector
+	-GlobalIndex(int l, int k) : int {query}
+	-_nTotalEntries : unsigned
+	-_nMaxMomentsOrder : unsigned short
+	-ComputeSystemMatrices() : void
+	+Solve() : void
 }
 
 
@@ -146,7 +231,7 @@ class Mesh {
 	#_numCells : const unsigned
 	#_numNodes : const unsigned
 	#_numNodesPerCell : const unsigned
-	#_log : std::shared_ptr<spdlog::logger>
+	+GetDistanceToOrigin(unsigned idx_cell) : double {query}
 	#_cellBoundaryTypes : std::vector<BOUNDARY_TYPE>
 	+GetBoundaryTypes() : std::vector<BOUNDARY_TYPE>& {query}
 	#_cellMidPoints : std::vector<Vector>
@@ -156,6 +241,8 @@ class Mesh {
 	#_cellAreas : std::vector<double>
 	+GetCellAreas() : std::vector<double>& {query}
 	#_boundaries : std::vector<std::pair<BOUNDARY_TYPE, std::vector<unsigned> > >
+	+GetBounds() : std::vector<std::pair<double , double> > {query}
+	#_bounds : std::vector<std::pair<double, double> >
 	#_cellNormals : std::vector<std::vector<Vector> >
 	+GetNormals() : std::vector<std::vector<Vector> >& {query}
 	#_cellNeighbors : std::vector<std::vector<unsigned> >
@@ -168,18 +255,23 @@ class Mesh {
 	+GetNumCells() : unsigned {query}
 	+GetNumNodes() : unsigned {query}
 	+GetNumNodesPerCell() : unsigned {query}
+	#ComputeBounds() : void
 	#ComputeCellAreas() : void
 	#ComputeCellMidpoints() : void
 	#ComputeConnectivity() : void
 	#ComputePartitioning() : void
 	+ComputeSlopes(unsigned nq, VectorVector& psiDerX, VectorVector& psiDerY, const VectorVector& psi) : void {query}
+	+ReconstructSlopesS(unsigned nq, VectorVector& psiDerX, VectorVector& psiDerY, const VectorVector& psi) : void {query}
+	+ReconstructSlopesU(unsigned nq, VectorVector& psiDerX, VectorVector& psiDerY, const VectorVector& psi) : void {query}
 }
 
 
 abstract class NumericalFlux {
 	+NumericalFlux(Config* settings)
 	+{static} Create(Config* settings) : NumericalFlux*
+	+{abstract} Flux(const Matrix AxPlus, const Matrix AxMinus, const Matrix AyPlus, const Matrix AyMinus, const Matrix AzPlus, const Matrix AzMinus, const Vector, const Vector, const Vector n) : Vector {query}
 	+{abstract} Flux(const Vector& Omega, double psiL, double psiR, const Vector& n) : double {query}
+	+{abstract} FluxVanLeer(const Matrix& Ax, const Matrix& AxAbs, const Matrix& Ay, const Matrix& AyAbs, const Matrix& Az, const Matrix& AzAbs, const Vector& psiL, const Vector& psiR, const Vector& n, Vector& resultFlux) : void {query}
 }
 
 
@@ -284,15 +376,64 @@ abstract class OptionULong {
 }
 
 
+class PNSolver {
+	+PNSolver(Config* settings)
+	#_AxAbs : Matrix
+	#_AxMinus : Matrix
+	#_AxPlus : Matrix
+	#_AyAbs : Matrix
+	#_AyMinus : Matrix
+	#_AyPlus : Matrix
+	#_AzAbs : Matrix
+	#_AzMinus : Matrix
+	#_AzPlus : Matrix
+	#_Ax : SymMatrix
+	#_Ay : SymMatrix
+	#_Az : SymMatrix
+	#_scatterMatDiag : Vector
+	#_sigmaA : VectorVector
+	#CheckIndex(int l, int k) : bool {query}
+	#AParam(int l, int k) : double {query}
+	#BParam(int l, int k) : double {query}
+	#CParam(int l, int k) : double {query}
+	#CTilde(int l, int k) : double {query}
+	#DParam(int l, int k) : double {query}
+	#DTilde(int l, int k) : double {query}
+	#EParam(int l, int k) : double {query}
+	#ETilde(int l, int k) : double {query}
+	#FParam(int l, int k) : double {query}
+	#FTilde(int l, int k) : double {query}
+	#LegendrePoly(double x, int l) : double
+	#GlobalIndex(int l, int k) : int {query}
+	#Sgn(int k) : int {query}
+	#kMinus(int k) : int {query}
+	#kPlus(int k) : int {query}
+	#_LMaxDegree : unsigned
+	#_nTotalEntries : unsigned
+	#CleanFluxMatrices() : void
+	#ComputeFluxComponents() : void
+	#ComputeScatterMatrix() : void
+	#ComputeSystemMatrices() : void
+	+Save() : void {query}
+	+Save(int currEnergy) : void {query}
+	+Solve() : void
+}
+
+
 class Physics {
-	+Physics(Config* settings)
-	-_totalxsH2O : Matrix
-	-_xsH2O : Matrix
-	+{static} Create(Config* settings) : Physics*
-	+GetScatteringXS(std::vector<double> energies, std::vector<double> density, std::vector<double> Omegas) : VectorVector
-	+GetStoppingPower(std::vector<double> energies, std::vector<double> sH2O) : VectorVector
-	+GetTotalXS(std::vector<double> energies, std::vector<double> density) : VectorVector
-	-LoadXSH2O(std::string fileName1, std::string fileName2) : void
+	+Physics()
+	+{static} Create() : Physics*
+	+GetScatteringXS(Vector energies, Vector density, Vector angle) : VectorVector
+	+GetStoppingPower(Vector energies, Vector density) : VectorVector
+	+GetTotalXS(Vector energies, Vector density) : VectorVector
+	+GetTransportXS(Vector energies, Vector density) : VectorVector
+	+ReadStoppingPowers(std::string fileName) : VectorVector
+	-_stpowH2O : VectorVector
+	-_xsH2O : VectorVector
+	-_xsTotalH2O : VectorVector
+	-_xsTransportH2O : VectorVector
+	+ReadENDL(std::string filename) : std::tuple<std::vector<VectorVector> , std::vector<VectorVector> >
+	+LoadDatabase(std::string fileName_H, std::string fileName_O, std::string fileName_stppower) : void
 }
 
 
@@ -308,6 +449,7 @@ abstract class ProblemBase {
 	+{abstract} GetTotalXS(const std::vector<double>& energies) : VectorVector
 	+{abstract} SetupIC() : VectorVector
 	+{abstract} GetExternalSource(const std::vector<double>& energies) : std::vector<VectorVector>
+	+GetDensity(const VectorVector& cellMidPoints) : std::vector<double>
 	+{abstract} GetStoppingPower(const std::vector<double>& energies) : std::vector<double>
 	#_density : std::vector<double>
 	#_stoppingPower : std::vector<double>
@@ -324,9 +466,25 @@ class QDummy {
 }
 
 
+class QGaussLegendre1D {
+	+QGaussLegendre1D(unsigned order)
+	+~QGaussLegendre1D()
+	-CheckOrder() : bool
+	-Pythag(const double a, const double b) : double
+	-ComputeEigenValTriDiagMatrix(const Matrix& mat) : std::pair<Vector , Matrix>
+	+SetConnectivity() : void
+	+SetName() : void
+	+SetNq() : void
+	+SetPointsAndWeights() : void
+}
+
+
 class QGaussLegendreTensorized {
 	+QGaussLegendreTensorized(unsigned order)
 	+~QGaussLegendreTensorized()
+	-CheckOrder() : bool
+	-Pythag(const double a, const double b) : double
+	-ComputeEigenValTriDiagMatrix(const Matrix& mat) : std::pair<Vector , Matrix>
 	+SetConnectivity() : void
 	+SetName() : void
 	+SetNq() : void
@@ -403,6 +561,7 @@ abstract class QuadratureBase {
 	+SumUpWeights() : double
 	+GetName() : std::string {query}
 	#_name : std::string
+	+Integrate(std::vector<double >(f)(doublex0,doublex1,doublex2), unsigned len) : std::vector<double>
 	+GetNq() : unsigned {query}
 	+GetOrder() : unsigned {query}
 	#_nq : unsigned
@@ -421,13 +580,13 @@ abstract class QuadratureBase {
 class Reconstructor {
 	+Reconstructor(Config* settings)
 	+ReconstructSlopeStruct(double uL, double uC, double uR, double dxL, double dxR, std::string limiter) : double {query}
-	+ReconstructSlopeUnstruct(unsigned nq, unsigned ncell, VectorVector& psi, VectorVector& psiDerX, VectorVector& psiDerY, Vector& area, VectorVector& neighbor, VectorVector& nx, VectorVector& ny) : void {query}
 }
 
 
 class SNSolver {
 	+SNSolver(Config* settings)
 	+Save() : void {query}
+	+Save(int currEnergy) : void {query}
 	+Solve() : void
 }
 
@@ -439,8 +598,19 @@ class SNSolverMPI {
 }
 
 
+abstract class ScatteringKernel {
+	-ScatteringKernel()
+	+ScatteringKernel(QuadratureBase* quad)
+	+~ScatteringKernel()
+	+{abstract} GetScatteringKernel() : Matrix
+	#_quad : QuadratureBase*
+	+{static} CreateScatteringKernel(KERNEL_NAME name, QuadratureBase* quad) : ScatteringKernel*
+}
+
+
 abstract class Solver {
 	+Solver(Config* settings)
+	+~Solver()
 	#_settings : Config*
 	#_scatteringKernel : Matrix
 	#_mesh : Mesh*
@@ -460,19 +630,72 @@ abstract class Solver {
 	#_density : std::vector<double>
 	#_energies : std::vector<double>
 	#_s : std::vector<double>
+	#_solverOutput : std::vector<double>
 	#_normals : std::vector<std::vector<Vector> >
 	#_neighbors : std::vector<std::vector<unsigned> >
 	#_nCells : unsigned
 	#_nEnergies : unsigned
 	#_nq : unsigned
 	+{abstract} Save() : void {query}
+	+{abstract} Save(int currEnergy) : void {query}
 	+{abstract} Solve() : void
+}
+
+
+class SphericalHarmonics {
+	+SphericalHarmonics(unsigned L_degree)
+	+ComputeSphericalBasis(double my, double phi) : std::vector<double>
+	+ComputeSphericalBasis(double x, double y, double z) : std::vector<double>
+	-_YBasis : std::vector<double>
+	-_aParam : std::vector<double>
+	-_assLegendreP : std::vector<double>
+	-_bParam : std::vector<double>
+	-GlobalIdxAssLegendreP(unsigned l_degree, unsigned k_order) : unsigned
+	-GlobalIdxBasis(unsigned l_degree, unsigned k_order) : unsigned
+	-_LMaxDegree : unsigned
+	-ComputeAssLegendrePoly(const double my) : void
+	-ComputeCoefficients() : void
+	-ComputeYBasis(const double phi) : void
+}
+
+
+class Spline {
+	+Spline()
+	-m_a : Vector
+	-m_b : Vector
+	-m_c : Vector
+	-m_x : Vector
+	-m_y : Vector
+	-m_left : bd_type
+	-m_right : bd_type
+	-m_force_linear_extrapolation : bool
+	-m_b0 : double
+	-m_c0 : double
+	-m_left_value : double
+	-m_right_value : double
+	+operator()(double x) : double {query}
+	+set_boundary(bd_type left, double left_value, bd_type right, double right_value, bool force_linear_extrapolation) : void
+	+set_points(const std::vector<double>& x, const std::vector<double>& y, bool cubic_Spline) : void
+	+set_points(const Vector& x, const Vector& y, bool cubic_Spline) : void
 }
 
 
 class UpwindFlux {
 	+UpwindFlux(Config* settings)
+	+Flux(const Matrix AxPlus, const Matrix AxMinus, const Matrix AyPlus, const Matrix AyMinus, const Matrix AzPlus, const Matrix AzMinus, const Vector psiL, const Vector psiR, const Vector n) : Vector {query}
 	+Flux(const Vector& Omega, double psiL, double psiR, const Vector& n) : double {query}
+	+FluxVanLeer(const Matrix& Ax, const Matrix& AxAbs, const Matrix& Ay, const Matrix& AyAbs, const Matrix& Az, const Matrix& AzAbs, const Vector& psiL, const Vector& psiR, const Vector& n, Vector& resultFlux) : void {query}
+}
+
+
+class WaterPhantom {
+	-WaterPhantom()
+	+WaterPhantom(Config* settings, Mesh* mesh)
+	+~WaterPhantom()
+	+SetupIC() : VectorVector
+	+GetExternalSource(const std::vector<double>& energies) : std::vector<VectorVector>
+	+GetDensity(const VectorVector& cellMidPoints) : std::vector<double>
+	+GetStoppingPower(const std::vector<double>& energies) : std::vector<double>
 }
 
 
@@ -486,6 +709,7 @@ enum BOUNDARY_TYPE {
 
 enum KERNEL_NAME {
 	KERNEL_Isotropic
+	KERNEL_Isotropic1D
 }
 
 
@@ -493,10 +717,13 @@ enum PROBLEM_NAME {
 	PROBLEM_Checkerboard
 	PROBLEM_ElectronRT
 	PROBLEM_LineSource
+	PROBLEM_LineSource_Pseudo_1D
+	PROBLEM_WaterPhantom
 }
 
 
 enum QUAD_NAME {
+	QUAD_GaussLegendre1D
 	QUAD_GaussLegendreTensorized
 	QUAD_LDFESA
 	QUAD_Lebedev
@@ -505,10 +732,22 @@ enum QUAD_NAME {
 }
 
 
+enum SOLVER_NAME {
+	PN_SOLVER
+	SN_SOLVER
+}
+
+
 
 
 
 /' Inheritance relationships '/
+
+ElectronRT <|-- WaterPhantom
+
+
+LineSource_SN <|-- LineSource_SN_Pseudo1D
+
 
 NumericalFlux <|-- LaxFriedrichsFlux
 
@@ -549,7 +788,10 @@ ProblemBase <|-- Checkerboard
 ProblemBase <|-- ElectronRT
 
 
-ProblemBase <|-- LineSource
+ProblemBase <|-- LineSource_PN
+
+
+ProblemBase <|-- LineSource_SN
 
 
 QLookupQuadrature <|-- QLDFESA
@@ -564,6 +806,9 @@ QLookupQuadrature <|-- QLevelSymmetric
 QuadratureBase <|-- QDummy
 
 
+QuadratureBase <|-- QGaussLegendre1D
+
+
 QuadratureBase <|-- QGaussLegendreTensorized
 
 
@@ -571,6 +816,21 @@ QuadratureBase <|-- QLookupQuadrature
 
 
 QuadratureBase <|-- QMonteCarlo
+
+
+ScatteringKernel <|-- Isotropic
+
+
+ScatteringKernel <|-- Isotropic1D
+
+
+Solver <|-- CSDSNSolver
+
+
+Solver <|-- MNSolver
+
+
+Solver <|-- PNSolver
 
 
 Solver <|-- SNSolver
@@ -587,6 +847,12 @@ Solver <|-- SNSolverMPI
 Config o-- OptionBase
 
 
+MNSolver o-- QuadratureBase
+
+
+MNSolver *-- SphericalHarmonics
+
+
 ProblemBase o-- Config
 
 
@@ -594,6 +860,9 @@ ProblemBase o-- Mesh
 
 
 ProblemBase o-- Physics
+
+
+ScatteringKernel o-- QuadratureBase
 
 
 Solver o-- Config

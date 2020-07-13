@@ -18,7 +18,9 @@
 #include "spdlog/spdlog.h"
 
 #include "globalconstants.h"
-#include "optionstructure.h"
+
+// Forward declaration
+class OptionBase;
 
 /*!
  * @class Config
@@ -41,6 +43,7 @@ class Config
     std::string _outputFile; /*!< @brief Name of output file*/
     std::string _logDir;     /*!< @brief Directory of log file*/
     std::string _meshFile;   /*!< @brief Name of mesh file*/
+    std::string _ctFile;     /*!< @brief Name of CT file*/
 
     // Quadrature
     QUAD_NAME _quadName;       /*!< @brief Quadrature Name*/
@@ -57,10 +60,14 @@ class Config
     SOLVER_NAME _solverName;         /*!< @brief Name of the used Solver */
     ENTROPY_NAME _entropyName;       /*!< @brief Name of the used Entropy Functional */
     unsigned short _maxMomentDegree; /*!< @brief Maximal Order of Moments for PN and MN Solver */
+    unsigned short _reconsOrder;     /*!< @brief Spatial Order of Accuracy for Solver */
 
     /*!< @brief If true, very low entries (10^-10 or smaller) of the flux matrices will be set to zero,
      * to improve floating point accuracy */
     bool _cleanFluxMat;
+
+    /*!< @brief If true, continuous slowing down approximation will be used */
+    bool _csd;
 
     // Boundary Conditions
     /*!< @brief List of all Pairs (marker, BOUNDARY_TYPE), e.g. (farfield,DIRICHLET).
@@ -195,6 +202,7 @@ class Config
     std::string inline GetOutputDir() const { return std::filesystem::path( _outputDir ).lexically_normal(); }
     std::string inline GetOutputFile() const { return std::filesystem::path( _outputFile ).lexically_normal(); }
     std::string inline GetLogDir() const { return std::filesystem::path( _logDir ).lexically_normal(); }
+    std::string inline GetCTFile() const { return std::filesystem::path( _ctFile ).lexically_normal(); }
 
     // Quadrature Structure
     QUAD_NAME inline GetQuadName() const { return _quadName; }
@@ -214,6 +222,9 @@ class Config
     SOLVER_NAME inline GetSolverName() const { return _solverName; }
     ENTROPY_NAME inline GetEntropyName() const { return _entropyName; }
     bool inline GetCleanFluxMat() const { return _cleanFluxMat; }
+    unsigned GetReconsOrder() { return _reconsOrder; }
+    bool inline IsCSD() const { return _csd; }
+    unsigned inline GetMaxMomentDegree() { return _maxMomentDegree; }
 
     // Optimizer
     OPTIMIZER_NAME inline GetOptimizerName() const { return _entropyOptimizerName; }

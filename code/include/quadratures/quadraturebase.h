@@ -3,7 +3,6 @@
 
 #include "settings/globalconstants.h"
 #include "settings/typedef.h"
-#include "toolboxes/errormessages.h"
 
 class QuadratureBase
 {

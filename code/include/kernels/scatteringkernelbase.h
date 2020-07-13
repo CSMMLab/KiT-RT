@@ -15,7 +15,7 @@ class ScatteringKernel
 
   public:
     ScatteringKernel( QuadratureBase* quad );
-    ~ScatteringKernel();
+    virtual ~ScatteringKernel();
 
     virtual Matrix GetScatteringKernel() = 0;
 

@@ -2,8 +2,10 @@
 #define OPTIMIZERBASE_H
 
 #include "entropies/entropybase.h"
-#include "settings/config.h"
 #include "settings/typedef.h"
+
+// Foward declaration
+class Config;
 
 class OptimizerBase
 {

@@ -6,6 +6,8 @@
 class SNSolver : public Solver
 {
   private:
+    Matrix _scatteringKernel; /*!  @brief scattering kernel for the quadrature */
+
   public:
     /**
      * @brief SNSolver constructor

@@ -19,7 +19,9 @@ RUN apt-get update \
        libssl-dev \
        libxt-dev \
        libgl1-mesa-dev \
-       libgsl-dev \
+       python3 \
+       python3-pip \
+       gmsh \
     && apt-get clean \
     && apt-get autoremove --purge \
     && rm -rf /var/lib/apt/lists/* 
@@ -33,5 +35,7 @@ RUN wget --no-check-certificate --quiet https://www.vtk.org/files/release/8.2/VT
     && ninja install > /dev/null \
     && cd - \
     && rm -rf VTK-*
+
+RUN pip3 install numpy pygmsh Pillow pydicom
 
 WORKDIR /home

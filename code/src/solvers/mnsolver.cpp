@@ -1,13 +1,23 @@
 #include "solvers/mnsolver.h"
+#include "entropies/entropybase.h"
+#include "fluxes/numericalflux.h"
+#include "io.h"
+#include "optimizers/optimizerbase.h"
+#include "quadratures/quadraturebase.h"
+#include "settings/config.h"
+#include "solvers/sphericalharmonics.h"
 #include "toolboxes/textprocessingtoolbox.h"
-//#include <chrono>
+
 #include <mpi.h>
 
-MNSolver::MNSolver( Config* settings ) : Solver( settings ), _nMaxMomentsOrder( settings->GetMaxMomentDegree() ), _basis( _nMaxMomentsOrder ) {
-    // Is this good (fast) code using a constructor list?
+//#include <chrono>
 
-    _nTotalEntries = GlobalIndex( _nMaxMomentsOrder, int( _nMaxMomentsOrder ) ) + 1;
-    _quadrature    = QuadratureBase::CreateQuadrature( _settings->GetQuadName(), settings->GetQuadOrder() );
+MNSolver::MNSolver( Config* settings ) : Solver( settings ) {
+
+    // Is this good (fast) code using a constructor list?
+    _nMaxMomentsOrder = settings->GetMaxMomentDegree();
+    _nTotalEntries    = GlobalIndex( _nMaxMomentsOrder, int( _nMaxMomentsOrder ) ) + 1;
+    _quadrature       = QuadratureBase::CreateQuadrature( _settings->GetQuadName(), settings->GetQuadOrder() );
 
     // transform sigmaT and sigmaS in sigmaA.
     _sigmaA = VectorVector( _nEnergies, Vector( _nCells, 0 ) );    // Get rid of this extra vektor!
@@ -33,6 +43,8 @@ MNSolver::MNSolver( Config* settings ) : Solver( settings ), _nMaxMomentsOrder( 
     _alpha = VectorVector( _nCells, Vector( _nTotalEntries, 0.0 ) );
 
     // Initialize and Pre-Compute Moments at quadrature points
+    _basis = new SphericalHarmonics( _nMaxMomentsOrder );
+
     _moments = VectorVector( _nq, Vector( _nTotalEntries, 0.0 ) );
     ComputeMoments();
 }
@@ -41,6 +53,7 @@ MNSolver::~MNSolver() {
     delete _quadrature;
     delete _entropy;
     delete _optimizer;
+    delete _basis;
 }
 
 int MNSolver::GlobalIndex( int l, int k ) const {
@@ -50,82 +63,45 @@ int MNSolver::GlobalIndex( int l, int k ) const {
 }
 
 void MNSolver::ComputeMoments() {
-    double my, phi, w;
+    double my, phi;
 
     for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
-        phi = _quadrature->GetPointsSphere()[idx_quad][0];
-        my  = _quadrature->GetPointsSphere()[idx_quad][1];
+        my  = _quadrature->GetPointsSphere()[idx_quad][0];
+        phi = _quadrature->GetPointsSphere()[idx_quad][1];
 
-        _moments[idx_quad] = _basis.ComputeSphericalBasis( my, phi );
+        _moments[idx_quad] = _basis->ComputeSphericalBasis( my, phi );
     }
-
-    Vector normalizationFactor( _moments[0].size(), 0.0 );
-
-    // Normalize Moments
-
-    // for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
-    //    w = _quadrature->GetWeights()[idx_quad];
-    //
-    //    for( unsigned idx_sys = 0; idx_sys < _nTotalEntries; idx_sys++ ) {
-    //        normalizationFactor[idx_sys] += w * _moments[idx_quad][idx_sys] * _moments[idx_quad][idx_sys];
-    //    }
-    //}
-    // std::cout << "norm" << normalizationFactor << "\n";
-    //
-    // for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
-    //    for( unsigned idx_sys = 0; idx_sys < _nTotalEntries; idx_sys++ ) {
-    //        _moments[idx_quad][idx_sys] /= sqrt( normalizationFactor[idx_sys] );
-    //    }
-    //}
 }
 
 Vector MNSolver::ConstructFlux( unsigned idx_cell ) {
 
     // ---- Integration of Moment of flux ----
     double w, entropyL, entropyR, entropyFlux;
-    // double x, y, z;
-    // std::cout << "--------\n";
-    // std::cout << " alphas curr cell" << _alpha[idx_cell] << " alphas neigh cell:\n";
-
-    bool good = _alpha[idx_cell] == 0.0;
-
-    int idx_good = 0;
-    for( unsigned idx_neigh = 0; idx_neigh < _neighbors[idx_cell].size(); idx_neigh++ ) {
-        // std::cout << _alpha[idx_neigh] << "\n";
-        if( _alpha[idx_neigh] == 0.0 ) idx_good++;
-    }
-    if( idx_good == 2 && good ) {
-        std::cout << "Candidate\n";
-    }
 
     Vector flux( _nTotalEntries, 0.0 );
+    Vector omega( 3, 0.0 );
+
     for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
 
         w = _quadrature->GetWeights()[idx_quad];
 
         entropyFlux = 0.0;    // Reset temorary flux
 
-        entropyL = dot( _alpha[idx_cell], _moments[idx_quad] );
-        // _entropy->EntropyPrimeDual( blaze::dot( _alpha[idx_cell], _moments[idx_quad] ) );
+        entropyL = _entropy->EntropyPrimeDual( blaze::dot( _alpha[idx_cell], _moments[idx_quad] ) );
+
+        omega = _quadrature->GetPoints()[idx_quad];    // Use Pointer!
 
         for( unsigned idx_neigh = 0; idx_neigh < _neighbors[idx_cell].size(); idx_neigh++ ) {
             // Store fluxes in psiNew, to save memory
             if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::NEUMANN && _neighbors[idx_cell][idx_neigh] == _nCells )
                 entropyR = entropyL;
             else {
-                entropyR = dot( _alpha[idx_neigh], _moments[idx_quad] );
-                //_entropy->EntropyPrimeDual( blaze::dot( _alpha[idx_neigh], _moments[idx_quad] ) );
+                entropyR = _entropy->EntropyPrimeDual( blaze::dot( _alpha[_neighbors[idx_cell][idx_neigh]], _moments[idx_quad] ) );
             }
-            entropyFlux += _g->Flux( _quadrature->GetPoints()[idx_quad], entropyL, entropyR, _normals[idx_cell][idx_neigh] );
+            entropyFlux += _g->Flux( omega, entropyL, entropyR, _normals[idx_cell][idx_neigh] );
         }
-
-        //   std::cout << "\n entropy Flux at cell [" << idx_cell << "] and quad [" << idx_quad << "]: " << entropyFlux << "\n";
-        // integrate
         flux += _moments[idx_quad] * ( w * entropyFlux );
     }
-
-    // std::cout << "\n integrate entropy Flux at cell [" << idx_cell << "] and : " << flux << "\n";
-
     return flux;
 }
 
@@ -137,15 +113,15 @@ void MNSolver::Solve() {
     auto log = spdlog::get( "event" );
 
     // angular flux at next time step (maybe store angular flux at all time steps, since time becomes energy?)
-    VectorVector psiNew = _psi;
+    VectorVector psiNew = _sol;
     double dFlux        = 1e10;
     Vector fluxNew( _nCells, 0.0 );
     Vector fluxOld( _nCells, 0.0 );
 
     double mass1 = 0;
     for( unsigned i = 0; i < _nCells; ++i ) {
-        _solverOutput[i] = _psi[i][0];
-        mass1 += _psi[i][0] * _areas[i];
+        _solverOutput[i] = _sol[i][0];
+        mass1 += _sol[i][0] * _areas[i];
     }
 
     dFlux   = blaze::l2Norm( fluxNew - fluxOld );
@@ -169,7 +145,7 @@ void MNSolver::Solve() {
 
             // ------- Reconstruction Step -------
 
-            _alpha[idx_cell] = _psi[idx_cell];    // _optimizer->Solve( _psi[idx_cell] );
+            _alpha[idx_cell] = _sol[idx_cell];    // _optimizer->Solve( _psi[idx_cell] );
 
             // ------- Flux Computation Step ---------
 
@@ -183,22 +159,21 @@ void MNSolver::Solve() {
             // NEED TO VECTORIZE
             for( unsigned idx_system = 0; idx_system < _nTotalEntries; idx_system++ ) {
 
-                psiNew[idx_cell][idx_system] =
-                    _psi[idx_cell][idx_system] - ( _dE / _areas[idx_cell] ) * psiNew[idx_cell][idx_system]; /* cell averaged flux */
-
-                //- _dE * _psi[idx_cell][idx_system] *
-                //      ( _sigmaA[idx_energy][idx_cell]                                    /* absorbtion influence */
-                //        + _sigmaS[idx_energy][idx_cell] * _scatterMatDiag[idx_system] ); /* scattering influence */
+                psiNew[idx_cell][idx_system] = _sol[idx_cell][idx_system] -
+                                               ( _dE / _areas[idx_cell] ) * psiNew[idx_cell][idx_system] /* cell averaged flux */
+                                               - _dE * _sol[idx_cell][idx_system] *
+                                                     ( _sigmaA[idx_energy][idx_cell]                                    /* absorbtion influence */
+                                                       + _sigmaS[idx_energy][idx_cell] * _scatterMatDiag[idx_system] ); /* scattering influence */
             }
         }
-        _psi = psiNew;
+        _sol = psiNew;
 
         // pseudo time iteration output
         double mass = 0.0;
         for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
-            fluxNew[idx_cell]       = _psi[idx_cell][0];    // zeroth moment is raditation densitiy we are interested in
-            _solverOutput[idx_cell] = _psi[idx_cell][0];
-            mass += _psi[idx_cell][0] * _areas[idx_cell];
+            fluxNew[idx_cell]       = _sol[idx_cell][0];    // zeroth moment is raditation densitiy we are interested in
+            _solverOutput[idx_cell] = _sol[idx_cell][0];
+            mass += _sol[idx_cell][0] * _areas[idx_cell];
         }
 
         dFlux   = blaze::l2Norm( fluxNew - fluxOld );
@@ -214,7 +189,7 @@ void MNSolver::Save() const {
     flux.resize( _nCells );
 
     for( unsigned i = 0; i < _nCells; ++i ) {
-        flux[i] = _psi[i][0];
+        flux[i] = _sol[i][0];
     }
     std::vector<std::vector<double>> scalarField( 1, flux );
     std::vector<std::vector<std::vector<double>>> results{ scalarField };

@@ -1,6 +1,5 @@
 #include "catch.hpp"
 #include "settings/config.h"
-#include "settings/globalconstants.h"
 
 TEST_CASE( "Read in Config Template" ) {
 

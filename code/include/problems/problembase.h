@@ -1,10 +1,12 @@
 #ifndef PROBLEMBASE_H
 #define PROBLEMBASE_H
 
-#include "mesh.h"
-#include "physics.h"
-#include "settings/config.h"
 #include "settings/typedef.h"
+
+// Forward Declaration
+class Config;
+class Physics;
+class Mesh;
 
 class ProblemBase
 {
@@ -49,6 +51,12 @@ class ProblemBase
      * @param energies is vector with energies
      */
     virtual std::vector<double> GetStoppingPower( const std::vector<double>& energies ) = 0;
+
+    /**
+     * @brief GetDensity gives back vector of densities for every spatial cell
+     * @param cellMidPoints is vector with cell mid points
+     */
+    virtual std::vector<double> GetDensity( const VectorVector& cellMidPoints );
 
     /**
      * @brief Setup the initial condition for the flux psi
