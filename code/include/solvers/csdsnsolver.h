@@ -1,13 +1,12 @@
 #ifndef CSDSNSOLVER_H
 #define CSDSNSOLVER_H
 
-#include "solvers/solverbase.h"
+#include "solvers/snsolver.h"
 
-class CSDSNSolver : public Solver
+class CSDSNSolver : public SNSolver
 {
   private:
     std::vector<double> _dose;
-    Matrix _scatteringKernel; /*!  @brief scattering kernel for the quadrature */
 
   public:
     /**

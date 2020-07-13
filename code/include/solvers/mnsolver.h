@@ -37,7 +37,10 @@ class MNSolver : public Solver
 
     Vector _scatterMatDiag; /*! @brief: Diagonal of the scattering matrix (its a diagonal matrix by construction) */
 
-    QuadratureBase* _quadrature; /*! @brief: Quadrature rule to compute flux Jacobian */    // Shift this to SolverBase!
+    // quadrature related numbers
+    VectorVector _quadPoints;       /*!  @brief quadrature points, dim(_quadPoints) = (_nq,spatialDim) */
+    Vector _weights;                /*!  @brief quadrature weights, dim(_weights) = (_nq) */
+    VectorVector _quadPointsSphere; /*!  @brief (my,phi), dim(_quadPoints) = (_nq,2) */
 
     EntropyBase* _entropy; /*! @brief: Class to handle entropy functionals */
     VectorVector _alpha;   /*! @brief: Lagrange Multipliers for Minimal Entropy problem for each gridCell

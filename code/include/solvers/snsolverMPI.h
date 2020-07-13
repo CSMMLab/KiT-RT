@@ -3,9 +3,9 @@
 
 #include <mpi.h>
 
-#include "solvers/solverbase.h"
+#include "solvers/snsolver.h"
 
-class SNSolverMPI : public Solver
+class SNSolverMPI : public SNSolver
 {
   public:
     /**

@@ -9,11 +9,12 @@
 
 SNSolver::SNSolver( Config* settings ) : Solver( settings ) {
 
-    QuadratureBase* quad = QuadratureBase::CreateQuadrature( settings->GetQuadName(), settings->GetQuadOrder() );
-    ScatteringKernel* k  = ScatteringKernel::CreateScatteringKernel( settings->GetKernelName(), quad );
-    _scatteringKernel    = k->GetScatteringKernel();
+    _quadPoints = _quadrature->GetPoints();
+    _weights    = _quadrature->GetWeights();
+
+    ScatteringKernel* k = ScatteringKernel::CreateScatteringKernel( settings->GetKernelName(), _quadrature );
+    _scatteringKernel   = k->GetScatteringKernel();
     delete k;
-    delete quad;
 }
 
 void SNSolver::Solve() {

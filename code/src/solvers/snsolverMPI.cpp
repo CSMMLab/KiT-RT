@@ -4,7 +4,7 @@
 #include "solvers/snsolverMPI.h"
 #include <mpi.h>
 
-SNSolverMPI::SNSolverMPI( Config* settings ) : Solver( settings ) {}
+SNSolverMPI::SNSolverMPI( Config* settings ) : SNSolver( settings ) {}
 
 void SNSolverMPI::Solve() {
     /*

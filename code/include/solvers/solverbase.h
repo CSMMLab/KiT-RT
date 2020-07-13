@@ -33,9 +33,11 @@ class Solver
     VectorVector _sigmaT; /*!  @brief total cross section for all energies */
 
     // quadrature related numbers
-    unsigned _nq;             /*! @brief number of quadrature points */
-    VectorVector _quadPoints; /*!  @brief quadrature points, dim(_quadPoints) = (_nSystem,spatialDim) */
-    Vector _weights;          /*!  @brief quadrature weights, dim(_weights) = (_NCells) */
+    QuadratureBase* _quadrature; /*! @brief quadrature to create members below */
+    unsigned _nq;                /*! @brief number of quadrature points */
+
+    // VectorVector _quadPoints;    /*!  @brief quadrature points, dim(_quadPoints) = (_nSystem,spatialDim) */
+    // Vector _weights;             /*!  @brief quadrature weights, dim(_weights) = (_NCells) */
 
     // Mesh related members
     unsigned _nCells;                          /*! @brief number of spatial cells */

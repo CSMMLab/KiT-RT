@@ -17,7 +17,13 @@ MNSolver::MNSolver( Config* settings ) : Solver( settings ) {
     // Is this good (fast) code using a constructor list?
     _nMaxMomentsOrder = settings->GetMaxMomentDegree();
     _nTotalEntries    = GlobalIndex( _nMaxMomentsOrder, int( _nMaxMomentsOrder ) ) + 1;
-    _quadrature       = QuadratureBase::CreateQuadrature( _settings->GetQuadName(), settings->GetQuadOrder() );
+
+    // build quadrature object and store quadrature points and weights
+    _quadPoints       = _quadrature->GetPoints();
+    _weights          = _quadrature->GetWeights();
+    _nq               = _quadrature->GetNq();
+    _quadPointsSphere = _quadrature->GetPointsSphere();
+    _settings->SetNQuadPoints( _nq );
 
     // transform sigmaT and sigmaS in sigmaA.
     _sigmaA = VectorVector( _nEnergies, Vector( _nCells, 0 ) );    // Get rid of this extra vektor!
@@ -50,7 +56,6 @@ MNSolver::MNSolver( Config* settings ) : Solver( settings ) {
 }
 
 MNSolver::~MNSolver() {
-    delete _quadrature;
     delete _entropy;
     delete _optimizer;
     delete _basis;
@@ -66,8 +71,8 @@ void MNSolver::ComputeMoments() {
     double my, phi;
 
     for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
-        my  = _quadrature->GetPointsSphere()[idx_quad][0];
-        phi = _quadrature->GetPointsSphere()[idx_quad][1];
+        my  = _quadPointsSphere[idx_quad][0];
+        phi = _quadPointsSphere[idx_quad][1];
 
         _moments[idx_quad] = _basis->ComputeSphericalBasis( my, phi );
     }
@@ -83,13 +88,13 @@ Vector MNSolver::ConstructFlux( unsigned idx_cell ) {
 
     for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
 
-        w = _quadrature->GetWeights()[idx_quad];
+        w = _weights[idx_quad];
 
         entropyFlux = 0.0;    // Reset temorary flux
 
         entropyL = _entropy->EntropyPrimeDual( blaze::dot( _alpha[idx_cell], _moments[idx_quad] ) );
 
-        omega = _quadrature->GetPoints()[idx_quad];    // Use Pointer!
+        omega = _quadPoints[idx_quad];    // Use Pointer!
 
         for( unsigned idx_neigh = 0; idx_neigh < _neighbors[idx_cell].size(); idx_neigh++ ) {
             // Store fluxes in psiNew, to save memory

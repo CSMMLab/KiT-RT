@@ -12,7 +12,7 @@
 Solver::Solver( Config* settings ) : _settings( settings ) {
     // @TODO save parameters from settings class
 
-    // build mesh and store all relevant information
+    // build mesh and store  and store frequently used params
     _mesh      = LoadSU2MeshFromFile( settings );
     _areas     = _mesh->GetCellAreas();
     _neighbors = _mesh->GetNeighbours();
@@ -20,20 +20,17 @@ Solver::Solver( Config* settings ) : _settings( settings ) {
     _nCells    = _mesh->GetNumCells();
     _settings->SetNCells( _nCells );
 
-    // build quadrature object and store quadrature points and weights
-    QuadratureBase* quad = QuadratureBase::CreateQuadrature( settings->GetQuadName(), settings->GetQuadOrder() );
-    _quadPoints          = quad->GetPoints();
-    _weights             = quad->GetWeights();
-    _nq                  = quad->GetNq();
+    // build quadrature object and store frequently used params
+    _quadrature = QuadratureBase::CreateQuadrature( settings->GetQuadName(), settings->GetQuadOrder() );
+    _nq         = _quadrature->GetNq();
     _settings->SetNQuadPoints( _nq );
-    delete quad;
 
     // set time step
     _dE        = ComputeTimeStep( settings->GetCFL() );
     _nEnergies = unsigned( settings->GetTEnd() / _dE );
     for( unsigned i = 0; i < _nEnergies; ++i ) _energies.push_back( ( i + 1 ) * _dE );
 
-    // setup problem
+    // setup problem  and store frequently used params
     _problem = ProblemBase::Create( _settings, _mesh );
     _sol     = _problem->SetupIC();
     _s       = _problem->GetStoppingPower( _energies );
@@ -52,6 +49,7 @@ Solver::Solver( Config* settings ) : _settings( settings ) {
 }
 
 Solver::~Solver() {
+    delete _quadrature;
     delete _mesh;
     delete _problem;
 }

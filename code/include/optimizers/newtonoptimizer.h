@@ -10,7 +10,7 @@ class NewtonOptimizer : public OptimizerBase
 
     inline ~NewtonOptimizer() {}
 
-    virtual Vector Solve( Vector u ) override;
+    void Solve( Vector& lambda, Vector& u ) override;
 };
 
 #endif    // NEWTONOPTIMIZER_H

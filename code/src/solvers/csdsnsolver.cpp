@@ -5,15 +5,7 @@
 
 #include "solvers/csdsnsolver.h"
 
-CSDSNSolver::CSDSNSolver( Config* settings ) : Solver( settings ) {
-    _dose = std::vector<double>( _settings->GetNCells(), 0.0 );
-
-    QuadratureBase* quad = QuadratureBase::CreateQuadrature( settings->GetQuadName(), settings->GetQuadOrder() );
-    ScatteringKernel* k  = ScatteringKernel::CreateScatteringKernel( settings->GetKernelName(), quad );
-    _scatteringKernel    = k->GetScatteringKernel();
-    delete quad;
-    delete k;
-}
+CSDSNSolver::CSDSNSolver( Config* settings ) : SNSolver( settings ) { _dose = std::vector<double>( _settings->GetNCells(), 0.0 ); }
 
 void CSDSNSolver::Solve() {
     auto log = spdlog::get( "event" );
