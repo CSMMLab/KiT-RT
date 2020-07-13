@@ -1,9 +1,10 @@
+#include <vtkCellData.h>
 #include <vtkSmartPointer.h>
+#include <vtkUnstructuredGrid.h>
 #include <vtkUnstructuredGridReader.h>
 
 #include "catch.hpp"
-#include "io.h"    // THIS SUCKS, ITS ONLY THERE BC I DONT KNOW WHAT IS EREALLY NEEDED FOR vtk
-#include "mesh.h"
+
 #include "settings/config.h"
 #include "solvers/solverbase.h"
 
