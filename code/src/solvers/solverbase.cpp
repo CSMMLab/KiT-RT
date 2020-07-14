@@ -4,6 +4,7 @@
 #include "mesh.h"
 #include "problems/problembase.h"
 #include "quadratures/quadraturebase.h"
+#include "settings/config.h"
 #include "settings/globalconstants.h"
 #include "solvers/mnsolver.h"
 #include "solvers/pnsolver.h"

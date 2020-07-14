@@ -3,6 +3,7 @@
 #include "io.h"
 #include "kernels/scatteringkernelbase.h"
 #include "mesh.h"
+#include "quadratures/quadraturebase.h"
 #include "settings/config.h"
 
 #include <mpi.h>

@@ -24,13 +24,17 @@ TEST_CASE( "Test the Newton Optimizer", "[optimizers]" ) {
 
     // Get dummy Moment Vector
     unsigned nTotalEntries = basis.GlobalIdxBasis( config->GetMaxMomentDegree(), config->GetMaxMomentDegree() ) + 1;    // = 4
-    Vector u( nTotalEntries, 1.0 );
+    Vector u( nTotalEntries, -1.5 );
+    u[1] = 0.0;
+    u[2] = 1.0;
 
     // Get inital guess for solution
-    Vector alpha( nTotalEntries, 0.0 );
+    Vector alpha( nTotalEntries, 27.0 );
 
     // Get Moments
-    VectorVector moments = VectorVector( config->GetNQuadPoints(), Vector( nTotalEntries, 0.0 ) );
+    config->SetNQuadPoints( quad->GetNq() );
+
+    VectorVector moments = VectorVector( quad->GetNq() );
     double my, phi;
     VectorVector quadPointsSphere = quad->GetPointsSphere();
     for( unsigned idx_quad = 0; idx_quad < config->GetNQuadPoints(); idx_quad++ ) {
@@ -40,7 +44,8 @@ TEST_CASE( "Test the Newton Optimizer", "[optimizers]" ) {
         moments[idx_quad] = basis.ComputeSphericalBasis( my, phi );
     }
 
+    // Solve
     optimizer->Solve( alpha, u, moments );
 
-    REQUIRE( std::fabs( norm( alpha - u ) ) < 1e2 * std::numeric_limits<double>::epsilon() );    // alpha = u for quadratic entropy
+    REQUIRE( std::fabs( norm( alpha - u ) ) < config->GetNewtonOptimizerEpsilon() );    // alpha = u for quadratic entropy
 }

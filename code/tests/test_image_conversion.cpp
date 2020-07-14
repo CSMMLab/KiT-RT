@@ -1,8 +1,11 @@
+#include <fstream>
 #include <numeric>
 
 #include "catch.hpp"
 #include "cubic2dspline.h"
 #include "io.h"
+#include "mesh.h"
+#include "settings/config.h"
 #include "toolboxes/textprocessingtoolbox.h"
 
 TEST_CASE( "convert image data to grayscale matrix", "[image I/O]" ) {

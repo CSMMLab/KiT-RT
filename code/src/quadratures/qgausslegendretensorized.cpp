@@ -46,8 +46,8 @@ void QGaussLegendreTensorized::SetPointsAndWeights() {
         phi[i] = ( i + 0.5 ) * M_PI / _order;
     }
 
-    unsigned range = std::floor( _order / 2.0 );    // comment (steffen): why do we only need half of the points:
-                                                    //=> In 2D we would count everything twice. (not wrong with scaling
+    // unsigned range = std::floor( _order / 2.0 );    // comment (steffen): why do we only need half of the points:
+    //=> In 2D we would count everything twice. (not wrong with scaling
 
     // resize points and weights
     _points.resize( _nq );
@@ -62,16 +62,16 @@ void QGaussLegendreTensorized::SetPointsAndWeights() {
     _weights.resize( _nq );
 
     // transform tensorized (x,y,z)-grid to spherical grid points
-    for( unsigned j = 0; j < range; ++j ) {
+    for( unsigned j = 0; j < _order; ++j ) {
         for( unsigned i = 0; i < 2 * _order; ++i ) {
             _points[j * ( 2 * _order ) + i][0] = sqrt( 1 - nodes1D[j] * nodes1D[j] ) * std::cos( phi[i] );
             _points[j * ( 2 * _order ) + i][1] = sqrt( 1 - nodes1D[j] * nodes1D[j] ) * std::sin( phi[i] );
             _points[j * ( 2 * _order ) + i][2] = nodes1D[j];
 
-            _pointsSphere[j * ( 2 * _order ) + i][0] = nodes1D[j];
-            _pointsSphere[j * ( 2 * _order ) + i][1] = phi[i];
+            _pointsSphere[j * ( 2 * _order ) + i][0] = nodes1D[j];    // my
+            _pointsSphere[j * ( 2 * _order ) + i][1] = phi[i];        // phi
 
-            _weights[j * ( 2 * _order ) + i] = 2.0 * M_PI / _order * weights1D[j];
+            _weights[j * ( 2 * _order ) + i] = M_PI / _order * weights1D[j];
         }
     }
 }

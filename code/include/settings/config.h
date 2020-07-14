@@ -82,9 +82,12 @@ class Config
     KERNEL_NAME _kernelName; /*!< @brief Scattering Kernel Name*/
 
     // Optimizer
-    OPTIMIZER_NAME _entropyOptimizerName;   /*!< @brief Choice of optimizer */
-    double _optimizerEpsilon;               /*!< @brief termination criterion epsilon for Newton Optmizer */
-    unsigned short _maxIterNewtonOptimizer; /*!< @brief Maximal Number of newton iterations */
+    OPTIMIZER_NAME _entropyOptimizerName; /*!< @brief Choice of optimizer */
+    double _optimizerEpsilon;             /*!< @brief termination criterion epsilon for Newton Optmizer */
+    unsigned short _newtonIter;           /*!< @brief Maximal Number of newton iterations */
+    double _newtonStepSize;               /*!< @brief Stepsize factor for newton optimizer */
+    unsigned short _newtonLineSearchIter; /*!< @brief Maximal Number of line search iterations for newton optimizer */
+    bool _newtonFastMode;                 /*!< @brief If true, we skip the NewtonOptimizer for quadratic entropy and assign alpha = u */
 
     // --- Parsing Functionality and Initializing of Options ---
     /*!
@@ -228,10 +231,14 @@ class Config
     bool inline IsCSD() const { return _csd; }
     unsigned inline GetMaxMomentDegree() { return _maxMomentDegree; }
 
-    // Optimizer
+    //  Optimizer
     OPTIMIZER_NAME inline GetOptimizerName() const { return _entropyOptimizerName; }
     double inline GetNewtonOptimizerEpsilon() const { return _optimizerEpsilon; }
-    unsigned inline GetMaxIterNewtonOptimizer() const { return _maxIterNewtonOptimizer; }
+    unsigned inline GetNewtonIter() const { return _newtonIter; }
+    double inline GetNewtonStepSize() const { return _newtonStepSize; }
+    unsigned inline GetMaxLineSearches() const { return _newtonLineSearchIter; }
+    bool inline GetNewtonFastMode() const { return _newtonFastMode; }
+
     // Boundary Conditions
     BOUNDARY_TYPE GetBoundaryType( std::string nameMarker ) const; /*! @brief Get Boundary Type of given marker */
 

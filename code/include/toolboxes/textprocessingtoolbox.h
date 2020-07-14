@@ -8,10 +8,10 @@
 #ifndef TEXTPROCESSINGTOOLBOX_H
 #define TEXTPROCESSINGTOOLBOX_H
 
+#include "settings/typedef.h"
+#include <iostream>
 #include <string>
 #include <vector>
-
-#include "settings/typedef.h"
 
 namespace TextProcessingToolbox {
 

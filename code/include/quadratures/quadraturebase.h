@@ -69,7 +69,7 @@ class QuadratureBase
     Vector _weights;             /*! @brief weights of the gridpoints of the quadrature */
     VectorVectorU _connectivity; /*! @brief connectivity of the gripoints of the quadrature */
 
-    VectorVector _pointsSphere; /*! @brief gridpoints of the quadrature in spherical cordinates */
+    VectorVector _pointsSphere; /*! @brief (my,phi)gridpoints of the quadrature in spherical cordinates */
 };
 
 #endif    // QUADRATURE_H

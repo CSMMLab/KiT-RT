@@ -1,9 +1,11 @@
 #ifndef SCATTERINGKERNELBASE_CPP
 #define SCATTERINGKERNELBASE_CPP
 
-#include "quadratures/quadraturebase.h"
 #include "settings/globalconstants.h"
 #include "settings/typedef.h"
+
+// Forward Declaration
+class QuadratureBase;
 
 class ScatteringKernel
 {

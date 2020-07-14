@@ -1,5 +1,16 @@
 #include "mesh.h"
 
+#include <algorithm>
+#include <mpi.h>
+#include <omp.h>
+
+#include "metis.h"
+#include "parmetis.h"
+
+#include "toolboxes/errormessages.h"
+
+#include "reconstructor.h"
+
 Mesh::Mesh( std::vector<Vector> nodes,
             std::vector<std::vector<unsigned>> cells,
             std::vector<std::pair<BOUNDARY_TYPE, std::vector<unsigned>>> boundaries )

@@ -2,6 +2,42 @@
 #include "toolboxes/errormessages.h"
 #include "toolboxes/textprocessingtoolbox.h"
 
+//#include <chrono>
+//#include <filesystem>
+#include <iostream>
+//#include <string>
+
+#include <mpi.h>
+#include <omp.h>
+
+#include <vtkCellArray.h>
+#include <vtkCellData.h>
+#include <vtkCellDataToPointData.h>
+#include <vtkDoubleArray.h>
+#include <vtkPointData.h>
+//#include <vtkPointDataToCellData.h>
+#include <vtkQuad.h>
+#include <vtkSmartPointer.h>
+#include <vtkTriangle.h>
+#include <vtkUnstructuredGrid.h>
+#include <vtkUnstructuredGridWriter.h>
+
+#include <Python.h>
+#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
+#include <numpy/arrayobject.h>
+
+#include "mesh.h"
+#include "settings/config.h"
+
+using vtkPointsSP                 = vtkSmartPointer<vtkPoints>;
+using vtkUnstructuredGridSP       = vtkSmartPointer<vtkUnstructuredGrid>;
+using vtkTriangleSP               = vtkSmartPointer<vtkTriangle>;
+using vtkCellArraySP              = vtkSmartPointer<vtkCellArray>;
+using vtkDoubleArraySP            = vtkSmartPointer<vtkDoubleArray>;
+using vtkUnstructuredGridWriterSP = vtkSmartPointer<vtkUnstructuredGridWriter>;
+using vtkCellDataToPointDataSP    = vtkSmartPointer<vtkCellDataToPointData>;
+// using vtkPointDataToCellDataSP    = vtkSmartPointer<vtkPointDataToCellData>;
+
 void ExportVTK( const std::string fileName,
                 const std::vector<std::vector<std::vector<double>>>& results,
                 const std::vector<std::string> fieldNames,
