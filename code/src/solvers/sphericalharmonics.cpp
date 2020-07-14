@@ -13,28 +13,34 @@ SphericalHarmonics::SphericalHarmonics( unsigned L_degree ) {
     ComputeCoefficients();
 
     unsigned basisSize = GlobalIdxBasis( _LMaxDegree, _LMaxDegree ) + 1;
-    _YBasis            = std::vector<double>( basisSize, 0.0 );
+    _YBasis            = Vector( basisSize, 0.0 );
 }
 
-std::vector<double> SphericalHarmonics::ComputeSphericalBasis( double my, double phi ) {
+Vector SphericalHarmonics::ComputeSphericalBasis( double my, double phi ) {
     ComputeAssLegendrePoly( my );
     ComputeYBasis( phi );
     return _YBasis;
 }
 
-std::vector<double> SphericalHarmonics::ComputeSphericalBasis( double x, double y, double z ) {
+Vector SphericalHarmonics::ComputeSphericalBasis( double x, double y, double z ) {
 
     // transform (x,y,z) into (my,phi)
     double my  = z;
     double phi = 0.0;
+
     if( y >= 0 )
         phi = acos( x );
     else
-        phi = acos( -x ) + M_PI;
+        phi = 2 * M_PI - acos( x );
 
     ComputeAssLegendrePoly( my );
     ComputeYBasis( phi );
     return _YBasis;
+}
+
+std::vector<double> SphericalHarmonics::GetAssLegendrePoly( const double my ) {
+    ComputeAssLegendrePoly( my );
+    return _assLegendreP;
 }
 
 void SphericalHarmonics::ComputeCoefficients() {
@@ -46,7 +52,8 @@ void SphericalHarmonics::ComputeCoefficients() {
         ls   = l_idx * l_idx;
         lm1s = ( l_idx - 1 ) * ( l_idx - 1 );
         for( unsigned k_idx = 0; k_idx < l_idx - 1; k_idx++ ) {
-            ks                                             = k_idx * k_idx;
+            ks = k_idx * k_idx;
+
             _aParam[GlobalIdxAssLegendreP( l_idx, k_idx )] = std::sqrt( ( 4 * ls - 1. ) / ( ls - ks ) );
             _bParam[GlobalIdxAssLegendreP( l_idx, k_idx )] = -std::sqrt( ( lm1s - ks ) / ( 4 * lm1s - 1. ) );
         }
@@ -110,4 +117,12 @@ void SphericalHarmonics::ComputeYBasis( const double phi ) {
             _YBasis[GlobalIdxBasis( l_idx, k_idx )]  = _assLegendreP[GlobalIdxAssLegendreP( l_idx, k_idx )] * c;
         }
     }
+
+    // slower version
+    // for( int l_idx = 1; l_idx <= int( _LMaxDegree ); l_idx++ ) {
+    //     for( int k_idx = 1; k_idx <= l_idx; k_idx++ ) {
+    //         _YBasis[GlobalIdxBasis( l_idx, -k_idx )] = _assLegendreP[GlobalIdxAssLegendreP( l_idx, k_idx )] * sin( k_idx * phi );
+    //         _YBasis[GlobalIdxBasis( l_idx, k_idx )]  = _assLegendreP[GlobalIdxAssLegendreP( l_idx, k_idx )] * cos( k_idx * phi );
+    //     }
+    // }
 }

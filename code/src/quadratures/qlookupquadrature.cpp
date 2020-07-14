@@ -1,5 +1,5 @@
 #include "quadratures/qlookupquadrature.h"
-#include "settings/globalconstants.h"    // for PI_NUMBER
+#include "toolboxes/errormessages.h"
 #include <fstream>
 #include <sstream>
 
@@ -76,4 +76,6 @@ void QLookupQuadrature::SetPointsAndWeights() {
         _weights[idx] /= sumWeights;
         _weights[idx] *= 4.0 * PI_NUMBER;
     }
+
+    // Transform _points to _pointsSphere
 }

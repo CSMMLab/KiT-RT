@@ -1,46 +1,58 @@
 #ifndef SOLVER_H
 #define SOLVER_H
 
-#include <string>
-
 // include Matrix, Vector definitions
-#include "fluxes/numericalflux.h"
-#include "io.h"
-#include "kernels/scatteringkernelbase.h"
-#include "problems/problembase.h"
-#include "quadratures/quadraturebase.h"
-#include "settings/config.h"
+#include "settings/globalconstants.h"
 #include "settings/typedef.h"
+
+// Forward Declarations
+class NumericalFlux;
+class Mesh;
+class Config;
+class ProblemBase;
+class QuadratureBase;
 
 class Solver
 {
   protected:
-    unsigned _nq;                                     // number of quadrature points
-    unsigned _nCells;                                 // number of spatial cells
-    unsigned _nEnergies;                              // number of energy/time steps, number of nodal energy values for CSD
-    double _dE;                                       // energy/time step size
-    std::vector<double> _energies;                    // energy groups used in the simulation [keV]
-    VectorVector _psi;                                // angular flux vector, dim(_psi) = (_NCells,_nq)
-    std::vector<double> _areas;                       // surface area of all spatial cells, dim(_areas) = _NCells
-    std::vector<std::vector<Vector>> _normals;        // edge normals multiplied by edge length, dim(_normals) = (_NCells,nEdgesPerCell,spatialDim)
-    std::vector<std::vector<unsigned>> _neighbors;    // edge normals multiplied by edge length, dim(_neighbors) = (_NCells,nEdgesPerCell)
-    std::vector<double> _density;                     // patient density, dim(_density) = _nCells
-    std::vector<double> _s;                           // stopping power, dim(_s) = _nTimeSteps
-    VectorVector _sigmaS;                             // scattering cross section for all energies
-    VectorVector _sigmaT;                             // total cross section for all energies
-    std::vector<VectorVector> _Q;                     // external source term
-    Matrix _scatteringKernel;                         // scattering kernel for the quadrature
-    VectorVector _quadPoints;                         // quadrature points, dim(_quadPoints) = (_nSystem,spatialDim)
-    Vector _weights;                                  // quadrature weights, dim(_weights) = (_NCells)
-    std::vector<BOUNDARY_TYPE> _boundaryCells;        // boundary type for all cells, dim(_boundary) = (_NCells)
-    std::vector<double> _solverOutput;                // PROTOTYPE: Outputfield for solver
+    Mesh* _mesh;           /*! @brief mesh object for writing out information */
+    NumericalFlux* _g;     /*! @brief class for numerical flux */
+    Config* _settings;     /*! @brief config class for global information */
+    ProblemBase* _problem; /*! @brief problem class for initial conditions */
+
+    // --------- Often used variables of member classes for faster access ----
+
+    unsigned _nEnergies;              /*! @brief number of energy/time steps, number of nodal energy values for CSD */
+    double _dE;                       /*! @brief energy/time step size */
+    std::vector<double> _energies;    // energy groups used in the simulation [keV]
+    std::vector<double> _density;     // patient density, dim(_density) = _nCells
+    std::vector<double> _s;           // stopping power, dim(_s) = _nTimeSteps
+    std::vector<VectorVector> _Q;     /*!  @brief  external source term */
+
+    VectorVector _sigmaS; /*!  @brief scattering cross section for all energies */
+    VectorVector _sigmaT; /*!  @brief total cross section for all energies */
+
+    // quadrature related numbers
+    QuadratureBase* _quadrature; /*! @brief quadrature to create members below */
+    unsigned _nq;                /*! @brief number of quadrature points */
+
+    // VectorVector _quadPoints;    /*!  @brief quadrature points, dim(_quadPoints) = (_nSystem,spatialDim) */
+    // Vector _weights;             /*!  @brief quadrature weights, dim(_weights) = (_NCells) */
+
+    // Mesh related members
+    unsigned _nCells;                          /*! @brief number of spatial cells */
+    std::vector<BOUNDARY_TYPE> _boundaryCells; /*! boundary type for all cells, dim(_boundary) = (_NCells) */
+    std::vector<double> _areas;                /*! @brief surface area of all spatial cells, dim(_areas) = _NCells */
+    /*! @brief edge normals multiplied by edge length, dim(_normals) = (_NCells,nEdgesPerCell,spatialDim) */
+    std::vector<std::vector<Vector>> _normals;
+    /*! @brief edge neighbor cell ids, dim(_neighbors) = (_NCells,nEdgesPerCell) */
+    std::vector<std::vector<unsigned>> _neighbors;
+
+    // Solution related members
+    VectorVector _sol;                 /*! @brief solution of the PDE, e.g. angular flux or moments */
+    std::vector<double> _solverOutput; /*! @brief PROTOTYPE: Outputfield for solver */
 
     // we will have to add a further dimension for quadPoints and weights once we start with multilevel SN
-
-    NumericalFlux* _g;    // numerical flux function
-    Mesh* _mesh;          // mesh object for writing out information
-    Config* _settings;
-    ProblemBase* _problem;
 
     /**
      * @brief ComputeTimeStep calculates the maximal stable time step

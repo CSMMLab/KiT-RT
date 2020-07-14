@@ -3,7 +3,6 @@
 
 #include "settings/globalconstants.h"
 #include "settings/typedef.h"
-#include "toolboxes/errormessages.h"
 
 class QuadratureBase
 {
@@ -43,6 +42,7 @@ class QuadratureBase
     inline unsigned GetOrder() const { return _order; }       /*! @returns unsigned _order:  order of the quadrature */
     inline unsigned GetNq() const { return _nq; }             /*! @returns unsigned _nq:  number of gridpoints of the quadrature */
     inline VectorVector GetPoints() const { return _points; } /*! @returns VectorVector _points:  coordinates of gridpoints of the quadrature */
+    virtual VectorVector GetPointsSphere() const;             /*! @returns VectorVector _pointsSphere:  "---- " in spherical coordinates (my, phi)*/
     inline Vector GetWeights() const { return _weights; }     /*! @returns Vector _weights:  weights of gridpoints of the quadrature */
     inline VectorVectorU GetConnectivity() const {
         return _connectivity;
@@ -61,12 +61,15 @@ class QuadratureBase
     virtual void SetPointsAndWeights() = 0;
 
     // Member variables
+    // TODO Config* _settings;           /*! @brief pointer to settings class that manages the solver */
     std::string _name;           /*! @brief name of the quadrature */
     unsigned _order;             /*! @brief order of the quadrature */
     unsigned _nq;                /*! @brief number of gridpoints of the quadrature */
     VectorVector _points;        /*! @brief gridpoints of the quadrature */
     Vector _weights;             /*! @brief weights of the gridpoints of the quadrature */
     VectorVectorU _connectivity; /*! @brief connectivity of the gripoints of the quadrature */
+
+    VectorVector _pointsSphere; /*! @brief (my,phi)gridpoints of the quadrature in spherical cordinates */
 };
 
 #endif    // QUADRATURE_H

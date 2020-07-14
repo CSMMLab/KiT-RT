@@ -53,8 +53,18 @@ enum KERNEL_NAME { KERNEL_Isotropic, KERNEL_Isotropic1D };
 inline std::map<std::string, KERNEL_NAME> Kernel_Map{ { "ISOTROPIC", KERNEL_Isotropic }, { "ISOTROPIC_1D", KERNEL_Isotropic1D } };
 
 // Solver name
-enum SOLVER_NAME { SN_SOLVER, PN_SOLVER };
+enum SOLVER_NAME { SN_SOLVER, PN_SOLVER, MN_SOLVER };
 
-inline std::map<std::string, SOLVER_NAME> Solver_Map{ { "SN_SOLVER", SN_SOLVER }, { "PN_SOLVER", PN_SOLVER } };
+inline std::map<std::string, SOLVER_NAME> Solver_Map{ { "SN_SOLVER", SN_SOLVER }, { "PN_SOLVER", PN_SOLVER }, { "MN_SOLVER", MN_SOLVER } };
 
+// Entropy functional
+enum ENTROPY_NAME { QUADRATIC, MAXWELL_BOLZMANN, BOSE_EINSTEIN, FERMI_DIRAC };
+
+inline std::map<std::string, ENTROPY_NAME> Entropy_Map{
+    { "QUADRATIC", QUADRATIC }, { "MAXWELL_BOLZMANN", MAXWELL_BOLZMANN }, { "BOSE_EINSTEIN", BOSE_EINSTEIN }, { "FERMI_DIRAC", FERMI_DIRAC } };
+
+// Otpimizer
+enum OPTIMIZER_NAME { NEWTON, ML };
+
+inline std::map<std::string, OPTIMIZER_NAME> Optimizer_Map{ { "NEWTON", NEWTON }, { "ML", ML } };
 #endif    // GLOBAL_CONSTANTS_H

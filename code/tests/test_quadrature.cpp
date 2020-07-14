@@ -17,7 +17,7 @@ std::vector<std::vector<int>> quadratureorders = {
 };
 
 bool approxequal( double a, double b, bool lowAccuracy = false ) {
-    double tol = 1e-15;              // For computed quadrature weights
+    double tol = 1e-12;              // For computed quadrature weights
     if( lowAccuracy ) tol = 5e-5;    // Mainly for Lookup Quadratures
     return std::abs( a - b ) < tol;
 }
@@ -25,7 +25,6 @@ bool approxequal( double a, double b, bool lowAccuracy = false ) {
 TEST_CASE( "Quadrature weights sum to 4*pi.", "[quadrature]" ) {
     bool lowAccuracyTesting = false;
     for( auto quadraturename : quadraturenames ) {
-
         lowAccuracyTesting = false;
         if( quadraturename == QUAD_GaussLegendreTensorized || quadraturename == QUAD_GaussLegendre1D || quadraturename == QUAD_LevelSymmetric ||
             quadraturename == QUAD_Lebedev || quadraturename == QUAD_LDFESA )

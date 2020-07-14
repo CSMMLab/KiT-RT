@@ -3,6 +3,7 @@
 #include "catch.hpp"
 #include "io.h"
 #include "mesh.h"
+#include "settings/config.h"
 #include "settings/globalconstants.h"
 
 TEST_CASE( "unit mesh tests", "[mesh]" ) {

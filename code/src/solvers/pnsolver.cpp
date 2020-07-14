@@ -1,7 +1,10 @@
-
 #include "solvers/pnsolver.h"
+#include "fluxes/numericalflux.h"
+#include "io.h"
+#include "settings/config.h"
 #include "toolboxes/errormessages.h"
 #include "toolboxes/textprocessingtoolbox.h"
+
 #include <mpi.h>
 
 PNSolver::PNSolver( Config* settings ) : Solver( settings ) {
@@ -69,18 +72,22 @@ PNSolver::PNSolver( Config* settings ) : Solver( settings ) {
 }
 
 void PNSolver::Solve() {
+
+    int rank;
+    MPI_Comm_rank( MPI_COMM_WORLD, &rank );
+
     auto log = spdlog::get( "event" );
 
     // angular flux at next time step (maybe store angular flux at all time steps, since time becomes energy?)
-    VectorVector psiNew = _psi;
+    VectorVector psiNew = _sol;
     double dFlux        = 1e10;
     Vector fluxNew( _nCells, 0.0 );
     Vector fluxOld( _nCells, 0.0 );
 
     double mass1 = 0;
     for( unsigned i = 0; i < _nCells; ++i ) {
-        _solverOutput[i] = _psi[i][0];
-        mass1 += _psi[i][0];
+        _solverOutput[i] = _sol[i][0];
+        mass1 += _sol[i][0];
     }
 
     dFlux   = blaze::l2Norm( fluxNew - fluxOld );
@@ -88,15 +95,9 @@ void PNSolver::Solve() {
 
     Save( -1 );    // Save initial condition
 
-    VectorVector cellMids = _mesh->GetCellMidPoints();
-
-    int rank;
-
     unsigned idx_system = 0;
 
-    MPI_Comm_rank( MPI_COMM_WORLD, &rank );
     if( rank == 0 ) log->info( "{:10}   {:10}", "t", "dFlux" );
-
     if( rank == 0 ) log->info( "{:03.8f}   {:01.5e} {:01.5e}", -1.0, dFlux, mass1 );
 
     // Loop over energies (pseudo-time of continuous slowing down approach)
@@ -107,7 +108,7 @@ void PNSolver::Solve() {
             if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::DIRICHLET ) continue;    // Dirichlet cells stay at IC, farfield assumption
 
             // Reset temporary variable psiNew
-            for( int idx_lDegree = 0; idx_lDegree <= int( _nq ); idx_lDegree++ ) {
+            for( int idx_lDegree = 0; idx_lDegree <= int( _LMaxDegree ); idx_lDegree++ ) {
                 for( int idx_kOrder = -idx_lDegree; idx_kOrder <= idx_lDegree; idx_kOrder++ ) {
                     idx_system                   = unsigned( GlobalIndex( idx_lDegree, idx_kOrder ) );
                     psiNew[idx_cell][idx_system] = 0.0;
@@ -120,7 +121,7 @@ void PNSolver::Solve() {
                 // Compute flux contribution and store in psiNew to save memory
                 if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::NEUMANN && _neighbors[idx_cell][idx_neighbor] == _nCells )
                     psiNew[idx_cell] += _g->Flux(
-                        _AxPlus, _AxMinus, _AyPlus, _AyMinus, _AzPlus, _AzMinus, _psi[idx_cell], _psi[idx_cell], _normals[idx_cell][idx_neighbor] );
+                        _AxPlus, _AxMinus, _AyPlus, _AyMinus, _AzPlus, _AzMinus, _sol[idx_cell], _sol[idx_cell], _normals[idx_cell][idx_neighbor] );
                 else
                     psiNew[idx_cell] += _g->Flux( _AxPlus,
                                                   _AxMinus,
@@ -128,37 +129,36 @@ void PNSolver::Solve() {
                                                   _AyMinus,
                                                   _AzPlus,
                                                   _AzMinus,
-                                                  _psi[idx_cell],
-                                                  _psi[_neighbors[idx_cell][idx_neighbor]],
+                                                  _sol[idx_cell],
+                                                  _sol[_neighbors[idx_cell][idx_neighbor]],
                                                   _normals[idx_cell][idx_neighbor] );
             }
 
             // time update angular flux with numerical flux and total scattering cross section
-            for( int idx_lOrder = 0; idx_lOrder <= int( _nq ); idx_lOrder++ ) {
+            for( int idx_lOrder = 0; idx_lOrder <= int( _LMaxDegree ); idx_lOrder++ ) {
                 for( int idx_kOrder = -idx_lOrder; idx_kOrder <= idx_lOrder; idx_kOrder++ ) {
                     idx_system = unsigned( GlobalIndex( idx_lOrder, idx_kOrder ) );
 
-                    psiNew[idx_cell][idx_system] = _psi[idx_cell][idx_system] -
+                    psiNew[idx_cell][idx_system] = _sol[idx_cell][idx_system] -
                                                    ( _dE / _areas[idx_cell] ) * psiNew[idx_cell][idx_system] /* cell averaged flux */
-                                                   - _dE * _psi[idx_cell][idx_system] *
+                                                   - _dE * _sol[idx_cell][idx_system] *
                                                          ( _sigmaA[idx_energy][idx_cell]                                    /* absorbtion influence */
                                                            + _sigmaS[idx_energy][idx_cell] * _scatterMatDiag[idx_system] ); /* scattering influence */
                 }
             }
         }
-        _psi = psiNew;
+        _sol = psiNew;
 
         double mass = 0.0;
         for( unsigned i = 0; i < _nCells; ++i ) {
-            fluxNew[i]       = _psi[i][0];    // zeroth moment is raditation densitiy we are interested in
-            _solverOutput[i] = _psi[i][0];
-            mass += _psi[i][0] * _areas[i];
+            fluxNew[i]       = _sol[i][0];    // zeroth moment is raditation densitiy we are interested in
+            _solverOutput[i] = _sol[i][0];
+            mass += _sol[i][0] * _areas[i];
         }
 
         dFlux   = blaze::l2Norm( fluxNew - fluxOld );
         fluxOld = fluxNew;
         if( rank == 0 ) {
-            // std::cout << "PseudoTime: " << _energies[idx_energy] << " | Flux Change: " << dFlux << " | Mass: " << mass << "\n";
             log->info( "{:03.8f}   {:01.5e} {:01.5e}", _energies[idx_energy], dFlux, mass );
         }
         Save( idx_energy );
@@ -170,7 +170,7 @@ void PNSolver::ComputeSystemMatrices() {
     unsigned idx_row = 0;
 
     // loop over columns of A
-    for( int idx_lOrder = 0; idx_lOrder <= int( _nq ); idx_lOrder++ ) {                  // index of legendre polynom
+    for( int idx_lOrder = 0; idx_lOrder <= int( _LMaxDegree ); idx_lOrder++ ) {          // index of legendre polynom
         for( int idx_kOrder = -idx_lOrder; idx_kOrder <= idx_lOrder; idx_kOrder++ ) {    // second index of legendre function
             idx_row = unsigned( GlobalIndex( idx_lOrder, idx_kOrder ) );
 
@@ -346,7 +346,7 @@ void PNSolver::ComputeScatterMatrix() {
     }
 }
 
-double PNSolver::LegendrePoly( double x, int l ) {
+double PNSolver::LegendrePoly( double x, int l ) {    // Legacy. TO BE DELETED
     // Pre computed low order polynomials for faster computation
     switch( l ) {
         case 0: return 1;
@@ -371,7 +371,7 @@ void PNSolver::Save() const {
     flux.resize( _nCells );
 
     for( unsigned i = 0; i < _nCells; ++i ) {
-        flux[i] = _psi[i][0];
+        flux[i] = _sol[i][0];
     }
     std::vector<std::vector<double>> scalarField( 1, flux );
     std::vector<std::vector<std::vector<double>>> results{ scalarField };

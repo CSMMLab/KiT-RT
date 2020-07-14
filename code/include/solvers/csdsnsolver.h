@@ -1,11 +1,9 @@
 #ifndef CSDSNSOLVER_H
 #define CSDSNSOLVER_H
 
-#include <mpi.h>
+#include "solvers/snsolver.h"
 
-#include "solvers/solverbase.h"
-
-class CSDSNSolver : public Solver
+class CSDSNSolver : public SNSolver
 {
   private:
     std::vector<double> _dose;

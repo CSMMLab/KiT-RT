@@ -1,20 +1,11 @@
 #ifndef MESH_H
 #define MESH_H
 
-#include <algorithm>
-#include <mpi.h>
-#include <omp.h>
-#include <vector>
-
 #include "blaze/math/CompressedMatrix.h"
-#include "metis.h"
-#include "parmetis.h"
-
 #include "settings/globalconstants.h"
 #include "settings/typedef.h"
-#include "toolboxes/errormessages.h"
 
-#include "reconstructor.h"
+#include <vector>
 
 class Mesh
 {
@@ -132,7 +123,6 @@ class Mesh
 
     void ReconstructSlopesS( unsigned nq, VectorVector& psiDerX, VectorVector& psiDerY, const VectorVector& psi ) const;
     void ReconstructSlopesU( unsigned nq, VectorVector& psiDerX, VectorVector& psiDerY, const VectorVector& psi ) const;
-
 };
 
 #endif    // MESH_H

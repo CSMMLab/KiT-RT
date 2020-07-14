@@ -4,7 +4,12 @@
 #include "problems/linesource.h"
 #include "problems/waterphantom.h"
 
-ProblemBase::ProblemBase( Config* settings, Mesh* mesh ) : _settings( settings ), _mesh( mesh ) {}
+#include "settings/config.h"
+
+ProblemBase::ProblemBase( Config* settings, Mesh* mesh ) {
+    _settings = settings;
+    _mesh     = mesh;
+}
 
 ProblemBase::~ProblemBase() {}
 
@@ -12,7 +17,7 @@ ProblemBase* ProblemBase::Create( Config* settings, Mesh* mesh ) {
     auto name = settings->GetProblemName();
     switch( name ) {
         case PROBLEM_LineSource: {
-            if( settings->GetSolverName() == PN_SOLVER )
+            if( settings->GetSolverName() == PN_SOLVER || settings->GetSolverName() == MN_SOLVER )
                 return new LineSource_PN( settings, mesh );
             else
                 return new LineSource_SN( settings, mesh );    // default

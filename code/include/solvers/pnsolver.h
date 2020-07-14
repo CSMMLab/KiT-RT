@@ -1,9 +1,7 @@
 #ifndef PNSOLVER_H
 #define PNSOLVER_H
 
-#include <cmath>
-
-#include "solvers/solverbase.h"
+#include "solverbase.h"
 
 class PNSolver : public Solver
 {
@@ -21,7 +19,7 @@ class PNSolver : public Solver
     unsigned _nTotalEntries; /*! @brief: total number of equations in the system */
     unsigned _LMaxDegree;    /*! @brief: maximal degree of the spherical harmonics basis*/
 
-    VectorVector _sigmaA; /*! @brief: Absorption coefficient for all energies*/
+    VectorVector _sigmaA; /*!  @brief: Absorption coefficient for all energies*/
     // System Matrix for x, y and z flux
     //    ==> not needed after computation of A+ and A- ==> maybe safe only temporarly and remove as member?
     SymMatrix _Ax; /*! @brief:  Flux Jacbioan in x direction */

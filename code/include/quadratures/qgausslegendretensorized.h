@@ -5,6 +5,7 @@
 
 class QGaussLegendreTensorized : public QuadratureBase
 {
+    // Implementation is done accordingly to Kendall Atkinson 1981, Australian Matematical Society.
   private:
     double Pythag( const double a, const double b );
     std::pair<Vector, Matrix> ComputeEigenValTriDiagMatrix( const Matrix& mat );
@@ -14,10 +15,12 @@ class QGaussLegendreTensorized : public QuadratureBase
     QGaussLegendreTensorized( unsigned order );
     virtual ~QGaussLegendreTensorized() {}
 
-    inline void SetName() override { _name = "Tensorized Gauss-Legendre quadrature."; }
-    inline void SetNq() override { _nq = pow( GetOrder(), 2 ); }
+    inline void SetName() override { _name = "Tensorized Gauss-Legendre quadrature"; }
+    inline void SetNq() override { _nq = 2 * pow( GetOrder(), 2 ); }
     void SetPointsAndWeights() override;
     void SetConnectivity() override;
+
+    inline VectorVector GetPointsSphere() const override { return _pointsSphere; }
 };
 
 #endif    // QGAUSSLEGENDRETENSORIZED_H

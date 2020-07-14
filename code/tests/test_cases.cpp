@@ -1,8 +1,10 @@
+#include <vtkCellData.h>
 #include <vtkSmartPointer.h>
+#include <vtkUnstructuredGrid.h>
 #include <vtkUnstructuredGridReader.h>
 
 #include "catch.hpp"
-#include "mesh.h"
+
 #include "settings/config.h"
 #include "solvers/solverbase.h"
 
@@ -28,7 +30,7 @@ std::vector<double> readVTKFile( std::string filename ) {
     return data;
 }
 
-TEST_CASE( "checkerboard_SN", "[testcases]" ) {
+TEST_CASE( "checkerboard_SN", "[validation_tests]" ) {
     std::string config_file_name = "../tests/input/checkerboard.cfg";
 
     Config* config = new Config( config_file_name );
@@ -46,15 +48,15 @@ TEST_CASE( "checkerboard_SN", "[testcases]" ) {
     }
 }
 
-TEST_CASE( "linesource_SN", "[testcases]" ) {
-    std::string config_file_name = "../tests/input/linesource.cfg";
+TEST_CASE( "linesource_SN", "[validation_tests]" ) {
+    std::string config_file_name = "../tests/input/linesource_SN.cfg";
 
     Config* config = new Config( config_file_name );
     Solver* solver = Solver::Create( config );
     solver->Solve();
     solver->Save();
 
-    auto test      = readVTKFile( "../result/rtsn_test_linesource.vtk" );
+    auto test      = readVTKFile( "../result/rtsn_test_linesource_SN.vtk" );
     auto reference = readVTKFile( "../tests/input/linesource_SN_reference.vtk" );
 
     double eps = 1e-3;
@@ -64,7 +66,7 @@ TEST_CASE( "linesource_SN", "[testcases]" ) {
     }
 }
 
-TEST_CASE( "linesource_PN", "[testcases]" ) {
+TEST_CASE( "linesource_PN", "[validation_tests]" ) {
     char config_file_name[MAX_STRING_SIZE] = "../tests/input/linesource_PN.cfg";
 
     Config* config = new Config( config_file_name );
@@ -74,6 +76,24 @@ TEST_CASE( "linesource_PN", "[testcases]" ) {
 
     auto test      = readVTKFile( "../result/rtsn_test_linesource_PN.vtk" );
     auto reference = readVTKFile( "../tests/input/linesource_PN_reference.vtk" );
+
+    double eps = 1e-3;
+    REQUIRE( test.size() == reference.size() );
+    for( unsigned i = 0; i < test.size(); ++i ) {
+        REQUIRE( std::fabs( test[i] - reference[i] ) < eps );
+    }
+}
+
+TEST_CASE( "linesource_MN", "[validation_tests]" ) {
+    char config_file_name[MAX_STRING_SIZE] = "../tests/input/linesource_MN.cfg";
+
+    Config* config = new Config( config_file_name );
+    Solver* solver = Solver::Create( config );
+    solver->Solve();
+    solver->Save();
+
+    auto test      = readVTKFile( "../result/rtsn_test_linesource_MN.vtk" );
+    auto reference = readVTKFile( "../tests/input/linesource_MN_reference.vtk" );
 
     double eps = 1e-3;
     REQUIRE( test.size() == reference.size() );

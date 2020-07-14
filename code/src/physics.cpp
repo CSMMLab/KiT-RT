@@ -1,12 +1,10 @@
-#include "physics.h"
 
+#include "physics.h"
 #include "spline.h"
-#include "toolboxes/errormessages.h"
 
 #include <fstream>
-#include <iostream>
+#include <list>
 #include <map>
-#include <string>
 
 Physics::Physics() {
     // LoadDatabase

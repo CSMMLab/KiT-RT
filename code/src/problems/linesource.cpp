@@ -1,4 +1,6 @@
 #include "problems/linesource.h"
+#include "mesh.h"
+#include "settings/config.h"
 
 // ---- LineSource_SN ----
 
@@ -81,7 +83,7 @@ std::vector<double> LineSource_PN::GetStoppingPower( const std::vector<double>& 
 
 VectorVector LineSource_PN::SetupIC() {
     // Compute number of equations in the system
-    int ntotalEquations = GlobalIndex( _settings->GetNQuadPoints(), _settings->GetNQuadPoints() ) + 1;
+    int ntotalEquations = GlobalIndex( _settings->GetMaxMomentDegree(), _settings->GetMaxMomentDegree() ) + 1;
 
     VectorVector psi( _mesh->GetNumCells(), Vector( ntotalEquations, 0 ) );    // zero could lead to problems?
     VectorVector cellMids = _mesh->GetCellMidPoints();
@@ -91,12 +93,13 @@ VectorVector LineSource_PN::SetupIC() {
     for( unsigned j = 0; j < cellMids.size(); ++j ) {
         double x  = cellMids[j][0];
         double y  = cellMids[j][1];
-        psi[j][0] = 1.0 / ( 4.0 * M_PI * t ) * std::exp( -( x * x + y * y ) / ( 4 * t ) );    // / ( 4 * M_PI );
+        psi[j][0] = 1.0 / ( 4.0 * M_PI * t ) * std::exp( -( x * x + y * y ) / ( 4 * t ) );
     }
 
+    // Debugging jump test case
     // for( unsigned j = 0; j < cellMids.size(); ++j ) {
-    //    if( cellMids[j][0] < 0 && cellMids[j][1] > 0 )
-    //        psi[j][0] = 1.0;    // / ( 4.0 * M_PI * t ) * std::exp( -( x * x + y * y ) / ( 4 * t ) ) / ( 4 * M_PI );
+    //    if( cellMids[j][0] > -0.2 && cellMids[j][1] > -0.2 && cellMids[j][1] < 0.2 && cellMids[j][0] < 0.2 )
+    //        psi[j][0] = 1.0;
     //    else
     //        psi[j][0] = 0.0;
     //}

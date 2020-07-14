@@ -1,6 +1,6 @@
 /*!
  * \file Config.cpp
- * \brief Classes for different Options in rtsn
+ * \brief Class for different Options in rtsn
  * \author S. Schotthoefer
  *
  * Disclaimer: This class structure was copied and modifed with open source permission from SU2 v7.0.3 https://su2code.github.io/
@@ -8,6 +8,7 @@
 
 #include "settings/config.h"
 #include "settings/globalconstants.h"
+#include "settings/optionstructure.h"
 #include "toolboxes/errormessages.h"
 #include "toolboxes/textprocessingtoolbox.h"
 #include <cassert>
@@ -129,7 +130,7 @@ void Config::AddUnsignedLongOption( const string name, unsigned long& option_fie
 void Config::AddUnsignedShortOption( const string name, unsigned short& option_field, unsigned short default_value ) {
     assert( _optionMap.find( name ) == _optionMap.end() );
     _allOptions.insert( pair<string, bool>( name, true ) );
-    OptionBase* val = new COptionUShort( name, option_field, default_value );
+    OptionBase* val = new OptionUShort( name, option_field, default_value );
     _optionMap.insert( pair<string, OptionBase*>( name, val ) );
 }
 
@@ -194,7 +195,7 @@ void Config::SetConfigOptions() {
      * Config*/
     AddEnumOption( "QUAD_TYPE", _quadName, Quadrature_Map, QUAD_MonteCarlo );
     /*!\brief QUAD_ORDER \n DESCRIPTION: Order of Quadrature rule \n DEFAULT 2 \ingroup Config.*/
-    AddUnsignedShortOption( "QUAD_ORDER", _quadOrder, 2 );
+    AddUnsignedShortOption( "QUAD_ORDER", _quadOrder, 1 );
 
     // Solver related options
     /*! @brief MAX_MOMENT_ORDER \n: DESCRIPTON: Specifies the maximal order of Moments for PN and SN Solver */
@@ -215,6 +216,26 @@ void Config::SetConfigOptions() {
     /*! @brief ContinuousSlowingDown \n DESCRIPTION: If true, the program uses the continuous slowing down approximation to treat energy dependent
      * problems. \n DEFAULT false \ingroup Config */
     AddBoolOption( "CONTINUOUS_SLOWING_DOWN", _csd, false );
+
+    // Entropy related options
+    /*! @brief Entropy Functional \n DESCRIPTION: Entropy functional used for the MN_Solver \n DEFAULT QUADRTATIC @ingroup Config. */
+    AddEnumOption( "ENTROPY_FUNCTIONAL", _entropyName, Entropy_Map, QUADRATIC );
+    /*! @brief Optimizer Name \n DESCRIPTION:  Optimizer used to determine the minimal Entropy reconstruction \n DEFAULT NEWTON \ingroup Config */
+    AddEnumOption( "ENTROPY_OPTIMIZER", _entropyOptimizerName, Optimizer_Map, NEWTON );
+
+    // Newton optimizer related options
+    /*! @brief Newton Optimizer Epsilon \n DESCRIPTION:  Convergencce Epsilon for Newton Optimizer \n DEFAULT 1e-3 \ingroup Config */
+    AddDoubleOption( "NEWTON_EPSILON", _optimizerEpsilon, 0.001 );
+    /*! @brief Max Iter Newton Optmizers \n DESCRIPTION: Max number of newton iterations \n DEFAULT 10 \ingroup Config */
+    AddUnsignedShortOption( "NEWTON_ITER", _newtonIter, 100 );
+    /*! @brief Step Size Newton Optmizers \n DESCRIPTION: Step size for Newton optimizer \n DEFAULT 10 \ingroup Config */
+    AddDoubleOption( "NEWTON_STEP_SIZE", _newtonStepSize, 0.1 );
+    /*! @brief Max Iter for line search in Newton Optmizers \n DESCRIPTION: Max number of line search iter for newton optimizer \n DEFAULT 10 \ingroup
+     * Config */
+    AddUnsignedShortOption( "NEWTON_LINE_SEARCH_ITER", _newtonLineSearchIter, 100 );
+    /*! @brief Newton Fast mode \n DESCRIPTION:  If true, we skip the Newton optimizer for Quadratic entropy and set alpha = u \n DEFAULT false
+     * \ingroup Config */
+    AddBoolOption( "NEWTON_FAST_MODE", _newtonFastMode, false );
 
     // Mesh related options
     // Boundary Markers

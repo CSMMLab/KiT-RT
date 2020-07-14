@@ -1,13 +1,18 @@
 #ifndef SNSOLVER_H
 #define SNSOLVER_H
 
-#include <mpi.h>
-
 #include "solvers/solverbase.h"
 
 class SNSolver : public Solver
 {
-  private:
+  protected:
+    Matrix _scatteringKernel; /*!  @brief scattering kernel for the quadrature */
+
+    // quadrature related numbers
+
+    VectorVector _quadPoints; /*!  @brief quadrature points, dim(_quadPoints) = (_nq,spatialDim) */
+    Vector _weights;          /*!  @brief quadrature weights, dim(_weights) = (_nq) */
+
   public:
     /**
      * @brief SNSolver constructor

@@ -25,34 +25,16 @@ class OptionBase
     OptionBase(){};
     virtual ~OptionBase() = 0;
 
-    virtual std::string SetValue( std::vector<std::string> value ) {
-        this->_value = value;
-        return "";
-    }
-    std::vector<std::string> GetValue() { return _value; }
+    virtual std::string SetValue( std::vector<std::string> value );
+
+    std::vector<std::string> GetValue();
+
     virtual void SetDefault() = 0;
 
-    std::string optionCheckMultipleValues( std::vector<std::string>& option_value, std::string type_id, std::string option_name ) {
-        if( option_value.size() != 1 ) {
-            std::string newString;
-            newString.append( option_name );
-            newString.append( ": multiple values for type " );
-            newString.append( type_id );
-            return newString;
-        }
-        return "";
-    }
+    std::string optionCheckMultipleValues( std::vector<std::string>& option_value, std::string type_id, std::string option_name );
 
-    std::string badValue( std::vector<std::string>& option_value, std::string type_id, std::string option_name ) {
-        std::string newString;
-        newString.append( option_name );
-        newString.append( ": improper option value for type " );
-        newString.append( type_id );
-        return newString;
-    }
+    std::string badValue( std::vector<std::string>& option_value, std::string type_id, std::string option_name );
 };
-
-inline OptionBase::~OptionBase() {}
 
 template <class Tenum> class OptionEnum : public OptionBase
 {
@@ -71,6 +53,7 @@ template <class Tenum> class OptionEnum : public OptionBase
     }
 
     ~OptionEnum() override{};
+
     std::string SetValue( std::vector<std::string> option_value ) override {
         OptionBase::SetValue( option_value );
         // Check if there is more than one string
@@ -78,7 +61,6 @@ template <class Tenum> class OptionEnum : public OptionBase
         if( out.compare( "" ) != 0 ) {
             return out;
         }
-
         // Check to see if the enum value is in the map
         if( this->_map.find( option_value[0] ) == _map.end() ) {
             std::string str;
@@ -104,28 +86,13 @@ class OptionDouble : public OptionBase
     std::string _name;    // identifier for the option
 
   public:
-    OptionDouble( std::string option_field_name, double& option_field, double default_value ) : _field( option_field ) {
-        this->_def  = default_value;
-        this->_name = option_field_name;
-    }
+    OptionDouble( std::string option_field_name, double& option_field, double default_value );
 
     ~OptionDouble() override{};
-    std::string SetValue( std::vector<std::string> option_value ) override {
-        OptionBase::SetValue( option_value );
-        // check if there is more than one value
-        std::string out = optionCheckMultipleValues( option_value, "double", this->_name );
-        if( out.compare( "" ) != 0 ) {
-            return out;
-        }
-        std::istringstream is( option_value[0] );
-        double val;
-        if( is >> val ) {
-            this->_field = val;
-            return "";
-        }
-        return badValue( option_value, "double", this->_name );
-    }
-    void SetDefault() override { this->_field = this->_def; }
+
+    std::string SetValue( std::vector<std::string> option_value ) override;
+
+    void SetDefault() override;
 };
 
 class OptionString : public OptionBase
@@ -135,24 +102,13 @@ class OptionString : public OptionBase
     std::string _name;      // identifier for the option
 
   public:
-    OptionString( std::string option_field_name, std::string& option_field, std::string default_value ) : _field( option_field ) {
-        this->_def  = default_value;
-        this->_name = option_field_name;
-    }
+    OptionString( std::string option_field_name, std::string& option_field, std::string default_value );
 
     ~OptionString() override{};
 
-    std::string SetValue( std::vector<std::string> option_value ) override {
-        OptionBase::SetValue( option_value );
-        // check if there is more than one value
-        std::string out = optionCheckMultipleValues( option_value, "double", this->_name );
-        if( out.compare( "" ) != 0 ) {
-            return out;
-        }
-        this->_field.assign( option_value[0] );
-        return "";
-    }
-    void SetDefault() override { this->_field = this->_def; }
+    std::string SetValue( std::vector<std::string> option_value ) override;
+
+    void SetDefault() override;
 };
 
 class OptionInt : public OptionBase
@@ -162,27 +118,13 @@ class OptionInt : public OptionBase
     std::string _name;    // identifier for the option
 
   public:
-    OptionInt( std::string option_field_name, int& option_field, int default_value ) : _field( option_field ) {
-        this->_def  = default_value;
-        this->_name = option_field_name;
-    }
+    OptionInt( std::string option_field_name, int& option_field, int default_value );
 
     ~OptionInt() override{};
-    std::string SetValue( std::vector<std::string> option_value ) override {
-        OptionBase::SetValue( option_value );
-        std::string out = optionCheckMultipleValues( option_value, "int", this->_name );
-        if( out.compare( "" ) != 0 ) {
-            return out;
-        }
-        std::istringstream is( option_value[0] );
-        int val;
-        if( is >> val ) {
-            this->_field = val;
-            return "";
-        }
-        return badValue( option_value, "int", this->_name );
-    }
-    void SetDefault() override { this->_field = this->_def; }
+
+    std::string SetValue( std::vector<std::string> option_value ) override;
+
+    void SetDefault() override;
 };
 
 class OptionULong : public OptionBase
@@ -192,57 +134,29 @@ class OptionULong : public OptionBase
     std::string _name;        // identifier for the option
 
   public:
-    OptionULong( std::string option_field_name, unsigned long& option_field, unsigned long default_value ) : _field( option_field ) {
-        this->_def  = default_value;
-        this->_name = option_field_name;
-    }
+    OptionULong( std::string option_field_name, unsigned long& option_field, unsigned long default_value );
 
     ~OptionULong() override{};
-    std::string SetValue( std::vector<std::string> option_value ) override {
-        OptionBase::SetValue( option_value );
-        std::string out = optionCheckMultipleValues( option_value, "unsigned long", this->_name );
-        if( out.compare( "" ) != 0 ) {
-            return out;
-        }
-        std::istringstream is( option_value[0] );
-        unsigned long val;
-        if( is >> val ) {
-            this->_field = val;
-            return "";
-        }
-        return badValue( option_value, "unsigned long", this->_name );
-    }
-    void SetDefault() override { this->_field = this->_def; }
+
+    std::string SetValue( std::vector<std::string> option_value ) override;
+
+    void SetDefault() override;
 };
 
-class COptionUShort : public OptionBase
+class OptionUShort : public OptionBase
 {
     unsigned short& _field;    // Reference to the feildname
     unsigned short _def;       // Default value
     std::string _name;         // identifier for the option
 
   public:
-    COptionUShort( std::string option_field_name, unsigned short& option_field, unsigned short default_value ) : _field( option_field ) {
-        this->_def  = default_value;
-        this->_name = option_field_name;
-    }
+    OptionUShort( std::string option_field_name, unsigned short& option_field, unsigned short default_value );
 
-    ~COptionUShort() override{};
-    std::string SetValue( std::vector<std::string> option_value ) override {
-        OptionBase::SetValue( option_value );
-        std::string out = optionCheckMultipleValues( option_value, "unsigned short", this->_name );
-        if( out.compare( "" ) != 0 ) {
-            return out;
-        }
-        std::istringstream is( option_value[0] );
-        unsigned short val;
-        if( is >> val ) {
-            this->_field = val;
-            return "";
-        }
-        return badValue( option_value, "unsigned short", this->_name );
-    }
-    void SetDefault() override { this->_field = this->_def; }
+    ~OptionUShort() override{};
+
+    std::string SetValue( std::vector<std::string> option_value ) override;
+
+    void SetDefault() override;
 };
 
 class OptionLong : public OptionBase
@@ -252,27 +166,13 @@ class OptionLong : public OptionBase
     std::string _name;    // identifier for the option
 
   public:
-    OptionLong( std::string option_field_name, long& option_field, long default_value ) : _field( option_field ) {
-        this->_def  = default_value;
-        this->_name = option_field_name;
-    }
+    OptionLong( std::string option_field_name, long& option_field, long default_value );
 
     ~OptionLong() override{};
-    std::string SetValue( std::vector<std::string> option_value ) override {
-        OptionBase::SetValue( option_value );
-        std::string out = optionCheckMultipleValues( option_value, "long", this->_name );
-        if( out.compare( "" ) != 0 ) {
-            return out;
-        }
-        std::istringstream is( option_value[0] );
-        long val;
-        if( is >> val ) {
-            this->_field = val;
-            return "";
-        }
-        return badValue( option_value, "long", this->_name );
-    }
-    void SetDefault() override { this->_field = this->_def; }
+
+    std::string SetValue( std::vector<std::string> option_value ) override;
+
+    void SetDefault() override;
 };
 
 class OptionBool : public OptionBase
@@ -282,30 +182,13 @@ class OptionBool : public OptionBase
     std::string _name;    // identifier for the option
 
   public:
-    OptionBool( std::string option_field_name, bool& option_field, bool default_value ) : _field( option_field ) {
-        this->_def  = default_value;
-        this->_name = option_field_name;
-    }
+    OptionBool( std::string option_field_name, bool& option_field, bool default_value );
 
     ~OptionBool() override{};
-    std::string SetValue( std::vector<std::string> option_value ) override {
-        OptionBase::SetValue( option_value );
-        // check if there is more than one value
-        std::string out = optionCheckMultipleValues( option_value, "bool", this->_name );
-        if( out.compare( "" ) != 0 ) {
-            return out;
-        }
-        if( option_value[0].compare( "YES" ) == 0 ) {
-            this->_field = true;
-            return "";
-        }
-        if( option_value[0].compare( "NO" ) == 0 ) {
-            this->_field = false;
-            return "";
-        }
-        return badValue( option_value, "bool", this->_name );
-    }
-    void SetDefault() override { this->_field = this->_def; }
+
+    std::string SetValue( std::vector<std::string> option_value ) override;
+
+    void SetDefault() override;
 };
 
 class OptionStringList : public OptionBase
@@ -315,34 +198,13 @@ class OptionStringList : public OptionBase
     unsigned short& _size;
 
   public:
-    OptionStringList( std::string option_field_name, unsigned short& list_size, std::vector<std::string>& option_field )
-        : _field( option_field ), _size( list_size ) {
-        this->_name = option_field_name;
-    }
+    OptionStringList( std::string option_field_name, unsigned short& list_size, std::vector<std::string>& option_field );
 
     ~OptionStringList() override{};
 
-    std::string SetValue( std::vector<std::string> option_value ) override {
-        OptionBase::SetValue( option_value );
-        // The size is the length of option_value
-        unsigned short option_size = option_value.size();
-        if( option_size == 1 && option_value[0].compare( "NONE" ) == 0 ) {
-            this->_size = 0;
-            return "";
-        }
-        this->_size = option_size;
+    std::string SetValue( std::vector<std::string> option_value ) override;
 
-        // Parse all of the options
-        this->_field.resize( this->_size );
-        for( unsigned long i = 0; i < option_size; i++ ) {
-            this->_field.at( i ) = option_value[i];
-        }
-        return "";
-    }
-
-    void SetDefault() override {
-        this->_size = 0;    // There is no default value for list
-    }
+    void SetDefault() override;
 };
 
 #endif    // OPTION_STRUCTURE_H

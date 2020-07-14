@@ -1,17 +1,22 @@
+#include "fluxes/numericalflux.h"
+#include "io.h"
+#include "kernels/scatteringkernelbase.h"
+#include "settings/config.h"
+
 #include "solvers/csdsnsolver.h"
 
-CSDSNSolver::CSDSNSolver( Config* settings ) : Solver( settings ) { _dose = std::vector<double>( _settings->GetNCells(), 0.0 ); }
+CSDSNSolver::CSDSNSolver( Config* settings ) : SNSolver( settings ) { _dose = std::vector<double>( _settings->GetNCells(), 0.0 ); }
 
 void CSDSNSolver::Solve() {
     auto log = spdlog::get( "event" );
 
     // angular flux at next time step (maybe store angular flux at all time steps, since time becomes energy?)
-    VectorVector psiNew = _psi;
+    VectorVector psiNew = _sol;
     double dFlux        = 1e10;
     Vector fluxNew( _nCells, 0.0 );
     Vector fluxOld( _nCells, 0.0 );
     for( unsigned j = 0; j < _nCells; ++j ) {
-        fluxOld[j] = dot( _psi[j], _weights );
+        fluxOld[j] = dot( _sol[j], _weights );
     }
     int rank;
     MPI_Comm_rank( MPI_COMM_WORLD, &rank );
@@ -20,7 +25,7 @@ void CSDSNSolver::Solve() {
     // do substitution from psi to psiTildeHat (cf. Dissertation Kerstion Kuepper, Eq. 1.23)
     for( unsigned j = 0; j < _nCells; ++j ) {
         for( unsigned k = 0; k < _nq; ++k ) {
-            _psi[j][k] = _psi[j][k] * _density[j] * _s[_nEnergies - 1];    // note that _s[_nEnergies - 1] is stopping power at highest energy
+            _sol[j][k] = _sol[j][k] * _density[j] * _s[_nEnergies - 1];    // note that _s[_nEnergies - 1] is stopping power at highest energy
         }
     }
 
@@ -56,16 +61,16 @@ void CSDSNSolver::Solve() {
                     //                            _normals[idx_cell][idx_neighbor] );
                     else
                         psiNew[idx_cell][idx_ord] += _g->Flux( _quadPoints[idx_ord] / _density[idx_cell],
-                                                               _psi[idx_cell][idx_ord],
-                                                               _psi[_neighbors[idx_cell][idx_neighbor]][idx_ord],
+                                                               _sol[idx_cell][idx_ord],
+                                                               _sol[_neighbors[idx_cell][idx_neighbor]][idx_ord],
                                                                _normals[idx_cell][idx_neighbor] );
                 }
                 // time update angular flux with numerical flux and total scattering cross section
-                psiNew[idx_cell][idx_ord] = _psi[idx_cell][idx_ord] - ( _dE / _areas[idx_cell] ) * psiNew[idx_cell][idx_ord] -
-                                            _dE * _sigmaT[idx_energy][idx_cell] * _psi[idx_cell][idx_ord];
+                psiNew[idx_cell][idx_ord] = _sol[idx_cell][idx_ord] - ( _dE / _areas[idx_cell] ) * psiNew[idx_cell][idx_ord] -
+                                            _dE * _sigmaT[idx_energy][idx_cell] * _sol[idx_cell][idx_ord];
             }
             // compute scattering effects
-            psiNew[idx_cell] += _dE * _sigmaS[idx_energy][idx_cell] * _scatteringKernel * _psi[idx_cell];    // multiply scattering matrix with psi
+            psiNew[idx_cell] += _dE * _sigmaS[idx_energy][idx_cell] * _scatteringKernel * _sol[idx_cell];    // multiply scattering matrix with psi
 
             // TODO: figure out a more elegant way
             // add external source contribution
@@ -82,12 +87,12 @@ void CSDSNSolver::Solve() {
                     psiNew[idx_cell] += _dE * _Q[idx_energy][idx_cell] * _s[_nEnergies - idx_energy - 1];
             }
         }
-        _psi = psiNew;
+        _sol = psiNew;
 
         // do backsubstitution from psiTildeHat to psi (cf. Dissertation Kerstion Kuepper, Eq. 1.23)
         for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
             for( unsigned idx_ord = 0; idx_ord < _nq; ++idx_ord ) {
-                psiNew[idx_cell][idx_ord] = _psi[idx_cell][idx_ord] * _density[idx_cell] *
+                psiNew[idx_cell][idx_ord] = _sol[idx_cell][idx_ord] * _density[idx_cell] *
                                             _s[_nEnergies - idx_energy - 1];    // note that _s[0] is stopping power at lowest energy
             }
         }

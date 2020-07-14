@@ -1,9 +1,10 @@
 #include "fluxes/numericalflux.h"
 #include "fluxes/upwindflux.h"
+#include "settings/globalconstants.h"
 
-NumericalFlux::NumericalFlux( Config* settings ) {}
+NumericalFlux::NumericalFlux() {}
 
-NumericalFlux* NumericalFlux::Create( Config* settings ) {
+NumericalFlux* NumericalFlux::Create() {
     // TODO: Add Flux options
-    return new UpwindFlux( settings );
+    return new UpwindFlux();
 }

@@ -18,7 +18,9 @@
 #include "spdlog/spdlog.h"
 
 #include "globalconstants.h"
-#include "optionstructure.h"
+
+// Forward declaration
+class OptionBase;
 
 /*!
  * @class Config
@@ -56,6 +58,7 @@ class Config
     double _tEnd;                    /*!< @brief Final Time for Simulation */
     PROBLEM_NAME _problemName;       /*!< @brief Name of predefined Problem   */
     SOLVER_NAME _solverName;         /*!< @brief Name of the used Solver */
+    ENTROPY_NAME _entropyName;       /*!< @brief Name of the used Entropy Functional */
     unsigned short _maxMomentDegree; /*!< @brief Maximal Order of Moments for PN and MN Solver */
     unsigned short _reconsOrder;     /*!< @brief Spatial Order of Accuracy for Solver */
 
@@ -77,6 +80,14 @@ class Config
 
     // Scattering Kernel
     KERNEL_NAME _kernelName; /*!< @brief Scattering Kernel Name*/
+
+    // Optimizer
+    OPTIMIZER_NAME _entropyOptimizerName; /*!< @brief Choice of optimizer */
+    double _optimizerEpsilon;             /*!< @brief termination criterion epsilon for Newton Optmizer */
+    unsigned short _newtonIter;           /*!< @brief Maximal Number of newton iterations */
+    double _newtonStepSize;               /*!< @brief Stepsize factor for newton optimizer */
+    unsigned short _newtonLineSearchIter; /*!< @brief Maximal Number of line search iterations for newton optimizer */
+    bool _newtonFastMode;                 /*!< @brief If true, we skip the NewtonOptimizer for quadratic entropy and assign alpha = u */
 
     // --- Parsing Functionality and Initializing of Options ---
     /*!
@@ -209,14 +220,24 @@ class Config
     unsigned GetNCells() { return _nCells; }
 
     // Solver Structure
+    unsigned short inline GetMaxMomentDegree() const { return _maxMomentDegree; }
     double inline GetCFL() const { return _CFL; }
     double inline GetTEnd() const { return _tEnd; }
     PROBLEM_NAME inline GetProblemName() const { return _problemName; }
     SOLVER_NAME inline GetSolverName() const { return _solverName; }
+    ENTROPY_NAME inline GetEntropyName() const { return _entropyName; }
     bool inline GetCleanFluxMat() const { return _cleanFluxMat; }
     unsigned GetReconsOrder() { return _reconsOrder; }
     bool inline IsCSD() const { return _csd; }
     unsigned inline GetMaxMomentDegree() { return _maxMomentDegree; }
+
+    //  Optimizer
+    OPTIMIZER_NAME inline GetOptimizerName() const { return _entropyOptimizerName; }
+    double inline GetNewtonOptimizerEpsilon() const { return _optimizerEpsilon; }
+    unsigned inline GetNewtonIter() const { return _newtonIter; }
+    double inline GetNewtonStepSize() const { return _newtonStepSize; }
+    unsigned inline GetMaxLineSearches() const { return _newtonLineSearchIter; }
+    bool inline GetNewtonFastMode() const { return _newtonFastMode; }
 
     // Boundary Conditions
     BOUNDARY_TYPE GetBoundaryType( std::string nameMarker ) const; /*! @brief Get Boundary Type of given marker */

@@ -1,4 +1,5 @@
 #include "kernels/isotropic1D.h"
+#include "quadratures/quadraturebase.h"
 
 Isotropic1D::Isotropic1D( QuadratureBase* quad ) : ScatteringKernel( quad ) {}
 

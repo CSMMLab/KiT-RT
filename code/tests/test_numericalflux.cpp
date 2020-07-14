@@ -2,16 +2,12 @@
 
 #include "catch.hpp"
 #include "fluxes/upwindflux.h"
-#include "io.h"
-#include "mesh.h"
-#include "settings/config.h"
-#include "settings/globalconstants.h"
 #include "settings/typedef.h"
 
 TEST_CASE( "unit numericalflux tests", "[numericalflux]" ) {
-    char config_file_name[] = "../tests/input/unit.cfg";
-
-    Config* config = new Config( config_file_name );
+    // char config_file_name[] = "../tests/input/unit.cfg";
+    //
+    // Config* config = new Config( config_file_name );
 
     // Test Flux Jacobians
     Matrix AxP( 4, 4, 0 );
@@ -31,7 +27,7 @@ TEST_CASE( "unit numericalflux tests", "[numericalflux]" ) {
     AyM( 3, 3 ) = -1;    // -0.25;
 
     SECTION( "test symmetry" ) {
-        UpwindFlux g( config );
+        UpwindFlux g;
         Vector resultFluxPlus( 4, 0.0 );
         Vector resultFluxMinus( 4, 0.0 );
         Vector psiLVect{ 1.0, 2.0, 3.0, 4.0 };
@@ -76,7 +72,7 @@ TEST_CASE( "unit numericalflux tests", "[numericalflux]" ) {
     }
 
     SECTION( "test consistency" ) {
-        UpwindFlux g( config );
+        UpwindFlux g;
         Vector n( 2, 0.0 );
         Vector resultFlux( 4, 0 );
         Vector resultFluxOrig( 4, 0 );
