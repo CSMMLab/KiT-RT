@@ -76,12 +76,71 @@ void Physics::LoadDatabase( std::string fileName_H, std::string fileName_O, std:
         _xsTransportH2O.push_back( 0.11189400 * transport_XS_H[i] + 0.88810600 * transport_XS_O[i] );
     for( unsigned i = 0; i < scattering_XS_H.size(); ++i ) _xsH2O.push_back( 0.11189400 * scattering_XS_H[i] + 0.88810600 * scattering_XS_O[i] );
     for( unsigned i = 0; i < total_scat_XS_H.size(); ++i ) _xsTotalH2O.push_back( 0.11189400 * total_scat_XS_H[i] + 0.88810600 * total_scat_XS_O[i] );
-
+    std::cout << "size is " << _xsH2O.size() << " " << _xsH2O[0].size() << std::endl;
     _stpowH2O = ReadStoppingPowers( fileName_stppower );
 }
 
 VectorVector Physics::GetScatteringXS( Vector energies, Vector density, Vector angle ) {
 
+    std::cout << _xsH2O.size() << " " << _xsH2O[0].size() << std::endl;
+    std::vector<std::vector<double>> tmp;              // vectorvector which stores data at fixed energies
+    std::vector<std::vector<double>> xsH2OGrid;        // matrix which stores tensorized data for given angular grid, original energy grid
+    std::vector<std::vector<double>> xsH2OGridGrid;    // matrix which stores tensorized data for given angular and energy grid
+    std::vector<double> tmpAngleGrid;
+    std::vector<double> tmpEnergyGrid;
+    std::vector<double> tmp1;
+    std::vector<double> energiesOrig;    // original energy grid
+    tmpAngleGrid.resize( angle.size() );
+    tmp.clear();
+    tmp.resize( 0 );
+    xsH2OGrid.resize( 0 );
+    double energyCurrent = _xsH2O[0][0];
+
+    // build grid at original energies and given angular grid
+    for( unsigned i = 0; i < _xsH2O.size(); ++i ) {
+        // split vector into subvectors with identical energy
+        if( abs( _xsH2O[i][0] - energyCurrent ) < 1e-12 ) {
+            tmp.push_back( std::vector<double>( { _xsH2O[i][1], _xsH2O[i][2] } ) );
+        }
+        else {
+            // new energy section starts in _xsH2O. Now we interpolate the values in tmp at given angular grid
+
+            // interpolate vector at different angles for fixed current energies
+            Spline interp;
+            interp.set_points( tmp[0], tmp[1], false );    // false == linear interpolation
+            for( unsigned k = 0; k < angle.size(); k++ ) {
+                // why do we need if else statements?
+                // Linear interpolation
+                tmpAngleGrid[k] = interp( energies[k] );
+            }
+            xsH2OGrid.push_back( tmpAngleGrid );
+
+            // reset current energy
+            energiesOrig.push_back( energyCurrent );
+            energyCurrent = _xsH2O[i][0];
+            tmp.clear();
+            tmp.resize( 0 );
+            tmp.push_back( std::vector<double>( { _xsH2O[i][1], _xsH2O[i][2] } ) );
+        }
+    }
+
+    // perform interpolation at fixed original energy for new energy grid
+
+    for( unsigned j = 0; j < angle.size(); ++j ) {    // loop over all angles
+        tmp1.resize( 0 );
+        // store all values at given angle j for all original energies
+        for( unsigned i = 0; i < energiesOrig.size(); ++i ) tmp1.push_back( xsH2OGrid[i][j] );
+        Spline interp;
+        interp.set_points( energiesOrig, tmp1, false );    // false == linear interpolation
+        for( unsigned k = 0; k < energies.size(); k++ ) {
+            // why do we need if else statements?
+            // Linear interpolation
+            tmpEnergyGrid[k] = interp( energies[k] );
+        }
+        xsH2OGridGrid.push_back( tmpEnergyGrid );
+    }
+
+    //_xsH2O
     VectorVector scattering_XS;
     return scattering_XS;
 }
