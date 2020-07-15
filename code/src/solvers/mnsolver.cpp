@@ -105,6 +105,14 @@ Vector MNSolver::ConstructFlux( unsigned idx_cell ) {
     return flux;
 }
 
+void MNSolver::ComputeRealizableSolution( unsigned idx_cell ) {
+    double entropyReconstruction = 0.0;
+
+    for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
+        entropyReconstruction = _entropy->EntropyPrimeDual( blaze::dot( _alpha[idx_cell], _moments[idx_quad] ) );
+    }
+}
+
 void MNSolver::Solve() {
 
     int rank;
@@ -143,19 +151,22 @@ void MNSolver::Solve() {
         // Loop over the grid cells
         for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
 
-            // ------- Reconstruction Step -------
+            // ------- Reconstruction Step ----------------
 
-            // _alpha[idx_cell] = _sol[idx_cell];
             _optimizer->Solve( _alpha[idx_cell], _sol[idx_cell], _moments );
 
-            // ------- Flux Computation Step ---------
+            // ------- Relizablity Reconstruction Step ----
+
+            ComputeRealizableSolution( idx_cell );
+
+            // ------- Flux Computation Step --------------
 
             // Dirichlet Boundaries are finished now
             if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::DIRICHLET ) continue;
 
             psiNew[idx_cell] = ConstructFlux( idx_cell );
 
-            // ------ FVM Step ------
+            // ------ Finite Volume Update Step ------
 
             // NEED TO VECTORIZE
             for( unsigned idx_system = 0; idx_system < _nTotalEntries; idx_system++ ) {

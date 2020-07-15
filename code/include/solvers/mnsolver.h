@@ -61,5 +61,9 @@ class MNSolver : public Solver
 
     /*! @brief : Pre-Compute Moments at all quadrature points. */
     void ComputeMoments();
+
+    /*! @brief Corrects the solution _sol[idx_cell] to be realizable w.r.t. the reconstructed entropy (eta'(alpha*m))
+        @param idx_cell = cell where the correction happens*/
+    void ComputeRealizableSolution( unsigned idx_cell );
 };
 #endif    // MNSOLVER_H
