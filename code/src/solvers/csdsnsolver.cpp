@@ -3,7 +3,7 @@
 #include "common/io.h"
 #include "fluxes/numericalflux.h"
 #include "kernels/scatteringkernelbase.h"
-#include "physics.h"
+#include "problems/problembase.h"
 
 CSDSNSolver::CSDSNSolver( Config* settings ) : SNSolver( settings ) {
     _dose = std::vector<double>( _settings->GetNCells(), 0.0 );
@@ -13,7 +13,8 @@ CSDSNSolver::CSDSNSolver( Config* settings ) : SNSolver( settings ) {
     _energies = Vector( _nEnergies, 0.0 );
     // TODO: write meaningfull values for them!
 
-    _sigmaS = _physics->GetScatteringXS( _energies, _angle );
+    _sigmaSE = _problem->GetScatteringXSE( _energies, _angle );
+    _sigmaTE = _problem->GetTotalXSE( _energies );
 
     // Get patient density
     _density = Vector( _nCells, 0.0 );
@@ -79,10 +80,12 @@ void CSDSNSolver::Solve() {
                 }
                 // time update angular flux with numerical flux and total scattering cross section
                 psiNew[idx_cell][idx_ord] = _sol[idx_cell][idx_ord] - ( _dE / _areas[idx_cell] ) * psiNew[idx_cell][idx_ord] -
-                                            _dE * _sigmaT[idx_energy][idx_cell] * _sol[idx_cell][idx_ord];
+                                            _dE * _density[idx_cell] * _sigmaTE[idx_energy] * _sol[idx_cell][idx_ord];
             }
             // compute scattering effects
-            psiNew[idx_cell] += _dE * _sigmaS[idx_energy][idx_cell] * _scatteringKernel * _sol[idx_cell];    // multiply scattering matrix with psi
+            psiNew[idx_cell] +=
+                _dE * _density[idx_cell] * ( blaze::trans( _sigmaSE[idx_energy] ) * _sol[idx_cell] );    // multiply scattering matrix with psi
+            // TODO: Check if _sigmaS^T*psi is correct
 
             // TODO: figure out a more elegant way
             // add external source contribution

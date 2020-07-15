@@ -1,6 +1,7 @@
 #ifndef ELECTRONRT_H
 #define ELECTRONRT_H
 
+#include "physics.h"
 #include "problembase.h"
 
 class ElectronRT : public ProblemBase
@@ -21,6 +22,8 @@ class ElectronRT : public ProblemBase
 
     virtual VectorVector GetScatteringXS( const std::vector<double>& energies );
     virtual VectorVector GetTotalXS( const std::vector<double>& energies );
+    virtual VectorVector GetScatteringXSE( const Vector& energies, const Vector& angles );
+    virtual Vector GetTotalXSE( const Vector& energies );
     virtual std::vector<VectorVector> GetExternalSource( const std::vector<double>& energies );
     virtual std::vector<double> GetStoppingPower( const std::vector<double>& energies );
     virtual VectorVector SetupIC();

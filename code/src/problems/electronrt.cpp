@@ -4,7 +4,7 @@
 
 ElectronRT::ElectronRT( Config* settings, Mesh* mesh ) : ProblemBase( settings, mesh ) {
     // @TODO
-    _physics = nullptr;
+    _physics = new Physics();
 }
 
 ElectronRT::~ElectronRT() {}
@@ -17,6 +17,17 @@ VectorVector ElectronRT::GetScatteringXS( const std::vector<double>& energies ) 
 VectorVector ElectronRT::GetTotalXS( const std::vector<double>& energies ) {
     // @TODO
     return VectorVector( energies.size(), Vector( _mesh->GetNumCells(), 0.0 ) );
+}
+
+VectorVector ElectronRT::GetScatteringXSE( const Vector& energies, const Vector& angles ) {
+    // @TODO
+    _physics->GetScatteringXS( energies, angles );
+    return VectorVector( energies.size(), Vector( angles.size(), 0.0 ) );
+}
+
+Vector ElectronRT::GetTotalXSE( const Vector& energies ) {
+    // @TODO
+    return Vector( energies.size(), 0.0 );
 }
 
 std::vector<VectorVector> ElectronRT::GetExternalSource( const std::vector<double>& energies ) {

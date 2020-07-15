@@ -37,6 +37,19 @@ class ProblemBase
      * @param density is vector with patient densities (at different spatial cells)
      */
     virtual VectorVector GetTotalXS( const std::vector<double>& energies ) = 0;
+    /**
+     * @brief GetTotalXSE gives back vector of total cross sections for
+     *        energies in vector energy
+     * @param energy is the energy the cross section is queried for
+     */
+    virtual Vector GetTotalXSE( const Vector& energies ) { return Vector( 1 ); }
+
+    /**
+     * @brief GetScatteringXSE gives back vector (each energy) of scattering cross sections for energies
+     *        in vector energy
+     * @param energy is the energy the cross section is queried for
+     */
+    virtual VectorVector GetScatteringXSE( const Vector& energies, const Vector& angles ) { return VectorVector( 1, Vector( 1 ) ); }
 
     /**
      * @brief GetExternalSource gives back vector of vectors of source terms for each
