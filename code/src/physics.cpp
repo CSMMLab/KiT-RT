@@ -123,7 +123,6 @@ VectorVector Physics::GetScatteringXS( Vector energies, Vector angle ) {
             tmp.push_back( std::vector<double>( { _xsH2O[i][1], _xsH2O[i][2] } ) );
         }
     }
-
     // perform interpolation at fixed original energy for new energy grid
 
     for( unsigned j = 0; j < angle.size(); ++j ) {    // loop over all angles
@@ -272,6 +271,7 @@ std::tuple<std::vector<VectorVector>, std::vector<VectorVector>> Physics::ReadEN
         Vector dataLine( linelist.size() );
         bool header         = false;
         unsigned lineLenght = linelist.size();
+
         // check, if line is a dataline
         if( lineLenght == 2 || lineLenght == 3 ) {
             dataLine[0] = linelist.front();
@@ -291,16 +291,6 @@ std::tuple<std::vector<VectorVector>, std::vector<VectorVector>> Physics::ReadEN
                 header = true;
             }
         }
-
-        // save dataLine in vector;
-        if( header ) {
-            headerPack[curr_HeaderLine] = dataLine;
-            curr_HeaderLine++;
-        }
-        else {
-            dataPackList.push_back( dataLine );
-        }
-
         // check if line is an endline, then reset indices and save packs
         if( lineLenght == 1 ) {
 
@@ -315,6 +305,16 @@ std::tuple<std::vector<VectorVector>, std::vector<VectorVector>> Physics::ReadEN
 
             pack_idx++;
             curr_HeaderLine = 0;
+        }
+        else {
+            // save dataLine in vector;
+            if( header ) {
+                headerPack[curr_HeaderLine] = dataLine;
+                curr_HeaderLine++;
+            }
+            else {
+                dataPackList.push_back( dataLine );
+            }
         }
     }
     case_file.close();
