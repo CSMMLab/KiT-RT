@@ -1,6 +1,7 @@
 #ifndef SOLVER_H
 #define SOLVER_H
 
+#include <iostream>
 // include Matrix, Vector definitions
 #include "settings/globalconstants.h"
 #include "settings/typedef.h"
