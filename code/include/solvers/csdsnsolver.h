@@ -16,6 +16,9 @@ class CSDSNSolver : public SNSolver
     Vector _density;   /*! @brief: patient density for each grid cell */
     Physics* _physics; /*! @brief: class that hold physics information */
 
+    VectorVector _sigmaSE; /*!  @brief scattering cross section for all energies*/
+    Vector _sigmaTE;       /*!  @brief total cross section for all energies*/
+
   public:
     /**
      * @brief CSDSNSolver constructor

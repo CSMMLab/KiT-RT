@@ -29,8 +29,8 @@ class Solver
     std::vector<double> _s;           // stopping power, dim(_s) = _nTimeSteps
     std::vector<VectorVector> _Q;     /*!  @brief  external source term */
 
-    VectorVector _sigmaS; /*!  @brief scattering cross section for all energies */
-    VectorVector _sigmaT; /*!  @brief total cross section for all energies */
+    VectorVector _sigmaS; /*!  @brief scattering cross section for all energies and spatial cells*/
+    VectorVector _sigmaT; /*!  @brief total cross section for all energies and spatial cells*/
 
     // quadrature related numbers
     QuadratureBase* _quadrature; /*! @brief quadrature to create members below */
