@@ -8,7 +8,6 @@
 // Forward Declarations
 class Config;
 class Mesh;
-// class Matrix;
 
 void ExportVTK( const std::string fileName,
                 const std::vector<std::vector<std::vector<double>>>& results,

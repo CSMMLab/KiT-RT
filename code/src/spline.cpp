@@ -1,4 +1,6 @@
 #include "spline.h"
+#include "toolboxes/errormessages.h"
+#include <blaze/math/lapack/posv.h>
 
 Spline::Spline() : m_left( first_deriv ), m_right( first_deriv ), m_left_value( 0.0 ), m_right_value( 0.0 ), m_force_linear_extrapolation( false ) {}
 

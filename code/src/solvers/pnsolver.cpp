@@ -5,6 +5,8 @@
 #include "toolboxes/errormessages.h"
 #include "toolboxes/textprocessingtoolbox.h"
 
+// externals
+#include "spdlog/spdlog.h"
 #include <mpi.h>
 
 PNSolver::PNSolver( Config* settings ) : Solver( settings ) {

@@ -11,11 +11,7 @@
 
 #include <filesystem>
 #include <map>
-#include <mpi.h>
-
-#include "spdlog/sinks/basic_file_sink.h"
-#include "spdlog/sinks/stdout_sinks.h"
-#include "spdlog/spdlog.h"
+#include <vector>
 
 #include "globalconstants.h"
 
@@ -183,7 +179,7 @@ class Config
     void AddStringListOption( const std::string name, unsigned short& num_marker, std::vector<std::string>& option_field );
 
     // Initialize the cmdline and file logger
-    void InitLogger( spdlog::level::level_enum terminalLogLvl, spdlog::level::level_enum fileLogLvl );
+    void InitLogger();
 
   public:
     /*!

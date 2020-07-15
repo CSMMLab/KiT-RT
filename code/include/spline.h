@@ -1,10 +1,7 @@
 #ifndef SPLINE_H
 #define SPLINE_H
 
-#include <blaze/math/lapack/posv.h>
-
 #include "common/typedef.h"
-#include "toolboxes/errormessages.h"
 
 class Spline
 {

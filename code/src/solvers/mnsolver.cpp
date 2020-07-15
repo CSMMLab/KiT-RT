@@ -8,6 +8,8 @@
 #include "solvers/sphericalharmonics.h"
 #include "toolboxes/textprocessingtoolbox.h"
 
+// externals
+#include "spdlog/spdlog.h"
 #include <mpi.h>
 
 //#include <chrono>

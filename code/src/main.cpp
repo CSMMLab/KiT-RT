@@ -31,10 +31,6 @@ int main( int argc, char** argv ) {
     // CD  Load Settings from File
     Config* config = new Config( filename );
 
-    // Test the physics reader
-    // Physics testPhysic();
-    // testPhysic.ReadENDL( "ENDL_H.txt" );
-
     // Print input file and run info to file
     PrintLogHeader( filename );
 

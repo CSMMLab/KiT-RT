@@ -11,9 +11,15 @@
 #include "common/optionstructure.h"
 #include "toolboxes/errormessages.h"
 #include "toolboxes/textprocessingtoolbox.h"
+
+// externals
+#include "spdlog/sinks/basic_file_sink.h"
+#include "spdlog/sinks/stdout_sinks.h"
+#include "spdlog/spdlog.h"
 #include <cassert>
 #include <filesystem>
 #include <fstream>
+#include <mpi.h>
 
 using namespace std;
 
@@ -349,12 +355,9 @@ void Config::SetPostprocessing() {
     // create directories if they dont exist
     if( !std::filesystem::exists( _outputDir ) ) std::filesystem::create_directory( _outputDir );
 
-        // init logger
-#ifdef BUILD_TESTING
-    InitLogger( spdlog::level::err, spdlog::level::off );
-#else
-    InitLogger( spdlog::level::info, spdlog::level::info );
-#endif
+    //         // init logger
+
+    InitLogger();
 
     // Regroup Boundary Conditions to  std::vector<std::pair<std::string, BOUNDARY_TYPE>> _boundaries;
     for( int i = 0; i < _nMarkerDirichlet; i++ ) {
@@ -501,7 +504,21 @@ bool Config::TokenizeString( string& str, string& option_name, vector<string>& o
     return true;
 }
 
-void Config::InitLogger( spdlog::level::level_enum terminalLogLvl, spdlog::level::level_enum fileLogLvl ) {
+void Config::InitLogger() {
+
+    // Declare Logger
+    spdlog::level::level_enum terminalLogLvl;
+    spdlog::level::level_enum fileLogLvl;
+
+    // Choose Logger
+#ifdef BUILD_TESTING
+    terminalLogLvl = spdlog::level::err;
+    fileLogLvl     = spdlog::level::off;
+#else
+    terminalLogLvl = spdlog::level::info;
+    fileLogLvl     = spdlog::level::info;
+#endif
+
     // create log dir if not existent
     if( !std::filesystem::exists( _logDir ) ) {
         std::filesystem::create_directory( _logDir );

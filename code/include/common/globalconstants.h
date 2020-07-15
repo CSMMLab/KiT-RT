@@ -9,14 +9,12 @@
 #ifndef GLOBAL_CONSTANTS_H
 #define GLOBAL_CONSTANTS_H
 
-#include <cmath>
 #include <map>
 #include <string>
 
 // --- Definition for global constants goes here ---
 
-const double PI_NUMBER             = M_PI; /*!< @brief Pi number. */
-const unsigned int MAX_STRING_SIZE = 200;  /*!< @brief Maximum size for strings. */
+const unsigned int MAX_STRING_SIZE = 200; /*!< @brief Maximum size for strings. */
 
 // --- Definition of enums goes here ---
 
