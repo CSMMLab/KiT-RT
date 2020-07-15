@@ -1,7 +1,7 @@
 
 #include "optimizers/newtonoptimizer.h"
+#include "common/config.h"
 #include "quadratures/quadraturebase.h"
-#include "settings/config.h"
 #include "toolboxes/errormessages.h"
 
 NewtonOptimizer::NewtonOptimizer( Config* settings ) : OptimizerBase( settings ) {

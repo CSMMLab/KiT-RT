@@ -6,9 +6,9 @@
  * Disclaimer: This class structure was copied and modifed with open source permission from SU2 v7.0.3 https://su2code.github.io/
  */
 
-#include "settings/config.h"
-#include "settings/globalconstants.h"
-#include "settings/optionstructure.h"
+#include "common/config.h"
+#include "common/globalconstants.h"
+#include "common/optionstructure.h"
 #include "toolboxes/errormessages.h"
 #include "toolboxes/textprocessingtoolbox.h"
 #include <cassert>

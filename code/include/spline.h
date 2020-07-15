@@ -3,7 +3,7 @@
 
 #include <blaze/math/lapack/posv.h>
 
-#include "settings/typedef.h"
+#include "common/typedef.h"
 #include "toolboxes/errormessages.h"
 
 class Spline

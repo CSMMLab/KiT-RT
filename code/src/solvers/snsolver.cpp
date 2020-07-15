@@ -1,10 +1,10 @@
 #include "solvers/snsolver.h"
+#include "common/config.h"
+#include "common/io.h"
+#include "common/mesh.h"
 #include "fluxes/numericalflux.h"
-#include "io.h"
 #include "kernels/scatteringkernelbase.h"
-#include "mesh.h"
 #include "quadratures/quadraturebase.h"
-#include "settings/config.h"
 
 #include <mpi.h>
 

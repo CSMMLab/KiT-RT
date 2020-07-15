@@ -1,6 +1,6 @@
 #include "problems/linesource.h"
-#include "mesh.h"
-#include "settings/config.h"
+#include "common/config.h"
+#include "common/mesh.h"
 
 // ---- LineSource_SN ----
 

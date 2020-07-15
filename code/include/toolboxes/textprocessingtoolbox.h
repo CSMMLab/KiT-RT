@@ -8,7 +8,7 @@
 #ifndef TEXTPROCESSINGTOOLBOX_H
 #define TEXTPROCESSINGTOOLBOX_H
 
-#include "settings/typedef.h"
+#include "common/typedef.h"
 #include <iostream>
 #include <string>
 #include <vector>

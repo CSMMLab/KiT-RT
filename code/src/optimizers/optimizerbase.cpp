@@ -1,6 +1,6 @@
 #include "optimizers/optimizerbase.h"
+#include "common/config.h"
 #include "optimizers/newtonoptimizer.h"
-#include "settings/config.h"
 
 OptimizerBase::OptimizerBase( Config* settings ) {
     _entropy  = EntropyBase::Create( settings );

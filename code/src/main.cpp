@@ -1,10 +1,10 @@
 #include <Python.h>
 #include <mpi.h>
 
-#include "io.h"
+#include "common/io.h"
 #include "solvers/solverbase.h"
 
-#include "settings/config.h"
+#include "common/config.h"
 
 #include "solvers/sphericalharmonics.h"
 #include <fstream>

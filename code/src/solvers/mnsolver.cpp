@@ -1,10 +1,10 @@
 #include "solvers/mnsolver.h"
+#include "common/config.h"
+#include "common/io.h"
 #include "entropies/entropybase.h"
 #include "fluxes/numericalflux.h"
-#include "io.h"
 #include "optimizers/optimizerbase.h"
 #include "quadratures/quadraturebase.h"
-#include "settings/config.h"
 #include "solvers/sphericalharmonics.h"
 #include "toolboxes/textprocessingtoolbox.h"
 

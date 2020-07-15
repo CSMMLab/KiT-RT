@@ -1,9 +1,9 @@
 #include <numeric>
 
 #include "catch.hpp"
+#include "common/config.h"
 #include "optimizers/optimizerbase.h"
 #include "quadratures/quadraturebase.h"
-#include "settings/config.h"
 #include "solvers/sphericalharmonics.h"
 
 TEST_CASE( "Test the Newton Optimizer", "[optimizers]" ) {

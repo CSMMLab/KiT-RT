@@ -1,4 +1,4 @@
-#include "mesh.h"
+#include "common/mesh.h"
 
 #include <algorithm>
 #include <mpi.h>

@@ -1,7 +1,7 @@
 #ifndef PROBLEMBASE_H
 #define PROBLEMBASE_H
 
-#include "settings/typedef.h"
+#include "common/typedef.h"
 
 // Forward Declaration
 class Config;

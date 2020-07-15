@@ -1,7 +1,7 @@
 #ifndef PHYSICS_H
 #define PHYSICS_H
 
-#include "settings/typedef.h"
+#include "common/typedef.h"
 
 class Physics
 {

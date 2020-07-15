@@ -1,7 +1,7 @@
+#include "common/config.h"
+#include "common/io.h"
 #include "fluxes/numericalflux.h"
-#include "io.h"
 #include "kernels/scatteringkernelbase.h"
-#include "settings/config.h"
 
 #include "solvers/csdsnsolver.h"
 

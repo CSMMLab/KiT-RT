@@ -2,8 +2,8 @@
 #define MESH_H
 
 #include "blaze/math/CompressedMatrix.h"
-#include "settings/globalconstants.h"
-#include "settings/typedef.h"
+#include "common/globalconstants.h"
+#include "common/typedef.h"
 
 #include <vector>
 

@@ -5,7 +5,7 @@
 
 #include "catch.hpp"
 
-#include "settings/config.h"
+#include "common/config.h"
 #include "solvers/solverbase.h"
 
 using vtkUnstructuredGridReaderSP = vtkSmartPointer<vtkUnstructuredGridReader>;

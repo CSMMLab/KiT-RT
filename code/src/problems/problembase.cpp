@@ -1,10 +1,10 @@
-#include "problems/problembase.h"
+#include "common/config.h"
+
 #include "problems/checkerboard.h"
 #include "problems/electronrt.h"
 #include "problems/linesource.h"
+#include "problems/problembase.h"
 #include "problems/waterphantom.h"
-
-#include "settings/config.h"
 
 ProblemBase::ProblemBase( Config* settings, Mesh* mesh ) {
     _settings = settings;

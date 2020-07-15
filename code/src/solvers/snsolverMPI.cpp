@@ -1,5 +1,5 @@
-#include "io.h"
-#include "settings/config.h"
+#include "common/config.h"
+#include "common/io.h"
 
 #include "solvers/snsolverMPI.h"
 #include <mpi.h>

@@ -1,8 +1,8 @@
 #include <numeric>
 
 #include "catch.hpp"
+#include "common/typedef.h"
 #include "fluxes/upwindflux.h"
-#include "settings/typedef.h"
 
 TEST_CASE( "unit numericalflux tests", "[numericalflux]" ) {
     // char config_file_name[] = "../tests/input/unit.cfg";

@@ -1,7 +1,7 @@
 #ifndef IO_H
 #define IO_H
 
-#include "settings/typedef.h"
+#include "common/typedef.h"
 #include <string>
 #include <vector>
 
