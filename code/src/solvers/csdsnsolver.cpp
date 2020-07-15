@@ -9,8 +9,8 @@ CSDSNSolver::CSDSNSolver( Config* settings ) : SNSolver( settings ) {
     _dose = std::vector<double>( _settings->GetNCells(), 0.0 );
 
     // Set angle and energies
-    _angle    = Vector( _settings->GetNQuadPoints(), 0.0 );
-    _energies = Vector( _nEnergies, 0.0 );
+    _angle    = Vector( _settings->GetNQuadPoints(), 0.0 );    // my
+    _energies = Vector( _nEnergies, 0.0 );                     // equidistant
     // TODO: write meaningfull values for them!
 
     _sigmaS = _physics->GetScatteringXS( _energies, _angle );

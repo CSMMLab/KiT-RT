@@ -15,6 +15,7 @@ class Physics
   public:
     // prototype data readers
     std::tuple<std::vector<VectorVector>, std::vector<VectorVector>> ReadENDL( std::string filename );
+
     VectorVector ReadStoppingPowers( std::string fileName );
 
     // load and prepare data from database
