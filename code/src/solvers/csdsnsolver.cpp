@@ -1,11 +1,23 @@
+#include "solvers/csdsnsolver.h"
 #include "common/config.h"
 #include "common/io.h"
 #include "fluxes/numericalflux.h"
 #include "kernels/scatteringkernelbase.h"
+#include "physics.h"
 
-#include "solvers/csdsnsolver.h"
+CSDSNSolver::CSDSNSolver( Config* settings ) : SNSolver( settings ) {
+    _dose = std::vector<double>( _settings->GetNCells(), 0.0 );
 
-CSDSNSolver::CSDSNSolver( Config* settings ) : SNSolver( settings ) { _dose = std::vector<double>( _settings->GetNCells(), 0.0 ); }
+    // Set angle and energies
+    _angle    = Vector( _settings->GetNQuadPoints(), 0.0 );
+    _energies = Vector( _nEnergies, 0.0 );
+    // TODO: write meaningfull values for them!
+
+    _sigmaS = _physics->GetScatteringXS( _energies, _angle );
+
+    // Get patient density
+    _density = Vector( _nCells, 0.0 );
+}
 
 void CSDSNSolver::Solve() {
     auto log = spdlog::get( "event" );

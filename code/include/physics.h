@@ -26,7 +26,7 @@ class Physics
      * @param density is vector with patient densities (at different spatial cells)
      * @param Omega are scattering angles
      */
-    VectorVector GetScatteringXS( Vector energies, Vector density, Vector angle );
+    VectorVector GetScatteringXS( Vector energies, Vector angle );
 
     /**
      * @brief GetTotalXS gives back vector of vectors of total cross sections for materials defined by density and energies in vector energy

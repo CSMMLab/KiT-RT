@@ -80,7 +80,7 @@ void Physics::LoadDatabase( std::string fileName_H, std::string fileName_O, std:
     _stpowH2O = ReadStoppingPowers( fileName_stppower );
 }
 
-VectorVector Physics::GetScatteringXS( Vector energies, Vector density, Vector angle ) {
+VectorVector Physics::GetScatteringXS( Vector energies, Vector angle ) {
 
     std::cout << _xsH2O.size() << " " << _xsH2O[0].size() << std::endl;
     std::vector<std::vector<double>> tmp;              // vectorvector which stores data at fixed energies
@@ -141,7 +141,15 @@ VectorVector Physics::GetScatteringXS( Vector energies, Vector density, Vector a
     }
 
     //_xsH2O
-    VectorVector scattering_XS;
+    VectorVector scattering_XS( xsH2OGridGrid.size() );
+    // write vector<vector> to VectorVector
+    for( unsigned idx_energy = 0; idx_energy < xsH2OGridGrid.size(); idx_energy++ ) {
+        scattering_XS[idx_energy] = Vector( xsH2OGridGrid[idx_energy].size() );
+        for( unsigned idx_angular = 0; idx_angular < xsH2OGridGrid[idx_energy].size(); idx_angular++ ) {
+            scattering_XS[idx_energy][idx_angular] = xsH2OGridGrid[idx_energy][idx_angular];
+        }
+    }
+
     return scattering_XS;
 }
 
