@@ -7,6 +7,7 @@ class CSDSNSolver : public SNSolver
 {
   private:
     std::vector<double> _dose;
+    std::vector<double> _density;    // patient density, dim(_density) = _nCells
 
   public:
     /**

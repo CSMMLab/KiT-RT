@@ -12,7 +12,7 @@ class NewtonOptimizer : public OptimizerBase
 
     inline ~NewtonOptimizer() {}
 
-    void Solve( Vector& lambda, Vector& u, VectorVector& moments, unsigned idx_cell ) override;
+    void Solve( Vector& lambda, Vector& u, VectorVector& moments, unsigned idx_cell = 0 ) override;
 
   private:
     /*! @brief: Computes gradient of objective function and stores it in grad

@@ -182,6 +182,8 @@ void MNSolver::Solve() {
                                                        + _sigmaS[idx_energy][idx_cell] * _scatterMatDiag[idx_system] ); /* scattering influence */
             }
         }
+
+        // Update Solution
         _sol = psiNew;
 
         // pseudo time iteration output

@@ -20,10 +20,7 @@ class MNSolver : public Solver
     /*! @brief MNSolver destructor */
     ~MNSolver();
 
-    /**
-     * @brief Solve functions runs main time loop
-     */
-    void Solve() override;
+    void Solve() override;                      /*! @brief Solve functions runs main time loop */
     void Save() const override;                 /*! @brief Save Output solution to VTK file */
     void Save( int currEnergy ) const override; /*! @brief Save Output solution at given energy (pseudo time) to VTK file */
 
