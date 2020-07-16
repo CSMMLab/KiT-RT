@@ -5,7 +5,6 @@
 Spline::Spline() : m_left( first_deriv ), m_right( first_deriv ), m_left_value( 0.0 ), m_right_value( 0.0 ), m_force_linear_extrapolation( false ) {}
 
 void Spline::set_boundary( Spline::bd_type left, double left_value, Spline::bd_type right, double right_value, bool force_linear_extrapolation ) {
-    assert( m_x.size() == 0 );
     m_left                       = left;
     m_right                      = right;
     m_left_value                 = left_value;
@@ -24,13 +23,12 @@ void Spline::set_points( const std::vector<double>& x, const std::vector<double>
 }
 
 void Spline::set_points( const Vector& x, const Vector& y, bool cubic_Spline ) {
-    assert( x.size() == y.size() );
-    assert( x.size() > 2 );
+    if( x.size() != y.size() ) ErrorMessages::Error( "Vectors are of unequal length!", CURRENT_FUNCTION );
     m_x   = x;
     m_y   = y;
     int n = x.size();
     for( int i = 0; i < n - 1; i++ ) {
-        assert( m_x[i] < m_x[i + 1] );
+        if( !( m_x[i] < m_x[i + 1] ) ) ErrorMessages::Error( "x is not sorted ascendingly!", CURRENT_FUNCTION );
     }
 
     if( cubic_Spline ) {

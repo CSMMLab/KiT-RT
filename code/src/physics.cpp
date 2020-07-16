@@ -1,11 +1,4 @@
-
 #include "physics.h"
-#include "spline.h"
-#include "toolboxes/errormessages.h"
-
-#include <fstream>
-#include <list>
-#include <map>
 
 Physics::Physics() {
     // LoadDatabase
@@ -77,31 +70,27 @@ void Physics::LoadDatabase( std::string fileName_H, std::string fileName_O, std:
         _xsTransportH2O.push_back( 0.11189400 * transport_XS_H[i] + 0.88810600 * transport_XS_O[i] );
     for( unsigned i = 0; i < scattering_XS_H.size(); ++i ) _xsH2O.push_back( 0.11189400 * scattering_XS_H[i] + 0.88810600 * scattering_XS_O[i] );
     for( unsigned i = 0; i < total_scat_XS_H.size(); ++i ) _xsTotalH2O.push_back( 0.11189400 * total_scat_XS_H[i] + 0.88810600 * total_scat_XS_O[i] );
-    std::cout << "size is " << _xsH2O.size() << " " << _xsH2O[0].size() << std::endl;
+
     _stpowH2O = ReadStoppingPowers( fileName_stppower );
 }
 
-VectorVector Physics::GetScatteringXS( Vector energies, Vector angle ) {
-
-    std::cout << _xsH2O.size() << " " << _xsH2O[0].size() << std::endl;
+VectorVector Physics::GetScatteringXS( Vector energies, Vector density, Vector angle ) {
     std::vector<std::vector<double>> tmp;              // vectorvector which stores data at fixed energies
     std::vector<std::vector<double>> xsH2OGrid;        // matrix which stores tensorized data for given angular grid, original energy grid
     std::vector<std::vector<double>> xsH2OGridGrid;    // matrix which stores tensorized data for given angular and energy grid
-    std::vector<double> tmpAngleGrid;
-    std::vector<double> tmpEnergyGrid;
+    std::vector<double> tmpAngleGrid( angle.size() );
+    std::vector<double> tmpEnergyGrid( energies.size() );
     std::vector<double> tmp1;
     std::vector<double> energiesOrig;    // original energy grid
-    tmpAngleGrid.resize( angle.size() );
-    tmp.clear();
-    tmp.resize( 0 );
-    xsH2OGrid.resize( 0 );
     double energyCurrent = _xsH2O[0][0];
 
     // build grid at original energies and given angular grid
     for( unsigned i = 0; i < _xsH2O.size(); ++i ) {
         // split vector into subvectors with identical energy
         if( abs( _xsH2O[i][0] - energyCurrent ) < 1e-12 ) {
-            tmp.push_back( std::vector<double>( { _xsH2O[i][1], _xsH2O[i][2] } ) );
+            if( tmp.empty() ) tmp.resize( 2 );
+            tmp[0].push_back( _xsH2O[i][1] );
+            tmp[1].push_back( _xsH2O[i][2] );
         }
         else {
             // new energy section starts in _xsH2O. Now we interpolate the values in tmp at given angular grid
@@ -110,9 +99,8 @@ VectorVector Physics::GetScatteringXS( Vector energies, Vector angle ) {
             Spline interp;
             interp.set_points( tmp[0], tmp[1], false );    // false == linear interpolation
             for( unsigned k = 0; k < angle.size(); k++ ) {
-                // why do we need if else statements?
                 // Linear interpolation
-                tmpAngleGrid[k] = interp( energies[k] );
+                tmpAngleGrid[k] = interp( angle[k] );
             }
             xsH2OGrid.push_back( tmpAngleGrid );
 
@@ -120,10 +108,9 @@ VectorVector Physics::GetScatteringXS( Vector energies, Vector angle ) {
             energiesOrig.push_back( energyCurrent );
             energyCurrent = _xsH2O[i][0];
             tmp.clear();
-            tmp.resize( 0 );
-            tmp.push_back( std::vector<double>( { _xsH2O[i][1], _xsH2O[i][2] } ) );
         }
     }
+
     // perform interpolation at fixed original energy for new energy grid
 
     for( unsigned j = 0; j < angle.size(); ++j ) {    // loop over all angles
@@ -133,7 +120,6 @@ VectorVector Physics::GetScatteringXS( Vector energies, Vector angle ) {
         Spline interp;
         interp.set_points( energiesOrig, tmp1, false );    // false == linear interpolation
         for( unsigned k = 0; k < energies.size(); k++ ) {
-            // why do we need if else statements?
             // Linear interpolation
             tmpEnergyGrid[k] = interp( energies[k] );
         }
@@ -141,12 +127,12 @@ VectorVector Physics::GetScatteringXS( Vector energies, Vector angle ) {
     }
 
     //_xsH2O
-    VectorVector scattering_XS( xsH2OGridGrid.size() );
-    // write vector<vector> to VectorVector
-    for( unsigned idx_energy = 0; idx_energy < xsH2OGridGrid.size(); idx_energy++ ) {
-        scattering_XS[idx_energy] = Vector( xsH2OGridGrid[idx_energy].size() );
-        for( unsigned idx_angular = 0; idx_angular < xsH2OGridGrid[idx_energy].size(); idx_angular++ ) {
-            scattering_XS[idx_energy][idx_angular] = xsH2OGridGrid[idx_energy][idx_angular];
+    VectorVector scattering_XS;
+    scattering_XS.resize( xsH2OGridGrid.size() );
+    for( unsigned i = 0; i < xsH2OGridGrid.size(); ++i ) {
+        scattering_XS[i].resize( xsH2OGridGrid[i].size() );
+        for( unsigned j = 0; j < xsH2OGridGrid[i].size(); ++j ) {
+            scattering_XS[i][j] = xsH2OGridGrid[i][j];
         }
     }
 
