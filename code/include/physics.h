@@ -1,11 +1,13 @@
 #ifndef PHYSICS_H
 #define PHYSICS_H
 
+#include <fstream>
 #include <list>
 #include <map>
 
 #include "common/typedef.h"
 #include "spline.h"
+#include "toolboxes/errormessages.h"
 
 class Physics
 {

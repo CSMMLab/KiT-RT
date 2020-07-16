@@ -74,7 +74,7 @@ void Physics::LoadDatabase( std::string fileName_H, std::string fileName_O, std:
     _stpowH2O = ReadStoppingPowers( fileName_stppower );
 }
 
-VectorVector Physics::GetScatteringXS( Vector energies, Vector density, Vector angle ) {
+VectorVector Physics::GetScatteringXS( Vector energies, Vector angle ) {
     std::vector<std::vector<double>> tmp;              // vectorvector which stores data at fixed energies
     std::vector<std::vector<double>> xsH2OGrid;        // matrix which stores tensorized data for given angular grid, original energy grid
     std::vector<std::vector<double>> xsH2OGridGrid;    // matrix which stores tensorized data for given angular and energy grid
