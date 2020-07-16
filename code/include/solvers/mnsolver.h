@@ -28,22 +28,35 @@ class MNSolver : public Solver
     unsigned _nTotalEntries;          /*! @brief: Total number of equations in the system */
     unsigned short _nMaxMomentsOrder; /*! @brief: Max Order of Moments */
 
-    VectorVector _sigmaA;       /*!  @brief: Absorption coefficient for all energies*/
+    // Solver specific physics
+    VectorVector _sigmaA; /*!  @brief: Absorption coefficient for all energies*/
+
+    // Moment basis
     SphericalHarmonics* _basis; /*! @brief: Class to compute and store current spherical harmonics basis */
     VectorVector _moments;      /*! @brief: Moment Vector pre-computed at each quadrature point: dim= _nq x _nTotalEntries */
 
+    // Right hand side members
     Vector _scatterMatDiag; /*! @brief: Diagonal of the scattering matrix (its a diagonal matrix by construction) */
+    // TODO: Source
 
-    // quadrature related numbers
+    // quadrature related members
     VectorVector _quadPoints;       /*!  @brief quadrature points, dim(_quadPoints) = (_nq,spatialDim) */
     Vector _weights;                /*!  @brief quadrature weights, dim(_weights) = (_nq) */
     VectorVector _quadPointsSphere; /*!  @brief (my,phi), dim(_quadPoints) = (_nq,2) */
 
-    EntropyBase* _entropy; /*! @brief: Class to handle entropy functionals */
-    VectorVector _alpha;   /*! @brief: Lagrange Multipliers for Minimal Entropy problem for each gridCell
-                                       Layout: _nCells x _nTotalEntries*/
-
+    // Entropy Optimization related members
+    EntropyBase* _entropy;     /*! @brief: Class to handle entropy functionals */
+    VectorVector _alpha;       /*! @brief: Lagrange Multipliers for Minimal Entropy problem for each gridCell
+                                           Layout: _nCells x _nTotalEntries*/
     OptimizerBase* _optimizer; /*! @brief: Class to solve minimal entropy problem */
+
+    // Output related members
+    std::vector<std::vector<double>> _outputFields; /*! @brief: Protoype output */
+
+    /*! @brief Function that writes NN Training Data in a .csv file */
+    void WriteNNTrainingData( unsigned idx_pseudoTime );
+
+    // Member functions
     /*! @brief : computes the global index of the moment corresponding to basis function (l,k)
      *  @param : degree l, it must hold: 0 <= l <=_nq
      *  @param : order k, it must hold: -l <=k <= l

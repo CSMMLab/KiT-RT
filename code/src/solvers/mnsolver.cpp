@@ -8,7 +8,10 @@
 #include "solvers/sphericalharmonics.h"
 #include "toolboxes/textprocessingtoolbox.h"
 
+// externals
 #include <mpi.h>
+
+#include <fstream>
 
 //#include <chrono>
 
@@ -53,6 +56,9 @@ MNSolver::MNSolver( Config* settings ) : Solver( settings ) {
 
     _moments = VectorVector( _nq, Vector( _nTotalEntries, 0.0 ) );
     ComputeMoments();
+
+    // Solver output
+    _outputFields = std::vector( _nTotalEntries, std::vector( _nCells, 0.0 ) );
 }
 
 MNSolver::~MNSolver() {
@@ -183,21 +189,26 @@ void MNSolver::Solve() {
             }
         }
 
-        // Update Solution
-        _sol = psiNew;
-
         // pseudo time iteration output
         double mass = 0.0;
-        for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
-            fluxNew[idx_cell]       = _sol[idx_cell][0];    // zeroth moment is raditation densitiy we are interested in
-            _solverOutput[idx_cell] = _sol[idx_cell][0];
-            mass += _sol[idx_cell][0] * _areas[idx_cell];
+        for( unsigned idx_sys = 0; idx_sys < _nTotalEntries; idx_sys++ ) {
+            for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
+                fluxNew[idx_cell]       = _sol[idx_cell][0];    // zeroth moment is raditation densitiy we are interested in
+                _solverOutput[idx_cell] = _sol[idx_cell][0];
+                mass += _sol[idx_cell][0] * _areas[idx_cell];
+                _outputFields[idx_sys][idx_cell] = _sol[idx_cell][idx_sys];
+            }
         }
 
         dFlux   = blaze::l2Norm( fluxNew - fluxOld );
         fluxOld = fluxNew;
         if( rank == 0 ) log->info( "{:03.8f}   {:01.5e} {:01.5e}", _energies[idx_energy], dFlux, mass );
         Save( idx_energy );
+
+        WriteNNTrainingData( idx_energy );
+
+        // Update Solution
+        _sol = psiNew;
     }
 }
 
@@ -219,4 +230,22 @@ void MNSolver::Save( int currEnergy ) const {
     std::vector<std::vector<double>> scalarField( 1, _solverOutput );
     std::vector<std::vector<std::vector<double>>> results{ scalarField };
     ExportVTK( _settings->GetOutputFile() + "_" + std::to_string( currEnergy ), results, fieldNames, _mesh );
+}
+
+void MNSolver::WriteNNTrainingData( unsigned idx_pseudoTime ) {
+    std::string filename = "trainNN.csv";
+    std::ofstream myfile;
+    myfile.open( filename, std::ofstream::app );
+
+    for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
+        for( unsigned idx_sys = 0; idx_sys < _nTotalEntries; idx_sys++ ) {
+            myfile << _sol[idx_cell][idx_sys];
+        }
+        myfile << "\n";
+        for( unsigned idx_sys = 0; idx_sys < _nTotalEntries; idx_sys++ ) {
+            myfile << _alpha[idx_cell][idx_sys];
+        }
+        myfile << "\n\n";
+    }
+    myfile.close();
 }
