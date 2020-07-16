@@ -59,7 +59,7 @@ void NewtonOptimizer::ComputeHessian( Vector& alpha, VectorVector& moments, Matr
     }
 }
 
-void NewtonOptimizer::Solve( Vector& lambda, Vector& sol, VectorVector& moments ) {
+void NewtonOptimizer::Solve( Vector& lambda, Vector& sol, VectorVector& moments, unsigned idx_cell ) {
 
     /* solve the problem argmin ( <eta(alpha*m)>-alpha*u))
      * where alpha = Lagrange multiplier
@@ -68,10 +68,10 @@ void NewtonOptimizer::Solve( Vector& lambda, Vector& sol, VectorVector& moments 
      */
 
     // if we  have quadratic entropy, then alpha = u;
-    // if( _settings->GetEntropyName() == QUADRATIC && _settings->GetNewtonFastMode() ) {
-    //    lambda = sol;
-    //    return;
-    //}
+    if( _settings->GetEntropyName() == QUADRATIC && _settings->GetNewtonFastMode() ) {
+        lambda = sol;
+        return;
+    }
 
     // Start Newton Algorithm
 
@@ -138,7 +138,7 @@ void NewtonOptimizer::Solve( Vector& lambda, Vector& sol, VectorVector& moments 
                 return;
             }
             else if( ++lineSearchCounter > _maxLineSearches ) {
-                ErrorMessages::Error( "Newton needed too many refinement steps!", CURRENT_FUNCTION );
+                ErrorMessages::Error( "Newton needed too many refinement steps!  at cell " + std::to_string( idx_cell ), CURRENT_FUNCTION );
             }
         }
         lambda = lambdaNew;
@@ -147,5 +147,7 @@ void NewtonOptimizer::Solve( Vector& lambda, Vector& sol, VectorVector& moments 
             return;
         }
     }
-    ErrorMessages::Error( "Newton did not converge!", CURRENT_FUNCTION );
+    ErrorMessages::Error( "Newton did not converge! Norm of gradient is: " + std::to_string( norm( dlambdaNew ) ) + " at cell " +
+                              std::to_string( idx_cell ),
+                          CURRENT_FUNCTION );
 }

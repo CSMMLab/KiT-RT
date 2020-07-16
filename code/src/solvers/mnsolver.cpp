@@ -101,15 +101,19 @@ Vector MNSolver::ConstructFlux( unsigned idx_cell ) {
             entropyFlux += _g->Flux( _quadPoints[idx_quad], entropyL, entropyR, _normals[idx_cell][idx_neigh] );
         }
         flux += _moments[idx_quad] * ( _weights[idx_quad] * entropyFlux );
+
+        // ------- Relizablity Reconstruction Step ----
     }
     return flux;
 }
 
 void MNSolver::ComputeRealizableSolution( unsigned idx_cell ) {
     double entropyReconstruction = 0.0;
-
+    _sol[idx_cell]               = 0;
     for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
+        // Make entropyReconstruction a member vector, s.t. it does not have to be re-evaluated in ConstructFlux
         entropyReconstruction = _entropy->EntropyPrimeDual( blaze::dot( _alpha[idx_cell], _moments[idx_quad] ) );
+        _sol[idx_cell] += _moments[idx_quad] * ( _weights[idx_quad] * entropyReconstruction );
     }
 }
 
@@ -153,11 +157,11 @@ void MNSolver::Solve() {
 
             // ------- Reconstruction Step ----------------
 
-            _optimizer->Solve( _alpha[idx_cell], _sol[idx_cell], _moments );
+            _optimizer->Solve( _alpha[idx_cell], _sol[idx_cell], _moments, idx_cell );
 
             // ------- Relizablity Reconstruction Step ----
 
-            ComputeRealizableSolution( idx_cell );
+            // ComputeRealizableSolution( idx_cell );
 
             // ------- Flux Computation Step --------------
 
