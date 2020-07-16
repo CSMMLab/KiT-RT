@@ -68,10 +68,10 @@ void NewtonOptimizer::Solve( Vector& lambda, Vector& sol, VectorVector& moments 
      */
 
     // if we  have quadratic entropy, then alpha = u;
-    // if( _settings->GetEntropyName() == QUADRATIC && _settings->GetNewtonFastMode() ) {
-    //    lambda = sol;
-    //    return;
-    //}
+    if( _settings->GetEntropyName() == QUADRATIC && _settings->GetNewtonFastMode() ) {
+        lambda = sol;
+        return;
+    }
 
     // Start Newton Algorithm
 

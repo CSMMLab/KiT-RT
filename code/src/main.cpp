@@ -12,14 +12,6 @@
 #include <string>
 
 // ----
-#include "optimizers/optimizerbase.h"
-#include "quadratures/qgausslegendretensorized.h"
-#include "quadratures/qmontecarlo.h"
-#include "solvers/sphericalharmonics.h"
-
-double testFunc( double my, double phi ) { return my * my + phi; }
-
-double testFunc2( double x, double y, double z ) { return x + y + z; }
 
 int main( int argc, char** argv ) {
     MPI_Init( &argc, &argv );
