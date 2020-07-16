@@ -1,28 +1,8 @@
 image: rtsn/test:latest
 
 stages:
-  - build
   - unit_tests
 
-build:
-  stage: build
-  script:
-    - git submodule update --init --recursive
-    - cd code/build/debug
-    - cmake -G Ninja -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=True ../../
-    - ninja
-  timeout: 2h
-  only:
-    refs:
-      - master
-      - merge_requests
-    changes:
-      - "code/include/**/*"
-      - "code/tests/**/*"
-      - "code/src/**/*"
-      - "code/CMakeLists.txt"
-      - "scripts/Dockerfile"
-      - ".gitmodules"
       
 unit_tests:
   stage: unit_tests
@@ -36,6 +16,7 @@ unit_tests:
   timeout: 2h
   only:
     refs:
+      - develop
       - master
       - merge_requests
     changes:
