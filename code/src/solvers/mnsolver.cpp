@@ -238,14 +238,15 @@ void MNSolver::WriteNNTrainingData( unsigned idx_pseudoTime ) {
     myfile.open( filename, std::ofstream::app );
 
     for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
+        myfile << 0 << ", " << _nTotalEntries << "," << idx_pseudoTime;
         for( unsigned idx_sys = 0; idx_sys < _nTotalEntries; idx_sys++ ) {
-            myfile << _sol[idx_cell][idx_sys];
+            myfile << "," << _sol[idx_cell][idx_sys];
         }
-        myfile << "\n";
+        myfile << "\n" << 1 << ", " << _nTotalEntries << "," << idx_pseudoTime;
         for( unsigned idx_sys = 0; idx_sys < _nTotalEntries; idx_sys++ ) {
-            myfile << _alpha[idx_cell][idx_sys];
+            myfile << "," << _alpha[idx_cell][idx_sys];
         }
-        myfile << "\n\n";
+        if( idx_cell < _nTotalEntries - 1 ) myfile << "\n";
     }
     myfile.close();
 }

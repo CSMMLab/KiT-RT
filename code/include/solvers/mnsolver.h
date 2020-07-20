@@ -4,7 +4,6 @@
 #include "solverbase.h"
 
 class EntropyBase;
-class QuadratureBase;
 class SphericalHarmonics;
 class OptimizerBase;
 
