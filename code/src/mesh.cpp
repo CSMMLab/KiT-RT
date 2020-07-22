@@ -366,10 +366,12 @@ void Mesh::ComputeSlopes( unsigned nq, VectorVector& psiDerX, VectorVector& psiD
 
 void Mesh::ReconstructSlopesS( unsigned nq, VectorVector& psiDerX, VectorVector& psiDerY, const VectorVector& psi ) const {
 
-    double duxL;
-    double duyL;
-    double duxR;
-    double duyR;
+    double dux1;
+    double duy1;
+    double dux2;
+    double duy2;
+    double dux3;
+    double duy3;
 
     for( unsigned k = 0; k < nq; ++k ) {
         for( unsigned j = 0; j < _numCells; ++j ) {
@@ -380,14 +382,17 @@ void Mesh::ReconstructSlopesS( unsigned nq, VectorVector& psiDerX, VectorVector&
             // skip boundary cells
             if( _cellBoundaryTypes[j] != 2 ) continue;
 
-            duxL = ( psi[j][k] - psi[_cellNeighbors[j][0]][k] ) / ( _cellMidPoints[j][0] - _cellMidPoints[_cellNeighbors[j][0]][0] + 1e-8 );
-            duyL = ( psi[j][k] - psi[_cellNeighbors[j][0]][k] ) / ( _cellMidPoints[j][1] - _cellMidPoints[_cellNeighbors[j][0]][1] + 1e-8 );
+            dux1 = ( psi[j][k] - psi[_cellNeighbors[j][0]][k] ) / ( _cellMidPoints[j][0] - _cellMidPoints[_cellNeighbors[j][0]][0] + 1e-8 );
+            duy1 = ( psi[j][k] - psi[_cellNeighbors[j][0]][k] ) / ( _cellMidPoints[j][1] - _cellMidPoints[_cellNeighbors[j][0]][1] + 1e-8 );
 
-            duxR = ( psi[j][k] - psi[_cellNeighbors[j][2]][k] ) / ( _cellMidPoints[j][0] - _cellMidPoints[_cellNeighbors[j][2]][0] + 1e-8 );
-            duyR = ( psi[j][k] - psi[_cellNeighbors[j][2]][k] ) / ( _cellMidPoints[j][1] - _cellMidPoints[_cellNeighbors[j][2]][1] + 1e-8 );
+            dux2 = ( psi[j][k] - psi[_cellNeighbors[j][1]][k] ) / ( _cellMidPoints[j][0] - _cellMidPoints[_cellNeighbors[j][2]][0] + 1e-8 );
+            duy2 = ( psi[j][k] - psi[_cellNeighbors[j][1]][k] ) / ( _cellMidPoints[j][1] - _cellMidPoints[_cellNeighbors[j][2]][1] + 1e-8 );
 
-            psiDerX[j][k] = LMinMod( duxL, duxR ) * 0.5;
-            psiDerY[j][k] = LMinMod( duyL, duyR ) * 0.5;
+            dux3 = ( psi[j][k] - psi[_cellNeighbors[j][2]][k] ) / ( _cellMidPoints[j][0] - _cellMidPoints[_cellNeighbors[j][2]][0] + 1e-8 );
+            duy3 = ( psi[j][k] - psi[_cellNeighbors[j][2]][k] ) / ( _cellMidPoints[j][1] - _cellMidPoints[_cellNeighbors[j][2]][1] + 1e-8 );
+
+            psiDerX[j][k] = std::min({LMinMod( dux1, dux2 ), LMinMod( dux2, dux3 ), LMinMod( dux1, dux3 )});
+            psiDerY[j][k] = std::min({LMinMod( duy1, duy2 ), LMinMod( duy2, duy3 ), LMinMod( duy1, duy3 )});
         }
     }
 }
@@ -400,8 +405,8 @@ void Mesh::ReconstructSlopesU( unsigned nq, VectorVector& psiDerX, VectorVector&
     std::vector<std::vector<Vector>> psiSample( _numCells, std::vector<Vector>( nq, Vector( _numNodesPerCell, 0.0 ) ) );
     std::vector<std::vector<Vector>> phiSample( _numCells, std::vector<Vector>( nq, Vector( _numNodesPerCell, 0.0 ) ) );
 
-    for( unsigned k = 0; k < nq; ++k ) {
 
+    for( unsigned k = 0; k < nq; ++k ) {
         for( unsigned j = 0; j < _numCells; ++j ) {
             // reset derivatives
             psiDerX[j][k] = 0.0;
@@ -410,6 +415,7 @@ void Mesh::ReconstructSlopesU( unsigned nq, VectorVector& psiDerX, VectorVector&
             // skip boundary cells
             if( _cellBoundaryTypes[j] != 2 ) continue;
 
+            /*
             // step 1: calculate psi difference around neighbors and theoretical derivatives by Gauss theorem
             for( unsigned l = 0; l < _cellNeighbors[j].size(); ++l ) {
                 if( psi[_cellNeighbors[j][l]][k] - psi[j][k] > dPsiMax[j][k] ) dPsiMax[j][k] = psi[_cellNeighbors[j][l]][k] - psi[j][k];
@@ -427,13 +433,13 @@ void Mesh::ReconstructSlopesU( unsigned nq, VectorVector& psiDerX, VectorVector&
 
                 // step 3: calculate Phi_ij at sample points
                 if( psiSample[j][k][l] > psi[j][k] ) {
-                    phiSample[j][k][l] = fmin( 0.5, dPsiMax[j][k] / ( psiSample[j][k][l] - psi[j][k] ) );
+                    phiSample[j][k][l] = fmin( 1.0, dPsiMax[j][k] / ( psiSample[j][k][l] - psi[j][k] ) );
                 }
                 else if( psiSample[j][l][k] < psi[j][k] ) {
-                    phiSample[j][k][l] = fmin( 0.5, dPsiMin[j][k] / ( psiSample[j][k][l] - psi[j][k] ) );
+                    phiSample[j][k][l] = fmin( 1.0, dPsiMin[j][k] / ( psiSample[j][k][l] - psi[j][k] ) );
                 }
                 else {
-                    phiSample[j][k][l] = 0.5;
+                    phiSample[j][k][l] = 1.0;
                 }
             }
 
@@ -445,6 +451,59 @@ void Mesh::ReconstructSlopesU( unsigned nq, VectorVector& psiDerX, VectorVector&
                 psiDerX[j][k] *= phi;
                 psiDerY[j][k] *= phi;
             }
+            */
+            
+            
+            // Venkatakrishnan limiter
+            for( unsigned l = 0; l < _cellNeighbors[j].size(); ++l ) {
+                if( psi[_cellNeighbors[j][l]][k] - psi[j][k] > dPsiMax[j][k] ) dPsiMax[j][k] = psi[_cellNeighbors[j][l]][k] - psi[j][k];
+                if( psi[_cellNeighbors[j][l]][k] - psi[j][k] < dPsiMin[j][k] ) dPsiMin[j][k] = psi[_cellNeighbors[j][l]][k] - psi[j][k];
+
+                psiDerX[j][k] += 0.5 * ( psi[j][k] + psi[_cellNeighbors[j][l]][k] ) * _cellNormals[j][l][0] / _cellAreas[j];
+                psiDerY[j][k] += 0.5 * ( psi[j][k] + psi[_cellNeighbors[j][l]][k] ) * _cellNormals[j][l][1] / _cellAreas[j];
+            }
+            
+            //psiSample[j][k][0] = 
+            //psiDerX[j][k] * ( 0.5 * (_nodes[_cells[j][0]][0] + _nodes[_cells[j][1]][0]) - _cellMidPoints[j][0] ) +
+            //psiDerY[j][k] * ( 0.5 * (_nodes[_cells[j][0]][1] + _nodes[_cells[j][1]][1]) - _cellMidPoints[j][1] );  
+            //psiSample[j][k][1] = 
+            //psiDerX[j][k] * ( 0.5 * (_nodes[_cells[j][1]][0] + _nodes[_cells[j][2]][0]) - _cellMidPoints[j][0] ) +
+            //psiDerY[j][k] * ( 0.5 * (_nodes[_cells[j][1]][1] + _nodes[_cells[j][2]][1]) - _cellMidPoints[j][1] );  
+            //psiSample[j][k][2] = 
+            //psiDerX[j][k] * ( 0.5 * (_nodes[_cells[j][2]][0] + _nodes[_cells[j][0]][0]) - _cellMidPoints[j][0] ) +
+            //psiDerY[j][k] * ( 0.5 * (_nodes[_cells[j][2]][1] + _nodes[_cells[j][0]][1]) - _cellMidPoints[j][1] );  
+
+            for( unsigned l = 0; l < _cellNeighbors[j].size(); ++l ) {
+                //psiSample[j][k][l] = 0.5 * psiDerX[j][k] * (_cellMidPoints[_cellNeighbors[j][l]][0] - _cellMidPoints[j][0]) +
+                //                     0.5 * psiDerY[j][k] * (_cellMidPoints[_cellNeighbors[j][l]][1] - _cellMidPoints[j][1]);
+                psiSample[j][k][l] = 2.0 * psiDerX[j][k] * (_cellMidPoints[_cellNeighbors[j][l]][0] - _cellMidPoints[j][0]) +
+                                     2.0 * psiDerY[j][k] * (_cellMidPoints[_cellNeighbors[j][l]][1] - _cellMidPoints[j][1]);
+
+                if( psiSample[j][k][l] > 0.0 ) {
+                    phiSample[j][k][l] = 
+                    (dPsiMax[j][k]*dPsiMax[j][k] + 2.0 * dPsiMax[j][k] * psiSample[j][k][l] + 1e-6)/
+                    (dPsiMax[j][k]*dPsiMax[j][k] + dPsiMax[j][k] * psiSample[j][k][l] + 2.0 * psiSample[j][k][l] * psiSample[j][k][l] + 1e-6);
+                }
+                else if( psiSample[j][l][k] < 0.0 ) {
+                    phiSample[j][k][l] = 
+                    (dPsiMin[j][k]*dPsiMin[j][k] + 2.0 * dPsiMin[j][k] * psiSample[j][k][l] + 1e-6)/
+                    (dPsiMin[j][k]*dPsiMin[j][k] + dPsiMin[j][k] * psiSample[j][k][l] + 2.0 * psiSample[j][k][l] * psiSample[j][k][l] + 1e-6);;
+                }
+                else {
+                    phiSample[j][k][l] = 1.0;
+                }
+            }
+
+            // step 4: find minimum limiter function phi
+            phi = min( phiSample[j][k] );
+
+            // step 5: limit the slope reconstructed from Gauss theorem
+            for( unsigned l = 0; l < _cellNeighbors[j].size(); ++l ) {
+                psiDerX[j][k] *= phi;
+                psiDerY[j][k] *= phi;
+            }
+            
+
         }
     }
 }

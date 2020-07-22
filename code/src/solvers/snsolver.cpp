@@ -147,22 +147,44 @@ void SNSolver::Solve() {
         fluxOld = fluxNew;
         if( rank == 0 ) log->info( "{:03.8f}   {:01.5e}", _energies[n], dFlux );
     }
+
+    /*
+    for( unsigned j = 0; j < _nCells; ++j ) {
+        for( unsigned k = 0; k < _nq; ++k ) {
+            _sol[j][k] = sin( cellMidPoints[j][0] + cellMidPoints[j][1] );
+            //if(cellMidPoints[j][0]<0.0){_sol[j][k] = 1.0;}
+            //else {_sol[j][k] = 0.0;}
+        }
+    }
+
+    //_mesh->ComputeSlopes( _nq, psiDx, psiDy, _sol );
+    _mesh->ReconstructSlopesU( _nq, psiDx, psiDy, _sol );
+
+    std::vector<std::string> fieldNames{"flux"};
+    std::vector<double> flux( _nCells, 0.0 );
+    for( unsigned i = 0; i < _nCells; ++i ) {
+        flux[i] = psiDx[i][0];
+    }
+    std::vector<std::vector<double>> scalarField( 1, flux );
+    std::vector<std::vector<std::vector<double>>> results{scalarField};
+    ExportVTK( _settings->GetOutputFile() + "_" + std::to_string( 1 ), results, fieldNames, _mesh );
+    */
 }
 
 void SNSolver::Save() const {
-    std::vector<std::string> fieldNames{ "flux" };
+    std::vector<std::string> fieldNames{"flux"};
     std::vector<double> flux( _nCells, 0.0 );
     for( unsigned i = 0; i < _nCells; ++i ) {
         flux[i] = dot( _sol[i], _weights );
     }
     std::vector<std::vector<double>> scalarField( 1, flux );
-    std::vector<std::vector<std::vector<double>>> results{ scalarField };
+    std::vector<std::vector<std::vector<double>>> results{scalarField};
     ExportVTK( _settings->GetOutputFile(), results, fieldNames, _mesh );
 }
 
 void SNSolver::Save( int currEnergy ) const {
-    std::vector<std::string> fieldNames{ "flux" };
+    std::vector<std::string> fieldNames{"flux"};
     std::vector<std::vector<double>> scalarField( 1, _solverOutput );
-    std::vector<std::vector<std::vector<double>>> results{ scalarField };
+    std::vector<std::vector<std::vector<double>>> results{scalarField};
     ExportVTK( _settings->GetOutputFile() + "_" + std::to_string( currEnergy ), results, fieldNames, _mesh );
 }
