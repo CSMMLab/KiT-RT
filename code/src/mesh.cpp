@@ -496,7 +496,7 @@ void Mesh::ReconstructSlopesU( unsigned nq, VectorVector& psiDerX, VectorVector&
 
             // step 4: find minimum limiter function phi
             phi = min( phiSample[j][k] );
-
+            //std::cout << phi << std::endl;
             // step 5: limit the slope reconstructed from Gauss theorem
             for( unsigned l = 0; l < _cellNeighbors[j].size(); ++l ) {
                 psiDerX[j][k] *= phi;
