@@ -103,8 +103,8 @@ void SNSolver::Solve() {
                                        psiDy[_neighbors[j][l]][k] * ( interfaceMidPoints[j][l][1] - cellMidPoints[_neighbors[j][l]][1] );
                                 // positivity check (if not satisfied, deduce to first order)
                                 if( psiL < 0.0 || psiR < 0.0 ) {
-                                    psiL = _sol[j][k];
-                                    psiR = _sol[_neighbors[j][l]][k];
+                                    //psiL = _sol[j][k];
+                                    //psiR = _sol[_neighbors[j][l]][k];
                                 }
                                 // flux evaluation
                                 psiNew[j][k] += _g->Flux( _quadPoints[k], psiL, psiR, _normals[j][l] );
