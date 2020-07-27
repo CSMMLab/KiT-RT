@@ -20,17 +20,17 @@ void Interpolation::set_boundary( BOUNDARY left, double left_value, BOUNDARY rig
     _force_linear_extrapolation = force_linear_extrapolation;
 }
 
-void Interpolation::set_points( const std::vector<double>& x, const std::vector<double>& y, bool cubic_Interpolation ) {
+void Interpolation::set_points( const std::vector<double>& x, const std::vector<double>& y, TYPE type ) {
     Vector xn( x.size(), 0.0 );
     Vector yn( y.size(), 0.0 );
     for( unsigned i = 0; i < x.size(); ++i ) {
         xn[i] = x[i];
         yn[i] = y[i];
     }
-    this->set_points( xn, yn, cubic_Interpolation );
+    this->set_points( xn, yn, type );
 }
 
-void Interpolation::set_points( const Vector& x, const Vector& y, bool cubic_Interpolation ) {
+void Interpolation::set_points( const Vector& x, const Vector& y, TYPE type ) {
     if( x.size() != y.size() ) ErrorMessages::Error( "Vectors are of unequal length!", CURRENT_FUNCTION );
     _x    = x;
     _y    = y;
@@ -39,7 +39,7 @@ void Interpolation::set_points( const Vector& x, const Vector& y, bool cubic_Int
         if( !( _x[i] < _x[i + 1] ) ) ErrorMessages::Error( "x is not sorted ascendingly!", CURRENT_FUNCTION );
     }
 
-    if( cubic_Interpolation ) {
+    if( type == cubic ) {
         Matrix A( n, n, 0.0 );    // TODO: should be a sparse matrix!
         Vector rhs( n, 0.0 );
         for( int i = 1; i < n - 1; i++ ) {
@@ -72,7 +72,7 @@ void Interpolation::set_points( const Vector& x, const Vector& y, bool cubic_Int
             rhs[n - 1]        = 3.0 * ( _right_value - ( y[n - 1] - y[n - 2] ) / ( x[n - 1] - x[n - 2] ) );
         }
         else {
-            ErrorMessages::Error( "Invalid bd_type", CURRENT_FUNCTION );
+            ErrorMessages::Error( "Invalid boundary type!", CURRENT_FUNCTION );
         }
 
         _b = rhs;
@@ -85,7 +85,7 @@ void Interpolation::set_points( const Vector& x, const Vector& y, bool cubic_Int
             _c[i] = ( y[i + 1] - y[i] ) / ( x[i + 1] - x[i] ) - 1.0 / 3.0 * ( 2.0 * _b[i] + _b[i + 1] ) * ( x[i + 1] - x[i] );
         }
     }
-    else {
+    else if( type == linear ) {
         _a.resize( n );
         _b.resize( n );
         _c.resize( n );
@@ -94,6 +94,9 @@ void Interpolation::set_points( const Vector& x, const Vector& y, bool cubic_Int
             _b[i] = 0.0;
             _c[i] = ( _y[i + 1] - _y[i] ) / ( _x[i + 1] - _x[i] );
         }
+    }
+    else {
+        ErrorMessages::Error( "Invalid interpolation type!", CURRENT_FUNCTION );
     }
 
     _b0 = ( _force_linear_extrapolation == false ) ? _b[0] : 0.0;

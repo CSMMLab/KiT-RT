@@ -99,18 +99,38 @@ VectorVector Physics::GetScatteringXS( Vector energies, Vector angle ) {
             // new energy section starts in _xsH2O. Now we interpolate the values in tmp at given angular grid
             // interpolate vector at different angles for fixed current energies
             Interpolation xsH( tmpH[0], tmpH[1], Interpolation::linear );
-            Interpolation xsO( tmpO[0], tmpO[1], Interpolation::linear );
             for( unsigned k = 0; k < angle.size(); k++ ) {
                 tmpAngleGridH[k] = xsH( angle[k] );
-                tmpAngleGridO[k] = xsO( angle[k] );
             }
             xsHGrid.push_back( tmpAngleGridH );
-            xsOGrid.push_back( tmpAngleGridO );
 
             // reset current energy
             energiesOrig.push_back( energyCurrent );
             energyCurrent = _xsScatteringH2O[H][i][0];
             tmpH.clear();
+        }
+    }
+
+    energyCurrent = _xsScatteringH2O[O][0][0];
+    for( unsigned i = 0; i < _xsScatteringH2O[O].size(); ++i ) {
+        // split vector into subvectors with identical energy
+        if( abs( _xsScatteringH2O[O][i][0] - energyCurrent ) < 1e-12 ) {
+            if( tmpO.empty() ) tmpO.resize( 2 );
+            tmpO[0].push_back( _xsScatteringH2O[O][i][1] );
+            tmpO[1].push_back( _xsScatteringH2O[O][i][2] );
+        }
+        else {
+            // new energy section starts in _xsH2O. Now we interpolate the values in tmp at given angular grid
+            // interpolate vector at different angles for fixed current energies
+            Interpolation xsO( tmpO[0], tmpO[1], Interpolation::linear );
+            for( unsigned k = 0; k < angle.size(); k++ ) {
+                tmpAngleGridO[k] = xsO( angle[k] );
+            }
+            xsOGrid.push_back( tmpAngleGridO );
+
+            // reset current energy
+            energyCurrent = _xsScatteringH2O[O][i][0];
+            tmpO.clear();
         }
     }
 

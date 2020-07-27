@@ -25,8 +25,8 @@ class Interpolation
     Interpolation( const Vector& x, const Vector& y, TYPE type = linear );
 
     void set_boundary( BOUNDARY left, double left_value, BOUNDARY right, double right_value, bool force_linear_extrapolation = false );
-    void set_points( const std::vector<double>& x, const std::vector<double>& y, bool cubic_Spline = true );
-    void set_points( const Vector& x, const Vector& y, bool cubic_Spline = true );
+    void set_points( const std::vector<double>& x, const std::vector<double>& y, TYPE type );
+    void set_points( const Vector& x, const Vector& y, TYPE type );
     double operator()( double x ) const;
 };
 
