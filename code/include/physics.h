@@ -6,17 +6,20 @@
 #include <map>
 
 #include "common/typedef.h"
-#include "spline.h"
+#include "interpolation.h"
 #include "toolboxes/errormessages.h"
 
 class Physics
 {
 
   private:
-    VectorVector _xsH2O;
-    VectorVector _xsTotalH2O;
-    VectorVector _xsTransportH2O;
+    enum Element { H = 0, O = 1 };
+    std::vector<VectorVector> _xsScatteringH2O;
+    std::vector<VectorVector> _xsTotalH2O;
+    std::vector<VectorVector> _xsTransportH2O;
     VectorVector _stpowH2O;
+
+    const Vector _H20MassFractions{ 0.11189400, 0.88810600 };
 
     std::tuple<std::vector<VectorVector>, std::vector<VectorVector>> ReadENDL( std::string filename );
     VectorVector ReadStoppingPowers( std::string fileName );
@@ -33,8 +36,6 @@ class Physics
      */
     VectorVector GetScatteringXS( Vector energies, Vector angle );
 
-    VectorVector GetScatteringXSE( Vector energies );
-
     /**
      * @brief GetTotalXS gives back vector of vectors of total cross sections for materials defined by density and energies in vector energy
      * @param energies is vector with energies
@@ -42,7 +43,7 @@ class Physics
      */
     VectorVector GetTotalXS( Vector energies, Vector density );
 
-    VectorVector GetTotalXSE( Vector energies );
+    Vector GetTotalXSE( Vector energies );
 
     /**
      * @brief GetStoppingPower gives back vector of vectors of stopping powers for materials defined by density and energies in vector energy
@@ -59,7 +60,7 @@ class Physics
      */
     VectorVector GetTransportXS( Vector energies, Vector density );
 
-    VectorVector GetTransportXSE( Vector energies );
+    Vector GetTransportXSE( Vector energies );
 
     /**
      * @brief Physics constructor

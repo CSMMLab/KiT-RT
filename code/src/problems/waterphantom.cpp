@@ -14,7 +14,7 @@ std::vector<VectorVector> WaterPhantom::GetExternalSource( const Vector& energie
 
 Vector WaterPhantom::GetStoppingPower( const Vector& energies ) {
     // @TODO get correct stopping power
-    return Vector( energies.size(), 1.0 );
+    return _physics->GetStoppingPower( energies );
 }
 
 VectorVector WaterPhantom::SetupIC() {

@@ -352,11 +352,13 @@ void Config::SetPostprocessing() {
     if( _inputDir[_inputDir.size() - 1] != '/' ) _inputDir.append( "/" );
 
     // setup relative paths
-    _logDir     = _inputDir + _logDir;
-    _outputDir  = _inputDir + _outputDir;
-    _meshFile   = _inputDir + _meshFile;
-    _outputFile = _outputDir + _outputFile;
-    _ctFile     = _inputDir + _ctFile;
+    _logDir       = _inputDir + _logDir;
+    _outputDir    = _inputDir + _outputDir;
+    _meshFile     = _inputDir + _meshFile;
+    _outputFile   = _outputDir + _outputFile;
+    _ctFile       = _inputDir + _ctFile;
+    _hydrogenFile = _inputDir + _hydrogenFile;
+    _oxygenFile   = _inputDir + _oxygenFile;
 
     // create directories if they dont exist
     if( !std::filesystem::exists( _outputDir ) ) std::filesystem::create_directory( _outputDir );
