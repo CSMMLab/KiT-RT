@@ -23,8 +23,8 @@ double testFunc2( double x, double y, double z ) { return x + y + z; }
 
 int main( int argc, char** argv ) {
     MPI_Init( &argc, &argv );
-    //    wchar_t* program = Py_DecodeLocale( argv[0], NULL );
-    //    Py_SetProgramName( program );
+    wchar_t* program = Py_DecodeLocale( argv[0], NULL );
+    Py_SetProgramName( program );
 
     std::string filename = ParseArguments( argc, argv );
 
