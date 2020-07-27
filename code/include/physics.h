@@ -48,7 +48,7 @@ class Physics
      * @param density is vector with patient densities (at different spatial cells)
      * @param sH2O is vector of stopping powers in water
      */
-    VectorVector GetStoppingPower( Vector energies, Vector density );
+    Vector GetStoppingPower( Vector energies );
 
     /**
      * @brief GetTransportXS gives back vector of vectors of stopping powers for materials defined by density and energies in vector energy

@@ -165,8 +165,8 @@ VectorVector Physics::GetTotalXS( Vector energies, Vector density ) {
     return total_XS;
 }
 
-VectorVector Physics::GetStoppingPower( Vector energies, Vector density ) {
-    VectorVector stopping_power;
+Vector Physics::GetStoppingPower( Vector energies ) {
+    Vector stopping_power;
     double stpw_H2O_i;
 
     Spline interp;
@@ -185,7 +185,7 @@ VectorVector Physics::GetStoppingPower( Vector energies, Vector density ) {
             stpw_H2O_i = interp( energies[i] );
         }
 
-        stopping_power[i] = stpw_H2O_i * density;
+        stopping_power[i] = stpw_H2O_i;
     }
     return stopping_power;
 }

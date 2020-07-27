@@ -6,6 +6,7 @@
 #include "fluxes/numericalflux.h"
 #include "problems/problembase.h"
 #include "quadratures/quadraturebase.h"
+#include "solvers/csdsnsolver.h"
 #include "solvers/mnsolver.h"
 #include "solvers/pnsolver.h"
 #include "solvers/snsolver.h"
@@ -34,10 +35,10 @@ Solver::Solver( Config* settings ) : _settings( settings ) {
     // setup problem  and store frequently used params
     _problem = ProblemBase::Create( _settings, _mesh );
     _sol     = _problem->SetupIC();
-    _s       = _problem->GetStoppingPower( _energies );
-    _sigmaT  = _problem->GetTotalXS( _energies );
-    _sigmaS  = _problem->GetScatteringXS( _energies );
-    _Q       = _problem->GetExternalSource( _energies );
+    //_s       = _problem->GetStoppingPower( _energies );
+    _sigmaT = _problem->GetTotalXS( _energies );
+    _sigmaS = _problem->GetScatteringXS( _energies );
+    _Q      = _problem->GetExternalSource( _energies );
 
     // setup numerical flux
     _g = NumericalFlux::Create();
@@ -69,6 +70,7 @@ double Solver::ComputeTimeStep( double cfl ) const {
 Solver* Solver::Create( Config* settings ) {
     switch( settings->GetSolverName() ) {
         case SN_SOLVER: return new SNSolver( settings );
+        case CSD_SN_SOLVER: return new CSDSNSolver( settings );
         case PN_SOLVER: return new PNSolver( settings );
         case MN_SOLVER: return new MNSolver( settings );
         default: return new SNSolver( settings );

@@ -21,7 +21,9 @@ VectorVector ElectronRT::GetTotalXS( const std::vector<double>& energies ) {
 
 VectorVector ElectronRT::GetScatteringXSE( const Vector& energies, const Vector& angles ) {
     // @TODO
+    std::cout << "before interpolation" << std::endl;
     _physics->GetScatteringXS( energies, angles );
+    std::cout << "after interpolation" << std::endl;
     return VectorVector( energies.size(), Vector( angles.size(), 0.0 ) );
 }
 
@@ -35,9 +37,9 @@ std::vector<VectorVector> ElectronRT::GetExternalSource( const std::vector<doubl
     return std::vector<VectorVector>( energies.size(), std::vector<Vector>( _mesh->GetNumCells(), Vector( _settings->GetNQuadPoints(), 0.0 ) ) );
 }
 
-std::vector<double> ElectronRT::GetStoppingPower( const std::vector<double>& energies ) {
+Vector ElectronRT::GetStoppingPower( const Vector& energies ) {
     // @TODO
-    return std::vector<double>( energies.size(), 1.0 );
+    return Vector( energies.size(), 1.0 );
 }
 
 VectorVector ElectronRT::SetupIC() {

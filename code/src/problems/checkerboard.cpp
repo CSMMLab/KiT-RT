@@ -30,9 +30,9 @@ std::vector<VectorVector> Checkerboard::GetExternalSource( const std::vector<dou
     return std::vector<VectorVector>( 1u, Q );
 }
 
-std::vector<double> Checkerboard::GetStoppingPower( const std::vector<double>& energies ) {
+Vector Checkerboard::GetStoppingPower( const Vector& energies ) {
     // @TODO
-    return std::vector<double>( energies.size(), 0.0 );
+    return Vector( energies.size(), 0.0 );
 }
 
 VectorVector Checkerboard::SetupIC() {

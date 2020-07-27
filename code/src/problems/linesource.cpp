@@ -20,9 +20,9 @@ std::vector<VectorVector> LineSource_SN::GetExternalSource( const std::vector<do
     return std::vector<VectorVector>( 1u, std::vector<Vector>( _mesh->GetNumCells(), Vector( 1u, 0.0 ) ) );
 }
 
-std::vector<double> LineSource_SN::GetStoppingPower( const std::vector<double>& energies ) {
+Vector LineSource_SN::GetStoppingPower( const Vector& energies ) {
     // @TODO
-    return std::vector<double>( energies.size(), 1.0 );
+    return Vector( energies.size(), 1.0 );
 }
 
 VectorVector LineSource_SN::SetupIC() {
@@ -76,9 +76,9 @@ std::vector<VectorVector> LineSource_PN::GetExternalSource( const std::vector<do
     return std::vector<VectorVector>( 1u, std::vector<Vector>( _mesh->GetNumCells(), Vector( 1u, 0.0 ) ) );
 }
 
-std::vector<double> LineSource_PN::GetStoppingPower( const std::vector<double>& energies ) {
+Vector LineSource_PN::GetStoppingPower( const Vector& energies ) {
     // @TODO
-    return std::vector<double>( energies.size(), 0.0 );
+    return Vector( energies.size(), 0.0 );
 }
 
 VectorVector LineSource_PN::SetupIC() {

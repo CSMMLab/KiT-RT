@@ -13,9 +13,9 @@ std::vector<VectorVector> WaterPhantom::GetExternalSource( const std::vector<dou
     return std::vector<VectorVector>( energies.size(), std::vector<Vector>( _mesh->GetNumCells(), Vector( _settings->GetNQuadPoints(), 0.0 ) ) );
 }
 
-std::vector<double> WaterPhantom::GetStoppingPower( const std::vector<double>& energies ) {
+Vector WaterPhantom::GetStoppingPower( const Vector& energies ) {
     // @TODO get correct stopping power
-    return std::vector<double>( energies.size(), 1.0 );
+    return Vector( energies.size(), 1.0 );
 }
 
 VectorVector WaterPhantom::SetupIC() {

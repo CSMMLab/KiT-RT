@@ -13,7 +13,7 @@ class WaterPhantom : public ElectronRT
     virtual ~WaterPhantom();
 
     virtual std::vector<VectorVector> GetExternalSource( const std::vector<double>& energies );
-    virtual std::vector<double> GetStoppingPower( const std::vector<double>& energies );
+    virtual Vector GetStoppingPower( const Vector& energies );
     virtual VectorVector SetupIC();
     std::vector<double> GetDensity( const VectorVector& cellMidPoints );
 };
