@@ -222,6 +222,12 @@ void Config::SetConfigOptions() {
     /*! @brief ContinuousSlowingDown \n DESCRIPTION: If true, the program uses the continuous slowing down approximation to treat energy dependent
      * problems. \n DEFAULT false \ingroup Config */
     AddBoolOption( "CONTINUOUS_SLOWING_DOWN", _csd, false );
+    /*! @brief HydogenFile \n DESCRIPTION: If the continuous slowing down approximation is used, this referes to the cross section file for hydrogen.
+     * . \n DEFAULT "h.dat" \ingroup Config */
+    AddStringOption( "HYDROGEN_FILE", _hydrogenFile, string( "ENDL_H.txt" ) );
+    /*! @brief OxygenFile \n DESCRIPTION: If the continuous slowing down approximation is used, this referes to the cross section file for oxygen.
+     * . \n DEFAULT "o.dat" \ingroup Config */
+    AddStringOption( "OXYGEN_FILE", _oxygenFile, string( "ENDL_O.txt" ) );
 
     // Entropy related options
     /*! @brief Entropy Functional \n DESCRIPTION: Entropy functional used for the MN_Solver \n DEFAULT QUADRTATIC @ingroup Config. */
@@ -371,6 +377,17 @@ void Config::SetPostprocessing() {
     // if( !std::filesystem::exists( _meshFile ) ) {
     //    ErrorMessages::Error( "Path to mesh file <" + _meshFile + "> does not exist. Please check your config file.", CURRENT_FUNCTION );
     //}
+
+    if( this->IsCSD() ) {
+        if( !std::filesystem::exists( this->GetHydrogenFile() ) ) {
+            ErrorMessages::Error( "Path to mesh file <" + this->GetHydrogenFile() + "> does not exist. Please check your config file.",
+                                  CURRENT_FUNCTION );
+        }
+        if( !std::filesystem::exists( this->GetOxygenFile() ) ) {
+            ErrorMessages::Error( "Path to mesh file <" + this->GetOxygenFile() + "> does not exist. Please check your config file.",
+                                  CURRENT_FUNCTION );
+        }
+    }
 }
 
 void Config::SetOutput() {

@@ -20,11 +20,11 @@ class ElectronRT : public ProblemBase
     ElectronRT( Config* settings, Mesh* mesh );
     virtual ~ElectronRT();
 
-    virtual VectorVector GetScatteringXS( const std::vector<double>& energies );
-    virtual VectorVector GetTotalXS( const std::vector<double>& energies );
+    virtual VectorVector GetScatteringXS( const Vector& energies );
+    virtual VectorVector GetTotalXS( const Vector& energies );
     virtual VectorVector GetScatteringXSE( const Vector& energies, const Vector& angles );
     virtual Vector GetTotalXSE( const Vector& energies );
-    virtual std::vector<VectorVector> GetExternalSource( const std::vector<double>& energies );
+    virtual std::vector<VectorVector> GetExternalSource( const Vector& energies );
     virtual Vector GetStoppingPower( const Vector& energies );
     virtual VectorVector SetupIC();
     std::vector<double> GetDensity( const VectorVector& cellMidPoints );

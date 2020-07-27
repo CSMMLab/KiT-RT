@@ -18,15 +18,13 @@ class Physics
     VectorVector _xsTransportH2O;
     VectorVector _stpowH2O;
 
-  public:
-    // prototype data readers
     std::tuple<std::vector<VectorVector>, std::vector<VectorVector>> ReadENDL( std::string filename );
-
     VectorVector ReadStoppingPowers( std::string fileName );
-
-    // load and prepare data from database
     void LoadDatabase( std::string fileName_H, std::string fileName_O, std::string fileName_stppower );
 
+    Physics() = delete;
+
+  public:
     /** @brief GetScatteringXS gives back vector of vectors of scattering cross sections for materials defined by density and energies in vector
      * energy
      * @param energies is vector with energies
@@ -35,12 +33,16 @@ class Physics
      */
     VectorVector GetScatteringXS( Vector energies, Vector angle );
 
+    VectorVector GetScatteringXSE( Vector energies );
+
     /**
      * @brief GetTotalXS gives back vector of vectors of total cross sections for materials defined by density and energies in vector energy
      * @param energies is vector with energies
      * @param density is vector with patient densities (at different spatial cells)
      */
     VectorVector GetTotalXS( Vector energies, Vector density );
+
+    VectorVector GetTotalXSE( Vector energies );
 
     /**
      * @brief GetStoppingPower gives back vector of vectors of stopping powers for materials defined by density and energies in vector energy
@@ -57,18 +59,17 @@ class Physics
      */
     VectorVector GetTransportXS( Vector energies, Vector density );
 
-    /**
-     * @brief Physics constructor
-     * @param settings stores all needed user information
-     */
-    Physics();
+    VectorVector GetTransportXSE( Vector energies );
 
     /**
-     * @brief Create constructor
-     * @param settings stores all needed information
-     * @return pointer to Physics
+     * @brief Physics constructor
      */
-    static Physics* Create();
+    Physics( std::string fileName_H, std::string fileName_O, std::string fileName_stppower );
+
+    /**
+     * @brief Physics destructor
+     */
+    ~Physics();
 };
 
 #endif

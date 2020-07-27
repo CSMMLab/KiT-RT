@@ -18,9 +18,9 @@ class Checkerboard : public ProblemBase
     Checkerboard( Config* settings, Mesh* mesh );
     virtual ~Checkerboard();
 
-    virtual VectorVector GetScatteringXS( const std::vector<double>& energies );
-    virtual VectorVector GetTotalXS( const std::vector<double>& energies );
-    virtual std::vector<VectorVector> GetExternalSource( const std::vector<double>& energies );
+    virtual VectorVector GetScatteringXS( const Vector& energies );
+    virtual VectorVector GetTotalXS( const Vector& energies );
+    virtual std::vector<VectorVector> GetExternalSource( const Vector& energies );
     virtual Vector GetStoppingPower( const Vector& energies );
     virtual VectorVector SetupIC();
 };

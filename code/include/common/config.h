@@ -62,8 +62,9 @@ class Config
      * to improve floating point accuracy */
     bool _cleanFluxMat;
 
-    /*!< @brief If true, continuous slowing down approximation will be used */
-    bool _csd;
+    bool _csd;                 /*!< @brief If true, continuous slowing down approximation will be used */
+    std::string _hydrogenFile; /*!< @brief Name of hydrogen cross section file */
+    std::string _oxygenFile;   /*!< @brief Name of oxygen cross section file */
 
     // Boundary Conditions
     /*!< @brief List of all Pairs (marker, BOUNDARY_TYPE), e.g. (farfield,DIRICHLET).
@@ -204,6 +205,8 @@ class Config
     std::string inline GetOutputFile() const { return std::filesystem::path( _outputFile ).lexically_normal(); }
     std::string inline GetLogDir() const { return std::filesystem::path( _logDir ).lexically_normal(); }
     std::string inline GetCTFile() const { return std::filesystem::path( _ctFile ).lexically_normal(); }
+    std::string inline GetHydrogenFile() const { return std::filesystem::path( _hydrogenFile ).lexically_normal(); }
+    std::string inline GetOxygenFile() const { return std::filesystem::path( _oxygenFile ).lexically_normal(); }
 
     // Quadrature Structure
     QUAD_NAME inline GetQuadName() const { return _quadName; }

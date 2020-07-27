@@ -28,7 +28,7 @@ class ProblemBase
      *        in vector energy
      * @param energy is the energy the cross section is queried for
      */
-    virtual VectorVector GetScatteringXS( const std::vector<double>& energies ) = 0;
+    virtual VectorVector GetScatteringXS( const Vector& energies ) = 0;
 
     /**
      * @brief GetTotalXS gives back vector of vectors of total cross sections for
@@ -36,7 +36,7 @@ class ProblemBase
      * @param energy is the energy the cross section is queried for
      * @param density is vector with patient densities (at different spatial cells)
      */
-    virtual VectorVector GetTotalXS( const std::vector<double>& energies ) = 0;
+    virtual VectorVector GetTotalXS( const Vector& energies ) = 0;
     /**
      * @brief GetTotalXSE gives back vector of total cross sections for
      *        energies in vector energy
@@ -56,7 +56,7 @@ class ProblemBase
      *        energy, cell and angle
      * @param energies is vector with energies
      */
-    virtual std::vector<VectorVector> GetExternalSource( const std::vector<double>& energies ) = 0;
+    virtual std::vector<VectorVector> GetExternalSource( const Vector& energies ) = 0;
 
     /**
      * @brief GetStoppingPower gives back vector of vectors of stopping powers for

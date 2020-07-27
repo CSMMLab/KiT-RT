@@ -1,8 +1,10 @@
 #include "physics.h"
 
-Physics::Physics() {
-    // LoadDatabase
+Physics::Physics( std::string fileName_H, std::string fileName_O, std::string fileName_stppower ) {
+    LoadDatabase( fileName_H, fileName_O, fileName_stppower );
 }
+
+Physics::~Physics() {}
 
 void Physics::LoadDatabase( std::string fileName_H, std::string fileName_O, std::string fileName_stppower ) {
     VectorVector transport_XS_H;
@@ -165,6 +167,32 @@ VectorVector Physics::GetTotalXS( Vector energies, Vector density ) {
     return total_XS;
 }
 
+VectorVector Physics::GetTotalXSE( Vector energies ) {
+    VectorVector total_XS;
+    double xsH2O_i;
+
+    Spline interp;
+    interp.set_points( _xsTotalH2O[0], _xsTotalH2O[1], false );    // false == linear interpolation
+
+    for( unsigned i = 0; i < energies.size(); i++ ) {
+
+        if( energies[i] < _xsTotalH2O[1][0] ) {
+            xsH2O_i = _xsTotalH2O[1][0];
+        }
+        else if( energies[i] > _xsTotalH2O[1][energies.size() - 1] ) {
+            xsH2O_i = _xsTotalH2O[1][energies.size() - 1];
+        }
+        else {
+            // Linear interpolation
+            xsH2O_i = interp( energies[i] );
+        }
+
+        total_XS[i] = xsH2O_i;
+    }
+
+    return total_XS;
+}
+
 Vector Physics::GetStoppingPower( Vector energies ) {
     Vector stopping_power;
     double stpw_H2O_i;
@@ -215,7 +243,30 @@ VectorVector Physics::GetTransportXS( Vector energies, Vector density ) {
     return transport_XS;
 }
 
-Physics* Physics::Create() { return new Physics(); }
+VectorVector Physics::GetTransportXSE( Vector energies ) {
+    VectorVector transport_XS;
+    double xsH2O_i;
+
+    Spline interp;
+    interp.set_points( _xsTransportH2O[0], _xsTransportH2O[1], false );    // false == linear interpolation
+
+    for( unsigned i = 0; i < energies.size(); i++ ) {
+
+        if( energies[i] < _xsTransportH2O[1][0] ) {
+            xsH2O_i = _xsTransportH2O[1][0];
+        }
+        else if( energies[i] > _xsTransportH2O[1][energies.size() - 1] ) {
+            xsH2O_i = _xsTransportH2O[1][energies.size() - 1];
+        }
+        else {
+            // Linear interpolation
+            xsH2O_i = interp( energies[i] );
+        }
+
+        transport_XS[i] = xsH2O_i;
+    }
+    return transport_XS;
+}
 
 std::tuple<std::vector<VectorVector>, std::vector<VectorVector>> Physics::ReadENDL( std::string filename ) {
     std::vector<VectorVector> _headers;

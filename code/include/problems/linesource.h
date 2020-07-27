@@ -12,9 +12,9 @@ class LineSource_SN : public ProblemBase
     LineSource_SN( Config* settings, Mesh* mesh );
     virtual ~LineSource_SN();
 
-    virtual VectorVector GetScatteringXS( const std::vector<double>& energies );
-    virtual VectorVector GetTotalXS( const std::vector<double>& energies );
-    virtual std::vector<VectorVector> GetExternalSource( const std::vector<double>& energies );
+    virtual VectorVector GetScatteringXS( const Vector& energies );
+    virtual VectorVector GetTotalXS( const Vector& energies );
+    virtual std::vector<VectorVector> GetExternalSource( const Vector& energies );
     virtual Vector GetStoppingPower( const Vector& energies );
     virtual VectorVector SetupIC();
 };
@@ -49,9 +49,9 @@ class LineSource_PN : public ProblemBase
     LineSource_PN( Config* settings, Mesh* mesh );
     virtual ~LineSource_PN();
 
-    virtual VectorVector GetScatteringXS( const std::vector<double>& energies ) override;
-    virtual VectorVector GetTotalXS( const std::vector<double>& energies ) override;
-    virtual std::vector<VectorVector> GetExternalSource( const std::vector<double>& energies ) override;
+    virtual VectorVector GetScatteringXS( const Vector& energies ) override;
+    virtual VectorVector GetTotalXS( const Vector& energies ) override;
+    virtual std::vector<VectorVector> GetExternalSource( const Vector& energies ) override;
     virtual Vector GetStoppingPower( const Vector& energies ) override;
     virtual VectorVector SetupIC() override;
 };

@@ -8,15 +8,11 @@ LineSource_SN::LineSource_SN( Config* settings, Mesh* mesh ) : ProblemBase( sett
 
 LineSource_SN::~LineSource_SN(){};
 
-VectorVector LineSource_SN::GetScatteringXS( const std::vector<double>& energies ) {
-    return VectorVector( energies.size(), Vector( _mesh->GetNumCells(), 1.0 ) );
-}
+VectorVector LineSource_SN::GetScatteringXS( const Vector& energies ) { return VectorVector( energies.size(), Vector( _mesh->GetNumCells(), 1.0 ) ); }
 
-VectorVector LineSource_SN::GetTotalXS( const std::vector<double>& energies ) {
-    return VectorVector( energies.size(), Vector( _mesh->GetNumCells(), 1.0 ) );
-}
+VectorVector LineSource_SN::GetTotalXS( const Vector& energies ) { return VectorVector( energies.size(), Vector( _mesh->GetNumCells(), 1.0 ) ); }
 
-std::vector<VectorVector> LineSource_SN::GetExternalSource( const std::vector<double>& energies ) {
+std::vector<VectorVector> LineSource_SN::GetExternalSource( const Vector& energies ) {
     return std::vector<VectorVector>( 1u, std::vector<Vector>( _mesh->GetNumCells(), Vector( 1u, 0.0 ) ) );
 }
 
@@ -64,15 +60,11 @@ LineSource_PN::LineSource_PN( Config* settings, Mesh* mesh ) : ProblemBase( sett
 
 LineSource_PN::~LineSource_PN(){};
 
-VectorVector LineSource_PN::GetScatteringXS( const std::vector<double>& energies ) {
-    return VectorVector( energies.size(), Vector( _mesh->GetNumCells(), 1.0 ) );
-}
+VectorVector LineSource_PN::GetScatteringXS( const Vector& energies ) { return VectorVector( energies.size(), Vector( _mesh->GetNumCells(), 1.0 ) ); }
 
-VectorVector LineSource_PN::GetTotalXS( const std::vector<double>& energies ) {
-    return VectorVector( energies.size(), Vector( _mesh->GetNumCells(), 1.0 ) );
-}
+VectorVector LineSource_PN::GetTotalXS( const Vector& energies ) { return VectorVector( energies.size(), Vector( _mesh->GetNumCells(), 1.0 ) ); }
 
-std::vector<VectorVector> LineSource_PN::GetExternalSource( const std::vector<double>& energies ) {
+std::vector<VectorVector> LineSource_PN::GetExternalSource( const Vector& energies ) {
     return std::vector<VectorVector>( 1u, std::vector<Vector>( _mesh->GetNumCells(), Vector( 1u, 0.0 ) ) );
 }
 

@@ -3,13 +3,12 @@
 #include "common/mesh.h"
 
 WaterPhantom::WaterPhantom( Config* settings, Mesh* mesh ) : ElectronRT( settings, mesh ) {
-    // @TODO get pointer to correct physics class
-    _physics = nullptr;
+    _physics = new Physics( settings->GetHydrogenFile(), settings->GetOxygenFile(), "../input/stopping_power.txt" );    // TODO
 }
 
-WaterPhantom::~WaterPhantom() {}
+WaterPhantom::~WaterPhantom() { delete _physics; }
 
-std::vector<VectorVector> WaterPhantom::GetExternalSource( const std::vector<double>& energies ) {
+std::vector<VectorVector> WaterPhantom::GetExternalSource( const Vector& energies ) {
     return std::vector<VectorVector>( energies.size(), std::vector<Vector>( _mesh->GetNumCells(), Vector( _settings->GetNQuadPoints(), 0.0 ) ) );
 }
 

@@ -30,7 +30,8 @@ Solver::Solver( Config* settings ) : _settings( settings ) {
     // set time step
     _dE        = ComputeTimeStep( settings->GetCFL() );
     _nEnergies = unsigned( settings->GetTEnd() / _dE );
-    for( unsigned i = 0; i < _nEnergies; ++i ) _energies.push_back( ( i + 1 ) * _dE );
+    _energies.resize( _nEnergies );
+    for( unsigned i = 0; i < _nEnergies; ++i ) _energies[i] = ( i + 1 ) * _dE;
 
     // setup problem  and store frequently used params
     _problem = ProblemBase::Create( _settings, _mesh );
