@@ -68,73 +68,72 @@ void CSDSNSolver::Solve() {
 
     // store transformed energies ETilde instead of E in _energies vector (cf. Dissertation Kerstion Kuepper, Eq. 1.25)
     double tmp = 0.0;
-    for( unsigned idx_energy = 0; idx_energy < _nEnergies; ++idx_energy ) {
-        tmp                   = tmp + _dE / _s[idx_energy];
-        _energies[idx_energy] = tmp;
+    for( unsigned n = 0; n < _nEnergies; ++n ) {
+        tmp          = tmp + _dE / _s[n];
+        _energies[n] = tmp;
     }
 
     // store transformed energies ETildeTilde instead of ETilde in _energies vector (cf. Dissertation Kerstion Kuepper, Eq. 1.25)
-    for( unsigned idx_energy = 0; idx_energy < _nEnergies; ++idx_energy ) {
-        _energies[idx_energy] = _energies[_nEnergies - 1] - _energies[idx_energy];
+    for( unsigned n = 0; n < _nEnergies; ++n ) {
+        _energies[n] = _energies[_nEnergies - 1] - _energies[n];
     }
+
+    // cross sections do not need to be transformed to ETilde energy grid since e.g. TildeSigmaT(ETilde) = SigmaT(E(ETilde))
 
     std::cout << "Before time loop" << std::endl;
 
     // loop over energies (pseudo-time)
-    for( unsigned idx_energy = 1; idx_energy < _nEnergies; ++idx_energy ) {
-        _dE = fabs( _energies[idx_energy] - _energies[idx_energy - 1] );    // is the sign correct here?
+    for( unsigned n = 0; n < _nEnergies - 1; ++n ) {
+        _dE = fabs( _energies[n + 1] - _energies[n] );    // is the sign correct here?
         // loop over all spatial cells
-        for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
-            if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::DIRICHLET ) continue;
+        for( unsigned j = 0; j < _nCells; ++j ) {
+            if( _boundaryCells[j] == BOUNDARY_TYPE::DIRICHLET ) continue;
             // loop over all ordinates
-            for( unsigned idx_ord = 0; idx_ord < _nq; ++idx_ord ) {
-                psiNew[idx_cell][idx_ord] = 0.0;
+            for( unsigned i = 0; i < _nq; ++i ) {
+                psiNew[j][i] = 0.0;
                 // loop over all neighbor cells (edges) of cell j and compute numerical fluxes
-                for( unsigned idx_neighbor = 0; idx_neighbor < _neighbors[idx_cell].size(); ++idx_neighbor ) {
+                for( unsigned idx_neighbor = 0; idx_neighbor < _neighbors[j].size(); ++idx_neighbor ) {
                     // store flux contribution on psiNew_sigmaS to save memory
-                    if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::NEUMANN && _neighbors[idx_cell][idx_neighbor] == _nCells )
+                    if( _boundaryCells[j] == BOUNDARY_TYPE::NEUMANN && _neighbors[j][idx_neighbor] == _nCells )
                         continue;    // adiabatic wall, add nothing
-                    // psiNew[idx_cell][idx_ord] += _g->Flux( _quadPoints[idx_ord] / _density[idx_cell],
-                    //                                _psi[idx_cell][idx_ord],
-                    //                              _psi[idx_cell][idx_ord],
-                    //                            _normals[idx_cell][idx_neighbor] );
+                    // psiNew[j][i] += _g->Flux( _quadPoints[i] / _density[j],
+                    //                                _psi[j][i],
+                    //                              _psi[j][i],
+                    //                            _normals[j][idx_neighbor] );
                     else
-                        psiNew[idx_cell][idx_ord] += _g->Flux( _quadPoints[idx_ord] / _density[idx_cell],
-                                                               _sol[idx_cell][idx_ord],
-                                                               _sol[_neighbors[idx_cell][idx_neighbor]][idx_ord],
-                                                               _normals[idx_cell][idx_neighbor] );
+                        psiNew[j][i] += _g->Flux( _quadPoints[i],
+                                                  _sol[j][i] / _density[j],
+                                                  _sol[_neighbors[j][idx_neighbor]][i] / _density[_neighbors[j][idx_neighbor]],
+                                                  _normals[j][idx_neighbor] );
                 }
                 // time update angular flux with numerical flux and total scattering cross section
-                psiNew[idx_cell][idx_ord] = _sol[idx_cell][idx_ord] - ( _dE / _areas[idx_cell] ) * psiNew[idx_cell][idx_ord] -
-                                            _dE * _density[idx_cell] * _sigmaTE[idx_energy] * _sol[idx_cell][idx_ord];
+                psiNew[j][i] = _sol[j][i] - ( _dE / _areas[j] ) * psiNew[j][i] - _dE * _sigmaTE[n] * _sol[j][i];
             }
-            // compute scattering effects
-            psiNew[idx_cell] +=
-                _dE * _density[idx_cell] * ( blaze::trans( _sigmaSE[idx_energy] ) * _sol[idx_cell] );    // multiply scattering matrix with psi
+            // compute scattering effects (_scatteringKernel is simply multiplication with quad weights)
+            psiNew[j] += _dE * ( blaze::trans( _sigmaSE[n] ) * _scatteringKernel * _sol[j] );    // multiply scattering matrix with psi
             // TODO: Check if _sigmaS^T*psi is correct
 
             // TODO: figure out a more elegant way
             // add external source contribution
-            if( _Q.size() == 1u ) {                   // constant source for all energies
-                if( _Q[0][idx_cell].size() == 1u )    // isotropic source
-                    psiNew[idx_cell] += _dE * _Q[0][idx_cell][0] * _s[_nEnergies - idx_energy - 1];
+            if( _Q.size() == 1u ) {            // constant source for all energies
+                if( _Q[0][j].size() == 1u )    // isotropic source
+                    psiNew[j] += _dE * _Q[0][j][0] * _s[_nEnergies - n - 1];
                 else
-                    psiNew[idx_cell] += _dE * _Q[0][idx_cell] * _s[_nEnergies - idx_energy - 1];
+                    psiNew[j] += _dE * _Q[0][j] * _s[_nEnergies - n - 1];
             }
             else {
-                if( _Q[0][idx_cell].size() == 1u )    // isotropic source
-                    psiNew[idx_cell] += _dE * _Q[idx_energy][idx_cell][0] * _s[_nEnergies - idx_energy - 1];
+                if( _Q[0][j].size() == 1u )    // isotropic source
+                    psiNew[j] += _dE * _Q[n][j][0] * _s[_nEnergies - n - 1];
                 else
-                    psiNew[idx_cell] += _dE * _Q[idx_energy][idx_cell] * _s[_nEnergies - idx_energy - 1];
+                    psiNew[j] += _dE * _Q[n][j] * _s[_nEnergies - n - 1];
             }
         }
         _sol = psiNew;
 
         // do backsubstitution from psiTildeHat to psi (cf. Dissertation Kerstion Kuepper, Eq. 1.23)
-        for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
-            for( unsigned idx_ord = 0; idx_ord < _nq; ++idx_ord ) {
-                psiNew[idx_cell][idx_ord] = _sol[idx_cell][idx_ord] * _density[idx_cell] *
-                                            _s[_nEnergies - idx_energy - 1];    // note that _s[0] is stopping power at lowest energy
+        for( unsigned j = 0; j < _nCells; ++j ) {
+            for( unsigned i = 0; i < _nq; ++i ) {
+                psiNew[j][i] = _sol[j][i] * _density[j] * _s[_nEnergies - n - 1];    // note that _s[0] is stopping power at lowest energy
             }
         }
 
@@ -144,10 +143,10 @@ void CSDSNSolver::Solve() {
             _solverOutput[j] = fluxNew[j];
         }
 
-        Save( idx_energy );
+        Save( n );
         dFlux   = blaze::l2Norm( fluxNew - fluxOld );
         fluxOld = fluxNew;
-        if( rank == 0 ) log->info( "{:03.8f}   {:01.5e}", _energies[idx_energy], dFlux );
+        if( rank == 0 ) log->info( "{:03.8f}   {:01.5e}", _energies[n], dFlux );
     }
 }
 
