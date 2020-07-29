@@ -1,9 +1,6 @@
-#imports
+# imports
 import tensorflow as tf
 import numpy as np
-import tensorflow.keras.backend as K
-import os
-
 
 
 def initialize_network():
@@ -13,49 +10,48 @@ def initialize_network():
     # Check its architecture
     model.summary()
 
-    print("network initizalized")
     return model
 
 
 # make the network a gobal variable here
 model = initialize_network()
 
+
 def call_network(input):
-
-
-    #print(tf.__version__)
-
     inputNP = np.asarray([input])
-    #print(os.getcwd())
-    #model = tf.keras.models.load_model('saved_model/my_model')
-    #model.summary()
 
-   # print("input")
-   # print(inputNP)
+    predictions = model.predict(inputNP)
+
+    return predictions[0]
+
+
+def call_networkBatchwise(input):
+
+    #print(input)
+    inputNP = np.asarray(input)
+    #print(inputNP.shape)
+    #print(inputNP)
 
     predictions = model.predict(inputNP)
 
     #print(predictions)
-    #print(predictions[0])
-    #print("python out")
 
-    #print(predictions[0].shape)
-    #print(np.zeros(4).shape)
+    size = predictions.shape[0]*predictions.shape[1]
+    test = np.zeros(size)
+    for i in  range(0,size):
+        test[i] = predictions.flatten(order='C')[i]
+    return test
 
-    output = np.zeros(4)
-    for i in range(0, 4):
-        output[i] = predictions[0, i]
-
-    #print(output)
-    return output
-
+    #return predictions.flatten(order='C')[0]
 
 
 def main():
-    input = [0,1,2,3]
+    input = [[[0, 1, 2, 3], [2, 3, 4, 5]]]
 
-    #initialize_network()
-    print(call_network(input))
+    # initialize_network()
+    print(call_network([0, 1, 2, 3]))
+    print("-----")
+    print(call_networkBatchwise(input))
 
     return 0
 

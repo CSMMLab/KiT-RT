@@ -135,7 +135,7 @@ void MNSolver::Solve() {
     double dFlux        = 1e10;
     Vector fluxNew( _nCells, 0.0 );
     Vector fluxOld( _nCells, 0.0 );
-    Vector _solTimesArea( _nTotalEntries, 0.0 );
+    VectorVector solTimesArea = _sol;
 
     double mass1 = 0;
     for( unsigned i = 0; i < _nCells; ++i ) {
@@ -164,9 +164,13 @@ void MNSolver::Solve() {
 
             // ------- Reconstruction Step ----------------
 
-            _solTimesArea = _sol[idx_cell] * _areas[idx_cell];    // reconstrucor need moments, not control volume averaged moments!
+            solTimesArea[idx_cell] = _sol[idx_cell] * _areas[idx_cell];    // reconstrucor need moments, not control volume averaged moments!
+        }
 
-            _optimizer->Solve( _alpha[idx_cell], _solTimesArea, _moments, idx_cell );
+        _optimizer->SolveMultiCell( _alpha, solTimesArea, _moments );
+
+        // Loop over the grid cells
+        for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
 
             // ------- Relizablity Reconstruction Step ----
 
