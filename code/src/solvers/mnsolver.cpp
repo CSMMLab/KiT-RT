@@ -156,18 +156,17 @@ void MNSolver::Solve() {
     // auto end   = chrono::steady_clock::now();
 
     // Loop over energies (pseudo-time of continuous slowing down approach)
-
     for( unsigned idx_energy = 0; idx_energy < _nEnergies; idx_energy++ ) {
 
         // Loop over the grid cells
-        for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
+        //        for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
 
-            // ------- Reconstruction Step ----------------
+        // solTimesArea[idx_cell] = _sol[idx_cell] * _areas[idx_cell];    // reconstrucor need moments, not control volume averaged moments!
+        // }
 
-            solTimesArea[idx_cell] = _sol[idx_cell] * _areas[idx_cell];    // reconstrucor need moments, not control volume averaged moments!
-        }
+        // ------- Reconstruction Step ----------------
 
-        _optimizer->SolveMultiCell( _alpha, solTimesArea, _moments );
+        _optimizer->SolveMultiCell( _alpha, _sol, _moments );
 
         // Loop over the grid cells
         for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
@@ -249,11 +248,11 @@ void MNSolver::WriteNNTrainingData( unsigned idx_pseudoTime ) {
         for( unsigned idx_sys = 0; idx_sys < _nTotalEntries; idx_sys++ ) {
             myfile << "," << _sol[idx_cell][idx_sys];
         }
-        myfile << "\n" << 1 << ", " << _nTotalEntries << "," << idx_pseudoTime;
+        myfile << " \n" << 1 << ", " << _nTotalEntries << "," << idx_pseudoTime;
         for( unsigned idx_sys = 0; idx_sys < _nTotalEntries; idx_sys++ ) {
             myfile << "," << _alpha[idx_cell][idx_sys];
         }
-        if( idx_cell < _nTotalEntries - 1 ) myfile << "\n";
+        myfile << "\n";
     }
     myfile.close();
 }

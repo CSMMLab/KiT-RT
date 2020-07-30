@@ -59,6 +59,23 @@ void NewtonOptimizer::ComputeHessian( Vector& alpha, VectorVector& moments, Matr
     }
 }
 
+void NewtonOptimizer::SolveMultiCell( VectorVector& lambda, VectorVector& sol, VectorVector& moments ) {
+
+    unsigned nCells = lambda.size();
+
+    // if we  have quadratic entropy, then alpha = u;
+    if( _settings->GetEntropyName() == QUADRATIC && _settings->GetNewtonFastMode() ) {
+        for( unsigned idx_cell = 0; idx_cell < nCells; idx_cell++ ) {
+            lambda[idx_cell] = sol[idx_cell];
+        }
+        return;
+    }
+
+    for( unsigned idx_cell = 0; idx_cell < nCells; idx_cell++ ) {
+        Solve( lambda[idx_cell], sol[idx_cell], moments );
+    }
+}
+
 void NewtonOptimizer::Solve( Vector& lambda, Vector& sol, VectorVector& moments, unsigned idx_cell ) {
 
     /* solve the problem argmin ( <eta(alpha*m)>-alpha*u))
