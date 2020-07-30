@@ -135,6 +135,7 @@ void MNSolver::Solve() {
     double dFlux        = 1e10;
     Vector fluxNew( _nCells, 0.0 );
     Vector fluxOld( _nCells, 0.0 );
+    // Vector solArea( _nTotalEntries, 0.0 );
 
     double mass1 = 0;
     for( unsigned i = 0; i < _nCells; ++i ) {
@@ -150,10 +151,6 @@ void MNSolver::Solve() {
     if( rank == 0 ) log->info( "{:10}   {:10}", "t", "dFlux" );
     if( rank == 0 ) log->info( "{:03.8f}   {:01.5e} {:01.5e}", -1.0, dFlux, mass1 );
 
-    // Time measurement
-    // auto start = chrono::steady_clock::now();
-    // auto end   = chrono::steady_clock::now();
-
     // Loop over energies (pseudo-time of continuous slowing down approach)
 
     for( unsigned idx_energy = 0; idx_energy < _nEnergies; idx_energy++ ) {
@@ -163,7 +160,9 @@ void MNSolver::Solve() {
 
             // ------- Reconstruction Step ----------------
 
-            _optimizer->Solve( _alpha[idx_cell], _sol[idx_cell], _moments, idx_cell );
+            // solArea = _sol[idx_cell] * _areas[idx_cell];
+
+            _optimizer->Solve( _alpha[idx_cell], _sol[idx_cell], _moments, idx_cell );    // check if we need volume cleaned values
 
             // ------- Relizablity Reconstruction Step ----
 
