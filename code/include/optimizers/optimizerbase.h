@@ -21,6 +21,8 @@ class OptimizerBase
      *  @return : Vector  alpha = optimal lagrange multipliers. Has the same length as Vector u. */
     virtual void Solve( Vector& lambda, Vector& u, VectorVector& moments, unsigned idx_cell = 0 ) = 0;
 
+    virtual void SolveMultiCell( VectorVector& lambda, VectorVector& u, VectorVector& moments ) = 0;
+
   protected:
     EntropyBase* _entropy; /*! @brief: Class to handle entropy functional evaluations */
     Config* _settings;

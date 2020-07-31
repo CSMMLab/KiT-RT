@@ -29,6 +29,8 @@
 #include "mesh.h"
 #include "settings/config.h"
 
+#include "settings/typedef.h"
+
 using vtkPointsSP                 = vtkSmartPointer<vtkPoints>;
 using vtkUnstructuredGridSP       = vtkSmartPointer<vtkUnstructuredGrid>;
 using vtkTriangleSP               = vtkSmartPointer<vtkTriangle>;

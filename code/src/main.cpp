@@ -1,3 +1,6 @@
+
+#include "toolboxes/errormessages.h"
+
 #include <mpi.h>
 
 #include "io.h"
@@ -5,7 +8,17 @@
 
 #include "settings/config.h"
 
+#include "solvers/sphericalharmonics.h"
+#include <fstream>
+#include <iostream>
+#include <string>
+
+#include <stdio.h>
+using namespace std;
+// ----
+
 int main( int argc, char** argv ) {
+
     MPI_Init( &argc, &argv );
 
     std::string filename = ParseArguments( argc, argv );
@@ -23,6 +36,9 @@ int main( int argc, char** argv ) {
     solver->Solve();
     solver->Save();
 
+    // Finalize programm
+
     MPI_Finalize();
-    return EXIT_SUCCESS;
+
+    return 0;
 }

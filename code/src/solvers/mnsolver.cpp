@@ -59,6 +59,31 @@ MNSolver::MNSolver( Config* settings ) : Solver( settings ) {
 
     // Solver output
     _outputFields = std::vector( _nTotalEntries, std::vector( _nCells, 0.0 ) );
+
+    // Delete that
+    /*
+        std::string filename = "obFunc.csv";
+        std::ofstream myfile;
+        myfile.open( filename );
+
+        NewtonOptimizer* optimizer = new NewtonOptimizer( settings );
+
+        Vector alpha( 4, 0.0 );
+        Vector u( 4, 0.0 );
+        u[0] = -1.11;
+        u[1] = 0;
+        u[2] = 0;
+        u[4] = 0;
+
+        for( double a1 = -1000; a1 <= 100; a1 += 10.0 / 100.0 ) {
+            for( double a2 = -60; a2 <= 100; a2 += 60.0 / 40.0 ) {
+                alpha[0] = a1;
+                alpha[1] = a2;
+                myfile << a1 << ", " << a2 << ", " << optimizer->ComputeObjFunc( alpha, u, _moments ) << "\n";
+            }
+        }
+        myfile.close();
+     */
 }
 
 MNSolver::~MNSolver() {
@@ -135,7 +160,7 @@ void MNSolver::Solve() {
     double dFlux        = 1e10;
     Vector fluxNew( _nCells, 0.0 );
     Vector fluxOld( _nCells, 0.0 );
-    // Vector solArea( _nTotalEntries, 0.0 );
+    VectorVector solTimesArea = _sol;
 
     double mass1 = 0;
     for( unsigned i = 0; i < _nCells; ++i ) {
@@ -152,21 +177,24 @@ void MNSolver::Solve() {
     if( rank == 0 ) log->info( "{:03.8f}   {:01.5e} {:01.5e}", -1.0, dFlux, mass1 );
 
     // Loop over energies (pseudo-time of continuous slowing down approach)
-
     for( unsigned idx_energy = 0; idx_energy < _nEnergies; idx_energy++ ) {
+
+        // Loop over the grid cells
+        //        for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
+
+        // solTimesArea[idx_cell] = _sol[idx_cell] * _areas[idx_cell];    // reconstrucor need moments, not control volume averaged moments!
+        // }
+
+        // ------- Reconstruction Step ----------------
+
+        _optimizer->SolveMultiCell( _alpha, _sol, _moments );
 
         // Loop over the grid cells
         for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
 
-            // ------- Reconstruction Step ----------------
-
-            // solArea = _sol[idx_cell] * _areas[idx_cell];
-
-            _optimizer->Solve( _alpha[idx_cell], _sol[idx_cell], _moments, idx_cell );    // check if we need volume cleaned values
-
             // ------- Relizablity Reconstruction Step ----
 
-            // ComputeRealizableSolution( idx_cell );
+            ComputeRealizableSolution( idx_cell );
 
             // ------- Flux Computation Step --------------
 
@@ -241,11 +269,11 @@ void MNSolver::WriteNNTrainingData( unsigned idx_pseudoTime ) {
         for( unsigned idx_sys = 0; idx_sys < _nTotalEntries; idx_sys++ ) {
             myfile << "," << _sol[idx_cell][idx_sys];
         }
-        myfile << "\n" << 1 << ", " << _nTotalEntries << "," << idx_pseudoTime;
+        myfile << " \n" << 1 << ", " << _nTotalEntries << "," << idx_pseudoTime;
         for( unsigned idx_sys = 0; idx_sys < _nTotalEntries; idx_sys++ ) {
             myfile << "," << _alpha[idx_cell][idx_sys];
         }
-        if( idx_cell < _nTotalEntries - 1 ) myfile << "\n";
+        myfile << "\n";
     }
     myfile.close();
 }
