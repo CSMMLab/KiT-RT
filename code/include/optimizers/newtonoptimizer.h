@@ -16,6 +16,10 @@ class NewtonOptimizer : public OptimizerBase
     void SolveMultiCell( VectorVector& lambda, VectorVector& sol, VectorVector& moments ) override;
 
   private:
+    /*! @brief: Computes the objective function
+                grad = <eta(alpha*m)> - alpha*sol */
+    double ComputeObjFunc( Vector& alpha, Vector& sol, VectorVector& moments );
+
     /*! @brief: Computes gradient of objective function and stores it in grad
                 grad = <m*eta*'(alpha*m)> - sol */
     void ComputeGradient( Vector& alpha, Vector& sol, VectorVector& moments, Vector& grad );
@@ -23,8 +27,6 @@ class NewtonOptimizer : public OptimizerBase
     /*! @brief: Computes hessian of objective function and stores it in hessian
                 grad = <mXm*eta*'(alpha*m)> */
     void ComputeHessian( Vector& alpha, VectorVector& moments, Matrix& hessian );
-
-    double ComputeObjFunc( Vector& alpha, Vector& sol, VectorVector& moments );
 
     QuadratureBase* _quadrature; /*! @brief: used quadrature */    // THis is memory doubling! Try to use a pointer.
     unsigned _nq;                                                  /*! @brief: number of quadrature points */

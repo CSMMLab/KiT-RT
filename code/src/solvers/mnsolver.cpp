@@ -59,6 +59,31 @@ MNSolver::MNSolver( Config* settings ) : Solver( settings ) {
 
     // Solver output
     _outputFields = std::vector( _nTotalEntries, std::vector( _nCells, 0.0 ) );
+
+    // Delete that
+    /*
+        std::string filename = "obFunc.csv";
+        std::ofstream myfile;
+        myfile.open( filename );
+
+        NewtonOptimizer* optimizer = new NewtonOptimizer( settings );
+
+        Vector alpha( 4, 0.0 );
+        Vector u( 4, 0.0 );
+        u[0] = -1.11;
+        u[1] = 0;
+        u[2] = 0;
+        u[4] = 0;
+
+        for( double a1 = -1000; a1 <= 100; a1 += 10.0 / 100.0 ) {
+            for( double a2 = -60; a2 <= 100; a2 += 60.0 / 40.0 ) {
+                alpha[0] = a1;
+                alpha[1] = a2;
+                myfile << a1 << ", " << a2 << ", " << optimizer->ComputeObjFunc( alpha, u, _moments ) << "\n";
+            }
+        }
+        myfile.close();
+     */
 }
 
 MNSolver::~MNSolver() {
@@ -173,7 +198,7 @@ void MNSolver::Solve() {
 
             // ------- Relizablity Reconstruction Step ----
 
-            // ComputeRealizableSolution( idx_cell );
+            ComputeRealizableSolution( idx_cell );
 
             // ------- Flux Computation Step --------------
 
