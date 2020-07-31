@@ -12,7 +12,6 @@
 #include <mpi.h>
 
 #include <fstream>
-
 //#include <chrono>
 
 MNSolver::MNSolver( Config* settings ) : Solver( settings ) {
