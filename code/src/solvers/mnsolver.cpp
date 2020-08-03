@@ -176,10 +176,6 @@ void MNSolver::Solve() {
     if( rank == 0 ) log->info( "{:10}   {:10}", "t", "dFlux" );
     if( rank == 0 ) log->info( "{:03.8f}   {:01.5e} {:01.5e}", -1.0, dFlux, mass1 );
 
-    // Time measurement
-    // auto start = chrono::steady_clock::now();
-    // auto end   = chrono::steady_clock::now();
-
     // Loop over energies (pseudo-time of continuous slowing down approach)
     for( unsigned idx_energy = 0; idx_energy < _nEnergies; idx_energy++ ) {
 
