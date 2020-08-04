@@ -10,37 +10,29 @@ import numpy as np
 import tensorflow as tf
 from tensorflow import keras
 import matplotlib.pyplot as plt      # MATLAB like plotting routines
+from sklearn.preprocessing import normalize
 
 def main():
-    (xDataTrain,yDataTrain,xDataTest,yDataTest) = prepare_data("trainNN.csv")
-    print(yDataTrain.shape)
-    print(yDataTest.shape)
+
+
+    (xDataTrain,yDataTrain,xDataTest,yDataTest) = preprocess_data("trainNN.csv")
+
+    #plot_data(xDataTrain,yDataTrain)
 
     model = create_model()
 
     cb_list = create_callbacks()
     # Do the training
-    history = model.fit(xDataTrain, yDataTrain, validation_split=0.33, epochs=500, batch_size=1000, verbose=1)
+    history = model.fit(xDataTrain, yDataTrain, validation_split=0.25, epochs=100, batch_size=500, verbose=1)
+
+    # Evaluation tests
+    score = model.evaluate(xDataTest, yDataTest)
+    print('Test score:', score[0])
+    print('Test accuracy:', score[1])
 
     # plot training results
-    fig, axs = plt.subplots(2)
-    print(history.history.keys())
-    axs[0].plot(history.history['accuracy'])
-    axs[0].plot(history.history['val_accuracy'])
-    axs[0].set_title('model accuracy')
-    axs[0].set_ylabel('accuracy')
-    axs[0].set_xlabel('epoch')
-    axs[0].legend(['train_acc', 'val_acc'], loc='upper left')
-    #axs[0].show()
-    # summarize history for loss
-    axs[1].plot(history.history['loss'])
-    axs[1].plot(history.history['val_loss'])
-    axs[1].set_title('model loss')
-    axs[1].set_ylabel('loss')
-    axs[1].set_xlabel('epoch')
-    axs[1].legend(['train_loss', 'val_loss'], loc='upper left')
-    #axs[1].show()
-    plt.show()
+    print_output(history)
+
     # Evaluation tests
     score = model.evaluate(xDataTest, yDataTest)
     print('Test score:', score[0])
@@ -53,17 +45,31 @@ def main():
 
 # Build the network:
 def create_model():
+  ''' mark 1 model
   model = tf.keras.models.Sequential([
     keras.layers.Dense(256, activation='relu', input_shape=(4,)),
-    keras.layers.Dropout(0.2),
+    keras.layers.Dropout(0.3),
     keras.layers.Dense(512, activation='relu', input_shape=(64,)),
-    keras.layers.Dropout(0.2),
+    keras.layers.Dropout(0.3),
     keras.layers.Dense(256, activation='relu', input_shape=(256,)),
-    keras.layers.Dropout(0.2),
+    keras.layers.Dropout(0.3),
     keras.layers.Dense(128, activation='relu', input_shape=(128,)),
-    keras.layers.Dropout(0.2),
+    keras.layers.Dropout(0.3),
     keras.layers.Dense(4,)
   ])
+  '''
+  #leakyRelu = tf.keras.layers.LeakyReLU(alpha=0.1)
+
+  model = tf.keras.models.Sequential([
+      keras.layers.Dense(256, activation='sigmoid', input_shape=(4,)),
+      keras.layers.Dense(512, activation='sigmoid'),
+      keras.layers.Dropout(0.2),
+      keras.layers.Dense(256, activation='sigmoid'),
+      keras.layers.Dropout(0.2),
+      keras.layers.Dense(128, activation='sigmoid'),
+      keras.layers.Dense(4, )
+  ])
+
   model.summary()
   model.compile(loss=tf.keras.losses.MeanSquaredError(), optimizer='adam', metrics=['accuracy'])
 
@@ -77,7 +83,7 @@ def create_callbacks():
 )]
     return cb_list
 
-def prepare_data(filename):
+def preprocess_data(filename):
     # reading csv file
     dataFrameInput = pd.read_csv(filename) #outputs a dataframe object
 
@@ -123,8 +129,79 @@ def prepare_data(filename):
     xDataTest = DataTest[:, 0, :]
     yDataTest = DataTest[:, 1, :]
 
+    #Normalize Input
+    xDataTrain = normalize(xDataTrain, axis=1, norm='l1')
+    xDataTest = normalize(xDataTest, axis=1, norm='l1')
+
     return (xDataTrain,yDataTrain,xDataTest,yDataTest)
 
+def plot_data(xDataTrain,yDataTrain):
+    fig, axs = plt.subplots(4)
+    axs[0].plot(xDataTrain[:,0])
+    axs[0].set_title('m_0^0')
+    axs[0].set_ylabel('value')
+    axs[0].set_xlabel('sample id')
+
+    axs[1].plot(xDataTrain[:,1])
+    axs[1].set_title('m_1^-1')
+    axs[1].set_ylabel('value')
+    axs[1].set_xlabel('sample id')
+
+    axs[2].plot(xDataTrain[:,2])
+    axs[2].set_title('m_1^0')
+    axs[2].set_ylabel('value')
+    axs[2].set_xlabel('sample id')
+
+    axs[3].plot(xDataTrain[:,3])
+    axs[3].set_title('m_1^1')
+    axs[3].set_ylabel('value')
+    axs[3].set_xlabel('sample id')
+    plt.show()
+
+    fig, axs = plt.subplots(4)
+    axs[0].plot(yDataTrain[:, 0])
+    axs[0].set_title('m_0^0')
+    axs[0].set_ylabel('value')
+    axs[0].set_xlabel('sample id')
+
+    axs[1].plot(yDataTrain[:, 1])
+    axs[1].set_title('m_1^-1')
+    axs[1].set_ylabel('value')
+    axs[1].set_xlabel('sample id')
+
+    axs[2].plot(yDataTrain[:, 2])
+    axs[2].set_title('m_1^0')
+    axs[2].set_ylabel('value')
+    axs[2].set_xlabel('sample id')
+
+    axs[3].plot(yDataTrain[:, 3])
+    axs[3].set_title('m_1^1')
+    axs[3].set_ylabel('value')
+    axs[3].set_xlabel('sample id')
+    plt.show()
+
+    return 0
+
+def print_output(history):
+    fig, axs = plt.subplots(2)
+    print(history.history.keys())
+    axs[0].plot(history.history['accuracy'])
+    axs[0].plot(history.history['val_accuracy'])
+    axs[0].set_title('model accuracy')
+    axs[0].set_ylabel('accuracy')
+    axs[0].set_xlabel('epoch')
+    axs[0].legend(['train_acc', 'val_acc'], loc='upper left')
+    # axs[0].show()
+    # summarize history for loss
+    axs[1].plot(history.history['loss'])
+    axs[1].plot(history.history['val_loss'])
+    axs[1].set_title('model loss')
+    axs[1].set_ylabel('loss')
+    axs[1].set_xlabel('epoch')
+    axs[1].legend(['train_loss', 'val_loss'], loc='upper left')
+    # axs[1].show()
+    plt.show()
+    return 0
 
 if __name__ == '__main__':
     main()

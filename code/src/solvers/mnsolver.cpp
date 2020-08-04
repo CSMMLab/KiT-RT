@@ -179,12 +179,6 @@ void MNSolver::Solve() {
     // Loop over energies (pseudo-time of continuous slowing down approach)
     for( unsigned idx_energy = 0; idx_energy < _nEnergies; idx_energy++ ) {
 
-        // Loop over the grid cells
-        //        for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
-
-        // solTimesArea[idx_cell] = _sol[idx_cell] * _areas[idx_cell];    // reconstrucor need moments, not control volume averaged moments!
-        // }
-
         // ------- Reconstruction Step ----------------
 
         _optimizer->SolveMultiCell( _alpha, _sol, _moments );
@@ -220,7 +214,9 @@ void MNSolver::Solve() {
         double mass = 0.0;
         for( unsigned idx_sys = 0; idx_sys < _nTotalEntries; idx_sys++ ) {
             for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
-                fluxNew[idx_cell]       = _sol[idx_cell][0];    // zeroth moment is raditation densitiy we are interested in
+
+                fluxNew[idx_cell] = _sol[idx_cell][0];    // zeroth moment is raditation densitiy we are interested in
+
                 _solverOutput[idx_cell] = _sol[idx_cell][0];
                 mass += _sol[idx_cell][0] * _areas[idx_cell];
                 _outputFields[idx_sys][idx_cell] = _sol[idx_cell][idx_sys];
