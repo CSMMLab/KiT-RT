@@ -227,7 +227,7 @@ void MNSolver::Solve() {
         if( rank == 0 ) log->info( "{:03.8f}   {:01.5e} {:01.5e}", _energies[idx_energy], dFlux, mass );
         Save( idx_energy );
 
-        // WriteNNTrainingData( idx_energy );
+        WriteNNTrainingData( idx_energy );
 
         // Update Solution
         _sol = psiNew;

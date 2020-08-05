@@ -90,23 +90,23 @@ VectorVector LineSource_PN::SetupIC() {
 
     // Initial condition is dirac impulse at (x,y) = (0,0) ==> constant in angle ==> all moments are zero.
     double t      = 3.2e-4;    // pseudo time for gaussian smoothing (Approx to dirac impulse)
-    double offset = 0;
+    double offset = 0.099;
     for( unsigned j = 0; j < cellMids.size(); ++j ) {
         double x = cellMids[j][0];
         double y = cellMids[j][1];    // (x- 0.5) * (x- 0.5)
 
-        psi[j][0] = 1.0 / ( 4.0 * M_PI * t ) * std::exp( -( ( x - offset ) * ( x - offset ) + ( y - offset ) * ( y - offset ) ) / ( 4 * t ) );    // +
-        //   1.0 / ( 4.0 * M_PI * t ) * std::exp( -( ( x + offset ) * ( x + offset ) + ( y - offset ) * ( y - offset ) ) / ( 4 * t ) ) +
-        //   1.0 / ( 4.0 * M_PI * t ) * std::exp( -( ( x - offset ) * ( x - offset ) + ( y + offset ) * ( y + offset ) ) / ( 4 * t ) ) +
-        //   1.0 / ( 4.0 * M_PI * t ) * std::exp( -( ( x + offset ) * ( x + offset ) + ( y + offset ) * ( y + offset ) ) / ( 4 * t ) ) +
-        //   1.0 / ( 4.0 * M_PI * t ) *
-        //       std::exp( -( ( x - 2 * offset ) * ( x - 2 * offset ) + ( y - 2 * offset ) * ( y - 2 * offset ) ) / ( 4 * t ) ) +
-        //   1.0 / ( 4.0 * M_PI * t ) *
-        //       std::exp( -( ( x + 2 * offset ) * ( x + 2 * offset ) + ( y - 2 * offset ) * ( y - 2 * offset ) ) / ( 4 * t ) ) +
-        //   1.0 / ( 4.0 * M_PI * t ) *
-        //       std::exp( -( ( x - 2 * offset ) * ( x - 2 * offset ) + ( y + 2 * offset ) * ( y + 2 * offset ) ) / ( 4 * t ) ) +
-        //   1.0 / ( 4.0 * M_PI * t ) * std::exp( -( ( x + 2 * offset ) * ( x + 2 * offset ) + ( y + 2 * offset ) * ( y + 2 * offset ) ) / ( 4 * t )
-        //   );
+        psi[j][0] =
+            1.0 / ( 4.0 * M_PI * t ) * std::exp( -( ( x - offset ) * ( x - offset ) + ( y - offset ) * ( y - offset ) ) / ( 4 * t ) ) +
+            1.0 / ( 4.0 * M_PI * t ) * std::exp( -( ( x + offset ) * ( x + offset ) + ( y - offset ) * ( y - offset ) ) / ( 4 * t ) ) +
+            1.0 / ( 4.0 * M_PI * t ) * std::exp( -( ( x - offset ) * ( x - offset ) + ( y + offset ) * ( y + offset ) ) / ( 4 * t ) ) +
+            1.0 / ( 4.0 * M_PI * t ) * std::exp( -( ( x + offset ) * ( x + offset ) + ( y + offset ) * ( y + offset ) ) / ( 4 * t ) ) +
+            1.0 / ( 4.0 * M_PI * t ) *
+                std::exp( -( ( x - 2 * offset ) * ( x - 2 * offset ) + ( y - 2 * offset ) * ( y - 2 * offset ) ) / ( 4 * t ) ) +
+            1.0 / ( 4.0 * M_PI * t ) *
+                std::exp( -( ( x + 2 * offset ) * ( x + 2 * offset ) + ( y - 2 * offset ) * ( y - 2 * offset ) ) / ( 4 * t ) ) +
+            1.0 / ( 4.0 * M_PI * t ) *
+                std::exp( -( ( x - 2 * offset ) * ( x - 2 * offset ) + ( y + 2 * offset ) * ( y + 2 * offset ) ) / ( 4 * t ) ) +
+            1.0 / ( 4.0 * M_PI * t ) * std::exp( -( ( x + 2 * offset ) * ( x + 2 * offset ) + ( y + 2 * offset ) * ( y + 2 * offset ) ) / ( 4 * t ) );
     }
 
     // Debugging jump test case
