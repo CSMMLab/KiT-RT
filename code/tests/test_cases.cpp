@@ -85,19 +85,40 @@ TEST_CASE( "linesource_PN", "[validation_tests]" ) {
 }
 
 TEST_CASE( "linesource_MN", "[validation_tests]" ) {
-    char config_file_name[MAX_STRING_SIZE] = "../tests/input/linesource_MN.cfg";
 
-    Config* config = new Config( config_file_name );
-    Solver* solver = Solver::Create( config );
-    solver->Solve();
-    solver->Save();
+    SECTION( "Quadratic Entropy" ) {
+        char config_file_name[MAX_STRING_SIZE] = "../tests/input/linesource_MN_Quad.cfg";
 
-    auto test      = readVTKFile( "../result/rtsn_test_linesource_MN.vtk" );
-    auto reference = readVTKFile( "../tests/input/linesource_MN_reference.vtk" );
+        Config* config = new Config( config_file_name );
+        Solver* solver = Solver::Create( config );
+        solver->Solve();
+        solver->Save();
 
-    double eps = 1e-3;
-    REQUIRE( test.size() == reference.size() );
-    for( unsigned i = 0; i < test.size(); ++i ) {
-        REQUIRE( std::fabs( test[i] - reference[i] ) < eps );
+        auto test      = readVTKFile( "../result/rtsn_test_linesource_MN_Quad.vtk" );
+        auto reference = readVTKFile( "../tests/input/linesource_MN_Quad_reference.vtk" );
+
+        double eps = 1e-3;
+        REQUIRE( test.size() == reference.size() );
+        for( unsigned i = 0; i < test.size(); ++i ) {
+            REQUIRE( std::fabs( test[i] - reference[i] ) < eps );
+        }
+    }
+
+    SECTION( "Maxwell Boltzmann Entropy" ) {
+        char config_file_name[MAX_STRING_SIZE] = "../tests/input/linesource_MN_MB.cfg";
+
+        Config* config = new Config( config_file_name );
+        Solver* solver = Solver::Create( config );
+        solver->Solve();
+        solver->Save();
+
+        auto test      = readVTKFile( "../result/rtsn_test_linesource_MN_MB.vtk" );
+        auto reference = readVTKFile( "../tests/input/linesource_MN_MB_reference.vtk" );
+
+        double eps = 1e-3;
+        REQUIRE( test.size() == reference.size() );
+        for( unsigned i = 0; i < test.size(); ++i ) {
+            REQUIRE( std::fabs( test[i] - reference[i] ) < eps );
+        }
     }
 }

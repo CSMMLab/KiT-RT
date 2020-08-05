@@ -175,18 +175,8 @@ void MNSolver::Solve() {
     if( rank == 0 ) log->info( "{:10}   {:10}", "t", "dFlux" );
     if( rank == 0 ) log->info( "{:03.8f}   {:01.5e} {:01.5e}", -1.0, dFlux, mass1 );
 
-    // Time measurement
-    // auto start = chrono::steady_clock::now();
-    // auto end   = chrono::steady_clock::now();
-
     // Loop over energies (pseudo-time of continuous slowing down approach)
     for( unsigned idx_energy = 0; idx_energy < _nEnergies; idx_energy++ ) {
-
-        // Loop over the grid cells
-        //        for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
-
-        // solTimesArea[idx_cell] = _sol[idx_cell] * _areas[idx_cell];    // reconstrucor need moments, not control volume averaged moments!
-        // }
 
         // ------- Reconstruction Step ----------------
 
@@ -223,7 +213,9 @@ void MNSolver::Solve() {
         double mass = 0.0;
         for( unsigned idx_sys = 0; idx_sys < _nTotalEntries; idx_sys++ ) {
             for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
-                fluxNew[idx_cell]       = _sol[idx_cell][0];    // zeroth moment is raditation densitiy we are interested in
+
+                fluxNew[idx_cell] = _sol[idx_cell][0];    // zeroth moment is raditation densitiy we are interested in
+
                 _solverOutput[idx_cell] = _sol[idx_cell][0];
                 mass += _sol[idx_cell][0] * _areas[idx_cell];
                 _outputFields[idx_sys][idx_cell] = _sol[idx_cell][idx_sys];
@@ -235,7 +227,7 @@ void MNSolver::Solve() {
         if( rank == 0 ) log->info( "{:03.8f}   {:01.5e} {:01.5e}", _energies[idx_energy], dFlux, mass );
         Save( idx_energy );
 
-        WriteNNTrainingData( idx_energy );
+        // WriteNNTrainingData( idx_energy );
 
         // Update Solution
         _sol = psiNew;
