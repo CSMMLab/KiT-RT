@@ -17,11 +17,10 @@ def custom_loss1dMB(u_input, alpha_pred):  # (label,prediciton)
 
 
 # Custom Loss
-def custom_loss1dMBPrime(u_input, alpha_pred):  # (label,prediciton)
-
-    return 0.5 * tf.square(
-        4 * math.pi * np.sqrt(1 / (4 * np.pi)) * tf.math.exp(alpha_pred * np.sqrt(1 / (4 * np.pi))) - u_input)
-
+def custom_loss1dMBPrime(): # (label,prediciton)
+    def loss(u_input, alpha_pred):
+        return 0.5*tf.square(4*math.pi*np.sqrt(1/(4*np.pi))*tf.math.exp(alpha_pred*np.sqrt(1/(4*np.pi))) - u_input)
+    return loss
 
 # Build the network:
 def create_model():
@@ -45,24 +44,20 @@ def create_model():
 
     # tf.keras.losses.MeanSquaredError()
     # custom_loss1d
-    model.compile(loss=custom_loss1dMBPrime, optimizer='adam',
-                  metrics=[custom_loss1dMB, custom_loss1dMBPrime])
+    model.compile(loss=custom_loss1dMBPrime, optimizer='adam')#, metrics=[custom_loss1dMB, custom_loss1dMBPrime])
 
     return model
 
 def main():
-    a = {'hello': 'world'}
-
-    with open('filename.pickle', 'wb') as handle:
-        pickle.dump(a, handle, protocol=pickle.HIGHEST_PROTOCOL)
-
+    
+    print("Create Model")
     model = create_model()
-
+	
+    print("Create Training Data")
     # build training data and shuffe!
-    uTrain = np.arange(0.1, 10, 0.000001)
-    print(uTrain)
+    uTrain = np.arange(0.1, 400, 0.000001)
     random.shuffle(uTrain)
-    print(uTrain)
+   
 
     # Create Early Stopping callback
     es = EarlyStopping(monitor='loss', mode='min', min_delta=0.00005, patience=50,
@@ -70,10 +65,17 @@ def main():
     mc = ModelCheckpoint('saved_model/best_model_1_300.h5', monitor='loss', mode='min', save_best_only=True)
 
     # Train the model
+	print("Train Model")
     history = model.fit(uTrain, uTrain, validation_split=0.3, epochs=1500, batch_size=50000, verbose=1,
                         callbacks=[es, mc])
 
+	
+	#save trained model
+	print("save model")
+    model.save('saved_model/_EntropyLoss_1_300_M_0')
+    
     # summarize history for loss
+    print("save history")
     with open('saved_model/_EntropyLoss_1_300_M_0_hist.pickle', 'wb') as file_pi:
         pickle.dump(history.history, file_pi)
 
@@ -81,8 +83,10 @@ def main():
     '''
     history = pickle.load(open('saved_model/_EntropyLoss_1_300_M_0_hist.pickle'), "rb")
     '''
-    #save trained model
-    model.save('saved_model/_EntropyLoss_1_300_M_0')
+    
+    print("Training Sequence successfully finished")
+    return 0
+   
 
 if __name__ == '__main__':
     main()
