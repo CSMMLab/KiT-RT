@@ -43,7 +43,7 @@ VectorVector LineSource_SN_Pseudo1D::SetupIC() {
     double t      = 3.2e-4;    // pseudo time for gaussian smoothing
     for( unsigned j = 0; j < cellMids.size(); ++j ) {
         double x = cellMids[j][0];
-        psi[j]   = 1.0 / ( 4.0 * M_PI * t ) * std::exp( -( x * x ) / ( 4 * t ) );
+        psi[j]   = 1.0 / ( 2.0 * M_PI * t ) * std::exp( -( x * x ) / ( 2.0 * t ) );
     }
     return psi;
 }
