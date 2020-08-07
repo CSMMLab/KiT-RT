@@ -154,7 +154,14 @@ VectorVector Physics::GetScatteringXS( Vector energies, Vector angle ) {
         xsH2OGridGrid.push_back( _H20MassFractions[H] * tmpEnergyGridH + _H20MassFractions[O] * tmpEnergyGridO );
     }
 
-    return xsH2OGridGrid;
+    VectorVector xs( energies.size(), Vector( angle.size() ) );
+    for( unsigned i = 0; i < energies.size(); ++i ) {
+        for( unsigned j = 0; j < angle.size(); ++j ) {
+            xs[i][j] = xsH2OGridGrid[j][i];
+        }
+    }
+
+    return xs;
 }
 
 VectorVector Physics::GetTotalXS( Vector energies, Vector density ) {

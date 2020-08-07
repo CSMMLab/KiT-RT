@@ -15,34 +15,26 @@ CSDSNSolver::CSDSNSolver( Config* settings ) : SNSolver( settings ) {
     // Set angle and energies
     _angle           = Vector( _settings->GetNQuadPoints(), 0.0 );    // my
     _energies        = Vector( _nEnergies, 0.0 );                     // equidistant
-    double energyMin = 1e-5;
-    double energyMax = 1e2;
+    double energyMin = 1e-4;
+    double energyMax = 1e-2;
     // write equidistant energy grid
     for( unsigned n = 0; n < _nEnergies; ++n ) {
         _energies[n] = energyMin + ( energyMax - energyMin ) / ( _nEnergies - 1 ) * n;
-        std::cout << _energies[n] << std::endl;
     }
-    std::cout << std::endl;
     // write mu grid
     for( unsigned k = 0; k < _settings->GetNQuadPoints(); ++k ) {
         _angle[k] = _quadPoints[k][2];
-        std::cout << _angle[k] << std::endl;
     }
-    std::cout << "DONE" << std::endl;
 
     _sigmaSE = _problem->GetScatteringXSE( _energies, _angle );
     _sigmaTE = _problem->GetTotalXSE( _energies );
     _s       = _problem->GetStoppingPower( _energies );
 
-    std::cout << "scattering" << std::endl;
-
     // Get patient density
-    _density = Vector( _nCells, 0.0 );
+    _density = Vector( _nCells, 1.0 );
 }
 
 void CSDSNSolver::Solve() {
-    std::cout << "In Solve" << std::endl;
-
     auto log = spdlog::get( "event" );
 
     // angular flux at next time step (maybe store angular flux at all time steps, since time becomes energy?)
@@ -53,7 +45,6 @@ void CSDSNSolver::Solve() {
     for( unsigned j = 0; j < _nCells; ++j ) {
         fluxOld[j] = dot( _sol[j], _weights );
     }
-    std::cout << "fluxOld" << std::endl;
     int rank;
     MPI_Comm_rank( MPI_COMM_WORLD, &rank );
     if( rank == 0 ) log->info( "{:10}   {:10}", "E", "dFlux" );
@@ -64,7 +55,6 @@ void CSDSNSolver::Solve() {
             _sol[j][k] = _sol[j][k] * _density[j] * _s[_nEnergies - 1];    // note that _s[_nEnergies - 1] is stopping power at highest energy
         }
     }
-    std::cout << "_sol" << std::endl;
 
     // store transformed energies ETilde instead of E in _energies vector (cf. Dissertation Kerstion Kuepper, Eq. 1.25)
     double tmp = 0.0;
@@ -80,8 +70,6 @@ void CSDSNSolver::Solve() {
 
     // cross sections do not need to be transformed to ETilde energy grid since e.g. TildeSigmaT(ETilde) = SigmaT(E(ETilde))
 
-    std::cout << "Before time loop" << std::endl;
-
     // loop over energies (pseudo-time)
     for( unsigned n = 0; n < _nEnergies - 1; ++n ) {
         _dE = fabs( _energies[n + 1] - _energies[n] );    // is the sign correct here?
@@ -96,10 +84,6 @@ void CSDSNSolver::Solve() {
                     // store flux contribution on psiNew_sigmaS to save memory
                     if( _boundaryCells[j] == BOUNDARY_TYPE::NEUMANN && _neighbors[j][idx_neighbor] == _nCells )
                         continue;    // adiabatic wall, add nothing
-                    // psiNew[j][i] += _g->Flux( _quadPoints[i] / _density[j],
-                    //                                _psi[j][i],
-                    //                              _psi[j][i],
-                    //                            _normals[j][idx_neighbor] );
                     else
                         psiNew[j][i] += _g->Flux( _quadPoints[i],
                                                   _sol[j][i] / _density[j],
@@ -143,7 +127,7 @@ void CSDSNSolver::Solve() {
             _solverOutput[j] = fluxNew[j];
         }
 
-        Save( n );
+        // Save( n );
         dFlux   = blaze::l2Norm( fluxNew - fluxOld );
         fluxOld = fluxNew;
         if( rank == 0 ) log->info( "{:03.8f}   {:01.5e}", _energies[n], dFlux );
