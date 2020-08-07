@@ -44,7 +44,7 @@ def create_model():
 
     # tf.keras.losses.MeanSquaredError()
     # custom_loss1d
-    model.compile(loss=custom_loss1dMBPrime, optimizer='adam')#, metrics=[custom_loss1dMB, custom_loss1dMBPrime])
+    model.compile(loss=custom_loss1dMBPrime(), optimizer='adam')#, metrics=[custom_loss1dMB, custom_loss1dMBPrime])
 
     return model
 
@@ -61,17 +61,17 @@ def main():
 
     # Create Early Stopping callback
     es = EarlyStopping(monitor='loss', mode='min', min_delta=0.00005, patience=50,
-                       verbose=10)  # loss == custom_loss1dMBPrime by model definition
+                     verbose=10)  # loss == custom_loss1dMBPrime by model definition
     mc = ModelCheckpoint('saved_model/best_model_1_300.h5', monitor='loss', mode='min', save_best_only=True)
 
     # Train the model
-	print("Train Model")
-    history = model.fit(uTrain, uTrain, validation_split=0.3, epochs=1500, batch_size=50000, verbose=1,
+    print("Train Model")
+    history = model.fit(uTrain, uTrain, validation_split=0.3, epochs=1500, batch_size=90000, verbose=1,
                         callbacks=[es, mc])
 
 	
 	#save trained model
-	print("save model")
+    print("save model")
     model.save('saved_model/_EntropyLoss_1_300_M_0')
     
     # summarize history for loss
