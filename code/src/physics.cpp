@@ -157,7 +157,7 @@ VectorVector Physics::GetScatteringXS( Vector energies, Vector angle ) {
     VectorVector xs( energies.size(), Vector( angle.size() ) );
     for( unsigned i = 0; i < energies.size(); ++i ) {
         for( unsigned j = 0; j < angle.size(); ++j ) {
-            xs[i][j] = xsH2OGridGrid[j][i];
+            xs[i][j] = xsH2OGridGrid[j][i] * 1e-24;
         }
     }
 
@@ -171,7 +171,7 @@ VectorVector Physics::GetTotalXS( Vector energies, Vector density ) {
     Interpolation xsO( _xsTotalH2O[O][0], _xsTotalH2O[O][1], Interpolation::linear );
 
     for( unsigned i = 0; i < energies.size(); i++ ) {
-        total_XS[i] = ( _H20MassFractions[H] * xsH( energies[i] ) + _H20MassFractions[O] * xsO( energies[i] ) ) * density;
+        total_XS[i] = ( _H20MassFractions[H] * xsH( energies[i] ) * 1e-24 + _H20MassFractions[O] * xsO( energies[i] ) * 1e-24 ) * density;
     }
 
     return total_XS;
@@ -184,7 +184,7 @@ Vector Physics::GetTotalXSE( Vector energies ) {
     Interpolation xsO( _xsTotalH2O[O][0], _xsTotalH2O[O][1], Interpolation::linear );
 
     for( unsigned i = 0; i < energies.size(); i++ ) {
-        total_XS[i] = ( _H20MassFractions[H] * xsH( energies[i] ) + _H20MassFractions[O] * xsO( energies[i] ) );
+        total_XS[i] = ( _H20MassFractions[H] * xsH( energies[i] ) * 1e-24 + _H20MassFractions[O] * xsO( energies[i] ) * 1e-24 );
     }
 
     return total_XS;
@@ -210,7 +210,7 @@ VectorVector Physics::GetTransportXS( Vector energies, Vector density ) {
 
     for( unsigned i = 0; i < energies.size(); i++ ) {
         for( unsigned i = 0; i < energies.size(); i++ ) {
-            transport_XS[i] = ( _H20MassFractions[H] * xsH( energies[i] ) + _H20MassFractions[O] * xsO( energies[i] ) ) * density;
+            transport_XS[i] = ( _H20MassFractions[H] * xsH( energies[i] ) * 1e-24 + _H20MassFractions[O] * xsO( energies[i] ) * 1e-24 ) * density;
         }
     }
 
@@ -225,7 +225,7 @@ Vector Physics::GetTransportXSE( Vector energies ) {
 
     for( unsigned i = 0; i < energies.size(); i++ ) {
         for( unsigned i = 0; i < energies.size(); i++ ) {
-            transport_XS[i] = ( _H20MassFractions[H] * xsH( energies[i] ) + _H20MassFractions[O] * xsO( energies[i] ) );
+            transport_XS[i] = ( _H20MassFractions[H] * xsH( energies[i] ) * 1e-24 + _H20MassFractions[O] * xsO( energies[i] ) * 1e-24 );
         }
     }
 
