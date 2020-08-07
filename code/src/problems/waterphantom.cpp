@@ -17,8 +17,8 @@ VectorVector WaterPhantom::SetupIC() {
     auto cellMids = _mesh->GetCellMidPoints();
     double s      = 0.1;
     for( unsigned j = 0; j < cellMids.size(); ++j ) {
-        double x = cellMids[j][0];
-        psi[j]   = 1.0 / ( s * sqrt( 2 * M_PI ) ) * std::exp( -x * x / ( 2 * s * s ) );
+        double x                                = cellMids[j][0];
+        psi[j][_settings->GetNQuadPoints() - 1] = 1.0 / ( s * sqrt( 2 * M_PI ) ) * std::exp( -x * x / ( 2 * s * s ) );
     }
     return psi;
 }
