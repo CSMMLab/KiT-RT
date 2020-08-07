@@ -44,9 +44,17 @@ VectorVector LineSource_SN_Pseudo1D::SetupIC() {
     return psi;
 }
 
+// ---- LineSource_SN_Pseudo1D_Physics ----
+
 LineSource_SN_Pseudo1D_Physics::LineSource_SN_Pseudo1D_Physics( Config* settings, Mesh* mesh ) : LineSource_SN_Pseudo1D( settings, mesh ) {
     _physics = new Physics( settings->GetHydrogenFile(), settings->GetOxygenFile(), "../input/stopping_power.txt" );
 }
+
+VectorVector LineSource_SN_Pseudo1D_Physics::GetScatteringXSE( const Vector& energies, const Vector& angles ) {
+    return _physics->GetScatteringXS( energies, angles );
+}
+
+Vector LineSource_SN_Pseudo1D_Physics::GetTotalXSE( const Vector& energies ) { return _physics->GetTotalXSE( energies ); }
 
 // ---- LineSource_PN ----
 
