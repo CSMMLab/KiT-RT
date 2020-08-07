@@ -65,7 +65,7 @@ class ProblemBase
      *        materials defined by density and energies in vector energy
      * @param energies is vector with energies
      */
-    virtual Vector GetStoppingPower( const Vector& energies ) = 0;
+    virtual Vector GetStoppingPower( const Vector& energies );
 
     /**
      * @brief GetDensity gives back vector of densities for every spatial cell

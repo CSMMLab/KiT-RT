@@ -21,7 +21,6 @@ class Checkerboard : public ProblemBase
     virtual VectorVector GetScatteringXS( const Vector& energies );
     virtual VectorVector GetTotalXS( const Vector& energies );
     virtual std::vector<VectorVector> GetExternalSource( const Vector& energies );
-    virtual Vector GetStoppingPower( const Vector& energies );
     virtual VectorVector SetupIC();
 };
 

@@ -33,11 +33,6 @@ std::vector<VectorVector> ElectronRT::GetExternalSource( const Vector& energies 
     return std::vector<VectorVector>( energies.size(), std::vector<Vector>( _mesh->GetNumCells(), Vector( _settings->GetNQuadPoints(), 0.0 ) ) );
 }
 
-Vector ElectronRT::GetStoppingPower( const Vector& energies ) {
-    // @TODO
-    return _physics->GetStoppingPower( energies );
-}
-
 VectorVector ElectronRT::SetupIC() {
     // @TODO
     return VectorVector( _mesh->GetNumCells(), Vector( _settings->GetNQuadPoints(), 1e-10 ) );

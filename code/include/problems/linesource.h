@@ -15,7 +15,6 @@ class LineSource_SN : public ProblemBase
     virtual VectorVector GetScatteringXS( const Vector& energies );
     virtual VectorVector GetTotalXS( const Vector& energies );
     virtual std::vector<VectorVector> GetExternalSource( const Vector& energies );
-    virtual Vector GetStoppingPower( const Vector& energies );
     virtual VectorVector SetupIC();
 };
 
@@ -28,6 +27,15 @@ class LineSource_SN_Pseudo1D : public LineSource_SN
     LineSource_SN_Pseudo1D( Config* settings, Mesh* mesh );
 
     VectorVector SetupIC() override;
+};
+
+class LineSource_SN_Pseudo1D_Physics : public LineSource_SN_Pseudo1D
+{
+  private:
+    LineSource_SN_Pseudo1D_Physics() = delete;
+
+  public:
+    LineSource_SN_Pseudo1D_Physics( Config* settings, Mesh* mesh );
 };
 
 class LineSource_PN : public ProblemBase
@@ -52,7 +60,6 @@ class LineSource_PN : public ProblemBase
     virtual VectorVector GetScatteringXS( const Vector& energies ) override;
     virtual VectorVector GetTotalXS( const Vector& energies ) override;
     virtual std::vector<VectorVector> GetExternalSource( const Vector& energies ) override;
-    virtual Vector GetStoppingPower( const Vector& energies ) override;
     virtual VectorVector SetupIC() override;
 };
 

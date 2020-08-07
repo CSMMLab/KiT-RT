@@ -30,11 +30,6 @@ std::vector<VectorVector> Checkerboard::GetExternalSource( const Vector& energie
     return std::vector<VectorVector>( 1u, Q );
 }
 
-Vector Checkerboard::GetStoppingPower( const Vector& energies ) {
-    // @TODO
-    return Vector( energies.size(), 0.0 );
-}
-
 VectorVector Checkerboard::SetupIC() {
     VectorVector psi( _mesh->GetNumCells(), Vector( _settings->GetNQuadPoints(), 1e-10 ) );
     return psi;

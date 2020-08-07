@@ -25,7 +25,6 @@ class ElectronRT : public ProblemBase
     virtual VectorVector GetScatteringXSE( const Vector& energies, const Vector& angles );
     virtual Vector GetTotalXSE( const Vector& energies );
     virtual std::vector<VectorVector> GetExternalSource( const Vector& energies );
-    virtual Vector GetStoppingPower( const Vector& energies );
     virtual VectorVector SetupIC();
     std::vector<double> GetDensity( const VectorVector& cellMidPoints );
 };

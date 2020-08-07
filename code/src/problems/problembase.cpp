@@ -31,3 +31,13 @@ ProblemBase* ProblemBase::Create( Config* settings, Mesh* mesh ) {
 }
 
 std::vector<double> ProblemBase::GetDensity( const VectorVector& cellMidPoints ) { return std::vector<double>( cellMidPoints.size(), 1.0 ); }
+
+Vector ProblemBase::GetStoppingPower( const Vector& energies ) {
+    if( _physics ) {
+        return _physics->GetStoppingPower( energies );
+    }
+    else {
+        ErrorMessages::Error( "Problem child class has not initialized a 'Physics' object!", CURRENT_FUNCTION );
+        return Vector( 1, -1.0 );
+    }
+}

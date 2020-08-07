@@ -1,6 +1,7 @@
 #include "problems/linesource.h"
 #include "common/config.h"
 #include "common/mesh.h"
+#include "physics.h"
 
 // ---- LineSource_SN ----
 
@@ -14,11 +15,6 @@ VectorVector LineSource_SN::GetTotalXS( const Vector& energies ) { return Vector
 
 std::vector<VectorVector> LineSource_SN::GetExternalSource( const Vector& energies ) {
     return std::vector<VectorVector>( 1u, std::vector<Vector>( _mesh->GetNumCells(), Vector( 1u, 0.0 ) ) );
-}
-
-Vector LineSource_SN::GetStoppingPower( const Vector& energies ) {
-    // @TODO
-    return Vector( energies.size(), 1.0 );
 }
 
 VectorVector LineSource_SN::SetupIC() {
@@ -48,6 +44,10 @@ VectorVector LineSource_SN_Pseudo1D::SetupIC() {
     return psi;
 }
 
+LineSource_SN_Pseudo1D_Physics::LineSource_SN_Pseudo1D_Physics( Config* settings, Mesh* mesh ) : LineSource_SN_Pseudo1D( settings, mesh ) {
+    _physics = new Physics( settings->GetHydrogenFile(), settings->GetOxygenFile(), "../input/stopping_power.txt" );
+}
+
 // ---- LineSource_PN ----
 
 int LineSource_PN::GlobalIndex( int l, int k ) const {
@@ -66,11 +66,6 @@ VectorVector LineSource_PN::GetTotalXS( const Vector& energies ) { return Vector
 
 std::vector<VectorVector> LineSource_PN::GetExternalSource( const Vector& energies ) {
     return std::vector<VectorVector>( 1u, std::vector<Vector>( _mesh->GetNumCells(), Vector( 1u, 0.0 ) ) );
-}
-
-Vector LineSource_PN::GetStoppingPower( const Vector& energies ) {
-    // @TODO
-    return Vector( energies.size(), 0.0 );
 }
 
 VectorVector LineSource_PN::SetupIC() {
