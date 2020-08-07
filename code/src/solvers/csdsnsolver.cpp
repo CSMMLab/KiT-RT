@@ -15,9 +15,13 @@ CSDSNSolver::CSDSNSolver( Config* settings ) : SNSolver( settings ) {
     // Set angle and energies
     _angle           = Vector( _settings->GetNQuadPoints(), 0.0 );    // my
     _energies        = Vector( _nEnergies, 0.0 );                     // equidistant
-    double energyMin = 1e-2;
-    double energyMax = 0.5 * 1e-2;
+    double energyMin = 1e-1;
+    double energyMax = 1e0;
     // write equidistant energy grid
+
+    _dE        = ComputeTimeStep( settings->GetCFL() );
+    _nEnergies = unsigned( ( energyMax - energyMin ) / _dE );
+    _energies.resize( _nEnergies );
     for( unsigned n = 0; n < _nEnergies; ++n ) {
         _energies[n] = energyMin + ( energyMax - energyMin ) / ( _nEnergies - 1 ) * n;
     }
@@ -29,6 +33,7 @@ CSDSNSolver::CSDSNSolver( Config* settings ) : SNSolver( settings ) {
     _sigmaSE = _problem->GetScatteringXSE( _energies, _angle );
     _sigmaTE = _problem->GetTotalXSE( _energies );
     _s       = _problem->GetStoppingPower( _energies );
+    _Q       = _problem->GetExternalSource( _energies );
 
     // Get patient density
     _density = Vector( _nCells, 1.0 );
@@ -97,15 +102,15 @@ void CSDSNSolver::Solve() {
                                                   _normals[j][idx_neighbor] );
                 }
                 // time update angular flux with numerical flux and total scattering cross section
-                psiNew[j][i] = _sol[j][i] - ( _dE / _areas[j] ) * psiNew[j][i];    // - _dE * _sigmaTE[n] * _sol[j][i];
+                psiNew[j][i] = _sol[j][i] - ( _dE / _areas[j] ) * psiNew[j][i] - _dE * _sigmaTE[n] * _sol[j][i];
             }
             // compute scattering effects (_scatteringKernel is simply multiplication with quad weights)
-            // psiNew[j] += _dE * ( blaze::trans( _sigmaSE[n] ) * _scatteringKernel * _sol[j] );    // multiply scattering matrix with psi
+            psiNew[j] += _dE * ( blaze::trans( _sigmaSE[n] ) * _scatteringKernel * _sol[j] );    // multiply scattering matrix with psi
             // TODO: Check if _sigmaS^T*psi is correct
 
             // TODO: figure out a more elegant way
             // add external source contribution
-            /*if( _Q.size() == 1u ) {            // constant source for all energies
+            if( _Q.size() == 1u ) {            // constant source for all energies
                 if( _Q[0][j].size() == 1u )    // isotropic source
                     psiNew[j] += _dE * _Q[0][j][0] * _s[_nEnergies - n - 1];
                 else
@@ -116,7 +121,7 @@ void CSDSNSolver::Solve() {
                     psiNew[j] += _dE * _Q[n][j][0] * _s[_nEnergies - n - 1];
                 else
                     psiNew[j] += _dE * _Q[n][j] * _s[_nEnergies - n - 1];
-            }*/
+            }
         }
         _sol = psiNew;
         // do backsubstitution from psiTildeHat to psi (cf. Dissertation Kerstion Kuepper, Eq. 1.23)
@@ -135,8 +140,8 @@ void CSDSNSolver::Solve() {
         // Save( n );
         dFlux   = blaze::l2Norm( fluxNew - fluxOld );
         fluxOld = fluxNew;
-        if( std::isinf( dFlux ) || std::isnan( dFlux ) ) break;
         if( rank == 0 ) log->info( "{:03.8f}  {:01.5e}  {:01.5e}", _energies[n], _dE / densityMin, dFlux );
+        if( std::isinf( dFlux ) || std::isnan( dFlux ) ) break;
     }
 }
 
