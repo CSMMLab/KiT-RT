@@ -223,9 +223,16 @@ void MNSolver::Save() const {
 }
 
 void MNSolver::Save( int currEnergy ) const {
-    std::vector<std::string> fieldNames{ "flux" };
+    std::vector<std::string> fieldNames = { "flux" };
+
+    // Multifield ooutput
+    // std::vector<std::string> fieldNames( _nTotalEntries, "flux" );
+    // for( unsigned idx_sys = 1; idx_sys < _nTotalEntries; idx_sys++ ) {
+    //    fieldNames[idx_sys] = std::string( "flux_moment_" + std::to_string( idx_sys ) );
+    //}
+
     std::vector<std::vector<double>> scalarField( 1, _solverOutput );
-    std::vector<std::vector<std::vector<double>>> results{ scalarField };
+    // std::vector<std::vector<std::vector<double>>> results{ _outputFields };
     ExportVTK( _settings->GetOutputFile() + "_" + std::to_string( currEnergy ), results, fieldNames, _mesh );
 }
 
