@@ -9,7 +9,7 @@ from tensorflow.keras import layers
 import math
 from tensorflow.keras.callbacks import EarlyStopping,ModelCheckpoint
 import random
-import pickle
+import json
 
 # Custom Loss
 def custom_loss1dMB(u_input, alpha_pred):  # (label,prediciton)
@@ -76,12 +76,17 @@ def main():
     
     # summarize history for loss
     print("save history")
-    with open('saved_model/_EntropyLoss_1_300_M_0_hist.pickle', 'wb') as file_pi:
-        pickle.dump(history.history, file_pi)
+
+
+    with open('saved_model/_EntropyLoss_1_10_M_0_hist.json', 'w') as file:
+		json.dump(history.history, file)
+
+    print("history saved")
 
     # load history
     '''
-    history = pickle.load(open('saved_model/_EntropyLoss_1_300_M_0_hist.pickle'), "rb")
+    with open('saved_model/_EntropyLoss_1_10_M_0_hist.json') as json_file:
+    history1 = json.load(json_file)
     '''
     
     print("Training Sequence successfully finished")
