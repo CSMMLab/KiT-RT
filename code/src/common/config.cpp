@@ -335,7 +335,7 @@ void Config::SetConfigParsing( string case_filename ) {
     /*--- See if there were any errors parsing the config file ---*/
 
     if( errorString.size() != 0 ) {
-        ErrorMessages::Error( errorString, CURRENT_FUNCTION );
+        ErrorMessages::ParsingError( errorString, CURRENT_FUNCTION );
     }
 
     case_file.close();
@@ -363,8 +363,7 @@ void Config::SetPostprocessing() {
     // create directories if they dont exist
     if( !std::filesystem::exists( _outputDir ) ) std::filesystem::create_directory( _outputDir );
 
-    //         // init logger
-
+    // init logger
     InitLogger();
 
     // Regroup Boundary Conditions to  std::vector<std::pair<std::string, BOUNDARY_TYPE>> _boundaries;
