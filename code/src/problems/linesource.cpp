@@ -7,7 +7,7 @@
 
 LineSource_SN::LineSource_SN( Config* settings, Mesh* mesh ) : ProblemBase( settings, mesh ) { _physics = nullptr; }
 
-LineSource_SN::~LineSource_SN(){};
+LineSource_SN::~LineSource_SN() {}
 
 VectorVector LineSource_SN::GetScatteringXS( const Vector& energies ) { return VectorVector( energies.size(), Vector( _mesh->GetNumCells(), 1.0 ) ); }
 
@@ -39,7 +39,7 @@ VectorVector LineSource_SN_Pseudo1D::SetupIC() {
     double t      = 3.2e-4;    // pseudo time for gaussian smoothing
     for( unsigned j = 0; j < cellMids.size(); ++j ) {
         double x = cellMids[j][0];
-        psi[j]   = 1.0 / ( 2.0 * M_PI * t ) * std::exp( -( x * x ) / ( 2.0 * t ) );
+        psi[j]   = 1.0 / ( 4.0 * M_PI * t ) * std::exp( -( x * x ) / ( 4 * t ) );
     }
     return psi;
 }
@@ -66,7 +66,7 @@ int LineSource_PN::GlobalIndex( int l, int k ) const {
 
 LineSource_PN::LineSource_PN( Config* settings, Mesh* mesh ) : ProblemBase( settings, mesh ) { _physics = nullptr; }
 
-LineSource_PN::~LineSource_PN(){};
+LineSource_PN::~LineSource_PN() {}
 
 VectorVector LineSource_PN::GetScatteringXS( const Vector& energies ) { return VectorVector( energies.size(), Vector( _mesh->GetNumCells(), 1.0 ) ); }
 
@@ -90,24 +90,20 @@ VectorVector LineSource_PN::SetupIC() {
         double x = cellMids[j][0];
         double y = cellMids[j][1];    // (x- 0.5) * (x- 0.5)
 
-        psi[j][0] =
-            1.0 / ( 4.0 * M_PI * t ) *
-            std::exp(
-                -( ( x ) * ( x ) + ( y ) * ( y ) ) /
-                ( 4 *
-                  t ) );    //+
-                            //  1.0 / ( 4.0 * M_PI * t ) * std::exp( -( ( x - offset ) * ( x - offset ) + ( y - offset ) * ( y - offset ) ) / ( 4 * t
-                            //  ) ) + 1.0 / ( 4.0 * M_PI * t ) * std::exp( -( ( x + offset ) * ( x + offset ) + ( y - offset ) * ( y - offset ) ) / (
-                            //  4 * t ) ) + 1.0 / ( 4.0 * M_PI * t ) * std::exp( -( ( x - offset ) * ( x - offset ) + ( y + offset ) * ( y + offset )
-                            //  ) / ( 4 * t ) ) + 1.0 / ( 4.0 * M_PI * t ) * std::exp( -( ( x + offset ) * ( x + offset ) + ( y + offset ) * ( y +
-                            //  offset ) ) / ( 4 * t ) ) + 1.0 / ( 4.0 * M_PI * t ) *
-                            //      std::exp( -( ( x - 2 * offset ) * ( x - 2 * offset ) + ( y - 2 * offset ) * ( y - 2 * offset ) ) / ( 4 * t ) ) +
-                            //  1.0 / ( 4.0 * M_PI * t ) *
-                            //      std::exp( -( ( x + 2 * offset ) * ( x + 2 * offset ) + ( y - 2 * offset ) * ( y - 2 * offset ) ) / ( 4 * t ) ) +
-                            //  1.0 / ( 4.0 * M_PI * t ) *
-                            //      std::exp( -( ( x - 2 * offset ) * ( x - 2 * offset ) + ( y + 2 * offset ) * ( y + 2 * offset ) ) / ( 4 * t ) ) +
-                            //  1.0 / ( 4.0 * M_PI * t ) * std::exp( -( ( x + 2 * offset ) * ( x + 2 * offset ) + ( y + 2 * offset ) * ( y + 2 *
-                            //  offset ) ) / ( 4 * t ) );
+        psi[j][0] = 1.0 / ( 4.0 * M_PI * t ) * std::exp( -( ( x ) * ( x ) + ( y ) * ( y ) ) / ( 4 * t ) );
+        //+
+        //  1.0 / ( 4.0 * M_PI * t ) * std::exp( -( ( x - offset ) * ( x - offset ) + ( y - offset ) * ( y - offset ) ) / ( 4 * t
+        //  ) ) + 1.0 / ( 4.0 * M_PI * t ) * std::exp( -( ( x + offset ) * ( x + offset ) + ( y - offset ) * ( y - offset ) ) / (
+        //  4 * t ) ) + 1.0 / ( 4.0 * M_PI * t ) * std::exp( -( ( x - offset ) * ( x - offset ) + ( y + offset ) * ( y + offset )
+        //  ) / ( 4 * t ) ) + 1.0 / ( 4.0 * M_PI * t ) * std::exp( -( ( x + offset ) * ( x + offset ) + ( y + offset ) * ( y +
+        //  offset ) ) / ( 4 * t ) ) + 1.0 / ( 4.0 * M_PI * t ) *
+        //      std::exp( -( ( x - 2 * offset ) * ( x - 2 * offset ) + ( y - 2 * offset ) * ( y - 2 * offset ) ) / ( 4 * t ) ) +
+        //  1.0 / ( 4.0 * M_PI * t ) *
+        //      std::exp( -( ( x + 2 * offset ) * ( x + 2 * offset ) + ( y - 2 * offset ) * ( y - 2 * offset ) ) / ( 4 * t ) ) +
+        //  1.0 / ( 4.0 * M_PI * t ) *
+        //      std::exp( -( ( x - 2 * offset ) * ( x - 2 * offset ) + ( y + 2 * offset ) * ( y + 2 * offset ) ) / ( 4 * t ) ) +
+        //  1.0 / ( 4.0 * M_PI * t ) * std::exp( -( ( x + 2 * offset ) * ( x + 2 * offset ) + ( y + 2 * offset ) * ( y + 2 *
+        //  offset ) ) / ( 4 * t ) );
     }
 
     // Debugging jump test case
