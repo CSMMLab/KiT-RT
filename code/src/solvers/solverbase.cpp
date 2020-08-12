@@ -1,11 +1,12 @@
 #include "solvers/solverbase.h"
+#include "common/config.h"
+#include "common/globalconstants.h"
+#include "common/io.h"
+#include "common/mesh.h"
 #include "fluxes/numericalflux.h"
-#include "io.h"
-#include "mesh.h"
 #include "problems/problembase.h"
 #include "quadratures/quadraturebase.h"
-#include "settings/config.h"
-#include "settings/globalconstants.h"
+#include "solvers/csdsnsolver.h"
 #include "solvers/mnsolver.h"
 #include "solvers/pnsolver.h"
 #include "solvers/snsolver.h"
@@ -29,15 +30,16 @@ Solver::Solver( Config* settings ) : _settings( settings ) {
     // set time step
     _dE        = ComputeTimeStep( settings->GetCFL() );
     _nEnergies = unsigned( settings->GetTEnd() / _dE );
-    for( unsigned i = 0; i < _nEnergies; ++i ) _energies.push_back( ( i + 1 ) * _dE );
+    _energies.resize( _nEnergies );
+    for( unsigned i = 0; i < _nEnergies; ++i ) _energies[i] = ( i + 1 ) * _dE;
 
     // setup problem  and store frequently used params
     _problem = ProblemBase::Create( _settings, _mesh );
     _sol     = _problem->SetupIC();
-    _s       = _problem->GetStoppingPower( _energies );
-    _sigmaT  = _problem->GetTotalXS( _energies );
-    _sigmaS  = _problem->GetScatteringXS( _energies );
-    _Q       = _problem->GetExternalSource( _energies );
+    //_s       = _problem->GetStoppingPower( _energies );
+    _sigmaT = _problem->GetTotalXS( _energies );
+    _sigmaS = _problem->GetScatteringXS( _energies );
+    _Q      = _problem->GetExternalSource( _energies );
 
     // setup numerical flux
     _g = NumericalFlux::Create();
@@ -69,6 +71,7 @@ double Solver::ComputeTimeStep( double cfl ) const {
 Solver* Solver::Create( Config* settings ) {
     switch( settings->GetSolverName() ) {
         case SN_SOLVER: return new SNSolver( settings );
+        case CSD_SN_SOLVER: return new CSDSNSolver( settings );
         case PN_SOLVER: return new PNSolver( settings );
         case MN_SOLVER: return new MNSolver( settings );
         default: return new SNSolver( settings );

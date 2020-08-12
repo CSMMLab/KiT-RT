@@ -1,6 +1,6 @@
 #include "problems/checkerboard.h"
-#include "mesh.h"
-#include "settings/config.h"
+#include "common/config.h"
+#include "common/mesh.h"
 
 Checkerboard::Checkerboard( Config* settings, Mesh* mesh ) : ProblemBase( settings, mesh ) {
     _physics      = nullptr;
@@ -17,22 +17,17 @@ Checkerboard::Checkerboard( Config* settings, Mesh* mesh ) : ProblemBase( settin
 
 Checkerboard::~Checkerboard() {}
 
-VectorVector Checkerboard::GetScatteringXS( const std::vector<double>& energies ) { return VectorVector( energies.size(), _scatteringXS ); }
+VectorVector Checkerboard::GetScatteringXS( const Vector& energies ) { return VectorVector( energies.size(), _scatteringXS ); }
 
-VectorVector Checkerboard::GetTotalXS( const std::vector<double>& energies ) { return VectorVector( energies.size(), _totalXS ); }
+VectorVector Checkerboard::GetTotalXS( const Vector& energies ) { return VectorVector( energies.size(), _totalXS ); }
 
-std::vector<VectorVector> Checkerboard::GetExternalSource( const std::vector<double>& energies ) {
+std::vector<VectorVector> Checkerboard::GetExternalSource( const Vector& energies ) {
     VectorVector Q( _mesh->GetNumCells(), Vector( 1u, 0.0 ) );
     auto cellMids = _mesh->GetCellMidPoints();
     for( unsigned j = 0; j < cellMids.size(); ++j ) {
         if( isSource( cellMids[j] ) ) Q[j] = 1.0 / ( 4 * M_PI );    // isotropic source
     }
     return std::vector<VectorVector>( 1u, Q );
-}
-
-std::vector<double> Checkerboard::GetStoppingPower( const std::vector<double>& energies ) {
-    // @TODO
-    return std::vector<double>( energies.size(), 0.0 );
 }
 
 VectorVector Checkerboard::SetupIC() {

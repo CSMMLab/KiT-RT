@@ -1,8 +1,8 @@
 #ifndef OPTIMIZERBASE_H
 #define OPTIMIZERBASE_H
 
+#include "common/typedef.h"
 #include "entropies/entropybase.h"
-#include "settings/typedef.h"
 
 // Foward declaration
 class Config;

@@ -1,7 +1,7 @@
 #ifndef PROBLEMBASE_H
 #define PROBLEMBASE_H
 
-#include "settings/typedef.h"
+#include "common/typedef.h"
 
 // Forward Declaration
 
@@ -29,7 +29,7 @@ class ProblemBase
      *        in vector energy
      * @param energy is the energy the cross section is queried for
      */
-    virtual VectorVector GetScatteringXS( const std::vector<double>& energies ) = 0;
+    virtual VectorVector GetScatteringXS( const Vector& energies ) = 0;
 
     /**
      * @brief GetTotalXS gives back vector of vectors of total cross sections for
@@ -37,21 +37,36 @@ class ProblemBase
      * @param energy is the energy the cross section is queried for
      * @param density is vector with patient densities (at different spatial cells)
      */
-    virtual VectorVector GetTotalXS( const std::vector<double>& energies ) = 0;
+    virtual VectorVector GetTotalXS( const Vector& energies ) = 0;
+    /**
+     * @brief GetTotalXSE gives back vector of total cross sections for
+     *        energies in vector energy
+     * @param energy is the energy the cross section is queried for
+     */
+    virtual Vector GetTotalXSE( const Vector& energies ) { return Vector( 1 ); }
+
+    /**
+     * @brief GetScatteringXSE gives back vector (each energy) of scattering cross sections for energies
+     *        in vector energy
+     * @param energy is the energy the cross section is queried for
+     */
+    virtual VectorVector GetScatteringXSE( const Vector& energies, const Vector& angles ) {
+        return VectorVector( energies.size(), Vector( angles.size() ) );
+    }
 
     /**
      * @brief GetExternalSource gives back vector of vectors of source terms for each
      *        energy, cell and angle
      * @param energies is vector with energies
      */
-    virtual std::vector<VectorVector> GetExternalSource( const std::vector<double>& energies ) = 0;
+    virtual std::vector<VectorVector> GetExternalSource( const Vector& energies ) = 0;
 
     /**
      * @brief GetStoppingPower gives back vector of vectors of stopping powers for
      *        materials defined by density and energies in vector energy
      * @param energies is vector with energies
      */
-    virtual std::vector<double> GetStoppingPower( const std::vector<double>& energies ) = 0;
+    virtual Vector GetStoppingPower( const Vector& energies );
 
     /**
      * @brief GetDensity gives back vector of densities for every spatial cell

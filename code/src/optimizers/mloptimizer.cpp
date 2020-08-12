@@ -3,8 +3,8 @@
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 #include <numpy/arrayobject.h>
 
+#include "common/config.h"
 #include "optimizers/mloptimizer.h"
-#include "settings/config.h"
 #include "toolboxes/errormessages.h"
 
 MLOptimizer::MLOptimizer( Config* settings ) : OptimizerBase( settings ) {

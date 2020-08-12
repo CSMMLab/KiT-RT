@@ -1,14 +1,15 @@
 #include "solvers/mnsolver.h"
+#include "common/config.h"
+#include "common/io.h"
 #include "entropies/entropybase.h"
 #include "fluxes/numericalflux.h"
-#include "io.h"
 #include "optimizers/optimizerbase.h"
 #include "quadratures/quadraturebase.h"
-#include "settings/config.h"
 #include "solvers/sphericalharmonics.h"
 #include "toolboxes/textprocessingtoolbox.h"
 
 // externals
+#include "spdlog/spdlog.h"
 #include <mpi.h>
 
 #include <fstream>
@@ -58,31 +59,6 @@ MNSolver::MNSolver( Config* settings ) : Solver( settings ) {
 
     // Solver output
     _outputFields = std::vector( _nTotalEntries, std::vector( _nCells, 0.0 ) );
-
-    // Delete that
-    /*
-        std::string filename = "obFunc.csv";
-        std::ofstream myfile;
-        myfile.open( filename );
-
-        NewtonOptimizer* optimizer = new NewtonOptimizer( settings );
-
-        Vector alpha( 4, 0.0 );
-        Vector u( 4, 0.0 );
-        u[0] = -1.11;
-        u[1] = 0;
-        u[2] = 0;
-        u[4] = 0;
-
-        for( double a1 = -1000; a1 <= 100; a1 += 10.0 / 100.0 ) {
-            for( double a2 = -60; a2 <= 100; a2 += 60.0 / 40.0 ) {
-                alpha[0] = a1;
-                alpha[1] = a2;
-                myfile << a1 << ", " << a2 << ", " << optimizer->ComputeObjFunc( alpha, u, _moments ) << "\n";
-            }
-        }
-        myfile.close();
-     */
 }
 
 MNSolver::~MNSolver() {
@@ -175,7 +151,12 @@ void MNSolver::Solve() {
     if( rank == 0 ) log->info( "{:10}   {:10}", "t", "dFlux" );
     if( rank == 0 ) log->info( "{:03.8f}   {:01.5e} {:01.5e}", -1.0, dFlux, mass1 );
 
+    // Time measurement
+    // auto start = chrono::steady_clock::now();
+    // auto end   = chrono::steady_clock::now();
+
     // Loop over energies (pseudo-time of continuous slowing down approach)
+
     for( unsigned idx_energy = 0; idx_energy < _nEnergies; idx_energy++ ) {
 
         // ------- Reconstruction Step ----------------
@@ -208,6 +189,7 @@ void MNSolver::Solve() {
                                                        + _sigmaS[idx_energy][idx_cell] * _scatterMatDiag[idx_system] ); /* scattering influence */
             }
         }
+        _sol = psiNew;
 
         // pseudo time iteration output
         double mass = 0.0;
