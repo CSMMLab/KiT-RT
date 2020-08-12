@@ -75,6 +75,28 @@ void Physics::LoadDatabase( std::string fileName_H, std::string fileName_O, std:
     _stpowH2O = ReadStoppingPowers( fileName_stppower );
 }
 
+std::vector<Matrix> Physics::GetScatteringXS( const Vector& energies, const Matrix& angle ) {
+    std::vector<Matrix> out( energies.size(), Matrix( angle.rows(), angle.columns() ) );
+    Vector angleVec( angle.columns() * angle.rows() );
+    // store Matrix with mu values in vector format to call GetScatteringXS
+    for( unsigned i = 0; i < angle.rows(); ++i ) {
+        for( unsigned j = 0; j < angle.columns(); ++j ) {
+            angleVec[i * angle.columns() + j] = angle( i, j );
+        }
+    }
+    VectorVector outVec = GetScatteringXS( energies, angleVec );
+
+    // rearrange output to matrix format
+    for( unsigned n = 0; n < energies.size(); ++n ) {
+        for( unsigned i = 0; i < angle.rows(); ++i ) {
+            for( unsigned j = 0; j < angle.columns(); ++j ) {
+                out[n]( i, j ) = outVec[n][i * angle.columns() + j];
+            }
+        }
+    }
+    return out;
+}
+
 VectorVector Physics::GetScatteringXS( Vector energies, Vector angle ) {
     std::vector<std::vector<double>> tmpH, tmpO;          // vectorvector which stores data at fixed energies
     std::vector<std::vector<double>> xsHGrid, xsOGrid;    // matrix which stores tensorized data for given angular grid, original energy grid

@@ -37,7 +37,7 @@ class LineSource_SN_Pseudo1D_Physics : public LineSource_SN_Pseudo1D
   public:
     LineSource_SN_Pseudo1D_Physics( Config* settings, Mesh* mesh );
 
-    VectorVector GetScatteringXSE( const Vector& energies, const Vector& angles ) override;
+    std::vector<Matrix> GetScatteringXSE( const Vector& energies, const Matrix& angles ) override;
     Vector GetTotalXSE( const Vector& energies ) override;
 };
 

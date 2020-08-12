@@ -26,11 +26,18 @@ CSDSNSolver::CSDSNSolver( Config* settings ) : SNSolver( settings ) {
         _energies[n] = energyMin + ( energyMax - energyMin ) / ( _nEnergies - 1 ) * n;
     }
     // write mu grid
-    for( unsigned k = 0; k < _settings->GetNQuadPoints(); ++k ) {
-        _angle[k] = _quadPoints[k][2];
+    Matrix muMatrix( _settings->GetNQuadPoints(), _settings->GetNQuadPoints() );
+    for( unsigned l = 0; l < _settings->GetNQuadPoints(); ++l ) {
+        for( unsigned k = 0; k < _settings->GetNQuadPoints(); ++k ) {
+            double inner = 0.0;
+            for( unsigned j = 0; j < 3; ++j ) {
+                inner += _quadPoints[l][j] * _quadPoints[k][j];    // compute mu at Omega_l*Omega_k
+            }
+            muMatrix( l, k ) = inner;
+        }
     }
 
-    _sigmaSE = _problem->GetScatteringXSE( _energies, _angle );
+    _sigmaSE = _problem->GetScatteringXSE( _energies, muMatrix );
     _sigmaTE = _problem->GetTotalXSE( _energies );
     _s       = _problem->GetStoppingPower( _energies );
     _Q       = _problem->GetExternalSource( _energies );
@@ -105,7 +112,7 @@ void CSDSNSolver::Solve() {
                 psiNew[j][i] = _sol[j][i] - ( _dE / _areas[j] ) * psiNew[j][i] - _dE * _sigmaTE[n] * _sol[j][i];
             }
             // compute scattering effects (_scatteringKernel is simply multiplication with quad weights)
-            psiNew[j] += _dE * ( blaze::trans( _sigmaSE[n] ) * _scatteringKernel * _sol[j] );    // multiply scattering matrix with psi
+            psiNew[j] += _dE * ( _sigmaSE[n] * _scatteringKernel * _sol[j] );    // multiply scattering matrix with psi
             // TODO: Check if _sigmaS^T*psi is correct
 
             // TODO: figure out a more elegant way

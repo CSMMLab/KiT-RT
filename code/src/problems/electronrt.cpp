@@ -18,7 +18,7 @@ VectorVector ElectronRT::GetTotalXS( const Vector& energies ) {
     return VectorVector( energies.size(), Vector( _mesh->GetNumCells(), 0.0 ) );
 }
 
-VectorVector ElectronRT::GetScatteringXSE( const Vector& energies, const Vector& angles ) {
+std::vector<Matrix> ElectronRT::GetScatteringXSE( const Vector& energies, const Matrix& angles ) {
     // @TODO
     return _physics->GetScatteringXS( energies, angles );
 }

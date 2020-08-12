@@ -15,8 +15,8 @@ class CSDSNSolver : public SNSolver
     Vector _angle;    /*! @brief: angles for SN */
     Vector _density;  /*! @brief: patient density for each grid cell */
 
-    VectorVector _sigmaSE; /*!  @brief scattering cross section for all energies*/
-    Vector _sigmaTE;       /*!  @brief total cross section for all energies*/
+    std::vector<Matrix> _sigmaSE; /*!  @brief scattering cross section for all energies*/
+    Vector _sigmaTE;              /*!  @brief total cross section for all energies*/
 
   public:
     /**

@@ -31,10 +31,16 @@ class Physics
     /** @brief GetScatteringXS gives back vector of vectors of scattering cross sections for materials defined by density and energies in vector
      * energy
      * @param energies is vector with energies
-     * @param density is vector with patient densities (at different spatial cells)
-     * @param Omega are scattering angles
+     * @param angle are scattering angles (mu)
      */
     VectorVector GetScatteringXS( Vector energies, Vector angle );
+
+    /** @brief GetScatteringXS gives back vector of Matrix of scattering cross sections for materials defined by density and energies in vector
+     * energy
+     * @param energies is vector with energies
+     * @param angle is matrix of scattering angles (<Omega_i,Omega_j>)
+     */
+    std::vector<Matrix> GetScatteringXS( const Vector& energies, const Matrix& angle );
 
     /**
      * @brief GetTotalXS gives back vector of vectors of total cross sections for materials defined by density and energies in vector energy

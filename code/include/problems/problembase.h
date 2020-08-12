@@ -49,8 +49,8 @@ class ProblemBase
      *        in vector energy
      * @param energy is the energy the cross section is queried for
      */
-    virtual VectorVector GetScatteringXSE( const Vector& energies, const Vector& angles ) {
-        return VectorVector( energies.size(), Vector( angles.size() ) );
+    virtual std::vector<Matrix> GetScatteringXSE( const Vector& energies, const Matrix& angles ) {
+        return std::vector<Matrix>( energies.size(), Matrix( angles.rows(), angles.columns() ) );
     }
 
     /**
