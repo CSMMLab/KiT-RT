@@ -84,6 +84,7 @@ void MLOptimizer::init_numpy() {
 void MLOptimizer::initialize_python() {
     // Initialize the Python Interpreter
     std::string pyPath = RTSN_PYTHON_PATH;
+
     if( !Py_IsInitialized() ) {
 
         Py_InitializeEx( 0 );
@@ -92,6 +93,8 @@ void MLOptimizer::initialize_python() {
         }
         PyRun_SimpleString( ( "import sys\nsys.path.append('" + pyPath + "')" ).c_str() );
     }
+
+    std::cout << "Python working directory is: " << pyPath << " \n";
     init_numpy();
 }
 

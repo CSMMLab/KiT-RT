@@ -1,21 +1,26 @@
 # imports
 import tensorflow as tf
 import numpy as np
+import math
+
+# Custom Loss
+def custom_loss1dMBPrime(): # (label,prediciton)
+    def loss(u_input, alpha_pred):
+        return 0.5*tf.square(4*math.pi*np.sqrt(1/(4*np.pi))*tf.math.exp(alpha_pred*np.sqrt(1/(4*np.pi))) - u_input)
+    return loss
 
 
 def initialize_network():
     # Load model
-    model = tf.keras.models.load_model('saved_model/my_model')
+    model = tf.keras.models.load_model('saved_model_GPU/_EntropyLoss_1_300_M_0', custom_objects={ 'loss':custom_loss1dMBPrime })
 
     # Check its architecture
     model.summary()
 
     return model
 
-
 # make the network a gobal variable here
 model = initialize_network()
-
 
 def call_network(input):
     inputNP = np.asarray([input])
@@ -46,10 +51,10 @@ def call_networkBatchwise(input):
 
 
 def main():
-    input = [[[0, 1, 2, 3], [2, 3, 4, 5]]]
+    input = [[1], [2], [3], [2], [3], [4], [5]]
 
     # initialize_network()
-    print(call_network([0, 1, 2, 3]))
+    print(call_network(1))
     print("-----")
     print(call_networkBatchwise(input))
 

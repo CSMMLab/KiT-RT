@@ -232,7 +232,7 @@ void MNSolver::Save( int currEnergy ) const {
     //}
 
     std::vector<std::vector<double>> scalarField( 1, _solverOutput );
-    // std::vector<std::vector<std::vector<double>>> results{ _outputFields };
+    std::vector<std::vector<std::vector<double>>> results{ _outputFields };
     ExportVTK( _settings->GetOutputFile() + "_" + std::to_string( currEnergy ), results, fieldNames, _mesh );
 }
 
