@@ -1,11 +1,12 @@
-#include "io.h"
+#include "common/io.h"
+#include "common/config.h"
+#include "common/mesh.h"
+#include "common/typedef.h"
+
 #include "toolboxes/errormessages.h"
 #include "toolboxes/textprocessingtoolbox.h"
 
-//#include <chrono>
-//#include <filesystem>
 #include <iostream>
-//#include <string>
 
 #include <mpi.h>
 #include <omp.h>
@@ -25,11 +26,6 @@
 #include <Python.h>
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 #include <numpy/arrayobject.h>
-
-#include "mesh.h"
-#include "settings/config.h"
-
-#include "settings/typedef.h"
 
 using vtkPointsSP                 = vtkSmartPointer<vtkPoints>;
 using vtkUnstructuredGridSP       = vtkSmartPointer<vtkUnstructuredGrid>;

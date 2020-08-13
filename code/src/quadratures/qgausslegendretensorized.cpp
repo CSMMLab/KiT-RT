@@ -1,7 +1,7 @@
-#include "../../include/quadratures/qgausslegendretensorized.h"
+#include "quadratures/qgausslegendretensorized.h"
 #include "toolboxes/errormessages.h"
 
-QGaussLegendreTensorized::QGaussLegendreTensorized( unsigned order ) : QuadratureBase( order ) {
+QGaussLegendreTensorized::QGaussLegendreTensorized( Config* settings ) : QuadratureBase( settings ) {
     SetName();
     CheckOrder();
     SetNq();
@@ -46,8 +46,13 @@ void QGaussLegendreTensorized::SetPointsAndWeights() {
         phi[i] = ( i + 0.5 ) * M_PI / _order;
     }
 
-    // unsigned range = std::floor( _order / 2.0 );    // comment (steffen): why do we only need half of the points:
-    //=> In 2D we would count everything twice. (not wrong with scaling
+    unsigned range             = _order;    // By default, use all quad points
+    double normalizationFactor = 1.0;
+    if( _settings->GetSolverName() == SN_SOLVER && _settings->GetUseAllGaussPts() == false ) {
+        range = std::floor( _order / 2.0 );    // comment (steffen): why do we only need half of the points:
+        //=> In 2D we would count everything twice. (not wrong with scaling)
+        normalizationFactor = 2.0;
+    }
 
     // resize points and weights
     _points.resize( _nq );
@@ -62,7 +67,7 @@ void QGaussLegendreTensorized::SetPointsAndWeights() {
     _weights.resize( _nq );
 
     // transform tensorized (x,y,z)-grid to spherical grid points
-    for( unsigned j = 0; j < _order; ++j ) {
+    for( unsigned j = 0; j < range; ++j ) {
         for( unsigned i = 0; i < 2 * _order; ++i ) {
             _points[j * ( 2 * _order ) + i][0] = sqrt( 1 - nodes1D[j] * nodes1D[j] ) * std::cos( phi[i] );
             _points[j * ( 2 * _order ) + i][1] = sqrt( 1 - nodes1D[j] * nodes1D[j] ) * std::sin( phi[i] );
@@ -71,7 +76,7 @@ void QGaussLegendreTensorized::SetPointsAndWeights() {
             _pointsSphere[j * ( 2 * _order ) + i][0] = nodes1D[j];    // my
             _pointsSphere[j * ( 2 * _order ) + i][1] = phi[i];        // phi
 
-            _weights[j * ( 2 * _order ) + i] = M_PI / _order * weights1D[j];
+            _weights[j * ( 2 * _order ) + i] = normalizationFactor * M_PI / _order * weights1D[j];
         }
     }
 }

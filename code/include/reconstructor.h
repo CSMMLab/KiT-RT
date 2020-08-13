@@ -1,8 +1,8 @@
 #ifndef RECONSTRUCTOR_H
 #define RECONSTRUCTOR_H
 
-#include "settings/config.h"
-#include "settings/typedef.h"
+#include "common/config.h"
+#include "common/typedef.h"
 
 class Reconstructor
 {
@@ -32,15 +32,13 @@ class Reconstructor
      */
 
     virtual double ReconstructSlopeStruct( double uL, double uC, double uR, double dxL, double dxR, std::string limiter ) const;
-    
 };
 
 #endif    // RECONSTRUCTOR_H
 
-
-double FortSign( double a, double b ) ;
-double LMinMod( double sL, double sR ) ;
-double LVanLeer( double sL, double sR ) ;
-double LSuperBee( double sL, double sR ) ;
-double LVanAlbaba( double sL, double sR ) ;
-double LWENOJS( double x ) ;
+double FortSign( double a, double b );
+double LMinMod( double sL, double sR );
+double LVanLeer( double sL, double sR );
+double LSuperBee( double sL, double sR );
+double LVanAlbaba( double sL, double sR );
+double LWENOJS( double x );

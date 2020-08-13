@@ -11,11 +11,7 @@
 
 #include <filesystem>
 #include <map>
-#include <mpi.h>
-
-#include "spdlog/sinks/basic_file_sink.h"
-#include "spdlog/sinks/stdout_sinks.h"
-#include "spdlog/spdlog.h"
+#include <vector>
 
 #include "globalconstants.h"
 
@@ -65,9 +61,11 @@ class Config
     /*!< @brief If true, very low entries (10^-10 or smaller) of the flux matrices will be set to zero,
      * to improve floating point accuracy */
     bool _cleanFluxMat;
+    bool _allGaussPts; /*!< @brief If true, the SN Solver uses all Gauss pts in the quadrature */
 
-    /*!< @brief If true, continuous slowing down approximation will be used */
-    bool _csd;
+    bool _csd;                 /*!< @brief If true, continuous slowing down approximation will be used */
+    std::string _hydrogenFile; /*!< @brief Name of hydrogen cross section file */
+    std::string _oxygenFile;   /*!< @brief Name of oxygen cross section file */
 
     // Boundary Conditions
     /*!< @brief List of all Pairs (marker, BOUNDARY_TYPE), e.g. (farfield,DIRICHLET).
@@ -183,7 +181,7 @@ class Config
     void AddStringListOption( const std::string name, unsigned short& num_marker, std::vector<std::string>& option_field );
 
     // Initialize the cmdline and file logger
-    void InitLogger( spdlog::level::level_enum terminalLogLvl, spdlog::level::level_enum fileLogLvl );
+    void InitLogger();
 
   public:
     /*!
@@ -208,6 +206,8 @@ class Config
     std::string inline GetOutputFile() const { return std::filesystem::path( _outputFile ).lexically_normal(); }
     std::string inline GetLogDir() const { return std::filesystem::path( _logDir ).lexically_normal(); }
     std::string inline GetCTFile() const { return std::filesystem::path( _ctFile ).lexically_normal(); }
+    std::string inline GetHydrogenFile() const { return std::filesystem::path( _hydrogenFile ).lexically_normal(); }
+    std::string inline GetOxygenFile() const { return std::filesystem::path( _oxygenFile ).lexically_normal(); }
 
     // Quadrature Structure
     QUAD_NAME inline GetQuadName() const { return _quadName; }
@@ -227,7 +227,8 @@ class Config
     SOLVER_NAME inline GetSolverName() const { return _solverName; }
     ENTROPY_NAME inline GetEntropyName() const { return _entropyName; }
     bool inline GetCleanFluxMat() const { return _cleanFluxMat; }
-    unsigned GetReconsOrder() { return _reconsOrder; }
+    bool inline GetUseAllGaussPts() const { return _allGaussPts; }
+    unsigned inline GetReconsOrder() { return _reconsOrder; }
     bool inline IsCSD() const { return _csd; }
     unsigned inline GetMaxMomentDegree() { return _maxMomentDegree; }
 

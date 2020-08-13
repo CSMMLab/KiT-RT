@@ -1,6 +1,6 @@
 #include "catch.hpp"
+#include "common/globalconstants.h"
 #include "quadratures/quadraturebase.h"
-#include "settings/globalconstants.h"
 
 #include <vector>
 

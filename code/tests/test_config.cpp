@@ -1,5 +1,5 @@
 #include "catch.hpp"
-#include "settings/config.h"
+#include "common/config.h"
 
 TEST_CASE( "Read in Config Template" ) {
 

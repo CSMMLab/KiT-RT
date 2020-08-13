@@ -11,7 +11,7 @@
 #ifndef SPHERICALHARMONICS_H
 #define SPHERICALHARMONICS_H
 
-#include "settings/typedef.h"
+#include "common/typedef.h"
 #include <vector>
 
 class SphericalHarmonics

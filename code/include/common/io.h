@@ -1,14 +1,13 @@
 #ifndef IO_H
 #define IO_H
 
-#include "settings/typedef.h"
+#include "common/typedef.h"
 #include <string>
 #include <vector>
 
 // Forward Declarations
 class Config;
 class Mesh;
-// class Matrix;
 
 void ExportVTK( const std::string fileName,
                 const std::vector<std::vector<std::vector<double>>>& results,

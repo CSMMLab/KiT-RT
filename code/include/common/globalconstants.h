@@ -9,14 +9,12 @@
 #ifndef GLOBAL_CONSTANTS_H
 #define GLOBAL_CONSTANTS_H
 
-#include <cmath>
 #include <map>
 #include <string>
 
 // --- Definition for global constants goes here ---
 
-const double PI_NUMBER             = M_PI; /*!< @brief Pi number. */
-const unsigned int MAX_STRING_SIZE = 200;  /*!< @brief Maximum size for strings. */
+const unsigned int MAX_STRING_SIZE = 200; /*!< @brief Maximum size for strings. */
 
 // --- Definition of enums goes here ---
 
@@ -39,13 +37,21 @@ inline std::map<std::string, QUAD_NAME> Quadrature_Map{ { "MONTE_CARLO", QUAD_Mo
                                                         { "LDFESA", QUAD_LDFESA } };
 
 // Problem name
-enum PROBLEM_NAME { PROBLEM_LineSource, PROBLEM_Checkerboard, PROBLEM_ElectronRT, PROBLEM_WaterPhantom, PROBLEM_LineSource_Pseudo_1D };
+enum PROBLEM_NAME {
+    PROBLEM_LineSource,
+    PROBLEM_Checkerboard,
+    PROBLEM_ElectronRT,
+    PROBLEM_WaterPhantom,
+    PROBLEM_LineSource_Pseudo_1D,
+    PROBLEM_LineSource_Pseudo_1D_Physics
+};
 
 inline std::map<std::string, PROBLEM_NAME> Problem_Map{ { "LINESOURCE", PROBLEM_LineSource },
                                                         { "CHECKERBOARD", PROBLEM_Checkerboard },
                                                         { "ELECTRONRT", PROBLEM_ElectronRT },
                                                         { "WATERPHANTOM", PROBLEM_WaterPhantom },
-                                                        { "LINESOURCE_PSEUDO_1D", PROBLEM_LineSource_Pseudo_1D } };
+                                                        { "LINESOURCE_PSEUDO_1D", PROBLEM_LineSource_Pseudo_1D },
+                                                        { "LINESOURCE_PSEUDO_1D_PHYSICS", PROBLEM_LineSource_Pseudo_1D_Physics } };
 
 // Kernel name
 enum KERNEL_NAME { KERNEL_Isotropic, KERNEL_Isotropic1D };
@@ -53,9 +59,10 @@ enum KERNEL_NAME { KERNEL_Isotropic, KERNEL_Isotropic1D };
 inline std::map<std::string, KERNEL_NAME> Kernel_Map{ { "ISOTROPIC", KERNEL_Isotropic }, { "ISOTROPIC_1D", KERNEL_Isotropic1D } };
 
 // Solver name
-enum SOLVER_NAME { SN_SOLVER, PN_SOLVER, MN_SOLVER };
+enum SOLVER_NAME { SN_SOLVER, CSD_SN_SOLVER, PN_SOLVER, MN_SOLVER };
 
-inline std::map<std::string, SOLVER_NAME> Solver_Map{ { "SN_SOLVER", SN_SOLVER }, { "PN_SOLVER", PN_SOLVER }, { "MN_SOLVER", MN_SOLVER } };
+inline std::map<std::string, SOLVER_NAME> Solver_Map{
+    { "SN_SOLVER", SN_SOLVER }, { "CSD_SN_SOLVER", CSD_SN_SOLVER }, { "PN_SOLVER", PN_SOLVER }, { "MN_SOLVER", MN_SOLVER } };
 
 // Entropy functional
 enum ENTROPY_NAME { QUADRATIC, MAXWELL_BOLZMANN, BOSE_EINSTEIN, FERMI_DIRAC };

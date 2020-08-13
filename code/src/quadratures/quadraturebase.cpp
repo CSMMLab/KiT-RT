@@ -1,4 +1,5 @@
 #include "quadratures/quadraturebase.h"
+#include "common/config.h"
 #include "quadratures/qgausslegendre1D.h"
 #include "quadratures/qgausslegendretensorized.h"
 #include "quadratures/qldfesa.h"
@@ -7,18 +8,22 @@
 #include "quadratures/qmontecarlo.h"
 #include "toolboxes/errormessages.h"
 
-QuadratureBase::QuadratureBase( unsigned order ) : _order( order ) {}
+QuadratureBase::QuadratureBase( Config* settings ) {
+    _settings = settings;
+    _order    = settings->GetQuadOrder();
+}
 
-QuadratureBase* QuadratureBase::CreateQuadrature( QUAD_NAME name, unsigned order ) {
+QuadratureBase* QuadratureBase::CreateQuadrature( Config* settings ) {
+    QUAD_NAME name = settings->GetQuadName();
 
     switch( name ) {
-        case QUAD_MonteCarlo: return new QMonteCarlo( order );
-        case QUAD_GaussLegendreTensorized: return new QGaussLegendreTensorized( order );
-        case QUAD_GaussLegendre1D: return new QGaussLegendre1D( order );
-        case QUAD_LevelSymmetric: return new QLevelSymmetric( order );
-        case QUAD_LDFESA: return new QLDFESA( order );
-        case QUAD_Lebedev: return new QLebedev( order );
-        default: return new QMonteCarlo( order );    // Use MonteCarlo as dummy
+        case QUAD_MonteCarlo: return new QMonteCarlo( settings );
+        case QUAD_GaussLegendreTensorized: return new QGaussLegendreTensorized( settings );
+        case QUAD_GaussLegendre1D: return new QGaussLegendre1D( settings );
+        case QUAD_LevelSymmetric: return new QLevelSymmetric( settings );
+        case QUAD_LDFESA: return new QLDFESA( settings );
+        case QUAD_Lebedev: return new QLebedev( settings );
+        default: return new QMonteCarlo( settings );    // Use MonteCarlo as dummy
     }
 }
 

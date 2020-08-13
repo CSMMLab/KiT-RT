@@ -62,30 +62,30 @@ def main():
     # Create Early Stopping callback
     es = EarlyStopping(monitor='loss', mode='min', min_delta=0.00005, patience=50,
                      verbose=10)  # loss == custom_loss1dMBPrime by model definition
-    mc = ModelCheckpoint('saved_model/best_model_1_300.h5', monitor='loss', mode='min', save_best_only=True)
+    mc = ModelCheckpoint('saved_model_GPU2/best_model_1_300.h5', monitor='loss', mode='min', save_best_only=True)
 
     # Train the model
     print("Train Model")
-    history = model.fit(uTrain, uTrain, validation_split=0.3, epochs=1500, batch_size=90000, verbose=1,
+    history = model.fit(uTrain, uTrain, validation_split=0.3, epochs=1500, batch_size=900000, verbose=1,
                         callbacks=[es, mc])
 
 	
-	#save trained model
+    #save trained model
     print("save model")
-    model.save('saved_model/_EntropyLoss_1_300_M_0')
+    model.save('saved_model_GPU2/_EntropyLoss_1_300_M_0')
     
     # summarize history for loss
     print("save history")
 
 
-    with open('saved_model/_EntropyLoss_1_10_M_0_hist.json', 'w') as file:
-		json.dump(history.history, file)
+    with open('saved_model_GPU2/_EntropyLoss_1_300_M_0_hist.json', 'w') as file:
+        json.dump(history.history, file)
 
     print("history saved")
 
     # load history
     '''
-    with open('saved_model/_EntropyLoss_1_10_M_0_hist.json') as json_file:
+    with open('saved_model/_EntropyLoss_1_300_M_0_hist.json') as json_file:
     history1 = json.load(json_file)
     '''
     

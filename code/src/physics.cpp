@@ -1,14 +1,13 @@
-
 #include "physics.h"
-#include "spline.h"
 
-#include <fstream>
-#include <list>
-#include <map>
-
-Physics::Physics() {
-    // LoadDatabase
+Physics::Physics( std::string fileName_H, std::string fileName_O, std::string fileName_stppower ) {
+    _xsScatteringH2O.resize( 2 );
+    _xsTotalH2O.resize( 2 );
+    _xsTransportH2O.resize( 2 );
+    LoadDatabase( fileName_H, fileName_O, fileName_stppower );
 }
+
+Physics::~Physics() {}
 
 void Physics::LoadDatabase( std::string fileName_H, std::string fileName_O, std::string fileName_stppower ) {
     VectorVector transport_XS_H;
@@ -17,8 +16,8 @@ void Physics::LoadDatabase( std::string fileName_H, std::string fileName_O, std:
     VectorVector scattering_XS_H;
     VectorVector scattering_XS_O;
 
-    VectorVector total_scat_XS_H;
-    VectorVector total_scat_XS_O;
+    VectorVector total_XS_H;
+    VectorVector total_XS_O;
 
     std::vector<VectorVector> headers_H;
     std::vector<VectorVector> data_H;
@@ -36,7 +35,7 @@ void Physics::LoadDatabase( std::string fileName_H, std::string fileName_O, std:
         }
         // Integrated elastic scattering XS
         else if( header[1][0] == 10 && header[1][1] == 0 ) {
-            total_scat_XS_H = data;
+            total_XS_H = data;
         }
         // Angular distribution large angle elastic scattering XS
         else if( header[1][0] == 8 && header[1][1] == 22 ) {
@@ -56,7 +55,7 @@ void Physics::LoadDatabase( std::string fileName_H, std::string fileName_O, std:
         }
         // Integrated elastic scattering XS
         else if( header[1][0] == 10 && header[1][1] == 0 ) {
-            total_scat_XS_O = data;
+            total_XS_O = data;
         }
         // Angular distribution large angle elastic scattering XS
         else if( header[1][0] == 8 && header[1][1] == 22 ) {
@@ -64,105 +63,174 @@ void Physics::LoadDatabase( std::string fileName_H, std::string fileName_O, std:
         }
     }
 
-    if( transport_XS_H.size() != transport_XS_O.size() )
-        ErrorMessages::Error( "transport_XS of hydrogen and oxygen have different sizes", CURRENT_FUNCTION );
-    if( scattering_XS_H.size() != scattering_XS_O.size() )
-        ErrorMessages::Error( "scattering_XS of hydrogen and oxygen have different sizes", CURRENT_FUNCTION );
-    if( total_scat_XS_H.size() != total_scat_XS_O.size() )
-        ErrorMessages::Error( "total_XS of hydrogen and oxygen have different sizes", CURRENT_FUNCTION );
+    _xsScatteringH2O[H] = scattering_XS_H;
+    _xsScatteringH2O[O] = scattering_XS_O;
 
-    // Combine values for H and O according to mixture ratio in water
-    for( unsigned i = 0; i < transport_XS_H.size(); ++i )
-        _xsTransportH2O.push_back( 0.11189400 * transport_XS_H[i] + 0.88810600 * transport_XS_O[i] );
-    for( unsigned i = 0; i < scattering_XS_H.size(); ++i ) _xsH2O.push_back( 0.11189400 * scattering_XS_H[i] + 0.88810600 * scattering_XS_O[i] );
-    for( unsigned i = 0; i < total_scat_XS_H.size(); ++i ) _xsTotalH2O.push_back( 0.11189400 * total_scat_XS_H[i] + 0.88810600 * total_scat_XS_O[i] );
+    _xsTransportH2O[H] = transport_XS_H;
+    _xsTransportH2O[O] = transport_XS_O;
+
+    _xsTotalH2O[H] = total_XS_H;
+    _xsTotalH2O[O] = total_XS_O;
 
     _stpowH2O = ReadStoppingPowers( fileName_stppower );
 }
 
-VectorVector Physics::GetScatteringXS( Vector energies, Vector density, Vector angle ) {
+VectorVector Physics::GetScatteringXS( Vector energies, Vector angle ) {
+    std::vector<std::vector<double>> tmpH, tmpO;          // vectorvector which stores data at fixed energies
+    std::vector<std::vector<double>> xsHGrid, xsOGrid;    // matrix which stores tensorized data for given angular grid, original energy grid
+    VectorVector xsH2OGridGrid;                           // matrix which stores tensorized data for given angular and energy grid
+    std::vector<double> tmpAngleGridH( angle.size() );
+    std::vector<double> tmpAngleGridO( angle.size() );
+    Vector tmpEnergyGridH( energies.size() );
+    Vector tmpEnergyGridO( energies.size() );
+    std::vector<double> tmp1H, tmp1O;
+    std::vector<double> energiesOrig;    // original energy grid
+    double energyCurrent = _xsScatteringH2O[H][0][0];
 
-    VectorVector scattering_XS;
-    return scattering_XS;
+    // build grid at original energies and given angular grid
+    for( unsigned i = 0; i < _xsScatteringH2O[H].size(); ++i ) {
+        // split vector into subvectors with identical energy
+        if( abs( _xsScatteringH2O[H][i][0] - energyCurrent ) < 1e-12 ) {
+            if( tmpH.empty() ) tmpH.resize( 2 );
+            tmpH[0].push_back( _xsScatteringH2O[H][i][1] );
+            tmpH[1].push_back( _xsScatteringH2O[H][i][2] );
+        }
+        else {
+            // new energy section starts in _xsH2O. Now we interpolate the values in tmp at given angular grid
+            // interpolate vector at different angles for fixed current energies
+            Interpolation xsH( tmpH[0], tmpH[1], Interpolation::linear );
+            for( unsigned k = 0; k < angle.size(); k++ ) {
+                tmpAngleGridH[k] = xsH( angle[k] );
+            }
+            xsHGrid.push_back( tmpAngleGridH );
+
+            // reset current energy
+            energiesOrig.push_back( energyCurrent );
+            energyCurrent = _xsScatteringH2O[H][i][0];
+            tmpH.clear();
+        }
+    }
+
+    energyCurrent = _xsScatteringH2O[O][0][0];
+    for( unsigned i = 0; i < _xsScatteringH2O[O].size(); ++i ) {
+        // split vector into subvectors with identical energy
+        if( abs( _xsScatteringH2O[O][i][0] - energyCurrent ) < 1e-12 ) {
+            if( tmpO.empty() ) tmpO.resize( 2 );
+            tmpO[0].push_back( _xsScatteringH2O[O][i][1] );
+            tmpO[1].push_back( _xsScatteringH2O[O][i][2] );
+        }
+        else {
+            // new energy section starts in _xsH2O. Now we interpolate the values in tmp at given angular grid
+            // interpolate vector at different angles for fixed current energies
+            Interpolation xsO( tmpO[0], tmpO[1], Interpolation::linear );
+            for( unsigned k = 0; k < angle.size(); k++ ) {
+                tmpAngleGridO[k] = xsO( angle[k] );
+            }
+            xsOGrid.push_back( tmpAngleGridO );
+
+            // reset current energy
+            energyCurrent = _xsScatteringH2O[O][i][0];
+            tmpO.clear();
+        }
+    }
+
+    // perform interpolation at fixed original energy for new energy grid
+
+    for( unsigned j = 0; j < angle.size(); ++j ) {    // loop over all angles
+        tmp1H.resize( 0 );
+        tmp1O.resize( 0 );
+        // store all values at given angle j for all original energies
+        for( unsigned i = 0; i < energiesOrig.size(); ++i ) {
+            tmp1H.push_back( xsHGrid[i][j] );
+            tmp1O.push_back( xsOGrid[i][j] );
+        }
+        Interpolation xsH( energiesOrig, tmp1H, Interpolation::linear );
+        Interpolation xsO( energiesOrig, tmp1O, Interpolation::linear );
+        for( unsigned k = 0; k < energies.size(); k++ ) {
+            // Linear interpolation
+            tmpEnergyGridH[k] = xsH( energies[k] );
+            tmpEnergyGridO[k] = xsO( energies[k] );
+        }
+        xsH2OGridGrid.push_back( _H20MassFractions[H] * tmpEnergyGridH + _H20MassFractions[O] * tmpEnergyGridO );
+    }
+
+    VectorVector xs( energies.size(), Vector( angle.size() ) );
+    for( unsigned i = 0; i < energies.size(); ++i ) {
+        for( unsigned j = 0; j < angle.size(); ++j ) {
+            xs[i][j] = xsH2OGridGrid[j][i] * 1e-24;
+        }
+    }
+
+    return xs;
 }
 
 VectorVector Physics::GetTotalXS( Vector energies, Vector density ) {
-    VectorVector total_XS;
-    double xsH2O_i;
+    VectorVector total_XS( energies.size() );
 
-    Spline interp;
-    interp.set_points( _xsTotalH2O[0], _xsTotalH2O[1], false );    // false == linear interpolation
+    Interpolation xsH( _xsTotalH2O[H][0], _xsTotalH2O[H][1], Interpolation::linear );
+    Interpolation xsO( _xsTotalH2O[O][0], _xsTotalH2O[O][1], Interpolation::linear );
 
     for( unsigned i = 0; i < energies.size(); i++ ) {
-
-        if( energies[i] < _xsTotalH2O[1][0] ) {
-            xsH2O_i = _xsTotalH2O[1][0];
-        }
-        else if( energies[i] > _xsTotalH2O[1][energies.size() - 1] ) {
-            xsH2O_i = _xsTotalH2O[1][energies.size() - 1];
-        }
-        else {
-            // Linear interpolation
-            xsH2O_i = interp( energies[i] );
-        }
-
-        total_XS[i] = xsH2O_i * density;
+        total_XS[i] = ( _H20MassFractions[H] * xsH( energies[i] ) * 1e-24 + _H20MassFractions[O] * xsO( energies[i] ) * 1e-24 ) * density;
     }
 
     return total_XS;
 }
 
-VectorVector Physics::GetStoppingPower( Vector energies, Vector density ) {
-    VectorVector stopping_power;
-    double stpw_H2O_i;
+Vector Physics::GetTotalXSE( Vector energies ) {
+    Vector total_XS( energies.size() );
 
-    Spline interp;
-    interp.set_points( _stpowH2O[0], _stpowH2O[1], false );    // false == linear interpolation
+    Interpolation xsH( _xsTotalH2O[H][0], _xsTotalH2O[H][1], Interpolation::linear );
+    Interpolation xsO( _xsTotalH2O[O][0], _xsTotalH2O[O][1], Interpolation::linear );
 
     for( unsigned i = 0; i < energies.size(); i++ ) {
-
-        if( energies[i] < _stpowH2O[1][0] ) {
-            stpw_H2O_i = _stpowH2O[1][0];
-        }
-        else if( energies[i] > _stpowH2O[1][energies.size() - 1] ) {
-            stpw_H2O_i = _stpowH2O[1][energies.size() - 1];
-        }
-        else {
-            // Linear interpolation
-            stpw_H2O_i = interp( energies[i] );
-        }
-
-        stopping_power[i] = stpw_H2O_i * density;
+        total_XS[i] = ( _H20MassFractions[H] * xsH( energies[i] ) * 1e-24 + _H20MassFractions[O] * xsO( energies[i] ) * 1e-24 );
     }
+
+    return total_XS;
+}
+
+Vector Physics::GetStoppingPower( Vector energies ) {
+    Vector stopping_power( energies.size() );
+
+    Interpolation pwr( _stpowH2O[0], _stpowH2O[1], Interpolation::linear );
+
+    for( unsigned i = 0; i < energies.size(); i++ ) {
+        stopping_power[i] = pwr( energies[i] );
+    }
+
     return stopping_power;
 }
 
 VectorVector Physics::GetTransportXS( Vector energies, Vector density ) {
-    VectorVector transport_XS;
-    double xsH2O_i;
+    VectorVector transport_XS( energies.size() );
 
-    Spline interp;
-    interp.set_points( _xsTransportH2O[0], _xsTransportH2O[1], false );    // false == linear interpolation
+    Interpolation xsH( _xsTransportH2O[H][0], _xsTransportH2O[H][1], Interpolation::linear );
+    Interpolation xsO( _xsTransportH2O[O][0], _xsTransportH2O[O][1], Interpolation::linear );
 
     for( unsigned i = 0; i < energies.size(); i++ ) {
-
-        if( energies[i] < _xsTransportH2O[1][0] ) {
-            xsH2O_i = _xsTransportH2O[1][0];
+        for( unsigned i = 0; i < energies.size(); i++ ) {
+            transport_XS[i] = ( _H20MassFractions[H] * xsH( energies[i] ) * 1e-24 + _H20MassFractions[O] * xsO( energies[i] ) * 1e-24 ) * density;
         }
-        else if( energies[i] > _xsTransportH2O[1][energies.size() - 1] ) {
-            xsH2O_i = _xsTransportH2O[1][energies.size() - 1];
-        }
-        else {
-            // Linear interpolation
-            xsH2O_i = interp( energies[i] );
-        }
-
-        transport_XS[i] = xsH2O_i * density;
     }
+
     return transport_XS;
 }
 
-Physics* Physics::Create() { return new Physics(); }
+Vector Physics::GetTransportXSE( Vector energies ) {
+    Vector transport_XS( energies.size() );
+
+    Interpolation xsH( _xsTransportH2O[H][0], _xsTransportH2O[H][1], Interpolation::linear );
+    Interpolation xsO( _xsTransportH2O[O][0], _xsTransportH2O[O][1], Interpolation::linear );
+
+    for( unsigned i = 0; i < energies.size(); i++ ) {
+        for( unsigned i = 0; i < energies.size(); i++ ) {
+            transport_XS[i] = ( _H20MassFractions[H] * xsH( energies[i] ) * 1e-24 + _H20MassFractions[O] * xsO( energies[i] ) * 1e-24 );
+        }
+    }
+
+    return transport_XS;
+}
 
 std::tuple<std::vector<VectorVector>, std::vector<VectorVector>> Physics::ReadENDL( std::string filename ) {
     std::vector<VectorVector> _headers;
@@ -205,6 +273,7 @@ std::tuple<std::vector<VectorVector>, std::vector<VectorVector>> Physics::ReadEN
         Vector dataLine( linelist.size() );
         bool header         = false;
         unsigned lineLenght = linelist.size();
+
         // check, if line is a dataline
         if( lineLenght == 2 || lineLenght == 3 ) {
             dataLine[0] = linelist.front();
@@ -224,16 +293,6 @@ std::tuple<std::vector<VectorVector>, std::vector<VectorVector>> Physics::ReadEN
                 header = true;
             }
         }
-
-        // save dataLine in vector;
-        if( header ) {
-            headerPack[curr_HeaderLine] = dataLine;
-            curr_HeaderLine++;
-        }
-        else {
-            dataPackList.push_back( dataLine );
-        }
-
         // check if line is an endline, then reset indices and save packs
         if( lineLenght == 1 ) {
 
@@ -248,6 +307,16 @@ std::tuple<std::vector<VectorVector>, std::vector<VectorVector>> Physics::ReadEN
 
             pack_idx++;
             curr_HeaderLine = 0;
+        }
+        else {
+            // save dataLine in vector;
+            if( header ) {
+                headerPack[curr_HeaderLine] = dataLine;
+                curr_HeaderLine++;
+            }
+            else {
+                dataPackList.push_back( dataLine );
+            }
         }
     }
     case_file.close();

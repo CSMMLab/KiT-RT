@@ -6,14 +6,20 @@
  * Disclaimer: This class structure was copied and modifed with open source permission from SU2 v7.0.3 https://su2code.github.io/
  */
 
-#include "settings/config.h"
-#include "settings/globalconstants.h"
-#include "settings/optionstructure.h"
+#include "common/config.h"
+#include "common/globalconstants.h"
+#include "common/optionstructure.h"
 #include "toolboxes/errormessages.h"
 #include "toolboxes/textprocessingtoolbox.h"
+
+// externals
+#include "spdlog/sinks/basic_file_sink.h"
+#include "spdlog/sinks/stdout_sinks.h"
+#include "spdlog/spdlog.h"
 #include <cassert>
 #include <filesystem>
 #include <fstream>
+#include <mpi.h>
 
 using namespace std;
 
@@ -208,7 +214,7 @@ void Config::SetConfigOptions() {
     AddEnumOption( "PROBLEM", _problemName, Problem_Map, PROBLEM_ElectronRT );
     /*! @brief Solver \n DESCRIPTION: Solver used for problem \n DEFAULT SN_SOLVER @ingroup Config. */
     AddEnumOption( "SOLVER", _solverName, Solver_Map, SN_SOLVER );
-    /*!\brief RECONS_ORDER \n DESCRIPTION: Reconstruction order for solver \n DEFAULT 1 \ingroup Config.*/
+    /*! @brief RECONS_ORDER \n DESCRIPTION: Reconstruction order for solver \n DEFAULT 1 \ingroup Config.*/
     AddUnsignedShortOption( "RECONS_ORDER", _reconsOrder, 1 );
     /*! @brief CleanFluxMatrices \n DESCRIPTION:  If true, very low entries (10^-10 or smaller) of the flux matrices will be set to zero,
      * to improve floating point accuracy \n DEFAULT false \ingroup Config */
@@ -216,6 +222,14 @@ void Config::SetConfigOptions() {
     /*! @brief ContinuousSlowingDown \n DESCRIPTION: If true, the program uses the continuous slowing down approximation to treat energy dependent
      * problems. \n DEFAULT false \ingroup Config */
     AddBoolOption( "CONTINUOUS_SLOWING_DOWN", _csd, false );
+    /*! @brief HydogenFile \n DESCRIPTION: If the continuous slowing down approximation is used, this referes to the cross section file for hydrogen.
+     * . \n DEFAULT "h.dat" \ingroup Config */
+    AddStringOption( "HYDROGEN_FILE", _hydrogenFile, string( "ENDL_H.txt" ) );
+    /*! @brief OxygenFile \n DESCRIPTION: If the continuous slowing down approximation is used, this referes to the cross section file for oxygen.
+     * . \n DEFAULT "o.dat" \ingroup Config */
+    AddStringOption( "OXYGEN_FILE", _oxygenFile, string( "ENDL_O.txt" ) );
+    /*! @brief SN_ALL_GAUSS_PTS \n DESCRIPTION: If true, the SN Solver uses all Gauss Quadrature Points for 2d. \n DEFAULT false \ingroup Config */
+    AddBoolOption( "SN_ALL_GAUSS_PTS", _allGaussPts, false );
 
     // Entropy related options
     /*! @brief Entropy Functional \n DESCRIPTION: Entropy functional used for the MN_Solver \n DEFAULT QUADRTATIC @ingroup Config. */
@@ -323,7 +337,7 @@ void Config::SetConfigParsing( string case_filename ) {
     /*--- See if there were any errors parsing the config file ---*/
 
     if( errorString.size() != 0 ) {
-        ErrorMessages::Error( errorString, CURRENT_FUNCTION );
+        ErrorMessages::ParsingError( errorString, CURRENT_FUNCTION );
     }
 
     case_file.close();
@@ -340,21 +354,19 @@ void Config::SetPostprocessing() {
     if( _inputDir[_inputDir.size() - 1] != '/' ) _inputDir.append( "/" );
 
     // setup relative paths
-    _logDir     = _inputDir + _logDir;
-    _outputDir  = _inputDir + _outputDir;
-    _meshFile   = _inputDir + _meshFile;
-    _outputFile = _outputDir + _outputFile;
-    _ctFile     = _inputDir + _ctFile;
+    _logDir       = _inputDir + _logDir;
+    _outputDir    = _inputDir + _outputDir;
+    _meshFile     = _inputDir + _meshFile;
+    _outputFile   = _outputDir + _outputFile;
+    _ctFile       = _inputDir + _ctFile;
+    _hydrogenFile = _inputDir + _hydrogenFile;
+    _oxygenFile   = _inputDir + _oxygenFile;
 
     // create directories if they dont exist
     if( !std::filesystem::exists( _outputDir ) ) std::filesystem::create_directory( _outputDir );
 
-        // init logger
-#ifdef BUILD_TESTING
-    InitLogger( spdlog::level::err, spdlog::level::off );
-#else
-    InitLogger( spdlog::level::info, spdlog::level::info );
-#endif
+    // init logger
+    InitLogger();
 
     // Regroup Boundary Conditions to  std::vector<std::pair<std::string, BOUNDARY_TYPE>> _boundaries;
     for( int i = 0; i < _nMarkerDirichlet; i++ ) {
@@ -368,6 +380,17 @@ void Config::SetPostprocessing() {
     // if( !std::filesystem::exists( _meshFile ) ) {
     //    ErrorMessages::Error( "Path to mesh file <" + _meshFile + "> does not exist. Please check your config file.", CURRENT_FUNCTION );
     //}
+
+    if( this->IsCSD() ) {
+        if( !std::filesystem::exists( this->GetHydrogenFile() ) ) {
+            ErrorMessages::Error( "Path to mesh file <" + this->GetHydrogenFile() + "> does not exist. Please check your config file.",
+                                  CURRENT_FUNCTION );
+        }
+        if( !std::filesystem::exists( this->GetOxygenFile() ) ) {
+            ErrorMessages::Error( "Path to mesh file <" + this->GetOxygenFile() + "> does not exist. Please check your config file.",
+                                  CURRENT_FUNCTION );
+        }
+    }
 }
 
 void Config::SetOutput() {
@@ -501,7 +524,21 @@ bool Config::TokenizeString( string& str, string& option_name, vector<string>& o
     return true;
 }
 
-void Config::InitLogger( spdlog::level::level_enum terminalLogLvl, spdlog::level::level_enum fileLogLvl ) {
+void Config::InitLogger() {
+
+    // Declare Logger
+    spdlog::level::level_enum terminalLogLvl;
+    spdlog::level::level_enum fileLogLvl;
+
+    // Choose Logger
+#ifdef BUILD_TESTING
+    terminalLogLvl = spdlog::level::err;
+    fileLogLvl     = spdlog::level::off;
+#else
+    terminalLogLvl = spdlog::level::info;
+    fileLogLvl     = spdlog::level::info;
+#endif
+
     // create log dir if not existent
     if( !std::filesystem::exists( _logDir ) ) {
         std::filesystem::create_directory( _logDir );
