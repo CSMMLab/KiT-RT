@@ -6,7 +6,15 @@
 class CSDSNSolver : public SNSolver
 {
   private:
-    std::vector<double> _dose;
+    std::vector<double> _dose; /*! @brief: TODO */
+
+    // Physics acess
+    Vector _energies; /*! @brief: energy levels for CSD, lenght = _nEnergies */
+    Vector _angle;    /*! @brief: angles for SN */
+    Vector _density;  /*! @brief: patient density for each grid cell */
+
+    VectorVector _sigmaSE; /*!  @brief scattering cross section for all energies*/
+    Vector _sigmaTE;       /*!  @brief total cross section for all energies*/
 
   public:
     /**

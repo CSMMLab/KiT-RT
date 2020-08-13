@@ -1,7 +1,7 @@
 #ifndef CUBIC2DSPLINE_H
 #define CUBIC2DSPLINE_H
 
-#include "settings/typedef.h"
+#include "common/typedef.h"
 
 class Cubic2DSpline
 {

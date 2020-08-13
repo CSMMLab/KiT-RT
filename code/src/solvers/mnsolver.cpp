@@ -1,15 +1,18 @@
 #include "solvers/mnsolver.h"
+#include "common/config.h"
+#include "common/io.h"
 #include "entropies/entropybase.h"
 #include "fluxes/numericalflux.h"
-#include "io.h"
 #include "optimizers/optimizerbase.h"
 #include "quadratures/quadraturebase.h"
-#include "settings/config.h"
 #include "solvers/sphericalharmonics.h"
 #include "toolboxes/textprocessingtoolbox.h"
 
+// externals
+#include "spdlog/spdlog.h"
 #include <mpi.h>
 
+#include <fstream>
 //#include <chrono>
 
 MNSolver::MNSolver( Config* settings ) : Solver( settings ) {
@@ -53,6 +56,9 @@ MNSolver::MNSolver( Config* settings ) : Solver( settings ) {
 
     _moments = VectorVector( _nq, Vector( _nTotalEntries, 0.0 ) );
     ComputeMoments();
+
+    // Solver output
+    _outputFields = std::vector( _nTotalEntries, std::vector( _nCells, 0.0 ) );
 }
 
 MNSolver::~MNSolver() {
@@ -101,8 +107,20 @@ Vector MNSolver::ConstructFlux( unsigned idx_cell ) {
             entropyFlux += _g->Flux( _quadPoints[idx_quad], entropyL, entropyR, _normals[idx_cell][idx_neigh] );
         }
         flux += _moments[idx_quad] * ( _weights[idx_quad] * entropyFlux );
+
+        // ------- Relizablity Reconstruction Step ----
     }
     return flux;
+}
+
+void MNSolver::ComputeRealizableSolution( unsigned idx_cell ) {
+    double entropyReconstruction = 0.0;
+    _sol[idx_cell]               = 0;
+    for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
+        // Make entropyReconstruction a member vector, s.t. it does not have to be re-evaluated in ConstructFlux
+        entropyReconstruction = _entropy->EntropyPrimeDual( blaze::dot( _alpha[idx_cell], _moments[idx_quad] ) );
+        _sol[idx_cell] += _moments[idx_quad] * ( _weights[idx_quad] * entropyReconstruction );
+    }
 }
 
 void MNSolver::Solve() {
@@ -117,6 +135,7 @@ void MNSolver::Solve() {
     double dFlux        = 1e10;
     Vector fluxNew( _nCells, 0.0 );
     Vector fluxOld( _nCells, 0.0 );
+    VectorVector solTimesArea = _sol;
 
     double mass1 = 0;
     for( unsigned i = 0; i < _nCells; ++i ) {
@@ -132,30 +151,28 @@ void MNSolver::Solve() {
     if( rank == 0 ) log->info( "{:10}   {:10}", "t", "dFlux" );
     if( rank == 0 ) log->info( "{:03.8f}   {:01.5e} {:01.5e}", -1.0, dFlux, mass1 );
 
-    // Time measurement
-    // auto start = chrono::steady_clock::now();
-    // auto end   = chrono::steady_clock::now();
-
     // Loop over energies (pseudo-time of continuous slowing down approach)
-
     for( unsigned idx_energy = 0; idx_energy < _nEnergies; idx_energy++ ) {
+
+        // ------- Reconstruction Step ----------------
+
+        _optimizer->SolveMultiCell( _alpha, _sol, _moments );
 
         // Loop over the grid cells
         for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
 
-            // ------- Reconstruction Step -------
+            // ------- Relizablity Reconstruction Step ----
 
-            // _alpha[idx_cell] = _sol[idx_cell];
-            _optimizer->Solve( _alpha[idx_cell], _sol[idx_cell], _moments );
+            ComputeRealizableSolution( idx_cell );
 
-            // ------- Flux Computation Step ---------
+            // ------- Flux Computation Step --------------
 
             // Dirichlet Boundaries are finished now
             if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::DIRICHLET ) continue;
 
             psiNew[idx_cell] = ConstructFlux( idx_cell );
 
-            // ------ FVM Step ------
+            // ------ Finite Volume Update Step ------
 
             // NEED TO VECTORIZE
             for( unsigned idx_system = 0; idx_system < _nTotalEntries; idx_system++ ) {
@@ -167,20 +184,29 @@ void MNSolver::Solve() {
                                                        + _sigmaS[idx_energy][idx_cell] * _scatterMatDiag[idx_system] ); /* scattering influence */
             }
         }
-        _sol = psiNew;
 
         // pseudo time iteration output
         double mass = 0.0;
-        for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
-            fluxNew[idx_cell]       = _sol[idx_cell][0];    // zeroth moment is raditation densitiy we are interested in
-            _solverOutput[idx_cell] = _sol[idx_cell][0];
-            mass += _sol[idx_cell][0] * _areas[idx_cell];
+        for( unsigned idx_sys = 0; idx_sys < _nTotalEntries; idx_sys++ ) {
+            for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
+
+                fluxNew[idx_cell] = _sol[idx_cell][0];    // zeroth moment is raditation densitiy we are interested in
+
+                _solverOutput[idx_cell] = _sol[idx_cell][0];
+                mass += _sol[idx_cell][0] * _areas[idx_cell];
+                _outputFields[idx_sys][idx_cell] = _sol[idx_cell][idx_sys];
+            }
         }
 
         dFlux   = blaze::l2Norm( fluxNew - fluxOld );
         fluxOld = fluxNew;
         if( rank == 0 ) log->info( "{:03.8f}   {:01.5e} {:01.5e}", _energies[idx_energy], dFlux, mass );
         Save( idx_energy );
+
+        WriteNNTrainingData( idx_energy );
+
+        // Update Solution
+        _sol = psiNew;
     }
 }
 
@@ -198,8 +224,34 @@ void MNSolver::Save() const {
 }
 
 void MNSolver::Save( int currEnergy ) const {
-    std::vector<std::string> fieldNames{ "flux" };
+    std::vector<std::string> fieldNames = { "flux" };
+
+    // Multifield ooutput
+    // std::vector<std::string> fieldNames( _nTotalEntries, "flux" );
+    // for( unsigned idx_sys = 1; idx_sys < _nTotalEntries; idx_sys++ ) {
+    //    fieldNames[idx_sys] = std::string( "flux_moment_" + std::to_string( idx_sys ) );
+    //}
+
     std::vector<std::vector<double>> scalarField( 1, _solverOutput );
     std::vector<std::vector<std::vector<double>>> results{ scalarField };
     ExportVTK( _settings->GetOutputFile() + "_" + std::to_string( currEnergy ), results, fieldNames, _mesh );
+}
+
+void MNSolver::WriteNNTrainingData( unsigned idx_pseudoTime ) {
+    std::string filename = "trainNN.csv";
+    std::ofstream myfile;
+    myfile.open( filename, std::ofstream::app );
+
+    for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
+        myfile << 0 << ", " << _nTotalEntries << "," << idx_pseudoTime;
+        for( unsigned idx_sys = 0; idx_sys < _nTotalEntries; idx_sys++ ) {
+            myfile << "," << _sol[idx_cell][idx_sys];
+        }
+        myfile << " \n" << 1 << ", " << _nTotalEntries << "," << idx_pseudoTime;
+        for( unsigned idx_sys = 0; idx_sys < _nTotalEntries; idx_sys++ ) {
+            myfile << "," << _alpha[idx_cell][idx_sys];
+        }
+        myfile << "\n";
+    }
+    myfile.close();
 }

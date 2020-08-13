@@ -6,7 +6,7 @@
 class QLookupQuadrature : public QuadratureBase
 {
   public:
-    QLookupQuadrature( unsigned order );
+    QLookupQuadrature( Config* settings );
     virtual ~QLookupQuadrature() {}
 
     // helper

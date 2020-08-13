@@ -1,13 +1,13 @@
 #include <numeric>
 
 #include "catch.hpp"
-#include "io.h"
-#include "mesh.h"
-#include "settings/config.h"
-#include "settings/globalconstants.h"
+#include "common/config.h"
+#include "common/globalconstants.h"
+#include "common/io.h"
+#include "common/mesh.h"
 
 TEST_CASE( "unit mesh tests", "[mesh]" ) {
-    char config_file_name[] = "../tests/input/unit.cfg";
+    char config_file_name[] = "../tests/input/unit_mesh.cfg";
 
     Config* config = new Config( config_file_name );
     Mesh* mesh     = LoadSU2MeshFromFile( config );

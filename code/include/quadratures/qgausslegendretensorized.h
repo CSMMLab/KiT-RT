@@ -12,11 +12,11 @@ class QGaussLegendreTensorized : public QuadratureBase
     bool CheckOrder();
 
   public:
-    QGaussLegendreTensorized( unsigned order );
+    QGaussLegendreTensorized( Config* settings );
     virtual ~QGaussLegendreTensorized() {}
 
     inline void SetName() override { _name = "Tensorized Gauss-Legendre quadrature"; }
-    inline void SetNq() override { _nq = 2 * pow( GetOrder(), 2 ); }
+    void SetNq() override;
     void SetPointsAndWeights() override;
     void SetConnectivity() override;
 

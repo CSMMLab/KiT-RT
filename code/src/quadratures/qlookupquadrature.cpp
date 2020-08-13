@@ -3,7 +3,7 @@
 #include <fstream>
 #include <sstream>
 
-QLookupQuadrature::QLookupQuadrature( unsigned order ) : QuadratureBase( order ) {}
+QLookupQuadrature::QLookupQuadrature( Config* settings ) : QuadratureBase( settings ) {}
 
 void QLookupQuadrature::printAvailOrders() const {
     auto log                    = spdlog::get( "event" );
@@ -74,7 +74,7 @@ void QLookupQuadrature::SetPointsAndWeights() {
     // Correct the scaling of the weights
     for( unsigned idx = 0; idx < _nq; idx++ ) {
         _weights[idx] /= sumWeights;
-        _weights[idx] *= 4.0 * PI_NUMBER;
+        _weights[idx] *= 4.0 * M_PI;
     }
 
     // Transform _points to _pointsSphere

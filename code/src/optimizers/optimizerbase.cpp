@@ -1,6 +1,8 @@
 #include "optimizers/optimizerbase.h"
+#include "optimizers/mloptimizer.h"
+#include "common/config.h"
 #include "optimizers/newtonoptimizer.h"
-#include "settings/config.h"
+
 
 OptimizerBase::OptimizerBase( Config* settings ) {
     _entropy  = EntropyBase::Create( settings );
@@ -10,7 +12,10 @@ OptimizerBase::OptimizerBase( Config* settings ) {
 OptimizerBase* OptimizerBase::Create( Config* settings ) {
     switch( settings->GetOptimizerName() ) {
         case NEWTON: return new NewtonOptimizer( settings );
-        // extend to other optimizers
+        case ML:
+            return new MLOptimizer( settings );
+
+            // extend to other optimizers
         default: return new NewtonOptimizer( settings );
     }
 }

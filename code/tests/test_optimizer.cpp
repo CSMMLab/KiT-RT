@@ -1,14 +1,14 @@
 #include <numeric>
 
 #include "catch.hpp"
+#include "common/config.h"
 #include "optimizers/optimizerbase.h"
 #include "quadratures/quadraturebase.h"
-#include "settings/config.h"
 #include "solvers/sphericalharmonics.h"
 
 TEST_CASE( "Test the Newton Optimizer", "[optimizers]" ) {
 
-    char filename[] = "../tests/input/unit_newtonOptimizer.cfg";
+    char filename[] = "../tests/input/unit_optimizerNewton.cfg";
 
     // Load Settings from File
     Config* config = new Config( filename );
@@ -17,7 +17,7 @@ TEST_CASE( "Test the Newton Optimizer", "[optimizers]" ) {
     SphericalHarmonics basis( config->GetMaxMomentDegree() );
 
     // Get Quadrature
-    QuadratureBase* quad = QuadratureBase::CreateQuadrature( config->GetQuadName(), config->GetQuadOrder() );
+    QuadratureBase* quad = QuadratureBase::CreateQuadrature( config );
 
     // Get Optimizer (Newton)
     OptimizerBase* optimizer = OptimizerBase::Create( config );

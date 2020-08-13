@@ -1,12 +1,12 @@
 
 #include "catch.hpp"
+#include "common/config.h"
 #include "quadratures/qgausslegendretensorized.h"
 #include "solvers/sphericalharmonics.h"
 
 #include <fstream>
-#include <sstream>
-
 #include <iostream>
+#include <sstream>
 
 double Y0_0( double my, double phi ) { return sqrt( 1 / ( 4 * M_PI ) ); }
 
@@ -29,6 +29,11 @@ double P2_1( double my ) { return -1 * sqrt( 15 / ( 4 * M_PI ) ) * my * sqrt( 1 
 double P2_2( double my ) { return sqrt( 15 / ( 16 * M_PI ) ) * ( 1 - my * my ); }
 
 TEST_CASE( "test the spherical harmonics basis computation", "[spherical_harmonics]" ) {
+
+    char filename[] = "../tests/input/unit_harmonics.cfg";
+
+    // Load Settings from File
+    Config* config = new Config( filename );
 
     unsigned maxMomentDegree = 2;
 
@@ -101,7 +106,7 @@ TEST_CASE( "test the spherical harmonics basis computation", "[spherical_harmoni
     SECTION( "test orthonormality - spherical coordinates" ) {
         // Caution: Integration only works with spherical coordinates!
 
-        QGaussLegendreTensorized quad( 12 );
+        QGaussLegendreTensorized quad( config );
 
         double my, phi, w;
         Vector moment = testBase.ComputeSphericalBasis( 0, 1, 0 );
@@ -149,7 +154,7 @@ TEST_CASE( "test the spherical harmonics basis computation", "[spherical_harmoni
         Vector moment2 = testBase.ComputeSphericalBasis( 0, 0 );
 
         // Parity in carthesian coordinates
-        QGaussLegendreTensorized quad( 6 );
+        QGaussLegendreTensorized quad( config );
 
         double x, y, z;
 

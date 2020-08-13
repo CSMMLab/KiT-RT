@@ -1,10 +1,12 @@
 #include "solvers/pnsolver.h"
+#include "common/config.h"
+#include "common/io.h"
 #include "fluxes/numericalflux.h"
-#include "io.h"
-#include "settings/config.h"
 #include "toolboxes/errormessages.h"
 #include "toolboxes/textprocessingtoolbox.h"
 
+// externals
+#include "spdlog/spdlog.h"
 #include <mpi.h>
 
 PNSolver::PNSolver( Config* settings ) : Solver( settings ) {

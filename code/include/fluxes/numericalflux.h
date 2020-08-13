@@ -1,7 +1,7 @@
 #ifndef NUMERICALFLUX_H
 #define NUMERICALFLUX_H
 
-#include "settings/typedef.h"
+#include "common/typedef.h"
 
 class NumericalFlux
 {

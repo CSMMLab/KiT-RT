@@ -1,28 +1,20 @@
 #include "problems/linesource.h"
-#include "mesh.h"
-#include "settings/config.h"
+#include "common/config.h"
+#include "common/mesh.h"
+#include "physics.h"
 
 // ---- LineSource_SN ----
 
 LineSource_SN::LineSource_SN( Config* settings, Mesh* mesh ) : ProblemBase( settings, mesh ) { _physics = nullptr; }
 
-LineSource_SN::~LineSource_SN(){};
+LineSource_SN::~LineSource_SN() {}
 
-VectorVector LineSource_SN::GetScatteringXS( const std::vector<double>& energies ) {
-    return VectorVector( energies.size(), Vector( _mesh->GetNumCells(), 1.0 ) );
-}
+VectorVector LineSource_SN::GetScatteringXS( const Vector& energies ) { return VectorVector( energies.size(), Vector( _mesh->GetNumCells(), 1.0 ) ); }
 
-VectorVector LineSource_SN::GetTotalXS( const std::vector<double>& energies ) {
-    return VectorVector( energies.size(), Vector( _mesh->GetNumCells(), 1.0 ) );
-}
+VectorVector LineSource_SN::GetTotalXS( const Vector& energies ) { return VectorVector( energies.size(), Vector( _mesh->GetNumCells(), 1.0 ) ); }
 
-std::vector<VectorVector> LineSource_SN::GetExternalSource( const std::vector<double>& energies ) {
+std::vector<VectorVector> LineSource_SN::GetExternalSource( const Vector& energies ) {
     return std::vector<VectorVector>( 1u, std::vector<Vector>( _mesh->GetNumCells(), Vector( 1u, 0.0 ) ) );
-}
-
-std::vector<double> LineSource_SN::GetStoppingPower( const std::vector<double>& energies ) {
-    // @TODO
-    return std::vector<double>( energies.size(), 1.0 );
 }
 
 VectorVector LineSource_SN::SetupIC() {
@@ -52,6 +44,18 @@ VectorVector LineSource_SN_Pseudo1D::SetupIC() {
     return psi;
 }
 
+// ---- LineSource_SN_Pseudo1D_Physics ----
+
+LineSource_SN_Pseudo1D_Physics::LineSource_SN_Pseudo1D_Physics( Config* settings, Mesh* mesh ) : LineSource_SN_Pseudo1D( settings, mesh ) {
+    _physics = new Physics( settings->GetHydrogenFile(), settings->GetOxygenFile(), "../input/stopping_power.txt" );
+}
+
+VectorVector LineSource_SN_Pseudo1D_Physics::GetScatteringXSE( const Vector& energies, const Vector& angles ) {
+    return _physics->GetScatteringXS( energies, angles );
+}
+
+Vector LineSource_SN_Pseudo1D_Physics::GetTotalXSE( const Vector& energies ) { return _physics->GetTotalXSE( energies ); }
+
 // ---- LineSource_PN ----
 
 int LineSource_PN::GlobalIndex( int l, int k ) const {
@@ -62,23 +66,14 @@ int LineSource_PN::GlobalIndex( int l, int k ) const {
 
 LineSource_PN::LineSource_PN( Config* settings, Mesh* mesh ) : ProblemBase( settings, mesh ) { _physics = nullptr; }
 
-LineSource_PN::~LineSource_PN(){};
+LineSource_PN::~LineSource_PN() {}
 
-VectorVector LineSource_PN::GetScatteringXS( const std::vector<double>& energies ) {
-    return VectorVector( energies.size(), Vector( _mesh->GetNumCells(), 1.0 ) );
-}
+VectorVector LineSource_PN::GetScatteringXS( const Vector& energies ) { return VectorVector( energies.size(), Vector( _mesh->GetNumCells(), 1.0 ) ); }
 
-VectorVector LineSource_PN::GetTotalXS( const std::vector<double>& energies ) {
-    return VectorVector( energies.size(), Vector( _mesh->GetNumCells(), 1.0 ) );
-}
+VectorVector LineSource_PN::GetTotalXS( const Vector& energies ) { return VectorVector( energies.size(), Vector( _mesh->GetNumCells(), 1.0 ) ); }
 
-std::vector<VectorVector> LineSource_PN::GetExternalSource( const std::vector<double>& energies ) {
+std::vector<VectorVector> LineSource_PN::GetExternalSource( const Vector& energies ) {
     return std::vector<VectorVector>( 1u, std::vector<Vector>( _mesh->GetNumCells(), Vector( 1u, 0.0 ) ) );
-}
-
-std::vector<double> LineSource_PN::GetStoppingPower( const std::vector<double>& energies ) {
-    // @TODO
-    return std::vector<double>( energies.size(), 0.0 );
 }
 
 VectorVector LineSource_PN::SetupIC() {
@@ -90,10 +85,25 @@ VectorVector LineSource_PN::SetupIC() {
 
     // Initial condition is dirac impulse at (x,y) = (0,0) ==> constant in angle ==> all moments are zero.
     double t = 3.2e-4;    // pseudo time for gaussian smoothing (Approx to dirac impulse)
+    // double offset = 0.099;
     for( unsigned j = 0; j < cellMids.size(); ++j ) {
-        double x  = cellMids[j][0];
-        double y  = cellMids[j][1];
-        psi[j][0] = 1.0 / ( 4.0 * M_PI * t ) * std::exp( -( x * x + y * y ) / ( 4 * t ) );
+        double x = cellMids[j][0];
+        double y = cellMids[j][1];    // (x- 0.5) * (x- 0.5)
+
+        psi[j][0] = 1.0 / ( 4.0 * M_PI * t ) * std::exp( -( ( x ) * ( x ) + ( y ) * ( y ) ) / ( 4 * t ) );
+        //+
+        //  1.0 / ( 4.0 * M_PI * t ) * std::exp( -( ( x - offset ) * ( x - offset ) + ( y - offset ) * ( y - offset ) ) / ( 4 * t
+        //  ) ) + 1.0 / ( 4.0 * M_PI * t ) * std::exp( -( ( x + offset ) * ( x + offset ) + ( y - offset ) * ( y - offset ) ) / (
+        //  4 * t ) ) + 1.0 / ( 4.0 * M_PI * t ) * std::exp( -( ( x - offset ) * ( x - offset ) + ( y + offset ) * ( y + offset )
+        //  ) / ( 4 * t ) ) + 1.0 / ( 4.0 * M_PI * t ) * std::exp( -( ( x + offset ) * ( x + offset ) + ( y + offset ) * ( y +
+        //  offset ) ) / ( 4 * t ) ) + 1.0 / ( 4.0 * M_PI * t ) *
+        //      std::exp( -( ( x - 2 * offset ) * ( x - 2 * offset ) + ( y - 2 * offset ) * ( y - 2 * offset ) ) / ( 4 * t ) ) +
+        //  1.0 / ( 4.0 * M_PI * t ) *
+        //      std::exp( -( ( x + 2 * offset ) * ( x + 2 * offset ) + ( y - 2 * offset ) * ( y - 2 * offset ) ) / ( 4 * t ) ) +
+        //  1.0 / ( 4.0 * M_PI * t ) *
+        //      std::exp( -( ( x - 2 * offset ) * ( x - 2 * offset ) + ( y + 2 * offset ) * ( y + 2 * offset ) ) / ( 4 * t ) ) +
+        //  1.0 / ( 4.0 * M_PI * t ) * std::exp( -( ( x + 2 * offset ) * ( x + 2 * offset ) + ( y + 2 * offset ) * ( y + 2 *
+        //  offset ) ) / ( 4 * t ) );
     }
 
     // Debugging jump test case

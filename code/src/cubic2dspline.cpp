@@ -1,7 +1,5 @@
 #include "cubic2dspline.h"
 
-#include <iostream>
-
 Cubic2DSpline::Cubic2DSpline( const Vector& x, const Vector& y, const Matrix& data ) : _x( x ), _y( y ), _data( data ) {}
 Cubic2DSpline::~Cubic2DSpline() {}
 

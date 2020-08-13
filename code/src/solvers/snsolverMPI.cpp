@@ -1,7 +1,9 @@
-#include "io.h"
-#include "settings/config.h"
-
 #include "solvers/snsolverMPI.h"
+#include "common/config.h"
+#include "common/io.h"
+
+// externals
+#include "spdlog/spdlog.h"
 #include <mpi.h>
 
 SNSolverMPI::SNSolverMPI( Config* settings ) : SNSolver( settings ) {}

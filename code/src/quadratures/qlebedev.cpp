@@ -2,7 +2,7 @@
 #include "quadratures/lookuptable_lebedev.h"
 #include "toolboxes/errormessages.h"
 
-QLebedev::QLebedev( unsigned order ) : QLookupQuadrature( order ) {
+QLebedev::QLebedev( Config* settings ) : QLookupQuadrature( settings ) {
 
     SetAvailOrders();
 
