@@ -33,6 +33,8 @@ ProblemBase* ProblemBase::Create( Config* settings, Mesh* mesh ) {
 
 std::vector<double> ProblemBase::GetDensity( const VectorVector& cellMidPoints ) { return std::vector<double>( cellMidPoints.size(), 1.0 ); }
 
+VectorVector ProblemBase::GetScatteringXSE( const Vector& energies, const Vector& angles ) { return _physics->GetScatteringXS( energies, angles ); }
+
 Vector ProblemBase::GetStoppingPower( const Vector& energies ) {
     if( _physics ) {
         return _physics->GetStoppingPower( energies );

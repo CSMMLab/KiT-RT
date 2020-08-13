@@ -54,6 +54,13 @@ class ProblemBase
     }
 
     /**
+     * @brief GetScatteringXSE gives back vector (each energy) of scattering cross sections for energies
+     *        in vector energy
+     * @param energy is the energy the cross section is queried for
+     */
+    virtual VectorVector GetScatteringXSE( const Vector& energies, const Vector& angles );
+
+    /**
      * @brief GetExternalSource gives back vector of vectors of source terms for each
      *        energy, cell and angle
      * @param energies is vector with energies
