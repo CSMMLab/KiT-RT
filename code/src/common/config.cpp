@@ -381,7 +381,7 @@ void Config::SetPostprocessing() {
     //    ErrorMessages::Error( "Path to mesh file <" + _meshFile + "> does not exist. Please check your config file.", CURRENT_FUNCTION );
     //}
 
-    if( this->IsCSD() ) {
+    if( this->GetIsCSD() ) {
         if( !std::filesystem::exists( this->GetHydrogenFile() ) ) {
             ErrorMessages::Error( "Path to mesh file <" + this->GetHydrogenFile() + "> does not exist. Please check your config file.",
                                   CURRENT_FUNCTION );
