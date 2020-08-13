@@ -106,10 +106,11 @@ void CSDSNSolver::Solve() {
                         psiNew[j][i] += _g->Flux( _quadPoints[i],
                                                   _sol[j][i] / _density[j],
                                                   _sol[_neighbors[j][idx_neighbor]][i] / _density[_neighbors[j][idx_neighbor]],
-                                                  _normals[j][idx_neighbor] );
+                                                  _normals[j][idx_neighbor] ) /
+                                        _areas[j];
                 }
                 // time update angular flux with numerical flux and total scattering cross section
-                psiNew[j][i] = _sol[j][i] - ( _dE / _areas[j] ) * psiNew[j][i] - _dE * _sigmaTE[n] * _sol[j][i];
+                psiNew[j][i] = _sol[j][i] - _dE * psiNew[j][i] - _dE * _sigmaTE[n] * _sol[j][i];
             }
             // compute scattering effects (_scatteringKernel is simply multiplication with quad weights)
             psiNew[j] += _dE * ( _sigmaSE[n] * _scatteringKernel * _sol[j] );    // multiply scattering matrix with psi
@@ -117,6 +118,7 @@ void CSDSNSolver::Solve() {
 
             // TODO: figure out a more elegant way
             // add external source contribution
+            /*
             if( _Q.size() == 1u ) {            // constant source for all energies
                 if( _Q[0][j].size() == 1u )    // isotropic source
                     psiNew[j] += _dE * _Q[0][j][0] * _s[_nEnergies - n - 1];
@@ -129,12 +131,13 @@ void CSDSNSolver::Solve() {
                 else
                     psiNew[j] += _dE * _Q[n][j] * _s[_nEnergies - n - 1];
             }
+            */
         }
         _sol = psiNew;
         // do backsubstitution from psiTildeHat to psi (cf. Dissertation Kerstion Kuepper, Eq. 1.23)
         for( unsigned j = 0; j < _nCells; ++j ) {
             for( unsigned i = 0; i < _nq; ++i ) {
-                psiNew[j][i] = _sol[j][i] * _density[j] * _s[_nEnergies - n - 1];    // note that _s[0] is stopping power at lowest energy
+                psiNew[j][i] = _sol[j][i] / _density[j] / _s[_nEnergies - n - 1];    // note that _s[0] is stopping power at lowest energy
             }
         }
 
