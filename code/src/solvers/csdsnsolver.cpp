@@ -42,6 +42,20 @@ CSDSNSolver::CSDSNSolver( Config* settings ) : SNSolver( settings ) {
     _s       = _problem->GetStoppingPower( _energies );
     _Q       = _problem->GetExternalSource( _energies );
 
+    double dMu   = 0.00001;
+    unsigned nMu = unsigned( 2 / dMu );
+    Vector muGrid( nMu );
+    for( unsigned n = 0; n < nMu; ++n ) {
+        muGrid[n] = -1.0 + 2.0 / ( nMu - 1 ) * n;
+    }
+    VectorVector tmp = _problem->GetScatteringXSE( _energies, muGrid );
+    double sigmaT    = 0.0;
+    for( unsigned n = 0; n < nMu; ++n ) {
+        sigmaT += tmp[0][n] * dMu;
+    }
+    std::cout << "int(sigmaS) at energy " << 2.0 * M_PI * sigmaT << std::endl;
+    std::cout << "sigmaT at energy " << _sigmaTE[0] << std::endl;
+
     // Get patient density
     _density = Vector( _nCells, 1.0 );
 }
@@ -134,16 +148,11 @@ void CSDSNSolver::Solve() {
             */
         }
         _sol = psiNew;
-        // do backsubstitution from psiTildeHat to psi (cf. Dissertation Kerstion Kuepper, Eq. 1.23)
-        for( unsigned j = 0; j < _nCells; ++j ) {
-            for( unsigned i = 0; i < _nq; ++i ) {
-                psiNew[j][i] = _sol[j][i] / _density[j] / _s[_nEnergies - n - 1];    // note that _s[0] is stopping power at lowest energy
-            }
-        }
 
         for( unsigned j = 0; j < _nCells; ++j ) {
             fluxNew[j] = dot( psiNew[j], _weights );
-            _dose[j] += 0.5 * _dE * ( fluxNew[j] + fluxOld[j] ) / _density[j];    // update dose with trapezoidal rule
+            _dose[j] += 0.5 * _dE * ( fluxNew[j] / _s[_energies.size() - n - 1] + fluxOld[j] / _s[_energies.size() - n - 2] ) /
+                        _density[j];    // update dose with trapezoidal rule
             _solverOutput[j] = fluxNew[j];
         }
 
