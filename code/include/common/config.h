@@ -201,44 +201,41 @@ class Config
      *        Please keep alphabetical order within each subcategory
      */
     // File structure
+    std::string inline GetCTFile() const { return std::filesystem::path( _ctFile ).lexically_normal(); }
+    std::string inline GetHydrogenFile() const { return std::filesystem::path( _hydrogenFile ).lexically_normal(); }
+    std::string inline GetLogDir() const { return std::filesystem::path( _logDir ).lexically_normal(); }
     std::string inline GetMeshFile() const { return std::filesystem::path( _meshFile ).lexically_normal(); }
     std::string inline GetOutputDir() const { return std::filesystem::path( _outputDir ).lexically_normal(); }
     std::string inline GetOutputFile() const { return std::filesystem::path( _outputFile ).lexically_normal(); }
-    std::string inline GetLogDir() const { return std::filesystem::path( _logDir ).lexically_normal(); }
-    std::string inline GetCTFile() const { return std::filesystem::path( _ctFile ).lexically_normal(); }
-    std::string inline GetHydrogenFile() const { return std::filesystem::path( _hydrogenFile ).lexically_normal(); }
     std::string inline GetOxygenFile() const { return std::filesystem::path( _oxygenFile ).lexically_normal(); }
 
     // Quadrature Structure
+    unsigned GetNQuadPoints() { return _nQuadPoints; }
     QUAD_NAME inline GetQuadName() const { return _quadName; }
     unsigned short inline GetQuadOrder() const { return _quadOrder; }
-    void SetNQuadPoints( unsigned nq ) { _nQuadPoints = nq; }
-    unsigned GetNQuadPoints() { return _nQuadPoints; }
 
     // Mesh Structure
-    void SetNCells( unsigned nCells ) { _nCells = nCells; }
     unsigned GetNCells() { return _nCells; }
 
     // Solver Structure
-    unsigned short inline GetMaxMomentDegree() const { return _maxMomentDegree; }
     double inline GetCFL() const { return _CFL; }
-    double inline GetTEnd() const { return _tEnd; }
-    PROBLEM_NAME inline GetProblemName() const { return _problemName; }
-    SOLVER_NAME inline GetSolverName() const { return _solverName; }
-    ENTROPY_NAME inline GetEntropyName() const { return _entropyName; }
     bool inline GetCleanFluxMat() const { return _cleanFluxMat; }
-    bool inline GetUseAllGaussPts() const { return _allGaussPts; }
+    ENTROPY_NAME inline GetEntropyName() const { return _entropyName; }
+    unsigned short inline GetMaxMomentDegree() const { return _maxMomentDegree; }
+    PROBLEM_NAME inline GetProblemName() const { return _problemName; }
     unsigned inline GetReconsOrder() { return _reconsOrder; }
-    bool inline IsCSD() const { return _csd; }
-    unsigned inline GetMaxMomentDegree() { return _maxMomentDegree; }
+    SOLVER_NAME inline GetSolverName() const { return _solverName; }
+    double inline GetTEnd() const { return _tEnd; }
+    bool inline GetUseAllGaussPts() const { return _allGaussPts; }
+    bool inline GetIsCSD() const { return _csd; }
 
     //  Optimizer
-    OPTIMIZER_NAME inline GetOptimizerName() const { return _entropyOptimizerName; }
     double inline GetNewtonOptimizerEpsilon() const { return _optimizerEpsilon; }
     unsigned inline GetNewtonIter() const { return _newtonIter; }
     double inline GetNewtonStepSize() const { return _newtonStepSize; }
-    unsigned inline GetMaxLineSearches() const { return _newtonLineSearchIter; }
+    unsigned inline GetNewtonMaxLineSearches() const { return _newtonLineSearchIter; }
     bool inline GetNewtonFastMode() const { return _newtonFastMode; }
+    OPTIMIZER_NAME inline GetOptimizerName() const { return _entropyOptimizerName; }
 
     // Boundary Conditions
     BOUNDARY_TYPE GetBoundaryType( std::string nameMarker ) const; /*! @brief Get Boundary Type of given marker */
@@ -247,6 +244,16 @@ class Config
     KERNEL_NAME inline GetKernelName() const { return _kernelName; }
 
     // Output Structure
+
+    // ---- Setters for option structure
+
+    // Quadrature Structure
+    void SetNQuadPoints( unsigned nq ) { _nQuadPoints = nq; }
+    void SetQuadName( QUAD_NAME quadName ) { _quadName = quadName; }    /*! @brief Never change the quadName! This is only for the test framework. */
+    void SetQuadOrder( unsigned quadOrder ) { _quadOrder = quadOrder; } /*! @brief Never change the quadOrder! This is only for the test framework. */
+
+    // Mesh Structure
+    void SetNCells( unsigned nCells ) { _nCells = nCells; }
 };
 
 #endif    // CONFIG_H
