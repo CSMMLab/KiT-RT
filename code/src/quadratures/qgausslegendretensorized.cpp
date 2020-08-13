@@ -1,4 +1,5 @@
 #include "quadratures/qgausslegendretensorized.h"
+#include "common/config.h"
 #include "toolboxes/errormessages.h"
 
 QGaussLegendreTensorized::QGaussLegendreTensorized( Config* settings ) : QuadratureBase( settings ) {
@@ -7,6 +8,15 @@ QGaussLegendreTensorized::QGaussLegendreTensorized( Config* settings ) : Quadrat
     SetNq();
     SetPointsAndWeights();
     SetConnectivity();
+}
+
+void QGaussLegendreTensorized::SetNq() {
+    _nq = 2 * pow( GetOrder(), 2 );
+
+    // 2d case SN solver only needs half of the sphere
+    if( _settings->GetSolverName() == SN_SOLVER && _settings->GetSNAllGaussPts() == false ) {
+        _nq = pow( GetOrder(), 2 );
+    }
 }
 
 void QGaussLegendreTensorized::SetPointsAndWeights() {
@@ -48,7 +58,7 @@ void QGaussLegendreTensorized::SetPointsAndWeights() {
 
     unsigned range             = _order;    // By default, use all quad points
     double normalizationFactor = 1.0;
-    if( _settings->GetSolverName() == SN_SOLVER && _settings->GetUseAllGaussPts() == false ) {
+    if( _settings->GetSolverName() == SN_SOLVER && _settings->GetSNAllGaussPts() == false ) {
         range = std::floor( _order / 2.0 );    // comment (steffen): why do we only need half of the points:
         //=> In 2D we would count everything twice. (not wrong with scaling)
         normalizationFactor = 2.0;

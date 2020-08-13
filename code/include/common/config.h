@@ -226,7 +226,7 @@ class Config
     unsigned inline GetReconsOrder() { return _reconsOrder; }
     SOLVER_NAME inline GetSolverName() const { return _solverName; }
     double inline GetTEnd() const { return _tEnd; }
-    bool inline GetUseAllGaussPts() const { return _allGaussPts; }
+    bool inline GetSNAllGaussPts() const { return _allGaussPts; }
     bool inline GetIsCSD() const { return _csd; }
 
     //  Optimizer
@@ -251,7 +251,7 @@ class Config
     void SetNQuadPoints( unsigned nq ) { _nQuadPoints = nq; }
     void SetQuadName( QUAD_NAME quadName ) { _quadName = quadName; }    /*! @brief Never change the quadName! This is only for the test framework. */
     void SetQuadOrder( unsigned quadOrder ) { _quadOrder = quadOrder; } /*! @brief Never change the quadOrder! This is only for the test framework. */
-
+    void SetSNAllGaussPts( bool useall ) { _allGaussPts = useall; }     /*! @brief Never change the this! This is only for the test framework. */
     // Mesh Structure
     void SetNCells( unsigned nCells ) { _nCells = nCells; }
 };

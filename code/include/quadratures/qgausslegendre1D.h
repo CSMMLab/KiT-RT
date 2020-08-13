@@ -11,7 +11,7 @@ class QGaussLegendre1D : public QuadratureBase
     bool CheckOrder();
 
   public:
-    QGaussLegendre1D( unsigned order );
+    QGaussLegendre1D( Config* settings );
     virtual ~QGaussLegendre1D() {}
 
     inline void SetName() override { _name = "Tensorized Gauss-Legendre quadrature."; }

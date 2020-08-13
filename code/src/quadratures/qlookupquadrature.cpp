@@ -3,7 +3,7 @@
 #include <fstream>
 #include <sstream>
 
-QLookupQuadrature::QLookupQuadrature( unsigned order ) : QuadratureBase( order ) {}
+QLookupQuadrature::QLookupQuadrature( Config* settings ) : QuadratureBase( settings ) {}
 
 void QLookupQuadrature::printAvailOrders() const {
     auto log                    = spdlog::get( "event" );

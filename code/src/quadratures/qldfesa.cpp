@@ -2,7 +2,7 @@
 #include "quadratures/lookuptable_ldfesa.h"
 #include "toolboxes/errormessages.h"
 
-QLDFESA::QLDFESA( unsigned order ) : QLookupQuadrature( order ) {
+QLDFESA::QLDFESA( Config* settings ) : QLookupQuadrature( settings ) {
 
     SetAvailOrders();
 

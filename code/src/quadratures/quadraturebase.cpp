@@ -23,7 +23,7 @@ QuadratureBase* QuadratureBase::CreateQuadrature( Config* settings ) {
         case QUAD_LevelSymmetric: return new QLevelSymmetric( settings );
         case QUAD_LDFESA: return new QLDFESA( settings );
         case QUAD_Lebedev: return new QLebedev( settings );
-        default: return new QMonteCarlo( settings );    // Use MonteCarlo as dummy
+        default: return new QMonteCarlo( settings );    // Use MonteCarlo as default
     }
 }
 

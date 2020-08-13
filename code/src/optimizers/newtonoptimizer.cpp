@@ -5,13 +5,13 @@
 #include "toolboxes/errormessages.h"
 
 NewtonOptimizer::NewtonOptimizer( Config* settings ) : OptimizerBase( settings ) {
-    _quadrature       = QuadratureBase::CreateQuadrature( settings->GetQuadName(), settings->GetQuadOrder() );
+    _quadrature       = QuadratureBase::CreateQuadrature( settings );
     _nq               = _quadrature->GetNq();
     _weights          = _quadrature->GetWeights();
     _quadPointsSphere = _quadrature->GetPointsSphere();
     _maxIterations    = settings->GetNewtonIter();
     _alpha            = settings->GetNewtonStepSize();
-    _maxLineSearches  = settings->GetMaxLineSearches();
+    _maxLineSearches  = settings->GetNewtonMaxLineSearches();
     _epsilon          = settings->GetNewtonOptimizerEpsilon();
 }
 

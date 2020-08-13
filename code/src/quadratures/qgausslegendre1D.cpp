@@ -1,7 +1,7 @@
 #include "quadratures/qgausslegendre1D.h"
 #include "toolboxes/errormessages.h"
 
-QGaussLegendre1D::QGaussLegendre1D( unsigned order ) : QuadratureBase( order ) {
+QGaussLegendre1D::QGaussLegendre1D( Config* settings ) : QuadratureBase( settings ) {
     SetName();
     CheckOrder();
     SetNq();

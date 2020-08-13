@@ -6,7 +6,7 @@
 class QLDFESA : public QLookupQuadrature
 {
   public:
-    QLDFESA( unsigned order );
+    QLDFESA( Config* settings );
     virtual ~QLDFESA() {}
 
     inline void SetName() override { _name = "LDFESA quadrature"; }

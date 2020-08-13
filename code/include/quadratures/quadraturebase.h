@@ -34,8 +34,7 @@ class QuadratureBase
 
     // Quadrature Hub
     /*! @brief Creates a quadrature rule with a given name and a given order.
-     *  @param: std::string name: Name of the quadrature rule
-     *  @param: unsigned order: Order of the quadrature rule
+     *  @param: Config* settings: Settings to handle quadrature options
      *  @returns Quadrature* quadrature: returns pointer to instance of the given derived quadrature class */
     static QuadratureBase* CreateQuadrature( Config* settings );
 

@@ -3,7 +3,7 @@
 
 TEST_CASE( "Read in Config Template" ) {
 
-    char filename[] = "../tests/input/configTest.cfg";
+    char filename[] = "../tests/input/unit_config.cfg";
 
     // Load Settings from File
     Config* config = new Config( filename );
