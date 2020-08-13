@@ -4,10 +4,12 @@
 #include "common/globalconstants.h"
 #include "common/typedef.h"
 
+class Config;
+
 class QuadratureBase
 {
   public:
-    QuadratureBase( unsigned order );
+    QuadratureBase( Config* settings );
     virtual ~QuadratureBase() {}
 
     // Aux functions
@@ -35,7 +37,7 @@ class QuadratureBase
      *  @param: std::string name: Name of the quadrature rule
      *  @param: unsigned order: Order of the quadrature rule
      *  @returns Quadrature* quadrature: returns pointer to instance of the given derived quadrature class */
-    static QuadratureBase* CreateQuadrature( QUAD_NAME name, unsigned order );
+    static QuadratureBase* CreateQuadrature( Config* settings );
 
     // Getter
     inline std::string GetName() const { return _name; }      /*! @returns std::string _name:  name of the quadrature */
@@ -61,7 +63,7 @@ class QuadratureBase
     virtual void SetPointsAndWeights() = 0;
 
     // Member variables
-    // TODO Config* _settings;           /*! @brief pointer to settings class that manages the solver */
+    Config* _settings;           /*! @brief pointer to settings class that manages the solver */
     std::string _name;           /*! @brief name of the quadrature */
     unsigned _order;             /*! @brief order of the quadrature */
     unsigned _nq;                /*! @brief number of gridpoints of the quadrature */

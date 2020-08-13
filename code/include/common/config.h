@@ -61,6 +61,7 @@ class Config
     /*!< @brief If true, very low entries (10^-10 or smaller) of the flux matrices will be set to zero,
      * to improve floating point accuracy */
     bool _cleanFluxMat;
+    bool _allGaussPts; /*!< @brief If true, the SN Solver uses all Gauss pts in the quadrature */
 
     bool _csd;                 /*!< @brief If true, continuous slowing down approximation will be used */
     std::string _hydrogenFile; /*!< @brief Name of hydrogen cross section file */
@@ -226,7 +227,8 @@ class Config
     SOLVER_NAME inline GetSolverName() const { return _solverName; }
     ENTROPY_NAME inline GetEntropyName() const { return _entropyName; }
     bool inline GetCleanFluxMat() const { return _cleanFluxMat; }
-    unsigned GetReconsOrder() { return _reconsOrder; }
+    bool inline GetUseAllGaussPts() const { return _allGaussPts; }
+    unsigned inline GetReconsOrder() { return _reconsOrder; }
     bool inline IsCSD() const { return _csd; }
     unsigned inline GetMaxMomentDegree() { return _maxMomentDegree; }
 
