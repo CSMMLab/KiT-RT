@@ -124,10 +124,10 @@ void CSDSNSolver::Solve() {
                                         _areas[j];
                 }
                 // time update angular flux with numerical flux and total scattering cross section
-                psiNew[j][i] = _sol[j][i] - _dE * psiNew[j][i] - _dE * _sigmaTE[n] * _sol[j][i];
+                psiNew[j][i] = _sol[j][i] - _dE * psiNew[j][i] - _dE * _sigmaTE[_nEnergies - n - 1] * _sol[j][i];
             }
             // compute scattering effects (_scatteringKernel is simply multiplication with quad weights)
-            psiNew[j] += _dE * ( _sigmaSE[n] * _scatteringKernel * _sol[j] );    // multiply scattering matrix with psi
+            psiNew[j] += _dE * ( _sigmaSE[_nEnergies - n - 1] * _scatteringKernel * _sol[j] );    // multiply scattering matrix with psi
             // TODO: Check if _sigmaS^T*psi is correct
 
             // TODO: figure out a more elegant way
@@ -151,7 +151,7 @@ void CSDSNSolver::Solve() {
 
         for( unsigned j = 0; j < _nCells; ++j ) {
             fluxNew[j] = dot( psiNew[j], _weights );
-            _dose[j] += 0.5 * _dE * ( fluxNew[j] / _s[_energies.size() - n - 1] + fluxOld[j] / _s[_energies.size() - n - 2] ) /
+            _dose[j] += 0.5 * _dE * ( fluxNew[j] / _s[_nEnergies - n - 1] + fluxOld[j] / _s[_nEnergies - n - 2] ) /
                         _density[j];    // update dose with trapezoidal rule
             _solverOutput[j] = fluxNew[j];
         }
