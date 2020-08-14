@@ -3,16 +3,12 @@
 Physics::Physics( std::string fileName_H, std::string fileName_O, std::string fileName_stppower ) {
     _xsScatteringH2O.resize( 2 );
     _xsTotalH2O.resize( 2 );
-    _xsTransportH2O.resize( 2 );
     LoadDatabase( fileName_H, fileName_O, fileName_stppower );
 }
 
 Physics::~Physics() {}
 
 void Physics::LoadDatabase( std::string fileName_H, std::string fileName_O, std::string fileName_stppower ) {
-    VectorVector transport_XS_H;
-    VectorVector transport_XS_O;
-
     VectorVector scattering_XS_H;
     VectorVector scattering_XS_O;
 
@@ -30,11 +26,9 @@ void Physics::LoadDatabase( std::string fileName_H, std::string fileName_O, std:
     for( unsigned i = 0; i < headers_H.size(); ++i ) {
         auto header = headers_H[i];
         auto data   = data_H[i];
-        if( header[1][0] == 7 && header[1][1] == 0 ) {
-            transport_XS_H = data;
-        }
+
         // Integrated elastic scattering XS
-        else if( header[1][0] == 10 && header[1][1] == 0 ) {
+        if( header[1][0] == 10 && header[1][1] == 0 ) {
             total_XS_H = data;
         }
         // Angular distribution large angle elastic scattering XS
@@ -50,11 +44,8 @@ void Physics::LoadDatabase( std::string fileName_H, std::string fileName_O, std:
     for( unsigned i = 0; i < headers_O.size(); ++i ) {
         auto header = headers_O[i];
         auto data   = data_O[i];
-        if( header[1][0] == 7 && header[1][1] == 0 ) {
-            transport_XS_O = data;
-        }
         // Integrated elastic scattering XS
-        else if( header[1][0] == 10 && header[1][1] == 0 ) {
+        if( header[1][0] == 10 && header[1][1] == 0 ) {
             total_XS_O = data;
         }
         // Angular distribution large angle elastic scattering XS
@@ -65,9 +56,6 @@ void Physics::LoadDatabase( std::string fileName_H, std::string fileName_O, std:
 
     _xsScatteringH2O[H] = scattering_XS_H;
     _xsScatteringH2O[O] = scattering_XS_O;
-
-    _xsTransportH2O[H] = transport_XS_H;
-    _xsTransportH2O[O] = transport_XS_O;
 
     _xsTotalH2O[H] = total_XS_H;
     _xsTotalH2O[O] = total_XS_O;
@@ -84,13 +72,15 @@ std::vector<Matrix> Physics::GetScatteringXS( const Vector& energies, const Matr
             angleVec[i * angle.columns() + j] = angle( i, j );
         }
     }
+
     VectorVector outVec = GetScatteringXS( energies, angleVec );
+    Vector totalXS      = GetTotalXSE( energies );
 
     // rearrange output to matrix format
     for( unsigned n = 0; n < energies.size(); ++n ) {
         for( unsigned i = 0; i < angle.rows(); ++i ) {
             for( unsigned j = 0; j < angle.columns(); ++j ) {
-                out[n]( i, j ) = outVec[n][i * angle.columns() + j];
+                out[n]( i, j ) = outVec[n][i * angle.columns() + j] * totalXS[n];
             }
         }
     }
@@ -222,36 +212,6 @@ Vector Physics::GetStoppingPower( Vector energies ) {
     }
 
     return stopping_power;
-}
-
-VectorVector Physics::GetTransportXS( Vector energies, Vector density ) {
-    VectorVector transport_XS( energies.size() );
-
-    Interpolation xsH( _xsTransportH2O[H][0], _xsTransportH2O[H][1], Interpolation::linear );
-    Interpolation xsO( _xsTransportH2O[O][0], _xsTransportH2O[O][1], Interpolation::linear );
-
-    for( unsigned i = 0; i < energies.size(); i++ ) {
-        for( unsigned i = 0; i < energies.size(); i++ ) {
-            transport_XS[i] = ( _H20MassFractions[H] * xsH( energies[i] ) * 1e-24 + _H20MassFractions[O] * xsO( energies[i] ) * 1e-24 ) * density;
-        }
-    }
-
-    return transport_XS;
-}
-
-Vector Physics::GetTransportXSE( Vector energies ) {
-    Vector transport_XS( energies.size() );
-
-    Interpolation xsH( _xsTransportH2O[H][0], _xsTransportH2O[H][1], Interpolation::linear );
-    Interpolation xsO( _xsTransportH2O[O][0], _xsTransportH2O[O][1], Interpolation::linear );
-
-    for( unsigned i = 0; i < energies.size(); i++ ) {
-        for( unsigned i = 0; i < energies.size(); i++ ) {
-            transport_XS[i] = ( _H20MassFractions[H] * xsH( energies[i] ) * 1e-24 + _H20MassFractions[O] * xsO( energies[i] ) * 1e-24 );
-        }
-    }
-
-    return transport_XS;
 }
 
 std::tuple<std::vector<VectorVector>, std::vector<VectorVector>> Physics::ReadENDL( std::string filename ) {

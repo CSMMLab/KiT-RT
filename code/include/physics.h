@@ -14,9 +14,8 @@ class Physics
 
   private:
     enum Element { H = 0, O = 1 };
-    std::vector<VectorVector> _xsScatteringH2O;
-    std::vector<VectorVector> _xsTotalH2O;
-    std::vector<VectorVector> _xsTransportH2O;
+    std::vector<VectorVector> _xsScatteringH2O;    // only holds angular distribution, no cross section terms
+    std::vector<VectorVector> _xsTotalH2O;         // equal to scatteringXS integrated over angle
     VectorVector _stpowH2O;
 
     const Vector _H20MassFractions{ 0.11189400, 0.88810600 };
@@ -58,15 +57,6 @@ class Physics
      * @param sH2O is vector of stopping powers in water
      */
     Vector GetStoppingPower( Vector energies );
-
-    /**
-     * @brief GetTransportXS gives back vector of vectors of stopping powers for materials defined by density and energies in vector energy
-     * @param energies is vector with energies
-     * @param density is vector with patient densities (at different spatial cells)
-     */
-    VectorVector GetTransportXS( Vector energies, Vector density );
-
-    Vector GetTransportXSE( Vector energies );
 
     /**
      * @brief Physics constructor

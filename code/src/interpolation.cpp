@@ -95,6 +95,16 @@ void Interpolation::set_points( const Vector& x, const Vector& y, TYPE type ) {
             _c[i] = ( _y[i + 1] - _y[i] ) / ( _x[i + 1] - _x[i] );
         }
     }
+    else if( type == loglinear ) {
+        _a.resize( n );
+        _b.resize( n );
+        _c.resize( n );
+        for( int i = 0; i < n - 1; i++ ) {
+            _a[i] = 0.0;
+            _b[i] = 0.0;
+            _c[i] = ( std::log( _y[i + 1] ) - std::log( _y[i] ) ) / ( _x[i + 1] - _x[i] );
+        }
+    }
     else {
         ErrorMessages::Error( "Invalid interpolation type!", CURRENT_FUNCTION );
     }
@@ -125,5 +135,8 @@ double Interpolation::operator()( double x ) const {
     else {
         interpol = ( ( _a[idx] * h + _b[idx] ) * h + _c[idx] ) * h + _y[idx];
     }
-    return interpol;
+    if( _type == loglinear )
+        return std::exp( interpol );
+    else
+        return interpol;
 }

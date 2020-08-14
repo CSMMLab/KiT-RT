@@ -7,7 +7,7 @@ class Interpolation
 {
   public:
     enum BOUNDARY { first_deriv, second_deriv };
-    enum TYPE { linear, cubic };
+    enum TYPE { linear, loglinear, cubic };
 
   private:
     Vector _x, _y;
