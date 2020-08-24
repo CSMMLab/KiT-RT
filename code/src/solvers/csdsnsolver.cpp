@@ -151,9 +151,12 @@ void CSDSNSolver::Solve() {
 }
 
 void CSDSNSolver::Save() const {
-    std::vector<std::string> fieldNames{ "dose" };
-    std::vector<std::vector<double>> scalarField( 1, _dose );
-    std::vector<std::vector<std::vector<double>>> results{ scalarField };
+    std::vector<std::string> fieldNames{ "dose", "normalized dose" };
+    std::vector<std::vector<double>> dose( 1, _dose );
+    std::vector<std::vector<double>> normalizedDose( 1, _dose );
+    double maxDose = *std::max_element( _dose.begin(), _dose.end() );
+    for( unsigned i = 0; i < _dose.size(); ++i ) normalizedDose[0][i] /= maxDose;
+    std::vector<std::vector<std::vector<double>>> results{ dose, normalizedDose };
     ExportVTK( _settings->GetOutputFile(), results, fieldNames, _mesh );
 }
 
