@@ -2,9 +2,7 @@
 #include "common/config.h"
 #include "common/mesh.h"
 
-WaterPhantom::WaterPhantom( Config* settings, Mesh* mesh ) : ElectronRT( settings, mesh ) {
-    _physics = new Physics( settings->GetHydrogenFile(), settings->GetOxygenFile(), "../input/stopping_power.txt" );    // TODO
-}
+WaterPhantom::WaterPhantom( Config* settings, Mesh* mesh ) : ElectronRT( settings, mesh ) {}
 
 WaterPhantom::~WaterPhantom() { delete _physics; }
 

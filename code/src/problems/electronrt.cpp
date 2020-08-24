@@ -3,7 +3,7 @@
 #include "common/mesh.h"
 
 ElectronRT::ElectronRT( Config* settings, Mesh* mesh ) : ProblemBase( settings, mesh ) {
-    _physics = new Physics( settings->GetHydrogenFile(), settings->GetOxygenFile(), "../input/stopping_power.txt" );    // TODO
+    _physics = new Physics( settings->GetHydrogenFile(), settings->GetOxygenFile(), "../input/stopping_power.txt" );
 }
 
 ElectronRT::~ElectronRT() {}

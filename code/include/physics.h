@@ -5,24 +5,25 @@
 #include <list>
 #include <map>
 
+#include "common/globalconstants.h"
 #include "common/typedef.h"
+#include "cubic2dspline.h"
 #include "interpolation.h"
 #include "toolboxes/errormessages.h"
 
 class Physics
 {
-
   private:
     enum Element { H = 0, O = 1 };
     std::vector<VectorVector> _xsScatteringH2O;    // only holds angular distribution, no cross section terms
     std::vector<VectorVector> _xsTotalH2O;         // equal to scatteringXS integrated over angle
     VectorVector _stpowH2O;
 
-    const Vector _H20MassFractions{ 0.11189400, 0.88810600 };
-
     std::tuple<std::vector<VectorVector>, std::vector<VectorVector>> ReadENDL( std::string filename );
     VectorVector ReadStoppingPowers( std::string fileName );
     void LoadDatabase( std::string fileName_H, std::string fileName_O, std::string fileName_stppower );
+    VectorVector ReorderTotalXS( const VectorVector& data ) const;
+    VectorVector ReorderScatteringXS( const VectorVector& data ) const;
 
     Physics() = delete;
 
@@ -58,10 +59,12 @@ class Physics
      */
     Vector GetStoppingPower( Vector energies );
 
+    Vector ComputeStoppingPower( const Vector& energies ) const;
+
     /**
      * @brief Physics constructor
      */
-    Physics( std::string fileName_H, std::string fileName_O, std::string fileName_stppower );
+    Physics( std::string fileName_H, std::string fileName_O, std::string fileName_stppower = "" );
 
     /**
      * @brief Physics destructor

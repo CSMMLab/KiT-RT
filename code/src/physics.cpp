@@ -54,13 +54,16 @@ void Physics::LoadDatabase( std::string fileName_H, std::string fileName_O, std:
         }
     }
 
+    for( auto& sXS : scattering_XS_H ) sXS[1] = 1.0 - sXS[1];    // data is given as x=1-cos(theta) in [0,2] -> shift to [-1,1] interval
+    for( auto& sXS : scattering_XS_O ) sXS[1] = 1.0 - sXS[1];
+
     _xsScatteringH2O[H] = scattering_XS_H;
     _xsScatteringH2O[O] = scattering_XS_O;
 
     _xsTotalH2O[H] = total_XS_H;
     _xsTotalH2O[O] = total_XS_O;
 
-    _stpowH2O = ReadStoppingPowers( fileName_stppower );
+    if( !( fileName_stppower.empty() ) ) _stpowH2O = ReadStoppingPowers( fileName_stppower );
 }
 
 std::vector<Matrix> Physics::GetScatteringXS( const Vector& energies, const Matrix& angle ) {
@@ -74,13 +77,12 @@ std::vector<Matrix> Physics::GetScatteringXS( const Vector& energies, const Matr
     }
 
     VectorVector outVec = GetScatteringXS( energies, angleVec );
-    Vector totalXS      = GetTotalXSE( energies );
 
     // rearrange output to matrix format
     for( unsigned n = 0; n < energies.size(); ++n ) {
         for( unsigned i = 0; i < angle.rows(); ++i ) {
             for( unsigned j = 0; j < angle.columns(); ++j ) {
-                out[n]( i, j ) = outVec[n][i * angle.columns() + j] * totalXS[n];
+                out[n]( i, j ) = outVec[n][i * angle.columns() + j];
             }
         }
     }
@@ -88,88 +90,48 @@ std::vector<Matrix> Physics::GetScatteringXS( const Vector& energies, const Matr
 }
 
 VectorVector Physics::GetScatteringXS( Vector energies, Vector angle ) {
-    std::vector<std::vector<double>> tmpH, tmpO;          // vectorvector which stores data at fixed energies
-    std::vector<std::vector<double>> xsHGrid, xsOGrid;    // matrix which stores tensorized data for given angular grid, original energy grid
-    VectorVector xsH2OGridGrid;                           // matrix which stores tensorized data for given angular and energy grid
-    std::vector<double> tmpAngleGridH( angle.size() );
-    std::vector<double> tmpAngleGridO( angle.size() );
-    Vector tmpEnergyGridH( energies.size() );
-    Vector tmpEnergyGridO( energies.size() );
-    std::vector<double> tmp1H, tmp1O;
-    std::vector<double> energiesOrig;    // original energy grid
-    double energyCurrent = _xsScatteringH2O[H][0][0];
+    auto scatter_XS_H = _xsScatteringH2O[H];
+    auto scatter_XS_O = _xsScatteringH2O[O];
 
-    // build grid at original energies and given angular grid
-    for( unsigned i = 0; i < _xsScatteringH2O[H].size(); ++i ) {
-        // split vector into subvectors with identical energy
-        if( abs( _xsScatteringH2O[H][i][0] - energyCurrent ) < 1e-12 ) {
-            if( tmpH.empty() ) tmpH.resize( 2 );
-            tmpH[0].push_back( _xsScatteringH2O[H][i][1] );
-            tmpH[1].push_back( _xsScatteringH2O[H][i][2] );
-        }
-        else {
-            // new energy section starts in _xsH2O. Now we interpolate the values in tmp at given angular grid
-            // interpolate vector at different angles for fixed current energies
-            Interpolation xsH( tmpH[0], tmpH[1], Interpolation::linear );
-            for( unsigned k = 0; k < angle.size(); k++ ) {
-                tmpAngleGridH[k] = xsH( angle[k] );
-            }
-            xsHGrid.push_back( tmpAngleGridH );
+    Vector integratedScatteringXS = GetTotalXSE( energies );
 
-            // reset current energy
-            energiesOrig.push_back( energyCurrent );
-            energyCurrent = _xsScatteringH2O[H][i][0];
-            tmpH.clear();
+    std::vector<double> dataEnergy;
+    std::vector<Vector> intermediateGrid;
+    unsigned idx = 0;
+    for( unsigned i = 0; i < scatter_XS_H.size(); i += idx ) {
+        idx = 1;
+        std::vector<double> dataAngle{ scatter_XS_H[i][1] }, dataXS{ scatter_XS_H[i][2] };
+        dataEnergy.push_back( scatter_XS_H[i][0] );
+        while( scatter_XS_H[i + idx][0] == scatter_XS_H[i + idx - 1][0] ) {
+            dataAngle.push_back( scatter_XS_H[i + idx][1] );
+            dataXS.push_back( scatter_XS_H[i + idx][2] );
+            idx++;
+            if( i + idx >= scatter_XS_H.size() ) break;
         }
+        std::reverse( dataAngle.begin(), dataAngle.end() );
+        std::reverse( dataXS.begin(), dataXS.end() );
+
+        Interpolation interp( dataAngle, dataXS, Interpolation::linear );
+        intermediateGrid.push_back( interp( angle ) );
+        double integral_sXS = 0.0;
+        auto sXS            = intermediateGrid.back();
+        for( unsigned a = 1; a < angle.size(); ++a ) {
+            integral_sXS += 0.5 * ( angle[a] - angle[a - 1] ) * ( sXS[a] + sXS[a - 1] );
+        }
+        intermediateGrid.back() /= integral_sXS;    // re-normalize to yield a valid distribution in a statistical sense; behaves poorly due to great
+                                                    // differences in order of magnitude
     }
-
-    energyCurrent = _xsScatteringH2O[O][0][0];
-    for( unsigned i = 0; i < _xsScatteringH2O[O].size(); ++i ) {
-        // split vector into subvectors with identical energy
-        if( abs( _xsScatteringH2O[O][i][0] - energyCurrent ) < 1e-12 ) {
-            if( tmpO.empty() ) tmpO.resize( 2 );
-            tmpO[0].push_back( _xsScatteringH2O[O][i][1] );
-            tmpO[1].push_back( _xsScatteringH2O[O][i][2] );
-        }
-        else {
-            // new energy section starts in _xsH2O. Now we interpolate the values in tmp at given angular grid
-            // interpolate vector at different angles for fixed current energies
-            Interpolation xsO( tmpO[0], tmpO[1], Interpolation::linear );
-            for( unsigned k = 0; k < angle.size(); k++ ) {
-                tmpAngleGridO[k] = xsO( angle[k] );
-            }
-            xsOGrid.push_back( tmpAngleGridO );
-
-            // reset current energy
-            energyCurrent = _xsScatteringH2O[O][i][0];
-            tmpO.clear();
-        }
-    }
-
-    // perform interpolation at fixed original energy for new energy grid
-
-    for( unsigned j = 0; j < angle.size(); ++j ) {    // loop over all angles
-        tmp1H.resize( 0 );
-        tmp1O.resize( 0 );
-        // store all values at given angle j for all original energies
-        for( unsigned i = 0; i < energiesOrig.size(); ++i ) {
-            tmp1H.push_back( xsHGrid[i][j] );
-            tmp1O.push_back( xsOGrid[i][j] );
-        }
-        Interpolation xsH( energiesOrig, tmp1H, Interpolation::linear );
-        Interpolation xsO( energiesOrig, tmp1O, Interpolation::linear );
-        for( unsigned k = 0; k < energies.size(); k++ ) {
-            // Linear interpolation
-            tmpEnergyGridH[k] = xsH( energies[k] );
-            tmpEnergyGridO[k] = xsO( energies[k] );
-        }
-        xsH2OGridGrid.push_back( _H20MassFractions[H] * tmpEnergyGridH + _H20MassFractions[O] * tmpEnergyGridO );
-    }
-
     VectorVector xs( energies.size(), Vector( angle.size() ) );
-    for( unsigned i = 0; i < energies.size(); ++i ) {
-        for( unsigned j = 0; j < angle.size(); ++j ) {
-            xs[i][j] = xsH2OGridGrid[j][i] * 1e-24;
+    for( unsigned j = 0; j < angle.size(); ++j ) {
+        std::vector<double> xsPerE( dataEnergy.size() );
+        for( unsigned i = 0; i < dataEnergy.size(); ++i ) {
+            xsPerE[i] = intermediateGrid[i][j];
+        }
+        Interpolation interp( dataEnergy, xsPerE, Interpolation::linear );
+        Vector eGrid = interp( energies );
+        for( unsigned i = 0; i < energies.size(); ++i ) {
+            xs[i][j] = eGrid[i] * integratedScatteringXS[i];    // multiply with the integrated scattering cross section to force the
+                                                                // integration over the angle to yield integratedScatteringXS
         }
     }
 
@@ -183,35 +145,60 @@ VectorVector Physics::GetTotalXS( Vector energies, Vector density ) {
     Interpolation xsO( _xsTotalH2O[O][0], _xsTotalH2O[O][1], Interpolation::linear );
 
     for( unsigned i = 0; i < energies.size(); i++ ) {
-        total_XS[i] = ( _H20MassFractions[H] * xsH( energies[i] ) * 1e-24 + _H20MassFractions[O] * xsO( energies[i] ) * 1e-24 ) * density;
+        total_XS[i] = ( H20MassFractions[H] * xsH( energies[i] ) * 1e-24 + H20MassFractions[O] * xsO( energies[i] ) * 1e-24 ) * density;
     }
 
     return total_XS;
 }
 
+VectorVector Physics::ReorderScatteringXS( const VectorVector& data ) const {
+    VectorVector ret( data[0].size(), Vector( data.size() ) );
+    for( unsigned i = 0; i < data.size(); i++ ) {
+        for( unsigned j = 0; j < data[0].size(); j++ ) {
+            ret[j][i] = data[i][j];
+        }
+    }
+    return ret;
+}
+
+VectorVector Physics::ReorderTotalXS( const VectorVector& data ) const {
+    VectorVector ret( data[0].size(), Vector( data.size() ) );
+    for( unsigned i = 0; i < data.size(); i++ ) {
+        for( unsigned j = 0; j < data[0].size(); j++ ) {
+            ret[j][i] = data[i][j];
+        }
+    }
+    return ret;
+}
+
 Vector Physics::GetTotalXSE( Vector energies ) {
     Vector total_XS( energies.size() );
 
-    Interpolation xsH( _xsTotalH2O[H][0], _xsTotalH2O[H][1], Interpolation::linear );
-    Interpolation xsO( _xsTotalH2O[O][0], _xsTotalH2O[O][1], Interpolation::linear );
+    auto total_XS_H = ReorderTotalXS( _xsTotalH2O[H] );
+    auto total_XS_O = ReorderTotalXS( _xsTotalH2O[O] );
+
+    Interpolation xsH( total_XS_H[0], total_XS_H[1], Interpolation::linear );
+    Interpolation xsO( total_XS_O[0], total_XS_O[1], Interpolation::linear );
 
     for( unsigned i = 0; i < energies.size(); i++ ) {
-        total_XS[i] = ( _H20MassFractions[H] * xsH( energies[i] ) * 1e-24 + _H20MassFractions[O] * xsO( energies[i] ) * 1e-24 );
+        total_XS[i] = ( H20MassFractions[H] * xsH( energies[i] ) + H20MassFractions[O] * xsO( energies[i] ) ) * 1e-24;
     }
 
     return total_XS;
 }
 
 Vector Physics::GetStoppingPower( Vector energies ) {
-    Vector stopping_power( energies.size() );
-
-    Interpolation pwr( _stpowH2O[0], _stpowH2O[1], Interpolation::linear );
-
-    for( unsigned i = 0; i < energies.size(); i++ ) {
-        stopping_power[i] = pwr( energies[i] );
+    if( _stpowH2O.empty() ) {
+        return ComputeStoppingPower( energies );
     }
-
-    return stopping_power;
+    else {
+        Vector stopping_power( energies.size() );
+        Interpolation pwr( _stpowH2O[0], _stpowH2O[1], Interpolation::linear );
+        for( unsigned i = 0; i < energies.size(); i++ ) {
+            stopping_power[i] = pwr( energies[i] );
+        }
+        return stopping_power;
+    }
 }
 
 std::tuple<std::vector<VectorVector>, std::vector<VectorVector>> Physics::ReadENDL( std::string filename ) {
@@ -337,4 +324,43 @@ VectorVector Physics::ReadStoppingPowers( std::string fileName ) {
     stp_powers.push_back( Vector( stp_power.size(), stp_power.data() ) );
 
     return stp_powers;
+}
+
+Vector Physics::ComputeStoppingPower( const Vector& energies ) const {
+
+    Vector stoppingPower( energies.size() );
+    for( unsigned i = 0; i < energies.size(); ++i ) {
+        long double e = energies[i] * 1e6 * ELECTRON_VOLT;    // MeV -> J
+        long double J = 0, S = 0;
+        for( int i = 0; i < 2; i++ ) {
+            if( H20AtomicNumbers[i] <= 6 )
+                J = ELECTRON_VOLT * 11.5 * H20AtomicNumbers[i];
+            else
+                J = ELECTRON_VOLT * ( 9.76 * H20AtomicNumbers[i] + 58.8 * std::pow( H20AtomicNumbers[i], -0.19 ) );
+            S += H20MassFractions[i] * H20AtomicNumbers[i] / H2OAtomicWeights[i] * ( AVOGADRO_CONSTANT * 1e3 ) * std::log( SQRT05E / J * e );
+        }
+        S = C1 * S / e;
+
+        stoppingPower[i] = static_cast<double>( S / ( ELECTRON_VOLT * H2OMassDensity * 1e5 ) );
+    }
+    /* OpenMC formula
+    Vector stoppingPower( energies.size() );
+    for( unsigned i = 0; i < energies.size(); ++i ) {
+        long double S_rad = 0, S_col = 0;
+        for( int i = 0; i < 2; i++ ) {
+            S_rad += H20MassFractions[i] * ( 1.0 );
+            long double beta  = 0;
+            long double T     = 0;
+            long double I     = 0;
+            long double tau   = T / ELECTRON_MASS;
+            long double F     = ( 1 - beta * beta ) * ( 1 + tau * tau / 8 - ( 2 * tau + 1 * M_LN2 ) );
+            long double delta = 0;
+            S_col += H20MassFractions[i] * ( 2.0 * PI * ELECTRON_RADIUS * ELECTRON_ENERGY / beta * AVOGADRO_CONSTANT * H20AtomicNumbers[i] /
+                                             H2OAtomicWeights[i] * ( std::log( ( T * T ) / ( I * I ) ) + std::log( 1.0 + tau / 2.0 ) + F - delta )
+    );
+        }
+        stoppingPower[i] = static_cast<double>( S_rad + S_col );
+    }
+    */
+    return stoppingPower;
 }

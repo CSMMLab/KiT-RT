@@ -28,6 +28,7 @@ class Interpolation
     void set_points( const std::vector<double>& x, const std::vector<double>& y, TYPE type );
     void set_points( const Vector& x, const Vector& y, TYPE type );
     double operator()( double x ) const;
+    Vector operator()( Vector v ) const;
 };
 
 #endif

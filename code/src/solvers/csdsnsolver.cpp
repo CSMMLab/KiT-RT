@@ -42,20 +42,6 @@ CSDSNSolver::CSDSNSolver( Config* settings ) : SNSolver( settings ) {
     _s       = _problem->GetStoppingPower( _energies );
     _Q       = _problem->GetExternalSource( _energies );
 
-    double dMu   = 0.00001;
-    unsigned nMu = unsigned( 2 / dMu );
-    Vector muGrid( nMu );
-    for( unsigned n = 0; n < nMu; ++n ) {
-        muGrid[n] = -1.0 + 2.0 / ( nMu - 1 ) * n;
-    }
-    VectorVector tmp = _problem->GetScatteringXSE( _energies, muGrid );
-    double sigmaT    = 0.0;
-    for( unsigned n = 0; n < nMu; ++n ) {
-        sigmaT += tmp[0][n] * dMu;
-    }
-    std::cout << "int(sigmaS) at energy " << 2.0 * M_PI * sigmaT << std::endl;
-    std::cout << "sigmaT at energy " << _sigmaTE[0] << std::endl;
-
     // Get patient density
     _density = Vector( _nCells, 1.0 );
 }

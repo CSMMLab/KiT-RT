@@ -3,12 +3,12 @@
 #include <blaze/math/lapack/posv.h>
 
 Interpolation::Interpolation( const std::vector<double>& x, const std::vector<double>& y, TYPE type )
-    : _left( first_deriv ), _right( first_deriv ), _left_value( 0.0 ), _right_value( 0.0 ), _force_linear_extrapolation( false ) {
+    : _left( first_deriv ), _right( first_deriv ), _type( type ), _left_value( 0.0 ), _right_value( 0.0 ), _force_linear_extrapolation( false ) {
     this->set_points( x, y, type );
 }
 
 Interpolation::Interpolation( const Vector& x, const Vector& y, TYPE type )
-    : _left( first_deriv ), _right( first_deriv ), _left_value( 0.0 ), _right_value( 0.0 ), _force_linear_extrapolation( false ) {
+    : _left( first_deriv ), _right( first_deriv ), _type( type ), _left_value( 0.0 ), _right_value( 0.0 ), _force_linear_extrapolation( false ) {
     this->set_points( x, y, type );
 }
 
@@ -32,8 +32,11 @@ void Interpolation::set_points( const std::vector<double>& x, const std::vector<
 
 void Interpolation::set_points( const Vector& x, const Vector& y, TYPE type ) {
     if( x.size() != y.size() ) ErrorMessages::Error( "Vectors are of unequal length!", CURRENT_FUNCTION );
-    _x    = x;
-    _y    = y;
+    _x = x;
+    if( type == loglinear )
+        _y = log( y );
+    else
+        _y = y;
     int n = x.size();
     for( int i = 0; i < n - 1; i++ ) {
         if( !( _x[i] < _x[i + 1] ) ) ErrorMessages::Error( "x is not sorted ascendingly!", CURRENT_FUNCTION );
@@ -85,7 +88,7 @@ void Interpolation::set_points( const Vector& x, const Vector& y, TYPE type ) {
             _c[i] = ( y[i + 1] - y[i] ) / ( x[i + 1] - x[i] ) - 1.0 / 3.0 * ( 2.0 * _b[i] + _b[i + 1] ) * ( x[i + 1] - x[i] );
         }
     }
-    else if( type == linear ) {
+    else if( type == linear || type == loglinear ) {
         _a.resize( n );
         _b.resize( n );
         _c.resize( n );
@@ -93,16 +96,6 @@ void Interpolation::set_points( const Vector& x, const Vector& y, TYPE type ) {
             _a[i] = 0.0;
             _b[i] = 0.0;
             _c[i] = ( _y[i + 1] - _y[i] ) / ( _x[i + 1] - _x[i] );
-        }
-    }
-    else if( type == loglinear ) {
-        _a.resize( n );
-        _b.resize( n );
-        _c.resize( n );
-        for( int i = 0; i < n - 1; i++ ) {
-            _a[i] = 0.0;
-            _b[i] = 0.0;
-            _c[i] = ( std::log( _y[i + 1] ) - std::log( _y[i] ) ) / ( _x[i + 1] - _x[i] );
         }
     }
     else {
@@ -139,4 +132,12 @@ double Interpolation::operator()( double x ) const {
         return std::exp( interpol );
     else
         return interpol;
+}
+
+Vector Interpolation::operator()( Vector v ) const {
+    Vector res( v.size() );
+    for( unsigned i = 0; i < v.size(); ++i ) {
+        res[i] = this->operator()( v[i] );
+    }
+    return res;
 }
