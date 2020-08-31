@@ -15,7 +15,7 @@ CSDSNSolver::CSDSNSolver( Config* settings ) : SNSolver( settings ) {
     // Set angle and energies
     _angle           = Vector( _settings->GetNQuadPoints(), 0.0 );    // my
     _energies        = Vector( _nEnergies, 0.0 );                     // equidistant
-    double energyMin = 1e-1;
+    double energyMin = 1e-5;
     double energyMax = 5e0;
     // write equidistant energy grid
 
@@ -39,14 +39,59 @@ CSDSNSolver::CSDSNSolver( Config* settings ) : SNSolver( settings ) {
 
     _sigmaSE = _problem->GetScatteringXSE( _energies, muMatrix );
     _sigmaTE = _problem->GetTotalXSE( _energies );
-    _s       = _problem->GetStoppingPower( _energies );
-    _Q       = _problem->GetExternalSource( _energies );
+    // compute scaling s.t. scattering kernel integrates to one for chosen quadrature
+    for( unsigned n = 0; n < _nEnergies; ++n ) {
+        for( unsigned p = 0; p < _nq; ++p ) {
+            double cp = 0.0;
+            for( unsigned q = 0; q < _nq; ++q ) {
+                cp += _weights[q] * _sigmaSE[n]( p, q );
+            }
+            for( unsigned q = 0; q < _nq; ++q ) {
+                _sigmaSE[n]( p, q ) = _sigmaTE[n] / cp * _sigmaSE[n]( p, q );
+            }
+        }
+    }
+
+    _s = _problem->GetStoppingPower( _energies );
+    _Q = _problem->GetExternalSource( _energies );
+
+    // recompute scattering kernel. TODO: add this to kernel function
+    for( unsigned p = 0; p < _nq; ++p ) {
+        for( unsigned q = 0; q < _nq; ++q ) {
+            _scatteringKernel( p, p ) = _weights[p];
+        }
+    }
+
+    /*
+    // test 1
+    for( unsigned n = 0; n < _nEnergies; ++n ) {
+        for( unsigned p = 0; p < _nq; ++p ) {
+            double tmp = 0.0;
+            for( unsigned q = 0; q < _nq; ++q ) {
+                tmp += _sigmaSE[n]( p, q ) * _scatteringKernel( q, p );
+            }
+
+            std::cout << tmp << " ";
+        }
+        std::cout << std::endl;
+    }
+
+    // exit( EXIT_FAILURE );
+
+    // test scattering
+    Vector ones( _nq, 1.0 );
+    for( unsigned n = 0; n < _nEnergies; ++n ) {
+        std::cout << ( _sigmaSE[_nEnergies - n - 1] * _scatteringKernel * ones )[0] << " " << _sigmaTE[_nEnergies - n - 1] << std::endl;
+    }*/
+
+    // exit( EXIT_FAILURE );
 
     // Get patient density
     _density = Vector( _nCells, 1.0 );
 }
 
 void CSDSNSolver::Solve() {
+    std::cout << "Solve" << std::endl;
     auto log = spdlog::get( "event" );
 
     // angular flux at next time step (maybe store angular flux at all time steps, since time becomes energy?)
@@ -69,9 +114,10 @@ void CSDSNSolver::Solve() {
     }
 
     // store transformed energies ETilde instead of E in _energies vector (cf. Dissertation Kerstion Kuepper, Eq. 1.25)
-    double tmp = 0.0;
-    for( unsigned n = 0; n < _nEnergies; ++n ) {
-        tmp          = tmp + _dE / _s[n];
+    double tmp   = 0.0;
+    _energies[0] = 0.0;
+    for( unsigned n = 1; n < _nEnergies; ++n ) {
+        tmp          = tmp + _dE * 0.5 * ( 1.0 / _s[n] + 1.0 / _s[n - 1] );
         _energies[n] = tmp;
     }
 
@@ -145,6 +191,7 @@ void CSDSNSolver::Solve() {
         // Save( n );
         dFlux   = blaze::l2Norm( fluxNew - fluxOld );
         fluxOld = fluxNew;
+        // std::cout << _energies[n] << std::endl;
         if( rank == 0 ) log->info( "{:03.8f}  {:01.5e}  {:01.5e}", _energies[n], _dE / densityMin, dFlux );
         if( std::isinf( dFlux ) || std::isnan( dFlux ) ) break;
     }

@@ -21,7 +21,7 @@ Matrix Isotropic1D::GetScatteringKernel() {
             tmp += kernel( i, j );
         }
         for( unsigned j = 0; j < nq; ++j ) {
-            kernel( i, j ) /= tmp;
+            // kernel( i, j ) /= tmp;
         }
     }
     return kernel;

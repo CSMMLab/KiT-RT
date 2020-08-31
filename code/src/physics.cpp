@@ -118,8 +118,9 @@ VectorVector Physics::GetScatteringXS( Vector energies, Vector angle ) {
         for( unsigned a = 1; a < angle.size(); ++a ) {
             integral_sXS += 0.5 * ( angle[a] - angle[a - 1] ) * ( sXS[a] + sXS[a - 1] );
         }
-        intermediateGrid.back() /= integral_sXS;    // re-normalize to yield a valid distribution in a statistical sense; behaves poorly due to great
-                                                    // differences in order of magnitude
+        // intermediateGrid.back() /= integral_sXS;    // re-normalize to yield a valid distribution in a statistical sense; behaves poorly due to
+        // great
+        // differences in order of magnitude
     }
     VectorVector xs( energies.size(), Vector( angle.size() ) );
     for( unsigned j = 0; j < angle.size(); ++j ) {
@@ -130,8 +131,8 @@ VectorVector Physics::GetScatteringXS( Vector energies, Vector angle ) {
         Interpolation interp( dataEnergy, xsPerE, Interpolation::linear );
         Vector eGrid = interp( energies );
         for( unsigned i = 0; i < energies.size(); ++i ) {
-            xs[i][j] = eGrid[i] * integratedScatteringXS[i];    // multiply with the integrated scattering cross section to force the
-                                                                // integration over the angle to yield integratedScatteringXS
+            // xs[i][j] = eGrid[i] * integratedScatteringXS[i];    // multiply with the integrated scattering cross section to force the
+            // integration over the angle to yield integratedScatteringXS
         }
     }
 
