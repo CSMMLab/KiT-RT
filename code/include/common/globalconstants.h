@@ -20,21 +20,24 @@ static const long double PI           = 3.14159265358979323846264338327950288419
 static const long double EULER        = 2.7182818284590452353602874713526624977572470936999595749669676277240766303535475945713821785251664274;
 static const long double INV_SQRT_2PI = 1.0 / std::sqrt( 2.0 * PI );
 
-static const long double AVOGADRO_CONSTANT               = 6.02214129e23;       // mol^-1
+static const long double AVOGADRO_CONSTANT               = 6.02214129e23;       // 1/mol
 static const long double ELECTRON_MASS                   = 9.10938291e-31;      // kg
 static const long double ELECTRON_ENERGY                 = 0.51099895;          // MeV
 static const long double ELECTRON_RADIUS                 = 2.8179403262e-15;    // m
 static const long double ELECTRON_MASS_ENERGY_EQUIVALENT = 8.18710506e-14;      // J
 static const long double ELECTRON_VOLT                   = 1.602176565e-19;     // J
-static const long double ELECTRIC_CONSTANT               = 8.854187817e-12;     // F m^-1
+static const long double ELECTRIC_CONSTANT               = 8.854187817e-12;     // F/m
 static const long double ELEMENTARY_CHARGE               = 1.602176565e-19;     // C
 static const long double PLANCK_CONSTANT                 = 6.62606957e-34;      // J s
 static const long double BOHR_RADIUS                     = 5.2917721092e-11;    // m
 
-static const std::vector<long double> H20MassFractions{ 0.111894, 0.888106 };
-static const std::vector<long double> H20AtomicNumbers{ 1.0, 8.0 };
+static const std::vector<long double> H2OMassFractions{ 0.111894, 0.888106 };
+static const std::vector<long double> H2OAtomicNumbers{ 1.0, 8.0 };
 static const std::vector<long double> H2OAtomicWeights{ 1.008, 15.999 };
-static const long double H2OMassDensity = 0.997;    // g/cm3
+static const long double H2OAtomicWeight     = 2 * H2OAtomicWeights[0] + H2OAtomicWeights[1];
+static const long double H2OElectronDensity  = 3.3428847e23;                                            // 1/cm3
+static const long double H2OMassDensity      = 1.0;                                                     // g/cm3
+static const long double H2OMolecularDensity = AVOGADRO_CONSTANT * H2OMassDensity / H2OAtomicWeight;    // 1/cm3
 
 static const long double C1      = 2.0 * PI * std::pow( ELEMENTARY_CHARGE, 4u ) / std::pow( 4.0 * PI * ELECTRIC_CONSTANT, 2u );
 static const long double C2      = C1 / 16.0;
