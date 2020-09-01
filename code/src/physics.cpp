@@ -131,7 +131,7 @@ VectorVector Physics::GetScatteringXS( Vector energies, Vector angle ) {
         Interpolation interp( dataEnergy, xsPerE, Interpolation::linear );
         Vector eGrid = interp( energies );
         for( unsigned i = 0; i < energies.size(); ++i ) {
-            // xs[i][j] = eGrid[i] * integratedScatteringXS[i];    // multiply with the integrated scattering cross section to force the
+            xs[i][j] = eGrid[i];    // multiply with the integrated scattering cross section to force the
             // integration over the angle to yield integratedScatteringXS
         }
     }
