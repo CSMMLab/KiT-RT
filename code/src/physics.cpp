@@ -146,7 +146,7 @@ VectorVector Physics::GetTotalXS( Vector energies, Vector density ) {
     Interpolation xsO( _xsTotalH2O[O][0], _xsTotalH2O[O][1], Interpolation::linear );
 
     for( unsigned i = 0; i < energies.size(); i++ ) {
-        total_XS[i] = ( H20MassFractions[H] * xsH( energies[i] ) * 1e-24 + H20MassFractions[O] * xsO( energies[i] ) * 1e-24 ) * density;
+        total_XS[i] = ( H2OMassFractions[H] * xsH( energies[i] ) * 1e-24 + H2OMassFractions[O] * xsO( energies[i] ) * 1e-24 ) * density;
     }
 
     return total_XS;
@@ -182,7 +182,7 @@ Vector Physics::GetTotalXSE( Vector energies ) {
     Interpolation xsO( total_XS_O[0], total_XS_O[1], Interpolation::linear );
 
     for( unsigned i = 0; i < energies.size(); i++ ) {
-        total_XS[i] = ( H20MassFractions[H] * xsH( energies[i] ) + H20MassFractions[O] * xsO( energies[i] ) ) * 1e-24;
+        total_XS[i] = ( H2OMassFractions[H] * xsH( energies[i] ) + H2OMassFractions[O] * xsO( energies[i] ) ) * 1e-24;
     }
 
     return total_XS;
@@ -334,11 +334,11 @@ Vector Physics::ComputeStoppingPower( const Vector& energies ) const {
         long double e = energies[i] * 1e6 * ELECTRON_VOLT;    // MeV -> J
         long double J = 0, S = 0;
         for( int i = 0; i < 2; i++ ) {
-            if( H20AtomicNumbers[i] <= 6 )
-                J = ELECTRON_VOLT * 11.5 * H20AtomicNumbers[i];
+            if( H2OAtomicNumbers[i] <= 6 )
+                J = ELECTRON_VOLT * 11.5 * H2OAtomicNumbers[i];
             else
-                J = ELECTRON_VOLT * ( 9.76 * H20AtomicNumbers[i] + 58.8 * std::pow( H20AtomicNumbers[i], -0.19 ) );
-            S += H20MassFractions[i] * H20AtomicNumbers[i] / H2OAtomicWeights[i] * ( AVOGADRO_CONSTANT * 1e3 ) * std::log( SQRT05E / J * e );
+                J = ELECTRON_VOLT * ( 9.76 * H2OAtomicNumbers[i] + 58.8 * std::pow( H2OAtomicNumbers[i], -0.19 ) );
+            S += H2OMassFractions[i] * H2OAtomicNumbers[i] / H2OAtomicWeights[i] * ( AVOGADRO_CONSTANT * 1e3 ) * std::log( SQRT05E / J * e );
         }
         S = C1 * S / e;
 
