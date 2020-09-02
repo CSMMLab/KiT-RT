@@ -38,7 +38,7 @@ CSDSNSolver::CSDSNSolver( Config* settings ) : SNSolver( settings ) {
     }
 
     _sigmaSE = _problem->GetScatteringXSE( _energies, muMatrix );
-    _sigmaTE = _problem->GetTotalXSE( _energies );    // 5e19 *
+    _sigmaTE = M_PI * 1e19 * _problem->GetTotalXSE( _energies );    // 5e19 *
     // compute scaling s.t. scattering kernel integrates to one for chosen quadrature
     for( unsigned n = 0; n < _nEnergies; ++n ) {
         for( unsigned p = 0; p < _nq; ++p ) {
@@ -183,7 +183,7 @@ void CSDSNSolver::Solve() {
 
         for( unsigned j = 0; j < _nCells; ++j ) {
             fluxNew[j] = dot( psiNew[j], _weights );
-            _dose[j] += 0.5 * _dE * ( fluxNew[j] / _s[_nEnergies - n - 1] + fluxOld[j] / _s[_nEnergies - n - 2] ) /
+            _dose[j] += 0.5 * _dE * ( fluxNew[j] * _s[_nEnergies - n - 1] + fluxOld[j] * _s[_nEnergies - n - 2] ) /
                         _density[j];    // update dose with trapezoidal rule
             _solverOutput[j] = fluxNew[j];
         }
