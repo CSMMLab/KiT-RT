@@ -41,6 +41,9 @@ class PNSolver : public Solver
 
     Vector _scatterMatDiag; /*! @brief: diagonal of the scattering matrix (its a diagonal matrix by construction) */
 
+    // Output related members
+    std::vector<std::vector<double>> _outputFields; /*! @brief: Protoype output for multiple output fields. Will replace _solverOutput */
+
     /*! @brief: parameter functions for setting up system matrix
      *  @param: degree l, it must hold: 0 <= l <=_nq
      *  @param : order k, it must hold: -l <=k <= l

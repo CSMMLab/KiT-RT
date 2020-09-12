@@ -132,24 +132,14 @@ void MNSolver::Solve() {
 
     // angular flux at next time step (maybe store angular flux at all time steps, since time becomes energy?)
     VectorVector psiNew = _sol;
-    double dFlux        = 1e10;
-    Vector fluxNew( _nCells, 0.0 );
-    Vector fluxOld( _nCells, 0.0 );
-    VectorVector solTimesArea = _sol;
 
-    double mass1 = 0;
-    for( unsigned i = 0; i < _nCells; ++i ) {
-        _solverOutput[i] = _sol[i][0];
-        mass1 += _sol[i][0] * _areas[i];
-    }
-
-    dFlux   = blaze::l2Norm( fluxNew - fluxOld );
-    fluxOld = fluxNew;
+    double mass = 0;
 
     Save( -1 );
 
-    if( rank == 0 ) log->info( "{:10}   {:10}", "t", "dFlux" );
-    if( rank == 0 ) log->info( "{:03.8f}   {:01.5e} {:01.5e}", -1.0, dFlux, mass1 );
+    if( rank == 0 ) log->info( "{:10}  {:10}", "t", "mass" );
+
+    // if( rank == 0 ) log->info( "{:03.8f}   {:01.5e} {:01.5e}", -1.0, dFlux, mass1 ); Should be deleted
 
     // Loop over energies (pseudo-time of continuous slowing down approach)
     for( unsigned idx_energy = 0; idx_energy < _nEnergies; idx_energy++ ) {
@@ -185,55 +175,42 @@ void MNSolver::Solve() {
             }
         }
 
-        // pseudo time iteration output
-        double mass = 0.0;
-        for( unsigned idx_sys = 0; idx_sys < _nTotalEntries; idx_sys++ ) {
-            for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
-
-                fluxNew[idx_cell] = _sol[idx_cell][0];    // zeroth moment is raditation densitiy we are interested in
-
-                _solverOutput[idx_cell] = _sol[idx_cell][0];
-                mass += _sol[idx_cell][0] * _areas[idx_cell];
-                _outputFields[idx_sys][idx_cell] = _sol[idx_cell][idx_sys];
-            }
-        }
-
-        dFlux   = blaze::l2Norm( fluxNew - fluxOld );
-        fluxOld = fluxNew;
-        if( rank == 0 ) log->info( "{:03.8f}   {:01.5e} {:01.5e}", _energies[idx_energy], dFlux, mass );
-        Save( idx_energy );
-
-        WriteNNTrainingData( idx_energy );
-
         // Update Solution
         _sol = psiNew;
+
+        // --- VTK and CSV Output ---
+        mass = WriteOutputFields();
+        Save( idx_energy );
+        WriteNNTrainingData( idx_energy );
+
+        // --- Screen Output ---
+        if( rank == 0 ) log->info( "{:03.8f}   {:01.5e} {:01.5e}", _energies[idx_energy], mass );
     }
 }
 
-void MNSolver::Save() const {
-    std::vector<std::string> fieldNames{ "flux" };
-    std::vector<double> flux;
-    flux.resize( _nCells );
+double MNSolver::WriteOutputFields() {
+    double mass = 0.0;
 
-    for( unsigned i = 0; i < _nCells; ++i ) {
-        flux[i] = _sol[i][0];
+    for( unsigned idx_sys = 0; idx_sys < _nTotalEntries; idx_sys++ ) {
+        for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
+            mass += _sol[idx_cell][0] * _areas[idx_cell];
+            _outputFields[idx_sys][idx_cell] = _sol[idx_cell][idx_sys];
+        }
     }
-    std::vector<std::vector<double>> scalarField( 1, flux );
-    std::vector<std::vector<std::vector<double>>> results{ scalarField };
-    ExportVTK( _settings->GetOutputFile(), results, fieldNames, _mesh );
+
+    return mass;
 }
+
+void MNSolver::Save() const { Save( _nEnergies - 1 ); }
 
 void MNSolver::Save( int currEnergy ) const {
-    std::vector<std::string> fieldNames = { "flux" };
-
-    // Multifield ooutput
-    // std::vector<std::string> fieldNames( _nTotalEntries, "flux" );
-    // for( unsigned idx_sys = 1; idx_sys < _nTotalEntries; idx_sys++ ) {
-    //    fieldNames[idx_sys] = std::string( "flux_moment_" + std::to_string( idx_sys ) );
-    //}
-
-    std::vector<std::vector<double>> scalarField( 1, _solverOutput );
-    std::vector<std::vector<std::vector<double>>> results{ scalarField };
+    std::vector<std::string> fieldNames( _nTotalEntries, "flux" );
+    for( int idx_l = 0; idx_l <= (int)_nMaxMomentsOrder; idx_l++ ) {
+        for( int idx_k = -idx_l; idx_k <= idx_l; idx_k++ ) {
+            fieldNames[GlobalIndex( idx_l, idx_k )] = std::string( "u_" + std::to_string( idx_l ) + "^" + std::to_string( idx_k ) );
+        }
+    }
+    std::vector<std::vector<std::vector<double>>> results{ _outputFields };
     ExportVTK( _settings->GetOutputFile() + "_" + std::to_string( currEnergy ), results, fieldNames, _mesh );
 }
 

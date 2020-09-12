@@ -96,21 +96,41 @@ void ExportVTK( const std::string fileName,
             grid->SetCells( VTK_QUAD, cellArray );
         }
 
-        for( unsigned i = 0; i < results.size(); i++ ) {
-            auto cellData = vtkDoubleArraySP::New();
-            cellData->SetName( fieldNames[i].c_str() );
-            switch( results[i].size() ) {
-                case 1:
-                    for( unsigned j = 0; j < numCells; j++ ) {
-                        cellData->InsertNextValue( results[i][0][j] );
-                    }
-                    break;
-                default:
-                    auto log = spdlog::get( "event" );
-                    ErrorMessages::Error( "Please implement output for results of size " + std::to_string( results[i].size() ) + "!",
-                                          CURRENT_FUNCTION );
+        for( unsigned idx_group = 0; idx_group < results.size(); idx_group++ ) {
+            // why is there a group dimension for results, but not for names?
+            // Right now, this is ok, since we only have one group... TODO!
+
+            for( unsigned idx_field = 0; idx_field < results[idx_group].size(); idx_field++ ) {    // Loop over all output fields
+
+                auto cellData = vtkDoubleArraySP::New();
+                cellData->SetName( fieldNames[idx_field].c_str() );
+
+                for( unsigned idx_cell = 0; idx_cell < numCells; idx_cell++ ) {
+                    cellData->InsertNextValue( results[idx_group][idx_field][idx_cell] );
+                }
+
+                /*
+                switch( results[idx_group].size() ) {
+                    case 1:
+                        for( unsigned j = 0; j < numCells; j++ ) {
+                            cellData->InsertNextValue( results[idx_group][0][j] );
+                        }
+                        break;
+                    default:
+                        // for( unsigned l = 0; l < results[i].size(); l++ ) {    // Loop over all output fields
+                        //    for( unsigned j = 0; j < numCells; j++ ) {
+                        //        cellData->InsertNextValue( results[i][l][j] );
+                        //    }
+                        // }
+
+                        auto log = spdlog::get( "event" );
+                        ErrorMessages::Error( "Please implement output for results of size " + std::to_string( results[idx_group].size() ) + "!",
+                                              CURRENT_FUNCTION );
+                        break;
+                }*/
+
+                grid->GetCellData()->AddArray( cellData );
             }
-            grid->GetCellData()->AddArray( cellData );
         }
 
         grid->SetPoints( pts );

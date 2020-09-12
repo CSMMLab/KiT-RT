@@ -50,10 +50,15 @@ class MNSolver : public Solver
     OptimizerBase* _optimizer; /*! @brief: Class to solve minimal entropy problem */
 
     // Output related members
-    std::vector<std::vector<double>> _outputFields; /*! @brief: Protoype output */
+    std::vector<std::vector<double>> _outputFields; /*! @brief: Protoype output for multiple output fields. Will replace _solverOutput */
 
     /*! @brief Function that writes NN Training Data in a .csv file */
     void WriteNNTrainingData( unsigned idx_pseudoTime );
+
+    /*! @brief Function that prepares VTK export and csv export of the current solver iteration
+        @returns: Mass of current iteration
+    */
+    double WriteOutputFields();
 
     // Member functions
     /*! @brief : computes the global index of the moment corresponding to basis function (l,k)

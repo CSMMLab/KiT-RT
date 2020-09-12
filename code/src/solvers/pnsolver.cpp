@@ -71,6 +71,9 @@ PNSolver::PNSolver( Config* settings ) : Solver( settings ) {
     // std::cout << "_AzMinus :\n" << _AzMinus << "\n ";
     //
     // std::cout << "_nCells: " << _nCells << "\n";
+
+    // Solver output
+    _outputFields = std::vector( _nTotalEntries, std::vector( _nCells, 0.0 ) );    // WILL REPLACE _solverOutput
 }
 
 void PNSolver::Solve() {
@@ -149,20 +152,26 @@ void PNSolver::Solve() {
                 }
             }
         }
+        // Update Solution
         _sol = psiNew;
 
+        // pseudo time iteration output
         double mass = 0.0;
-        for( unsigned i = 0; i < _nCells; ++i ) {
-            fluxNew[i]       = _sol[i][0];    // zeroth moment is raditation densitiy we are interested in
-            _solverOutput[i] = _sol[i][0];
-            mass += _sol[i][0] * _areas[i];
+        for( unsigned idx_sys = 0; idx_sys < _nTotalEntries; idx_sys++ ) {
+            for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
+
+                fluxNew[idx_cell] = _sol[idx_cell][0];    // zeroth moment is raditation densitiy we are interested in
+
+                _solverOutput[idx_cell] = _sol[idx_cell][0];
+                mass += _sol[idx_cell][0] * _areas[idx_cell];
+                _outputFields[idx_sys][idx_cell] = _sol[idx_cell][idx_sys];
+            }
         }
 
+        // Screen Output
         dFlux   = blaze::l2Norm( fluxNew - fluxOld );
         fluxOld = fluxNew;
-        if( rank == 0 ) {
-            log->info( "{:03.8f}   {:01.5e} {:01.5e}", _energies[idx_energy], dFlux, mass );
-        }
+        if( rank == 0 ) log->info( "{:03.8f}   {:01.5e} {:01.5e}", _energies[idx_energy], dFlux, mass );
         Save( idx_energy );
     }
 }
@@ -367,23 +376,16 @@ double PNSolver::LegendrePoly( double x, int l ) {    // Legacy. TO BE DELETED
     }
 }
 
-void PNSolver::Save() const {
-    std::vector<std::string> fieldNames{ "flux" };
-    std::vector<double> flux;
-    flux.resize( _nCells );
-
-    for( unsigned i = 0; i < _nCells; ++i ) {
-        flux[i] = _sol[i][0];
-    }
-    std::vector<std::vector<double>> scalarField( 1, flux );
-    std::vector<std::vector<std::vector<double>>> results{ scalarField };
-    ExportVTK( _settings->GetOutputFile(), results, fieldNames, _mesh );
-}
+void PNSolver::Save() const { Save( _nEnergies - 1 ); }
 
 void PNSolver::Save( int currEnergy ) const {
-    std::vector<std::string> fieldNames{ "flux" };
-    std::vector<std::vector<double>> scalarField( 1, _solverOutput );
-    std::vector<std::vector<std::vector<double>>> results{ scalarField };
+    std::vector<std::string> fieldNames( _nTotalEntries, "flux" );
+    for( int idx_l = 0; idx_l <= _LMaxDegree; idx_l++ ) {
+        for( int idx_k = -idx_l; idx_k <= idx_l; idx_k++ ) {
+            fieldNames[GlobalIndex( idx_l, idx_k )] = std::string( "u_" + std::to_string( idx_l ) + "^" + std::to_string( idx_k ) );
+        }
+    }
+    std::vector<std::vector<std::vector<double>>> results{ _outputFields };
     ExportVTK( _settings->GetOutputFile() + "_" + std::to_string( currEnergy ), results, fieldNames, _mesh );
 }
 

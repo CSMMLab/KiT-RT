@@ -50,7 +50,7 @@ class Solver
 
     // Solution related members
     VectorVector _sol;                 /*! @brief solution of the PDE, e.g. angular flux or moments */
-    std::vector<double> _solverOutput; /*! @brief PROTOTYPE: Outputfield for solver */
+    std::vector<double> _solverOutput; /*! @brief PROTOTYPE: Outputfield for solver ==> Will be replaced by _outputFields in the near future */
 
     // we will have to add a further dimension for quadPoints and weights once we start with multilevel SN
 
