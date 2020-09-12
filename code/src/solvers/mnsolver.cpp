@@ -184,7 +184,7 @@ void MNSolver::Solve() {
         WriteNNTrainingData( idx_energy );
 
         // --- Screen Output ---
-        if( rank == 0 ) log->info( "{:03.8f}   {:01.5e} {:01.5e}", _energies[idx_energy], mass );
+        if( rank == 0 ) log->info( "{:03.8f}   {:01.5e}", _energies[idx_energy], mass );
     }
 }
 
