@@ -206,8 +206,8 @@ void MNSolver::PrepareOutputFields() {
                 _outputFields[idx_group].resize( 1 );
                 _outputFieldNames[idx_group].resize( 1 );
 
-                _outputFields[0][0].resize( _nCells );
-                _outputFieldNames[0][0] = "radiation flux density";
+                _outputFields[idx_group][0].resize( _nCells );
+                _outputFieldNames[idx_group][0] = "radiation flux density";
                 break;
 
             case MOMENTS:

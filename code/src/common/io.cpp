@@ -1,3 +1,9 @@
+/*!
+ * \file io.cpp
+ * \brief Set of utility io functions for rtns
+ * \author S. Schotthoefer, J. Wolters et al.
+ */
+
 #include "common/io.h"
 #include "common/config.h"
 #include "common/mesh.h"
