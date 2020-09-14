@@ -408,6 +408,22 @@ void Config::SetPostprocessing() {
     }
 
     // Output Postprocessing
+    // check for doublicates and remove them
+    std::map<VOLUME_OUTPUT, int> dublicate_map;
+
+    for( unsigned short idx_volOutput = 0; idx_volOutput < _nVolumeOutput; idx_volOutput++ ) {
+        std::map<VOLUME_OUTPUT, int>::iterator it = dublicate_map.find( _volumeOutput[idx_volOutput] );
+        it->second++;
+    }
+    for( auto& e : dublicate_map ) {
+        std::cout << '{' << e.first << ", " << e.second << '}' << '\n';
+        if( e.second > 0 ) {
+            ErrorMessages::Error( "Each output group for option VOLUME_OUTPUT can only be set once. \n Please check your .cfg file.",
+                                  CURRENT_FUNCTION );
+        }
+    }
+
+    // Set default volume output
     if( _nVolumeOutput == 0 ) {    // If no specific output is chosen,  use "MINIMAL"
         _nVolumeOutput = 1;
         _volumeOutput.push_back( MINIMAL );
