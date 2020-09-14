@@ -37,8 +37,8 @@ using vtkCellDataToPointDataSP    = vtkSmartPointer<vtkCellDataToPointData>;
 // using vtkPointDataToCellDataSP    = vtkSmartPointer<vtkPointDataToCellData>;
 
 void ExportVTK( const std::string fileName,
-                const std::vector<std::vector<std::vector<double>>>& results,
-                const std::vector<std::string> fieldNames,
+                const std::vector<std::vector<std::vector<double>>>& outputFields,
+                const std::vector<std::vector<std::string>>& outputFieldNames,
                 const Mesh* mesh ) {
     int rank;
     MPI_Comm_rank( MPI_COMM_WORLD, &rank );
@@ -96,38 +96,17 @@ void ExportVTK( const std::string fileName,
             grid->SetCells( VTK_QUAD, cellArray );
         }
 
-        for( unsigned idx_group = 0; idx_group < results.size(); idx_group++ ) {
-            // why is there a group dimension for results, but not for names?
-            // Right now, this is ok, since we only have one group... TODO!
+        // Write the output
+        for( unsigned idx_group = 0; idx_group < outputFields.size(); idx_group++ ) {
 
-            for( unsigned idx_field = 0; idx_field < results[idx_group].size(); idx_field++ ) {    // Loop over all output fields
+            for( unsigned idx_field = 0; idx_field < outputFields[idx_group].size(); idx_field++ ) {    // Loop over all output fields
 
                 auto cellData = vtkDoubleArraySP::New();
-                cellData->SetName( fieldNames[idx_field].c_str() );
+                cellData->SetName( outputFieldNames[idx_group][idx_field].c_str() );
 
                 for( unsigned idx_cell = 0; idx_cell < numCells; idx_cell++ ) {
-                    cellData->InsertNextValue( results[idx_group][idx_field][idx_cell] );
+                    cellData->InsertNextValue( outputFields[idx_group][idx_field][idx_cell] );
                 }
-
-                /*
-                switch( results[idx_group].size() ) {
-                    case 1:
-                        for( unsigned j = 0; j < numCells; j++ ) {
-                            cellData->InsertNextValue( results[idx_group][0][j] );
-                        }
-                        break;
-                    default:
-                        // for( unsigned l = 0; l < results[i].size(); l++ ) {    // Loop over all output fields
-                        //    for( unsigned j = 0; j < numCells; j++ ) {
-                        //        cellData->InsertNextValue( results[i][l][j] );
-                        //    }
-                        // }
-
-                        auto log = spdlog::get( "event" );
-                        ErrorMessages::Error( "Please implement output for results of size " + std::to_string( results[idx_group].size() ) + "!",
-                                              CURRENT_FUNCTION );
-                        break;
-                }*/
 
                 grid->GetCellData()->AddArray( cellData );
             }

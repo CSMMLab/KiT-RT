@@ -42,8 +42,22 @@ class PNSolver : public Solver
     Vector _scatterMatDiag; /*! @brief: diagonal of the scattering matrix (its a diagonal matrix by construction) */
 
     // Output related members
-    std::vector<std::vector<double>> _outputFields; /*! @brief: Protoype output for multiple output fields. Will replace _solverOutput */
+    std::vector<std::vector<std::vector<double>>> _outputFields; /*! @brief: Solver Output: dimensions (GroupID,FieldID,CellID). !Protoype output for
+                                                                    multiple output fields. Will replace _solverOutput */
+    std::vector<std::vector<std::string>> _outputFieldNames;     /*! @brief: Names of the outputFields: dimensions (GroupID,FieldID) */
 
+    // ---- Member functions ----
+
+    // IO
+    /*! @brief Initializes the output groups and fields of this solver and names the fields */
+    void PrepareOutputFields();
+
+    /*! @brief Function that prepares VTK export and csv export of the current solver iteration
+        @returns: Mass of current iteration
+    */
+    double WriteOutputFields();
+
+    // Solver
     /*! @brief: parameter functions for setting up system matrix
      *  @param: degree l, it must hold: 0 <= l <=_nq
      *  @param : order k, it must hold: -l <=k <= l

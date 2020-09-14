@@ -78,6 +78,7 @@ TEST_CASE( "linesource_PN", "[validation_tests]" ) {
     auto reference = readVTKFile( "../tests/input/linesource_PN_reference.vtk" );
 
     double eps = 1e-3;
+
     REQUIRE( test.size() == reference.size() );
     for( unsigned i = 0; i < test.size(); ++i ) {
         REQUIRE( std::fabs( test[i] - reference[i] ) < eps );
@@ -98,6 +99,7 @@ TEST_CASE( "linesource_MN", "[validation_tests]" ) {
         auto reference = readVTKFile( "../tests/input/linesource_MN_Quad_reference.vtk" );
 
         double eps = 1e-3;
+
         REQUIRE( test.size() == reference.size() );
         for( unsigned i = 0; i < test.size(); ++i ) {
             REQUIRE( std::fabs( test[i] - reference[i] ) < eps );

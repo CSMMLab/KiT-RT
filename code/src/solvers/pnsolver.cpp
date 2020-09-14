@@ -73,7 +73,7 @@ PNSolver::PNSolver( Config* settings ) : Solver( settings ) {
     // std::cout << "_nCells: " << _nCells << "\n";
 
     // Solver output
-    _outputFields = std::vector( _nTotalEntries, std::vector( _nCells, 0.0 ) );    // WILL REPLACE _solverOutput
+    PrepareOutputFields();
 }
 
 void PNSolver::Solve() {
@@ -83,30 +83,19 @@ void PNSolver::Solve() {
 
     auto log = spdlog::get( "event" );
 
-    // angular flux at next time step (maybe store angular flux at all time steps, since time becomes energy?)
     VectorVector psiNew = _sol;
-    double dFlux        = 1e10;
-    Vector fluxNew( _nCells, 0.0 );
-    Vector fluxOld( _nCells, 0.0 );
 
-    double mass1 = 0;
-    for( unsigned i = 0; i < _nCells; ++i ) {
-        _solverOutput[i] = _sol[i][0];
-        mass1 += _sol[i][0];
-    }
-
-    dFlux   = blaze::l2Norm( fluxNew - fluxOld );
-    fluxOld = fluxNew;
+    double mass = 0;
 
     Save( -1 );    // Save initial condition
 
     unsigned idx_system = 0;
 
-    if( rank == 0 ) log->info( "{:10}   {:10}", "t", "dFlux" );
-    if( rank == 0 ) log->info( "{:03.8f}   {:01.5e} {:01.5e}", -1.0, dFlux, mass1 );
+    if( rank == 0 ) log->info( "{:10}   {:10}", "t", "mass" );
+
+    // if( rank == 0 ) log->info( "{:03.8f}   {:01.5e} {:01.5e}", -1.0, dFlux, mass1 );
 
     // Loop over energies (pseudo-time of continuous slowing down approach)
-
     for( unsigned idx_energy = 0; idx_energy < _nEnergies; idx_energy++ ) {
         // Loop over all spatial cells
         for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
@@ -152,27 +141,16 @@ void PNSolver::Solve() {
                 }
             }
         }
+
         // Update Solution
         _sol = psiNew;
 
-        // pseudo time iteration output
-        double mass = 0.0;
-        for( unsigned idx_sys = 0; idx_sys < _nTotalEntries; idx_sys++ ) {
-            for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
-
-                fluxNew[idx_cell] = _sol[idx_cell][0];    // zeroth moment is raditation densitiy we are interested in
-
-                _solverOutput[idx_cell] = _sol[idx_cell][0];
-                mass += _sol[idx_cell][0] * _areas[idx_cell];
-                _outputFields[idx_sys][idx_cell] = _sol[idx_cell][idx_sys];
-            }
-        }
-
-        // Screen Output
-        dFlux   = blaze::l2Norm( fluxNew - fluxOld );
-        fluxOld = fluxNew;
-        if( rank == 0 ) log->info( "{:03.8f}   {:01.5e} {:01.5e}", _energies[idx_energy], dFlux, mass );
+        // --- VTK and CSV Output ---
+        mass = WriteOutputFields();
         Save( idx_energy );
+
+        // --- Screen Output ---
+        if( rank == 0 ) log->info( "{:03.8f}  {:01.5e}", _energies[idx_energy], mass );
     }
 }
 
@@ -376,17 +354,79 @@ double PNSolver::LegendrePoly( double x, int l ) {    // Legacy. TO BE DELETED
     }
 }
 
-void PNSolver::Save() const { Save( _nEnergies - 1 ); }
+void PNSolver::PrepareOutputFields() {
+    unsigned nGroups = (unsigned)_settings->GetNVolumeOutput();
 
-void PNSolver::Save( int currEnergy ) const {
-    std::vector<std::string> fieldNames( _nTotalEntries, "flux" );
-    for( int idx_l = 0; idx_l <= (int)_LMaxDegree; idx_l++ ) {
-        for( int idx_k = -idx_l; idx_k <= idx_l; idx_k++ ) {
-            fieldNames[GlobalIndex( idx_l, idx_k )] = std::string( "u_" + std::to_string( idx_l ) + "^" + std::to_string( idx_k ) );
+    _outputFieldNames.resize( nGroups );
+    _outputFields.resize( nGroups );
+
+    // Prepare all OutputGroups ==> Specified in option VOLUME_OUTPUT
+    for( unsigned idx_group = 0; idx_group < nGroups; idx_group++ ) {
+        // Prepare all Output Fields per group
+
+        // Different procedure, depending on the Group...
+        switch( _settings->GetVolumeOutput()[idx_group] ) {
+            case MINIMAL:
+                // Currently only one entry ==> rad flux
+                _outputFields[idx_group].resize( 1 );
+                _outputFieldNames[idx_group].resize( 1 );
+
+                _outputFields[0][0].resize( _nCells );
+                _outputFieldNames[0][0] = "radiation flux density";
+                break;
+
+            case MOMENTS:
+                // As many entries as there are moments in the system
+                _outputFields[idx_group].resize( _nTotalEntries );
+                _outputFieldNames[idx_group].resize( _nTotalEntries );
+
+                for( int idx_l = 0; idx_l <= (int)_LMaxDegree; idx_l++ ) {
+                    for( int idx_k = -idx_l; idx_k <= idx_l; idx_k++ ) {
+                        _outputFields[idx_group][GlobalIndex( idx_l, idx_k )].resize( _nCells );
+
+                        _outputFieldNames[idx_group][GlobalIndex( idx_l, idx_k )] =
+                            std::string( "u_" + std::to_string( idx_l ) + "^" + std::to_string( idx_k ) );
+                    }
+                }
+                break;
+            default: ErrorMessages::Error( "Volume Output Group not defined for PN Solver!", CURRENT_FUNCTION ); break;
         }
     }
-    std::vector<std::vector<std::vector<double>>> results{ _outputFields };
-    ExportVTK( _settings->GetOutputFile() + "_" + std::to_string( currEnergy ), results, fieldNames, _mesh );
+}
+
+double PNSolver::WriteOutputFields() {
+    double mass      = 0.0;
+    unsigned nGroups = (unsigned)_settings->GetNVolumeOutput();
+
+    // Compute total "mass" of the system ==> to check conservation properties
+    for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
+        mass += _sol[idx_cell][0] * _areas[idx_cell];    // Should probably go to postprocessing
+    }
+
+    for( unsigned idx_group = 0; idx_group < nGroups; idx_group++ ) {
+        switch( _settings->GetVolumeOutput()[idx_group] ) {
+            case MINIMAL:
+                for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
+                    _outputFields[idx_group][0][idx_cell] = _sol[idx_cell][0];
+                }
+                break;
+            case MOMENTS:
+                for( unsigned idx_sys = 0; idx_sys < _nTotalEntries; idx_sys++ ) {
+                    for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
+                        _outputFields[idx_group][idx_sys][idx_cell] = _sol[idx_cell][idx_sys];
+                    }
+                }
+                break;
+            default: ErrorMessages::Error( "Volume Output Group not defined for PN Solver!", CURRENT_FUNCTION ); break;
+        }
+    }
+    return mass;
+}
+
+void PNSolver::Save() const { ExportVTK( _settings->GetOutputFile(), _outputFields, _outputFieldNames, _mesh ); }
+
+void PNSolver::Save( int currEnergy ) const {
+    ExportVTK( _settings->GetOutputFile() + "_" + std::to_string( currEnergy ), _outputFields, _outputFieldNames, _mesh );
 }
 
 void PNSolver::CleanFluxMatrices() {

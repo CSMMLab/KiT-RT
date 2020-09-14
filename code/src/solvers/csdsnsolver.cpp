@@ -147,14 +147,16 @@ void CSDSNSolver::Solve() {
 
 void CSDSNSolver::Save() const {
     std::vector<std::string> fieldNames{ "dose" };
+    std::vector<std::vector<std::string>> fieldNamesWrapper{ fieldNames };
     std::vector<std::vector<double>> scalarField( 1, _dose );
     std::vector<std::vector<std::vector<double>>> results{ scalarField };
-    ExportVTK( _settings->GetOutputFile(), results, fieldNames, _mesh );
+    ExportVTK( _settings->GetOutputFile(), results, fieldNamesWrapper, _mesh );
 }
 
 void CSDSNSolver::Save( int currEnergy ) const {
-    std::vector<std::string> fieldNames{ "flux" };
+    std::vector<std::string> fieldNames{ "dose" };
+    std::vector<std::vector<std::string>> fieldNamesWrapper{ fieldNames };
     std::vector<std::vector<double>> scalarField( 1, _solverOutput );
     std::vector<std::vector<std::vector<double>>> results{ scalarField };
-    ExportVTK( _settings->GetOutputFile() + "_" + std::to_string( currEnergy ), results, fieldNames, _mesh );
+    ExportVTK( _settings->GetOutputFile() + "_" + std::to_string( currEnergy ), results, fieldNamesWrapper, _mesh );
 }

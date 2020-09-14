@@ -79,11 +79,13 @@ TEST_CASE( "convert image data to grayscale matrix", "[image I/O]" ) {
         }
 
         std::vector<std::string> fieldNames{ "CT Data" };
+        std::vector<std::vector<std::string>> fieldNamesWrapper{ fieldNames };
+
         std::vector<std::vector<double>> scalarField( 1, result );
         std::vector<std::vector<std::vector<double>>> results{ scalarField };
         std::string outputFile = config->GetOutputFile();
         if( !TextProcessingToolbox::StringEndsWith( outputFile, ".vtk" ) ) outputFile.append( ".vtk" );
-        ExportVTK( outputFile, results, fieldNames, mesh );
+        ExportVTK( outputFile, results, fieldNamesWrapper, mesh );
 
         REQUIRE( std::filesystem::exists( outputFile ) );
 

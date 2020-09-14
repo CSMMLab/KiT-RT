@@ -6,6 +6,7 @@
 #include "optimizers/optimizerbase.h"
 #include "quadratures/quadraturebase.h"
 #include "solvers/sphericalharmonics.h"
+#include "toolboxes/errormessages.h"
 #include "toolboxes/textprocessingtoolbox.h"
 
 // externals
@@ -18,8 +19,8 @@
 MNSolver::MNSolver( Config* settings ) : Solver( settings ) {
 
     // Is this good (fast) code using a constructor list?
-    _nMaxMomentsOrder = settings->GetMaxMomentDegree();
-    _nTotalEntries    = GlobalIndex( _nMaxMomentsOrder, int( _nMaxMomentsOrder ) ) + 1;
+    _LMaxDegree    = settings->GetMaxMomentDegree();
+    _nTotalEntries = GlobalIndex( _LMaxDegree, int( _LMaxDegree ) ) + 1;
 
     // build quadrature object and store quadrature points and weights
     _quadPoints       = _quadrature->GetPoints();
@@ -52,13 +53,13 @@ MNSolver::MNSolver( Config* settings ) : Solver( settings ) {
     _alpha = VectorVector( _nCells, Vector( _nTotalEntries, 0.0 ) );
 
     // Initialize and Pre-Compute Moments at quadrature points
-    _basis = new SphericalHarmonics( _nMaxMomentsOrder );
+    _basis = new SphericalHarmonics( _LMaxDegree );
 
     _moments = VectorVector( _nq, Vector( _nTotalEntries, 0.0 ) );
     ComputeMoments();
 
     // Solver output
-    _outputFields = std::vector( _nTotalEntries, std::vector( _nCells, 0.0 ) );
+    PrepareOutputFields();
 }
 
 MNSolver::~MNSolver() {
@@ -188,30 +189,79 @@ void MNSolver::Solve() {
     }
 }
 
-double MNSolver::WriteOutputFields() {
-    double mass = 0.0;
+void MNSolver::PrepareOutputFields() {
+    unsigned nGroups = (unsigned)_settings->GetNVolumeOutput();
 
-    for( unsigned idx_sys = 0; idx_sys < _nTotalEntries; idx_sys++ ) {
-        for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
-            mass += _sol[idx_cell][0] * _areas[idx_cell];
-            _outputFields[idx_sys][idx_cell] = _sol[idx_cell][idx_sys];
+    _outputFieldNames.resize( nGroups );
+    _outputFields.resize( nGroups );
+
+    // Prepare all OutputGroups ==> Specified in option VOLUME_OUTPUT
+    for( unsigned idx_group = 0; idx_group < nGroups; idx_group++ ) {
+        // Prepare all Output Fields per group
+
+        // Different procedure, depending on the Group...
+        switch( _settings->GetVolumeOutput()[idx_group] ) {
+            case MINIMAL:
+                // Currently only one entry ==> rad flux
+                _outputFields[idx_group].resize( 1 );
+                _outputFieldNames[idx_group].resize( 1 );
+
+                _outputFields[0][0].resize( _nCells );
+                _outputFieldNames[0][0] = "radiation flux density";
+                break;
+
+            case MOMENTS:
+                // As many entries as there are moments in the system
+                _outputFields[idx_group].resize( _nTotalEntries );
+                _outputFieldNames[idx_group].resize( _nTotalEntries );
+
+                for( int idx_l = 0; idx_l <= (int)_LMaxDegree; idx_l++ ) {
+                    for( int idx_k = -idx_l; idx_k <= idx_l; idx_k++ ) {
+                        _outputFields[idx_group][GlobalIndex( idx_l, idx_k )].resize( _nCells );
+
+                        _outputFieldNames[idx_group][GlobalIndex( idx_l, idx_k )] =
+                            std::string( "u_" + std::to_string( idx_l ) + "^" + std::to_string( idx_k ) );
+                    }
+                }
+                break;
+            default: ErrorMessages::Error( "Volume Output Group not defined for MN Solver!", CURRENT_FUNCTION ); break;
         }
     }
+}
 
+double MNSolver::WriteOutputFields() {
+    double mass      = 0.0;
+    unsigned nGroups = (unsigned)_settings->GetNVolumeOutput();
+
+    // Compute total "mass" of the system ==> to check conservation properties
+    for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
+        mass += _sol[idx_cell][0] * _areas[idx_cell];    // Should probably go to postprocessing
+    }
+
+    for( unsigned idx_group = 0; idx_group < nGroups; idx_group++ ) {
+        switch( _settings->GetVolumeOutput()[idx_group] ) {
+            case MINIMAL:
+                for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
+                    _outputFields[idx_group][0][idx_cell] = _sol[idx_cell][0];
+                }
+                break;
+            case MOMENTS:
+                for( unsigned idx_sys = 0; idx_sys < _nTotalEntries; idx_sys++ ) {
+                    for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
+                        _outputFields[idx_group][idx_sys][idx_cell] = _sol[idx_cell][idx_sys];
+                    }
+                }
+                break;
+            default: ErrorMessages::Error( "Volume Output Group not defined for MN Solver!", CURRENT_FUNCTION ); break;
+        }
+    }
     return mass;
 }
 
-void MNSolver::Save() const { Save( _nEnergies - 1 ); }
+void MNSolver::Save() const { ExportVTK( _settings->GetOutputFile(), _outputFields, _outputFieldNames, _mesh ); }
 
 void MNSolver::Save( int currEnergy ) const {
-    std::vector<std::string> fieldNames( _nTotalEntries, "flux" );
-    for( int idx_l = 0; idx_l <= (int)_nMaxMomentsOrder; idx_l++ ) {
-        for( int idx_k = -idx_l; idx_k <= idx_l; idx_k++ ) {
-            fieldNames[GlobalIndex( idx_l, idx_k )] = std::string( "u_" + std::to_string( idx_l ) + "^" + std::to_string( idx_k ) );
-        }
-    }
-    std::vector<std::vector<std::vector<double>>> results{ _outputFields };
-    ExportVTK( _settings->GetOutputFile() + "_" + std::to_string( currEnergy ), results, fieldNames, _mesh );
+    ExportVTK( _settings->GetOutputFile() + "_" + std::to_string( currEnergy ), _outputFields, _outputFieldNames, _mesh );
 }
 
 void MNSolver::WriteNNTrainingData( unsigned idx_pseudoTime ) {

@@ -80,6 +80,8 @@ Solver* Solver::Create( Config* settings ) {
 
 void Solver::Save() const {
     std::vector<std::string> fieldNames{ "flux" };
+    std::vector<std::vector<std::string>> fieldNamesWrapper{ fieldNames };
+
     std::vector<double> flux;
     flux.resize( _nCells );
 
@@ -88,5 +90,5 @@ void Solver::Save() const {
     }
     std::vector<std::vector<double>> scalarField( 1, flux );
     std::vector<std::vector<std::vector<double>>> results{ scalarField };
-    ExportVTK( _settings->GetOutputFile() + "_" + std::to_string( _nEnergies ), results, fieldNames, _mesh );
+    ExportVTK( _settings->GetOutputFile() + "_" + std::to_string( _nEnergies ), results, fieldNamesWrapper, _mesh );
 }
