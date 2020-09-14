@@ -380,7 +380,7 @@ void PNSolver::Save() const { Save( _nEnergies - 1 ); }
 
 void PNSolver::Save( int currEnergy ) const {
     std::vector<std::string> fieldNames( _nTotalEntries, "flux" );
-    for( int idx_l = 0; idx_l <= _LMaxDegree; idx_l++ ) {
+    for( int idx_l = 0; idx_l <= (int)_LMaxDegree; idx_l++ ) {
         for( int idx_k = -idx_l; idx_k <= idx_l; idx_k++ ) {
             fieldNames[GlobalIndex( idx_l, idx_k )] = std::string( "u_" + std::to_string( idx_l ) + "^" + std::to_string( idx_k ) );
         }
