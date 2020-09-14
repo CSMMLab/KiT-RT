@@ -10,8 +10,6 @@
 
 // --- Members of OptionBase ----
 
-OptionBase::~OptionBase() {}
-
 std::vector<std::string> OptionBase::GetValue() { return _value; }
 
 std::string OptionBase::SetValue( std::vector<std::string> value ) {

@@ -70,8 +70,14 @@ enum ENTROPY_NAME { QUADRATIC, MAXWELL_BOLZMANN, BOSE_EINSTEIN, FERMI_DIRAC };
 inline std::map<std::string, ENTROPY_NAME> Entropy_Map{
     { "QUADRATIC", QUADRATIC }, { "MAXWELL_BOLZMANN", MAXWELL_BOLZMANN }, { "BOSE_EINSTEIN", BOSE_EINSTEIN }, { "FERMI_DIRAC", FERMI_DIRAC } };
 
-// Otpimizer
+// Optimizer
 enum OPTIMIZER_NAME { NEWTON, ML };
 
 inline std::map<std::string, OPTIMIZER_NAME> Optimizer_Map{ { "NEWTON", NEWTON }, { "ML", ML } };
+
+// Volume output
+enum VOLUME_OUTPUT { MINIMAL, MOMENTS };
+
+inline std::map<std::string, VOLUME_OUTPUT> VolOutput_Map{ { "MINIMAL", MINIMAL }, { "MOMENTS", MOMENTS } };
+
 #endif    // GLOBAL_CONSTANTS_H

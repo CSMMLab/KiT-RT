@@ -158,6 +158,18 @@ void Config::AddStringListOption( const string name, unsigned short& num_marker,
     _optionMap.insert( pair<string, OptionBase*>( name, val ) );
 }
 
+template <class Tenum>
+void Config::AddEnumListOption( const std::string name,
+                                unsigned short& input_size,
+                                std::vector<Tenum>& option_field,
+                                const map<std::string, Tenum>& enum_map ) {
+    input_size = 0;
+    assert( _optionMap.find( name ) == _optionMap.end() );
+    _allOptions.insert( pair<string, bool>( name, true ) );
+    OptionBase* val = new OptionEnumList<Tenum>( name, enum_map, option_field, input_size );
+    _optionMap.insert( pair<string, OptionBase*>( name, val ) );
+}
+
 // ---- Getter Functions ----
 
 BOUNDARY_TYPE Config::GetBoundaryType( std::string name ) const {
@@ -258,6 +270,9 @@ void Config::SetConfigOptions() {
     AddStringListOption( "BC_NEUMANN", _nMarkerNeumann, _MarkerNeumann );
 
     AddEnumOption( "KERNEL", _kernelName, Kernel_Map, KERNEL_Isotropic );
+
+    // Output related options
+    AddEnumListOption( "VOLUME_OUTPUT", _nVolumeOutput, _volumeOutput, VolOutput_Map );
 }
 
 void Config::SetConfigParsing( string case_filename ) {
@@ -390,6 +405,12 @@ void Config::SetPostprocessing() {
             ErrorMessages::Error( "Path to mesh file <" + this->GetOxygenFile() + "> does not exist. Please check your config file.",
                                   CURRENT_FUNCTION );
         }
+    }
+
+    // Output Postprocessing
+    if( _nVolumeOutput == 0 ) {    // If no specific output is chosen,  use "MINIMAL"
+        _nVolumeOutput = 1;
+        _volumeOutput.push_back( MINIMAL );
     }
 }
 
