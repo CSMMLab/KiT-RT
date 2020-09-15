@@ -407,8 +407,9 @@ void Config::SetPostprocessing() {
         }
     }
 
-    // Output Postprocessing
-    // check for doublicates and remove them
+    // --- Output Postprocessing ---
+
+    // Check for doublicates in VOLUME OUTPUT
     std::map<VOLUME_OUTPUT, int> dublicate_map;
 
     for( unsigned short idx_volOutput = 0; idx_volOutput < _nVolumeOutput; idx_volOutput++ ) {
@@ -424,6 +425,34 @@ void Config::SetPostprocessing() {
         if( e.second > 0 ) {
             ErrorMessages::Error( "Each output group for option VOLUME_OUTPUT can only be set once.\nPlease check your .cfg file.",
                                   CURRENT_FUNCTION );
+        }
+    }
+
+    // Check, if the choice of volume output is compatible to the solver
+    for( unsigned short idx_volOutput = 0; idx_volOutput < _nVolumeOutput; idx_volOutput++ ) {
+        switch( _solverName ) {
+            case SN_SOLVER:
+                if( _volumeOutput[idx_volOutput] != MINIMAL ) {
+                    ErrorMessages::Error( "SN_SOLVER only supports volume output MINIMAL.\nPlease check your .cfg file.", CURRENT_FUNCTION );
+                }
+                break;
+            case MN_SOLVER:
+                if( _volumeOutput[idx_volOutput] != MINIMAL || _volumeOutput[idx_volOutput] != MOMENTS ) {
+                    ErrorMessages::Error( "MN_SOLVER only supports volume output MINIMAL and MOMENTS.\nPlease check your .cfg file.",
+                                          CURRENT_FUNCTION );
+                }
+                break;
+            case PN_SOLVER:
+                if( _volumeOutput[idx_volOutput] != MINIMAL || _volumeOutput[idx_volOutput] != MOMENTS ) {
+                    ErrorMessages::Error( "PN_SOLVER only supports volume output MINIMAL and MOMENTS.\nPlease check your .cfg file.",
+                                          CURRENT_FUNCTION );
+                }
+                break;
+            case CSD_SN_SOLVER:
+                if( _volumeOutput[idx_volOutput] != MINIMAL ) {
+                    ErrorMessages::Error( "CSD_SN_SOLVER only supports volume output MINIMAL.\nPlease check your .cfg file.", CURRENT_FUNCTION );
+                }
+                break;
         }
     }
 
