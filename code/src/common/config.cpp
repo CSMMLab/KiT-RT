@@ -413,12 +413,16 @@ void Config::SetPostprocessing() {
 
     for( unsigned short idx_volOutput = 0; idx_volOutput < _nVolumeOutput; idx_volOutput++ ) {
         std::map<VOLUME_OUTPUT, int>::iterator it = dublicate_map.find( _volumeOutput[idx_volOutput] );
-        it->second++;
+        if( it == dublicate_map.end() ) {
+            dublicate_map.insert( std::pair<VOLUME_OUTPUT, int>( _volumeOutput[idx_volOutput], 0 ) );
+        }
+        else {
+            it->second++;
+        }
     }
     for( auto& e : dublicate_map ) {
-        std::cout << '{' << e.first << ", " << e.second << '}' << '\n';
         if( e.second > 0 ) {
-            ErrorMessages::Error( "Each output group for option VOLUME_OUTPUT can only be set once. \n Please check your .cfg file.",
+            ErrorMessages::Error( "Each output group for option VOLUME_OUTPUT can only be set once.\nPlease check your .cfg file.",
                                   CURRENT_FUNCTION );
         }
     }
