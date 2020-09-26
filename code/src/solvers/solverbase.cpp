@@ -10,6 +10,7 @@
 #include "solvers/mnsolver.h"
 #include "solvers/pnsolver.h"
 #include "solvers/snsolver.h"
+#include "solvers/csdsnsolvernotrafo.h"
 
 Solver::Solver( Config* settings ) : _settings( settings ) {
     // @TODO save parameters from settings class
@@ -72,6 +73,7 @@ Solver* Solver::Create( Config* settings ) {
     switch( settings->GetSolverName() ) {
         case SN_SOLVER: return new SNSolver( settings );
         case CSD_SN_SOLVER: return new CSDSNSolver( settings );
+        case CSD_SN_NOTRAFO_SOLVER: return new CSDSNSolverNoTrafo( settings );
         case PN_SOLVER: return new PNSolver( settings );
         case MN_SOLVER: return new MNSolver( settings );
         default: return new SNSolver( settings );
