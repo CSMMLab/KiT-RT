@@ -7,7 +7,6 @@
 
 #include "common/globalconstants.h"
 #include "common/typedef.h"
-#include "cubic2dspline.h"
 #include "interpolation.h"
 #include "toolboxes/errormessages.h"
 

@@ -25,6 +25,13 @@ CSDSNSolver::CSDSNSolver( Config* settings ) : SNSolver( settings ) {
     for( unsigned n = 0; n < _nEnergies; ++n ) {
         _energies[n] = energyMin + ( energyMax - energyMin ) / ( _nEnergies - 1 ) * n;
     }
+
+    std::vector<double> buffer;
+    for( auto q : _quadPoints )
+        if( q[0] > 0.0 ) buffer.push_back( q[0] );
+    std::sort( buffer.begin(), buffer.end() );
+    Vector posMu( buffer.size(), buffer.data() );
+
     // write mu grid
     Matrix muMatrix( _settings->GetNQuadPoints(), _settings->GetNQuadPoints() );
     for( unsigned l = 0; l < _settings->GetNQuadPoints(); ++l ) {
@@ -37,9 +44,30 @@ CSDSNSolver::CSDSNSolver( Config* settings ) : SNSolver( settings ) {
         }
     }
 
-    _sigmaSE = _problem->GetScatteringXSE( _energies, muMatrix );
-    _sigmaTE = M_PI * 1e19 * _problem->GetTotalXSE( _energies );    // 5e19 *
+    _sigmaSE = std::vector<Matrix>( _energies.size(), Matrix( muMatrix.rows(), muMatrix.columns(), 0.0 ) );
+    Vector angleVec( muMatrix.columns() * muMatrix.rows() );
+    // store Matrix with mu values in vector format to call GetScatteringXS
+    for( unsigned i = 0; i < muMatrix.rows(); ++i ) {
+        for( unsigned j = 0; j < muMatrix.columns(); ++j ) {
+            angleVec[i * muMatrix.columns() + j] = std::fabs( muMatrix( i, j ) );    // icru xs go from 0 to 1 due to symmetry
+        }
+    }
+
+    ICRU database( angleVec, _energies );
+    Matrix total;
+    database.GetAngularScatteringXS( total, _sigmaTE );
+
+    // rearrange output to matrix format
+    for( unsigned n = 0; n < _energies.size(); ++n ) {
+        for( unsigned i = 0; i < muMatrix.rows(); ++i ) {
+            for( unsigned j = 0; j < muMatrix.columns(); ++j ) {
+                _sigmaSE[n]( i, j ) = total( i * muMatrix.columns() + j, n );
+            }
+        }
+    }
+
     // compute scaling s.t. scattering kernel integrates to one for chosen quadrature
+    /*
     for( unsigned n = 0; n < _nEnergies; ++n ) {
         for( unsigned p = 0; p < _nq; ++p ) {
             double cp = 0.0;
@@ -51,6 +79,7 @@ CSDSNSolver::CSDSNSolver( Config* settings ) : SNSolver( settings ) {
             }
         }
     }
+    */
 
     _s = _problem->GetStoppingPower( _energies );
     _Q = _problem->GetExternalSource( _energies );
@@ -62,6 +91,7 @@ CSDSNSolver::CSDSNSolver( Config* settings ) : SNSolver( settings ) {
         }
         _scatteringKernel( p, p ) = _weights[p];
     }
+
     /*
         // test 1
         for( unsigned n = 0; n < _nEnergies; ++n ) {
@@ -191,7 +221,6 @@ void CSDSNSolver::Solve() {
         // Save( n );
         dFlux   = blaze::l2Norm( fluxNew - fluxOld );
         fluxOld = fluxNew;
-        std::cout << _energies[n] << " " << dFlux << std::endl;
         if( rank == 0 ) log->info( "{:03.8f}  {:01.5e}  {:01.5e}", _energies[n], _dE / densityMin, dFlux );
         if( std::isinf( dFlux ) || std::isnan( dFlux ) ) break;
     }

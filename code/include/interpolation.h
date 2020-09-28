@@ -6,29 +6,29 @@
 class Interpolation
 {
   public:
-    enum BOUNDARY { first_deriv, second_deriv };
     enum TYPE { linear, loglinear, cubic };
 
   private:
+    unsigned _dim;
     Vector _x, _y;
-    Vector _a, _b, _c;
-    double _b0, _c0;
-    BOUNDARY _left, _right;
+    Matrix _data;
     TYPE _type;
-    double _left_value, _right_value;
-    bool _force_linear_extrapolation;
 
     Interpolation() = delete;
+
+    void Setup();
+    unsigned IndexOfClosestValue( double value, const Vector& v ) const;
+    inline double EvalCubic1DSpline( double param[4], double x ) const;
 
   public:
     Interpolation( const std::vector<double>& x, const std::vector<double>& y, TYPE type = linear );
     Interpolation( const Vector& x, const Vector& y, TYPE type = linear );
+    Interpolation( const Vector& x, const Vector& y, const Matrix& data, TYPE type = cubic );
 
-    void set_boundary( BOUNDARY left, double left_value, BOUNDARY right, double right_value, bool force_linear_extrapolation = false );
-    void set_points( const std::vector<double>& x, const std::vector<double>& y, TYPE type );
-    void set_points( const Vector& x, const Vector& y, TYPE type );
     double operator()( double x ) const;
     Vector operator()( Vector v ) const;
+    std::vector<double> operator()( std::vector<double> v ) const;
+    double operator()( double x, double y ) const;
 };
 
 #endif

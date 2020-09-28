@@ -2,136 +2,108 @@
 #include "toolboxes/errormessages.h"
 #include <blaze/math/lapack/posv.h>
 
-Interpolation::Interpolation( const std::vector<double>& x, const std::vector<double>& y, TYPE type )
-    : _left( first_deriv ), _right( first_deriv ), _type( type ), _left_value( 0.0 ), _right_value( 0.0 ), _force_linear_extrapolation( false ) {
-    this->set_points( x, y, type );
+Interpolation::Interpolation( const std::vector<double>& x, const std::vector<double>& y, TYPE type ) : _dim( 1u ), _type( type ) {
+    _x = Vector( x.size(), x.data() );
+    _y = Vector( y.size(), y.data() );
+    Setup();
 }
 
-Interpolation::Interpolation( const Vector& x, const Vector& y, TYPE type )
-    : _left( first_deriv ), _right( first_deriv ), _type( type ), _left_value( 0.0 ), _right_value( 0.0 ), _force_linear_extrapolation( false ) {
-    this->set_points( x, y, type );
+Interpolation::Interpolation( const Vector& x, const Vector& y, TYPE type ) : _dim( 1u ), _x( x ), _y( y ), _type( type ) { Setup(); }
+
+Interpolation::Interpolation( const Vector& x, const Vector& y, const Matrix& data, TYPE type )
+    : _dim( 2u ), _x( x ), _y( y ), _data( data ), _type( type ) {
+    Setup();
 }
 
-void Interpolation::set_boundary( BOUNDARY left, double left_value, BOUNDARY right, double right_value, bool force_linear_extrapolation ) {
-    _left                       = left;
-    _right                      = right;
-    _left_value                 = left_value;
-    _right_value                = right_value;
-    _force_linear_extrapolation = force_linear_extrapolation;
-}
+void Interpolation::Setup() {
+    if( _dim == 1u ) {
+        if( _x.size() != _y.size() ) ErrorMessages::Error( "Vectors are of unequal length!", CURRENT_FUNCTION );
+        if( _type == loglinear ) _y = blaze::log( _y );
 
-void Interpolation::set_points( const std::vector<double>& x, const std::vector<double>& y, TYPE type ) {
-    Vector xn( x.size(), 0.0 );
-    Vector yn( y.size(), 0.0 );
-    for( unsigned i = 0; i < x.size(); ++i ) {
-        xn[i] = x[i];
-        yn[i] = y[i];
-    }
-    this->set_points( xn, yn, type );
-}
-
-void Interpolation::set_points( const Vector& x, const Vector& y, TYPE type ) {
-    if( x.size() != y.size() ) ErrorMessages::Error( "Vectors are of unequal length!", CURRENT_FUNCTION );
-    _x = x;
-    if( type == loglinear )
-        _y = log( y );
-    else
-        _y = y;
-    int n = x.size();
-    for( int i = 0; i < n - 1; i++ ) {
-        if( !( _x[i] < _x[i + 1] ) ) ErrorMessages::Error( "x is not sorted ascendingly!", CURRENT_FUNCTION );
-    }
-
-    if( type == cubic ) {
-        Matrix A( n, n, 0.0 );    // TODO: should be a sparse matrix!
-        Vector rhs( n, 0.0 );
-        for( int i = 1; i < n - 1; i++ ) {
-            A( i, i - 1 ) = 1.0 / 3.0 * ( x[i] - x[i - 1] );
-            A( i, i )     = 2.0 / 3.0 * ( x[i + 1] - x[i - 1] );
-            A( i, i + 1 ) = 1.0 / 3.0 * ( x[i + 1] - x[i] );
-            rhs[i]        = ( y[i + 1] - y[i] ) / ( x[i + 1] - x[i] ) - ( y[i] - y[i - 1] ) / ( x[i] - x[i - 1] );
-        }
-        if( _left == Interpolation::second_deriv ) {
-            A( 0, 0 ) = 2.0;
-            A( 0, 1 ) = 0.0;
-            rhs[0]    = _left_value;
-        }
-        else if( _left == Interpolation::first_deriv ) {
-            A( 0, 0 ) = 2.0 * ( x[1] - x[0] );
-            A( 0, 1 ) = 1.0 * ( x[1] - x[0] );
-            rhs[0]    = 3.0 * ( ( y[1] - y[0] ) / ( x[1] - x[0] ) - _left_value );
-        }
-        else {
-            ErrorMessages::Error( "Invalid bd_type", CURRENT_FUNCTION );
-        }
-        if( _right == Interpolation::second_deriv ) {
-            A( n - 1, n - 1 ) = 2.0;
-            A( n - 1, n - 2 ) = 0.0;
-            rhs[n - 1]        = _right_value;
-        }
-        else if( _right == Interpolation::first_deriv ) {
-            A( n - 1, n - 1 ) = 2.0 * ( x[n - 1] - x[n - 2] );
-            A( n - 1, n - 2 ) = 1.0 * ( x[n - 1] - x[n - 2] );
-            rhs[n - 1]        = 3.0 * ( _right_value - ( y[n - 1] - y[n - 2] ) / ( x[n - 1] - x[n - 2] ) );
-        }
-        else {
-            ErrorMessages::Error( "Invalid boundary type!", CURRENT_FUNCTION );
-        }
-
-        _b = rhs;
-        blaze::posv( A, _b, 'U' );
-
-        _a.resize( n );
-        _c.resize( n );
-        for( int i = 0; i < n - 1; i++ ) {
-            _a[i] = 1.0 / 3.0 * ( _b[i + 1] - _b[i] ) / ( x[i + 1] - x[i] );
-            _c[i] = ( y[i + 1] - y[i] ) / ( x[i + 1] - x[i] ) - 1.0 / 3.0 * ( 2.0 * _b[i] + _b[i + 1] ) * ( x[i + 1] - x[i] );
+        for( unsigned i = 0; i < _x.size() - 1u; i++ ) {
+            if( !( _x[i] < _x[i + 1] ) ) ErrorMessages::Error( "x is not sorted ascendingly!", CURRENT_FUNCTION );
         }
     }
-    else if( type == linear || type == loglinear ) {
-        _a.resize( n );
-        _b.resize( n );
-        _c.resize( n );
-        for( int i = 0; i < n - 1; i++ ) {
-            _a[i] = 0.0;
-            _b[i] = 0.0;
-            _c[i] = ( _y[i + 1] - _y[i] ) / ( _x[i + 1] - _x[i] );
+    else if( _dim == 2u ) {
+        if( _x.size() != _data.rows() ) ErrorMessages::Error( "x and data are of unequal length!", CURRENT_FUNCTION );
+        if( _y.size() != _data.columns() ) ErrorMessages::Error( "y and data are of unequal length!", CURRENT_FUNCTION );
+        for( unsigned i = 0; i < _x.size() - 1u; i++ ) {
+            if( !( _x[i] < _x[i + 1] ) ) ErrorMessages::Error( "x is not sorted ascendingly!", CURRENT_FUNCTION );
+        }
+        for( unsigned i = 0; i < _y.size() - 1u; i++ ) {
+            if( !( _y[i] < _y[i + 1] ) ) ErrorMessages::Error( "y is not sorted ascendingly!", CURRENT_FUNCTION );
         }
     }
-    else {
-        ErrorMessages::Error( "Invalid interpolation type!", CURRENT_FUNCTION );
-    }
-
-    _b0 = ( _force_linear_extrapolation == false ) ? _b[0] : 0.0;
-    _c0 = _c[0];
-
-    double h  = x[n - 1] - x[n - 2];
-    _a[n - 1] = 0.0;
-    _c[n - 1] = 3.0 * _a[n - 2] * h * h + 2.0 * _b[n - 2] * h + _c[n - 2];
-    if( _force_linear_extrapolation == true ) _b[n - 1] = 0.0;
 }
 
 double Interpolation::operator()( double x ) const {
-    size_t n = _x.size();
-    Vector::ConstIterator it;
-    it      = std::lower_bound( _x.begin(), _x.end(), x );
-    int idx = std::max( int( it - _x.begin() ) - 1, 0 );
+    if( _dim != 1u ) ErrorMessages::Error( "Invalid data dimension for operator(x)!", CURRENT_FUNCTION );
 
-    double h = x - _x[idx];
-    double interpol;
-    if( x < _x[0] ) {
-        interpol = ( _b0 * h + _c0 ) * h + _y[0];
+    if( x < _x[0] || x > _x[_x.size() - 1u] ) {
+        ErrorMessages::Error( "Extrapolation is not supported!", CURRENT_FUNCTION );
     }
-    else if( x > _x[n - 1] ) {
-        interpol = ( _b[n - 1] * h + _c[n - 1] ) * h + _y[n - 1];
+
+    Vector::ConstIterator it = std::lower_bound( _x.begin(), _x.end(), x );
+
+    unsigned idx = static_cast<unsigned>( std::max( int( it - _x.begin() ) - 1, 0 ) );
+
+    if( _type == linear || _type == loglinear ) {
+        double res = _y[idx] + ( _y[idx + 1] - _y[idx] ) / ( _x[idx + 1] - _x[idx] ) * ( x - _x[idx] );
+
+        if( _type == loglinear )
+            return std::exp( res );
+        else
+            return res;
+    }
+    else if( _type == cubic ) {
+        double param[4] = { _y[idx - 1], _y[idx], _y[idx + 1], _y[idx + 2] };
+        double t        = ( x - _x[idx] ) / ( _x[idx + 1] - _x[idx] );
+        return EvalCubic1DSpline( param, t );
     }
     else {
-        interpol = ( ( _a[idx] * h + _b[idx] ) * h + _c[idx] ) * h + _y[idx];
+        ErrorMessages::Error( "Invalid type!", CURRENT_FUNCTION );
+        return -1.0;
     }
-    if( _type == loglinear )
-        return std::exp( interpol );
-    else
-        return interpol;
+}
+
+double Interpolation::operator()( double x, double y ) const {
+    if( _dim != 2u ) ErrorMessages::Error( "Invalid data dimension for operator(x,y)!", CURRENT_FUNCTION );
+    if( _type == cubic ) {
+
+        unsigned xId = IndexOfClosestValue( x, _x );
+        unsigned yId = IndexOfClosestValue( y, _y );
+
+        // store all 16 interpolation points needed
+        double points[4][4];
+        for( int i = -1; i < 3; ++i ) {
+            unsigned idx_y;
+            idx_y = yId + i < 0 ? 0 : yId + i;
+            idx_y = yId + i > _data.rows() - 1 ? _data.rows() - 1 : yId + i;
+            for( int j = -1; j < 3; ++j ) {
+                unsigned idx_x;
+                idx_x = xId + j < 0 ? 0 : xId + j;
+                idx_x = xId + j > _data.columns() - 1 ? _data.columns() - 1 : xId + j;
+
+                points[i + 1][j + 1] = _data( idx_x, idx_y );
+            }
+        }
+
+        // rescale data to [0,1]
+        double t = ( x - _x[xId] ) / ( _x[xId + 1] - _x[xId] );
+        double u = ( y - _y[yId] ) / ( _y[yId + 1] - _y[yId] );
+
+        // first interpolate in x-direction and store the results on which the final interpolation in y will be done
+        double buffer[4];
+        buffer[0] = EvalCubic1DSpline( points[0], t );
+        buffer[1] = EvalCubic1DSpline( points[1], t );
+        buffer[2] = EvalCubic1DSpline( points[2], t );
+        buffer[3] = EvalCubic1DSpline( points[3], t );
+        return EvalCubic1DSpline( buffer, u );
+    }
+    else {
+        ErrorMessages::Error( "Unsupported interpolation type!", CURRENT_FUNCTION );
+        return -1.0;
+    }
 }
 
 Vector Interpolation::operator()( Vector v ) const {
@@ -140,4 +112,24 @@ Vector Interpolation::operator()( Vector v ) const {
         res[i] = this->operator()( v[i] );
     }
     return res;
+}
+
+std::vector<double> Interpolation::operator()( std::vector<double> v ) const {
+    std::vector<double> res( v.size() );
+    for( unsigned i = 0; i < v.size(); ++i ) {
+        res[i] = this->operator()( v[i] );
+    }
+    return res;
+}
+
+inline double Interpolation::EvalCubic1DSpline( double param[4], double x ) const {
+    return ( param[1] + 0.5 * x *
+                            ( param[2] - param[0] +
+                              x * ( 2.0 * param[0] - 5.0 * param[1] + 4.0 * param[2] - param[3] +
+                                    x * ( 3.0 * ( param[1] - param[2] ) + param[3] - param[0] ) ) ) );
+}
+
+unsigned Interpolation::IndexOfClosestValue( double value, const Vector& v ) const {
+    auto i = std::min_element( begin( v ), end( v ), [=]( double x, double y ) { return abs( x - value ) < abs( y - value ); } );
+    return std::distance( begin( v ), i );
 }

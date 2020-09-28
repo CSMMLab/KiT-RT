@@ -37,8 +37,29 @@ CSDSNSolverNoTrafo::CSDSNSolverNoTrafo( Config* settings ) : SNSolver( settings 
         }
     }
 
-    _sigmaSE = _problem->GetScatteringXSE( _energies, muMatrix );
-    _sigmaTE = _problem->GetTotalXSE( _energies );    // M_PI * 1e19 *
+    _sigmaSE = std::vector<Matrix>( _energies.size(), Matrix( muMatrix.rows(), muMatrix.columns(), 0.0 ) );
+    Vector angleVec( muMatrix.columns() * muMatrix.rows() );
+    // store Matrix with mu values in vector format to call GetScatteringXS
+    for( unsigned i = 0; i < muMatrix.rows(); ++i ) {
+        for( unsigned j = 0; j < muMatrix.columns(); ++j ) {
+            angleVec[i * muMatrix.columns() + j] = std::fabs( muMatrix( i, j ) );    // icru xs go from 0 to 1 due to symmetry
+        }
+    }
+
+    ICRU database( angleVec, _energies );
+    Matrix total;
+    database.GetAngularScatteringXS( total, _sigmaTE );
+
+    // rearrange output to matrix format
+    for( unsigned n = 0; n < _energies.size(); ++n ) {
+        for( unsigned i = 0; i < muMatrix.rows(); ++i ) {
+            for( unsigned j = 0; j < muMatrix.columns(); ++j ) {
+                _sigmaSE[n]( i, j ) = total( i * muMatrix.columns() + j, n );
+            }
+        }
+    }
+
+    /*
     // compute scaling s.t. scattering kernel integrates to one for chosen quadrature
     for( unsigned n = 0; n < _nEnergies; ++n ) {
         for( unsigned p = 0; p < _nq; ++p ) {
@@ -51,6 +72,7 @@ CSDSNSolverNoTrafo::CSDSNSolverNoTrafo( Config* settings ) : SNSolver( settings 
             }
         }
     }
+    */
 
     _s = _problem->GetStoppingPower( _energies );
     _Q = _problem->GetExternalSource( _energies );
@@ -84,12 +106,12 @@ void CSDSNSolverNoTrafo::Solve() {
     Vector sSave = _s;
     for( unsigned n = 0; n < _nEnergies; ++n ) {
         _energies[n] = _energies[_nEnergies - 1] - _energies[n];
-        _s[n] = sSave[_nEnergies-1-n];
+        _s[n]        = sSave[_nEnergies - 1 - n];
     }
 
     for( unsigned j = 0; j < _nCells; ++j ) {
-        for( unsigned k = 0; k<_nq; ++k){
-            fluxOld[j] += _weights[k]*_sol[j][k]*_s[0];
+        for( unsigned k = 0; k < _nq; ++k ) {
+            fluxOld[j] += _weights[k] * _sol[j][k] * _s[0];
         }
     }
 
@@ -116,17 +138,16 @@ void CSDSNSolverNoTrafo::Solve() {
                     if( _boundaryCells[j] == BOUNDARY_TYPE::NEUMANN && _neighbors[j][idx_neighbor] == _nCells )
                         continue;    // adiabatic wall, add nothing
                     else
-                        psiNew[j][i] += _g->Flux( _quadPoints[i],
-                                                  _sol[j][i],
-                                                  _sol[_neighbors[j][idx_neighbor]][i],
-                                                  _normals[j][idx_neighbor] ) /
-                                        _areas[j]/(_density[j]*_s[n+1]);
+                        psiNew[j][i] += _g->Flux( _quadPoints[i], _sol[j][i], _sol[_neighbors[j][idx_neighbor]][i], _normals[j][idx_neighbor] ) /
+                                        _areas[j] / ( _density[j] * _s[n + 1] );
                 }
                 // time update angular flux with numerical flux and total scattering cross section
-                psiNew[j][i] = _sol[j][i] - _dE * psiNew[j][i] - _dE * _sigmaTE[_nEnergies - n - 1] * _sol[j][i]/(_density[j]*_s[n+1]) + (_s[n]/_s[n+1]-1)*_sol[j][i];
+                psiNew[j][i] = _sol[j][i] - _dE * psiNew[j][i] - _dE * _sigmaTE[_nEnergies - n - 1] * _sol[j][i] / ( _density[j] * _s[n + 1] ) +
+                               ( _s[n] / _s[n + 1] - 1 ) * _sol[j][i];
             }
             // compute scattering effects (_scatteringKernel is simply multiplication with quad weights)
-            psiNew[j] += _dE * ( _sigmaSE[_nEnergies - n - 1] * _scatteringKernel * _sol[j] )/(_density[j]*_s[n+1]);    // multiply scattering matrix with psi
+            psiNew[j] += _dE * ( _sigmaSE[_nEnergies - n - 1] * _scatteringKernel * _sol[j] ) /
+                         ( _density[j] * _s[n + 1] );    // multiply scattering matrix with psi
             // TODO: Check if _sigmaS^T*psi is correct
 
             // TODO: figure out a more elegant way
@@ -150,8 +171,8 @@ void CSDSNSolverNoTrafo::Solve() {
 
         for( unsigned j = 0; j < _nCells; ++j ) {
             fluxNew[j] = 0.0;
-            for( unsigned k = 0; k<_nq; ++k){
-                fluxNew[j] += _weights[k]*_sol[j][k]*_s[n+1];
+            for( unsigned k = 0; k < _nq; ++k ) {
+                fluxNew[j] += _weights[k] * _sol[j][k] * _s[n + 1];
             }
             _dose[j] += 0.5 * _dE * ( fluxNew[j] + fluxOld[j] );    // update dose with trapezoidal rule
             _solverOutput[j] = fluxNew[j];
@@ -160,7 +181,6 @@ void CSDSNSolverNoTrafo::Solve() {
         // Save( n );
         dFlux   = blaze::l2Norm( fluxNew - fluxOld );
         fluxOld = fluxNew;
-        std::cout << _energies[n] << " " << dFlux << std::endl;
         if( rank == 0 ) log->info( "{:03.8f}  {:01.5e}  {:01.5e}", _energies[n], _dE / densityMin, dFlux );
         if( std::isinf( dFlux ) || std::isnan( dFlux ) ) break;
     }

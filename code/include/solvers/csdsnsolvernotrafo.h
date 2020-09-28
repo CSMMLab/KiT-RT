@@ -1,6 +1,7 @@
 #ifndef CSDSNSOLVERNOTRAFO_H
 #define CSDSNSOLVERNOTRAFO_H
 
+#include "icru.h"
 #include "solvers/snsolver.h"
 
 class Physics;
@@ -35,4 +36,4 @@ class CSDSNSolverNoTrafo : public SNSolver
     virtual void Save( int currEnergy ) const;
 };
 
-#endif // CSDSNSOLVERNOTRAFO_H
+#endif    // CSDSNSOLVERNOTRAFO_H

@@ -6,6 +6,7 @@
 #include <sstream>
 #include <vector>
 
+#include "common/globalconstants.h"
 #include "common/typedef.h"
 #include "interpolation.h"
 #include "toolboxes/errormessages.h"
@@ -140,7 +141,7 @@ class ICRU
     }
     ~ICRU(){};
 
-    void GetAngularScatteringXS( Matrix& elastic, Matrix& inelastic, Matrix& total );
+    void GetAngularScatteringXS( Matrix& angularXS, Vector& integratedXS );
 };
 
 #endif    // ICRU_H

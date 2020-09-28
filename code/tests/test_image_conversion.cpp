@@ -5,7 +5,7 @@
 #include "common/config.h"
 #include "common/io.h"
 #include "common/mesh.h"
-#include "cubic2dspline.h"
+#include "interpolation.h"
 #include "toolboxes/textprocessingtoolbox.h"
 
 TEST_CASE( "convert image data to grayscale matrix", "[image I/O]" ) {
@@ -72,7 +72,7 @@ TEST_CASE( "convert image data to grayscale matrix", "[image I/O]" ) {
         }
         for( unsigned i = 0; i < n + 1; ++i ) y[i] = static_cast<double>( i ) / static_cast<double>( n ) * ( yMax - yMin );
 
-        Cubic2DSpline interp( x, y, gsImage );
+        Interpolation interp( x, y, gsImage );
         std::vector<double> result( mesh->GetNumCells(), 0.0 );
         for( unsigned i = 0; i < mesh->GetNumCells(); ++i ) {
             result[i] = std::clamp( interp( cellCenters[i][0], cellCenters[i][1] ), 0.0, 1.0 );

@@ -447,18 +447,18 @@ double ICRU::DODCSC( double RMU, double EL ) {
     return res;
 }
 
-void ICRU::GetAngularScatteringXS( Matrix& elastic, Matrix& inelastic, Matrix& total ) {
-    elastic.resize( _QMU.size(), _E.size() );
-    inelastic.resize( _QMU.size(), _E.size() );
-    total.resize( _QMU.size(), _E.size() );
+void ICRU::GetAngularScatteringXS( Matrix& angularXS, Vector& integratedXS ) {
+    angularXS.resize( _QMU.size(), _E.size() );
+    integratedXS.resize( _E.size() );
     for( unsigned i = 0; i < _E.size(); ++i ) {
         std::vector<double> dxse, dxsi, dxs;
         angdcs( 3u, _E[i], dxse, dxsi, dxs );
-        Interpolation interpDXSE( _XMU, dxse );
-        Interpolation interpDXSI( _XMU, dxsi );
         Interpolation interpDXS( _XMU, dxs );
-        blaze::column( elastic, i )   = interpDXSE( _QMU );
-        blaze::column( inelastic, i ) = interpDXSI( _QMU );
-        blaze::column( total, i )     = interpDXS( _QMU );
+        blaze::column( angularXS, i ) = interpDXS( _QMU );
+        for( unsigned j = 0; j < _XMU.size() - 1; ++j ) {
+            integratedXS[i] += 0.5 * ( _XMU[j + 1] - _XMU[j] ) * ( dxs[j + 1] + dxs[j] );
+        }
     }
+    angularXS *= H2OMolecularDensity;
+    integratedXS *= H2OMolecularDensity;
 }
