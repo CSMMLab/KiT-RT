@@ -38,10 +38,7 @@ void Interpolation::Setup() {
 
 double Interpolation::operator()( double x ) const {
     if( _dim != 1u ) ErrorMessages::Error( "Invalid data dimension for operator(x)!", CURRENT_FUNCTION );
-
-    if( x < _x[0] || x > _x[_x.size() - 1u] ) {
-        ErrorMessages::Error( "Extrapolation is not supported!", CURRENT_FUNCTION );
-    }
+    if( x < _x[0] || x > _x[_x.size() - 1u] ) ErrorMessages::Error( "Extrapolation is not supported!", CURRENT_FUNCTION );
 
     Vector::ConstIterator it = std::lower_bound( _x.begin(), _x.end(), x );
 

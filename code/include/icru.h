@@ -142,6 +142,7 @@ class ICRU
     ~ICRU(){};
 
     void GetAngularScatteringXS( Matrix& angularXS, Vector& integratedXS );
+    void GetStoppingPower( Vector& stoppingPower );
 };
 
 #endif    // ICRU_H

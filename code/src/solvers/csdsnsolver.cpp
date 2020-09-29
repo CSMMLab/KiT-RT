@@ -81,7 +81,8 @@ CSDSNSolver::CSDSNSolver( Config* settings ) : SNSolver( settings ) {
     }
     */
 
-    _s = _problem->GetStoppingPower( _energies );
+    //_s = _problem->GetStoppingPower( _energies );
+    database.GetStoppingPower( _s );
     _Q = _problem->GetExternalSource( _energies );
 
     // recompute scattering kernel. TODO: add this to kernel function

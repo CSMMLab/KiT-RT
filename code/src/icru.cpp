@@ -462,3 +462,37 @@ void ICRU::GetAngularScatteringXS( Matrix& angularXS, Vector& integratedXS ) {
     angularXS *= H2OMolecularDensity;
     integratedXS *= H2OMolecularDensity;
 }
+
+void ICRU::GetStoppingPower( Vector& stoppingPower ) {
+    std::string PATHMT = "../data/material/";
+    std::stringstream ss;
+    ss << std::setw( 3 ) << std::setfill( '0' ) << materialID;
+
+    std::string FILE1 = PATHMT + "mater" + ss.str() + ".stp";
+
+    std::vector<double> energy, stppwr;
+
+    std::ifstream f( FILE1 );
+    std::string line;
+    for( unsigned i = 0; i < 23; ++i ) std::getline( f, line );
+    double e, ecol, erad, pcol, prad;
+    while( std::getline( f, line ) ) {
+        std::stringstream stream( line );
+        stream >> e >> ecol >> erad >> pcol >> prad;
+        energy.push_back( e * 1e-6 );    // store as MeV
+        if( particle == ELECTRON ) {
+            stppwr.push_back( ecol + erad );
+        }
+        else if( particle == POSITRON ) {
+            stppwr.push_back( pcol + prad );
+        }
+        else {
+            ErrorMessages::Error( "Invalid particle type!", CURRENT_FUNCTION );
+        }
+    }
+    Interpolation interp( energy, stppwr );
+    stoppingPower.resize( _E.size() );
+    for( unsigned i = 0; i < _E.size(); ++i ) {
+        stoppingPower[i] = interp( _E[i] / 1e6 );
+    }
+}
