@@ -65,7 +65,7 @@ class MNSolver : public Solver
     /*! @brief Function that prepares VTK export and csv export of the current solver iteration
         @returns: Mass of current iteration
     */
-    double WriteOutputFields();
+    double WriteOutputFields( unsigned idx_pseudoTime );
 
     /*! @brief : computes the global index of the moment corresponding to basis function (l,k)
      *  @param : degree l, it must hold: 0 <= l <=_nq

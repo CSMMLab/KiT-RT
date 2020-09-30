@@ -432,20 +432,38 @@ void Config::SetPostprocessing() {
     for( unsigned short idx_volOutput = 0; idx_volOutput < _nVolumeOutput; idx_volOutput++ ) {
         switch( _solverName ) {
             case SN_SOLVER:
-                if( _volumeOutput[idx_volOutput] != MINIMAL ) {
-                    ErrorMessages::Error( "SN_SOLVER only supports volume output MINIMAL.\nPlease check your .cfg file.", CURRENT_FUNCTION );
+                if( _volumeOutput[idx_volOutput] != MINIMAL && _volumeOutput[idx_volOutput] != ANALYTIC ) {
+                    ErrorMessages::Error( "SN_SOLVER only supports volume output MINIMAL and ANALYTIC.\nPlease check your .cfg file.",
+                                          CURRENT_FUNCTION );
+                }
+                if( _volumeOutput[idx_volOutput] == ANALYTIC && _problemName != PROBLEM_LineSource ) {
+                    ErrorMessages::Error(
+                        "Analytical solution (VOLUME_OUTPUT=ANALYTIC) is only available for the PROBLEM=LINESOURCE.\nPlease check your .cfg file.",
+                        CURRENT_FUNCTION );
                 }
                 break;
             case MN_SOLVER:
-                if( _volumeOutput[idx_volOutput] != MINIMAL || _volumeOutput[idx_volOutput] != MOMENTS ) {
-                    ErrorMessages::Error( "MN_SOLVER only supports volume output MINIMAL and MOMENTS.\nPlease check your .cfg file.",
-                                          CURRENT_FUNCTION );
+                if( _volumeOutput[idx_volOutput] != MINIMAL && _volumeOutput[idx_volOutput] != MOMENTS &&
+                    _volumeOutput[idx_volOutput] != DUAL_MOMENTS && _volumeOutput[idx_volOutput] != ANALYTIC ) {
+                    ErrorMessages::Error(
+                        "MN_SOLVER only supports volume output ANALYTIC, MINIMAL, MOMENTS and DUAL_MOMENTS.\nPlease check your .cfg file.",
+                        CURRENT_FUNCTION );
+                }
+                if( _volumeOutput[idx_volOutput] == ANALYTIC && _problemName != PROBLEM_LineSource ) {
+                    ErrorMessages::Error(
+                        "Analytical solution (VOLUME_OUTPUT=ANALYTIC) is only available for the PROBLEM=LINESOURCE.\nPlease check your .cfg file.",
+                        CURRENT_FUNCTION );
                 }
                 break;
             case PN_SOLVER:
-                if( _volumeOutput[idx_volOutput] != MINIMAL || _volumeOutput[idx_volOutput] != MOMENTS ) {
-                    ErrorMessages::Error( "PN_SOLVER only supports volume output MINIMAL and MOMENTS.\nPlease check your .cfg file.",
+                if( _volumeOutput[idx_volOutput] != MINIMAL && _volumeOutput[idx_volOutput] != MOMENTS && _volumeOutput[idx_volOutput] != ANALYTIC ) {
+                    ErrorMessages::Error( "PN_SOLVER only supports volume output ANALYTIC, MINIMAL and MOMENTS.\nPlease check your .cfg file.",
                                           CURRENT_FUNCTION );
+                }
+                if( _volumeOutput[idx_volOutput] == ANALYTIC && _problemName != PROBLEM_LineSource ) {
+                    ErrorMessages::Error(
+                        "Analytical solution (VOLUME_OUTPUT=ANALYTIC) is only available for the PROBLEM=LINESOURCE.\nPlease check your .cfg file.",
+                        CURRENT_FUNCTION );
                 }
                 break;
             case CSD_SN_SOLVER:

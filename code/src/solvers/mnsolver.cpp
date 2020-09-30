@@ -1,9 +1,11 @@
 #include "solvers/mnsolver.h"
 #include "common/config.h"
 #include "common/io.h"
+#include "common/mesh.h"
 #include "entropies/entropybase.h"
 #include "fluxes/numericalflux.h"
 #include "optimizers/optimizerbase.h"
+#include "problems/problembase.h"
 #include "quadratures/quadraturebase.h"
 #include "solvers/sphericalharmonics.h"
 #include "toolboxes/errormessages.h"
@@ -35,7 +37,7 @@ MNSolver::MNSolver( Config* settings ) : Solver( settings ) {
     for( unsigned n = 0; n < _nEnergies; n++ ) {
         for( unsigned j = 0; j < _nCells; j++ ) {
             _sigmaA[n][j] = 0;    //_sigmaT[n][j] - _sigmaS[n][j];
-            _sigmaS[n][j] = 1;
+            _sigmaS[n][j] = 0;
         }
     }
 
@@ -180,7 +182,7 @@ void MNSolver::Solve() {
         _sol = psiNew;
 
         // --- VTK and CSV Output ---
-        mass = WriteOutputFields();
+        mass = WriteOutputFields( idx_energy );
         Save( idx_energy );
         WriteNNTrainingData( idx_energy );
 
@@ -224,12 +226,36 @@ void MNSolver::PrepareOutputFields() {
                     }
                 }
                 break;
+
+            case DUAL_MOMENTS:
+                // As many entries as there are moments in the system
+                _outputFields[idx_group].resize( _nTotalEntries );
+                _outputFieldNames[idx_group].resize( _nTotalEntries );
+
+                for( int idx_l = 0; idx_l <= (int)_LMaxDegree; idx_l++ ) {
+                    for( int idx_k = -idx_l; idx_k <= idx_l; idx_k++ ) {
+                        _outputFields[idx_group][GlobalIndex( idx_l, idx_k )].resize( _nCells );
+
+                        _outputFieldNames[idx_group][GlobalIndex( idx_l, idx_k )] =
+                            std::string( "alpha_" + std::to_string( idx_l ) + "^" + std::to_string( idx_k ) );
+                    }
+                }
+                break;
+
+            case ANALYTIC:
+                // one entry per cell
+                _outputFields[idx_group].resize( 1 );
+                _outputFieldNames[idx_group].resize( 1 );
+                _outputFields[idx_group][0].resize( _nCells );
+                _outputFieldNames[idx_group][0] = std::string( "analytic radiation flux density" );
+                break;
+
             default: ErrorMessages::Error( "Volume Output Group not defined for MN Solver!", CURRENT_FUNCTION ); break;
         }
     }
 }
 
-double MNSolver::WriteOutputFields() {
+double MNSolver::WriteOutputFields( unsigned idx_pseudoTime ) {
     double mass      = 0.0;
     unsigned nGroups = (unsigned)_settings->GetNVolumeOutput();
 
@@ -252,6 +278,25 @@ double MNSolver::WriteOutputFields() {
                     }
                 }
                 break;
+            case DUAL_MOMENTS:
+                for( unsigned idx_sys = 0; idx_sys < _nTotalEntries; idx_sys++ ) {
+                    for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
+                        _outputFields[idx_group][idx_sys][idx_cell] = _alpha[idx_cell][idx_sys];
+                    }
+                }
+                break;
+            case ANALYTIC:
+                // Compute total "mass" of the system ==> to check conservation properties
+                for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
+
+                    double time  = idx_pseudoTime * _dE;
+                    double sigma = 0;
+
+                    _outputFields[idx_group][0][idx_cell] = _problem->GetAnalyticalSolution(
+                        _mesh->GetCellMidPoints()[idx_cell][0], _mesh->GetCellMidPoints()[idx_cell][1], time, sigma );
+                }
+                break;
+
             default: ErrorMessages::Error( "Volume Output Group not defined for MN Solver!", CURRENT_FUNCTION ); break;
         }
     }

@@ -3,9 +3,67 @@
 #include "common/mesh.h"
 #include "physics.h"
 
+// ---- Linesource ----
+
+LineSource::LineSource( Config* settings, Mesh* mesh ) : ProblemBase( settings, mesh ) { _physics = nullptr; }
+LineSource::~LineSource() {}
+
+double LineSource::GetAnalyticalSolution( double x, double y, double t, double sigma_s ) {
+
+    double solution = 0.0;
+    double R        = sqrt( x * x + y * y );
+
+    if( sigma_s == 0.0 ) {
+        if( ( t - R ) > 0 ) {
+            solution = 1 / ( 2 * M_PI * t * sqrt( t * t - R * R ) );
+        }
+    }
+    else {
+        double gamma = R / t;
+
+        if( ( 1 - gamma ) > 0 ) {
+            solution = exp( -t ) / ( 2 * M_PI * t * t * sqrt( 1 - gamma * gamma ) );
+
+            double integral = ComputeHelperIntegral( R, t );
+            solution += 2 * t * integral;
+        }
+    }
+    return solution;
+}
+
+double LineSource::ComputeHelperIntegral( double R, double t ) {
+    double result = 0;
+
+    return result;
+}
+
+double LineSource::HelperRho_ptc( double R, double t ) {
+    double result = HelperRho_ptc1( R, t ) + HelperRho_ptc2( R, t );
+
+    return result;
+}
+
+double LineSource::HelperRho_ptc1( double R, double t ) {
+    double gamma  = R / t;
+    double result = exp( -t ) / ( 4.0 * M_PI * R * t ) * log( ( 1 + gamma ) / ( 1 - gamma ) );
+
+    return result;
+}
+
+double LineSource::HelperRho_ptc2( double R, double t ) {
+    double gamma = R / t;
+
+    double result = 0;
+    if( 1 - gamma > 0 ) {
+        result = exp( -t ) / ( 32 * M_PI * M_PI * R ) * ( 1 - gamma * gamma );
+    }
+
+    return result;
+}
+
 // ---- LineSource_SN ----
 
-LineSource_SN::LineSource_SN( Config* settings, Mesh* mesh ) : ProblemBase( settings, mesh ) { _physics = nullptr; }
+LineSource_SN::LineSource_SN( Config* settings, Mesh* mesh ) : LineSource( settings, mesh ) {}
 
 LineSource_SN::~LineSource_SN() {}
 
@@ -64,7 +122,7 @@ int LineSource_PN::GlobalIndex( int l, int k ) const {
     return numIndicesPrevLevel + prevIndicesThisLevel;
 }
 
-LineSource_PN::LineSource_PN( Config* settings, Mesh* mesh ) : ProblemBase( settings, mesh ) { _physics = nullptr; }
+LineSource_PN::LineSource_PN( Config* settings, Mesh* mesh ) : LineSource( settings, mesh ) {}
 
 LineSource_PN::~LineSource_PN() {}
 

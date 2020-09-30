@@ -79,6 +79,15 @@ class ProblemBase
      */
     virtual VectorVector SetupIC() = 0;
 
+    /*!< @brief: Exact analytical solution for the Line Source Test Case at
+         @param: x: x coordinate of exact solution
+                 y: y coordinate of exact solution
+                 t: time of the exact solution
+                 scatteringXS: scattering cross section of the exact solution
+         @return: exact solution at x,y,t,scatteringXS
+    */ // Default is set to 0. ~> if no analytical solution is available.
+    double virtual GetAnalyticalSolution( double x, double y, double t, double scatteringXS ) { return 0.0; }
+
     /**
      * @brief Physics constructor
      * @param settings stores all needed user information
