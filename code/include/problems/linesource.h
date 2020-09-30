@@ -23,10 +23,17 @@ class LineSource : public ProblemBase
     double GetAnalyticalSolution( double x, double y, double t, double sigma_s ) override;
 
   private:
-    double ComputeHelperIntegral( double R, double t );
+    /*!< @brief: Helper Functions to compute the analytic solution for sigma != 0
+     * (See publication: Garret,Hauck; Momentum Closures for Linear Kinetic Transport Equations)
+         @param: R = distance to origin
+         @param: t = time
+         @param: sigma = R/t
+     */
+    double HelperIntRho_ptc( double R, double t );
     double HelperRho_ptc( double R, double t );
     double HelperRho_ptc1( double R, double t );
     double HelperRho_ptc2( double R, double t );
+    double HelperIntRho_ptc2( double t, double gamma );
 };
 
 class LineSource_SN : public LineSource

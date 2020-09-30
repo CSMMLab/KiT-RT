@@ -3,6 +3,8 @@
 #include "common/mesh.h"
 #include "physics.h"
 
+#include <complex>
+
 // ---- Linesource ----
 
 LineSource::LineSource( Config* settings, Mesh* mesh ) : ProblemBase( settings, mesh ) { _physics = nullptr; }
@@ -22,19 +24,27 @@ double LineSource::GetAnalyticalSolution( double x, double y, double t, double s
         double gamma = R / t;
 
         if( ( 1 - gamma ) > 0 ) {
-            solution = exp( -t ) / ( 2 * M_PI * t * t * sqrt( 1 - gamma * gamma ) );
-
-            double integral = ComputeHelperIntegral( R, t );
-            solution += 2 * t * integral;
+            solution = exp( -t ) / ( 2 * M_PI * t * t * sqrt( 1 - gamma * gamma ) ) + 2 * t * HelperIntRho_ptc( R, t );
         }
     }
     return solution;
 }
 
-double LineSource::ComputeHelperIntegral( double R, double t ) {
-    double result = 0;
+double LineSource::HelperIntRho_ptc( double R, double t ) {
 
-    return result;
+    int numsteps    = 100;
+    double integral = 0;
+    double gamma    = R / t;
+    double omega    = 0;
+    // integral is from 0 to  sqrt( 1 - gamma * gamma )
+    double stepsize = sqrt( 1 - gamma * gamma ) / (double)numsteps;
+
+    omega = 0.5 * stepsize;
+    for( int i = 0; i < numsteps; i++ ) {
+        omega = omega + i * stepsize;
+        integral += HelperRho_ptc( t * sqrt( gamma * gamma + omega * omega ), t );
+    }
+    return integral;
 }
 
 double LineSource::HelperRho_ptc( double R, double t ) {
@@ -53,12 +63,45 @@ double LineSource::HelperRho_ptc1( double R, double t ) {
 double LineSource::HelperRho_ptc2( double R, double t ) {
     double gamma = R / t;
 
-    double result = 0;
+    double result   = 0;
+    double integral = 0;
     if( 1 - gamma > 0 ) {
-        result = exp( -t ) / ( 32 * M_PI * M_PI * R ) * ( 1 - gamma * gamma );
+
+        // Compute the integralpart with midpoint rule
+        result = exp( -t ) / ( 32 * M_PI * M_PI * R ) * ( 1 - gamma * gamma ) * HelperIntRho_ptc2( t, gamma );
     }
 
     return result;
+}
+
+double LineSource::HelperIntRho_ptc2( double t, double gamma ) {
+
+    double u        = 0;
+    double integral = 0;
+    double beta     = 0;
+    double q        = 0;
+    complex<double> complexPart;
+
+    // compute the integral using the midpoint rule
+    // integral is from 0 to pi
+
+    int numsteps = 100;
+
+    double stepsize = M_PI / (double)numsteps;
+
+    u = 0.5 * stepsize;
+    q = ( 1 + gamma ) / ( 1 - gamma );
+
+    for( int i = 0; i < numsteps; i++ ) {
+        u = u + i * stepsize;
+
+        // function evaluation
+        beta        = ( log( q ) + _Complex_I * u ) / ( gamma + _Complex_I * tan( 0.5 * u ) );
+        complexPart = ( gamma + _Complex_I * tan( 0.5 * u ) ) * beta * beta * beta * exp( 0.5 * t * ( 1 - gamma * gamma ) * beta );
+        integral += ( 1 / cos( 0.5 * u ) ) * ( 1 / cos( 0.5 * u ) ) * complexPart.real();
+    }
+
+    return integral;
 }
 
 // ---- LineSource_SN ----
