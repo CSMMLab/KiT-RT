@@ -49,14 +49,12 @@ double LineSource::HelperIntRho_ptc( double R, double t ) {
 
 double LineSource::HelperRho_ptc( double R, double t ) {
     double result = HelperRho_ptc1( R, t ) + HelperRho_ptc2( R, t );
-
     return result;
 }
 
 double LineSource::HelperRho_ptc1( double R, double t ) {
     double gamma  = R / t;
     double result = exp( -t ) / ( 4.0 * M_PI * R * t ) * log( ( 1 + gamma ) / ( 1 - gamma ) );
-
     return result;
 }
 
@@ -78,9 +76,10 @@ double LineSource::HelperIntRho_ptc2( double t, double gamma ) {
 
     double u        = 0;
     double integral = 0;
-    double beta     = 0;
-    double q        = 0;
-    complex<double> complexPart;
+    std::complex<double> beta( 0, 0 );
+    double q = 0;
+    std::complex<double> complexPart( 0, 0 );
+    std::complex<double> com_one( 0, 1 );
 
     // compute the integral using the midpoint rule
     // integral is from 0 to pi
@@ -90,17 +89,17 @@ double LineSource::HelperIntRho_ptc2( double t, double gamma ) {
     double stepsize = M_PI / (double)numsteps;
 
     u = 0.5 * stepsize;
-    q = ( 1 + gamma ) / ( 1 - gamma );
+
+    q = ( 1.0 + gamma ) / ( 1.0 - gamma );
 
     for( int i = 0; i < numsteps; i++ ) {
-        u = u + i * stepsize;
+        u = u + (double)i * stepsize;
 
         // function evaluation
-        beta        = ( log( q ) + _Complex_I * u ) / ( gamma + _Complex_I * tan( 0.5 * u ) );
-        complexPart = ( gamma + _Complex_I * tan( 0.5 * u ) ) * beta * beta * beta * exp( 0.5 * t * ( 1 - gamma * gamma ) * beta );
+        beta        = ( log( q ) + com_one * u ) / ( gamma + com_one * tan( 0.5 * u ) );
+        complexPart = ( gamma + com_one * tan( 0.5 * u ) ) * beta * beta * beta * exp( 0.5 * t * ( 1 - gamma * gamma ) * beta );
         integral += ( 1 / cos( 0.5 * u ) ) * ( 1 / cos( 0.5 * u ) ) * complexPart.real();
     }
-
     return integral;
 }
 

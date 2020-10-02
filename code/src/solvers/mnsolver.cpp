@@ -290,7 +290,7 @@ double MNSolver::WriteOutputFields( unsigned idx_pseudoTime ) {
                 for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
 
                     double time  = idx_pseudoTime * _dE;
-                    double sigma = 0;
+                    double sigma = 1;
 
                     _outputFields[idx_group][0][idx_cell] = _problem->GetAnalyticalSolution(
                         _mesh->GetCellMidPoints()[idx_cell][0], _mesh->GetCellMidPoints()[idx_cell][1], time, sigma );
