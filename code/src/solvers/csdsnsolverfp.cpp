@@ -1,11 +1,11 @@
 #include "solvers/csdsnsolverfp.h"
 #include "common/config.h"
 #include "common/io.h"
+#include "common/mesh.h"
 #include "fluxes/numericalflux.h"
 #include "kernels/scatteringkernelbase.h"
 #include "problems/problembase.h"
 #include "quadratures/quadraturebase.h"
-#include "common/mesh.h"
 
 // externals
 #include "spdlog/spdlog.h"
@@ -18,7 +18,7 @@ CSDSNSolverFP::CSDSNSolverFP( Config* settings ) : SNSolver( settings ) {
     _angle           = Vector( _settings->GetNQuadPoints(), 0.0 );    // my
     _energies        = Vector( _nEnergies, 0.0 );                     // equidistant
     double energyMin = 1e-1;
-    double energyMax = 1e0;
+    double energyMax = 1e1;
     // write equidistant energy grid
 
     _dE        = ComputeTimeStep( settings->GetCFL() );
@@ -29,30 +29,30 @@ CSDSNSolverFP::CSDSNSolverFP( Config* settings ) : SNSolver( settings ) {
     }
 
     // create 1D quadrature
-    unsigned nq = _settings->GetNQuadPoints();
-    QuadratureBase* quad1D = QuadratureBase::CreateQuadrature(QUAD_GaussLegendre1D,nq);
-    Vector w = quad1D->GetWeights();
-    VectorVector muVec = quad1D->GetPoints();
-    Vector mu(nq);
-    for(unsigned k=0;k<nq;++k){
+    unsigned nq            = _settings->GetNQuadPoints();
+    QuadratureBase* quad1D = QuadratureBase::CreateQuadrature( QUAD_GaussLegendre1D, nq );
+    Vector w               = quad1D->GetWeights();
+    VectorVector muVec     = quad1D->GetPoints();
+    Vector mu( nq );
+    for( unsigned k = 0; k < nq; ++k ) {
         mu[k] = muVec[k][0];
     }
 
     // setup Laplace Beltrami matrix L in slab geometry
-    _L = Matrix(nq,nq,0.0);
+    _L = Matrix( nq, nq, 0.0 );
 
     double DMinus = 0.0;
-    double DPlus = 0.0;
-    for( unsigned k = 0; k < nq; ++k ){
+    double DPlus  = 0.0;
+    for( unsigned k = 0; k < nq; ++k ) {
         DMinus = DPlus;
-        DPlus = DMinus-2*mu[k]*w[k];
-        if( k > 0 ){
-            _L(k,k-1) = DMinus/(mu[k]-mu[k-1])/w[k];
-            _L(k,k) = -DMinus/(mu[k]-mu[k-1])/w[k];
+        DPlus  = DMinus - 2 * mu[k] * w[k];
+        if( k > 0 ) {
+            _L( k, k - 1 ) = DMinus / ( mu[k] - mu[k - 1] ) / w[k];
+            _L( k, k )     = -DMinus / ( mu[k] - mu[k - 1] ) / w[k];
         }
-        if( k < nq-1 ){
-            _L(k,k+1) = DPlus/(mu[k+1]-mu[k])/w[k];
-            _L(k,k) += -DPlus/(mu[k+1]-mu[k])/w[k];
+        if( k < nq - 1 ) {
+            _L( k, k + 1 ) = DPlus / ( mu[k + 1] - mu[k] ) / w[k];
+            _L( k, k ) += -DPlus / ( mu[k + 1] - mu[k] ) / w[k];
         }
     }
 
@@ -60,24 +60,24 @@ CSDSNSolverFP::CSDSNSolverFP( Config* settings ) : SNSolver( settings ) {
     double g = 0.8;
 
     // determine momente of Heney-Greenstein
-    double xi1 = 1.0-g; // paper Olbrant, Frank (11)
-    double xi2 = 4.0/3.0 - 2.0 * g + 2.0/3.0 * g*g;
+    double xi1 = 1.0 - g;    // paper Olbrant, Frank (11)
+    double xi2 = 4.0 / 3.0 - 2.0 * g + 2.0 / 3.0 * g * g;
 
     // determine alpha and beta
-    _alpha = xi1/2.0 + xi2/8.0;
-    _beta = xi2/8.0/xi1;
+    _alpha = xi1 / 2.0 + xi2 / 8.0;
+    _beta  = xi2 / 8.0 / xi1;
 
-    std::cout<<"alpha = "<<_alpha<<std::endl;
-    std::cout<<"beta = "<<_beta<<std::endl;
+    std::cout << "alpha = " << _alpha << std::endl;
+    std::cout << "beta = " << _beta << std::endl;
 
-    Matrix identity(nq,nq,0.0);
-    for( unsigned k = 0; k < nq; ++k ) identity(k,k) = 1.0;
+    Matrix identity( nq, nq, 0.0 );
+    for( unsigned k = 0; k < nq; ++k ) identity( k, k ) = 1.0;
 
-    _IL = identity - _beta*_L;
+    _IL = identity - _beta * _L;
 
-    std::cout<<_IL<<std::endl;
+    std::cout << _IL << std::endl;
 
-    _s = Vector(_nEnergies,1.0);
+    _s = Vector( _nEnergies, 1.0 );
 
     // recompute scattering kernel. TODO: add this to kernel function
     for( unsigned p = 0; p < _nq; ++p ) {
@@ -88,41 +88,36 @@ CSDSNSolverFP::CSDSNSolverFP( Config* settings ) : SNSolver( settings ) {
     }
 
     _density = Vector( _nCells, 1.0 );
-    //exit(EXIT_SUCCESS);
+    // exit(EXIT_SUCCESS);
 }
 
 void CSDSNSolverFP::Solve() {
     std::cout << "Solve Fokker-Planck with Heney-Greenstein kernel" << std::endl;
 
-    auto log = spdlog::get( "event" );
-    //int* ipiv = new int[_nq];
-    //for( unsigned i = 0; i < _nq ;++i ) ipiv[i] = i+1;
-
-    blaze::DynamicVector<int> ipiv = blaze::linspace( _nq, 0, static_cast<int>( _nq )-1 );
-    //blaze::gesv( A, b, ipiv.data() );
+    auto log      = spdlog::get( "event" );
     auto cellMids = _mesh->GetCellMidPoints();
 
     // setup IC and incoming BC on left
-    //auto cellMids = _settings->GetCellMidPoints();
+    // auto cellMids = _settings->GetCellMidPoints();
     _sol = std::vector<Vector>( _nCells, Vector( _nq, 0.0 ) );
     for( unsigned j = 0; j < _nCells; ++j ) {
-        //if(_boundaryCells[j] == BOUNDARY_TYPE::NEUMANN) std::cout<<"BOUNDARY CELL DETECTED. x = "<<cellMids[j][0]<<std::endl;
-        if(_boundaryCells[j] == BOUNDARY_TYPE::DIRICHLET && cellMids[j][0] < 1.0){
-            std::cout<<"BOUNDARY CELL is left!"<<std::endl;
-            for( unsigned k = 0; k<_nq; ++k ){
-                if(_quadPoints[k][0] > 0){
-                    _sol[j][k] = 1e5*exp(-10.0*pow(1.0-_quadPoints[k][0],2));
+        // if(_boundaryCells[j] == BOUNDARY_TYPE::NEUMANN) std::cout<<"BOUNDARY CELL DETECTED. x = "<<cellMids[j][0]<<std::endl;
+        if( _boundaryCells[j] == BOUNDARY_TYPE::DIRICHLET && cellMids[j][0] < 1.0 ) {
+            std::cout << "BOUNDARY CELL is left!" << std::endl;
+            for( unsigned k = 0; k < _nq; ++k ) {
+                if( _quadPoints[k][0] > 0 ) {
+                    _sol[j][k] = 1e5 * exp( -10.0 * pow( 1.0 - _quadPoints[k][0], 2 ) );
                 }
             }
         }
     }
-    for( unsigned k = 0; k<_nq; ++k ){
-        if(_quadPoints[k][0] > 0){
-            _sol[0][k] = 1e5*exp(-10.0*pow(1.0-_quadPoints[k][0],2));
+    for( unsigned k = 0; k < _nq; ++k ) {
+        if( _quadPoints[k][0] > 0 ) {
+            _sol[0][k] = 1e5 * exp( -10.0 * pow( 1.0 - _quadPoints[k][0], 2 ) );
         }
     }
-    _boundaryCells[0] = BOUNDARY_TYPE::DIRICHLET;
-    _boundaryCells[_nCells-1] = BOUNDARY_TYPE::DIRICHLET;
+    _boundaryCells[0]           = BOUNDARY_TYPE::DIRICHLET;
+    _boundaryCells[_nCells - 1] = BOUNDARY_TYPE::DIRICHLET;
 
     // angular flux at next time step (maybe store angular flux at all time steps, since time becomes energy?)
     VectorVector psiNew( _nCells, Vector( _nq, 0.0 ) );
@@ -157,28 +152,27 @@ void CSDSNSolverFP::Solve() {
 
     // cross sections do not need to be transformed to ETilde energy grid since e.g. TildeSigmaT(ETilde) = SigmaT(E(ETilde))
 
-
     // loop over energies (pseudo-time)
     for( unsigned n = 0; n < _nEnergies - 1; ++n ) {
         _dE = fabs( _energies[n + 1] - _energies[n] );    // is the sign correct here?
-        // loop over all spatial cells
-        // scattering step
+// loop over all spatial cells
+// scattering step
+#pragma omp parallel for
         for( unsigned j = 0; j < _nCells; ++j ) {
             if( _boundaryCells[j] == BOUNDARY_TYPE::DIRICHLET ) continue;
-            psi1[j] = _sol[j];
-            Vector psiVec = _sol[j];
-            blaze::gesv(_IL,psi1[j],ipiv.data());
-            if(norm(_IL*psi1[j]-_sol[j])> 0.1){
-                std::cout<<_sol[j]<<std::endl;
-                std::cout<<"----------------------------"<<std::endl;
-                std::cout<<psi1[j]<<std::endl;
-                std::cout<<"res = "<<norm(_IL*psi1[j]-_sol[j])<<std::endl;
+            psi1[j] = blaze::solve( _IL, _sol[j] );
+            if( norm( _IL * psi1[j] - _sol[j] ) > 0.1 ) {
+                std::cout << _sol[j] << std::endl;
+                std::cout << "----------------------------" << std::endl;
+                std::cout << psi1[j] << std::endl;
+                std::cout << "res = " << norm( _IL * psi1[j] - _sol[j] ) << std::endl;
 
-                exit(EXIT_SUCCESS);
+                exit( EXIT_SUCCESS );
             }
-            psi1[j] = _alpha*_L*psi1[j];
+            psi1[j] = _alpha * _L * psi1[j];
         }
-        // advection step
+// advection step
+#pragma omp parallel for
         for( unsigned j = 0; j < _nCells; ++j ) {
             if( _boundaryCells[j] == BOUNDARY_TYPE::DIRICHLET ) continue;
             // loop over all ordinates
@@ -199,6 +193,7 @@ void CSDSNSolverFP::Solve() {
         }
         _sol = psiNew;
 
+#pragma omp parallel for
         for( unsigned j = 0; j < _nCells; ++j ) {
             fluxNew[j] = 0.0;
             for( unsigned k = 0; k < _nq; ++k ) {
