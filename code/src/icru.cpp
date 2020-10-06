@@ -463,6 +463,33 @@ void ICRU::GetAngularScatteringXS( Matrix& angularXS, Vector& integratedXS ) {
     integratedXS *= H2OMolecularDensity;
 }
 
+void ICRU::GetTransportCoefficients( Matrix& xi ) {
+
+    for( unsigned i = 0; i < _ET.size(); ++i ) { std::cout<<_ET[i]<<std::endl; }
+    exit(EXIT_FAILURE);
+
+    for( unsigned i = 0; i < _E.size(); ++i ) {
+        std::vector<double> dxse, dxsi, dxs;
+        angdcs( 3u, _E[i], dxse, dxsi, dxs );
+
+        //std::cout<<"size dxs -> "<<dxs.size()<<std::endl;
+
+        // compute moments with trapezoidal rule
+        for( unsigned n = 0; n < xi.rows(); ++n ){
+            xi(n,i) = 0.0;
+            // so far only integration on [0,1]
+            for( unsigned k = 0; k < dxs.size()-1; ++k ){
+                xi(n,i) += 0.5 * ( pow(1.0-_XMU[k+1],n)*dxs[k+1] + pow(1.0-_XMU[k],n)*dxs[k] )*(_XMU[k+1]-_XMU[k]);
+                //std::cout<<"XMU at "<<k<<":"<<_XMU[k]<<std::endl;
+                //std::cout<<"dxs at "<<k<<": "<<dxs[k]<<std::endl;
+            }
+            // integration over [-1,1]
+            xi(n,i) *= 2.0;
+        }
+    }
+    xi *= 2.0*PI*1e24;//*H2OMolecularDensity;
+}
+
 void ICRU::GetStoppingPower( Vector& stoppingPower ) {
     std::string PATHMT = "../data/material/";
     std::stringstream ss;

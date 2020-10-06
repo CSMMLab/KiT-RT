@@ -25,6 +25,15 @@ class CSDSNSolverFP : public SNSolver
     double _alpha;
     double _beta;
 
+    Vector _xi1;
+    Vector _xi2;
+    Matrix _xi;
+
+    bool _RT;
+
+    double _energyMin;
+    double _energyMax;
+
   public:
     /**
      * @brief CSDSNSolverFP constructor

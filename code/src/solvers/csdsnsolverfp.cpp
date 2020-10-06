@@ -17,15 +17,15 @@ CSDSNSolverFP::CSDSNSolverFP( Config* settings ) : SNSolver( settings ) {
     // Set angle and energies
     _angle           = Vector( _settings->GetNQuadPoints(), 0.0 );    // my
     _energies        = Vector( _nEnergies, 0.0 );                     // equidistant
-    double energyMin = 1e-1;
-    double energyMax = 50e0;
+     _energyMin = 50;
+     _energyMax = 51;
     // write equidistant energy grid
 
     _dE        = ComputeTimeStep( settings->GetCFL() );
-    _nEnergies = unsigned( ( energyMax - energyMin ) / _dE );
+    _nEnergies = unsigned( ( _energyMax - _energyMin ) / _dE );
     _energies.resize( _nEnergies );
     for( unsigned n = 0; n < _nEnergies; ++n ) {
-        _energies[n] = energyMin + ( energyMax - energyMin ) / ( _nEnergies - 1 ) * n;
+        _energies[n] = _energyMin + ( _energyMax - _energyMin ) / ( _nEnergies - 1 ) * n;
     }
 
     // create 1D quadrature
@@ -60,24 +60,20 @@ CSDSNSolverFP::CSDSNSolverFP( Config* settings ) : SNSolver( settings ) {
     double g = 0.8;
 
     // determine momente of Heney-Greenstein
-    double xi1 = 1.0 - g;    // paper Olbrant, Frank (11)
-    double xi2 = 4.0 / 3.0 - 2.0 * g + 2.0 / 3.0 * g * g;
-
-    // determine alpha and beta
-    _alpha = xi1 / 2.0 + xi2 / 8.0;
-    _beta  = xi2 / 8.0 / xi1;
-
-    std::cout << "alpha = " << _alpha << std::endl;
-    std::cout << "beta = " << _beta << std::endl;
-
-    Matrix identity( nq, nq, 0.0 );
-    for( unsigned k = 0; k < nq; ++k ) identity( k, k ) = 1.0;
-
-    _IL = identity - _beta * _L;
-
-    std::cout << _IL << std::endl;
+    _xi1 = Vector(_nEnergies, 1.0 - g); // paper Olbrant, Frank (11)
+    _xi2 = Vector(_nEnergies, 4.0 / 3.0 - 2.0 * g + 2.0 / 3.0 * g * g);
+    _xi = Matrix(3,_nEnergies);
 
     _s = Vector( _nEnergies, 1.0 );
+
+    _RT = true;
+
+    // read in medical data if radiation therapy option selected
+    if(_RT){
+        ICRU database( abs(mu), _energies );
+        database.GetTransportCoefficients( _xi );
+        database.GetStoppingPower( _s );
+    }
 
     // recompute scattering kernel. TODO: add this to kernel function
     for( unsigned p = 0; p < _nq; ++p ) {
@@ -88,7 +84,7 @@ CSDSNSolverFP::CSDSNSolverFP( Config* settings ) : SNSolver( settings ) {
     }
 
     _density = Vector( _nCells, 1.0 );
-    // exit(EXIT_SUCCESS);
+    //exit(EXIT_SUCCESS);
 }
 
 void CSDSNSolverFP::Solve() {
@@ -113,11 +109,19 @@ void CSDSNSolverFP::Solve() {
     }
     for( unsigned k = 0; k < _nq; ++k ) {
         if( _quadPoints[k][0] > 0 ) {
-            _sol[0][k] = 1e5 * exp( -10.0 * pow( 1.0 - _quadPoints[k][0], 2 ) );
+            if(_RT){
+                _sol[0][k] = 1e5 * exp( -200.0 * pow( 1.0 - _quadPoints[k][0], 2 ) ) * exp(-50*(_energyMin-_energyMax));
+            }else
+                _sol[0][k] = 1e5 * exp( -10.0 * pow( 1.0 - _quadPoints[k][0], 2 ) );
         }
     }
     _boundaryCells[0]           = BOUNDARY_TYPE::DIRICHLET;
     _boundaryCells[_nCells - 1] = BOUNDARY_TYPE::DIRICHLET;
+
+
+
+    Matrix identity( _nq, _nq, 0.0 );
+    for( unsigned k = 0; k < _nq; ++k ) identity( k, k ) = 1.0;
 
     // angular flux at next time step (maybe store angular flux at all time steps, since time becomes energy?)
     VectorVector psiNew( _nCells, Vector( _nq, 0.0 ) );
@@ -155,20 +159,43 @@ void CSDSNSolverFP::Solve() {
     // loop over energies (pseudo-time)
     for( unsigned n = 0; n < _nEnergies - 1; ++n ) {
         _dE = fabs( _energies[n + 1] - _energies[n] );    // is the sign correct here?
+        // set alpha and beta
+        _alpha = _xi(1,_nEnergies-n-1) / 2.0 + _xi(2,_nEnergies-n-1) / 8.0;
+        _beta  = _xi(2,_nEnergies-n-1) / 8.0 / _xi(1,_nEnergies-n-1);
+
+        _IL = identity - _beta * _L;
+
+        std::cout << "xi0 = " << _xi(0,_nEnergies-n-1) << std::endl;
+        std::cout << "xi1 = " << _xi(1,_nEnergies-n-1) << std::endl;
+        std::cout << "xi2 = " << _xi(2,_nEnergies-n-1) << std::endl;
+
+        std::cout << "alpha = " << _alpha << std::endl;
+        std::cout << "beta = " << _beta << std::endl;
+
+        // write BC
+        if(_RT){
+            for( unsigned k = 0; k < _nq; ++k ) {
+                if( _quadPoints[k][0] > 0 ) {
+                        _sol[0][k] = 1e5 * exp( -200.0 * pow( 1.0 - _quadPoints[k][0], 2 ) ) * exp(-50*(_energyMin-_energies[n]));
+                }
+            }
+        }
+
 // loop over all spatial cells
 // scattering step
 //#pragma omp parallel for
         for( unsigned j = 0; j < _nCells; ++j ) {
             if( _boundaryCells[j] == BOUNDARY_TYPE::DIRICHLET ) continue;
             psi1[j] = blaze::solve( _IL, _sol[j] );
-            if( norm( _IL * psi1[j] - _sol[j] ) > 1e-5 ) {
+            /*
+            if( norm( _IL * psi1[j] - _sol[j] ) > 1e-3 ) {
                 std::cout << _sol[j] << std::endl;
                 std::cout << "----------------------------" << std::endl;
                 std::cout << psi1[j] << std::endl;
                 std::cout << "res = " << norm( _IL * psi1[j] - _sol[j] ) << std::endl;
 
                 exit( EXIT_FAILURE );
-            }
+            }*/
             psi1[j] = _alpha * _L * psi1[j];
         }
 // advection step
@@ -185,10 +212,11 @@ void CSDSNSolverFP::Solve() {
                         continue;    // adiabatic wall, add nothing
                     else
                         psiNew[j][i] += _g->Flux( _quadPoints[i], _sol[j][i], _sol[_neighbors[j][idx_neighbor]][i], _normals[j][idx_neighbor] ) /
-                                        _areas[j];
+                                        _areas[j] / ( _density[j] * _s[n + 1] );;
                 }
                 // time update angular flux with numerical flux and total scattering cross section
-                psiNew[j][i] = _sol[j][i] - _dE * psiNew[j][i] + _dE * psi1[j][i];
+                psiNew[j][i] = _sol[j][i] - _dE * psiNew[j][i] + _dE * psi1[j][i]/ ( _density[j] * _s[n + 1] ) +
+                        ( _s[n] / _s[n + 1] - 1 ) * _sol[j][i];
             }
         }
         for( unsigned j = 0; j < _nCells; ++j ) {
