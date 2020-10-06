@@ -27,9 +27,6 @@ class MNSolver : public Solver
     unsigned _nTotalEntries;    /*! @brief: Total number of equations in the system */
     unsigned short _LMaxDegree; /*! @brief: Max Order of Moments */
 
-    // Solver specific physics
-    VectorVector _sigmaA; /*!  @brief: Absorption coefficient for all energies*/
-
     // Moment basis
     SphericalHarmonics* _basis; /*! @brief: Class to compute and store current spherical harmonics basis */
     VectorVector _moments;      /*! @brief: Moment Vector pre-computed at each quadrature point: dim= _nq x _nTotalEntries */
@@ -81,6 +78,9 @@ class MNSolver : public Solver
 
     /*! @brief : Pre-Compute Moments at all quadrature points. */
     void ComputeMoments();
+
+    /*! @brief:  fucntion for computing and setting up EV matrix for scattering kernel */
+    void ComputeScatterMatrix();
 
     /*! @brief Corrects the solution _sol[idx_cell] to be realizable w.r.t. the reconstructed entropy (eta'(alpha*m))
         @param idx_cell = cell where the correction happens*/

@@ -31,19 +31,17 @@ MNSolver::MNSolver( Config* settings ) : Solver( settings ) {
     _quadPointsSphere = _quadrature->GetPointsSphere();
     _settings->SetNQuadPoints( _nq );
 
-    // transform sigmaT and sigmaS in sigmaA.
-    _sigmaA = VectorVector( _nEnergies, Vector( _nCells, 0 ) );    // Get rid of this extra vektor!
-
+    // This must be shifted to Problem Class
     for( unsigned n = 0; n < _nEnergies; n++ ) {
         for( unsigned j = 0; j < _nCells; j++ ) {
-            _sigmaA[n][j] = 0;    //_sigmaT[n][j] - _sigmaS[n][j];
-            _sigmaS[n][j] = 0;
+            _sigmaT[n][j] = 1;    //_sigmaT[n][j] - _sigmaS[n][j];
+            _sigmaS[n][j] = 1;
         }
     }
 
-    // Initialize Scatter Matrix
-    _scatterMatDiag    = Vector( _nTotalEntries, 1.0 );
-    _scatterMatDiag[0] = 0.0;    // First entry is zero by construction.
+    // Initialize Scatter Matrix --
+    _scatterMatDiag = Vector( _nTotalEntries, 0.0 );
+    ComputeScatterMatrix();
 
     // Initialize Entropy
     _entropy = EntropyBase::Create( _settings );
@@ -68,6 +66,15 @@ MNSolver::~MNSolver() {
     delete _entropy;
     delete _optimizer;
     delete _basis;
+}
+
+void MNSolver::ComputeScatterMatrix() {
+
+    // --- Isotropic ---
+    _scatterMatDiag[0] = -1.0;
+    for( unsigned idx_diag = 1; idx_diag < _nTotalEntries; idx_diag++ ) {
+        _scatterMatDiag[idx_diag] = 0.0;
+    }
 }
 
 int MNSolver::GlobalIndex( int l, int k ) const {
@@ -173,7 +180,7 @@ void MNSolver::Solve() {
                 psiNew[idx_cell][idx_system] = _sol[idx_cell][idx_system] -
                                                ( _dE / _areas[idx_cell] ) * psiNew[idx_cell][idx_system] /* cell averaged flux */
                                                - _dE * _sol[idx_cell][idx_system] *
-                                                     ( _sigmaA[idx_energy][idx_cell]                                    /* absorbtion influence */
+                                                     ( _sigmaT[idx_energy][idx_cell]                                    /* absorbtion influence */
                                                        + _sigmaS[idx_energy][idx_cell] * _scatterMatDiag[idx_system] ); /* scattering influence */
             }
         }

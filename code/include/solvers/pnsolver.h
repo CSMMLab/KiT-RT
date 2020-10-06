@@ -19,7 +19,7 @@ class PNSolver : public Solver
     unsigned _nTotalEntries; /*! @brief: total number of equations in the system */
     unsigned _LMaxDegree;    /*! @brief: maximal degree of the spherical harmonics basis*/
 
-    VectorVector _sigmaA; /*!  @brief: Absorption coefficient for all energies*/
+    // VectorVector _sigmaA; /*!  @brief: Absorption coefficient for all energies*/
     // System Matrix for x, y and z flux
     //    ==> not needed after computation of A+ and A- ==> maybe safe only temporarly and remove as member?
     SymMatrix _Ax; /*! @brief:  Flux Jacbioan in x direction */
@@ -39,7 +39,8 @@ class PNSolver : public Solver
 
     // double _combinedSpectralRadius; /*! @brief:  Combined spectral radius of sum of flux jacobians*/
 
-    Vector _scatterMatDiag; /*! @brief: diagonal of the scattering matrix (its a diagonal matrix by construction) */
+    Vector _scatterMatDiag; /*! @brief: diagonal of the scattering matrix (its a diagonal matrix by construction). Contains eigenvalues of the
+                               scattering kernel.  */
 
     // Output related members
     std::vector<std::vector<std::vector<double>>> _outputFields; /*! @brief: Solver Output: dimensions (GroupID,FieldID,CellID). !Protoype output for
@@ -97,7 +98,7 @@ class PNSolver : public Solver
     void ComputeSystemMatrices();
     /*! @brief:  function for computing and setting up flux matrices for upwinding */
     void ComputeFluxComponents();
-    /*! @brief:  fucntion for computing and setting up diagonal matrix for scattering kernel */
+    /*! @brief:  fucntion for computing and setting up EV matrix for scattering kernel */
     void ComputeScatterMatrix();
     /*! @brief:  Computes Legedre polinomial of oder l at point x */
     double LegendrePoly( double x, int l );
