@@ -31,14 +31,6 @@ MNSolver::MNSolver( Config* settings ) : Solver( settings ) {
     _quadPointsSphere = _quadrature->GetPointsSphere();
     _settings->SetNQuadPoints( _nq );
 
-    // This must be shifted to Problem Class
-    for( unsigned n = 0; n < _nEnergies; n++ ) {
-        for( unsigned j = 0; j < _nCells; j++ ) {
-            _sigmaT[n][j] = 1;    //_sigmaT[n][j] - _sigmaS[n][j];
-            _sigmaS[n][j] = 1;
-        }
-    }
-
     // Initialize Scatter Matrix --
     _scatterMatDiag = Vector( _nTotalEntries, 0.0 );
     ComputeScatterMatrix();
@@ -263,8 +255,9 @@ void MNSolver::PrepareOutputFields() {
 }
 
 double MNSolver::WriteOutputFields( unsigned idx_pseudoTime ) {
-    double mass      = 0.0;
-    unsigned nGroups = (unsigned)_settings->GetNVolumeOutput();
+    double mass                   = 0.0;
+    unsigned nGroups              = (unsigned)_settings->GetNVolumeOutput();
+    double firstMomentScaleFactor = sqrt( 4 * M_PI );
 
     // Compute total "mass" of the system ==> to check conservation properties
     for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
@@ -275,7 +268,7 @@ double MNSolver::WriteOutputFields( unsigned idx_pseudoTime ) {
         switch( _settings->GetVolumeOutput()[idx_group] ) {
             case MINIMAL:
                 for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
-                    _outputFields[idx_group][0][idx_cell] = _sol[idx_cell][0];
+                    _outputFields[idx_group][0][idx_cell] = firstMomentScaleFactor * _sol[idx_cell][0];
                 }
                 break;
             case MOMENTS:
@@ -297,10 +290,11 @@ double MNSolver::WriteOutputFields( unsigned idx_pseudoTime ) {
                 for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
 
                     double time  = idx_pseudoTime * _dE;
-                    double sigma = 1;
+                    double sigma = 0;
 
-                    _outputFields[idx_group][0][idx_cell] = _problem->GetAnalyticalSolution(
-                        _mesh->GetCellMidPoints()[idx_cell][0], _mesh->GetCellMidPoints()[idx_cell][1], time, sigma );
+                    _outputFields[idx_group][0][idx_cell] =
+                        ( 4 * M_PI ) * _problem->GetAnalyticalSolution(
+                                           _mesh->GetCellMidPoints()[idx_cell][0], _mesh->GetCellMidPoints()[idx_cell][1], time, sigma );
                 }
                 break;
 

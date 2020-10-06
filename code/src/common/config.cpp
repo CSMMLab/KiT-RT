@@ -243,6 +243,10 @@ void Config::SetConfigOptions() {
     /*! @brief SN_ALL_GAUSS_PTS \n DESCRIPTION: If true, the SN Solver uses all Gauss Quadrature Points for 2d. \n DEFAULT false \ingroup Config */
     AddBoolOption( "SN_ALL_GAUSS_PTS", _allGaussPts, false );
 
+    // Linesource Testcase Options
+    /*! @brief SCATTER_COEFF \n DESCRIPTION: Sets the scattering coefficient for the Linesource test case. \n DEFAULT 0.0 \ingroup Config */
+    AddDoubleOption( "SCATTER_COEFF", _sigmaS, 0.0 );
+
     // Entropy related options
     /*! @brief Entropy Functional \n DESCRIPTION: Entropy functional used for the MN_Solver \n DEFAULT QUADRTATIC @ingroup Config. */
     AddEnumOption( "ENTROPY_FUNCTIONAL", _entropyName, Entropy_Map, QUADRATIC );

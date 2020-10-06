@@ -13,14 +13,6 @@ PNSolver::PNSolver( Config* settings ) : Solver( settings ) {
     _LMaxDegree    = settings->GetMaxMomentDegree();
     _nTotalEntries = GlobalIndex( int( _LMaxDegree ), int( _LMaxDegree ) ) + 1;
 
-    // This must be shifted to Problem Class
-    for( unsigned n = 0; n < _nEnergies; n++ ) {
-        for( unsigned j = 0; j < _nCells; j++ ) {
-            _sigmaT[n][j] = 1;
-            _sigmaS[n][j] = 1;
-        }
-    }
-
     // Initialize System Matrices
     _Ax = SymMatrix( _nTotalEntries );
     _Ay = SymMatrix( _nTotalEntries );
@@ -42,33 +34,18 @@ PNSolver::PNSolver( Config* settings ) : Solver( settings ) {
     // Fill System Matrices
     ComputeSystemMatrices();
 
-    // std::cout << "System Matrix Set UP!" << std::endl;
     // Compute Decomposition in positive and negative (eigenvalue) parts of flux jacobians
     ComputeFluxComponents();
 
     // Compute diagonal of the scatter matrix (it's a diagonal matrix)
     ComputeScatterMatrix();
 
-    // std::cout << "scatterMatrix : " << _scatterMatDiag << "\n";
-
     // AdaptTimeStep();
 
     if( settings->GetCleanFluxMat() ) CleanFluxMatrices();
 
-    // std::cout << "--------\n";
-    // std::cout << "_Ax :\n" << _Ax << "\n ";    // _AxP \n" << _AxPlus << "\n _AxM \n" << _AxMinus << "\n";
-    // std::cout << "_Ay :\n" << _Ay << "\n ";    //_AyP \n" << _AyPlus << "\n _AyM \n" << _AyMinus << "\n";
-    // std::cout << "_Az :\n" << _Az << "\n ";    //_AzP \n" << _AzPlus << "\n _AzM \n" << _AzMinus << "\n";
-    //
-    // std::cout << "_AxPlus :\n" << _AxPlus << "\n ";    // _AxP \n" << _AxPlus << "\n _AxM \n" << _AxMinus << "\n";
-    // std::cout << "_AyPlus :\n" << _AyPlus << "\n ";    //_AyP \n" << _AyPlus << "\n _AyM \n" << _AyMinus << "\n";
-    // std::cout << "_AzPlus :\n" << _AzPlus << "\n ";
-    //
-    // std::cout << "_AxMinus :\n" << _AxMinus << "\n ";    // _AxP \n" << _AxPlus << "\n _AxM \n" << _AxMinus << "\n";
-    // std::cout << "_AyMinus :\n" << _AyMinus << "\n ";    //_AyP \n" << _AyPlus << "\n _AyM \n" << _AyMinus << "\n";
-    // std::cout << "_AzMinus :\n" << _AzMinus << "\n ";
-    //
-    // std::cout << "_nCells: " << _nCells << "\n";
+    // Compute moments of initial condition
+    // TODO
 
     // Solver output
     PrepareOutputFields();
@@ -91,7 +68,9 @@ void PNSolver::Solve() {
 
     if( rank == 0 ) log->info( "{:10}   {:10}", "t", "mass" );
 
-    // if( rank == 0 ) log->info( "{:03.8f}   {:01.5e} {:01.5e}", -1.0, dFlux, mass1 );
+    //   Remove
+    mass = WriteOutputFields();
+    if( rank == 0 ) log->info( " {:01.5e}  {:01.5e}", 0.0, mass );
 
     // Loop over energies (pseudo-time of continuous slowing down approach)
     for( unsigned idx_energy = 0; idx_energy < _nEnergies; idx_energy++ ) {
@@ -393,8 +372,9 @@ void PNSolver::PrepareOutputFields() {
 }
 
 double PNSolver::WriteOutputFields() {
-    double mass      = 0.0;
-    unsigned nGroups = (unsigned)_settings->GetNVolumeOutput();
+    double mass                   = 0.0;
+    unsigned nGroups              = (unsigned)_settings->GetNVolumeOutput();
+    double firstMomentScaleFactor = sqrt( 4 * M_PI );
 
     // Compute total "mass" of the system ==> to check conservation properties
     for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
@@ -411,7 +391,7 @@ double PNSolver::WriteOutputFields() {
             case MOMENTS:
                 for( unsigned idx_sys = 0; idx_sys < _nTotalEntries; idx_sys++ ) {
                     for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
-                        _outputFields[idx_group][idx_sys][idx_cell] = _sol[idx_cell][idx_sys];
+                        _outputFields[idx_group][idx_sys][idx_cell] = firstMomentScaleFactor * _sol[idx_cell][idx_sys];
                     }
                 }
                 break;

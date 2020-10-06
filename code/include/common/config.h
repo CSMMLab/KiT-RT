@@ -58,6 +58,9 @@ class Config
     unsigned short _maxMomentDegree; /*!< @brief Maximal Order of Moments for PN and MN Solver */
     unsigned short _reconsOrder;     /*!< @brief Spatial Order of Accuracy for Solver */
 
+    // Linesource
+    double _sigmaS; /*!< @brief Scattering coeffient for Linesource test case */
+
     /*!< @brief If true, very low entries (10^-10 or smaller) of the flux matrices will be set to zero,
      * to improve floating point accuracy */
     bool _cleanFluxMat;
@@ -239,6 +242,8 @@ class Config
     bool inline GetSNAllGaussPts() const { return _allGaussPts; }
     bool inline GetIsCSD() const { return _csd; }
 
+    // Linesource
+    double inline GetSigmaS() const { return _sigmaS; }
     //  Optimizer
     double inline GetNewtonOptimizerEpsilon() const { return _optimizerEpsilon; }
     unsigned inline GetNewtonIter() const { return _newtonIter; }

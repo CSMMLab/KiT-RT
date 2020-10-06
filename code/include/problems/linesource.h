@@ -8,6 +8,9 @@ class LineSource : public ProblemBase
   private:
     LineSource() = delete;
 
+  protected:
+    double _sigmaS; /*!< @brief: Scattering coefficient */
+
   public:
     LineSource( Config* settings, Mesh* mesh );
 
