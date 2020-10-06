@@ -13,16 +13,6 @@ PNSolver::PNSolver( Config* settings ) : Solver( settings ) {
     _LMaxDegree    = settings->GetMaxMomentDegree();
     _nTotalEntries = GlobalIndex( int( _LMaxDegree ), int( _LMaxDegree ) ) + 1;
 
-    // transform sigmaT and sigmaS in sigmaA.
-    _sigmaA = VectorVector( _nEnergies, Vector( _nCells, 0 ) );    // Get rid of this extra vektor!
-
-    for( unsigned n = 0; n < _nEnergies; n++ ) {
-        for( unsigned j = 0; j < _nCells; j++ ) {
-            _sigmaA[n][j] = 0;    //_sigmaT[n][j] - _sigmaS[n][j];
-            _sigmaS[n][j] = 1;
-        }
-    }
-
     // Initialize System Matrices
     _Ax = SymMatrix( _nTotalEntries );
     _Ay = SymMatrix( _nTotalEntries );
@@ -106,6 +96,7 @@ void PNSolver::Solve() {
 
     for( unsigned idx_energy = 0; idx_energy < _nEnergies; idx_energy++ ) {
         // Loop over all spatial cells
+#pragma omp parallel for
         for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
             if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::DIRICHLET ) continue;    // Dirichlet cells stay at IC, farfield assumption
 
@@ -144,9 +135,12 @@ void PNSolver::Solve() {
                     psiNew[idx_cell][idx_system] = _sol[idx_cell][idx_system] -
                                                    ( _dE / _areas[idx_cell] ) * psiNew[idx_cell][idx_system] /* cell averaged flux */
                                                    - _dE * _sol[idx_cell][idx_system] *
-                                                         ( _sigmaA[idx_energy][idx_cell]                                    /* absorbtion influence */
-                                                           + _sigmaS[idx_energy][idx_cell] * _scatterMatDiag[idx_system] ); /* scattering influence */
+                                                         ( ( _sigmaT[idx_energy][idx_cell] - _sigmaS[idx_energy][idx_cell] ) +
+                                                           _sigmaS[idx_energy][idx_cell] * _scatterMatDiag[idx_system] ); /* scattering influence */
                 }
+
+                // add isotropic source to 0-th moment
+                psiNew[idx_cell][0] += _dE * _Q[0][idx_cell][0];
             }
         }
         _sol = psiNew;
@@ -154,7 +148,7 @@ void PNSolver::Solve() {
         double mass = 0.0;
         for( unsigned i = 0; i < _nCells; ++i ) {
             fluxNew[i]       = _sol[i][0];    // zeroth moment is raditation densitiy we are interested in
-            _solverOutput[i] = _sol[i][0];
+            _solverOutput[i] = std::sqrt( 4 * PI ) * _sol[i][0];
             mass += _sol[i][0] * _areas[i];
         }
 
@@ -163,7 +157,7 @@ void PNSolver::Solve() {
         if( rank == 0 ) {
             log->info( "{:03.8f}   {:01.5e} {:01.5e}", _energies[idx_energy], dFlux, mass );
         }
-        Save( idx_energy );
+        // Save( idx_energy );
     }
 }
 
@@ -369,13 +363,7 @@ double PNSolver::LegendrePoly( double x, int l ) {    // Legacy. TO BE DELETED
 
 void PNSolver::Save() const {
     std::vector<std::string> fieldNames{ "flux" };
-    std::vector<double> flux;
-    flux.resize( _nCells );
-
-    for( unsigned i = 0; i < _nCells; ++i ) {
-        flux[i] = _sol[i][0];
-    }
-    std::vector<std::vector<double>> scalarField( 1, flux );
+    std::vector<std::vector<double>> scalarField( 1, _solverOutput );
     std::vector<std::vector<std::vector<double>>> results{ scalarField };
     ExportVTK( _settings->GetOutputFile(), results, fieldNames, _mesh );
 }
