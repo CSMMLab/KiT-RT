@@ -18,7 +18,7 @@ CSDSNSolverFP::CSDSNSolverFP( Config* settings ) : SNSolver( settings ) {
     _angle           = Vector( _settings->GetNQuadPoints(), 0.0 );    // my
     _energies        = Vector( _nEnergies, 0.0 );                     // equidistant
     double energyMin = 1e-1;
-    double energyMax = 1e1;
+    double energyMax = 50e0;
     // write equidistant energy grid
 
     _dE        = ComputeTimeStep( settings->GetCFL() );
@@ -157,22 +157,22 @@ void CSDSNSolverFP::Solve() {
         _dE = fabs( _energies[n + 1] - _energies[n] );    // is the sign correct here?
 // loop over all spatial cells
 // scattering step
-#pragma omp parallel for
+//#pragma omp parallel for
         for( unsigned j = 0; j < _nCells; ++j ) {
             if( _boundaryCells[j] == BOUNDARY_TYPE::DIRICHLET ) continue;
             psi1[j] = blaze::solve( _IL, _sol[j] );
-            if( norm( _IL * psi1[j] - _sol[j] ) > 0.1 ) {
+            if( norm( _IL * psi1[j] - _sol[j] ) > 1e-5 ) {
                 std::cout << _sol[j] << std::endl;
                 std::cout << "----------------------------" << std::endl;
                 std::cout << psi1[j] << std::endl;
                 std::cout << "res = " << norm( _IL * psi1[j] - _sol[j] ) << std::endl;
 
-                exit( EXIT_SUCCESS );
+                exit( EXIT_FAILURE );
             }
             psi1[j] = _alpha * _L * psi1[j];
         }
 // advection step
-#pragma omp parallel for
+//#pragma omp parallel for
         for( unsigned j = 0; j < _nCells; ++j ) {
             if( _boundaryCells[j] == BOUNDARY_TYPE::DIRICHLET ) continue;
             // loop over all ordinates
@@ -185,15 +185,18 @@ void CSDSNSolverFP::Solve() {
                         continue;    // adiabatic wall, add nothing
                     else
                         psiNew[j][i] += _g->Flux( _quadPoints[i], _sol[j][i], _sol[_neighbors[j][idx_neighbor]][i], _normals[j][idx_neighbor] ) /
-                                        _areas[j] / ( _density[j] * _s[n + 1] );
+                                        _areas[j];
                 }
                 // time update angular flux with numerical flux and total scattering cross section
-                psiNew[j][i] = _sol[j][i] - _dE * psiNew[j][i] - _dE * psi1[j][i];
+                psiNew[j][i] = _sol[j][i] - _dE * psiNew[j][i] + _dE * psi1[j][i];
             }
         }
-        _sol = psiNew;
+        for( unsigned j = 0; j < _nCells; ++j ) {
+            if( _boundaryCells[j] == BOUNDARY_TYPE::DIRICHLET ) continue;
+            _sol[j] = psiNew[j];
+        }
 
-#pragma omp parallel for
+//#pragma omp parallel for
         for( unsigned j = 0; j < _nCells; ++j ) {
             fluxNew[j] = 0.0;
             for( unsigned k = 0; k < _nq; ++k ) {
