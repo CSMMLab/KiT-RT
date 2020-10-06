@@ -183,7 +183,7 @@ void MNSolver::Solve() {
         // --- VTK and CSV Output ---
         mass = WriteOutputFields( idx_energy );
         Save( idx_energy );
-        WriteNNTrainingData( idx_energy );
+        // WriteNNTrainingData( idx_energy );
 
         // --- Screen Output ---
         if( rank == 0 ) log->info( "{:03.8f}   {:01.5e}", _energies[idx_energy], mass );
@@ -264,41 +264,44 @@ double MNSolver::WriteOutputFields( unsigned idx_pseudoTime ) {
         mass += _sol[idx_cell][0] * _areas[idx_cell];    // Should probably go to postprocessing
     }
 
-    for( unsigned idx_group = 0; idx_group < nGroups; idx_group++ ) {
-        switch( _settings->GetVolumeOutput()[idx_group] ) {
-            case MINIMAL:
-                for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
-                    _outputFields[idx_group][0][idx_cell] = firstMomentScaleFactor * _sol[idx_cell][0];
-                }
-                break;
-            case MOMENTS:
-                for( unsigned idx_sys = 0; idx_sys < _nTotalEntries; idx_sys++ ) {
+    if( _settings->GetOutputFrequency() != 0 && idx_pseudoTime % (unsigned)_settings->GetOutputFrequency() == 0 ) {
+
+        for( unsigned idx_group = 0; idx_group < nGroups; idx_group++ ) {
+            switch( _settings->GetVolumeOutput()[idx_group] ) {
+                case MINIMAL:
                     for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
-                        _outputFields[idx_group][idx_sys][idx_cell] = _sol[idx_cell][idx_sys];
+                        _outputFields[idx_group][0][idx_cell] = firstMomentScaleFactor * _sol[idx_cell][0];
                     }
-                }
-                break;
-            case DUAL_MOMENTS:
-                for( unsigned idx_sys = 0; idx_sys < _nTotalEntries; idx_sys++ ) {
+                    break;
+                case MOMENTS:
+                    for( unsigned idx_sys = 0; idx_sys < _nTotalEntries; idx_sys++ ) {
+                        for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
+                            _outputFields[idx_group][idx_sys][idx_cell] = _sol[idx_cell][idx_sys];
+                        }
+                    }
+                    break;
+                case DUAL_MOMENTS:
+                    for( unsigned idx_sys = 0; idx_sys < _nTotalEntries; idx_sys++ ) {
+                        for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
+                            _outputFields[idx_group][idx_sys][idx_cell] = _alpha[idx_cell][idx_sys];
+                        }
+                    }
+                    break;
+                case ANALYTIC:
+                    // Compute total "mass" of the system ==> to check conservation properties
                     for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
-                        _outputFields[idx_group][idx_sys][idx_cell] = _alpha[idx_cell][idx_sys];
+
+                        double time  = idx_pseudoTime * _dE;
+                        double sigma = 0;
+
+                        _outputFields[idx_group][0][idx_cell] =
+                            ( 4 * M_PI ) * _problem->GetAnalyticalSolution(
+                                               _mesh->GetCellMidPoints()[idx_cell][0], _mesh->GetCellMidPoints()[idx_cell][1], time, sigma );
                     }
-                }
-                break;
-            case ANALYTIC:
-                // Compute total "mass" of the system ==> to check conservation properties
-                for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
+                    break;
 
-                    double time  = idx_pseudoTime * _dE;
-                    double sigma = 0;
-
-                    _outputFields[idx_group][0][idx_cell] =
-                        ( 4 * M_PI ) * _problem->GetAnalyticalSolution(
-                                           _mesh->GetCellMidPoints()[idx_cell][0], _mesh->GetCellMidPoints()[idx_cell][1], time, sigma );
-                }
-                break;
-
-            default: ErrorMessages::Error( "Volume Output Group not defined for MN Solver!", CURRENT_FUNCTION ); break;
+                default: ErrorMessages::Error( "Volume Output Group not defined for MN Solver!", CURRENT_FUNCTION ); break;
+            }
         }
     }
     return mass;
@@ -307,7 +310,9 @@ double MNSolver::WriteOutputFields( unsigned idx_pseudoTime ) {
 void MNSolver::Save() const { ExportVTK( _settings->GetOutputFile(), _outputFields, _outputFieldNames, _mesh ); }
 
 void MNSolver::Save( int currEnergy ) const {
-    ExportVTK( _settings->GetOutputFile() + "_" + std::to_string( currEnergy ), _outputFields, _outputFieldNames, _mesh );
+    if( _settings->GetOutputFrequency() != 0 && currEnergy % (unsigned)_settings->GetOutputFrequency() == 0 ) {
+        ExportVTK( _settings->GetOutputFile() + "_" + std::to_string( currEnergy ), _outputFields, _outputFieldNames, _mesh );
+    }
 }
 
 void MNSolver::WriteNNTrainingData( unsigned idx_pseudoTime ) {

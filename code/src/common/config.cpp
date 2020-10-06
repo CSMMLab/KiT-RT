@@ -273,10 +273,14 @@ void Config::SetConfigOptions() {
     AddStringListOption( "BC_DIRICHLET", _nMarkerDirichlet, _MarkerDirichlet );
     AddStringListOption( "BC_NEUMANN", _nMarkerNeumann, _MarkerNeumann );
 
+    /*! @brief Scattering kernel \n DESCRIPTION: Describes used scattering kernel \n DEFAULT KERNEL_Isotropic \ingroup Config */
     AddEnumOption( "KERNEL", _kernelName, Kernel_Map, KERNEL_Isotropic );
 
     // Output related options
+    /*! @brief Volume output \n DESCRIPTION: Describes output groups to write to vtk \ingroup Config */
     AddEnumListOption( "VOLUME_OUTPUT", _nVolumeOutput, _volumeOutput, VolOutput_Map );
+    /*! @brief Output Frequency \n DESCRIPTION: Describes output write frequency \n DEFAULT 0 ,i.e. only last value \ingroup Config */
+    AddUnsignedShortOption( "OUTPUT_FREQUENCY", _outputFrequency, 0 );
 }
 
 void Config::SetConfigParsing( string case_filename ) {

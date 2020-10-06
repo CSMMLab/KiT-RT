@@ -69,7 +69,7 @@ void PNSolver::Solve() {
     if( rank == 0 ) log->info( "{:10}   {:10}", "t", "mass" );
 
     //   Remove
-    mass = WriteOutputFields();
+    mass = WriteOutputFields( 0 );
     if( rank == 0 ) log->info( " {:01.5e}  {:01.5e}", 0.0, mass );
 
     // Loop over energies (pseudo-time of continuous slowing down approach)
@@ -123,7 +123,7 @@ void PNSolver::Solve() {
         _sol = psiNew;
 
         // --- VTK and CSV Output ---
-        mass = WriteOutputFields();
+        mass = WriteOutputFields( idx_energy );
         Save( idx_energy );
 
         // --- Screen Output ---
@@ -371,7 +371,7 @@ void PNSolver::PrepareOutputFields() {
     }
 }
 
-double PNSolver::WriteOutputFields() {
+double PNSolver::WriteOutputFields( unsigned idx_pseudoTime ) {
     double mass                   = 0.0;
     unsigned nGroups              = (unsigned)_settings->GetNVolumeOutput();
     double firstMomentScaleFactor = sqrt( 4 * M_PI );
@@ -381,21 +381,24 @@ double PNSolver::WriteOutputFields() {
         mass += _sol[idx_cell][0] * _areas[idx_cell];    // Should probably go to postprocessing
     }
 
-    for( unsigned idx_group = 0; idx_group < nGroups; idx_group++ ) {
-        switch( _settings->GetVolumeOutput()[idx_group] ) {
-            case MINIMAL:
-                for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
-                    _outputFields[idx_group][0][idx_cell] = _sol[idx_cell][0];
-                }
-                break;
-            case MOMENTS:
-                for( unsigned idx_sys = 0; idx_sys < _nTotalEntries; idx_sys++ ) {
+    if( _settings->GetOutputFrequency() != 0 && idx_pseudoTime % (unsigned)_settings->GetOutputFrequency() == 0 ) {
+
+        for( unsigned idx_group = 0; idx_group < nGroups; idx_group++ ) {
+            switch( _settings->GetVolumeOutput()[idx_group] ) {
+                case MINIMAL:
                     for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
-                        _outputFields[idx_group][idx_sys][idx_cell] = firstMomentScaleFactor * _sol[idx_cell][idx_sys];
+                        _outputFields[idx_group][0][idx_cell] = _sol[idx_cell][0];
                     }
-                }
-                break;
-            default: ErrorMessages::Error( "Volume Output Group not defined for PN Solver!", CURRENT_FUNCTION ); break;
+                    break;
+                case MOMENTS:
+                    for( unsigned idx_sys = 0; idx_sys < _nTotalEntries; idx_sys++ ) {
+                        for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
+                            _outputFields[idx_group][idx_sys][idx_cell] = firstMomentScaleFactor * _sol[idx_cell][idx_sys];
+                        }
+                    }
+                    break;
+                default: ErrorMessages::Error( "Volume Output Group not defined for PN Solver!", CURRENT_FUNCTION ); break;
+            }
         }
     }
     return mass;
@@ -404,7 +407,9 @@ double PNSolver::WriteOutputFields() {
 void PNSolver::Save() const { ExportVTK( _settings->GetOutputFile(), _outputFields, _outputFieldNames, _mesh ); }
 
 void PNSolver::Save( int currEnergy ) const {
-    ExportVTK( _settings->GetOutputFile() + "_" + std::to_string( currEnergy ), _outputFields, _outputFieldNames, _mesh );
+    if( _settings->GetOutputFrequency() != 0 && currEnergy % (unsigned)_settings->GetOutputFrequency() == 0 ) {
+        ExportVTK( _settings->GetOutputFile() + "_" + std::to_string( currEnergy ), _outputFields, _outputFieldNames, _mesh );
+    }
 }
 
 void PNSolver::CleanFluxMatrices() {

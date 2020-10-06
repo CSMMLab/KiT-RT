@@ -93,6 +93,7 @@ class Config
     // Output Options
     unsigned short _nVolumeOutput;            /*!< @brief Number of volume outputs */
     std::vector<VOLUME_OUTPUT> _volumeOutput; /*!< @brief Output groups for volume output*/
+    unsigned short _outputFrequency;          /*!< @brief Frequency of vtk write of volume output*/
 
     // --- Parsing Functionality and Initializing of Options ---
     /*!
@@ -244,6 +245,7 @@ class Config
 
     // Linesource
     double inline GetSigmaS() const { return _sigmaS; }
+
     //  Optimizer
     double inline GetNewtonOptimizerEpsilon() const { return _optimizerEpsilon; }
     unsigned inline GetNewtonIter() const { return _newtonIter; }
@@ -261,6 +263,7 @@ class Config
     // Output Structure
     std::vector<VOLUME_OUTPUT> inline GetVolumeOutput() { return _volumeOutput; }
     unsigned short inline GetNVolumeOutput() { return _nVolumeOutput; }
+    unsigned short inline GetOutputFrequency() { return _outputFrequency; }
 
     // ---- Setters for option structure
 
