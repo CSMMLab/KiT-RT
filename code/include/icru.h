@@ -54,7 +54,7 @@ class ICRU
     double _BETA2;
     double _R1;
 
-    Vector _E, _QMU; // energy and mu vectors
+    Vector _E, _QMU; // input energy and mu vectors
     std::vector<double> _ET, _ETL;
     std::vector<double> _XMU, _XMUL;
     std::vector<double> _ECS, _PCS;

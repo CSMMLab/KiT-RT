@@ -168,6 +168,7 @@ void ICRU::ELINIT( std::vector<double> IZ, std::vector<double> STF ) {
 
 void ICRU::DCSEL0( double E ) {
     if( E < 49.9999e0 || E > 1.0001e8 ) {
+        std::cout<<"Energy "<<E<<std::endl;
         ErrorMessages::Error( "Outside of supported energy range", CURRENT_FUNCTION );
     }
     double EL = std::log( E );
@@ -464,13 +465,26 @@ void ICRU::GetAngularScatteringXS( Matrix& angularXS, Vector& integratedXS ) {
 }
 
 void ICRU::GetTransportCoefficients( Matrix& xi ) {
-
-    for( unsigned i = 0; i < _ET.size(); ++i ) { std::cout<<_ET[i]<<std::endl; }
-    exit(EXIT_FAILURE);
-
+    //xi.resize(xi.rows(),ELAW.size());
+    Vector mu(_XMU.size());
+    for( unsigned n = 0; n < mu.size(); ++n ) mu[n] = fabs(_XMU[n]-1.0);
     for( unsigned i = 0; i < _E.size(); ++i ) {
         std::vector<double> dxse, dxsi, dxs;
+        //_E[i] = 10*1e6;
         angdcs( 3u, _E[i], dxse, dxsi, dxs );
+/*
+        std::cout<<"mu = [ ";
+        for( unsigned k = 0; k < dxse.size(); ++k ){
+            std::cout<<_XMU[k]<<"; ";
+        }
+        std::cout<<"];"<<std::endl;
+
+        std::cout<<"sigmaE = [ ";
+        for( unsigned k = 0; k < dxse.size(); ++k ){
+            std::cout<<dxse[k]*H2OMolecularDensity*2*PI<<"; "; // TODO: fix to barn per ster
+        }
+        std::cout<<"];"<<std::endl;*/
+        //exit(EXIT_FAILURE);
 
         //std::cout<<"size dxs -> "<<dxs.size()<<std::endl;
 
@@ -479,15 +493,22 @@ void ICRU::GetTransportCoefficients( Matrix& xi ) {
             xi(n,i) = 0.0;
             // so far only integration on [0,1]
             for( unsigned k = 0; k < dxs.size()-1; ++k ){
-                xi(n,i) += 0.5 * ( pow(1.0-_XMU[k+1],n)*dxs[k+1] + pow(1.0-_XMU[k],n)*dxs[k] )*(_XMU[k+1]-_XMU[k]);
+                //std::cout<<n<<" on [0,1] : "<<pow(1.0-_XMU[k+1],n)<<" "<<( pow(1.0-_XMU[k+1],n)*dxs[k+1] + pow(1.0+_XMU[k],n)*dxs[k] )*(_XMU[k+1]-_XMU[k])<<std::endl;
+                //std::cout<<mu[k]<<" "<<dxs[k]<<std::endl;
+                xi(n,i) -= 0.5 * ( pow(1.0-mu[k+1],n)*dxs[k+1] + pow(1.0-mu[k],n)*dxs[k] )*(mu[k+1]-mu[k]);
                 //std::cout<<"XMU at "<<k<<":"<<_XMU[k]<<std::endl;
                 //std::cout<<"dxs at "<<k<<": "<<dxs[k]<<std::endl;
             }
-            // integration over [-1,1]
-            xi(n,i) *= 2.0;
+            // integration over [-1,0]
+            for( unsigned k = 0; k < dxs.size()-1; ++k ){
+                //std::cout<<n<<" on [-1,0] :"<<pow(1.0+_XMU[k+1],n)<<" "<<( pow(1.0+_XMU[k+1],n)*dxs[k+1] + pow(1.0+_XMU[k],n)*dxs[k] )*(_XMU[k+1]-_XMU[k])<<std::endl;
+                //xi(n,i) -= 0.5 * ( pow(1.0+mu[k+1],n)*dxs[k+1] + pow(1.0+mu[k],n)*dxs[k] )*(mu[k+1]-mu[k]);
+                //std::cout<<"XMU at "<<k<<":"<<_XMU[k]<<std::endl;
+                //std::cout<<"dxs at "<<k<<": "<<dxs[k]<<std::endl;
+            }
         }
     }
-    xi *= 2.0*PI*1e24;//*H2OMolecularDensity;
+    xi *= 2.0*PI*H2OMolecularDensity;
 }
 
 void ICRU::GetStoppingPower( Vector& stoppingPower ) {
