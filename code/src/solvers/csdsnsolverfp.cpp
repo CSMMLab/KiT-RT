@@ -17,8 +17,8 @@ CSDSNSolverFP::CSDSNSolverFP( Config* settings ) : SNSolver( settings ) {
     // Set angle and energies
     _angle           = Vector( _settings->GetNQuadPoints(), 0.0 );    // my
     _energies        = Vector( _nEnergies, 0.0 );                     // equidistant
-     _energyMin = 50;
-     _energyMax = 51;
+     _energyMin = 1e-4;
+     _energyMax = 10.0;
     // write equidistant energy grid
 
     _dE        = ComputeTimeStep( settings->GetCFL() );
@@ -96,24 +96,8 @@ void CSDSNSolverFP::Solve() {
     // setup IC and incoming BC on left
     // auto cellMids = _settings->GetCellMidPoints();
     _sol = std::vector<Vector>( _nCells, Vector( _nq, 0.0 ) );
-    for( unsigned j = 0; j < _nCells; ++j ) {
-        // if(_boundaryCells[j] == BOUNDARY_TYPE::NEUMANN) std::cout<<"BOUNDARY CELL DETECTED. x = "<<cellMids[j][0]<<std::endl;
-        if( _boundaryCells[j] == BOUNDARY_TYPE::DIRICHLET && cellMids[j][0] < 1.0 ) {
-            std::cout << "BOUNDARY CELL is left!" << std::endl;
-            for( unsigned k = 0; k < _nq; ++k ) {
-                if( _quadPoints[k][0] > 0 ) {
-                    _sol[j][k] = 1e5 * exp( -10.0 * pow( 1.0 - _quadPoints[k][0], 2 ) );
-                }
-            }
-        }
-    }
     for( unsigned k = 0; k < _nq; ++k ) {
-        if( _quadPoints[k][0] > 0 ) {
-            if(_RT){
-                _sol[0][k] = 1e5 * exp( -200.0 * pow( 1.0 - _quadPoints[k][0], 2 ) ) * exp(-50*(_energyMin-_energyMax));
-            }else
-                _sol[0][k] = 1e5 * exp( -10.0 * pow( 1.0 - _quadPoints[k][0], 2 ) );
-        }
+        if( _quadPoints[k][0] > 0 && !_RT) _sol[0][k] = 1e5 * exp( -10.0 * pow( 1.0 - _quadPoints[k][0], 2 ) );
     }
     _boundaryCells[0]           = BOUNDARY_TYPE::DIRICHLET;
     _boundaryCells[_nCells - 1] = BOUNDARY_TYPE::DIRICHLET;
@@ -165,18 +149,11 @@ void CSDSNSolverFP::Solve() {
 
         _IL = identity - _beta * _L;
 
-        std::cout << "xi0 = " << _xi(0,_nEnergies-n-1) << std::endl;
-        std::cout << "xi1 = " << _xi(1,_nEnergies-n-1) << std::endl;
-        std::cout << "xi2 = " << _xi(2,_nEnergies-n-1) << std::endl;
-
-        std::cout << "alpha = " << _alpha << std::endl;
-        std::cout << "beta = " << _beta << std::endl;
-
         // write BC
         if(_RT){
             for( unsigned k = 0; k < _nq; ++k ) {
                 if( _quadPoints[k][0] > 0 ) {
-                        _sol[0][k] = 1e5 * exp( -200.0 * pow( 1.0 - _quadPoints[k][0], 2 ) ) * exp(-50*(_energyMin-_energies[n]));
+                        _sol[0][k] = 1e5 * exp( -200.0 * pow( 1.0 - _quadPoints[k][0], 2 ) ) * exp(-50*pow(_energyMax-_energies[n],2));
                 }
             }
         }
@@ -187,15 +164,6 @@ void CSDSNSolverFP::Solve() {
         for( unsigned j = 0; j < _nCells; ++j ) {
             if( _boundaryCells[j] == BOUNDARY_TYPE::DIRICHLET ) continue;
             psi1[j] = blaze::solve( _IL, _sol[j] );
-            /*
-            if( norm( _IL * psi1[j] - _sol[j] ) > 1e-3 ) {
-                std::cout << _sol[j] << std::endl;
-                std::cout << "----------------------------" << std::endl;
-                std::cout << psi1[j] << std::endl;
-                std::cout << "res = " << norm( _IL * psi1[j] - _sol[j] ) << std::endl;
-
-                exit( EXIT_FAILURE );
-            }*/
             psi1[j] = _alpha * _L * psi1[j];
         }
 // advection step
