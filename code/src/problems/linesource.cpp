@@ -24,18 +24,19 @@ double LineSource::GetAnalyticalSolution( double x, double y, double t, double s
                 solution = 1 / ( 2 * M_PI * t * sqrt( t * t - R * R ) );
             }
         }
-        else {
+        else if( _sigmaS == 1.0 ) {
             double gamma = R / t;
 
             if( ( 1 - gamma ) > 0 ) {
                 solution = exp( -t ) / ( 2 * M_PI * t * t * sqrt( 1 - gamma * gamma ) ) + 2 * t * HelperIntRho_ptc( R, t );
             }
         }
+        else {
+            solution = 0.0;
+        }
     }
-    else {
-        solution = 0;
-    }
-    return ( 4 * M_PI ) * solution;
+
+    return ( 4 * M_PI ) * solution;    // Scaling of soolution
 }
 
 double LineSource::HelperIntRho_ptc( double R, double t ) {
