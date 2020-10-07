@@ -22,7 +22,12 @@ ProblemBase* ProblemBase::Create( Config* settings, Mesh* mesh ) {
             else
                 return new LineSource_SN( settings, mesh );    // default
         }
-        case PROBLEM_Checkerboard: return new Checkerboard( settings, mesh );
+        case PROBLEM_Checkerboard: {
+            if( settings->GetSolverName() == PN_SOLVER || settings->GetSolverName() == MN_SOLVER )
+                return new Checkerboard_PN( settings, mesh );
+            else
+                return new Checkerboard_SN( settings, mesh );    // default
+        }
         case PROBLEM_ElectronRT: return new ElectronRT( settings, mesh );
         case PROBLEM_WaterPhantom: return new WaterPhantom( settings, mesh );
         case PROBLEM_LineSource_Pseudo_1D: return new LineSource_SN_Pseudo1D( settings, mesh );
