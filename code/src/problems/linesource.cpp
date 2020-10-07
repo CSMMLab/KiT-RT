@@ -18,19 +18,24 @@ double LineSource::GetAnalyticalSolution( double x, double y, double t, double s
     double solution = 0.0;
     double R        = sqrt( x * x + y * y );
 
-    if( _sigmaS == 0.0 ) {
-        if( ( t - R ) > 0 ) {
-            solution = 1 / ( 2 * M_PI * t * sqrt( t * t - R * R ) );
+    if( t > 0 ) {
+        if( _sigmaS == 0.0 ) {
+            if( ( t - R ) > 0 ) {
+                solution = 1 / ( 2 * M_PI * t * sqrt( t * t - R * R ) );
+            }
+        }
+        else {
+            double gamma = R / t;
+
+            if( ( 1 - gamma ) > 0 ) {
+                solution = exp( -t ) / ( 2 * M_PI * t * t * sqrt( 1 - gamma * gamma ) ) + 2 * t * HelperIntRho_ptc( R, t );
+            }
         }
     }
     else {
-        double gamma = R / t;
-
-        if( ( 1 - gamma ) > 0 ) {
-            solution = exp( -t ) / ( 2 * M_PI * t * t * sqrt( 1 - gamma * gamma ) ) + 2 * t * HelperIntRho_ptc( R, t );
-        }
+        solution = 0;
     }
-    return solution;
+    return ( 4 * M_PI ) * solution;
 }
 
 double LineSource::HelperIntRho_ptc( double R, double t ) {
@@ -42,10 +47,10 @@ double LineSource::HelperIntRho_ptc( double R, double t ) {
     // integral is from 0 to  sqrt( 1 - gamma * gamma )
     double stepsize = sqrt( 1 - gamma * gamma ) / (double)numsteps;
 
-    omega = 0.5 * stepsize;
     for( int i = 0; i < numsteps; i++ ) {
-        omega = omega + i * stepsize;
-        integral += HelperRho_ptc( t * sqrt( gamma * gamma + omega * omega ), t );
+        omega = i * stepsize + 0.5 * stepsize;
+
+        integral += stepsize * HelperRho_ptc( t * sqrt( gamma * gamma + omega * omega ), t );
     }
     return integral;
 }
@@ -68,6 +73,10 @@ double LineSource::HelperRho_ptc2( double R, double t ) {
         // Compute the integralpart with midpoint rule
         result = exp( -t ) / ( 32 * M_PI * M_PI * R ) * ( 1 - gamma * gamma ) * HelperIntRho_ptc2( t, gamma );
     }
+    if( __isnan( result ) ) {
+        double iNan = 0.0;
+    }
+
     return result;
 }
 
@@ -86,17 +95,15 @@ double LineSource::HelperIntRho_ptc2( double t, double gamma ) {
 
     double stepsize = M_PI / (double)numsteps;
 
-    u = 0.5 * stepsize;
-
     q = ( 1.0 + gamma ) / ( 1.0 - gamma );
 
     for( int i = 0; i < numsteps; i++ ) {
-        u = u + (double)i * stepsize;
+        u = i * stepsize + 0.5 * stepsize;
 
         // function evaluation
         beta        = ( log( q ) + com_one * u ) / ( gamma + com_one * tan( 0.5 * u ) );
         complexPart = ( gamma + com_one * tan( 0.5 * u ) ) * beta * beta * beta * exp( 0.5 * t * ( 1 - gamma * gamma ) * beta );
-        integral += ( 1 / cos( 0.5 * u ) ) * ( 1 / cos( 0.5 * u ) ) * complexPart.real();
+        integral += stepsize * ( 1 / cos( 0.5 * u ) ) * ( 1 / cos( 0.5 * u ) ) * complexPart.real();
     }
     return integral;
 }
