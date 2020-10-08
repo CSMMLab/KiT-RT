@@ -380,22 +380,24 @@ double PNSolver::WriteOutputFields( unsigned idx_pseudoTime ) {
     for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
         mass += _sol[idx_cell][0] * _areas[idx_cell];    // Should probably go to postprocessing
     }
-
-    for( unsigned idx_group = 0; idx_group < nGroups; idx_group++ ) {
-        switch( _settings->GetVolumeOutput()[idx_group] ) {
-            case MINIMAL:
-                for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
-                    _outputFields[idx_group][0][idx_cell] = _sol[idx_cell][0];
-                }
-                break;
-            case MOMENTS:
-                for( unsigned idx_sys = 0; idx_sys < _nTotalEntries; idx_sys++ ) {
+    if( _settings->GetOutputFrequency() != 0 && idx_pseudoTime % (unsigned)_settings->GetOutputFrequency() == 0 ||
+        idx_pseudoTime == _nEnergies - 1 /* need sol at last iteration */ ) {
+        for( unsigned idx_group = 0; idx_group < nGroups; idx_group++ ) {
+            switch( _settings->GetVolumeOutput()[idx_group] ) {
+                case MINIMAL:
                     for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
-                        _outputFields[idx_group][idx_sys][idx_cell] = firstMomentScaleFactor * _sol[idx_cell][idx_sys];
+                        _outputFields[idx_group][0][idx_cell] = _sol[idx_cell][0];
                     }
-                }
-                break;
-            default: ErrorMessages::Error( "Volume Output Group not defined for PN Solver!", CURRENT_FUNCTION ); break;
+                    break;
+                case MOMENTS:
+                    for( unsigned idx_sys = 0; idx_sys < _nTotalEntries; idx_sys++ ) {
+                        for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
+                            _outputFields[idx_group][idx_sys][idx_cell] = firstMomentScaleFactor * _sol[idx_cell][idx_sys];
+                        }
+                    }
+                    break;
+                default: ErrorMessages::Error( "Volume Output Group not defined for PN Solver!", CURRENT_FUNCTION ); break;
+            }
         }
     }
     return mass;

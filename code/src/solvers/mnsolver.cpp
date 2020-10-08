@@ -263,40 +263,43 @@ double MNSolver::WriteOutputFields( unsigned idx_pseudoTime ) {
     for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
         mass += _sol[idx_cell][0] * _areas[idx_cell];    // Should probably go to postprocessing
     }
+    if( _settings->GetOutputFrequency() != 0 && idx_pseudoTime % (unsigned)_settings->GetOutputFrequency() == 0 ||
+        idx_pseudoTime == _nEnergies - 1 /* need sol at last iteration */ ) {
 
-    for( unsigned idx_group = 0; idx_group < nGroups; idx_group++ ) {
-        switch( _settings->GetVolumeOutput()[idx_group] ) {
-            case MINIMAL:
-                for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
-                    _outputFields[idx_group][0][idx_cell] = firstMomentScaleFactor * _sol[idx_cell][0];
-                }
-                break;
-            case MOMENTS:
-                for( unsigned idx_sys = 0; idx_sys < _nTotalEntries; idx_sys++ ) {
+        for( unsigned idx_group = 0; idx_group < nGroups; idx_group++ ) {
+            switch( _settings->GetVolumeOutput()[idx_group] ) {
+                case MINIMAL:
                     for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
-                        _outputFields[idx_group][idx_sys][idx_cell] = _sol[idx_cell][idx_sys];
+                        _outputFields[idx_group][0][idx_cell] = firstMomentScaleFactor * _sol[idx_cell][0];
                     }
-                }
-                break;
-            case DUAL_MOMENTS:
-                for( unsigned idx_sys = 0; idx_sys < _nTotalEntries; idx_sys++ ) {
+                    break;
+                case MOMENTS:
+                    for( unsigned idx_sys = 0; idx_sys < _nTotalEntries; idx_sys++ ) {
+                        for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
+                            _outputFields[idx_group][idx_sys][idx_cell] = _sol[idx_cell][idx_sys];
+                        }
+                    }
+                    break;
+                case DUAL_MOMENTS:
+                    for( unsigned idx_sys = 0; idx_sys < _nTotalEntries; idx_sys++ ) {
+                        for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
+                            _outputFields[idx_group][idx_sys][idx_cell] = _alpha[idx_cell][idx_sys];
+                        }
+                    }
+                    break;
+                case ANALYTIC:
+                    // Compute total "mass" of the system ==> to check conservation properties
                     for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
-                        _outputFields[idx_group][idx_sys][idx_cell] = _alpha[idx_cell][idx_sys];
+
+                        double time = idx_pseudoTime * _dE;
+
+                        _outputFields[idx_group][0][idx_cell] = _problem->GetAnalyticalSolution(
+                            _mesh->GetCellMidPoints()[idx_cell][0], _mesh->GetCellMidPoints()[idx_cell][1], time, _sigmaS[idx_pseudoTime][idx_cell] );
                     }
-                }
-                break;
-            case ANALYTIC:
-                // Compute total "mass" of the system ==> to check conservation properties
-                for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
+                    break;
 
-                    double time = idx_pseudoTime * _dE;
-
-                    _outputFields[idx_group][0][idx_cell] = _problem->GetAnalyticalSolution(
-                        _mesh->GetCellMidPoints()[idx_cell][0], _mesh->GetCellMidPoints()[idx_cell][1], time, _sigmaS[idx_pseudoTime][idx_cell] );
-                }
-                break;
-
-            default: ErrorMessages::Error( "Volume Output Group not defined for MN Solver!", CURRENT_FUNCTION ); break;
+                default: ErrorMessages::Error( "Volume Output Group not defined for MN Solver!", CURRENT_FUNCTION ); break;
+            }
         }
     }
     return mass;
