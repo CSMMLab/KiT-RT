@@ -193,7 +193,7 @@ VectorVector LineSource_PN::SetupIC() {
     VectorVector psi( _mesh->GetNumCells(), Vector( ntotalEquations, 0 ) );    // zero could lead to problems?
     VectorVector cellMids = _mesh->GetCellMidPoints();
 
-    // Initial condition is dirac impulse at (x,y) = (0,0) ==> constant in angle ==> all moments are zero.
+    // Initial condition is dirac impulse at (x,y) = (0,0) ==> constant in angle ==> all moments - exept first - are zero.
     double t = 3.2e-4;    // pseudo time for gaussian smoothing (Approx to dirac impulse)
     for( unsigned j = 0; j < cellMids.size(); ++j ) {
         double x  = cellMids[j][0];

@@ -1,7 +1,7 @@
 /*!
  * \file io.cpp
  * \brief Set of utility io functions for rtns
- * \author S. Schotthoefer, J. Wolters et al.
+ * \author  J. Kusch, S. Schotthoefer, P. Stammer,  J. Wolters, T. Xiao
  */
 
 #include "common/io.h"

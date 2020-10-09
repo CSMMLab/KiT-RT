@@ -263,6 +263,8 @@ double MNSolver::WriteOutputFields( unsigned idx_pseudoTime ) {
     for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
         mass += _sol[idx_cell][0] * _areas[idx_cell];    // Should probably go to postprocessing
     }
+    mass *= firstMomentScaleFactor;
+
     if( _settings->GetOutputFrequency() != 0 && idx_pseudoTime % (unsigned)_settings->GetOutputFrequency() == 0 ||
         idx_pseudoTime == _nEnergies - 1 /* need sol at last iteration */ ) {
 
