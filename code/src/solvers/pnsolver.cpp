@@ -117,6 +117,7 @@ void PNSolver::Solve() {
                                                            + _sigmaS[idx_energy][idx_cell] * _scatterMatDiag[idx_system] ); /* scattering influence */
                 }
             }
+            psiNew[idx_cell][0] += _dE * _Q[0][idx_cell][0];
         }
 
         // Update Solution
