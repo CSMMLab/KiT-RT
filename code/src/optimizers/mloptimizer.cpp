@@ -8,12 +8,11 @@
 #include "toolboxes/errormessages.h"
 
 MLOptimizer::MLOptimizer( Config* settings ) : OptimizerBase( settings ) {
-    // test
-    // Test
+
     initialize_python();
 
     // initialize network
-    std::string moduleName = "callNN";
+    std::string moduleName = "callNN_MK3";
 
     _pModule = PyImport_ImportModule( moduleName.c_str() );
     if( !_pModule ) {

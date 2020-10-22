@@ -74,10 +74,6 @@ double LineSource::HelperRho_ptc2( double R, double t ) {
         // Compute the integralpart with midpoint rule
         result = exp( -t ) / ( 32 * M_PI * M_PI * R ) * ( 1 - gamma * gamma ) * HelperIntRho_ptc2( t, gamma );
     }
-    if( __isnan( result ) ) {
-        double iNan = 0.0;
-    }
-
     return result;
 }
 
