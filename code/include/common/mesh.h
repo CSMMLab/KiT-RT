@@ -5,7 +5,15 @@
 #include "common/globalconstants.h"
 #include "common/typedef.h"
 
+#include <algorithm>
+#include <mpi.h>
+#include <omp.h>
 #include <vector>
+
+#include "metis.h"
+#include "parmetis.h"
+#include "reconstructor.h"
+#include "toolboxes/errormessages.h"
 
 class Mesh
 {
@@ -15,6 +23,7 @@ class Mesh
     const unsigned _numNodes;
     const unsigned _numNodesPerCell;
     const unsigned _numBoundaries;
+    const unsigned _numCellBoundaryNodes;
     const unsigned _ghostCellID;    // equal to _numCells and therefore has the ID of the last cell + 1
 
     std::vector<std::pair<double, double>> _bounds;
