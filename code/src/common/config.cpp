@@ -371,6 +371,7 @@ void Config::SetPointersNull( void ) {
 }
 
 void Config::SetPostprocessing() {
+
     // append '/' to all dirs to allow for simple path addition
     if( _logDir[_logDir.size() - 1] != '/' ) _logDir.append( "/" );
     if( _outputDir[_outputDir.size() - 1] != '/' ) _outputDir.append( "/" );

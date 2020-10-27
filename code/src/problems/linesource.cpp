@@ -194,7 +194,7 @@ VectorVector LineSource_PN::SetupIC() {
     for( unsigned j = 0; j < cellMids.size(); ++j ) {
         double x  = cellMids[j][0];
         double y  = cellMids[j][1];    // (x- 0.5) * (x- 0.5)
-        psi[j][0] = sqrt( 4 * M_PI ) * 1.0 / ( 4.0 * M_PI * t ) * std::exp( -( x * x + y * y ) / ( 4 * t ) );
+        psi[j][0] = /*sqrt( 4 * M_PI ) * */ 1.0 / ( 4.0 * M_PI * t ) * std::exp( -( x * x + y * y ) / ( 4 * t ) );
     }
     return psi;
 }
