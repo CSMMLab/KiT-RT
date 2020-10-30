@@ -3,16 +3,14 @@ image: rtsn/test:latest
 stages:
   - unit_tests
 
-      
 unit_tests:
   stage: unit_tests
   script:
     - git submodule update --init --recursive
     - cd code/build/release
-    - cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=True ../../
+    - cmake -G Ninja -DCMAKE_BUILD_TYPE=Release ../../
     - ninja
-    - cd ../../bin
-    - ./unit_tests
+    - ninja test
   timeout: 2h
   only:
     refs:

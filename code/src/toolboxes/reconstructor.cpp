@@ -1,10 +1,10 @@
-#include "reconstructor.h"
+#include "toolboxes/reconstructor.h"
 
 Reconstructor::Reconstructor( Config* settings ) {}
 
-double FortSign( double a, double b ) { 
-    if( b > 0.0 ) return abs(a);
-    if( b < 0.0 ) return -abs(a);
+double FortSign( double a, double b ) {
+    if( b > 0.0 ) return abs( a );
+    if( b < 0.0 ) return -abs( a );
     return 0.0;
 }
 

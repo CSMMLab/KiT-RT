@@ -1,6 +1,6 @@
-# RTSN - an HPC Radio Therapy $`S_n`$ framework
+# KiT-RT - an HPC Radio Therapy $`S_n`$ framework
 TBD 
-## What RTSN is capable of
+## What KiT-RT is capable of
 ### Theory
 TBD
 ### Examples
@@ -56,13 +56,13 @@ Execute the compiled binary and hand over a valid *TOML*-styled config file.
 Example from inside the `code` directory:
 
 ```bash
-./bin/RTSN input/example.cfg
+./bin/KiT-RT input/example.cfg
 ```
 
 In order to run the code in parallel execute:
 
 ```bash
-OMP_NUM_THREADS=N mpirun -np J ./bin/RTSN input/example.cfg
+OMP_NUM_THREADS=N mpirun -np J ./bin/KiT-RT input/example.cfg
 ```
 
 with `N` equal to the number of shared memory threads and `J` equal to the number of distrubuted memory threads.
@@ -86,8 +86,8 @@ rm -r VTK-8.2.0 VTK-build
 Example for build and run on bwUniCluster:
 Get the code
 ```bash
-git clone https://git.scc.kit.edu/rtsn/rtsn.git
-cd rtsn/
+git clone https://git.scc.kit.edu/rtsn/rtsn.git KiT-RT
+cd KiT-RT/
 git submodule init
 git submodule update
 ```
@@ -109,13 +109,13 @@ make -j
 ---
 
 ## Tests
-In order to also compile the unit tests, add `-DBUILD_TESTING=True` to the cmake command, e.g.:
+After compiling the framework as described above just run:
 
 ```bash
-cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=True ../../
+make test
 ```
 
-The resulting `unit_tests` executable will also be placed in `/bin`.
+The `unit_tests` executable will also be placed in in the build folder.
 
 ## Continuous Integration (CI)
 Every commit on the master branch will trigger a build test and unit tests.
@@ -145,13 +145,13 @@ This last step requires a preceeding `docker login`. Ask Jannick for login crede
 ## Code structure
 **WARNING: is not created automatically - might be out of date!**
 Reverse engineered plantuml diagram of the current code structure: 
-![Can't load image](doc/rtsn.svg "UML diagram")
+![Can't load image](doc/KiT-RT.svg "UML diagram")
 <br/><br/>
 Was created using [hpp2plantuml](https://github.com/thibaultmarin/hpp2plantuml) and [plantuml](https://plantuml.com/), e.g.:
 ```bash
 cd doc 
-hpp2plantuml -i "../code/include/*.h" -i "../code/include/*/*.h" -o rtsn.puml
-plantuml rtsn.puml -tsvg
+hpp2plantuml -i "../code/include/*.h" -i "../code/include/*/*.h" -o KiT-RT.puml
+plantuml KiT-RT.puml -tsvg
 ```
 
 ---

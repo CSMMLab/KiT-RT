@@ -6,8 +6,14 @@ Mesh::Mesh( std::vector<Vector> nodes,
             std::vector<std::vector<unsigned>> cells,
             std::vector<std::pair<BOUNDARY_TYPE, std::vector<unsigned>>> boundaries )
     : _dim( nodes[0].size() ), _numCells( cells.size() ), _numNodes( nodes.size() ), _numNodesPerCell( cells[0].size() ),
-      _numBoundaries( boundaries.size() ), _numCellBoundaryNodes( _numNodesPerCell - 1u ), _ghostCellID( _numCells ), _nodes( nodes ),
-      _cells( cells ), _boundaries( boundaries ) {
+      _numBoundaries( boundaries.size() ), _ghostCellID( _numCells ), _nodes( nodes ), _cells( cells ), _boundaries( boundaries ) {
+    if( _dim == 2 ) {
+        _numNodesPerBoundary = 2u;
+    }
+    else {
+        ErrorMessages::Error( "Unsupported mesh dimension!", CURRENT_FUNCTION );
+    }
+
     ComputeCellAreas();
     ComputeCellMidpoints();
     ComputeConnectivity();
@@ -57,7 +63,7 @@ void Mesh::ComputeConnectivity() {
         for( unsigned j = 0; j < _numCells; ++j ) {
             if( i == j ) continue;
             if( static_cast<unsigned>( blaze::dot( blaze::row( connMat, i ), blaze::row( connMat, j ) ) ) ==
-                _numCellBoundaryNodes ) {    // in 2D cells are neighbors if they share two nodes std::vector<unsigned>* cellsJ = &sortedCells[j];
+                _numNodesPerBoundary ) {    // in 2D cells are neighbors if they share two nodes std::vector<unsigned>* cellsJ = &sortedCells[j];
                 std::vector<unsigned>* cellsJ = &sortedCells[j];
                 std::vector<unsigned> commonElements;
                 std::set_intersection( cellsI->begin(),

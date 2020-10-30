@@ -638,9 +638,12 @@ void Config::InitLogger() {
 #ifdef BUILD_TESTING
     terminalLogLvl = spdlog::level::err;
     fileLogLvl     = spdlog::level::off;
-#else
+#elif NDEBUG
     terminalLogLvl = spdlog::level::info;
     fileLogLvl     = spdlog::level::info;
+#else
+    terminalLogLvl = spdlog::level::debug;
+    fileLogLvl     = spdlog::level::debug;
 #endif
 
     // create log dir if not existent

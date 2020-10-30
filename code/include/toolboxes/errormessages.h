@@ -19,36 +19,68 @@ class ErrorMessages
     inline static void Error( std::string ErrorMsg, std::string FunctionName ) {
         auto log = spdlog::get( "event" );
         // if (Rank == 0){ //For MPI implementation later
-        log->error( "\n" );
-        log->error( "Error in \"{0}\": ", FunctionName );
-        log->error( "-------------------------------------------------------------------------" );
-        log->error( ErrorMsg );
-        log->error( "------------------------------ Error Exit -------------------------------" );
-        log->error( "\n" );
+        if( log ) {
+            log->error( "\n" );
+            log->error( "Error in \"{0}\": ", FunctionName );
+            log->error( "-------------------------------------------------------------------------" );
+            log->error( ErrorMsg );
+            log->error( "------------------------------ Error Exit -------------------------------" );
+            log->error( "\n" );
+        }
+        else {
+            spdlog::error( "\n" );
+            spdlog::error( "Error in \"{0}\": ", FunctionName );
+            spdlog::error( "-------------------------------------------------------------------------" );
+            spdlog::error( ErrorMsg );
+            spdlog::error( "------------------------------ Error Exit -------------------------------" );
+            spdlog::error( "\n" );
+        }
         //}
         exit( EXIT_FAILURE );
     }
 
     inline static void OptionNotSetError( std::string OptionName, std::string FunctionName ) {
+        auto log = spdlog::get( "event" );
         // if (Rank == 0){
-        std::cout << std::endl << std::endl;
-        std::cout << "Error in \"" << FunctionName << "\": " << std::endl;
-        std::cout << "-------------------------------------------------------------------------" << std::endl;
-        std::cout << "Option " << OptionName << " not set. Please check your config file." << std::endl;
-        std::cout << "------------------------------ Error Exit -------------------------------" << std::endl;
-        std::cout << std::endl << std::endl;
+        if( log ) {
+            log->error( "\n" );
+            log->error( "Error in \"{0}\": ", FunctionName );
+            log->error( "-------------------------------------------------------------------------" );
+            log->error( "Option \"{0}\" not set. Please check your config file.", OptionName );
+            log->error( "------------------------------ Error Exit -------------------------------" );
+            log->error( "\n" );
+        }
+        else {
+            spdlog::error( "\n" );
+            spdlog::error( "Error in \"{0}\": ", FunctionName );
+            spdlog::error( "-------------------------------------------------------------------------" );
+            spdlog::error( "Option \"{0}\" not set. Please check your config file.", OptionName );
+            spdlog::error( "------------------------------ Error Exit -------------------------------" );
+            spdlog::error( "\n" );
+        }
         //}
         exit( EXIT_FAILURE );
     }
 
     inline static void ParsingError( std::string ErrorMsg, std::string FunctionName ) {
+        auto log = spdlog::get( "event" );
         // if (Rank == 0){
-        std::cout << std::endl << std::endl;
-        std::cout << "Error in \"" << FunctionName << "\": " << std::endl;
-        std::cout << "-------------------------------------------------------------------------" << std::endl;
-        std::cout << ErrorMsg;
-        std::cout << "------------------------------ Error Exit -------------------------------" << std::endl;
-        std::cout << std::endl << std::endl;
+        if( log ) {
+            log->error( "\n" );
+            log->error( "Error in \"{0}\": ", FunctionName );
+            log->error( "-------------------------------------------------------------------------" );
+            log->error( ErrorMsg );
+            log->error( "------------------------------ Error Exit -------------------------------" );
+            log->error( "\n" );
+        }
+        else {
+            spdlog::error( "\n" );
+            spdlog::error( "Error in \"{0}\": ", FunctionName );
+            spdlog::error( "-------------------------------------------------------------------------" );
+            spdlog::error( ErrorMsg );
+            spdlog::error( "------------------------------ Error Exit -------------------------------" );
+            spdlog::error( "\n" );
+        }
         //}
         exit( EXIT_FAILURE );
     }

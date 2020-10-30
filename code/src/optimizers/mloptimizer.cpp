@@ -82,7 +82,7 @@ void MLOptimizer::init_numpy() {
 
 void MLOptimizer::initialize_python() {
     // Initialize the Python Interpreter
-    std::string pyPath = RTSN_PYTHON_PATH;
+    std::string pyPath = KITRT_PYTHON_PATH;
 
     if( !Py_IsInitialized() ) {
 

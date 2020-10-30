@@ -238,7 +238,7 @@ void PNSolver::ComputeFluxComponents() {
         _AxMinus = _AxMinus * eigenVectors;
         _AxAbs   = _AxAbs * eigenVectors;
 
-        eigenValuesX = eigenValues;
+        // eigenValuesX = eigenValues;
     }
     // --- For y Direction -------
     {
@@ -264,7 +264,7 @@ void PNSolver::ComputeFluxComponents() {
         _AyMinus = _AyMinus * eigenVectors;
         _AyAbs   = _AyAbs * eigenVectors;
 
-        eigenValuesY = eigenValues;
+        // eigenValuesY = eigenValues;
     }
     // --- For z Direction -------
     {
@@ -383,8 +383,8 @@ double PNSolver::WriteOutputFields( unsigned idx_pseudoTime ) {
     }
     mass *= firstMomentScaleFactor;
 
-    if( _settings->GetOutputFrequency() != 0 && idx_pseudoTime % (unsigned)_settings->GetOutputFrequency() == 0 ||
-        idx_pseudoTime == _nEnergies - 1 /* need sol at last iteration */ ) {
+    if( ( _settings->GetOutputFrequency() != 0 && idx_pseudoTime % (unsigned)_settings->GetOutputFrequency() == 0 ) ||
+        ( idx_pseudoTime == _nEnergies - 1 ) /* need sol at last iteration */ ) {
         for( unsigned idx_group = 0; idx_group < nGroups; idx_group++ ) {
             switch( _settings->GetVolumeOutput()[idx_group] ) {
                 case MINIMAL:

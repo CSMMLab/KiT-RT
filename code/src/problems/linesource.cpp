@@ -1,7 +1,7 @@
 #include "problems/linesource.h"
 #include "common/config.h"
 #include "common/mesh.h"
-#include "physics.h"
+#include "toolboxes/physics.h"
 
 #include <complex>
 

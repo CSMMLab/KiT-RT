@@ -5,7 +5,7 @@
 #include "common/config.h"
 #include "common/io.h"
 #include "common/mesh.h"
-#include "cubic2dspline.h"
+#include "toolboxes/cubic2dspline.h"
 #include "toolboxes/textprocessingtoolbox.h"
 
 TEST_CASE( "convert image data to grayscale matrix", "[image I/O]" ) {
