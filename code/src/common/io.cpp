@@ -31,6 +31,7 @@
 
 #include <Python.h>
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
+#define PY_ARRAY_UNIQUE_SYMBOL KITRT_IO_ARRAY_API
 #include <numpy/arrayobject.h>
 
 using vtkPointsSP                 = vtkSmartPointer<vtkPoints>;
@@ -364,6 +365,8 @@ Matrix createSU2MeshFromImage( std::string imageName, std::string SU2Filename ) 
     if( !std::filesystem::exists( outDir ) ) {
         ErrorMessages::Error( "Output directory '" + outDir.string() + "' does not exists!", CURRENT_FUNCTION );
     }
+
+    _import_array();
 
     std::string pyPath = KITRT_PYTHON_PATH;
 
