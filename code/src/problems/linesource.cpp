@@ -13,7 +13,7 @@ LineSource::LineSource( Config* settings, Mesh* mesh ) : ProblemBase( settings, 
 }
 LineSource::~LineSource() {}
 
-double LineSource::GetAnalyticalSolution( double x, double y, double t, double sigma_s ) {
+double LineSource::GetAnalyticalSolution( double x, double y, double t, double /*sigma_s*/ ) {
 
     double solution = 0.0;
     double R        = sqrt( x * x + y * y );
@@ -117,7 +117,7 @@ VectorVector LineSource_SN::GetScatteringXS( const Vector& energies ) {
 
 VectorVector LineSource_SN::GetTotalXS( const Vector& energies ) { return VectorVector( energies.size(), Vector( _mesh->GetNumCells(), _sigmaS ) ); }
 
-std::vector<VectorVector> LineSource_SN::GetExternalSource( const Vector& energies ) {
+std::vector<VectorVector> LineSource_SN::GetExternalSource( const Vector& /*energies*/ ) {
     return std::vector<VectorVector>( 1u, std::vector<Vector>( _mesh->GetNumCells(), Vector( 1u, 0.0 ) ) );
 }
 
@@ -178,7 +178,7 @@ VectorVector LineSource_PN::GetScatteringXS( const Vector& energies ) {
 
 VectorVector LineSource_PN::GetTotalXS( const Vector& energies ) { return VectorVector( energies.size(), Vector( _mesh->GetNumCells(), _sigmaS ) ); }
 
-std::vector<VectorVector> LineSource_PN::GetExternalSource( const Vector& energies ) {
+std::vector<VectorVector> LineSource_PN::GetExternalSource( const Vector& /*energies*/ ) {
     return std::vector<VectorVector>( 1u, std::vector<Vector>( _mesh->GetNumCells(), Vector( 1u, 0.0 ) ) );
 }
 

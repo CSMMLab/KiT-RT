@@ -28,7 +28,7 @@ Config::Config( string case_filename ) {
     /*--- Set the case name to the base config file name without extension ---*/
 
     auto cwd     = std::filesystem::current_path();
-    auto relPath = std::filesystem::path( case_filename );
+    auto relPath = std::filesystem::relative( std::filesystem::path( case_filename ), cwd );
     _fileName    = relPath.filename().string();
     _inputDir    = cwd.string() + "/" + relPath.parent_path().string();
 

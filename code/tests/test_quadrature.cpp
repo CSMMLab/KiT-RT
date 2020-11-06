@@ -28,10 +28,10 @@ double f( double x, double y, double z ) {
     return x * x + y * y + z * z;    // == 1
 }
 
-double sin( double x, double y, double z ) { return sin( x ); }
+double sin( double x, double /*y*/, double /*z*/ ) { return sin( x ); }
 
 TEST_CASE( "Quadrature Tests", "[quadrature]" ) {
-    char filename[] = "../tests/input/unit_quadrature.cfg";
+    std::string filename = std::string( TESTS_PATH ) + "input/unit_quadrature.cfg";
 
     // Load Settings from File
     Config* config = new Config( filename );

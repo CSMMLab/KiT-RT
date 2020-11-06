@@ -1,3 +1,4 @@
+#include <cstdio>
 #include <vtkCellData.h>
 #include <vtkSmartPointer.h>
 #include <vtkUnstructuredGrid.h>
@@ -31,15 +32,15 @@ std::vector<double> readVTKFile( std::string filename ) {
 }
 
 TEST_CASE( "checkerboard_SN", "[validation_tests]" ) {
-    std::string config_file_name = "../tests/input/checkerboard.cfg";
+    std::string config_file_name = std::string( TESTS_PATH ) + "input/checkerboard.cfg";
 
     Config* config = new Config( config_file_name );
     Solver* solver = Solver::Create( config );
     solver->Solve();
     solver->Save();
 
-    auto test      = readVTKFile( "../result/rtsn_test_checkerboard.vtk" );
-    auto reference = readVTKFile( "../tests/input/checkerboard_reference.vtk" );
+    auto test      = readVTKFile( std::string( TESTS_PATH ) + "../result/rtsn_test_checkerboard.vtk" );
+    auto reference = readVTKFile( std::string( TESTS_PATH ) + "input/checkerboard_reference.vtk" );
 
     double eps = 1e-3;
     REQUIRE( test.size() == reference.size() );
@@ -49,15 +50,15 @@ TEST_CASE( "checkerboard_SN", "[validation_tests]" ) {
 }
 
 TEST_CASE( "linesource_SN", "[validation_tests]" ) {
-    std::string config_file_name = "../tests/input/linesource_SN.cfg";
+    std::string config_file_name = std::string( TESTS_PATH ) + "input/linesource_SN.cfg";
 
     Config* config = new Config( config_file_name );
     Solver* solver = Solver::Create( config );
     solver->Solve();
     solver->Save();
 
-    auto test      = readVTKFile( "../result/rtsn_test_linesource_SN.vtk" );
-    auto reference = readVTKFile( "../tests/input/linesource_SN_reference.vtk" );
+    auto test      = readVTKFile( std::string( TESTS_PATH ) + "../result/rtsn_test_linesource_SN.vtk" );
+    auto reference = readVTKFile( std::string( TESTS_PATH ) + "input/linesource_SN_reference.vtk" );
 
     double eps = 1e-3;
     REQUIRE( test.size() == reference.size() );
@@ -67,15 +68,15 @@ TEST_CASE( "linesource_SN", "[validation_tests]" ) {
 }
 
 TEST_CASE( "linesource_PN", "[validation_tests]" ) {
-    char config_file_name[MAX_STRING_SIZE] = "../tests/input/linesource_PN.cfg";
+    std::string config_file_name = std::string( TESTS_PATH ) + "input/linesource_PN.cfg";
 
     Config* config = new Config( config_file_name );
     Solver* solver = Solver::Create( config );
     solver->Solve();
     solver->Save();
 
-    auto test      = readVTKFile( "../result/rtsn_test_linesource_PN.vtk" );
-    auto reference = readVTKFile( "../tests/input/linesource_PN_reference.vtk" );
+    auto test      = readVTKFile( std::string( TESTS_PATH ) + "../result/rtsn_test_linesource_PN.vtk" );
+    auto reference = readVTKFile( std::string( TESTS_PATH ) + "input/linesource_PN_reference.vtk" );
 
     double eps = 1e-3;
 
@@ -88,15 +89,15 @@ TEST_CASE( "linesource_PN", "[validation_tests]" ) {
 TEST_CASE( "linesource_MN", "[validation_tests]" ) {
 
     SECTION( "Quadratic Entropy" ) {
-        char config_file_name[MAX_STRING_SIZE] = "../tests/input/linesource_MN_Quad.cfg";
+        std::string config_file_name = std::string( TESTS_PATH ) + "input/linesource_MN_Quad.cfg";
 
         Config* config = new Config( config_file_name );
         Solver* solver = Solver::Create( config );
         solver->Solve();
         solver->Save();
 
-        auto test      = readVTKFile( "../result/rtsn_test_linesource_MN_Quad.vtk" );
-        auto reference = readVTKFile( "../tests/input/linesource_MN_Quad_reference.vtk" );
+        auto test      = readVTKFile( std::string( TESTS_PATH ) + "../result/rtsn_test_linesource_MN_Quad.vtk" );
+        auto reference = readVTKFile( std::string( TESTS_PATH ) + "input/linesource_MN_Quad_reference.vtk" );
 
         double eps = 1e-3;
 
@@ -107,15 +108,15 @@ TEST_CASE( "linesource_MN", "[validation_tests]" ) {
     }
 
     SECTION( "Maxwell Boltzmann Entropy" ) {
-        char config_file_name[MAX_STRING_SIZE] = "../tests/input/linesource_MN_MB.cfg";
+        std::string config_file_name = std::string( TESTS_PATH ) + "input/linesource_MN_MB.cfg";
 
         Config* config = new Config( config_file_name );
         Solver* solver = Solver::Create( config );
         solver->Solve();
         solver->Save();
 
-        auto test      = readVTKFile( "../result/rtsn_test_linesource_MN_MB.vtk" );
-        auto reference = readVTKFile( "../tests/input/linesource_MN_MB_reference.vtk" );
+        auto test      = readVTKFile( std::string( TESTS_PATH ) + "../result/rtsn_test_linesource_MN_MB.vtk" );
+        auto reference = readVTKFile( std::string( TESTS_PATH ) + "input/linesource_MN_MB_reference.vtk" );
 
         double eps = 1e-3;
         REQUIRE( test.size() == reference.size() );

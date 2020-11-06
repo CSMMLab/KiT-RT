@@ -366,8 +366,6 @@ Matrix createSU2MeshFromImage( std::string imageName, std::string SU2Filename ) 
         ErrorMessages::Error( "Output directory '" + outDir.string() + "' does not exists!", CURRENT_FUNCTION );
     }
 
-    _import_array();
-
     std::string pyPath = KITRT_PYTHON_PATH;
 
     if( !Py_IsInitialized() ) {

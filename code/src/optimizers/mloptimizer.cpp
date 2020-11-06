@@ -25,11 +25,11 @@ MLOptimizer::MLOptimizer( Config* settings ) : OptimizerBase( settings ) {
 
 MLOptimizer::~MLOptimizer() { finalize_python(); }
 
-void MLOptimizer::Solve( Vector& lambda, Vector& u, VectorVector& moments, unsigned idx_cell ) {
+void MLOptimizer::Solve( Vector& lambda, Vector& u, VectorVector& /*moments*/, unsigned /*idx_cell*/ ) {
 
     // Convert Vector to array
     const unsigned input_size = u.size();
-    double nn_input[u.size()];
+    double* nn_input          = new double[u.size()];
 
     for( unsigned idx_sys = 0; idx_sys < input_size; idx_sys++ ) {
         nn_input[idx_sys] = u[idx_sys];
@@ -46,9 +46,10 @@ void MLOptimizer::Solve( Vector& lambda, Vector& u, VectorVector& moments, unsig
         lambda[i] = nn_output[i];
     }
     //  std::cout << std::endl;
+    delete[] nn_input;
 }
 
-void MLOptimizer::SolveMultiCell( VectorVector& lambda, VectorVector& u, VectorVector& moments ) {
+void MLOptimizer::SolveMultiCell( VectorVector& lambda, VectorVector& u, VectorVector& /*moments*/ ) {
 
     const unsigned batch_size = u.size();       // batch size = number of cells
     const unsigned sol_dim    = u[0].size();    // dimension of input vector = nTotalEntries
@@ -56,7 +57,7 @@ void MLOptimizer::SolveMultiCell( VectorVector& lambda, VectorVector& u, VectorV
     const unsigned n_size = batch_size * sol_dim;    // length of input array
 
     // Covert input to array
-    double nn_input[n_size];
+    double* nn_input = new double[n_size];
 
     unsigned idx_input = 0;
     for( unsigned idx_cell = 0; idx_cell < batch_size; idx_cell++ ) {
@@ -75,6 +76,8 @@ void MLOptimizer::SolveMultiCell( VectorVector& lambda, VectorVector& u, VectorV
             idx_output++;
         }
     }
+
+    delete[] nn_output;
 }
 
 void MLOptimizer::init_numpy() {

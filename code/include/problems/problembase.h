@@ -43,7 +43,7 @@ class ProblemBase
      *        energies in vector energy
      * @param energy is the energy the cross section is queried for
      */
-    virtual Vector GetTotalXSE( const Vector& energies ) { return Vector( 1 ); }
+    virtual Vector GetTotalXSE( const Vector& /*energies*/ ) { return Vector( 1 ); }
 
     /**
      * @brief GetScatteringXSE gives back vector (each energy) of scattering cross sections for energies
@@ -86,7 +86,7 @@ class ProblemBase
                  scatteringXS: scattering cross section of the exact solution
          @return: exact solution at x,y,t,scatteringXS
     */ // Default is set to 0. ~> if no analytical solution is available.
-    double virtual GetAnalyticalSolution( double x, double y, double t, double scatteringXS ) { return 0.0; }
+    double virtual GetAnalyticalSolution( double /*x*/, double /*y*/, double /*t*/, double /*scatteringXS*/ ) { return 0.0; }
 
     /**
      * @brief Physics constructor

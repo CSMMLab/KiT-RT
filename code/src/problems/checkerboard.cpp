@@ -21,7 +21,7 @@ VectorVector Checkerboard_SN::GetScatteringXS( const Vector& energies ) { return
 
 VectorVector Checkerboard_SN::GetTotalXS( const Vector& energies ) { return VectorVector( energies.size(), _totalXS ); }
 
-std::vector<VectorVector> Checkerboard_SN::GetExternalSource( const Vector& energies ) {
+std::vector<VectorVector> Checkerboard_SN::GetExternalSource( const Vector& /*energies*/ ) {
     VectorVector Q( _mesh->GetNumCells(), Vector( 1u, 0.0 ) );
     auto cellMids = _mesh->GetCellMidPoints();
     for( unsigned j = 0; j < cellMids.size(); ++j ) {
@@ -77,7 +77,7 @@ VectorVector Checkerboard_PN::GetScatteringXS( const Vector& energies ) { return
 
 VectorVector Checkerboard_PN::GetTotalXS( const Vector& energies ) { return VectorVector( energies.size(), _totalXS ); }
 
-std::vector<VectorVector> Checkerboard_PN::GetExternalSource( const Vector& energies ) {
+std::vector<VectorVector> Checkerboard_PN::GetExternalSource( const Vector& /*energies*/ ) {
     VectorVector Q( _mesh->GetNumCells(), Vector( 1u, 0.0 ) );
     auto cellMids = _mesh->GetCellMidPoints();
     for( unsigned j = 0; j < cellMids.size(); ++j ) {

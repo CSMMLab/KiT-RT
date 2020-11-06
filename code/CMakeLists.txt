@@ -81,6 +81,7 @@ target_compile_options( ${CMAKE_PROJECT_NAME} PUBLIC "$<$<CONFIG:RELEASE>:${KITR
 ### BUILD UNIT TESTS ############################
 include( CTest )
 set( CATCH_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/ext/Catch2/single_include/catch2 )
+add_compile_definitions( TESTS_PATH="${CMAKE_SOURCE_DIR}/tests/" )
 add_library( Catch INTERFACE )
 target_include_directories( Catch INTERFACE ${CATCH_INCLUDE_DIR} )
 file( GLOB_RECURSE TEST_SRCS RELATIVE ${CMAKE_SOURCE_DIR} "tests/*.cpp" )
