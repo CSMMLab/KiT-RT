@@ -6,7 +6,7 @@ stages:
 unit_tests:
   stage: unit_tests
   variables:
-    CTEST_OUTPUT_ON_FAILURE: TRUE
+    CTEST_OUTPUT_ON_FAILURE: "TRUE"
   script:
     - git submodule update --init --recursive
     - cd code/build/release
