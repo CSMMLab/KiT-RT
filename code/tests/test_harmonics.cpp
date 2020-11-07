@@ -8,19 +8,19 @@
 #include <iostream>
 #include <sstream>
 
-double Y0_0( double my, double phi ) { return sqrt( 1 / ( 4 * M_PI ) ); }
+double Y0_0( double, double ) { return sqrt( 1 / ( 4 * M_PI ) ); }
 
 double Y1_m1( double my, double phi ) { return -sqrt( 3 / ( 4 * M_PI ) ) * sqrt( 1 - my * my ) * sin( phi ); }
-double Y1_0( double my, double phi ) { return sqrt( 3 / ( 4 * M_PI ) ) * my; }
+double Y1_0( double my, double /*phi*/ ) { return sqrt( 3 / ( 4 * M_PI ) ) * my; }
 double Y1_1( double my, double phi ) { return -sqrt( 3 / ( 4 * M_PI ) ) * sqrt( 1 - my * my ) * cos( phi ); }
 
 double Y2_m2( double my, double phi ) { return sqrt( 15 / ( 16 * M_PI ) ) * ( 1 - my * my ) * sin( 2 * phi ); }
 double Y2_m1( double my, double phi ) { return -1 * sqrt( 15 / ( 4 * M_PI ) ) * my * sqrt( 1 - my * my ) * sin( phi ); }
-double Y2_0( double my, double phi ) { return sqrt( 5 / ( 16 * M_PI ) ) * ( 3 * my * my - 1 ); }
+double Y2_0( double my, double /*phi*/ ) { return sqrt( 5 / ( 16 * M_PI ) ) * ( 3 * my * my - 1 ); }
 double Y2_1( double my, double phi ) { return -1 * sqrt( 15 / ( 4 * M_PI ) ) * my * sqrt( 1 - my * my ) * cos( phi ); }
 double Y2_2( double my, double phi ) { return sqrt( 15 / ( 16 * M_PI ) ) * ( 1 - my * my ) * cos( 2 * phi ); }
 
-double P0_0( double my ) { return sqrt( 1 / ( 2 * M_PI ) ); }
+double P0_0( double /*my*/ ) { return sqrt( 1 / ( 2 * M_PI ) ); }
 double P1_0( double my ) { return sqrt( 3 / ( 2 * M_PI ) ) * my; }
 double P1_1( double my ) { return -sqrt( 3 / ( 4 * M_PI ) ) * sqrt( 1 - my * my ); }
 
@@ -30,7 +30,7 @@ double P2_2( double my ) { return sqrt( 15 / ( 16 * M_PI ) ) * ( 1 - my * my ); 
 
 TEST_CASE( "test the spherical harmonics basis computation", "[spherical_harmonics]" ) {
 
-    char filename[] = "../tests/input/unit_harmonics.cfg";
+    std::string filename = std::string( TESTS_PATH ) + "input/unit_harmonics.cfg";
 
     // Load Settings from File
     Config* config = new Config( filename );

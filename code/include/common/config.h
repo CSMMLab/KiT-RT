@@ -58,6 +58,9 @@ class Config
     unsigned short _maxMomentDegree; /*!< @brief Maximal Order of Moments for PN and MN Solver */
     unsigned short _reconsOrder;     /*!< @brief Spatial Order of Accuracy for Solver */
 
+    // Linesource
+    double _sigmaS; /*!< @brief Scattering coeffient for Linesource test case */
+
     /*!< @brief If true, very low entries (10^-10 or smaller) of the flux matrices will be set to zero,
      * to improve floating point accuracy */
     bool _cleanFluxMat;
@@ -86,6 +89,11 @@ class Config
     double _newtonStepSize;               /*!< @brief Stepsize factor for newton optimizer */
     unsigned short _newtonLineSearchIter; /*!< @brief Maximal Number of line search iterations for newton optimizer */
     bool _newtonFastMode;                 /*!< @brief If true, we skip the NewtonOptimizer for quadratic entropy and assign alpha = u */
+
+    // Output Options
+    unsigned short _nVolumeOutput;            /*!< @brief Number of volume outputs */
+    std::vector<VOLUME_OUTPUT> _volumeOutput; /*!< @brief Output groups for volume output*/
+    unsigned short _outputFrequency;          /*!< @brief Frequency of vtk write of volume output*/
 
     // --- Parsing Functionality and Initializing of Options ---
     /*!
@@ -178,7 +186,13 @@ class Config
     void AddEnumOption( const std::string name, Tenum& option_field, const std::map<std::string, Tenum>& enum_map, Tenum default_value );
 
     // List Options
-    void AddStringListOption( const std::string name, unsigned short& num_marker, std::vector<std::string>& option_field );
+    void AddStringListOption( const std::string name, unsigned short& input_size, std::vector<std::string>& option_field );
+
+    template <class Tenum>
+    void AddEnumListOption( const std::string name,
+                            unsigned short& num_marker,
+                            std::vector<Tenum>& option_field,
+                            const std::map<std::string, Tenum>& enum_map );
 
     // Initialize the cmdline and file logger
     void InitLogger();
@@ -229,6 +243,9 @@ class Config
     bool inline GetSNAllGaussPts() const { return _allGaussPts; }
     bool inline GetIsCSD() const { return _csd; }
 
+    // Linesource
+    double inline GetSigmaS() const { return _sigmaS; }
+
     //  Optimizer
     double inline GetNewtonOptimizerEpsilon() const { return _optimizerEpsilon; }
     unsigned inline GetNewtonIter() const { return _newtonIter; }
@@ -244,6 +261,9 @@ class Config
     KERNEL_NAME inline GetKernelName() const { return _kernelName; }
 
     // Output Structure
+    std::vector<VOLUME_OUTPUT> inline GetVolumeOutput() { return _volumeOutput; }
+    unsigned short inline GetNVolumeOutput() { return _nVolumeOutput; }
+    unsigned short inline GetOutputFrequency() { return _outputFrequency; }
 
     // ---- Setters for option structure
 

@@ -10,8 +10,6 @@
 
 // --- Members of OptionBase ----
 
-OptionBase::~OptionBase() {}
-
 std::vector<std::string> OptionBase::GetValue() { return _value; }
 
 std::string OptionBase::SetValue( std::vector<std::string> value ) {
@@ -30,7 +28,7 @@ std::string OptionBase::optionCheckMultipleValues( std::vector<std::string>& opt
     return "";
 }
 
-std::string OptionBase::badValue( std::vector<std::string>& option_value, std::string type_id, std::string option_name ) {
+std::string OptionBase::badValue( std::vector<std::string>& /*option_value*/, std::string type_id, std::string option_name ) {
     std::string newString;
     newString.append( option_name );
     newString.append( ": improper option value for type " );

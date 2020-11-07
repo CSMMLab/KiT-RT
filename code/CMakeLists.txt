@@ -1,27 +1,18 @@
 cmake_minimum_required( VERSION 3.12.4 )
-project( RTSN VERSION 0.1.0 LANGUAGES CXX )
+project( KiT-RT VERSION 0.1.0 LANGUAGES CXX )
+
+
+### COMPILER ####################################
 set( CMAKE_CXX_STANDARD 17 )
 set( CMAKE_CXX_STANDARD_REQUIRED ON )
+set( KITRT_RELEASE_OPTIONS -march=native -w )
+set( KITRT_RELWITHDEBINFO_OPTIONS -march=native -pg -no-pie )
+set( KITRT_DEBUG_OPTIONS -Wall -Wextra -Wpedantic )
+#################################################
 
-set( CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -march=native -Wno-dev" )
-set( CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -march=native -pg -no-pie" )
-set( CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -Wall" )
 
-set( CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin" )
-
-file( GLOB_RECURSE SRCS RELATIVE ${CMAKE_SOURCE_DIR} "src/*.cpp" "include/*.h" )
-include_directories( ${CMAKE_SOURCE_DIR}/include )
-add_executable( ${CMAKE_PROJECT_NAME} ${SRCS} )
-
-find_package( Python3 COMPONENTS Interpreter Development NumPy REQUIRED )
-include_directories( ${Python3_INCLUDE_DIRS} ${Python3_NumPy_INCLUDE_DIRS} )
-add_compile_definitions( RTSN_PYTHON_PATH="${CMAKE_SOURCE_DIR}/python" )
-
+### LIBRARIES ###################################
 find_package( OpenMP REQUIRED )
-if( OPENMP_FOUND )
-    set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}" )
-    set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}" )
-endif()
 
 find_package( MPI REQUIRED )
 include_directories( ${MPI_INCLUDE_PATH} )
@@ -30,6 +21,15 @@ find_package( LAPACK REQUIRED )
 include_directories( ${LAPACK_INCLUDE_DIR} )
 
 find_package( BLAS )
+
+find_package( VTK REQUIRED COMPONENTS vtkIOGeometry vtkFiltersCore )
+
+find_package( Python3 COMPONENTS Interpreter Development NumPy REQUIRED )
+include_directories( ${Python3_INCLUDE_DIRS} ${Python3_NumPy_INCLUDE_DIRS} )
+add_compile_definitions( KITRT_PYTHON_PATH="${CMAKE_SOURCE_DIR}/python" )
+
+add_compile_definitions( BLAZE_USE_SHARED_MEMORY_PARALLELIZATION=0 )
+message( STATUS "Blaze: Shared memory parallelization disabled" )
 if( BLAS_FOUND )
     message( STATUS "Blaze: BLAS mode enabled" )
     add_compile_definitions( BLAZE_BLAS_MODE=1 )
@@ -38,80 +38,7 @@ else()
     message( STATUS "Blaze: BLAS mode disabled" )
     add_compile_definitions( BLAZE_BLAS_MODE=0 )
 endif()
-
-add_compile_definitions( BLAZE_USE_SHARED_MEMORY_PARALLELIZATION=0 )
-
-set(flag 1)
-if (WIN32)
-    execute_process(COMMAND wmic cpu get L3CacheSize
-        OUTPUT_VARIABLE tmp
-        RESULT_VARIABLE flag
-        ERROR_QUIET)
-    if (flag)
-        execute_process(COMMAND wmic cpu get L2CacheSize
-            OUTPUT_VARIABLE tmp
-            RESULT_VARIABLE flag
-            ERROR_QUIET)
-    endif (flag)
-    if (flag)
-        execute_process(COMMAND wmic cpu get L1CacheSize
-            OUTPUT_VARIABLE tmp
-            RESULT_VARIABLE flag
-            ERROR_QUIET)
-    endif (flag)
-endif (WIN32)
-
-if (UNIX)
-    execute_process(COMMAND cat /sys/devices/system/cpu/cpu0/cache/index3/size
-        OUTPUT_VARIABLE tmp
-        RESULT_VARIABLE flag
-        ERROR_QUIET)
-    if (flag)
-        execute_process(COMMAND cat /sys/devices/system/cpu/cpu0/cache/index2/size
-            OUTPUT_VARIABLE tmp
-            RESULT_VARIABLE flag
-            ERROR_QUIET)
-    endif (flag)
-    if (flag)
-        execute_process(COMMAND cat /sys/devices/system/cpu/cpu0/cache/index1/size
-            OUTPUT_VARIABLE tmp
-            RESULT_VARIABLE flag
-            ERROR_QUIET)
-    endif (flag)
-endif (UNIX)
-
-if (APPLE)
-    execute_process(COMMAND sysctl -n hw.l3cachesize
-        OUTPUT_VARIABLE tmp
-        RESULT_VARIABLE flag
-        ERROR_QUIET)
-    if (flag)
-        execute_process(COMMAND sysctl -n hw.l2cachesize
-            OUTPUT_VARIABLE tmp
-            RESULT_VARIABLE flag
-            ERROR_QUIET)
-    endif (flag)
-    if (flag)
-        execute_process(COMMAND sysctl -n hw.l1icachesize
-            OUTPUT_VARIABLE tmp
-            RESULT_VARIABLE flag
-            ERROR_QUIET)
-    endif (flag)
-
-    if (flag EQUAL 0)
-        math(EXPR tmp ${tmp}/1024)  # If successful convert to kibibytes to comply with rest
-    endif (flag EQUAL 0)
-endif (APPLE)
-
-if (flag)
-    message(WARNING "Cache size not found automatically. Using default value as cache size.")
-    set(tmp "3072")
-endif (flag)
-
-string( REGEX MATCH "([0-9][0-9]+)" tmp ${tmp} )
-math( EXPR BLAZE_CACHE_SIZE ${tmp}*1024 )
-add_compile_definitions( BLAZE_CACHE_SIZE=${BLAZE_CACHE_SIZE}UL )
-message( STATUS "Blaze: Automatic Cache Size Configuration = ${BLAZE_CACHE_SIZE} KiB" )
+include( ${CMAKE_SOURCE_DIR}/cmake/blaze-cache-config.cmake )
 include_directories( ${CMAKE_SOURCE_DIR}/ext/blaze )
 
 add_compile_definitions( METIS_EXPORT= )
@@ -121,12 +48,14 @@ include_directories( ${ParMETIS_PATH}/include )
 include_directories( ${ParMETIS_PATH}/metis/include )
 add_subdirectory( ${ParMETIS_PATH} )
 
-find_package( VTK REQUIRED COMPONENTS vtkIOGeometry vtkFiltersCore HINTS /home/pia/vtk-inst/include/vtk-8.2)
-include(${VTK_USE_FILE})
-
 include_directories( ${CMAKE_SOURCE_DIR}/ext/cpptoml/include )
 include_directories( ${CMAKE_SOURCE_DIR}/ext/spdlog/include )
 
+set( CORE_LIBRARIES ${Python3_LIBRARIES} ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} ${MPI_LIBRARIES} ${VTK_LIBRARIES} OpenMP::OpenMP_CXX parmetis -lstdc++fs )
+#################################################
+
+
+### MISC ########################################
 execute_process(
     COMMAND git rev-parse HEAD
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
@@ -134,17 +63,34 @@ execute_process(
     OUTPUT_STRIP_TRAILING_WHITESPACE
 )
 add_compile_definitions( GIT_HASH="${GIT_HASH}" )
+#################################################
 
-set( CORE_LIBRARIES ${Python3_LIBRARIES} ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} ${MPI_LIBRARIES} ${VTK_LIBRARIES} OpenMP::OpenMP_CXX parmetis -lstdc++fs )
 
+### BUILD KIT-RT ################################
+file( GLOB_RECURSE SRCS RELATIVE ${CMAKE_SOURCE_DIR} "src/*.cpp" "include/*.h" )
+include_directories( ${CMAKE_SOURCE_DIR}/include )
+add_executable( ${CMAKE_PROJECT_NAME} ${SRCS} ${EXT_SRCS} )
 target_link_libraries( ${CMAKE_PROJECT_NAME} ${CORE_LIBRARIES} )
+set_target_properties( ${CMAKE_PROJECT_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin" )
+target_compile_options( ${CMAKE_PROJECT_NAME} PUBLIC "$<$<CONFIG:DEBUG>:${KITRT_DEBUG_OPTIONS}>" )
+target_compile_options( ${CMAKE_PROJECT_NAME} PUBLIC "$<$<CONFIG:RELWITHDEBINFO>:${KITRT_RELWITHDEBINFO_OPTIONS}>" )
+target_compile_options( ${CMAKE_PROJECT_NAME} PUBLIC "$<$<CONFIG:RELEASE>:${KITRT_RELEASE_OPTIONS}>" )
+#################################################
 
-if( BUILD_TESTING )
-    add_compile_definitions( BUILD_TESTING=1 )
-    add_subdirectory( ${CMAKE_SOURCE_DIR}/ext/Catch2 )
-    include_directories( ${CMAKE_SOURCE_DIR}/ext/Catch2/single_include/catch2 )
-    file( GLOB_RECURSE TEST_SRCS RELATIVE ${CMAKE_SOURCE_DIR} "tests/*.cpp" )
-    list( REMOVE_ITEM SRCS "src/main.cpp" )
-    add_executable( unit_tests ${SRCS} ${TEST_SRCS} )
-    target_link_libraries( unit_tests ${CORE_LIBRARIES} )
-endif()
+
+### BUILD UNIT TESTS ############################
+include( CTest )
+set( CATCH_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/ext/Catch2/single_include/catch2 )
+add_compile_definitions( TESTS_PATH="${CMAKE_SOURCE_DIR}/tests/" )
+add_library( Catch INTERFACE )
+target_include_directories( Catch INTERFACE ${CATCH_INCLUDE_DIR} )
+file( GLOB_RECURSE TEST_SRCS RELATIVE ${CMAKE_SOURCE_DIR} "tests/*.cpp" )
+list( REMOVE_ITEM SRCS "src/main.cpp" )
+add_executable( unit_tests ${TEST_SRCS} ${SRCS} ${EXT_SRCS} )
+target_link_libraries( unit_tests Catch ${CORE_LIBRARIES} )
+target_compile_options( unit_tests PUBLIC "$<$<CONFIG:DEBUG>:${KITRT_DEBUG_OPTIONS}>" )
+target_compile_options( unit_tests PUBLIC "$<$<CONFIG:RELWITHDEBINFO>:${KITRT_RELWITHDEBINFO_OPTIONS}>" )
+target_compile_options( unit_tests PUBLIC "$<$<CONFIG:RELEASE>:${KITRT_RELEASE_OPTIONS}>" )
+add_test( NAME unit_tests COMMAND unit_tests )
+enable_testing()
+#################################################

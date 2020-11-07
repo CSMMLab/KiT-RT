@@ -7,7 +7,7 @@
 #include "common/mesh.h"
 
 TEST_CASE( "unit mesh tests", "[mesh]" ) {
-    char config_file_name[] = "../tests/input/unit_mesh.cfg";
+    std::string config_file_name = std::string( TESTS_PATH ) + "input/unit_mesh.cfg";
 
     Config* config = new Config( config_file_name );
     Mesh* mesh     = LoadSU2MeshFromFile( config );

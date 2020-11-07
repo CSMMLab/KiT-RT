@@ -1,3 +1,9 @@
+/*!
+ * \file io.cpp
+ * \brief Set of utility io functions for rtns
+ * \author  J. Kusch, S. Schotthoefer, P. Stammer,  J. Wolters, T. Xiao
+ */
+
 #include "common/io.h"
 #include "common/config.h"
 #include "common/mesh.h"
@@ -25,6 +31,7 @@
 
 #include <Python.h>
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
+#define PY_ARRAY_UNIQUE_SYMBOL KITRT_IO_ARRAY_API
 #include <numpy/arrayobject.h>
 
 using vtkPointsSP                 = vtkSmartPointer<vtkPoints>;
@@ -37,8 +44,8 @@ using vtkCellDataToPointDataSP    = vtkSmartPointer<vtkCellDataToPointData>;
 // using vtkPointDataToCellDataSP    = vtkSmartPointer<vtkPointDataToCellData>;
 
 void ExportVTK( const std::string fileName,
-                const std::vector<std::vector<std::vector<double>>>& results,
-                const std::vector<std::string> fieldNames,
+                const std::vector<std::vector<std::vector<double>>>& outputFields,
+                const std::vector<std::vector<std::string>>& outputFieldNames,
                 const Mesh* mesh ) {
     int rank;
     MPI_Comm_rank( MPI_COMM_WORLD, &rank );
@@ -96,21 +103,20 @@ void ExportVTK( const std::string fileName,
             grid->SetCells( VTK_QUAD, cellArray );
         }
 
-        for( unsigned i = 0; i < results.size(); i++ ) {
-            auto cellData = vtkDoubleArraySP::New();
-            cellData->SetName( fieldNames[i].c_str() );
-            switch( results[i].size() ) {
-                case 1:
-                    for( unsigned j = 0; j < numCells; j++ ) {
-                        cellData->InsertNextValue( results[i][0][j] );
-                    }
-                    break;
-                default:
-                    auto log = spdlog::get( "event" );
-                    ErrorMessages::Error( "Please implement output for results of size " + std::to_string( results[i].size() ) + "!",
-                                          CURRENT_FUNCTION );
+        // Write the output
+        for( unsigned idx_group = 0; idx_group < outputFields.size(); idx_group++ ) {
+
+            for( unsigned idx_field = 0; idx_field < outputFields[idx_group].size(); idx_field++ ) {    // Loop over all output fields
+
+                auto cellData = vtkDoubleArraySP::New();
+                cellData->SetName( outputFieldNames[idx_group][idx_field].c_str() );
+
+                for( unsigned idx_cell = 0; idx_cell < numCells; idx_cell++ ) {
+                    cellData->InsertNextValue( outputFields[idx_group][idx_field][idx_cell] );
+                }
+
+                grid->GetCellData()->AddArray( cellData );
             }
-            grid->GetCellData()->AddArray( cellData );
         }
 
         grid->SetPoints( pts );
@@ -360,7 +366,7 @@ Matrix createSU2MeshFromImage( std::string imageName, std::string SU2Filename ) 
         ErrorMessages::Error( "Output directory '" + outDir.string() + "' does not exists!", CURRENT_FUNCTION );
     }
 
-    std::string pyPath = RTSN_PYTHON_PATH;
+    std::string pyPath = KITRT_PYTHON_PATH;
 
     if( !Py_IsInitialized() ) {
         Py_InitializeEx( 0 );

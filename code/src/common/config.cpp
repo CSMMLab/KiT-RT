@@ -28,7 +28,7 @@ Config::Config( string case_filename ) {
     /*--- Set the case name to the base config file name without extension ---*/
 
     auto cwd     = std::filesystem::current_path();
-    auto relPath = std::filesystem::path( case_filename );
+    auto relPath = std::filesystem::relative( std::filesystem::path( case_filename ), cwd );
     _fileName    = relPath.filename().string();
     _inputDir    = cwd.string() + "/" + relPath.parent_path().string();
 
@@ -158,6 +158,18 @@ void Config::AddStringListOption( const string name, unsigned short& num_marker,
     _optionMap.insert( pair<string, OptionBase*>( name, val ) );
 }
 
+template <class Tenum>
+void Config::AddEnumListOption( const std::string name,
+                                unsigned short& input_size,
+                                std::vector<Tenum>& option_field,
+                                const map<std::string, Tenum>& enum_map ) {
+    input_size = 0;
+    assert( _optionMap.find( name ) == _optionMap.end() );
+    _allOptions.insert( pair<string, bool>( name, true ) );
+    OptionBase* val = new OptionEnumList<Tenum>( name, enum_map, option_field, input_size );
+    _optionMap.insert( pair<string, OptionBase*>( name, val ) );
+}
+
 // ---- Getter Functions ----
 
 BOUNDARY_TYPE Config::GetBoundaryType( std::string name ) const {
@@ -231,6 +243,10 @@ void Config::SetConfigOptions() {
     /*! @brief SN_ALL_GAUSS_PTS \n DESCRIPTION: If true, the SN Solver uses all Gauss Quadrature Points for 2d. \n DEFAULT false \ingroup Config */
     AddBoolOption( "SN_ALL_GAUSS_PTS", _allGaussPts, false );
 
+    // Linesource Testcase Options
+    /*! @brief SCATTER_COEFF \n DESCRIPTION: Sets the scattering coefficient for the Linesource test case. \n DEFAULT 0.0 \ingroup Config */
+    AddDoubleOption( "SCATTER_COEFF", _sigmaS, 0.0 );
+
     // Entropy related options
     /*! @brief Entropy Functional \n DESCRIPTION: Entropy functional used for the MN_Solver \n DEFAULT QUADRTATIC @ingroup Config. */
     AddEnumOption( "ENTROPY_FUNCTIONAL", _entropyName, Entropy_Map, QUADRATIC );
@@ -257,7 +273,14 @@ void Config::SetConfigOptions() {
     AddStringListOption( "BC_DIRICHLET", _nMarkerDirichlet, _MarkerDirichlet );
     AddStringListOption( "BC_NEUMANN", _nMarkerNeumann, _MarkerNeumann );
 
+    /*! @brief Scattering kernel \n DESCRIPTION: Describes used scattering kernel \n DEFAULT KERNEL_Isotropic \ingroup Config */
     AddEnumOption( "KERNEL", _kernelName, Kernel_Map, KERNEL_Isotropic );
+
+    // Output related options
+    /*! @brief Volume output \n DESCRIPTION: Describes output groups to write to vtk \ingroup Config */
+    AddEnumListOption( "VOLUME_OUTPUT", _nVolumeOutput, _volumeOutput, VolOutput_Map );
+    /*! @brief Output Frequency \n DESCRIPTION: Describes output write frequency \n DEFAULT 0 ,i.e. only last value \ingroup Config */
+    AddUnsignedShortOption( "OUTPUT_FREQUENCY", _outputFrequency, 0 );
 }
 
 void Config::SetConfigParsing( string case_filename ) {
@@ -391,6 +414,86 @@ void Config::SetPostprocessing() {
             ErrorMessages::Error( "Path to mesh file <" + this->GetOxygenFile() + "> does not exist. Please check your config file.",
                                   CURRENT_FUNCTION );
         }
+    }
+
+    // --- Output Postprocessing ---
+
+    // Check for doublicates in VOLUME OUTPUT
+    std::map<VOLUME_OUTPUT, int> dublicate_map;
+
+    for( unsigned short idx_volOutput = 0; idx_volOutput < _nVolumeOutput; idx_volOutput++ ) {
+        std::map<VOLUME_OUTPUT, int>::iterator it = dublicate_map.find( _volumeOutput[idx_volOutput] );
+        if( it == dublicate_map.end() ) {
+            dublicate_map.insert( std::pair<VOLUME_OUTPUT, int>( _volumeOutput[idx_volOutput], 0 ) );
+        }
+        else {
+            it->second++;
+        }
+    }
+    for( auto& e : dublicate_map ) {
+        if( e.second > 0 ) {
+            ErrorMessages::Error( "Each output group for option VOLUME_OUTPUT can only be set once.\nPlease check your .cfg file.",
+                                  CURRENT_FUNCTION );
+        }
+    }
+
+    // Check, if the choice of volume output is compatible to the solver
+    std::vector<VOLUME_OUTPUT> supportedGroups;
+
+    for( unsigned short idx_volOutput = 0; idx_volOutput < _nVolumeOutput; idx_volOutput++ ) {
+        switch( _solverName ) {
+            case SN_SOLVER:
+                supportedGroups = { MINIMAL, ANALYTIC };
+                if( supportedGroups.end() == std::find( supportedGroups.begin(), supportedGroups.end(), _volumeOutput[idx_volOutput] ) ) {
+                    ErrorMessages::Error( "SN_SOLVER only supports volume output MINIMAL and ANALYTIC.\nPlease check your .cfg file.",
+                                          CURRENT_FUNCTION );
+                }
+                if( _volumeOutput[idx_volOutput] == ANALYTIC && _problemName != PROBLEM_LineSource ) {
+                    ErrorMessages::Error(
+                        "Analytical solution (VOLUME_OUTPUT=ANALYTIC) is only available for the PROBLEM=LINESOURCE.\nPlease check your .cfg file.",
+                        CURRENT_FUNCTION );
+                }
+                break;
+            case MN_SOLVER:
+                supportedGroups = { MINIMAL, MOMENTS, DUAL_MOMENTS, ANALYTIC };
+                if( supportedGroups.end() == std::find( supportedGroups.begin(), supportedGroups.end(), _volumeOutput[idx_volOutput] ) ) {
+
+                    ErrorMessages::Error(
+                        "MN_SOLVER only supports volume output ANALYTIC, MINIMAL, MOMENTS and DUAL_MOMENTS.\nPlease check your .cfg file.",
+                        CURRENT_FUNCTION );
+                }
+                if( _volumeOutput[idx_volOutput] == ANALYTIC && _problemName != PROBLEM_LineSource ) {
+                    ErrorMessages::Error( "Analytical solution (VOLUME_OUTPUT=ANALYTIC) is only available for the PROBLEM=LINESOURCE.\nPlease "
+                                          "check your .cfg file.",
+                                          CURRENT_FUNCTION );
+                }
+                break;
+            case PN_SOLVER:
+                supportedGroups = { MINIMAL, MOMENTS, ANALYTIC };
+                if( supportedGroups.end() == std::find( supportedGroups.begin(), supportedGroups.end(), _volumeOutput[idx_volOutput] ) ) {
+
+                    ErrorMessages::Error( "PN_SOLVER only supports volume output ANALYTIC, MINIMAL and MOMENTS.\nPlease check your .cfg file.",
+                                          CURRENT_FUNCTION );
+                }
+                if( _volumeOutput[idx_volOutput] == ANALYTIC && _problemName != PROBLEM_LineSource ) {
+                    ErrorMessages::Error( "Analytical solution (VOLUME_OUTPUT=ANALYTIC) is only available for the PROBLEM=LINESOURCE.\nPlease "
+                                          "check your .cfg file.",
+                                          CURRENT_FUNCTION );
+                }
+                break;
+            case CSD_SN_SOLVER:
+                supportedGroups = { MINIMAL };
+                if( _volumeOutput[idx_volOutput] != MINIMAL ) {
+                    ErrorMessages::Error( "CSD_SN_SOLVER only supports volume output MINIMAL.\nPlease check your .cfg file.", CURRENT_FUNCTION );
+                }
+                break;
+        }
+    }
+
+    // Set default volume output
+    if( _nVolumeOutput == 0 ) {    // If no specific output is chosen,  use "MINIMAL"
+        _nVolumeOutput = 1;
+        _volumeOutput.push_back( MINIMAL );
     }
 }
 
@@ -535,9 +638,12 @@ void Config::InitLogger() {
 #ifdef BUILD_TESTING
     terminalLogLvl = spdlog::level::err;
     fileLogLvl     = spdlog::level::off;
-#else
+#elif NDEBUG
     terminalLogLvl = spdlog::level::info;
     fileLogLvl     = spdlog::level::info;
+#else
+    terminalLogLvl = spdlog::level::debug;
+    fileLogLvl     = spdlog::level::debug;
 #endif
 
     // create log dir if not existent

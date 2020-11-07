@@ -68,7 +68,18 @@ void SNSolver::Solve() {
     Vector fluxOld( _nCells, 0.0 );
     int rank;
     MPI_Comm_rank( MPI_COMM_WORLD, &rank );
-    if( rank == 0 ) log->info( "{:10}   {:10}", "t", "dFlux" );
+    if( rank == 0 ) log->info( "{:10}   {:10}", "t", "dFlux", "mass" );
+
+    // Remove
+    double mass1 = 0;
+    for( unsigned i = 0; i < _nCells; ++i ) {
+        _solverOutput[i] = dot( _sol[i], _weights );
+    }
+    // Compute total "mass" of the system ==> to check conservation properties
+    for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
+        mass1 += _solverOutput[idx_cell] * _areas[idx_cell];    // Should probably go to postprocessing
+    }
+    if( rank == 0 ) log->info( "{:01.5e}   {:01.5e} {:01.5e}", 0.0, dFlux, mass1 );
 
     // loop over energies (pseudo-time)
     for( unsigned n = 0; n < _nEnergies; ++n ) {
@@ -144,27 +155,39 @@ void SNSolver::Solve() {
             fluxNew[i]       = dot( _sol[i], _weights );
             _solverOutput[i] = fluxNew[i];
         }
+
+        double mass = 0;
+
+        // Compute total "mass" of the system ==> to check conservation properties
+        for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
+            mass += _solverOutput[idx_cell] * _areas[idx_cell];    // Should probably go to postprocessing
+        }
+
         // Save( n );
         dFlux   = blaze::l2Norm( fluxNew - fluxOld );
         fluxOld = fluxNew;
-        if( rank == 0 ) log->info( "{:03.8f}   {:01.5e}", _energies[n], dFlux );
+        if( rank == 0 ) log->info( "{:03.8f}   {:01.5e} {:01.5e}", _energies[n], dFlux, mass );
     }
 }
 
 void SNSolver::Save() const {
     std::vector<std::string> fieldNames{ "flux" };
+    std::vector<std::vector<std::string>> fieldNamesWrapper{ fieldNames };
+
     std::vector<double> flux( _nCells, 0.0 );
     for( unsigned i = 0; i < _nCells; ++i ) {
         flux[i] = dot( _sol[i], _weights );
     }
     std::vector<std::vector<double>> scalarField( 1, flux );
     std::vector<std::vector<std::vector<double>>> results{ scalarField };
-    ExportVTK( _settings->GetOutputFile(), results, fieldNames, _mesh );
+    ExportVTK( _settings->GetOutputFile(), results, fieldNamesWrapper, _mesh );
 }
 
 void SNSolver::Save( int currEnergy ) const {
     std::vector<std::string> fieldNames{ "flux" };
+    std::vector<std::vector<std::string>> fieldNamesWrapper{ fieldNames };
+
     std::vector<std::vector<double>> scalarField( 1, _solverOutput );
     std::vector<std::vector<std::vector<double>>> results{ scalarField };
-    ExportVTK( _settings->GetOutputFile() + "_" + std::to_string( currEnergy ), results, fieldNames, _mesh );
+    ExportVTK( _settings->GetOutputFile() + "_" + std::to_string( currEnergy ), results, fieldNamesWrapper, _mesh );
 }

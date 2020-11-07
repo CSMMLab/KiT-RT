@@ -5,15 +5,15 @@
 #include "common/config.h"
 #include "common/io.h"
 #include "common/mesh.h"
-#include "cubic2dspline.h"
+#include "toolboxes/cubic2dspline.h"
 #include "toolboxes/textprocessingtoolbox.h"
 
 TEST_CASE( "convert image data to grayscale matrix", "[image I/O]" ) {
-    std::string config_file_name = "../tests/input/image_conversion.cfg";
+    std::string config_file_name = std::string( TESTS_PATH ) + "input/image_conversion.cfg";
 
     Config* config = new Config( config_file_name );    // just to init spdlog
 
-    std::string testImage = "../tests/input/phantom.png";
+    std::string testImage = std::string( TESTS_PATH ) + "input/phantom.png";
     std::string testMesh  = config->GetMeshFile();
 
     Matrix gsImage = createSU2MeshFromImage( testImage, testMesh );
@@ -25,7 +25,7 @@ TEST_CASE( "convert image data to grayscale matrix", "[image I/O]" ) {
         REQUIRE( blaze::max( gsImage ) <= 1.0 );           // upper bound
 
         // load reference matrix from csv file
-        std::string refMatrixFile = "../tests/input/phantom.csv";
+        std::string refMatrixFile = std::string( TESTS_PATH ) + "input/phantom.csv";
         std::ifstream data( refMatrixFile );
         REQUIRE( data.is_open() );
         std::string line;
@@ -79,11 +79,13 @@ TEST_CASE( "convert image data to grayscale matrix", "[image I/O]" ) {
         }
 
         std::vector<std::string> fieldNames{ "CT Data" };
+        std::vector<std::vector<std::string>> fieldNamesWrapper{ fieldNames };
+
         std::vector<std::vector<double>> scalarField( 1, result );
         std::vector<std::vector<std::vector<double>>> results{ scalarField };
         std::string outputFile = config->GetOutputFile();
         if( !TextProcessingToolbox::StringEndsWith( outputFile, ".vtk" ) ) outputFile.append( ".vtk" );
-        ExportVTK( outputFile, results, fieldNames, mesh );
+        ExportVTK( outputFile, results, fieldNamesWrapper, mesh );
 
         REQUIRE( std::filesystem::exists( outputFile ) );
 

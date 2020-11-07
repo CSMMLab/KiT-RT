@@ -65,13 +65,20 @@ inline std::map<std::string, SOLVER_NAME> Solver_Map{
     { "SN_SOLVER", SN_SOLVER }, { "CSD_SN_SOLVER", CSD_SN_SOLVER }, { "PN_SOLVER", PN_SOLVER }, { "MN_SOLVER", MN_SOLVER } };
 
 // Entropy functional
-enum ENTROPY_NAME { QUADRATIC, MAXWELL_BOLZMANN, BOSE_EINSTEIN, FERMI_DIRAC };
+enum ENTROPY_NAME { QUADRATIC, MAXWELL_BOLTZMANN, BOSE_EINSTEIN, FERMI_DIRAC };
 
 inline std::map<std::string, ENTROPY_NAME> Entropy_Map{
-    { "QUADRATIC", QUADRATIC }, { "MAXWELL_BOLZMANN", MAXWELL_BOLZMANN }, { "BOSE_EINSTEIN", BOSE_EINSTEIN }, { "FERMI_DIRAC", FERMI_DIRAC } };
+    { "QUADRATIC", QUADRATIC }, { "MAXWELL_BOLTZMANN", MAXWELL_BOLTZMANN }, { "BOSE_EINSTEIN", BOSE_EINSTEIN }, { "FERMI_DIRAC", FERMI_DIRAC } };
 
-// Otpimizer
+// Optimizer
 enum OPTIMIZER_NAME { NEWTON, ML };
 
 inline std::map<std::string, OPTIMIZER_NAME> Optimizer_Map{ { "NEWTON", NEWTON }, { "ML", ML } };
+
+// Volume output
+enum VOLUME_OUTPUT { ANALYTIC, MINIMAL, MOMENTS, DUAL_MOMENTS };
+
+inline std::map<std::string, VOLUME_OUTPUT> VolOutput_Map{
+    { "ANALYTIC", ANALYTIC }, { "MINIMAL", MINIMAL }, { "MOMENTS", MOMENTS }, { "DUAL_MOMENTS", DUAL_MOMENTS } };
+
 #endif    // GLOBAL_CONSTANTS_H
