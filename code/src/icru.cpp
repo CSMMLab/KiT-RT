@@ -465,53 +465,24 @@ void ICRU::GetAngularScatteringXS( Matrix& angularXS, Vector& integratedXS ) {
 }
 
 void ICRU::GetTransportCoefficients( Matrix& xi ) {
-    //xi.resize(xi.rows(),ELAW.size());
     Vector mu(_XMU.size());
-    for( unsigned n = 0; n < mu.size(); ++n ) mu[n] = fabs(_XMU[n]-1.0);  // mu starts at 1 and goes to 0
+    for( unsigned n = 0; n < mu.size(); ++n ) mu[n] = 1.0-2.0*_XMU[n];  // mu starts at 1 and goes to 0
     for( unsigned i = 0; i < _E.size(); ++i ) {
         std::vector<double> dxse, dxsi, dxs;
-        //_E[i] = 10*1e6;
+        // get scattering cross sections for energy E[i]
         angdcs( 3u, _E[i], dxse, dxsi, dxs );
-/*
-        std::cout<<"mu = [ ";
-        for( unsigned k = 0; k < dxse.size(); ++k ){
-            std::cout<<_XMU[k]<<"; ";
-        }
-        std::cout<<"];"<<std::endl;
-
-        std::cout<<"sigmaE = [ ";
-        for( unsigned k = 0; k < dxse.size(); ++k ){
-            std::cout<<dxse[k]*H2OMolecularDensity*2*PI<<"; "; // TODO: fix to barn per ster
-        }
-        std::cout<<"];"<<std::endl;*/
-        //exit(EXIT_FAILURE);
-
-        //std::cout<<"size dxs -> "<<dxs.size()<<std::endl;
 
         // compute moments with trapezoidal rule
         for( unsigned n = 0; n < xi.rows(); ++n ){
             xi(n,i) = 0.0;
-            // so far only integration on [1,0] -> angles from 180 to 0 degrees
+            // integration over mu
             for( unsigned k = 0; k < dxs.size()-1; ++k ){
-                //std::cout<<n<<" on [0,1] : "<<pow(1.0-_XMU[k+1],n)<<" "<<( pow(1.0-_XMU[k+1],n)*dxs[k+1] + pow(1.0+_XMU[k],n)*dxs[k] )*(_XMU[k+1]-_XMU[k])<<std::endl;
-                //std::cout<<mu[k]<<" "<<dxs[k]<<std::endl;
                 xi(n,i) -= 0.5 * ( pow(1.0-mu[k+1],n)*dxs[k+1] + pow(1.0-mu[k],n)*dxs[k] )*(mu[k+1]-mu[k]);
-                //std::cout<<"XMU at "<<k<<":"<<_XMU[k]<<std::endl;
-                //std::cout<<"dxs at "<<k<<": "<<dxs[k]<<std::endl;
             }
-            // integration over [-1,0] -> angles from -180 to 0 degrees
-            for( unsigned k = 0; k < dxs.size()-1; ++k ){
-                //std::cout<<n<<" on [-1,0] :"<<pow(1.0+_XMU[k+1],n)<<" "<<( pow(1.0+_XMU[k+1],n)*dxs[k+1] + pow(1.0+_XMU[k],n)*dxs[k] )*(_XMU[k+1]-_XMU[k])<<std::endl;
-                //xi(n,i) += 0.5 * ( pow(1.0+mu[k+1],n)*dxs[k+1] + pow(1.0+mu[k],n)*dxs[k] )*(-mu[k+1]+mu[k]);
-                //std::cout<<"XMU at "<<k<<":"<<_XMU[k]<<std::endl;
-                //std::cout<<"dxs at "<<k<<": "<<dxs[k]<<std::endl;
-            }
+
         }
     }
     xi *= 2.0*PI*H2OMolecularDensity;
-
-    // account for 2 times integration domain over mu\in [0,1]
-    xi *= 2.0;
 }
 
 void ICRU::GetStoppingPower( Vector& stoppingPower ) {

@@ -18,11 +18,13 @@ CSDSNSolverFP::CSDSNSolverFP( Config* settings ) : SNSolver( settings ) {
     _angle           = Vector( _settings->GetNQuadPoints(), 0.0 );    // my
     _energies        = Vector( _nEnergies, 0.0 );                     // equidistant
      _energyMin = 1e-4;
-     _energyMax = 10.0;
+     //_energyMax = 10.0;
+     _energyMax = 5.0;
     // write equidistant energy grid
 
     _dE        = ComputeTimeStep( settings->GetCFL() );
     _nEnergies = unsigned( ( _energyMax - _energyMin ) / _dE );
+    std::cout<<"nEnergies = "<<_nEnergies<<std::endl;
     _energies.resize( _nEnergies );
     for( unsigned n = 0; n < _nEnergies; ++n ) {
         _energies[n] = _energyMin + ( _energyMax - _energyMin ) / ( _nEnergies - 1 ) * n;
@@ -70,9 +72,31 @@ CSDSNSolverFP::CSDSNSolverFP( Config* settings ) : SNSolver( settings ) {
 
     // read in medical data if radiation therapy option selected
     if(_RT){
+        //_nEnergies = 1000;
+        //_energies.resize(_nEnergies);
+        //_xi = Matrix(6,_nEnergies);
+        //double minExp = -4.0;
+        //double  maxExp = 1.5;
+        //for( int n = 0; n<_nEnergies; ++n){
+        //    double exponent = minExp + ( maxExp - minExp ) / ( _nEnergies - 1 ) * n;
+        //    _energies[n] = pow(10.0,exponent);
+        //}
         ICRU database( abs(mu), _energies );
         database.GetTransportCoefficients( _xi );
         database.GetStoppingPower( _s );
+/*
+        // print coefficients
+        std::cout<<"E = [";
+        for( unsigned n = 0; n<_nEnergies; ++n){
+            std::cout<<_energies[n]<<"; ";
+        }
+        std::cout<<"];"<<std::endl;
+        std::cout<<"xi = [";
+        for( unsigned n = 0; n<_nEnergies; ++n){
+            std::cout<<_xi(0,n)<<" "<<_xi(1,n)<<" "<<_xi(2,n)<<" "<<_xi(3,n)<<" "<<_xi(4,n)<<" "<<_xi(5,n)<<"; ";
+        }
+        std::cout<<"];"<<std::endl;*/
+
     }
 
     // recompute scattering kernel. TODO: add this to kernel function
@@ -88,7 +112,8 @@ CSDSNSolverFP::CSDSNSolverFP( Config* settings ) : SNSolver( settings ) {
 }
 
 void CSDSNSolverFP::Solve() {
-    std::cout << "Solve Fokker-Planck with Heney-Greenstein kernel" << std::endl;
+    std::cout << "Solve Fokker-Planck with Heney-Greenstein kernel using "<<_nEnergies<<" energies " << std::endl;
+
 
     auto log      = spdlog::get( "event" );
     auto cellMids = _mesh->GetCellMidPoints();
