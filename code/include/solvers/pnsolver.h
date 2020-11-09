@@ -52,6 +52,14 @@ class PNSolver : public Solver
     double WriteOutputFields( unsigned idx_pseudoTime ) override;
 
     // Solver
+    /*! @brief Computes the finite volume update for all cells and stores it in psiNew    */
+    void FVMUpdate( VectorVector& psiNew, unsigned idx_energy );
+    /*! @brief Computes the fluxes for all cells and stores it in psiNew, sets Neumann Boundaries   */
+    void FluxUpdate( VectorVector& psiNew, unsigned idx_energy );
+    /*! @brief Sets Dirichlet Boundaries and resets temp Variables    */
+    void PrepIteration( VectorVector& psiNew );
+
+    // Initialization
     /*! @brief: parameter functions for setting up system matrix
      *  @param: degree l, it must hold: 0 <= l <=_nq
      *  @param : order k, it must hold: -l <=k <= l

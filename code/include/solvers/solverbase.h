@@ -70,6 +70,10 @@ class Solver
     */
     virtual double WriteOutputFields( unsigned idx_pseudoTime ) = 0;
 
+    // Solver
+    ///*! @brief Computes the finite volume update for all cells and stores it in psiNew    */
+    // virtual void FVMUpdate( VectorVector& psiNew ) = 0;
+
     /**
      * @brief ComputeTimeStep calculates the maximal stable time step
      * @param cfl is cfl number

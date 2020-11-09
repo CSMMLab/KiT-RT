@@ -74,53 +74,17 @@ void PNSolver::Solve() {
 
     // Loop over energies (pseudo-time of continuous slowing down approach)
     for( unsigned idx_energy = 0; idx_energy < _nEnergies; idx_energy++ ) {
-        // Loop over all spatial cells
-        for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
-            if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::DIRICHLET ) continue;    // Dirichlet cells stay at IC, farfield assumption
 
-            // Reset temporary variable psiNew
-            for( int idx_lDegree = 0; idx_lDegree <= int( _LMaxDegree ); idx_lDegree++ ) {
-                for( int idx_kOrder = -idx_lDegree; idx_kOrder <= idx_lDegree; idx_kOrder++ ) {
-                    idx_system                   = unsigned( GlobalIndex( idx_lDegree, idx_kOrder ) );
-                    psiNew[idx_cell][idx_system] = 0.0;
-                }
-            }
+        // --- Prepare Boundaries and temp variables
+        PrepIteration( psiNew );
 
-            // Loop over all neighbor cells (edges) of cell j and compute numerical fluxes
-            for( unsigned idx_neighbor = 0; idx_neighbor < _neighbors[idx_cell].size(); idx_neighbor++ ) {
+        // --- Compute Fluxes ---
+        FluxUpdate( psiNew, idx_energy );
 
-                // Compute flux contribution and store in psiNew to save memory
-                if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::NEUMANN && _neighbors[idx_cell][idx_neighbor] == _nCells )
-                    psiNew[idx_cell] += _g->Flux(
-                        _AxPlus, _AxMinus, _AyPlus, _AyMinus, _AzPlus, _AzMinus, _sol[idx_cell], _sol[idx_cell], _normals[idx_cell][idx_neighbor] );
-                else
-                    psiNew[idx_cell] += _g->Flux( _AxPlus,
-                                                  _AxMinus,
-                                                  _AyPlus,
-                                                  _AyMinus,
-                                                  _AzPlus,
-                                                  _AzMinus,
-                                                  _sol[idx_cell],
-                                                  _sol[_neighbors[idx_cell][idx_neighbor]],
-                                                  _normals[idx_cell][idx_neighbor] );
-            }
+        // --- Finite Volume Update ---
+        FVMUpdate( psiNew, idx_energy );
 
-            // time update angular flux with numerical flux and total scattering cross section
-            for( int idx_lOrder = 0; idx_lOrder <= int( _LMaxDegree ); idx_lOrder++ ) {
-                for( int idx_kOrder = -idx_lOrder; idx_kOrder <= idx_lOrder; idx_kOrder++ ) {
-                    idx_system = unsigned( GlobalIndex( idx_lOrder, idx_kOrder ) );
-
-                    psiNew[idx_cell][idx_system] = _sol[idx_cell][idx_system] -
-                                                   ( _dE / _areas[idx_cell] ) * psiNew[idx_cell][idx_system] /* cell averaged flux */
-                                                   - _dE * _sol[idx_cell][idx_system] *
-                                                         ( _sigmaT[idx_energy][idx_cell]                                    /* absorbtion influence */
-                                                           + _sigmaS[idx_energy][idx_cell] * _scatterMatDiag[idx_system] ); /* scattering influence */
-                }
-            }
-            psiNew[idx_cell][0] += _dE * _Q[0][idx_cell][0];
-        }
-
-        // Update Solution
+        // --- Update Solution ---
         _sol = psiNew;
 
         // --- VTK and CSV Output ---
@@ -129,6 +93,56 @@ void PNSolver::Solve() {
 
         // --- Screen Output ---
         if( rank == 0 ) log->info( "{:03.8f}  {:01.5e}", _energies[idx_energy], mass );
+    }
+}
+
+void PNSolver::PrepIteration( VectorVector& psiNew ) {
+    // Loop over all spatial cells
+    for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
+        if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::DIRICHLET ) continue;    // Dirichlet cells stay at IC, farfield assumption
+
+        // Reset temporary variable psiNew
+        for( unsigned idx_sys = 0; idx_sys < _nTotalEntries; idx_sys++ ) {
+            psiNew[idx_cell][idx_sys] = 0.0;
+        }
+    }
+}
+
+void PNSolver::FluxUpdate( VectorVector& psiNew, unsigned idx_energy ) {
+    // Loop over all spatial cells
+    for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
+        // Loop over all neighbor cells (edges) of cell j and compute numerical fluxes
+        for( unsigned idx_neighbor = 0; idx_neighbor < _neighbors[idx_cell].size(); idx_neighbor++ ) {
+
+            // Compute flux contribution and store in psiNew to save memory
+            if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::NEUMANN && _neighbors[idx_cell][idx_neighbor] == _nCells )
+                psiNew[idx_cell] += _g->Flux(
+                    _AxPlus, _AxMinus, _AyPlus, _AyMinus, _AzPlus, _AzMinus, _sol[idx_cell], _sol[idx_cell], _normals[idx_cell][idx_neighbor] );
+            else
+                psiNew[idx_cell] += _g->Flux( _AxPlus,
+                                              _AxMinus,
+                                              _AyPlus,
+                                              _AyMinus,
+                                              _AzPlus,
+                                              _AzMinus,
+                                              _sol[idx_cell],
+                                              _sol[_neighbors[idx_cell][idx_neighbor]],
+                                              _normals[idx_cell][idx_neighbor] );
+        }
+    }
+}
+
+void PNSolver::FVMUpdate( VectorVector& psiNew, unsigned idx_energy ) {
+    // time update angular flux with numerical flux and total scattering cross section
+    for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
+        for( unsigned idx_sys = 0; idx_sys < _nTotalEntries; idx_sys++ ) {
+
+            psiNew[idx_cell][idx_sys] = _sol[idx_cell][idx_sys] - ( _dE / _areas[idx_cell] ) * psiNew[idx_cell][idx_sys] /* cell averaged flux */
+                                        - _dE * _sol[idx_cell][idx_sys] *
+                                              ( _sigmaT[idx_energy][idx_cell]                                 /* absorbtion influence */
+                                                + _sigmaS[idx_energy][idx_cell] * _scatterMatDiag[idx_sys] ); /* scattering influence */
+        }
+        psiNew[idx_cell][0] += _dE * _Q[0][idx_cell][0];
     }
 }
 

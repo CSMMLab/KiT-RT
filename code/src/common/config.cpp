@@ -482,9 +482,11 @@ void Config::SetPostprocessing() {
                 }
                 break;
             case CSD_SN_SOLVER:
-                supportedGroups = { MINIMAL };
-                if( _volumeOutput[idx_volOutput] != MINIMAL ) {
-                    ErrorMessages::Error( "CSD_SN_SOLVER only supports volume output MINIMAL.\nPlease check your .cfg file.", CURRENT_FUNCTION );
+                supportedGroups = { MINIMAL, DOSE };
+                if( supportedGroups.end() == std::find( supportedGroups.begin(), supportedGroups.end(), _volumeOutput[idx_volOutput] ) ) {
+
+                    ErrorMessages::Error( "CSD_SN_SOLVER only supports volume output ANALYTIC and MINIMAL.\nPlease check your .cfg file.",
+                                          CURRENT_FUNCTION );
                 }
                 break;
         }

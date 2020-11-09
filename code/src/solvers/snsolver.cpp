@@ -48,116 +48,166 @@ void SNSolver::Solve() {
 
     // center location of cell interfaces
     std::vector<std::vector<Vector>> interfaceMidPoints( _nCells, std::vector<Vector>( _mesh->GetNumNodesPerCell(), Vector( 2, 1e-10 ) ) );
-    for( unsigned i = 0; i < _nCells; ++i ) {
+    for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
         for( unsigned k = 0; k < _mesh->GetDim(); ++k ) {
-            for( unsigned j = 0; j < _neighbors[i].size() - 1; ++j ) {
-                interfaceMidPoints[i][j][k] = 0.5 * ( nodes[cells[i][j]][k] + nodes[cells[i][j + 1]][k] );
+            for( unsigned j = 0; j < _neighbors[idx_cell].size() - 1; ++j ) {
+                interfaceMidPoints[idx_cell][j][k] = 0.5 * ( nodes[cells[idx_cell][j]][k] + nodes[cells[idx_cell][j + 1]][k] );
             }
-            interfaceMidPoints[i][_neighbors[i].size() - 1][k] = 0.5 * ( nodes[cells[i][_neighbors[i].size() - 1]][k] + nodes[cells[i][0]][k] );
+            interfaceMidPoints[idx_cell][_neighbors[idx_cell].size() - 1][k] =
+                0.5 * ( nodes[cells[idx_cell][_neighbors[idx_cell].size() - 1]][k] + nodes[cells[idx_cell][0]][k] );
         }
     }
 
     // distance between cell center to interface center
-    VectorVector cellDx( _nCells, Vector( _mesh->GetNumNodesPerCell(), 1e-10 ) );
-    VectorVector cellDy( _nCells, Vector( _mesh->GetNumNodesPerCell(), 1e-10 ) );
-    for( unsigned i = 0; i < _nCells; ++i ) {
-        for( unsigned j = 0; j < _mesh->GetNumNodesPerCell(); ++j ) {
-            cellDx[i][j] = interfaceMidPoints[i][j][0] - cellMidPoints[i][0];
-            cellDy[i][j] = interfaceMidPoints[i][j][1] - cellMidPoints[j][1];
-        }
-    }
+    // VectorVector cellDx( _nCells, Vector( _mesh->GetNumNodesPerCell(), 1e-10 ) );
+    // VectorVector cellDy( _nCells, Vector( _mesh->GetNumNodesPerCell(), 1e-10 ) );
+    //
+    // for( unsigned i = 0; i < _nCells; ++i ) {
+    //    for( unsigned j = 0; j < _mesh->GetNumNodesPerCell(); ++j ) {
+    //        cellDx[i][j] = interfaceMidPoints[i][j][0] - cellMidPoints[i][0];
+    //        cellDy[i][j] = interfaceMidPoints[i][j][1] - cellMidPoints[j][1];
+    //    }
+    // }
 
     double dFlux = 1e10;
     Vector fluxNew( _nCells, 0.0 );
     Vector fluxOld( _nCells, 0.0 );
     int rank;
+
     MPI_Comm_rank( MPI_COMM_WORLD, &rank );
     if( rank == 0 ) log->info( "{:10}   {:10}", "t", "dFlux", "mass" );
 
     // if( rank == 0 ) log->info( "{:01.5e}   {:01.5e} {:01.5e}", 0.0, dFlux, mass1 );
 
     // loop over energies (pseudo-time)
-    for( unsigned n = 0; n < _nEnergies; ++n ) {
+    for( unsigned idx_energy = 0; idx_energy < _nEnergies; ++idx_energy ) {
 
         // reconstruct slopes for higher order solver
-        if( reconsOrder > 1 ) {
-            _mesh->ReconstructSlopesU( _nq, psiDx, psiDy, _sol );    // unstructured reconstruction
-            //_mesh->ReconstructSlopesS( _nq, psiDx, psiDy, _psi );    // structured reconstruction (not stable currently)
-        }
+        // if( reconsOrder > 1 ) {
+        //    _mesh->ReconstructSlopesU( _nq, psiDx, psiDy, _sol );    // unstructured reconstruction
+        //    //_mesh->ReconstructSlopesS( _nq, psiDx, psiDy, _psi );    // structured reconstruction (not stable currently)
+        //}
 
-        // loop over all spatial cells
-        for( unsigned j = 0; j < _nCells; ++j ) {
-            if( _boundaryCells[j] == BOUNDARY_TYPE::DIRICHLET ) continue;
-            // loop over all ordinates
-            for( unsigned k = 0; k < _nq; ++k ) {
-                psiNew[j][k] = 0.0;
-                // loop over all neighbor cells (edges) of cell j and compute numerical fluxes
-                for( unsigned l = 0; l < _neighbors[j].size(); ++l ) {
-                    // store flux contribution on psiNew_sigmaS to save memory
-                    if( _boundaryCells[j] == BOUNDARY_TYPE::NEUMANN && _neighbors[j][l] == _nCells )
-                        psiNew[j][k] += _g->Flux( _quadPoints[k], _sol[j][k], _sol[j][k], _normals[j][l] );
-                    else {
-                        switch( reconsOrder ) {
-                            // first order solver
-                            case 1: psiNew[j][k] += _g->Flux( _quadPoints[k], _sol[j][k], _sol[_neighbors[j][l]][k], _normals[j][l] ); break;
-                            // second order solver
-                            case 2:
-                                // left status of interface
-                                psiL = _sol[j][k] + psiDx[j][k] * ( interfaceMidPoints[j][l][0] - cellMidPoints[j][0] ) +
-                                       psiDy[j][k] * ( interfaceMidPoints[j][l][1] - cellMidPoints[j][1] );
-                                // right status of interface
-                                psiR = _sol[_neighbors[j][l]][k] +
-                                       psiDx[_neighbors[j][l]][k] * ( interfaceMidPoints[j][l][0] - cellMidPoints[_neighbors[j][l]][0] ) +
-                                       psiDy[_neighbors[j][l]][k] * ( interfaceMidPoints[j][l][1] - cellMidPoints[_neighbors[j][l]][1] );
-                                // positivity check (if not satisfied, deduce to first order)
-                                if( psiL < 0.0 || psiR < 0.0 ) {
-                                    psiL = _sol[j][k];
-                                    psiR = _sol[_neighbors[j][l]][k];
-                                }
-                                // flux evaluation
-                                psiNew[j][k] += _g->Flux( _quadPoints[k], psiL, psiR, _normals[j][l] );
-                                break;
-                            // higher order solver
-                            case 3: std::cout << "higher order is WIP" << std::endl; break;
-                            // default: first order solver
-                            default: psiNew[j][k] += _g->Flux( _quadPoints[k], _sol[j][k], _sol[_neighbors[j][l]][k], _normals[j][l] );
-                        }
-                    }
-                }
-                // time update angular flux with numerical flux and total scattering cross section
-                psiNew[j][k] = _sol[j][k] - ( _dE / _areas[j] ) * psiNew[j][k] - _dE * _sigmaT[n][j] * _sol[j][k];
-            }
-            // compute scattering effects
-            psiNew[j] += _dE * _sigmaS[n][j] * _scatteringKernel * _sol[j];    // multiply scattering matrix with psi
+        // --- Prepare Boundaries and temp variables
+        PrepIteration( psiNew );
 
-            // TODO: figure out a more elegant way
-            // add external source contribution
-            if( _Q.size() == 1u ) {            // constant source for all energies
-                if( _Q[0][j].size() == 1u )    // isotropic source
-                    psiNew[j] += _dE * _Q[0][j][0];
-                else
-                    psiNew[j] += _dE * _Q[0][j];
-            }
-            else {
-                if( _Q[0][j].size() == 1u )    // isotropic source
-                    psiNew[j] += _dE * _Q[n][j][0];
-                else
-                    psiNew[j] += _dE * _Q[n][j];
-            }
-        }
+        // --- Compute Fluxes ---
+        FluxUpdate( psiNew, idx_energy );
+
+        // --- Compute Finite Volume Step ---
+        FVMUpdate( psiNew, idx_energy );
+
+        // --- Update Solution ---
         _sol = psiNew;
+
+        // --- VTK and CSV Output ---
+        mass = WriteOutputFields( idx_energy );
+        Save( idx_energy );
+
+        // --- Screen Output ---
         for( unsigned i = 0; i < _nCells; ++i ) {
             fluxNew[i] = dot( _sol[i], _weights );
         }
 
-        // --- VTK and CSV Output ---
-        mass = WriteOutputFields( n );
-        Save( n );
-
-        // --- Screen Output ---
         dFlux   = blaze::l2Norm( fluxNew - fluxOld );
         fluxOld = fluxNew;
-        if( rank == 0 ) log->info( "{:03.8f}   {:01.5e} {:01.5e}", _energies[n], dFlux, mass );
+        if( rank == 0 ) log->info( "{:03.8f}   {:01.5e} {:01.5e}", _energies[idx_energy], dFlux, mass );
+    }
+}
+
+void SNSolver::PrepIteration( VectorVector& psiNew ) {
+    // Loop over all spatial cells
+    for( unsigned idx_cells = 0; idx_cells < _nCells; ++idx_cells ) {
+        if( _boundaryCells[idx_cells] == BOUNDARY_TYPE::DIRICHLET ) continue;    // Dirichlet cells stay at IC, farfield assumption
+
+        // loop over all ordinates
+        for( unsigned idx_quad = 0; idx_quad < _nq; ++idx_quad ) {
+            psiNew[idx_cells][idx_quad] = 0.0;
+        }
+    }
+}
+
+void SNSolver::FluxUpdate( VectorVector& psiNew, unsigned idx_energy ) {
+    // loop over all spatial cells
+    for( unsigned idx_cells = 0; idx_cells < _nCells; ++idx_cells ) {
+        // loop over all ordinates
+        for( unsigned idx_quad = 0; idx_quad < _nq; ++idx_quad ) {
+            // loop over all neighbor cells (edges) of cell j and compute numerical fluxes
+            for( unsigned idx_neighbor = 0; idx_neighbor < _neighbors[idx_cells].size(); ++idx_neighbor ) {
+                // store flux contribution on psiNew_sigmaS to save memory
+                if( _boundaryCells[idx_cells] == BOUNDARY_TYPE::NEUMANN && _neighbors[idx_cells][idx_neighbor] == _nCells )
+                    psiNew[idx_cells][idx_quad] +=
+                        _g->Flux( _quadPoints[idx_quad], _sol[idx_cells][idx_quad], _sol[idx_cells][idx_quad], _normals[idx_cells][idx_neighbor] );
+                else {
+                    /*                    switch( reconsOrder ) {
+                                            // first order solver
+                                            case 1:
+                                                psiNew[idx_cells][idx_quad] += _g->Flux( _quadPoints[idx_quad],
+                                                                                         _sol[idx_cells][idx_quad],
+                                                                                         _sol[_neighbors[idx_cells][idx_neighbor]][idx_quad],
+                                                                                         _normals[idx_cells][idx_neighbor] );
+                                                break;
+                                            // second order solver
+                                            case 2:
+                                                // left status of interface
+                                                psiL = _sol[idx_cells][idx_quad] +
+                                                       psiDx[idx_cells][idx_quad] * ( interfaceMidPoints[idx_cells][idx_neighbor][0] -
+                       cellMidPoints[idx_cells][0] ) + psiDy[idx_cells][idx_quad] * ( interfaceMidPoints[idx_cells][idx_neighbor][1] -
+                       cellMidPoints[idx_cells][1] );
+                                                // right status of interface
+                                                psiR = _sol[_neighbors[idx_cells][idx_neighbor]][idx_quad] +
+                                                       psiDx[_neighbors[idx_cells][idx_neighbor]][idx_quad] *
+                                                           ( interfaceMidPoints[idx_cells][idx_neighbor][0] -
+                       cellMidPoints[_neighbors[idx_cells][idx_neighbor]][0] ) + psiDy[_neighbors[idx_cells][idx_neighbor]][idx_quad] * (
+                       interfaceMidPoints[idx_cells][idx_neighbor][1] - cellMidPoints[_neighbors[idx_cells][idx_neighbor]][1] );
+                                                // positivity check (if not satisfied, deduce to first order)
+                                                if( psiL < 0.0 || psiR < 0.0 ) {
+                                                    psiL = _sol[idx_cells][idx_quad];
+                                                    psiR = _sol[_neighbors[idx_cells][idx_neighbor]][idx_quad];
+                                                }
+                                                // flux evaluation
+                                                psiNew[idx_cells][idx_quad] += _g->Flux( _quadPoints[idx_quad], psiL, psiR,
+                       _normals[idx_cells][idx_neighbor] ); break;
+                                            // higher order solver
+                                            case 3: std::cout << "higher order is WIP" << std::endl; break;
+                                            // default: first order solver
+                                            default:
+                                            */
+                    psiNew[idx_cells][idx_quad] += _g->Flux( _quadPoints[idx_quad],
+                                                             _sol[idx_cells][idx_quad],
+                                                             _sol[_neighbors[idx_cells][idx_neighbor]][idx_quad],
+                                                             _normals[idx_cells][idx_neighbor] );
+                    // }
+                }
+            }
+        }
+    }
+}
+
+void SNSolver::FVMUpdate( VectorVector& psiNew, unsigned idx_energy ) {
+    for( unsigned idx_cells = 0; idx_cells < _nCells; ++idx_cells ) {
+        // loop over all ordinates
+        for( unsigned idx_quad = 0; idx_quad < _nq; ++idx_quad ) {
+            // time update angular flux with numerical flux and total scattering cross section
+            psiNew[idx_cells][idx_quad] = _sol[idx_cells][idx_quad] - ( _dE / _areas[idx_cells] ) * psiNew[idx_cells][idx_quad] -
+                                          _dE * _sigmaT[idx_energy][idx_cells] * _sol[idx_cells][idx_quad];
+        }
+        // compute scattering effects
+        psiNew[idx_cells] += _dE * _sigmaS[idx_energy][idx_cells] * _scatteringKernel * _sol[idx_cells];    // multiply scattering matrix with psi
+
+        // Source Term
+        if( _Q.size() == 1u ) {                    // constant source for all energies
+            if( _Q[0][idx_cells].size() == 1u )    // isotropic source
+                psiNew[idx_cells] += _dE * _Q[0][idx_cells][0];
+            else
+                psiNew[idx_cells] += _dE * _Q[0][idx_cells];
+        }
+        else {
+            if( _Q[0][idx_cells].size() == 1u )    // isotropic source
+                psiNew[idx_cells] += _dE * _Q[idx_energy][idx_cells][0];
+            else
+                psiNew[idx_cells] += _dE * _Q[idx_energy][idx_cells];
+        }
     }
 }
 

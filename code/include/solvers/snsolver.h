@@ -27,6 +27,11 @@ class SNSolver : public Solver
   private:
     void PrepareOutputFields() override;
     double WriteOutputFields( unsigned idx_pseudoTime ) override;
+
+    void PrepIteration( VectorVector& psiNew );
+    void FluxUpdate( VectorVector& psiNew, unsigned idx_energy );
+    void FVMUpdate( VectorVector& psiNew, unsigned idx_energy );
+    // --- Member variables ---
 };
 
 #endif    // SNSOLVER_H

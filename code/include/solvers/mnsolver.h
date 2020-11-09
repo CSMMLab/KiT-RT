@@ -46,6 +46,7 @@ class MNSolver : public Solver
 
     // ---- Member functions ---
 
+    // IO
     /*! @brief Initializes the output groups and fields of this solver and names the fields */
     void PrepareOutputFields() override;
 
