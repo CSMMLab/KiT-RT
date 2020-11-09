@@ -406,14 +406,6 @@ double PNSolver::WriteOutputFields( unsigned idx_pseudoTime ) {
     return mass;
 }
 
-void PNSolver::Save() const { ExportVTK( _settings->GetOutputFile(), _outputFields, _outputFieldNames, _mesh ); }
-
-void PNSolver::Save( int currEnergy ) const {
-    if( _settings->GetOutputFrequency() != 0 && currEnergy % (unsigned)_settings->GetOutputFrequency() == 0 ) {
-        ExportVTK( _settings->GetOutputFile() + "_" + std::to_string( currEnergy ), _outputFields, _outputFieldNames, _mesh );
-    }
-}
-
 void PNSolver::CleanFluxMatrices() {
     for( unsigned idx_row = 0; idx_row < _nTotalEntries; idx_row++ ) {
         for( unsigned idx_col = 0; idx_col < _nTotalEntries; idx_col++ ) {

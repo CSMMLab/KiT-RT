@@ -11,9 +11,7 @@ class PNSolver : public Solver
      */
     PNSolver( Config* settings );
 
-    virtual void Solve() override;              /*! @brief Solve functions runs main time loop. (Run Solver) */
-    void Save() const override;                 /*! @brief Save Output solution to VTK file */
-    void Save( int currEnergy ) const override; /*! @brief Save Output solution at given energy (pseudo time) to VTK file */
+    virtual void Solve() override; /*! @brief Solve functions runs main time loop. (Run Solver) */
 
   protected:
     unsigned _nTotalEntries; /*! @brief: total number of equations in the system */
@@ -42,21 +40,16 @@ class PNSolver : public Solver
     Vector _scatterMatDiag; /*! @brief: diagonal of the scattering matrix (its a diagonal matrix by construction). Contains eigenvalues of the
                                scattering kernel.  */
 
-    // Output related members
-    std::vector<std::vector<std::vector<double>>> _outputFields; /*! @brief: Solver Output: dimensions (GroupID,FieldID,CellID). !Protoype output for
-                                                                    multiple output fields. Will replace _solverOutput */
-    std::vector<std::vector<std::string>> _outputFieldNames;     /*! @brief: Names of the outputFields: dimensions (GroupID,FieldID) */
-
     // ---- Member functions ----
 
     // IO
     /*! @brief Initializes the output groups and fields of this solver and names the fields */
-    void PrepareOutputFields();
+    void PrepareOutputFields() override;
 
     /*! @brief Function that prepares VTK export and csv export of the current solver iteration
         @returns: Mass of current iteration
     */
-    double WriteOutputFields( unsigned idx_pseudoTime );
+    double WriteOutputFields( unsigned idx_pseudoTime ) override;
 
     // Solver
     /*! @brief: parameter functions for setting up system matrix

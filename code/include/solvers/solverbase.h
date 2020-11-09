@@ -52,7 +52,23 @@ class Solver
     VectorVector _sol;                 /*! @brief solution of the PDE, e.g. angular flux or moments */
     std::vector<double> _solverOutput; /*! @brief LEGACY: Outputfield for solver ==> Will be replaced by _outputFields in the near future */
 
+    // Output related members
+    std::vector<std::vector<std::vector<double>>> _outputFields; /*! @brief: Solver Output: dimensions (GroupID,FieldID,CellID). !Protoype output for
+                                                                    multiple output fields. Will replace _solverOutput */
+    std::vector<std::vector<std::string>> _outputFieldNames;     /*! @brief: Names of the outputFields: dimensions (GroupID,FieldID) */
+
     // we will have to add a further dimension for quadPoints and weights once we start with multilevel SN
+
+    // ---- Member functions ----
+
+    // IO
+    /*! @brief Initializes the output groups and fields of this solver and names the fields */
+    virtual void PrepareOutputFields() = 0;
+
+    /*! @brief Function that prepares VTK export and csv export of the current solver iteration
+        @returns: Mass of current iteration
+    */
+    virtual double WriteOutputFields( unsigned idx_pseudoTime ) = 0;
 
     /**
      * @brief ComputeTimeStep calculates the maximal stable time step
@@ -81,12 +97,8 @@ class Solver
      */
     virtual void Solve() = 0;
 
-    /**
-     * @brief Output solution to VTK file
-     */
-    virtual void Save() const = 0;
-
-    virtual void Save( int currEnergy ) const = 0;
+    void Save() const;                 /*! @brief Save Output solution to VTK file */
+    void Save( int currEnergy ) const; /*! @brief Save Output solution at given energy (pseudo time) to VTK file */
 };
 
 #endif    // SOLVER_H

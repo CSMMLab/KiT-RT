@@ -23,11 +23,10 @@ class SNSolver : public Solver
      * @brief Solve functions runs main time loop
      */
     void Solve() override;
-    /**
-     * @brief Output solution to VTK file
-     */
-    void Save() const override;
-    void Save( int currEnergy ) const override;
+
+  private:
+    void PrepareOutputFields() override;
+    double WriteOutputFields( unsigned idx_pseudoTime ) override;
 };
 
 #endif    // SNSOLVER_H

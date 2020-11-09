@@ -78,17 +78,10 @@ Solver* Solver::Create( Config* settings ) {
     }
 }
 
-void Solver::Save() const {
-    std::vector<std::string> fieldNames{ "flux" };
-    std::vector<std::vector<std::string>> fieldNamesWrapper{ fieldNames };
+void Solver::Save() const { ExportVTK( _settings->GetOutputFile(), _outputFields, _outputFieldNames, _mesh ); }
 
-    std::vector<double> flux;
-    flux.resize( _nCells );
-
-    for( unsigned i = 0; i < _nCells; ++i ) {
-        flux[i] = _sol[i][0];
+void Solver::Save( int currEnergy ) const {
+    if( _settings->GetOutputFrequency() != 0 && currEnergy % (unsigned)_settings->GetOutputFrequency() == 0 ) {
+        ExportVTK( _settings->GetOutputFile() + "_" + std::to_string( currEnergy ), _outputFields, _outputFieldNames, _mesh );
     }
-    std::vector<std::vector<double>> scalarField( 1, flux );
-    std::vector<std::vector<std::vector<double>>> results{ scalarField };
-    ExportVTK( _settings->GetOutputFile() + "_" + std::to_string( _nEnergies ), results, fieldNamesWrapper, _mesh );
 }

@@ -19,9 +19,7 @@ class MNSolver : public Solver
     /*! @brief MNSolver destructor */
     ~MNSolver();
 
-    void Solve() override;                      /*! @brief Solve functions runs main time loop */
-    void Save() const override;                 /*! @brief Save Output solution to VTK file */
-    void Save( int currEnergy ) const override; /*! @brief Save Output solution at given energy (pseudo time) to VTK file */
+    void Solve() override; /*! @brief Solve functions runs main time loop */
 
   private:
     unsigned _nTotalEntries;    /*! @brief: Total number of equations in the system */
@@ -46,15 +44,10 @@ class MNSolver : public Solver
                                            Layout: _nCells x _nTotalEntries*/
     OptimizerBase* _optimizer; /*! @brief: Class to solve minimal entropy problem */
 
-    // Output related members
-    std::vector<std::vector<std::vector<double>>> _outputFields; /*! @brief: Solver Output: dimensions (GroupID,FieldID,CellID). !Protoype output for
-                                                                    multiple output fields. Will replace _solverOutput */
-    std::vector<std::vector<std::string>> _outputFieldNames;     /*! @brief: Names of the outputFields: dimensions (GroupID,FieldID) */
-
     // ---- Member functions ---
 
     /*! @brief Initializes the output groups and fields of this solver and names the fields */
-    void PrepareOutputFields();
+    void PrepareOutputFields() override;
 
     /*! @brief Function that writes NN Training Data in a .csv file */
     void WriteNNTrainingData( unsigned idx_pseudoTime );
@@ -62,7 +55,7 @@ class MNSolver : public Solver
     /*! @brief Function that prepares VTK export and csv export of the current solver iteration
         @returns: Mass of current iteration
     */
-    double WriteOutputFields( unsigned idx_pseudoTime );
+    double WriteOutputFields( unsigned idx_pseudoTime ) override;
 
     /*! @brief : computes the global index of the moment corresponding to basis function (l,k)
      *  @param : degree l, it must hold: 0 <= l <=_nq

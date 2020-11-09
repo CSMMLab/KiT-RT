@@ -4,6 +4,7 @@
 #include "fluxes/numericalflux.h"
 #include "kernels/scatteringkernelbase.h"
 #include "problems/problembase.h"
+#include "toolboxes/errormessages.h"
 
 // externals
 #include "spdlog/spdlog.h"
@@ -38,6 +39,9 @@ CSDSNSolver::CSDSNSolver( Config* settings ) : SNSolver( settings ) {
 
     // Get patient density
     _density = Vector( _nCells, 1.0 );
+
+    // Solver output
+    PrepareOutputFields();
 }
 
 void CSDSNSolver::Solve() {
@@ -138,7 +142,11 @@ void CSDSNSolver::Solve() {
             _solverOutput[j] = fluxNew[j];
         }
 
-        // Save( n );
+        // --- VTK and CSV Output ---
+        WriteOutputFields( n );
+        Save( n );
+
+        // --- Screen Output ---
         dFlux   = blaze::l2Norm( fluxNew - fluxOld );
         fluxOld = fluxNew;
         if( rank == 0 ) log->info( "{:03.8f}  {:01.5e}  {:01.5e}", _energies[n], _dE / densityMin, dFlux );
@@ -146,18 +154,70 @@ void CSDSNSolver::Solve() {
     }
 }
 
-void CSDSNSolver::Save() const {
-    std::vector<std::string> fieldNames{ "dose" };
-    std::vector<std::vector<std::string>> fieldNamesWrapper{ fieldNames };
-    std::vector<std::vector<double>> scalarField( 1, _dose );
-    std::vector<std::vector<std::vector<double>>> results{ scalarField };
-    ExportVTK( _settings->GetOutputFile(), results, fieldNamesWrapper, _mesh );
+void CSDSNSolver::PrepareOutputFields() {
+    unsigned nGroups = (unsigned)_settings->GetNVolumeOutput();
+
+    _outputFieldNames.resize( nGroups );
+    _outputFields.resize( nGroups );
+
+    // Prepare all OutputGroups ==> Specified in option VOLUME_OUTPUT
+    for( unsigned idx_group = 0; idx_group < nGroups; idx_group++ ) {
+        // Prepare all Output Fields per group
+
+        // Different procedure, depending on the Group...
+        switch( _settings->GetVolumeOutput()[idx_group] ) {
+            case MINIMAL:
+                // Currently only one entry ==> rad flux
+                _outputFields[idx_group].resize( 1 );
+                _outputFieldNames[idx_group].resize( 1 );
+                _outputFields[idx_group][0].resize( _nCells );
+                _outputFieldNames[idx_group][0] = "radiation flux density";
+                break;
+
+            case DOSE:
+                // one entry per cell
+                _outputFields[idx_group].resize( 1 );
+                _outputFieldNames[idx_group].resize( 1 );
+                _outputFields[idx_group][0].resize( _nCells );
+                _outputFieldNames[idx_group][0] = std::string( "raditation dose" );
+                break;
+
+            default: ErrorMessages::Error( "Volume Output Group not defined for CSD SN Solver!", CURRENT_FUNCTION ); break;
+        }
+    }
 }
 
-void CSDSNSolver::Save( int currEnergy ) const {
-    std::vector<std::string> fieldNames{ "dose" };
-    std::vector<std::vector<std::string>> fieldNamesWrapper{ fieldNames };
-    std::vector<std::vector<double>> scalarField( 1, _solverOutput );
-    std::vector<std::vector<std::vector<double>>> results{ scalarField };
-    ExportVTK( _settings->GetOutputFile() + "_" + std::to_string( currEnergy ), results, fieldNamesWrapper, _mesh );
+double CSDSNSolver::WriteOutputFields( unsigned idx_pseudoTime ) {
+    double mass      = 0.0;
+    unsigned nGroups = (unsigned)_settings->GetNVolumeOutput();
+
+    // Compute total "mass" of the system ==> to check conservation properties
+    std::vector<double> flux( _nCells, 0.0 );
+    for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
+        flux[idx_cell] = dot( _sol[idx_cell], _weights );
+        mass += flux[idx_cell] * _areas[idx_cell];
+    }
+
+    if( ( _settings->GetOutputFrequency() != 0 && idx_pseudoTime % (unsigned)_settings->GetOutputFrequency() == 0 ) ||
+        ( idx_pseudoTime == _nEnergies - 1 ) /* need sol at last iteration */ ) {
+
+        for( unsigned idx_group = 0; idx_group < nGroups; idx_group++ ) {
+            switch( _settings->GetVolumeOutput()[idx_group] ) {
+                case MINIMAL:
+                    for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
+                        _outputFields[idx_group][0][idx_cell] = flux[idx_cell];
+                    }
+                    break;
+
+                case DOSE:
+                    for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
+                        _outputFields[idx_group][0][idx_cell] = _dose[idx_cell];    // Remove DOSE
+                    }
+                    break;
+
+                default: ErrorMessages::Error( "Volume Output Group not defined for CSD SN Solver!", CURRENT_FUNCTION ); break;
+            }
+        }
+    }
+    return mass;
 }

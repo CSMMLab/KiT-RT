@@ -309,14 +309,6 @@ double MNSolver::WriteOutputFields( unsigned idx_pseudoTime ) {
     return mass;
 }
 
-void MNSolver::Save() const { ExportVTK( _settings->GetOutputFile(), _outputFields, _outputFieldNames, _mesh ); }
-
-void MNSolver::Save( int currEnergy ) const {
-    if( _settings->GetOutputFrequency() != 0 && currEnergy % (unsigned)_settings->GetOutputFrequency() == 0 ) {
-        ExportVTK( _settings->GetOutputFile() + "_" + std::to_string( currEnergy ), _outputFields, _outputFieldNames, _mesh );
-    }
-}
-
 void MNSolver::WriteNNTrainingData( unsigned idx_pseudoTime ) {
     std::string filename = "trainNN.csv";
     std::ofstream myfile;
