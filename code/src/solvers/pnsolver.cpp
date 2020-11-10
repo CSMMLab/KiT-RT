@@ -62,24 +62,16 @@ void PNSolver::Solve() {
 
     double mass = 0;
 
-    Save( -1 );    // Save initial condition
-
-    unsigned idx_system = 0;
-
     if( rank == 0 ) log->info( "{:10}   {:10}", "t", "mass" );
-
-    //   Remove
-    mass = WriteOutputFields( 0 );
-    if( rank == 0 ) log->info( " {:01.5e}  {:01.5e}", 0.0, mass );
 
     // Loop over energies (pseudo-time of continuous slowing down approach)
     for( unsigned idx_energy = 0; idx_energy < _nEnergies; idx_energy++ ) {
 
         // --- Prepare Boundaries and temp variables
-        PrepIteration( psiNew );
+        IterPreprocessing();
 
         // --- Compute Fluxes ---
-        FluxUpdate( psiNew, idx_energy );
+        FluxUpdate( psiNew );
 
         // --- Finite Volume Update ---
         FVMUpdate( psiNew, idx_energy );
@@ -96,21 +88,22 @@ void PNSolver::Solve() {
     }
 }
 
-void PNSolver::PrepIteration( VectorVector& psiNew ) {
+void PNSolver::IterPreprocessing() {
+    // Nothing to preprocess for PNSolver
+}
+
+void PNSolver::FluxUpdate( VectorVector& psiNew ) {
     // Loop over all spatial cells
     for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
-        if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::DIRICHLET ) continue;    // Dirichlet cells stay at IC, farfield assumption
+
+        // Dirichlet cells stay at IC, farfield assumption
+        if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::DIRICHLET ) continue;
 
         // Reset temporary variable psiNew
         for( unsigned idx_sys = 0; idx_sys < _nTotalEntries; idx_sys++ ) {
             psiNew[idx_cell][idx_sys] = 0.0;
         }
-    }
-}
 
-void PNSolver::FluxUpdate( VectorVector& psiNew, unsigned idx_energy ) {
-    // Loop over all spatial cells
-    for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
         // Loop over all neighbor cells (edges) of cell j and compute numerical fluxes
         for( unsigned idx_neighbor = 0; idx_neighbor < _neighbors[idx_cell].size(); idx_neighbor++ ) {
 
@@ -133,10 +126,12 @@ void PNSolver::FluxUpdate( VectorVector& psiNew, unsigned idx_energy ) {
 }
 
 void PNSolver::FVMUpdate( VectorVector& psiNew, unsigned idx_energy ) {
-    // time update angular flux with numerical flux and total scattering cross section
+    // Loop over all spatial cells
     for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
+        // Dirichlet cells stay at IC, farfield assumption
+        if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::DIRICHLET ) continue;
+        // Flux update
         for( unsigned idx_sys = 0; idx_sys < _nTotalEntries; idx_sys++ ) {
-
             psiNew[idx_cell][idx_sys] = _sol[idx_cell][idx_sys] - ( _dE / _areas[idx_cell] ) * psiNew[idx_cell][idx_sys] /* cell averaged flux */
                                         - _dE * _sol[idx_cell][idx_sys] *
                                               ( _sigmaT[idx_energy][idx_cell]                                 /* absorbtion influence */

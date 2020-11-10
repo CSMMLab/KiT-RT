@@ -132,52 +132,23 @@ void MNSolver::Solve() {
 
     auto log = spdlog::get( "event" );
 
-    // angular flux at next time step (maybe store angular flux at all time steps, since time becomes energy?)
     VectorVector psiNew = _sol;
 
     double mass = 0;
 
-    Save( -1 );
-
     if( rank == 0 ) log->info( "{:10}  {:10}", "t", "mass" );
-
-    // if( rank == 0 ) log->info( "{:03.8f}   {:01.5e} {:01.5e}", -1.0, dFlux, mass1 ); Should be deleted
 
     // Loop over energies (pseudo-time of continuous slowing down approach)
     for( unsigned idx_energy = 0; idx_energy < _nEnergies; idx_energy++ ) {
 
-        // ------- Reconstruction Step ----------------
+        // ----- Iteration Preprocessing -----
+        IterPreprocessing();
 
-        _optimizer->SolveMultiCell( _alpha, _sol, _moments );
+        // ------- Flux Computation Step --------------
+        FluxUpdate( psiNew );
 
-        // Loop over the grid cells
-        for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
-
-            // ------- Relizablity Reconstruction Step ----
-
-            ComputeRealizableSolution( idx_cell );
-
-            // ------- Flux Computation Step --------------
-
-            // Dirichlet Boundaries are finished now
-            if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::DIRICHLET ) continue;
-
-            psiNew[idx_cell] = ConstructFlux( idx_cell );
-
-            // ------ Finite Volume Update Step ------
-
-            // NEED TO VECTORIZE
-            for( unsigned idx_system = 0; idx_system < _nTotalEntries; idx_system++ ) {
-
-                psiNew[idx_cell][idx_system] = _sol[idx_cell][idx_system] -
-                                               ( _dE / _areas[idx_cell] ) * psiNew[idx_cell][idx_system] /* cell averaged flux */
-                                               - _dE * _sol[idx_cell][idx_system] *
-                                                     ( _sigmaT[idx_energy][idx_cell]                                    /* absorbtion influence */
-                                                       + _sigmaS[idx_energy][idx_cell] * _scatterMatDiag[idx_system] ); /* scattering influence */
-            }
-
-            psiNew[idx_cell][0] += _dE * _Q[0][idx_cell][0];
-        }
+        // ------ Finite Volume Update Step ------
+        FVMUpdate( psiNew, idx_energy );
 
         // Update Solution
         _sol = psiNew;
@@ -189,6 +160,46 @@ void MNSolver::Solve() {
 
         // --- Screen Output ---
         if( rank == 0 ) log->info( "{:03.8f}   {:01.5e}", _energies[idx_energy], mass );
+    }
+}
+
+void MNSolver::IterPreprocessing() {
+
+    // ------- Reconstruction Step ----------------
+
+    _optimizer->SolveMultiCell( _alpha, _sol, _moments );
+
+    // ------- Relizablity Reconstruction Step ----
+    for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
+        ComputeRealizableSolution( idx_cell );
+    }
+}
+
+void MNSolver::FluxUpdate( VectorVector& psiNew ) {
+    // Loop over the grid cells
+    for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
+        // Dirichlet Boundaries stay
+        if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::DIRICHLET ) continue;
+        psiNew[idx_cell] = ConstructFlux( idx_cell );
+    }
+}
+
+void MNSolver::FVMUpdate( VectorVector& psiNew, unsigned idx_energy ) {
+    // Loop over the grid cells
+    for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
+        // Dirichlet Boundaries stay
+        if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::DIRICHLET ) continue;
+
+        for( unsigned idx_system = 0; idx_system < _nTotalEntries; idx_system++ ) {
+
+            psiNew[idx_cell][idx_system] = _sol[idx_cell][idx_system] -
+                                           ( _dE / _areas[idx_cell] ) * psiNew[idx_cell][idx_system] /* cell averaged flux */
+                                           - _dE * _sol[idx_cell][idx_system] *
+                                                 ( _sigmaT[idx_energy][idx_cell]                                    /* absorbtion influence */
+                                                   + _sigmaS[idx_energy][idx_cell] * _scatterMatDiag[idx_system] ); /* scattering influence */
+        }
+
+        psiNew[idx_cell][0] += _dE * _Q[0][idx_cell][0];
     }
 }
 

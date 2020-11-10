@@ -74,6 +74,13 @@ class Solver
     ///*! @brief Computes the finite volume update for all cells and stores it in psiNew    */
     // virtual void FVMUpdate( VectorVector& psiNew ) = 0;
 
+    /*! @brief Performs preprocessing for the current solver iteration */
+    virtual void IterPreprocessing() = 0;
+    /*! @brief Constructs  the flux update for the current iteration and stores it in psiNew*/
+    virtual void FluxUpdate( VectorVector& psiNew ) = 0;
+    /*! @brief Computes the finite Volume update step for the current iteration */
+    virtual void FVMUpdate( VectorVector& psiNew, unsigned idx_energy ) = 0;
+
     /**
      * @brief ComputeTimeStep calculates the maximal stable time step
      * @param cfl is cfl number

@@ -79,5 +79,10 @@ class MNSolver : public Solver
     /*! @brief Corrects the solution _sol[idx_cell] to be realizable w.r.t. the reconstructed entropy (eta'(alpha*m))
         @param idx_cell = cell where the correction happens*/
     void ComputeRealizableSolution( unsigned idx_cell );
+
+    // Solver
+    void FVMUpdate( VectorVector& psiNew, unsigned idx_energy ) override;
+    void FluxUpdate( VectorVector& psiNew ) override;
+    void IterPreprocessing() override;
 };
 #endif    // MNSOLVER_H
