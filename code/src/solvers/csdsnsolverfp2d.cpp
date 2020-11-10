@@ -12,16 +12,32 @@
 #include <mpi.h>
 
 CSDSNSolverFP2D::CSDSNSolverFP2D( Config* settings ) : SNSolver( settings ) {
+    // quadrature
+    unsigned nq            = _settings->GetNQuadPoints();
+    _quadPoints = _quadrature->GetPoints();
+    _weights    = _quadrature->GetWeights();
+    std::cout<<nq<<std::endl;
+    Vector mu( nq );
+    Vector phi( nq );
+    Vector wp( nq );
+    Vector wa( nq );
+    for( unsigned k = 0; k < nq; ++k ) {
+        mu[k] = _quadPoints[k][0];
+        phi[k] = _quadPoints[k][2];
+        wp[k] = _weights[k];
+        wa[k] = _weights[k];
+    } // @TODO I need to further define 1D polar & azimuthal quadratures
+
+    // dose
     _dose = std::vector<double>( _settings->GetNCells(), 0.0 );
 
-    // Set angle and energies
-    _angle           = Vector( _settings->GetNQuadPoints(), 0.0 );    // my
-    _energies        = Vector( _nEnergies, 0.0 );                     // equidistant
-     _energyMin = 1e-4;
-     //_energyMax = 10.0;
-     _energyMax = 5.0;
-    // write equidistant energy grid
+    // set angle and energies
+    _angle           = Vector( nq, 0.0 );
+    _energies        = Vector( _nEnergies, 0.0 );
+    _energyMin = 1e-4;
+    _energyMax = 5.0;
 
+    // write equidistant energy grid
     _dE        = ComputeTimeStep( settings->GetCFL() );
     _nEnergies = unsigned( ( _energyMax - _energyMin ) / _dE );
     std::cout<<"nEnergies = "<<_nEnergies<<std::endl;
@@ -30,31 +46,46 @@ CSDSNSolverFP2D::CSDSNSolverFP2D( Config* settings ) : SNSolver( settings ) {
         _energies[n] = _energyMin + ( _energyMax - _energyMin ) / ( _nEnergies - 1 ) * n;
     }
 
-    // create 1D quadrature
-    unsigned nq            = _settings->GetNQuadPoints();
-    QuadratureBase* quad1D = QuadratureBase::CreateQuadrature( QUAD_GaussLegendre1D, nq );
-    Vector w               = quad1D->GetWeights();
-    VectorVector muVec     = quad1D->GetPoints();
-    Vector mu( nq );
-    for( unsigned k = 0; k < nq; ++k ) {
-        mu[k] = muVec[k][0];
-    }
-
-    // setup Laplace Beltrami matrix L in slab geometry
+    // set Laplace Beltrami matrix L under 2D geometry
     _L = Matrix( nq, nq, 0.0 );
-
+    // polar coeffs
     double DMinus = 0.0;
     double DPlus  = 0.0;
+    // azimuthal coeffs
+    double A = 0.0;
+    double A1 = 0.0;
+    double A2 = 0.0;
+    double A3 = 0.0;
+    double A4Plus = 0.0;
+    double A4Minus = 0.0;
     for( unsigned k = 0; k < nq; ++k ) {
         DMinus = DPlus;
-        DPlus  = DMinus - 2 * mu[k] * w[k];
+        DPlus  = DMinus - 2 * mu[k] * _weights[k];
+
+        if (k > 0 && k < nq - 1) {
+            A4Plus = (sqrt(1.0 - pow(mu[k+1], 2)) - sqrt(1.0 - pow(mu[k], 2))) / (mu[k+1] - mu[k]);
+            A4Minus = (sqrt(1.0 - pow(mu[k], 2)) - sqrt(1.0 - pow(mu[k-1], 2))) / (mu[k] - mu[k-1]);
+            A3 = (DPlus * A4Plus - DMinus * A4Minus) / wp[k];
+            A2 = 2.0 * (1.0 - pow(mu[k], 2)) + A3 * sqrt(1.0 - pow(mu[k], 2));
+            A1 = pow(3.1415926, 2) * A2 / 2.0 / nq / (1.0 - cos(3.1415926 / nq));
+            A = A1 / (1.0 - pow(mu[k], 2));
+        }
+
         if( k > 0 ) {
-            _L( k, k - 1 ) = DMinus / ( mu[k] - mu[k - 1] ) / w[k];
-            _L( k, k )     = -DMinus / ( mu[k] - mu[k - 1] ) / w[k];
+            // polar
+            _L( k, k - 1 ) = DMinus / ( mu[k] - mu[k - 1] ) / wp[k];
+            _L( k, k )     = -DMinus / ( mu[k] - mu[k - 1] ) / wp[k];
+            // azimuthal
+            _L( k, k - 1 ) += A / ( phi[k] - phi[k - 1] ) / wa[k];
+            _L( k, k - 1 ) -= A / ( phi[k] - phi[k - 1] ) / wa[k];
         }
         if( k < nq - 1 ) {
-            _L( k, k + 1 ) = DPlus / ( mu[k + 1] - mu[k] ) / w[k];
-            _L( k, k ) += -DPlus / ( mu[k + 1] - mu[k] ) / w[k];
+            // polar
+            _L( k, k + 1 ) = DPlus / ( mu[k + 1] - mu[k] ) / wp[k];
+            _L( k, k ) += -DPlus / ( mu[k + 1] - mu[k] ) / wp[k];
+            // azimuthal
+            _L( k, k - 1 ) += A / ( phi[k + 1] - phi[k] ) / wa[k];
+            _L( k, k - 1 ) -= A / ( phi[k + 1] - phi[k] ) / wa[k];
         }
     }
 
@@ -68,9 +99,8 @@ CSDSNSolverFP2D::CSDSNSolverFP2D( Config* settings ) : SNSolver( settings ) {
 
     _s = Vector( _nEnergies, 1.0 );
 
+    // read medical data if radiation therapy option selected
     _RT = true;
-
-    // read in medical data if radiation therapy option selected
     if(_RT){
         //_nEnergies = 1000;
         //_energies.resize(_nEnergies);
@@ -96,7 +126,6 @@ CSDSNSolverFP2D::CSDSNSolverFP2D( Config* settings ) : SNSolver( settings ) {
             std::cout<<_xi(0,n)<<" "<<_xi(1,n)<<" "<<_xi(2,n)<<" "<<_xi(3,n)<<" "<<_xi(4,n)<<" "<<_xi(5,n)<<"; ";
         }
         std::cout<<"];"<<std::endl;*/
-
     }
 
     // recompute scattering kernel. TODO: add this to kernel function
@@ -109,6 +138,7 @@ CSDSNSolverFP2D::CSDSNSolverFP2D( Config* settings ) : SNSolver( settings ) {
 
     _density = Vector( _nCells, 1.0 );
     //exit(EXIT_SUCCESS);
+    
 }
 
 void CSDSNSolverFP2D::Solve() {

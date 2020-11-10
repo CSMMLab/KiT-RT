@@ -34,6 +34,9 @@ class CSDSNSolverFP2D : public SNSolver
     double _energyMin;
     double _energyMax;
 
+    VectorVector _quadPoints; /*!  @brief quadrature points, dim(_quadPoints) = (_nq,spatialDim) */
+    Vector _weights;          /*!  @brief quadrature weights, dim(_weights) = (_nq) */
+    
   public:
     /**
      * @brief CSDSNSolverFP constructor
