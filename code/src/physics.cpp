@@ -294,37 +294,32 @@ std::tuple<std::vector<VectorVector>, std::vector<VectorVector>> Physics::ReadEN
 }
 
 VectorVector Physics::ReadStoppingPowers( std::string fileName ) {
+    /*
     VectorVector stp_powers;
     std::string text_line;
-
     std::vector<double> e, stp_power;
-
     std::ifstream file_stream;
     file_stream.open( fileName, std::ios::in );
-
     if( file_stream.fail() ) {
         ErrorMessages::Error( "The Stopping Power file is missing!!", CURRENT_FUNCTION );
     }
-
     while( getline( file_stream, text_line ) ) {
-
         std::stringstream ss( text_line );    // give line to stringstream
         std::list<double> linelist;
         for( double double_in; ss >> double_in; ) {    // parse line
             linelist.push_back( double_in );
         }
-
         e.push_back( linelist.front() );    // append elements from line to column vectors
         linelist.pop_front();
         stp_power.push_back( linelist.front() );
         linelist.pop_front();
     }
     file_stream.close();
-
     stp_powers.push_back( Vector( e.size(), e.data() ) );
     stp_powers.push_back( Vector( stp_power.size(), stp_power.data() ) );
-
     return stp_powers;
+    */
+    return VectorVector(1u,Vector(1,-1.0));
 }
 
 Vector Physics::ComputeStoppingPower( const Vector& energies ) const {

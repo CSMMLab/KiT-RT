@@ -9,6 +9,7 @@
 // externals
 #include "spdlog/spdlog.h"
 #include <mpi.h>
+#include <iostream>
 
 SNSolver::SNSolver( Config* settings ) : Solver( settings ) {
 
