@@ -220,16 +220,8 @@ void SNSolver::PrepareOutputFields() {
     }
 }
 
-double SNSolver::WriteOutputFields( unsigned idx_pseudoTime ) {
-    double mass      = 0.0;
+void SNSolver::WriteOutputFields( unsigned idx_pseudoTime ) {
     unsigned nGroups = (unsigned)_settings->GetNVolumeOutput();
-
-    // Compute total "mass" of the system ==> to check conservation properties
-    std::vector<double> flux( _nCells, 0.0 );
-    for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
-        flux[idx_cell] = dot( _sol[idx_cell], _weights );
-        mass += flux[idx_cell] * _areas[idx_cell];
-    }
 
     if( ( _settings->GetVolumeOutputFrequency() != 0 && idx_pseudoTime % (unsigned)_settings->GetVolumeOutputFrequency() == 0 ) ||
         ( idx_pseudoTime == _nEnergies - 1 ) /* need sol at last iteration */ ) {
@@ -243,11 +235,8 @@ double SNSolver::WriteOutputFields( unsigned idx_pseudoTime ) {
                     break;
 
                 case ANALYTIC:
-                    // Compute total "mass" of the system ==> to check conservation properties
                     for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
-
-                        double time = idx_pseudoTime * _dE;
-
+                        double time                           = idx_pseudoTime * _dE;
                         _outputFields[idx_group][0][idx_cell] = _problem->GetAnalyticalSolution(
                             _mesh->GetCellMidPoints()[idx_cell][0], _mesh->GetCellMidPoints()[idx_cell][1], time, _sigmaS[idx_pseudoTime][idx_cell] );
                     }
@@ -257,5 +246,4 @@ double SNSolver::WriteOutputFields( unsigned idx_pseudoTime ) {
             }
         }
     }
-    return mass;
 }

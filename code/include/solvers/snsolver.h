@@ -20,8 +20,9 @@ class SNSolver : public Solver
     SNSolver( Config* settings );
 
   private:
+    // IO
     void PrepareOutputFields() override;
-    double WriteOutputFields( unsigned idx_pseudoTime ) override;
+    void WriteOutputFields( unsigned idx_pseudoTime ) override;
 
     // Solver
     void FVMUpdate( VectorVector& psiNew, unsigned idx_energy ) override;

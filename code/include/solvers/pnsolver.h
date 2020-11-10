@@ -11,11 +11,13 @@ class PNSolver : public Solver
      */
     PNSolver( Config* settings );
 
-  protected:
+    /*! @brief PNSolver destructor */
+    ~PNSolver();
+
+  private:
     unsigned _nTotalEntries; /*! @brief: total number of equations in the system */
     unsigned _LMaxDegree;    /*! @brief: maximal degree of the spherical harmonics basis*/
 
-    // VectorVector _sigmaA; /*!  @brief: Absorption coefficient for all energies*/
     // System Matrix for x, y and z flux
     //    ==> not needed after computation of A+ and A- ==> maybe safe only temporarly and remove as member?
     SymMatrix _Ax; /*! @brief:  Flux Jacbioan in x direction */
@@ -33,8 +35,6 @@ class PNSolver : public Solver
     Matrix _AzMinus; /*! @brief:  Flux Jacbioan in z direction, negative part */
     Matrix _AzAbs;   /*! @brief:  Flux Jacbioan in z direction, absolute part */
 
-    // double _combinedSpectralRadius; /*! @brief:  Combined spectral radius of sum of flux jacobians*/
-
     Vector _scatterMatDiag; /*! @brief: diagonal of the scattering matrix (its a diagonal matrix by construction). Contains eigenvalues of the
                                scattering kernel.  */
 
@@ -43,10 +43,9 @@ class PNSolver : public Solver
     // IO
     /*! @brief Initializes the output groups and fields of this solver and names the fields */
     void PrepareOutputFields() override;
-
     /*! @brief Function that prepares VTK export and csv export of the current solver iteration
         @returns: Mass of current iteration     */
-    double WriteOutputFields( unsigned idx_pseudoTime ) override;
+    void WriteOutputFields( unsigned idx_pseudoTime ) override;
 
     // Solver
     void FVMUpdate( VectorVector& psiNew, unsigned idx_energy ) override;
@@ -57,7 +56,7 @@ class PNSolver : public Solver
     // Helper
     void ComputeRadFlux();
 
-    // Initialization
+    // Initialization of the Solver
     /*! @brief: parameter functions for setting up system matrix
      *  @param: degree l, it must hold: 0 <= l <=_nq
      *  @param : order k, it must hold: -l <=k <= l

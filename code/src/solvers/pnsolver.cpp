@@ -359,16 +359,8 @@ void PNSolver::PrepareOutputFields() {
     }
 }
 
-double PNSolver::WriteOutputFields( unsigned idx_pseudoTime ) {
-    double mass                   = 0.0;
-    unsigned nGroups              = (unsigned)_settings->GetNVolumeOutput();
-    double firstMomentScaleFactor = sqrt( 4 * M_PI );
-
-    // Compute total "mass" of the system ==> to check conservation properties
-    for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
-        mass += _sol[idx_cell][0] * _areas[idx_cell];    // Should probably go to postprocessing
-    }
-    mass *= firstMomentScaleFactor;
+void PNSolver::WriteOutputFields( unsigned idx_pseudoTime ) {
+    unsigned nGroups = (unsigned)_settings->GetNVolumeOutput();
 
     if( ( _settings->GetVolumeOutputFrequency() != 0 && idx_pseudoTime % (unsigned)_settings->GetVolumeOutputFrequency() == 0 ) ||
         ( idx_pseudoTime == _nEnergies - 1 ) /* need sol at last iteration */ ) {
@@ -390,7 +382,6 @@ double PNSolver::WriteOutputFields( unsigned idx_pseudoTime ) {
             }
         }
     }
-    return mass;
 }
 
 void PNSolver::CleanFluxMatrices() {

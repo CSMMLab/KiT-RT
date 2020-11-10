@@ -187,7 +187,7 @@ void CSDSNSolver::PrepareOutputFields() {
     }
 }
 
-double CSDSNSolver::WriteOutputFields( unsigned idx_pseudoTime ) {
+void CSDSNSolver::WriteOutputFields( unsigned idx_pseudoTime ) {
     double mass      = 0.0;
     unsigned nGroups = (unsigned)_settings->GetNVolumeOutput();
 
@@ -219,5 +219,4 @@ double CSDSNSolver::WriteOutputFields( unsigned idx_pseudoTime ) {
             }
         }
     }
-    return mass;
 }

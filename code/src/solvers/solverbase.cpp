@@ -155,8 +155,6 @@ void Solver::Solve() {
 
     auto log = spdlog::get( "event" );
 
-    double mass = 0;
-
     if( rank == 0 ) log->info( "{:10}   {:10}", "t", "mass" );
 
     // Loop over energies (pseudo-time of continuous slowing down approach)
@@ -175,7 +173,7 @@ void Solver::Solve() {
         IterPostprocessing();
 
         // --- VTK and CSV Output ---
-        mass = WriteOutputFields( idx_energy );
+        WriteOutputFields( idx_energy );
         Save( idx_energy );
 
         // --- Screen Output ---

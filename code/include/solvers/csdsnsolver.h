@@ -29,7 +29,7 @@ class CSDSNSolver : public SNSolver
 
   private:
     void PrepareOutputFields() override;
-    double WriteOutputFields( unsigned idx_pseudoTime ) override;
+    void WriteOutputFields( unsigned idx_pseudoTime ) override;
 };
 
 #endif    // CSDSNSOLVER_H

@@ -74,17 +74,12 @@ class Solver
     // IO
     /*! @brief Initializes the output groups and fields of this solver and names the fields */
     virtual void PrepareOutputFields() = 0;
-
-    /*! @brief Function that prepares VTK export and csv export of the current solver iteration
-        @returns: Mass of current iteration    */
-    virtual double WriteOutputFields( unsigned idx_pseudoTime ) = 0;
-
+    /*! @brief Function that prepares VTK export and csv export of the current solver iteration  */
+    virtual void WriteOutputFields( unsigned idx_pseudoTime ) = 0;
     /*! @brief: Initialized the output fields and their Names for the Screenoutput */
     void PrepareScreenOutputFields();
-
     /*! @brief Function that Screen Output and prints to Screen/Logger */
     void WriteScreenOutputFields( unsigned idx_pseudoTime );
-
     /*! @brief Prints ScreenOutputFields to Screen and to logger */
     void PrintScreen( std::shared_ptr<spdlog::logger> log );
 
