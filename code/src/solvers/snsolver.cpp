@@ -42,7 +42,7 @@ void SNSolver::ComputeRadFlux() {
     }
 }
 
-void SNSolver::FluxUpdate( VectorVector& psiNew ) {
+void SNSolver::FluxUpdate() {
 
     // Legacy Code form second order reconstruction:
 
@@ -104,12 +104,12 @@ void SNSolver::FluxUpdate( VectorVector& psiNew ) {
         // Loop over all ordinates
         for( unsigned idx_quad = 0; idx_quad < _nq; ++idx_quad ) {
             // Reset temporary variable
-            psiNew[idx_cell][idx_quad] = 0.0;
+            _solNew[idx_cell][idx_quad] = 0.0;
             // Loop over all neighbor cells (edges) of cell j and compute numerical fluxes
             for( unsigned idx_neighbor = 0; idx_neighbor < _neighbors[idx_cell].size(); ++idx_neighbor ) {
                 // store flux contribution on psiNew_sigmaS to save memory
                 if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::NEUMANN && _neighbors[idx_cell][idx_neighbor] == _nCells )
-                    psiNew[idx_cell][idx_quad] +=
+                    _solNew[idx_cell][idx_quad] +=
                         _g->Flux( _quadPoints[idx_quad], _sol[idx_cell][idx_quad], _sol[idx_cell][idx_quad], _normals[idx_cell][idx_neighbor] );
                 else {
                     /*                    switch( reconsOrder ) {
@@ -146,10 +146,10 @@ void SNSolver::FluxUpdate( VectorVector& psiNew ) {
                                             // default: first order solver
                                             default:
                                             */
-                    psiNew[idx_cell][idx_quad] += _g->Flux( _quadPoints[idx_quad],
-                                                            _sol[idx_cell][idx_quad],
-                                                            _sol[_neighbors[idx_cell][idx_neighbor]][idx_quad],
-                                                            _normals[idx_cell][idx_neighbor] );
+                    _solNew[idx_cell][idx_quad] += _g->Flux( _quadPoints[idx_quad],
+                                                             _sol[idx_cell][idx_quad],
+                                                             _sol[_neighbors[idx_cell][idx_neighbor]][idx_quad],
+                                                             _normals[idx_cell][idx_neighbor] );
                     // }
                 }
             }
@@ -157,31 +157,31 @@ void SNSolver::FluxUpdate( VectorVector& psiNew ) {
     }
 }
 
-void SNSolver::FVMUpdate( VectorVector& psiNew, unsigned idx_energy ) {
+void SNSolver::FVMUpdate( unsigned idx_energy ) {
     for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
         // Dirichlet cells stay at IC, farfield assumption
         if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::DIRICHLET ) continue;
         // loop over all ordinates
         for( unsigned idx_quad = 0; idx_quad < _nq; ++idx_quad ) {
             // time update angular flux with numerical flux and total scattering cross section
-            psiNew[idx_cell][idx_quad] = _sol[idx_cell][idx_quad] - ( _dE / _areas[idx_cell] ) * psiNew[idx_cell][idx_quad] -
-                                         _dE * _sigmaT[idx_energy][idx_cell] * _sol[idx_cell][idx_quad];
+            _solNew[idx_cell][idx_quad] = _sol[idx_cell][idx_quad] - ( _dE / _areas[idx_cell] ) * _solNew[idx_cell][idx_quad] -
+                                          _dE * _sigmaT[idx_energy][idx_cell] * _sol[idx_cell][idx_quad];
         }
         // compute scattering effects
-        psiNew[idx_cell] += _dE * _sigmaS[idx_energy][idx_cell] * _scatteringKernel * _sol[idx_cell];    // multiply scattering matrix with psi
+        _solNew[idx_cell] += _dE * _sigmaS[idx_energy][idx_cell] * _scatteringKernel * _sol[idx_cell];    // multiply scattering matrix with psi
 
         // Source Term
         if( _Q.size() == 1u ) {                   // constant source for all energies
             if( _Q[0][idx_cell].size() == 1u )    // isotropic source
-                psiNew[idx_cell] += _dE * _Q[0][idx_cell][0];
+                _solNew[idx_cell] += _dE * _Q[0][idx_cell][0];
             else
-                psiNew[idx_cell] += _dE * _Q[0][idx_cell];
+                _solNew[idx_cell] += _dE * _Q[0][idx_cell];
         }
         else {
             if( _Q[0][idx_cell].size() == 1u )    // isotropic source
-                psiNew[idx_cell] += _dE * _Q[idx_energy][idx_cell][0];
+                _solNew[idx_cell] += _dE * _Q[idx_energy][idx_cell][0];
             else
-                psiNew[idx_cell] += _dE * _Q[idx_energy][idx_cell];
+                _solNew[idx_cell] += _dE * _Q[idx_energy][idx_cell];
         }
     }
 }

@@ -164,10 +164,10 @@ void Solver::Solve() {
         IterPreprocessing();
 
         // --- Compute Fluxes ---
-        FluxUpdate( _solNew );
+        FluxUpdate();
 
         // --- Finite Volume Update ---
-        FVMUpdate( _solNew, idx_energy );
+        FVMUpdate( idx_energy );
 
         // --- Postprocessing ---
         IterPostprocessing();

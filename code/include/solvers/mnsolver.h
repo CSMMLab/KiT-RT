@@ -52,8 +52,8 @@ class MNSolver : public Solver
     void WriteOutputFields( unsigned idx_pseudoTime ) override;
 
     // Solver
-    void FVMUpdate( VectorVector& psiNew, unsigned idx_energy ) override;
-    void FluxUpdate( VectorVector& psiNew ) override;
+    void FVMUpdate( unsigned idx_energy ) override;
+    void FluxUpdate() override;
     void IterPreprocessing() override;
     void IterPostprocessing();
     /*! @brief : Construct flux by computing the Moment of the  sum of FVM discretization at the interface of cell

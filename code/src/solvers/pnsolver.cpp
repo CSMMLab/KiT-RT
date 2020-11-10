@@ -70,7 +70,7 @@ void PNSolver::ComputeRadFlux() {
     }
 }
 
-void PNSolver::FluxUpdate( VectorVector& psiNew ) {
+void PNSolver::FluxUpdate() {
     // Loop over all spatial cells
     for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
 
@@ -79,7 +79,7 @@ void PNSolver::FluxUpdate( VectorVector& psiNew ) {
 
         // Reset temporary variable psiNew
         for( unsigned idx_sys = 0; idx_sys < _nTotalEntries; idx_sys++ ) {
-            psiNew[idx_cell][idx_sys] = 0.0;
+            _solNew[idx_cell][idx_sys] = 0.0;
         }
 
         // Loop over all neighbor cells (edges) of cell j and compute numerical fluxes
@@ -87,35 +87,36 @@ void PNSolver::FluxUpdate( VectorVector& psiNew ) {
 
             // Compute flux contribution and store in psiNew to save memory
             if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::NEUMANN && _neighbors[idx_cell][idx_neighbor] == _nCells )
-                psiNew[idx_cell] += _g->Flux(
+                _solNew[idx_cell] += _g->Flux(
                     _AxPlus, _AxMinus, _AyPlus, _AyMinus, _AzPlus, _AzMinus, _sol[idx_cell], _sol[idx_cell], _normals[idx_cell][idx_neighbor] );
             else
-                psiNew[idx_cell] += _g->Flux( _AxPlus,
-                                              _AxMinus,
-                                              _AyPlus,
-                                              _AyMinus,
-                                              _AzPlus,
-                                              _AzMinus,
-                                              _sol[idx_cell],
-                                              _sol[_neighbors[idx_cell][idx_neighbor]],
-                                              _normals[idx_cell][idx_neighbor] );
+                _solNew[idx_cell] += _g->Flux( _AxPlus,
+                                               _AxMinus,
+                                               _AyPlus,
+                                               _AyMinus,
+                                               _AzPlus,
+                                               _AzMinus,
+                                               _sol[idx_cell],
+                                               _sol[_neighbors[idx_cell][idx_neighbor]],
+                                               _normals[idx_cell][idx_neighbor] );
         }
     }
 }
 
-void PNSolver::FVMUpdate( VectorVector& psiNew, unsigned idx_energy ) {
+void PNSolver::FVMUpdate( unsigned idx_energy ) {
     // Loop over all spatial cells
     for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
         // Dirichlet cells stay at IC, farfield assumption
         if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::DIRICHLET ) continue;
         // Flux update
         for( unsigned idx_sys = 0; idx_sys < _nTotalEntries; idx_sys++ ) {
-            psiNew[idx_cell][idx_sys] = _sol[idx_cell][idx_sys] - ( _dE / _areas[idx_cell] ) * psiNew[idx_cell][idx_sys] /* cell averaged flux */
-                                        - _dE * _sol[idx_cell][idx_sys] *
-                                              ( _sigmaT[idx_energy][idx_cell]                                 /* absorbtion influence */
-                                                + _sigmaS[idx_energy][idx_cell] * _scatterMatDiag[idx_sys] ); /* scattering influence */
+            _solNew[idx_cell][idx_sys] = _sol[idx_cell][idx_sys] - ( _dE / _areas[idx_cell] ) * _solNew[idx_cell][idx_sys] /* cell averaged flux */
+                                         - _dE * _sol[idx_cell][idx_sys] *
+                                               ( _sigmaT[idx_energy][idx_cell]                                 /* absorbtion influence */
+                                                 + _sigmaS[idx_energy][idx_cell] * _scatterMatDiag[idx_sys] ); /* scattering influence */
         }
-        psiNew[idx_cell][0] += _dE * _Q[0][idx_cell][0];
+        // Source Term
+        _solNew[idx_cell][0] += _dE * _Q[0][idx_cell][0];
     }
 }
 

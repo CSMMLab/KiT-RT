@@ -152,16 +152,16 @@ void MNSolver::ComputeRadFlux() {
     }
 }
 
-void MNSolver::FluxUpdate( VectorVector& psiNew ) {
+void MNSolver::FluxUpdate() {
     // Loop over the grid cells
     for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
         // Dirichlet Boundaries stay
         if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::DIRICHLET ) continue;
-        psiNew[idx_cell] = ConstructFlux( idx_cell );
+        _solNew[idx_cell] = ConstructFlux( idx_cell );
     }
 }
 
-void MNSolver::FVMUpdate( VectorVector& psiNew, unsigned idx_energy ) {
+void MNSolver::FVMUpdate( unsigned idx_energy ) {
     // Loop over the grid cells
     for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
         // Dirichlet Boundaries stay
@@ -169,14 +169,14 @@ void MNSolver::FVMUpdate( VectorVector& psiNew, unsigned idx_energy ) {
 
         for( unsigned idx_system = 0; idx_system < _nTotalEntries; idx_system++ ) {
 
-            psiNew[idx_cell][idx_system] = _sol[idx_cell][idx_system] -
-                                           ( _dE / _areas[idx_cell] ) * psiNew[idx_cell][idx_system] /* cell averaged flux */
-                                           - _dE * _sol[idx_cell][idx_system] *
-                                                 ( _sigmaT[idx_energy][idx_cell]                                    /* absorbtion influence */
-                                                   + _sigmaS[idx_energy][idx_cell] * _scatterMatDiag[idx_system] ); /* scattering influence */
+            _solNew[idx_cell][idx_system] = _sol[idx_cell][idx_system] -
+                                            ( _dE / _areas[idx_cell] ) * _solNew[idx_cell][idx_system] /* cell averaged flux */
+                                            - _dE * _sol[idx_cell][idx_system] *
+                                                  ( _sigmaT[idx_energy][idx_cell]                                    /* absorbtion influence */
+                                                    + _sigmaS[idx_energy][idx_cell] * _scatterMatDiag[idx_system] ); /* scattering influence */
         }
 
-        psiNew[idx_cell][0] += _dE * _Q[0][idx_cell][0];
+        _solNew[idx_cell][0] += _dE * _Q[0][idx_cell][0];
     }
 }
 

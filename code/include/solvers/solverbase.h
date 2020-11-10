@@ -89,9 +89,9 @@ class Solver
     /*! @brief Performs postprocessing for the current solver iteration */
     virtual void IterPostprocessing() = 0;
     /*! @brief Constructs  the flux update for the current iteration and stores it in psiNew*/
-    virtual void FluxUpdate( VectorVector& psiNew ) = 0;
+    virtual void FluxUpdate() = 0;
     /*! @brief Computes the finite Volume update step for the current iteration */
-    virtual void FVMUpdate( VectorVector& psiNew, unsigned idx_energy ) = 0;
+    virtual void FVMUpdate( unsigned idx_energy ) = 0;
 
     // Helper
     /**
