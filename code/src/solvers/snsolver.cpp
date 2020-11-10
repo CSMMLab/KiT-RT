@@ -24,54 +24,22 @@ SNSolver::SNSolver( Config* settings ) : Solver( settings ) {
     PrepareOutputFields();
 }
 
-void SNSolver::Solve() {
-
-    int rank;
-    MPI_Comm_rank( MPI_COMM_WORLD, &rank );
-
-    auto log = spdlog::get( "event" );
-
-    VectorVector psiNew = _sol;
-
-    double mass  = 0.0;
-    double dFlux = 1e10;
-    Vector fluxNew( _nCells, 0.0 );
-    Vector fluxOld( _nCells, 0.0 );
-
-    if( rank == 0 ) log->info( "{:10}   {:10}", "t", "dFlux", "mass" );
-
-    // loop over energies (pseudo-time)
-    for( unsigned idx_energy = 0; idx_energy < _nEnergies; ++idx_energy ) {
-
-        // --- Prepare Boundaries and temp variables
-        IterPreprocessing();
-
-        // --- Compute Fluxes ---
-        FluxUpdate( psiNew );
-
-        // --- Compute Finite Volume Step ---
-        FVMUpdate( psiNew, idx_energy );
-
-        // --- Update Solution ---
-        _sol = psiNew;
-
-        // --- VTK and CSV Output ---
-        mass = WriteOutputFields( idx_energy );
-        Save( idx_energy );
-
-        // --- Screen Output ---
-        for( unsigned i = 0; i < _nCells; ++i ) {
-            fluxNew[i] = dot( _sol[i], _weights );
-        }
-
-        dFlux   = blaze::l2Norm( fluxNew - fluxOld );
-        fluxOld = fluxNew;
-        if( rank == 0 ) log->info( "{:03.8f}   {:01.5e} {:01.5e}", _energies[idx_energy], dFlux, mass );
-    }
-}
-
 void SNSolver::IterPreprocessing() {
     // Nothing to do for SNSolver
+}
+
+void SNSolver::IterPostprocessing() {
+    // --- Update Solution ---
+    _sol = _solNew;
+
+    // --- Compute Flux for solution and Screen Output ---
+    ComputeRadFlux();
+}
+
+void SNSolver::ComputeRadFlux() {
+    for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
+        _fluxNew[idx_cell] = blaze::dot( _sol[idx_cell], _weights );
+    }
 }
 
 void SNSolver::FluxUpdate( VectorVector& psiNew ) {
@@ -263,14 +231,14 @@ double SNSolver::WriteOutputFields( unsigned idx_pseudoTime ) {
         mass += flux[idx_cell] * _areas[idx_cell];
     }
 
-    if( ( _settings->GetOutputFrequency() != 0 && idx_pseudoTime % (unsigned)_settings->GetOutputFrequency() == 0 ) ||
+    if( ( _settings->GetVolumeOutputFrequency() != 0 && idx_pseudoTime % (unsigned)_settings->GetVolumeOutputFrequency() == 0 ) ||
         ( idx_pseudoTime == _nEnergies - 1 ) /* need sol at last iteration */ ) {
 
         for( unsigned idx_group = 0; idx_group < nGroups; idx_group++ ) {
             switch( _settings->GetVolumeOutput()[idx_group] ) {
                 case MINIMAL:
                     for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
-                        _outputFields[idx_group][0][idx_cell] = flux[idx_cell];
+                        _outputFields[idx_group][0][idx_cell] = _fluxNew[idx_cell];
                     }
                     break;
 

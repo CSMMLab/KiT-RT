@@ -81,4 +81,9 @@ enum VOLUME_OUTPUT { ANALYTIC, MINIMAL, MOMENTS, DUAL_MOMENTS, DOSE };
 inline std::map<std::string, VOLUME_OUTPUT> VolOutput_Map{
     { "ANALYTIC", ANALYTIC }, { "MINIMAL", MINIMAL }, { "MOMENTS", MOMENTS }, { "DUAL_MOMENTS", DUAL_MOMENTS }, { "DOSE", DOSE } };
 
+// Screen output
+enum SCREEN_OUTPUT { ITER, MASS, RMS_FLUX };
+
+inline std::map<std::string, SCREEN_OUTPUT> ScreenOutput_Map{ { "ITER", ITER }, { "MASS", MASS }, { "RMS_FLUX", RMS_FLUX } };
+
 #endif    // GLOBAL_CONSTANTS_H

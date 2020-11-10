@@ -5,6 +5,9 @@
 #include "common/globalconstants.h"
 #include "common/typedef.h"
 
+// externals
+#include "spdlog/spdlog.h"
+
 // Forward Declarations
 class NumericalFlux;
 class Mesh;
@@ -53,11 +56,18 @@ class Solver
     std::vector<double> _solverOutput; /*! @brief LEGACY: Outputfield for solver ==> Will be replaced by _outputFields in the near future */
 
     // Output related members
-    std::vector<std::vector<std::vector<double>>> _outputFields; /*! @brief: Solver Output: dimensions (GroupID,FieldID,CellID). !Protoype output for
-                                                                    multiple output fields. Will replace _solverOutput */
+    std::vector<std::vector<std::vector<double>>> _outputFields; /*! @brief: Solver Output: dimensions (GroupID,FieldID,CellID).*/
     std::vector<std::vector<std::string>> _outputFieldNames;     /*! @brief: Names of the outputFields: dimensions (GroupID,FieldID) */
-
     // we will have to add a further dimension for quadPoints and weights once we start with multilevel SN
+
+    // Output related members
+    std::vector<double> _screenOutputFields;          /*! @brief: Solver Output: dimensions (FieldID). */
+    std::vector<std::string> _screenOutputFieldNames; /*! @brief: Names of the outputFields: dimensions (FieldID) */
+
+    // Internal Members
+    VectorVector _solNew; /*! @brief: VectorVector to store the new flux and later the new solution per iteration */    // REPLACES psiNEW
+    Vector _fluxNew; /*! @brief: Vector to store the new Flux */
+    Vector _flux;    /*! @brief: Vector to store the old Flux */
 
     // ---- Member functions ----
 
@@ -66,26 +76,37 @@ class Solver
     virtual void PrepareOutputFields() = 0;
 
     /*! @brief Function that prepares VTK export and csv export of the current solver iteration
-        @returns: Mass of current iteration
-    */
+        @returns: Mass of current iteration    */
     virtual double WriteOutputFields( unsigned idx_pseudoTime ) = 0;
 
-    // Solver
-    ///*! @brief Computes the finite volume update for all cells and stores it in psiNew    */
-    // virtual void FVMUpdate( VectorVector& psiNew ) = 0;
+    /*! @brief: Initialized the output fields and their Names for the Screenoutput */
+    void PrepareScreenOutputFields();
 
+    /*! @brief Function that Screen Output and prints to Screen/Logger */
+    void WriteScreenOutputFields( unsigned idx_pseudoTime );
+
+    /*! @brief Prints ScreenOutputFields to Screen and to logger */
+    void PrintScreen( std::shared_ptr<spdlog::logger> log );
+
+    // Solver
     /*! @brief Performs preprocessing for the current solver iteration */
     virtual void IterPreprocessing() = 0;
+    /*! @brief Performs postprocessing for the current solver iteration */
+    virtual void IterPostprocessing() = 0;
     /*! @brief Constructs  the flux update for the current iteration and stores it in psiNew*/
     virtual void FluxUpdate( VectorVector& psiNew ) = 0;
     /*! @brief Computes the finite Volume update step for the current iteration */
     virtual void FVMUpdate( VectorVector& psiNew, unsigned idx_energy ) = 0;
 
+    // Helper
     /**
      * @brief ComputeTimeStep calculates the maximal stable time step
      * @param cfl is cfl number
      */
     double ComputeTimeStep( double cfl ) const;
+
+    /*! @brief: Computes the flux of the solution to check conservation properties */
+    virtual void ComputeRadFlux() = 0;
 
   public:
     /**
@@ -106,7 +127,7 @@ class Solver
     /**
      * @brief Solve functions runs main time loop
      */
-    virtual void Solve() = 0;
+    virtual void Solve();
 
     void Save() const;                 /*! @brief Save Output solution to VTK file */
     void Save( int currEnergy ) const; /*! @brief Save Output solution at given energy (pseudo time) to VTK file */

@@ -19,8 +19,6 @@ class MNSolver : public Solver
     /*! @brief MNSolver destructor */
     ~MNSolver();
 
-    void Solve() override; /*! @brief Solve functions runs main time loop */
-
   private:
     unsigned _nTotalEntries;    /*! @brief: Total number of equations in the system */
     unsigned short _LMaxDegree; /*! @brief: Max Order of Moments */
@@ -84,5 +82,9 @@ class MNSolver : public Solver
     void FVMUpdate( VectorVector& psiNew, unsigned idx_energy ) override;
     void FluxUpdate( VectorVector& psiNew ) override;
     void IterPreprocessing() override;
+    void IterPostprocessing();
+
+    // Helper
+    void ComputeRadFlux();
 };
 #endif    // MNSOLVER_H

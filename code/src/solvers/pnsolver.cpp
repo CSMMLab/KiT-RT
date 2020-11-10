@@ -51,45 +51,23 @@ PNSolver::PNSolver( Config* settings ) : Solver( settings ) {
     PrepareOutputFields();
 }
 
-void PNSolver::Solve() {
-
-    int rank;
-    MPI_Comm_rank( MPI_COMM_WORLD, &rank );
-
-    auto log = spdlog::get( "event" );
-
-    VectorVector psiNew = _sol;
-
-    double mass = 0;
-
-    if( rank == 0 ) log->info( "{:10}   {:10}", "t", "mass" );
-
-    // Loop over energies (pseudo-time of continuous slowing down approach)
-    for( unsigned idx_energy = 0; idx_energy < _nEnergies; idx_energy++ ) {
-
-        // --- Prepare Boundaries and temp variables
-        IterPreprocessing();
-
-        // --- Compute Fluxes ---
-        FluxUpdate( psiNew );
-
-        // --- Finite Volume Update ---
-        FVMUpdate( psiNew, idx_energy );
-
-        // --- Update Solution ---
-        _sol = psiNew;
-
-        // --- VTK and CSV Output ---
-        mass = WriteOutputFields( idx_energy );
-        Save( idx_energy );
-
-        // --- Screen Output ---
-        if( rank == 0 ) log->info( "{:03.8f}  {:01.5e}", _energies[idx_energy], mass );
-    }
-}
-
 void PNSolver::IterPreprocessing() {
     // Nothing to preprocess for PNSolver
+}
+
+void PNSolver::IterPostprocessing() {
+    // --- Update Solution ---
+    _sol = _solNew;
+
+    // --- Compute Flux for solution and Screen Output ---
+    ComputeRadFlux();
+}
+
+void PNSolver::ComputeRadFlux() {
+    double firstMomentScaleFactor = sqrt( 4 * M_PI );
+    for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
+        _fluxNew[idx_cell] = _sol[idx_cell][0] * firstMomentScaleFactor;
+    }
 }
 
 void PNSolver::FluxUpdate( VectorVector& psiNew ) {
@@ -392,13 +370,13 @@ double PNSolver::WriteOutputFields( unsigned idx_pseudoTime ) {
     }
     mass *= firstMomentScaleFactor;
 
-    if( ( _settings->GetOutputFrequency() != 0 && idx_pseudoTime % (unsigned)_settings->GetOutputFrequency() == 0 ) ||
+    if( ( _settings->GetVolumeOutputFrequency() != 0 && idx_pseudoTime % (unsigned)_settings->GetVolumeOutputFrequency() == 0 ) ||
         ( idx_pseudoTime == _nEnergies - 1 ) /* need sol at last iteration */ ) {
         for( unsigned idx_group = 0; idx_group < nGroups; idx_group++ ) {
             switch( _settings->GetVolumeOutput()[idx_group] ) {
                 case MINIMAL:
                     for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
-                        _outputFields[idx_group][0][idx_cell] = firstMomentScaleFactor * _sol[idx_cell][0];
+                        _outputFields[idx_group][0][idx_cell] = _fluxNew[idx_cell];
                     }
                     break;
                 case MOMENTS:

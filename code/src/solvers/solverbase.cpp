@@ -36,6 +36,8 @@ Solver::Solver( Config* settings ) : _settings( settings ) {
     // setup problem  and store frequently used params
     _problem = ProblemBase::Create( _settings, _mesh );
     _sol     = _problem->SetupIC();
+    _solNew  = _sol;    // setup temporary sol variable
+
     //_s       = _problem->GetStoppingPower( _energies );
     _sigmaT = _problem->GetTotalXS( _energies );
     _sigmaS = _problem->GetScatteringXS( _energies );
@@ -48,7 +50,13 @@ Solver::Solver( Config* settings ) : _settings( settings ) {
     _boundaryCells = _mesh->GetBoundaryTypes();
 
     // Solver Output
-    _solverOutput.resize( _nCells );    // Currently only Flux
+    _solverOutput.resize( _nCells );    // LEGACY! Only used for CSD SN
+    // Screen Output
+    PrepareScreenOutputFields();
+
+    // initialize Helper Variables
+    _fluxNew = Vector( _nCells, 0 );
+    _flux    = Vector( _nCells, 0 );
 }
 
 Solver::~Solver() {
@@ -81,7 +89,97 @@ Solver* Solver::Create( Config* settings ) {
 void Solver::Save() const { ExportVTK( _settings->GetOutputFile(), _outputFields, _outputFieldNames, _mesh ); }
 
 void Solver::Save( int currEnergy ) const {
-    if( _settings->GetOutputFrequency() != 0 && currEnergy % (unsigned)_settings->GetOutputFrequency() == 0 ) {
+    if( _settings->GetVolumeOutputFrequency() != 0 && currEnergy % (unsigned)_settings->GetVolumeOutputFrequency() == 0 ) {
         ExportVTK( _settings->GetOutputFile() + "_" + std::to_string( currEnergy ), _outputFields, _outputFieldNames, _mesh );
+    }
+}
+
+void Solver::PrepareScreenOutputFields() {
+    unsigned nFields = (unsigned)_settings->GetNScreenOutput();
+
+    _screenOutputFieldNames.resize( nFields );
+    _screenOutputFields.resize( nFields );
+
+    // Prepare all output Fields ==> Specified in option SCREEN_OUTPUT
+    for( unsigned idx_field = 0; idx_field < nFields; idx_field++ ) {
+        // Prepare all Output Fields per group
+
+        // Different procedure, depending on the Group...
+        switch( _settings->GetScreenOutput()[idx_field] ) {
+            case MASS: _screenOutputFieldNames[idx_field] = "mass"; break;
+
+            case ITER: _screenOutputFieldNames[idx_field] = "iter"; break;
+
+            case RMS_FLUX: _screenOutputFieldNames[idx_field] = "RMS_flux"; break;
+
+            default: ErrorMessages::Error( "Screen Output Group not defined!", CURRENT_FUNCTION ); break;
+        }
+    }
+}
+
+void Solver::WriteScreenOutputFields( unsigned idx_pseudoTime ) {
+
+    unsigned nFields = (unsigned)_settings->GetNScreenOutput();
+    double mass      = 0.0;
+
+    for( unsigned idx_field = 0; idx_field < nFields; idx_field++ ) {
+        // Prepare all Output Fields per group
+        // Different procedure, depending on the Group...
+        switch( _settings->GetScreenOutput()[idx_field] ) {
+            case MASS:
+                for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
+                    mass += _fluxNew[idx_cell] * _areas[idx_cell];
+                }
+                _screenOutputFields[idx_field] = mass;
+                break;
+
+            case ITER: _screenOutputFields[idx_field] = idx_pseudoTime; break;
+
+            case RMS_FLUX:
+                _screenOutputFields[idx_field] = blaze::l2Norm( _fluxNew - _flux );
+                _flux                          = _fluxNew;
+                break;
+
+            default: ErrorMessages::Error( "Screen Output Group not defined!", CURRENT_FUNCTION ); break;
+        }
+    }
+}
+
+void Solver::PrintScreen( std::shared_ptr<spdlog::logger> log ) {
+    log->info( "{:03.8f}   {:01.5e} {:01.5e}", _screenOutputFields[0], _screenOutputFields[1], _screenOutputFields[2] );
+}
+
+void Solver::Solve() {
+    int rank;
+    MPI_Comm_rank( MPI_COMM_WORLD, &rank );
+
+    auto log = spdlog::get( "event" );
+
+    double mass = 0;
+
+    if( rank == 0 ) log->info( "{:10}   {:10}", "t", "mass" );
+
+    // Loop over energies (pseudo-time of continuous slowing down approach)
+    for( unsigned idx_energy = 0; idx_energy < _nEnergies; idx_energy++ ) {
+
+        // --- Prepare Boundaries and temp variables
+        IterPreprocessing();
+
+        // --- Compute Fluxes ---
+        FluxUpdate( _solNew );
+
+        // --- Finite Volume Update ---
+        FVMUpdate( _solNew, idx_energy );
+
+        // --- Postprocessing ---
+        IterPostprocessing();
+
+        // --- VTK and CSV Output ---
+        mass = WriteOutputFields( idx_energy );
+        Save( idx_energy );
+
+        // --- Screen Output ---
+        WriteScreenOutputFields( idx_energy );
+        PrintScreen( log );
     }
 }

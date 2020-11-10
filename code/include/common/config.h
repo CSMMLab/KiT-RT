@@ -93,7 +93,11 @@ class Config
     // Output Options
     unsigned short _nVolumeOutput;            /*!< @brief Number of volume outputs */
     std::vector<VOLUME_OUTPUT> _volumeOutput; /*!< @brief Output groups for volume output*/
-    unsigned short _outputFrequency;          /*!< @brief Frequency of vtk write of volume output*/
+    unsigned short _volumeOutputFrequency;    /*!< @brief Frequency of vtk write of volume output*/
+
+    unsigned short _nScreenOutput;            /*!< @brief Number of screen outputs */
+    std::vector<SCREEN_OUTPUT> _screenOutput; /*!< @brief Output groups for screen output*/
+    unsigned short _screenOutputFrequency;    /*!< @brief Frequency of screen output*/
 
     // --- Parsing Functionality and Initializing of Options ---
     /*!
@@ -263,8 +267,11 @@ class Config
     // Output Structure
     std::vector<VOLUME_OUTPUT> inline GetVolumeOutput() { return _volumeOutput; }
     unsigned short inline GetNVolumeOutput() { return _nVolumeOutput; }
-    unsigned short inline GetOutputFrequency() { return _outputFrequency; }
+    unsigned short inline GetVolumeOutputFrequency() { return _volumeOutputFrequency; }
 
+    std::vector<SCREEN_OUTPUT> inline GetScreenOutput() { return _screenOutput; }
+    unsigned short inline GetNScreenOutput() { return _nScreenOutput; }
+    unsigned short inline GetScreenOutputFrequency() { return _screenOutputFrequency; }
     // ---- Setters for option structure
 
     // Quadrature Structure

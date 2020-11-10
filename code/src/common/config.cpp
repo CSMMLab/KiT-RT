@@ -279,8 +279,12 @@ void Config::SetConfigOptions() {
     // Output related options
     /*! @brief Volume output \n DESCRIPTION: Describes output groups to write to vtk \ingroup Config */
     AddEnumListOption( "VOLUME_OUTPUT", _nVolumeOutput, _volumeOutput, VolOutput_Map );
-    /*! @brief Output Frequency \n DESCRIPTION: Describes output write frequency \n DEFAULT 0 ,i.e. only last value \ingroup Config */
-    AddUnsignedShortOption( "OUTPUT_FREQUENCY", _outputFrequency, 0 );
+    /*! @brief Volume Output Frequency \n DESCRIPTION: Describes output write frequency \n DEFAULT 0 ,i.e. only last value \ingroup Config */
+    AddUnsignedShortOption( "OUTPUT_FREQUENCY", _volumeOutputFrequency, 0 );
+    /*! @brief Screen output \n DESCRIPTION: Describes scren output groups \ingroup Config */
+    AddEnumListOption( "SCREEN_OUTPUT", _nScreenOutput, _screenOutput, ScreenOutput_Map );
+    /*! @brief Screen Output Frequency \n DESCRIPTION: Describes screen output write frequency \n DEFAULT 0 ,i.e. only last value \ingroup Config */
+    AddUnsignedShortOption( "SCREEN_OUTPUT_FREQUENCY", _screenOutputFrequency, 0 );
 }
 
 void Config::SetConfigParsing( string case_filename ) {
@@ -496,6 +500,14 @@ void Config::SetPostprocessing() {
     if( _nVolumeOutput == 0 ) {    // If no specific output is chosen,  use "MINIMAL"
         _nVolumeOutput = 1;
         _volumeOutput.push_back( MINIMAL );
+    }
+
+    // Set default screen output
+    if( _nScreenOutput == 0 ) {
+        _nScreenOutput = 3;
+        _screenOutput.push_back( ITER );
+        _screenOutput.push_back( RMS_FLUX );
+        _screenOutput.push_back( MASS );
     }
 }
 

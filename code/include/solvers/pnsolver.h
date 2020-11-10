@@ -11,8 +11,6 @@ class PNSolver : public Solver
      */
     PNSolver( Config* settings );
 
-    virtual void Solve() override; /*! @brief Solve functions runs main time loop. (Run Solver) */
-
   protected:
     unsigned _nTotalEntries; /*! @brief: total number of equations in the system */
     unsigned _LMaxDegree;    /*! @brief: maximal degree of the spherical harmonics basis*/
@@ -47,14 +45,17 @@ class PNSolver : public Solver
     void PrepareOutputFields() override;
 
     /*! @brief Function that prepares VTK export and csv export of the current solver iteration
-        @returns: Mass of current iteration
-    */
+        @returns: Mass of current iteration     */
     double WriteOutputFields( unsigned idx_pseudoTime ) override;
 
     // Solver
     void FVMUpdate( VectorVector& psiNew, unsigned idx_energy ) override;
     void FluxUpdate( VectorVector& psiNew ) override;
     void IterPreprocessing() override;
+    void IterPostprocessing();
+
+    // Helper
+    void ComputeRadFlux();
 
     // Initialization
     /*! @brief: parameter functions for setting up system matrix

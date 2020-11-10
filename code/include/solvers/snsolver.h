@@ -14,15 +14,10 @@ class SNSolver : public Solver
     Vector _weights;          /*!  @brief quadrature weights, dim(_weights) = (_nq) */
 
   public:
-    /**
-     * @brief SNSolver constructor
+    /*! @brief SNSolver constructor
      * @param settings stores all needed information
      */
     SNSolver( Config* settings );
-    /**
-     * @brief Solve functions runs main time loop
-     */
-    void Solve() override;
 
   private:
     void PrepareOutputFields() override;
@@ -32,6 +27,10 @@ class SNSolver : public Solver
     void FVMUpdate( VectorVector& psiNew, unsigned idx_energy ) override;
     void FluxUpdate( VectorVector& psiNew ) override;
     void IterPreprocessing() override;
+    void IterPostprocessing() override;
+
+    // Helper
+    void ComputeRadFlux();
 
     // --- Member variables ---
 };
