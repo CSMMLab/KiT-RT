@@ -13,20 +13,26 @@
 
 CSDSNSolverFP2D::CSDSNSolverFP2D( Config* settings ) : SNSolver( settings ) {
     // quadrature
-    unsigned nq            = _settings->GetNQuadPoints();
+    unsigned order = _quadrature->GetOrder();
+    unsigned nq = _settings->GetNQuadPoints();
     _quadPoints = _quadrature->GetPoints();
     _weights    = _quadrature->GetWeights();
-    std::cout<<nq<<std::endl;
-    Vector mu( nq );
-    Vector phi( nq );
-    Vector wp( nq );
-    Vector wa( nq );
-    for( unsigned k = 0; k < nq; ++k ) {
-        mu[k] = _quadPoints[k][0];
-        phi[k] = _quadPoints[k][2];
-        wp[k] = _weights[k];
-        wa[k] = _weights[k];
-    } // @TODO I need to further define 1D polar & azimuthal quadratures
+    _quadPointsSphere = _quadrature->GetPointsSphere();
+
+    // transform structured quadrature
+    _mu = Vector( order );
+    _phi = Vector( 2 * order );
+    _wp = Vector( order );
+    _wa = Vector( 2 * order );
+    for( unsigned j = 0; j < order; ++j ) {
+        for( unsigned i = 0; i < 2 * order; ++i ) {
+            _mu[j] = _quadPointsSphere[j * ( 2 * order ) + i][0];
+            _phi[i] = _quadPointsSphere[j * ( 2 * order ) + i][1];
+
+            _wp[j] = _weights[j * ( 2 * order ) + i] * order / M_PI;
+            _wa[i] = M_PI / order;
+        }
+    }
 
     // dose
     _dose = std::vector<double>( _settings->GetNCells(), 0.0 );
@@ -46,46 +52,36 @@ CSDSNSolverFP2D::CSDSNSolverFP2D( Config* settings ) : SNSolver( settings ) {
         _energies[n] = _energyMin + ( _energyMax - _energyMin ) / ( _nEnergies - 1 ) * n;
     }
 
-    // set Laplace Beltrami matrix L under 2D geometry
-    _L = Matrix( nq, nq, 0.0 );
-    // polar coeffs
+    // set polar and azimuthal matrix L & R
+    _L = Matrix( order, order, 0.0 ); // polar: mu
+    _R = Matrix( 2 * order, 2 * order, 0.0 ); // azimuthal: phi
+
+    // polar matrix (left multiplication)
     double DMinus = 0.0;
     double DPlus  = 0.0;
-    // azimuthal coeffs
-    double A = 0.0;
-    double A1 = 0.0;
-    double A2 = 0.0;
-    double A3 = 0.0;
-    double A4Plus = 0.0;
-    double A4Minus = 0.0;
-    for( unsigned k = 0; k < nq; ++k ) {
+    for( unsigned k = 0; k < order; ++k ) {
         DMinus = DPlus;
-        DPlus  = DMinus - 2 * mu[k] * _weights[k];
-
-        if (k > 0 && k < nq - 1) {
-            A4Plus = (sqrt(1.0 - pow(mu[k+1], 2)) - sqrt(1.0 - pow(mu[k], 2))) / (mu[k+1] - mu[k]);
-            A4Minus = (sqrt(1.0 - pow(mu[k], 2)) - sqrt(1.0 - pow(mu[k-1], 2))) / (mu[k] - mu[k-1]);
-            A3 = (DPlus * A4Plus - DMinus * A4Minus) / wp[k];
-            A2 = 2.0 * (1.0 - pow(mu[k], 2)) + A3 * sqrt(1.0 - pow(mu[k], 2));
-            A1 = pow(3.1415926, 2) * A2 / 2.0 / nq / (1.0 - cos(3.1415926 / nq));
-            A = A1 / (1.0 - pow(mu[k], 2));
-        }
+        DPlus  = DMinus - 2 * _mu[k] * _weights[k];
 
         if( k > 0 ) {
-            // polar
-            _L( k, k - 1 ) = DMinus / ( mu[k] - mu[k - 1] ) / wp[k];
-            _L( k, k )     = -DMinus / ( mu[k] - mu[k - 1] ) / wp[k];
-            // azimuthal
-            _L( k, k - 1 ) += A / ( phi[k] - phi[k - 1] ) / wa[k];
-            _L( k, k - 1 ) -= A / ( phi[k] - phi[k - 1] ) / wa[k];
+            _L( k, k - 1 ) = DMinus / ( _mu[k] - _mu[k - 1] ) / _wp[k];
+            _L( k, k )     = -DMinus / ( _mu[k] - _mu[k - 1] ) / _wp[k];
         }
-        if( k < nq - 1 ) {
-            // polar
-            _L( k, k + 1 ) = DPlus / ( mu[k + 1] - mu[k] ) / wp[k];
-            _L( k, k ) += -DPlus / ( mu[k + 1] - mu[k] ) / wp[k];
-            // azimuthal
-            _L( k, k - 1 ) += A / ( phi[k + 1] - phi[k] ) / wa[k];
-            _L( k, k - 1 ) -= A / ( phi[k + 1] - phi[k] ) / wa[k];
+        if( k < order - 1 ) {
+            _L( k, k + 1 ) = DPlus / ( _mu[k + 1] - _mu[k] ) / _wp[k];
+            _L( k, k ) += -DPlus / ( _mu[k + 1] - _mu[k] ) / _wp[k];
+        }
+    }
+
+    // azimuthal matrix (right multiplication)
+    for( unsigned k = 0; k < 2 * order; ++k ) {
+        if( k > 0 ) {
+            _R( k - 1, k ) = 1.0 / ( _phi[k] - _phi[k - 1] ) / _wa[k];
+            _R( k, k ) = -1.0 / ( _phi[k] - _phi[k - 1] ) / _wa[k];
+        }
+        if( k < 2 * order - 1 ) {
+            _R( k + 1, k ) = 1.0 / ( _phi[k + 1] - _phi[k] ) / _wa[k];
+            _R( k, k ) -= 1.0 / ( _phi[k + 1] - _phi[k] ) / _wa[k];
         }
     }
 
@@ -111,11 +107,10 @@ CSDSNSolverFP2D::CSDSNSolverFP2D( Config* settings ) : SNSolver( settings ) {
         //    double exponent = minExp + ( maxExp - minExp ) / ( _nEnergies - 1 ) * n;
         //    _energies[n] = pow(10.0,exponent);
         //}
-        ICRU database( abs(mu), _energies );
+        ICRU database( abs(_mu), _energies );
         database.GetTransportCoefficients( _xi );
         database.GetStoppingPower( _s );
-/*
-        // print coefficients
+        /*// print coefficients
         std::cout<<"E = [";
         for( unsigned n = 0; n<_nEnergies; ++n){
             std::cout<<_energies[n]<<"; ";
@@ -138,7 +133,6 @@ CSDSNSolverFP2D::CSDSNSolverFP2D( Config* settings ) : SNSolver( settings ) {
 
     _density = Vector( _nCells, 1.0 );
     //exit(EXIT_SUCCESS);
-    
 }
 
 void CSDSNSolverFP2D::Solve() {
@@ -167,6 +161,41 @@ void CSDSNSolverFP2D::Solve() {
     double dFlux = 1e10;
     Vector fluxNew( _nCells, 0.0 );
     Vector fluxOld( _nCells, 0.0 );
+
+    unsigned order = _quadrature->GetOrder();
+    auto psiStruct = Matrix( order, 2 * order, 0.0 );
+    double A = 0.0;
+    double A1 = 0.0;
+    double A2 = 0.0;
+    double A3 = 0.0;
+    double A4Plus = 0.0;
+    double A4Minus = 0.0;
+
+    double DPlus = 0.0;
+    double DMinus = 0.0;
+    for( unsigned k = 0; k < 2 * order; ++k ) {
+        DMinus = DPlus;
+        DPlus  = DMinus - 2 * _mu[k] * _weights[k];
+
+        if (k > 0 && k < 2 * order - 1) {
+            A4Plus = (sqrt(1.0 - _mu[k+1] * _mu[k+1]) - sqrt(1.0 - _mu[k] * _mu[k])) / (_mu[k+1] - _mu[k]);
+            A4Minus = (sqrt(1.0 - _mu[k] * _mu[k]) - sqrt(1.0 - _mu[k-1] * _mu[k-1])) / (_mu[k] - _mu[k-1]);
+            A3 = (DPlus * A4Plus - DMinus * A4Minus) / _wp[k];
+            A2 = 2.0 * (1.0 - pow(_mu[k], 2)) + A3 * sqrt(1.0 - pow(_mu[k], 2));
+            A1 = pow(3.1415926, 2) * A2 / 2.0 / _nq / (1.0 - cos(3.1415926 / _nq));
+            A = A1 / (1.0 - pow(_mu[k], 2));
+        }
+
+        if( k > 0 ) {
+            _R( k - 1, k - 1 ) = A / ( _phi[k] - _phi[k - 1] ) / _wa[k];
+            _R( k, k ) = A / ( _phi[k] - _phi[k - 1] ) / _wa[k];
+        }
+        if( k < _nq - 1 ) {
+            _R( k + 1, k - 1 ) = A / ( _phi[k + 1] - _phi[k] ) / _wa[k];
+            _R( k, k - 1 ) -= A / ( _phi[k + 1] - _phi[k] ) / _wa[k];
+        }
+    }
+
 
     int rank;
     MPI_Comm_rank( MPI_COMM_WORLD, &rank );

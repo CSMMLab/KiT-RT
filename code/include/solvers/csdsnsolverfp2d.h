@@ -22,6 +22,9 @@ class CSDSNSolverFP2D : public SNSolver
     Matrix _L; /*!  @brief Laplace Beltrami Matrix */
     Matrix _IL; /*!  @brief Laplace Beltrami Matrix */
 
+    Matrix _R;
+    Matrix _IR;
+
     double _alpha;
     double _beta;
 
@@ -34,9 +37,14 @@ class CSDSNSolverFP2D : public SNSolver
     double _energyMin;
     double _energyMax;
 
-    VectorVector _quadPoints; /*!  @brief quadrature points, dim(_quadPoints) = (_nq,spatialDim) */
-    Vector _weights;          /*!  @brief quadrature weights, dim(_weights) = (_nq) */
-    
+    VectorVector _quadPoints;
+    VectorVector _quadPointsSphere;
+    Vector _weights;
+    Vector _mu;
+    Vector _phi;
+    Vector _wp;
+    Vector _wa;
+
   public:
     /**
      * @brief CSDSNSolverFP constructor
