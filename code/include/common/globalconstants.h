@@ -73,13 +73,17 @@ enum PROBLEM_NAME {
     PROBLEM_ElectronRT,
     PROBLEM_WaterPhantom,
     PROBLEM_LineSource_Pseudo_1D,
-    PROBLEM_LineSource_Pseudo_1D_Physics
+    PROBLEM_LineSource_Pseudo_1D_Physics,
+    PROBLEM_AirCavity,
+    PROBLEM_MuscleBoneLung
 };
 
 inline std::map<std::string, PROBLEM_NAME> Problem_Map{ { "LINESOURCE", PROBLEM_LineSource },
                                                         { "CHECKERBOARD", PROBLEM_Checkerboard },
                                                         { "ELECTRONRT", PROBLEM_ElectronRT },
                                                         { "WATERPHANTOM", PROBLEM_WaterPhantom },
+                                                        { "AIRCAVITY", PROBLEM_AirCavity },
+                                                        { "MUSCLEBONELUNG", PROBLEM_MuscleBoneLung },
                                                         { "LINESOURCE_PSEUDO_1D", PROBLEM_LineSource_Pseudo_1D },
                                                         { "LINESOURCE_PSEUDO_1D_PHYSICS", PROBLEM_LineSource_Pseudo_1D_Physics } };
 
