@@ -13,7 +13,6 @@ std::vector<VectorVector> WaterPhantom::GetExternalSource( const Vector& energie
 VectorVector WaterPhantom::SetupIC() {
     VectorVector psi( _mesh->GetNumCells(), Vector( _settings->GetNQuadPoints(), 1e-10 ) );
     auto cellMids = _mesh->GetCellMidPoints();
-    std::cout<<"Length of mesh "<< cellMids.size() << std::endl;
     double s      = 0.1;
     for( unsigned j = 0; j < cellMids.size(); ++j ) {
         double x                                = cellMids[j][0];

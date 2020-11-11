@@ -25,6 +25,6 @@ std::vector<double> AirCavity1D::GetDensity( const VectorVector& cellMidPoints )
     std::vector<double> densities ( 4*cellMidPoints.size()/9, 1.0 );
     std::vector<double> air( 2*cellMidPoints.size()/9, 0.00125  );
     std::vector<double> water ( 3*cellMidPoints.size()/9, 1.0 );
-    densities.insert(densities.end(),air.begin(),air.end()-1);
-    densities.insert(densities.end(),water.begin(),water.end()-1);
+    densities.insert(densities.end(),air.begin(),air.end());
+    densities.insert(densities.end(),water.begin(),water.end());
     return densities; }

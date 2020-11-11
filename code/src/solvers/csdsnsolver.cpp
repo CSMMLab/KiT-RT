@@ -118,7 +118,7 @@ CSDSNSolver::CSDSNSolver( Config* settings ) : SNSolver( settings ) {
         // exit( EXIT_FAILURE );
     */
     // Get patient density
-    _density = Vector( _nCells, 1.0 );
+    _density = std::vector<double>( _nCells, 1.0 );
 }
 
 void CSDSNSolver::Solve() {
