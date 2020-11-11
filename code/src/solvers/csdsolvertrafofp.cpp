@@ -14,16 +14,13 @@ CSDSolverTrafoFP::CSDSolverTrafoFP( Config* settings ) : SNSolver( settings ) {
     _dose = std::vector<double>( _settings->GetNCells(), 0.0 );
 
     // Set angle and energies
-    _angle           = Vector( _settings->GetNQuadPoints(), 0.0 );    // my
-    _energies        = Vector( _nEnergies, 0.0 );                     // equidistant
-     _energyMin = 1e-4;
-     //_energyMax = 10.0;
-     _energyMax = 5.0;
+    _energies  = Vector( _nEnergies, 0.0 );    // equidistant
+    _energyMin = 5e-5;
+    _energyMax = 10e0;
     // write equidistant energy grid
 
     _dE        = ComputeTimeStep( settings->GetCFL() );
     _nEnergies = unsigned( ( _energyMax - _energyMin ) / _dE );
-    std::cout<<"nEnergies = "<<_nEnergies<<std::endl;
     _energies.resize( _nEnergies );
     for( unsigned n = 0; n < _nEnergies; ++n ) {
         _energies[n] = _energyMin + ( _energyMax - _energyMin ) / ( _nEnergies - 1 ) * n;
@@ -61,20 +58,20 @@ CSDSolverTrafoFP::CSDSolverTrafoFP( Config* settings ) : SNSolver( settings ) {
     double g = 0.8;
 
     // determine momente of Heney-Greenstein
-    _xi1 = Vector(_nEnergies, 1.0 - g); // paper Olbrant, Frank (11)
-    _xi2 = Vector(_nEnergies, 4.0 / 3.0 - 2.0 * g + 2.0 / 3.0 * g * g);
-    _xi = Matrix(3,_nEnergies);
-    for(unsigned n = 0; n<_nEnergies; ++n ){
-        _xi(1,n) = 1.0 - g;
-        _xi(2,n) = 4.0 / 3.0 - 2.0 * g + 2.0 / 3.0 * g * g;
+    _xi1 = Vector( _nEnergies, 1.0 - g );    // paper Olbrant, Frank (11)
+    _xi2 = Vector( _nEnergies, 4.0 / 3.0 - 2.0 * g + 2.0 / 3.0 * g * g );
+    _xi  = Matrix( 4, _nEnergies );
+    for( unsigned n = 0; n < _nEnergies; ++n ) {
+        _xi( 1, n ) = 1.0 - g;
+        _xi( 2, n ) = 4.0 / 3.0 - 2.0 * g + 2.0 / 3.0 * g * g;
     }
 
     _s = Vector( _nEnergies, 1.0 );
 
-    _RT = false;
+    _RT = true;
 
     // read in medical data if radiation therapy option selected
-    if(_RT){
+    if( _RT ) {
         /*
         _nEnergies = 100;
         _energies.resize(_nEnergies);
@@ -88,19 +85,18 @@ CSDSolverTrafoFP::CSDSolverTrafoFP( Config* settings ) : SNSolver( settings ) {
         ICRU database( mu, _energies );
         database.GetTransportCoefficients( _xi );
         database.GetStoppingPower( _s );
-/*
-        // print coefficients
-        std::cout<<"E = [";
-        for( unsigned n = 0; n<_nEnergies; ++n){
-            std::cout<<_energies[n]<<"; ";
-        }
-        std::cout<<"];"<<std::endl;
-        std::cout<<"xi = [";
-        for( unsigned n = 0; n<_nEnergies; ++n){
-            std::cout<<_xi(0,n)<<" "<<_xi(1,n)<<" "<<_xi(2,n)<<" "<<_xi(3,n)<<" "<<_xi(4,n)<<" "<<_xi(5,n)<<"; ";
-        }
-        std::cout<<"];"<<std::endl;*/
-
+        /*
+                // print coefficients
+                std::cout<<"E = [";
+                for( unsigned n = 0; n<_nEnergies; ++n){
+                    std::cout<<_energies[n]<<"; ";
+                }
+                std::cout<<"];"<<std::endl;
+                std::cout<<"xi = [";
+                for( unsigned n = 0; n<_nEnergies; ++n){
+                    std::cout<<_xi(0,n)<<" "<<_xi(1,n)<<" "<<_xi(2,n)<<" "<<_xi(3,n)<<" "<<_xi(4,n)<<" "<<_xi(5,n)<<"; ";
+                }
+                std::cout<<"];"<<std::endl;*/
     }
 
     // recompute scattering kernel. TODO: add this to kernel function
@@ -112,7 +108,7 @@ CSDSolverTrafoFP::CSDSolverTrafoFP( Config* settings ) : SNSolver( settings ) {
     }
 
     _density = Vector( _nCells, 1.0 );
-    //exit(EXIT_SUCCESS);
+    // exit(EXIT_SUCCESS);
 }
 
 void CSDSolverTrafoFP::Solve() {
@@ -125,7 +121,7 @@ void CSDSolverTrafoFP::Solve() {
     // auto cellMids = _settings->GetCellMidPoints();
     _sol = std::vector<Vector>( _nCells, Vector( _nq, 0.0 ) );
     for( unsigned k = 0; k < _nq; ++k ) {
-        if( _quadPoints[k][0] > 0 && !_RT) _sol[0][k] = 1e5 * exp( -10.0 * pow( 1.0 - _quadPoints[k][0], 2 ) );
+        if( _quadPoints[k][0] > 0 && !_RT ) _sol[0][k] = 1e5 * exp( -10.0 * pow( 1.0 - _quadPoints[k][0], 2 ) );
     }
     _boundaryCells[0]           = BOUNDARY_TYPE::DIRICHLET;
     _boundaryCells[_nCells - 1] = BOUNDARY_TYPE::DIRICHLET;
@@ -138,7 +134,7 @@ void CSDSolverTrafoFP::Solve() {
     double dFlux = 1e10;
     Vector fluxNew( _nCells, 0.0 );
     Vector fluxOld( _nCells, 0.0 );
-    //for( unsigned j = 0; j < _nCells; ++j ) {
+    // for( unsigned j = 0; j < _nCells; ++j ) {
     //    fluxOld[j] = dot( _sol[j], _weights );
     //}
 
@@ -180,19 +176,39 @@ void CSDSolverTrafoFP::Solve() {
     for( unsigned n = 0; n < _nEnergies - 1; ++n ) {
         _dE = fabs( _energies[n + 1] - _energies[n] );    // is the sign correct here?
 
-        // set alpha and beta
-        _alpha = _xi(1,_nEnergies-n-1) / 2.0 + _xi(2,_nEnergies-n-1) / 8.0;
-        _beta  = _xi(2,_nEnergies-n-1) / 8.0 / _xi(1,_nEnergies-n-1);
+        double xi1 = _xi( 1, _nEnergies - n - 1 );
+        double xi2 = _xi( 2, _nEnergies - n - 1 );
+        double xi3 = _xi( 3, _nEnergies - n - 1 );
+
+        // FP1
+        /*
+        _alpha         = 0.0;
+        _alpha2 = xi1 / 2.0;
+        _beta          = 0.0;
+        */
+
+        // FP2
+        _alpha  = xi1 / 2.0 + xi2 / 8.0;
+        _alpha2 = 0.0;
+        _beta   = xi2 / 8.0 / xi1;
+        /*
+        // FP3
+        _alpha         = xi2 * ( 27.0 * xi2 * xi2 + 5.0 * xi3 * xi3 - 24.0 * xi2 * xi3 ) / ( 8.0 * xi3 * ( 3.0 * xi2 - 2.0 * xi3 ) );
+        _beta          = xi3 / ( 6.0 * ( 3.0 * xi2 - 2.0 * xi3 ) );
+        _alpha2        = xi1 / 2.0 - 9.0 / 8.0 * xi2 * xi2 / xi3 + 3.0 / 8.0 * xi2;
+        */
 
         _IL = identity - _beta * _L;
 
         // write BC for water phantom
-        if(_RT){
+        if( _RT ) {
             for( unsigned k = 0; k < _nq; ++k ) {
                 if( _quadPoints[k][0] > 0 ) {
-                        //_sol[0][k] = 1e5 * exp( -200.0 * pow( 1.0 - _quadPoints[k][0], 2 ) ) * exp(-50*pow(_energies[0]-_energies[n],2))* _density[0] * _s[_nEnergies - n- 1];
-                        _sol[0][k] = 1e5 * exp( -200.0 * pow( 1.0 - _quadPoints[k][0], 2 ) ) * exp(-50.0*pow(_energyMax-energiesOrig[_nEnergies - n - 1],2))* _density[0] * _s[_nEnergies - n - 1];
-                        //psiNew[0][k] = _sol[0][k];
+                    //_sol[0][k] = 1e5 * exp( -200.0 * pow( 1.0 - _quadPoints[k][0], 2 ) ) * exp(-50*pow(_energies[0]-_energies[n],2))* _density[0] *
+                    //_s[_nEnergies - n- 1];
+                    _sol[0][k] = 1e5 * exp( -200.0 * pow( 1.0 - _quadPoints[k][0], 2 ) ) *
+                                 exp( -50.0 * pow( _energyMax - energiesOrig[_nEnergies - n - 1], 2 ) ) * _density[0] * _s[_nEnergies - n - 1];
+                    // psiNew[0][k] = _sol[0][k];
                 }
             }
         }
@@ -200,7 +216,14 @@ void CSDSolverTrafoFP::Solve() {
         for( unsigned j = 0; j < _nCells; ++j ) {
             if( _boundaryCells[j] == BOUNDARY_TYPE::DIRICHLET ) continue;
             psi1[j] = blaze::solve( _IL, _sol[j] );
-            psi1[j] = _alpha * _L * psi1[j];
+            psi1[j] = _alpha * _L * psi1[j] + _alpha2 * _L * _sol[j];
+        }
+
+        // add FP scattering term implicitly
+        for( unsigned j = 0; j < _nCells; ++j ) {
+            if( _boundaryCells[j] == BOUNDARY_TYPE::DIRICHLET ) continue;
+            //_sol[j] = blaze::solve( identity - _dE * _alpha2 * _L, psiNew[j] );
+            _sol[j] = _IL * blaze::solve( _IL - _dE * _alpha * _L, _sol[j] );
         }
 
         // loop over all spatial cells
@@ -218,20 +241,27 @@ void CSDSolverTrafoFP::Solve() {
                         psiNew[j][i] += _g->Flux( _quadPoints[i],
                                                   _sol[j][i] / _density[j],
                                                   _sol[_neighbors[j][idx_neighbor]][i] / _density[_neighbors[j][idx_neighbor]],
-                                                  _normals[j][idx_neighbor] ) / _areas[j];
+                                                  _normals[j][idx_neighbor] ) /
+                                        _areas[j];
                 }
-                // time update angular flux with numerical flux and total scattering cross section
-                psiNew[j][i] = _sol[j][i] - _dE * psiNew[j][i] + _dE * psi1[j][i];
+                // tteamime update angular flux with numerical flux and total scattering cross section
+                psiNew[j][i] = _sol[j][i] - _dE * psiNew[j][i];    // + _dE * psi1[j][i];
             }
         }
-        _sol = psiNew;
 
         for( unsigned j = 0; j < _nCells; ++j ) {
-            fluxNew[j] = dot( psiNew[j], _weights );
-            if(n > 0){
-                _dose[j] += 0.5 * _dE * ( fluxNew[j] * _s[_nEnergies - n - 1] + fluxOld[j] * _s[_nEnergies - n] ) / _density[j];    // update dose with trapezoidal rule
-            }else{
-                _dose[j] += _dE * fluxNew[j] * _s[_nEnergies - n - 1]/ _density[j];
+            if( _boundaryCells[j] == BOUNDARY_TYPE::DIRICHLET ) continue;
+            _sol[j] = psiNew[j];
+        }
+
+        for( unsigned j = 0; j < _nCells; ++j ) {
+            fluxNew[j] = dot( _sol[j], _weights );
+            if( n > 0 ) {
+                _dose[j] += 0.5 * _dE * ( fluxNew[j] * _s[_nEnergies - n - 1] + fluxOld[j] * _s[_nEnergies - n] ) /
+                            _density[j];    // update dose with trapezoidal rule
+            }
+            else {
+                _dose[j] += _dE * fluxNew[j] * _s[_nEnergies - n - 1] / _density[j];
             }
             _solverOutput[j] = fluxNew[j];
         }
@@ -239,9 +269,11 @@ void CSDSolverTrafoFP::Solve() {
         // Save( n );
         dFlux   = blaze::l2Norm( fluxNew - fluxOld );
         fluxOld = fluxNew;
-        if( rank == 0 ) log->info( "{:03.8f}  {:01.5e}  {:01.5e}", _energies[n], _dE / densityMin, dFlux );
+        if( rank == 0 )
+            log->info( "{:03.8f}  {:03.8f}  {:01.5e}  {:01.5e}", energiesOrig[_nEnergies - n - 1], _energies[n], _dE / densityMin, dFlux );
         if( std::isinf( dFlux ) || std::isnan( dFlux ) ) break;
     }
+    Save( 1 );
 }
 
 void CSDSolverTrafoFP::Save() const {

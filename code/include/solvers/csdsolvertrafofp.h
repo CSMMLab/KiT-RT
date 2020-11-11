@@ -13,16 +13,16 @@ class CSDSolverTrafoFP : public SNSolver
 
     // Physics acess
     Vector _energies; /*! @brief: energy levels for CSD, lenght = _nEnergies */
-    Vector _angle;    /*! @brief: angles for SN */
     Vector _density;  /*! @brief: patient density for each grid cell */
 
     std::vector<Matrix> _sigmaSE; /*!  @brief scattering cross section for all energies*/
     Vector _sigmaTE;              /*!  @brief total cross section for all energies*/
 
-    Matrix _L; /*!  @brief Laplace Beltrami Matrix */
+    Matrix _L;  /*!  @brief Laplace Beltrami Matrix */
     Matrix _IL; /*!  @brief Laplace Beltrami Matrix */
 
     double _alpha;
+    double _alpha2;
     double _beta;
 
     Vector _xi1;
@@ -51,4 +51,4 @@ class CSDSolverTrafoFP : public SNSolver
     virtual void Save( int currEnergy ) const;
 };
 
-#endif // CSDSOLVERTRAFOFP_H
+#endif    // CSDSOLVERTRAFOFP_H
