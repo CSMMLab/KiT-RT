@@ -5,6 +5,8 @@
 #include "problems/linesource.h"
 #include "problems/problembase.h"
 #include "problems/waterphantom.h"
+#include "problems/aircavity1d.h"
+#include "problems/musclebonelung.h"
 
 ProblemBase::ProblemBase( Config* settings, Mesh* mesh ) {
     _settings = settings;
@@ -29,6 +31,8 @@ ProblemBase* ProblemBase::Create( Config* settings, Mesh* mesh ) {
                 return new Checkerboard_SN( settings, mesh );    // default
         }
         case PROBLEM_ElectronRT: return new ElectronRT( settings, mesh );
+        case PROBLEM_AirCavity: return new AirCavity1D( settings, mesh );
+        case PROBLEM_MuscleBoneLung: return new MuscleBoneLung( settings, mesh );
         case PROBLEM_WaterPhantom: return new WaterPhantom( settings, mesh );
         case PROBLEM_LineSource_Pseudo_1D: return new LineSource_SN_Pseudo1D( settings, mesh );
         case PROBLEM_LineSource_Pseudo_1D_Physics: return new LineSource_SN_Pseudo1D_Physics( settings, mesh );
