@@ -29,6 +29,8 @@ class CSDSolverTrafoFP : public SNSolver
     Vector _xi2;
     Matrix _xi;
 
+    unsigned _FPMethod;
+
     bool _RT;
 
     double _energyMin;

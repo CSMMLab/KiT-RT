@@ -16,7 +16,7 @@ CSDSolverTrafoFP::CSDSolverTrafoFP( Config* settings ) : SNSolver( settings ) {
     // Set angle and energies
     _energies  = Vector( _nEnergies, 0.0 );    // equidistant
     _energyMin = 1e-4 * 0.511;
-    _energyMax = 5e0;
+    _energyMax = 10e0;
 
     // write equidistant energy grid (false) or refined grid (true)
     GenerateEnergyGrid( false );
@@ -33,6 +33,8 @@ CSDSolverTrafoFP::CSDSolverTrafoFP( Config* settings ) : SNSolver( settings ) {
 
     // setup Laplace Beltrami matrix L in slab geometry
     _L = Matrix( nq, nq, 0.0 );
+
+    _FPMethod = 2;
 
     double DMinus = 0.0;
     double DPlus  = 0.0;
@@ -61,6 +63,7 @@ CSDSolverTrafoFP::CSDSolverTrafoFP( Config* settings ) : SNSolver( settings ) {
         _xi( 2, n ) = 4.0 / 3.0 - 2.0 * g + 2.0 / 3.0 * g * g;
     }
 
+    // initialize stopping power vector
     _s = Vector( _nEnergies, 1.0 );
 
     _RT = true;
@@ -97,25 +100,25 @@ CSDSolverTrafoFP::CSDSolverTrafoFP( Config* settings ) : SNSolver( settings ) {
 }
 
 void CSDSolverTrafoFP::Solve() {
-    std::cout << "Solve" << std::endl;
-    std::cout << "Density set with size " << _density.size() << std::endl;
     auto log = spdlog::get( "event" );
 
+    // save original energy field for boundary conditions
     auto energiesOrig = _energies;
-    //_density          = std::vector<double>( _density.size(), 1.0 );
 
     // setup incoming BC on left
-    _sol = VectorVector( _density.size(), Vector( _settings->GetNQuadPoints(), 0.0 ) );
+    _sol = VectorVector( _density.size(), Vector( _settings->GetNQuadPoints(), 0.0 ) );    // hard coded IC, needs to be changed
     for( unsigned k = 0; k < _nq; ++k ) {
         if( _quadPoints[k][0] > 0 && !_RT ) _sol[0][k] = 1e5 * exp( -10.0 * pow( 1.0 - _quadPoints[k][0], 2 ) );
     }
+    // hard coded boundary type for 1D testcases (otherwise cells will be NEUMANN)
     _boundaryCells[0]           = BOUNDARY_TYPE::DIRICHLET;
     _boundaryCells[_nCells - 1] = BOUNDARY_TYPE::DIRICHLET;
 
+    // setup identity matrix for FP scattering
     Matrix identity( _nq, _nq, 0.0 );
     for( unsigned k = 0; k < _nq; ++k ) identity( k, k ) = 1.0;
 
-    // angular flux at next time step (maybe store angular flux at all time steps, since time becomes energy?)
+    // angular flux at next time step
     VectorVector psiNew( _nCells, Vector( _nq, 0.0 ) );
     double dFlux = 1e10;
     Vector fluxNew( _nCells, 0.0 );
@@ -164,23 +167,22 @@ void CSDSolverTrafoFP::Solve() {
         double xi2 = _xi( 2, _nEnergies - n - 1 );
         double xi3 = _xi( 3, _nEnergies - n - 1 );
 
-        // FP1
-        /*
-        _alpha         = 0.0;
-        _alpha2 = xi1 / 2.0;
-        _beta          = 0.0;
-        */
-
-        // FP2
-        _alpha  = xi1 / 2.0 + xi2 / 8.0;
-        _alpha2 = 0.0;
-        _beta   = xi2 / 8.0 / xi1;
-        /*
-        // FP3
-        _alpha         = xi2 * ( 27.0 * xi2 * xi2 + 5.0 * xi3 * xi3 - 24.0 * xi2 * xi3 ) / ( 8.0 * xi3 * ( 3.0 * xi2 - 2.0 * xi3 ) );
-        _beta          = xi3 / ( 6.0 * ( 3.0 * xi2 - 2.0 * xi3 ) );
-        _alpha2        = xi1 / 2.0 - 9.0 / 8.0 * xi2 * xi2 / xi3 + 3.0 / 8.0 * xi2;
-        */
+        // setup coefficients in FP step
+        if( _FPMethod == 1 ) {
+            _alpha  = 0.0;
+            _alpha2 = xi1 / 2.0;
+            _beta   = 0.0;
+        }
+        else if( _FPMethod == 2 ) {
+            _alpha  = xi1 / 2.0 + xi2 / 8.0;
+            _alpha2 = 0.0;
+            _beta   = xi2 / 8.0 / xi1;
+        }
+        else if( _FPMethod == 3 ) {
+            _alpha  = xi2 * ( 27.0 * xi2 * xi2 + 5.0 * xi3 * xi3 - 24.0 * xi2 * xi3 ) / ( 8.0 * xi3 * ( 3.0 * xi2 - 2.0 * xi3 ) );
+            _beta   = xi3 / ( 6.0 * ( 3.0 * xi2 - 2.0 * xi3 ) );
+            _alpha2 = xi1 / 2.0 - 9.0 / 8.0 * xi2 * xi2 / xi3 + 3.0 / 8.0 * xi2;
+        }
 
         _IL = identity - _beta * _L;
 
@@ -278,33 +280,26 @@ void CSDSolverTrafoFP::GenerateEnergyGrid( bool refinement ) {
         }
     }
     else {
+        // hard-coded positions for energy-grid refinement
         double energySwitch    = 0.58;
         double energySwitchMin = 0.03;
-        // write equidistant energy grid
 
-        _dE                 = ComputeTimeStep( _settings->GetCFL() );
+        // number of energies per intervals [E_min,energySwitchMin], [energySwitchMin,energySwitch], [energySwitch,E_Max]
         unsigned nEnergies1 = unsigned( ( _energyMax - energySwitch ) / _dE );
         unsigned nEnergies2 = unsigned( ( energySwitch - energySwitchMin ) / ( _dE / 2 ) );
-        unsigned nEnergies3 = unsigned( ( energySwitchMin - _energyMin ) / ( _dE / 2 ) );
+        unsigned nEnergies3 = unsigned( ( energySwitchMin - _energyMin ) / ( _dE / 3 ) );
         _nEnergies          = nEnergies1 + nEnergies2 + nEnergies3 - 2;
-        std::cout << "nEnergies1 = " << nEnergies1 << std::endl;
-        std::cout << "nEnergies2 = " << nEnergies2 << std::endl;
-        std::cout << "nEnergies3 = " << nEnergies3 << std::endl;
-        std::cout << "nEnergies = " << _nEnergies << std::endl;
         _energies.resize( _nEnergies );
+
+        // write equidistant energy grid in each interval
         for( unsigned n = 0; n < nEnergies3; ++n ) {
             _energies[n] = _energyMin + ( energySwitchMin - _energyMin ) / ( nEnergies3 - 1 ) * n;
-            std::cout << _energies[n] << std::endl;
         }
-        std::cout << "====================================================" << std::endl;
         for( unsigned n = 1; n < nEnergies2; ++n ) {
             _energies[n + nEnergies3 - 1] = energySwitchMin + ( energySwitch - energySwitchMin ) / ( nEnergies2 - 1 ) * n;
-            std::cout << _energies[n + nEnergies3 - 1] << std::endl;
         }
-        std::cout << "----------------------------------------------------" << std::endl;
         for( unsigned n = 1; n < nEnergies1; ++n ) {
             _energies[n + nEnergies3 + nEnergies2 - 2] = energySwitch + ( _energyMax - energySwitch ) / ( nEnergies1 - 1 ) * n;
-            std::cout << _energies[n + nEnergies3 + nEnergies2 - 2] << std::endl;
         }
     }
 }
