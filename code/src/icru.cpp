@@ -557,11 +557,8 @@ void ICRU::GetTransportCoefficients( Matrix& xi ) {
     Vector mu( _XMU.size() );
     std::vector<std::vector<double>> dxs;
     // get scattering cross sections for all energies E
-    std::cout << "Computing dxs" << std::endl;
     angdcs( 3u, dxs );
-    std::cout << "DONE." << std::endl;
     for( unsigned n = 0; n < mu.size(); ++n ) mu[n] = 1.0 - 2.0 * _XMU[n];    // mu starts at 1 and goes to 0
-    std::cout << "Reset mu DONE." << std::endl;
 #pragma omp parallel for
     for( unsigned i = 0; i < _E.size(); ++i ) {
         // compute moments with trapezoidal rule
@@ -573,7 +570,6 @@ void ICRU::GetTransportCoefficients( Matrix& xi ) {
             }
         }
     }
-    std::cout << "Computation xi DONE." << std::endl;
     xi *= 2.0 * PI * H2OMolecularDensity;
 }
 
