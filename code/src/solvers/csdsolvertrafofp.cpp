@@ -97,6 +97,9 @@ CSDSolverTrafoFP::CSDSolverTrafoFP( Config* settings ) : SNSolver( settings ) {
         std::cout<<"];"<<std::endl;
         */
     }
+
+    _density = std::vector<double> ( _nCells, 1.0 );
+    //exit(EXIT_SUCCESS);
 }
 
 void CSDSolverTrafoFP::Solve() {
