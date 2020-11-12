@@ -19,7 +19,7 @@ CSDSolverTrafoFP::CSDSolverTrafoFP( Config* settings ) : SNSolver( settings ) {
     _energyMax = 5e0;
 
     // write equidistant energy grid (false) or refined grid (true)
-    GenerateEnergyGrid( true );
+    GenerateEnergyGrid( false );
 
     // create 1D quadrature
     unsigned nq            = _settings->GetNQuadPoints();
@@ -102,12 +102,13 @@ CSDSolverTrafoFP::CSDSolverTrafoFP( Config* settings ) : SNSolver( settings ) {
         _scatteringKernel( p, p ) = _weights[p];
     }
 
-    _density = std::vector<double>( _nCells, 1.0 );
+    //_density = std::vector<double>( _nCells, 1.0 );
     // exit(EXIT_SUCCESS);
 }
 
 void CSDSolverTrafoFP::Solve() {
     std::cout << "Solve" << std::endl;
+    std::cout << "Density set with size " << _density.size() << std::endl;
     auto log = spdlog::get( "event" );
 
     auto energiesOrig = _energies;
