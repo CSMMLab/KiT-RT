@@ -93,7 +93,6 @@ CSDSolverTrafoFP::CSDSolverTrafoFP( Config* settings ) : SNSolver( settings ) {
                 }
                 std::cout<<"];"<<std::endl;*/
     }
-    
 
     // recompute scattering kernel. TODO: add this to kernel function
     for( unsigned p = 0; p < _nq; ++p ) {
@@ -103,13 +102,8 @@ CSDSolverTrafoFP::CSDSolverTrafoFP( Config* settings ) : SNSolver( settings ) {
         _scatteringKernel( p, p ) = _weights[p];
     }
 
-<<<<<<< HEAD
-    _density = Vector( _nCells, 1.0 );
+    _density = std::vector<double>( _nCells, 1.0 );
     // exit(EXIT_SUCCESS);
-=======
-    _density = std::vector<double> ( _nCells, 1.0 );
-    //exit(EXIT_SUCCESS);
->>>>>>> Resolved inconsistencies in _density declaration, corrected minor error in test cases
 }
 
 void CSDSolverTrafoFP::Solve() {
