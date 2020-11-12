@@ -80,6 +80,95 @@ void ICRU::angdcs( unsigned ncor, double e, std::vector<double>& dxse, std::vect
         dxs[IA] = dxse[IA] + dxsi[IA];
     }
 }
+
+void ICRU::angdcs( unsigned ncor, std::vector<std::vector<double>>& dxs ) {
+
+    unsigned NM = materialID;
+    if( NM < 1 || NM > 280 ) {
+        ErrorMessages::Error( "The material number " + std::to_string( NM ) + " is not defined.", CURRENT_FUNCTION );
+    }
+
+    std::string PATHMT = "../data/material/";
+    std::stringstream ss;
+    ss << std::setw( 3 ) << std::setfill( '0' ) << materialID;
+
+    std::string FILE1 = PATHMT + "mater" + ss.str() + ".stp";
+
+    std::ifstream f( FILE1 );
+    std::string line;
+    for( unsigned i = 0; i < 5; ++i ) std::getline( f, line );
+    // double RHO = std::stod( line.substr( line.find_first_of( "=" ) + 1, 16 ) );
+    std::getline( f, line );
+    _NELEM     = std::stoul( line.substr( line.find_first_of( "=" ) + 1, 3 ) );
+    double ATW = 0.0, ZTOT = 0.0;
+    _IZ.resize( _NELEM );
+    _STF.resize( _NELEM );
+    for( unsigned IEL = 0; IEL < _NELEM; ++IEL ) {
+        std::getline( f, line );
+        _IZ[IEL]  = std::stoul( line.substr( line.find_first_of( "=" ) + 1, 3 ) );
+        _STF[IEL] = std::stod( line.substr( line.find_last_of( "=" ) + 1, 3 ) );
+        ZTOT += _STF[IEL] * _IZ[IEL];
+        ATW += ELAW[_IZ[IEL]] * _STF[IEL];
+    }
+    std::getline( f, line );
+    std::getline( f, line );
+    double EXPOT = std::stod( line.substr( line.find_first_of( "=" ) + 1, 16 ) );
+    std::getline( f, line );
+    _NOSC = std::stoul( line.substr( line.find_first_of( "=" ) + 1, line.back() ) );
+    std::getline( f, line );
+    std::getline( f, line );
+    std::getline( f, line );
+    double EXPOTR = 0.0;
+    _F.resize( _NOSC );
+    _WRI.resize( _NOSC );
+    double buffer;
+    for( unsigned I = 0; I < _NOSC; ++I ) {
+        f >> buffer >> _F[I] >> buffer >> _WRI[I];
+        EXPOTR += _F[I] * std::log( _WRI[I] );
+    }
+    f.close();
+    EXPOTR = std::exp( EXPOTR / ZTOT );
+    if( std::fabs( EXPOT - EXPOTR ) > 1.0e-5 * EXPOT ) {
+        ErrorMessages::Error( "Inconsistent oscillator data", CURRENT_FUNCTION );
+    }
+
+    unsigned NDAT = _NA;
+    ELINIT( _IZ, _STF );
+
+    std::vector<double> dxse;
+    std::vector<double> dxsi;
+    dxs.resize( NDAT );
+
+    for( unsigned n = 0; n < _E.size(); ++n ) {
+        DCSEL0( _E[n] );
+        dxse.resize( NDAT );
+        dxsi.resize( NDAT );
+        dxs[n].resize( NDAT );
+
+        for( unsigned IA = 0; IA < NDAT; ++IA ) {
+            dxse[IA] = DCSEL( _XMU[IA] );
+        }
+
+        if( ncor == 1u || ncor == 2u ) {    // 1: Inelastic DCS = elastic DCS/Z | 2: Morse's incoherent scattering function.
+            ErrorMessages::Error( "Unsupported scattering model", CURRENT_FUNCTION );
+        }
+        else if( ncor == 3u ) {    // Sternheimer -Liljequist GOS model.
+            for( unsigned IA = 0; IA < NDAT; ++IA ) {
+                dxsi[IA] = DCSIN3( _E[n], _XMU[IA] );
+            }
+        }
+        else {    // No inelastic scattering correction
+            for( unsigned IA = 0; IA < NDAT; ++IA ) {
+                dxsi[IA] = 0.0e0;
+            }
+        }
+
+        for( unsigned IA = 0; IA < _NA; ++IA ) {
+            dxs[n][IA] = dxse[IA] + dxsi[IA];
+        }
+    }
+}
+
 void ICRU::ELINIT( std::vector<double> IZ, std::vector<double> STF ) {
     unsigned IE    = 0;
     double FGRID   = 10.0e0;
@@ -168,7 +257,7 @@ void ICRU::ELINIT( std::vector<double> IZ, std::vector<double> STF ) {
 
 void ICRU::DCSEL0( double E ) {
     if( E < 49.9999e0 || E > 1.0001e8 ) {
-        std::cout<<"Energy "<<E<<std::endl;
+        std::cout << "Energy " << E << std::endl;
         ErrorMessages::Error( "Outside of supported energy range", CURRENT_FUNCTION );
     }
     double EL = std::log( E );
@@ -465,24 +554,28 @@ void ICRU::GetAngularScatteringXS( Matrix& angularXS, Vector& integratedXS ) {
 }
 
 void ICRU::GetTransportCoefficients( Matrix& xi ) {
-    Vector mu(_XMU.size());
-    for( unsigned n = 0; n < mu.size(); ++n ) mu[n] = 1.0-2.0*_XMU[n];  // mu starts at 1 and goes to 0
+    Vector mu( _XMU.size() );
+    std::vector<std::vector<double>> dxs;
+    // get scattering cross sections for all energies E
+    angdcs( 3u, dxs );
+    for( unsigned n = 0; n < mu.size(); ++n )
+        mu[n] = 1.0 - 2.0 * _XMU[n];    // mu starts at 1 and goes to 0
+                                        //#pragma omp parallel for
     for( unsigned i = 0; i < _E.size(); ++i ) {
-        std::vector<double> dxse, dxsi, dxs;
+        // std::vector<double> dxse, dxsi, dxs;
         // get scattering cross sections for energy E[i]
-        angdcs( 3u, _E[i], dxse, dxsi, dxs );
+        // angdcs( 3u, _E[i], dxse, dxsi, dxs );
 
         // compute moments with trapezoidal rule
-        for( unsigned n = 0; n < xi.rows(); ++n ){
-            xi(n,i) = 0.0;
+        for( unsigned n = 0; n < xi.rows(); ++n ) {
+            xi( n, i ) = 0.0;
             // integration over mu
-            for( unsigned k = 0; k < dxs.size()-1; ++k ){
-                xi(n,i) -= 0.5 * ( pow(1.0-mu[k+1],n)*dxs[k+1] + pow(1.0-mu[k],n)*dxs[k] )*(mu[k+1]-mu[k]);
+            for( unsigned k = 0; k < dxs.size() - 1; ++k ) {
+                xi( n, i ) -= 0.5 * ( pow( 1.0 - mu[k + 1], n ) * dxs[i][k + 1] + pow( 1.0 - mu[k], n ) * dxs[i][k] ) * ( mu[k + 1] - mu[k] );
             }
-
         }
     }
-    xi *= 2.0*PI*H2OMolecularDensity;
+    xi *= 2.0 * PI * H2OMolecularDensity;
 }
 
 void ICRU::GetStoppingPower( Vector& stoppingPower ) {

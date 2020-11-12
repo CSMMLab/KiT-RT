@@ -54,7 +54,7 @@ class ICRU
     double _BETA2;
     double _R1;
 
-    Vector _E, _QMU; // input energy and mu vectors
+    Vector _E, _QMU;    // input energy and mu vectors
     std::vector<double> _ET, _ETL;
     std::vector<double> _XMU, _XMUL;
     std::vector<double> _ECS, _PCS;
@@ -85,6 +85,7 @@ class ICRU
     double DODCSC( double RMU, double EL );
     void DOICSS( double WR, double E, double RMU, double& DCSD, double& DCSC );
     void angdcs( unsigned ncor, double e, std::vector<double>& dxse, std::vector<double>& dxsi, std::vector<double>& dxs );
+    void angdcs( unsigned ncor, std::vector<std::vector<double>>& dxs );
 
     ICRU() = delete;
 
@@ -143,7 +144,7 @@ class ICRU
 
     void GetAngularScatteringXS( Matrix& angularXS, Vector& integratedXS );
     void GetStoppingPower( Vector& stoppingPower );
-    void GetTransportCoefficients(Matrix& xi);
+    void GetTransportCoefficients( Matrix& xi );
 };
 
 #endif    // ICRU_H
