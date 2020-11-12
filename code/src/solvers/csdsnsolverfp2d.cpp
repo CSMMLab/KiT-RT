@@ -137,13 +137,10 @@ CSDSNSolverFP2D::CSDSNSolverFP2D( Config* settings ) : SNSolver( settings ) {
 
 void CSDSNSolverFP2D::Solve() {
     std::cout << "Solve Fokker-Planck with Heney-Greenstein kernel using "<<_nEnergies<<" energies " << std::endl;
-
-
     auto log      = spdlog::get( "event" );
     auto cellMids = _mesh->GetCellMidPoints();
 
     // setup IC and incoming BC on left
-    // auto cellMids = _settings->GetCellMidPoints();
     _sol = std::vector<Vector>( _nCells, Vector( _nq, 0.0 ) );
     for( unsigned k = 0; k < _nq; ++k ) {
         if( _quadPoints[k][0] > 0 && !_RT) _sol[0][k] = 1e5 * exp( -10.0 * pow( 1.0 - _quadPoints[k][0], 2 ) );
@@ -151,10 +148,11 @@ void CSDSNSolverFP2D::Solve() {
     _boundaryCells[0]           = BOUNDARY_TYPE::DIRICHLET;
     _boundaryCells[_nCells - 1] = BOUNDARY_TYPE::DIRICHLET;
 
-
-
-    Matrix identity( _nq, _nq, 0.0 );
-    for( unsigned k = 0; k < _nq; ++k ) identity( k, k ) = 1.0;
+    unsigned order = _quadrature->GetOrder();
+    //Matrix identity( _nq, _nq, 0.0 );
+    //for( unsigned k = 0; k < _nq; ++k ) identity( k, k ) = 1.0;
+    Matrix identity( order, order, 0.0 ); // unit matrix 
+    for( unsigned k = 0; k < order; ++k ) identity( k, k ) = 1.0;
 
     // angular flux at next time step (maybe store angular flux at all time steps, since time becomes energy?)
     VectorVector psiNew( _nCells, Vector( _nq, 0.0 ) );
@@ -162,6 +160,7 @@ void CSDSNSolverFP2D::Solve() {
     Vector fluxNew( _nCells, 0.0 );
     Vector fluxOld( _nCells, 0.0 );
 
+    /*
     unsigned order = _quadrature->GetOrder();
     auto psiStruct = Matrix( order, 2 * order, 0.0 );
     double A = 0.0;
@@ -195,7 +194,7 @@ void CSDSNSolverFP2D::Solve() {
             _R( k, k - 1 ) -= A / ( _phi[k + 1] - _phi[k] ) / _wa[k];
         }
     }
-
+    */
 
     int rank;
     MPI_Comm_rank( MPI_COMM_WORLD, &rank );
@@ -223,10 +222,11 @@ void CSDSNSolverFP2D::Solve() {
     VectorVector psi1 = _sol;
 
     // cross sections do not need to be transformed to ETilde energy grid since e.g. TildeSigmaT(ETilde) = SigmaT(E(ETilde))
-
+    
     // loop over energies (pseudo-time)
     for( unsigned n = 0; n < _nEnergies - 1; ++n ) {
         _dE = fabs( _energies[n + 1] - _energies[n] );    // is the sign correct here?
+
         // set alpha and beta
         _alpha = _xi(1,_nEnergies-n-1) / 2.0 + _xi(2,_nEnergies-n-1) / 8.0;
         _beta  = _xi(2,_nEnergies-n-1) / 8.0 / _xi(1,_nEnergies-n-1);
@@ -245,13 +245,13 @@ void CSDSNSolverFP2D::Solve() {
 // loop over all spatial cells
 // scattering step
 //#pragma omp parallel for
-        for( unsigned j = 0; j < _nCells; ++j ) {
-            if( _boundaryCells[j] == BOUNDARY_TYPE::DIRICHLET ) continue;
-            psi1[j] = blaze::solve( _IL, _sol[j] );
-            psi1[j] = _alpha * _L * psi1[j];
-        }
+        //for( unsigned j = 0; j < _nCells; ++j ) {
+        //    if( _boundaryCells[j] == BOUNDARY_TYPE::DIRICHLET ) continue;
+        //    psi1[j] = blaze::solve( _IL, _sol[j] );
+        //    psi1[j] = _alpha * _L * psi1[j];
+        //}
+        std::cout<<"point 1"<<std::endl;
 // advection step
-//#pragma omp parallel for
         for( unsigned j = 0; j < _nCells; ++j ) {
             if( _boundaryCells[j] == BOUNDARY_TYPE::DIRICHLET ) continue;
             // loop over all ordinates
@@ -267,16 +267,17 @@ void CSDSNSolverFP2D::Solve() {
                                         _areas[j] / ( _density[j] * _s[n + 1] );;
                 }
                 // time update angular flux with numerical flux and total scattering cross section
-                psiNew[j][i] = _sol[j][i] - _dE * psiNew[j][i] + _dE * psi1[j][i]/ ( _density[j] * _s[n + 1] ) +
-                        ( _s[n] / _s[n + 1] - 1 ) * _sol[j][i];
+                //psiNew[j][i] = _sol[j][i] - _dE * psiNew[j][i] + _dE * psi1[j][i]/ ( _density[j] * _s[n + 1] ) +
+                //        ( _s[n] / _s[n + 1] - 1 ) * _sol[j][i];
+                psiNew[j][i] = _sol[j][i] - _dE * psiNew[j][i] + ( _s[n] / _s[n + 1] - 1 ) * _sol[j][i];
             }
         }
+        std::cout<<"point 2"<<std::endl;
         for( unsigned j = 0; j < _nCells; ++j ) {
             if( _boundaryCells[j] == BOUNDARY_TYPE::DIRICHLET ) continue;
             _sol[j] = psiNew[j];
         }
-
-//#pragma omp parallel for
+        std::cout<<"point 3"<<std::endl;
         for( unsigned j = 0; j < _nCells; ++j ) {
             fluxNew[j] = 0.0;
             for( unsigned k = 0; k < _nq; ++k ) {
@@ -285,7 +286,7 @@ void CSDSNSolverFP2D::Solve() {
             _dose[j] += 0.5 * _dE * ( fluxNew[j] + fluxOld[j] );    // update dose with trapezoidal rule
             _solverOutput[j] = fluxNew[j];
         }
-
+        std::cout<<"point 4"<<std::endl;
         // Save( n );
         dFlux   = blaze::l2Norm( fluxNew - fluxOld );
         fluxOld = fluxNew;

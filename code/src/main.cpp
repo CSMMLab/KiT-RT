@@ -38,8 +38,8 @@ int main( int argc, char** argv ) {
     Solver* solver = Solver::Create( config );
 
     // Run solver and export
-    //solver->Solve();
-    //solver->Save();
+    solver->Solve();
+    solver->Save();
 
     //  if( Py_IsInitialized() ) Py_Finalize();
     MPI_Finalize();
