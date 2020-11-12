@@ -15,16 +15,11 @@ CSDSolverTrafoFP::CSDSolverTrafoFP( Config* settings ) : SNSolver( settings ) {
 
     // Set angle and energies
     _energies  = Vector( _nEnergies, 0.0 );    // equidistant
-    _energyMin = 5e-5;
-    _energyMax = 10e0;
-    // write equidistant energy grid
+    _energyMin = 1e-4 * 0.511;
+    _energyMax = 5e0;
 
-    _dE        = ComputeTimeStep( settings->GetCFL() );
-    _nEnergies = unsigned( ( _energyMax - _energyMin ) / _dE );
-    _energies.resize( _nEnergies );
-    for( unsigned n = 0; n < _nEnergies; ++n ) {
-        _energies[n] = _energyMin + ( _energyMax - _energyMin ) / ( _nEnergies - 1 ) * n;
-    }
+    // write equidistant energy grid (false) or refined grid (true)
+    GenerateEnergyGrid( true );
 
     // create 1D quadrature
     unsigned nq            = _settings->GetNQuadPoints();
@@ -291,4 +286,45 @@ void CSDSolverTrafoFP::Save( int currEnergy ) const {
     std::vector<std::vector<double>> scalarField( 1, _solverOutput );
     std::vector<std::vector<std::vector<double>>> results{ scalarField };
     ExportVTK( _settings->GetOutputFile() + "_" + std::to_string( currEnergy ), results, fieldNames, _mesh );
+}
+
+void CSDSolverTrafoFP::GenerateEnergyGrid( bool refinement ) {
+    _dE = ComputeTimeStep( _settings->GetCFL() );
+    if( !refinement ) {
+        _nEnergies = unsigned( ( _energyMax - _energyMin ) / _dE );
+        _energies.resize( _nEnergies );
+        for( unsigned n = 0; n < _nEnergies; ++n ) {
+            _energies[n] = _energyMin + ( _energyMax - _energyMin ) / ( _nEnergies - 1 ) * n;
+        }
+    }
+    else {
+        double energySwitch    = 0.11;
+        double energySwitchMin = 0.03;
+        // write equidistant energy grid
+
+        _dE                 = ComputeTimeStep( _settings->GetCFL() );
+        unsigned nEnergies1 = unsigned( ( _energyMax - energySwitch ) / _dE );
+        unsigned nEnergies2 = unsigned( ( energySwitch - energySwitchMin ) / ( _dE ) );
+        unsigned nEnergies3 = unsigned( ( energySwitchMin - _energyMin ) / ( _dE / 1 ) );
+        _nEnergies          = nEnergies1 + nEnergies2 + nEnergies3 - 2;
+        std::cout << "nEnergies1 = " << nEnergies1 << std::endl;
+        std::cout << "nEnergies2 = " << nEnergies2 << std::endl;
+        std::cout << "nEnergies3 = " << nEnergies3 << std::endl;
+        std::cout << "nEnergies = " << _nEnergies << std::endl;
+        _energies.resize( _nEnergies );
+        for( unsigned n = 0; n < nEnergies3; ++n ) {
+            _energies[n] = _energyMin + ( energySwitchMin - _energyMin ) / ( nEnergies3 - 1 ) * n;
+            std::cout << _energies[n] << std::endl;
+        }
+        std::cout << "====================================================" << std::endl;
+        for( unsigned n = 1; n < nEnergies2; ++n ) {
+            _energies[n + nEnergies3 - 1] = energySwitchMin + ( energySwitch - energySwitchMin ) / ( nEnergies2 - 1 ) * n;
+            std::cout << _energies[n + nEnergies3 - 1] << std::endl;
+        }
+        std::cout << "----------------------------------------------------" << std::endl;
+        for( unsigned n = 1; n < nEnergies1; ++n ) {
+            _energies[n + nEnergies3 + nEnergies2 - 2] = energySwitch + ( _energyMax - energySwitch ) / ( nEnergies1 - 1 ) * n;
+            std::cout << _energies[n + nEnergies3 + nEnergies2 - 2] << std::endl;
+        }
+    }
 }

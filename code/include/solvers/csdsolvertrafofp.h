@@ -34,6 +34,8 @@ class CSDSolverTrafoFP : public SNSolver
     double _energyMin;
     double _energyMax;
 
+    void GenerateEnergyGrid( bool refinement );
+
   public:
     /**
      * @brief CSDSolverTrafoFP constructor
