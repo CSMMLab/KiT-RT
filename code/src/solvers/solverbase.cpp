@@ -56,7 +56,6 @@ Solver::Solver( Config* settings ) : _settings( settings ) {
     // store density
     VectorVector cellMids = _mesh->GetCellMidPoints();
     _density              = _problem->GetDensity( cellMids );
-    std::cout << "Density set with size " << _density.size() << std::endl;
 }
 
 Solver::~Solver() {

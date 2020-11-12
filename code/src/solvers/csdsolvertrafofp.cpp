@@ -102,8 +102,10 @@ void CSDSolverTrafoFP::Solve() {
     auto log = spdlog::get( "event" );
 
     auto energiesOrig = _energies;
+    //_density          = std::vector<double>( _density.size(), 1.0 );
 
     // setup incoming BC on left
+    _sol = VectorVector( _density.size(), Vector( _settings->GetNQuadPoints(), 0.0 ) );
     for( unsigned k = 0; k < _nq; ++k ) {
         if( _quadPoints[k][0] > 0 && !_RT ) _sol[0][k] = 1e5 * exp( -10.0 * pow( 1.0 - _quadPoints[k][0], 2 ) );
     }
@@ -132,8 +134,6 @@ void CSDSolverTrafoFP::Solve() {
             _sol[j][k] = _sol[j][k] * _density[j] * _s[_nEnergies - 1];    // note that _s[_nEnergies - 1] is stopping power at highest energy
         }
     }
-
-    VectorVector psi1 = _sol;
 
     // store transformed energies ETilde instead of E in _energies vector (cf. Dissertation Kerstion Kuepper, Eq. 1.25)
     double tmp   = 0.0;
@@ -188,11 +188,8 @@ void CSDSolverTrafoFP::Solve() {
         if( _RT ) {
             for( unsigned k = 0; k < _nq; ++k ) {
                 if( _quadPoints[k][0] > 0 ) {
-                    //_sol[0][k] = 1e5 * exp( -200.0 * pow( 1.0 - _quadPoints[k][0], 2 ) ) * exp(-50*pow(_energies[0]-_energies[n],2))* _density[0] *
-                    //_s[_nEnergies - n- 1];
                     _sol[0][k] = 1e5 * exp( -200.0 * pow( 1.0 - _quadPoints[k][0], 2 ) ) *
                                  exp( -50.0 * pow( _energyMax - energiesOrig[_nEnergies - n - 1], 2 ) ) * _density[0] * _s[_nEnergies - n - 1];
-                    // psiNew[0][k] = _sol[0][k];
                 }
             }
         }
@@ -223,7 +220,7 @@ void CSDSolverTrafoFP::Solve() {
                                         _areas[j];
                 }
                 // time update angular flux with numerical flux and total scattering cross section
-                psiNew[j][i] = _sol[j][i] - _dE * psiNew[j][i];    // + _dE * psi1[j][i];
+                psiNew[j][i] = _sol[j][i] - _dE * psiNew[j][i];
             }
         }
 
@@ -281,14 +278,14 @@ void CSDSolverTrafoFP::GenerateEnergyGrid( bool refinement ) {
         }
     }
     else {
-        double energySwitch    = 0.11;
+        double energySwitch    = 0.58;
         double energySwitchMin = 0.03;
         // write equidistant energy grid
 
         _dE                 = ComputeTimeStep( _settings->GetCFL() );
         unsigned nEnergies1 = unsigned( ( _energyMax - energySwitch ) / _dE );
-        unsigned nEnergies2 = unsigned( ( energySwitch - energySwitchMin ) / ( _dE ) );
-        unsigned nEnergies3 = unsigned( ( energySwitchMin - _energyMin ) / ( _dE / 1 ) );
+        unsigned nEnergies2 = unsigned( ( energySwitch - energySwitchMin ) / ( _dE / 2 ) );
+        unsigned nEnergies3 = unsigned( ( energySwitchMin - _energyMin ) / ( _dE / 2 ) );
         _nEnergies          = nEnergies1 + nEnergies2 + nEnergies3 - 2;
         std::cout << "nEnergies1 = " << nEnergies1 << std::endl;
         std::cout << "nEnergies2 = " << nEnergies2 << std::endl;
