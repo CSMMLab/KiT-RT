@@ -86,7 +86,7 @@ CSDSNSolverNoTrafo::CSDSNSolverNoTrafo( Config* settings ) : SNSolver( settings 
         _scatteringKernel( p, p ) = _weights[p];
     }
     // Get patient density
-    _density = Vector( _nCells, 1.0 );
+    _density = std::vector<double>( _nCells, 1.0 );
 }
 
 void CSDSNSolverNoTrafo::Solve() {

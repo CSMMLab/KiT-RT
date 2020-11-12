@@ -107,7 +107,8 @@ CSDSNSolverFP::CSDSNSolverFP( Config* settings ) : SNSolver( settings ) {
         _scatteringKernel( p, p ) = _weights[p];
     }
 
-    _density = Vector( _nCells, 1.0 );
+
+    _density = std::vector<double>( _nCells, 1.0 );
     //exit(EXIT_SUCCESS);
 }
 
@@ -117,6 +118,8 @@ void CSDSNSolverFP::Solve() {
 
     auto log      = spdlog::get( "event" );
     auto cellMids = _mesh->GetCellMidPoints();
+
+    _density = _problem->GetDensity(cellMids);
 
     // setup IC and incoming BC on left
     // auto cellMids = _settings->GetCellMidPoints();
