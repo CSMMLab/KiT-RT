@@ -81,29 +81,19 @@ CSDSolverTrafoFP::CSDSolverTrafoFP( Config* settings ) : SNSolver( settings ) {
         database.GetTransportCoefficients( _xi );
         database.GetStoppingPower( _s );
         /*
-                // print coefficients
-                std::cout<<"E = [";
-                for( unsigned n = 0; n<_nEnergies; ++n){
-                    std::cout<<_energies[n]<<"; ";
-                }
-                std::cout<<"];"<<std::endl;
-                std::cout<<"xi = [";
-                for( unsigned n = 0; n<_nEnergies; ++n){
-                    std::cout<<_xi(0,n)<<" "<<_xi(1,n)<<" "<<_xi(2,n)<<" "<<_xi(3,n)<<" "<<_xi(4,n)<<" "<<_xi(5,n)<<"; ";
-                }
-                std::cout<<"];"<<std::endl;*/
-    }
-
-    // recompute scattering kernel. TODO: add this to kernel function
-    for( unsigned p = 0; p < _nq; ++p ) {
-        for( unsigned q = 0; q < _nq; ++q ) {
-            _scatteringKernel( p, q ) = 0.0;
+        // print coefficients
+        std::cout<<"E = [";
+        for( unsigned n = 0; n<_nEnergies; ++n){
+            std::cout<<_energies[n]<<"; ";
         }
-        _scatteringKernel( p, p ) = _weights[p];
+        std::cout<<"];"<<std::endl;
+        std::cout<<"xi = [";
+        for( unsigned n = 0; n<_nEnergies; ++n){
+            std::cout<<_xi(0,n)<<" "<<_xi(1,n)<<" "<<_xi(2,n)<<" "<<_xi(3,n)<<" "<<_xi(4,n)<<" "<<_xi(5,n)<<"; ";
+        }
+        std::cout<<"];"<<std::endl;
+        */
     }
-
-    //_density = std::vector<double>( _nCells, 1.0 );
-    // exit(EXIT_SUCCESS);
 }
 
 void CSDSolverTrafoFP::Solve() {
@@ -113,9 +103,7 @@ void CSDSolverTrafoFP::Solve() {
 
     auto energiesOrig = _energies;
 
-    // setup IC and incoming BC on left
-    // auto cellMids = _settings->GetCellMidPoints();
-    _sol = std::vector<Vector>( _nCells, Vector( _nq, 0.0 ) );
+    // setup incoming BC on left
     for( unsigned k = 0; k < _nq; ++k ) {
         if( _quadPoints[k][0] > 0 && !_RT ) _sol[0][k] = 1e5 * exp( -10.0 * pow( 1.0 - _quadPoints[k][0], 2 ) );
     }
@@ -209,12 +197,6 @@ void CSDSolverTrafoFP::Solve() {
             }
         }
 
-        for( unsigned j = 0; j < _nCells; ++j ) {
-            if( _boundaryCells[j] == BOUNDARY_TYPE::DIRICHLET ) continue;
-            psi1[j] = blaze::solve( _IL, _sol[j] );
-            psi1[j] = _alpha * _L * psi1[j] + _alpha2 * _L * _sol[j];
-        }
-
         // add FP scattering term implicitly
         for( unsigned j = 0; j < _nCells; ++j ) {
             if( _boundaryCells[j] == BOUNDARY_TYPE::DIRICHLET ) continue;
@@ -240,7 +222,7 @@ void CSDSolverTrafoFP::Solve() {
                                                   _normals[j][idx_neighbor] ) /
                                         _areas[j];
                 }
-                // tteamime update angular flux with numerical flux and total scattering cross section
+                // time update angular flux with numerical flux and total scattering cross section
                 psiNew[j][i] = _sol[j][i] - _dE * psiNew[j][i];    // + _dE * psi1[j][i];
             }
         }

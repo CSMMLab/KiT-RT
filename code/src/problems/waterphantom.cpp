@@ -4,20 +4,14 @@
 
 WaterPhantom::WaterPhantom( Config* settings, Mesh* mesh ) : ElectronRT( settings, mesh ) {}
 
-WaterPhantom::~WaterPhantom() { delete _physics; }
+WaterPhantom::~WaterPhantom() {}
 
 std::vector<VectorVector> WaterPhantom::GetExternalSource( const Vector& energies ) {
     return std::vector<VectorVector>( energies.size(), std::vector<Vector>( _mesh->GetNumCells(), Vector( _settings->GetNQuadPoints(), 0.0 ) ) );
 }
 
 VectorVector WaterPhantom::SetupIC() {
-    VectorVector psi( _mesh->GetNumCells(), Vector( _settings->GetNQuadPoints(), 1e-10 ) );
-    auto cellMids = _mesh->GetCellMidPoints();
-    double s      = 0.1;
-    for( unsigned j = 0; j < cellMids.size(); ++j ) {
-        double x                                = cellMids[j][0];
-        psi[j][_settings->GetNQuadPoints() - 1] = 1.0 / ( s * sqrt( 2 * M_PI ) ) * std::exp( -x * x / ( 2 * s * s ) );
-    }
+    VectorVector psi( _mesh->GetNumCells(), Vector( _settings->GetNQuadPoints(), 0.0 ) );
     return psi;
 }
 
