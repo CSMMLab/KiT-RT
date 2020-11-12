@@ -77,9 +77,12 @@ CSDSolverTrafoFP::CSDSolverTrafoFP( Config* settings ) : SNSolver( settings ) {
             double exponent = minExp + ( maxExp - minExp ) / ( _nEnergies - 1 ) * n;
             _energies[n] = pow(10.0,exponent);
         }*/
+        std::cout << "Setting up transport coefficients..." << std::endl;
         ICRU database( mu, _energies );
         database.GetTransportCoefficients( _xi );
+        std::cout << "Setting up transport coefficients DONE." << std::endl;
         database.GetStoppingPower( _s );
+        std::cout << "Setting up stopping powers DONE." << std::endl;
         /*
         // print coefficients
         std::cout<<"E = [";

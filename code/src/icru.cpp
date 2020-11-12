@@ -137,7 +137,7 @@ void ICRU::angdcs( unsigned ncor, std::vector<std::vector<double>>& dxs ) {
 
     std::vector<double> dxse;
     std::vector<double> dxsi;
-    dxs.resize( NDAT );
+    dxs.resize( _E.size() );
 
     for( unsigned n = 0; n < _E.size(); ++n ) {
         DCSEL0( _E[n] );
@@ -557,24 +557,23 @@ void ICRU::GetTransportCoefficients( Matrix& xi ) {
     Vector mu( _XMU.size() );
     std::vector<std::vector<double>> dxs;
     // get scattering cross sections for all energies E
+    std::cout << "Computing dxs" << std::endl;
     angdcs( 3u, dxs );
-    for( unsigned n = 0; n < mu.size(); ++n )
-        mu[n] = 1.0 - 2.0 * _XMU[n];    // mu starts at 1 and goes to 0
-                                        //#pragma omp parallel for
+    std::cout << "DONE." << std::endl;
+    for( unsigned n = 0; n < mu.size(); ++n ) mu[n] = 1.0 - 2.0 * _XMU[n];    // mu starts at 1 and goes to 0
+    std::cout << "Reset mu DONE." << std::endl;
+#pragma omp parallel for
     for( unsigned i = 0; i < _E.size(); ++i ) {
-        // std::vector<double> dxse, dxsi, dxs;
-        // get scattering cross sections for energy E[i]
-        // angdcs( 3u, _E[i], dxse, dxsi, dxs );
-
         // compute moments with trapezoidal rule
         for( unsigned n = 0; n < xi.rows(); ++n ) {
             xi( n, i ) = 0.0;
             // integration over mu
-            for( unsigned k = 0; k < dxs.size() - 1; ++k ) {
+            for( unsigned k = 0; k < dxs[i].size() - 1; ++k ) {
                 xi( n, i ) -= 0.5 * ( pow( 1.0 - mu[k + 1], n ) * dxs[i][k + 1] + pow( 1.0 - mu[k], n ) * dxs[i][k] ) * ( mu[k + 1] - mu[k] );
             }
         }
     }
+    std::cout << "Computation xi DONE." << std::endl;
     xi *= 2.0 * PI * H2OMolecularDensity;
 }
 
