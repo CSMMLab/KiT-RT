@@ -23,9 +23,9 @@ VectorVector MuscleBoneLung::SetupIC() {
 
 std::vector<double>  MuscleBoneLung::GetDensity( const VectorVector& cellMidPoints ) { 
     std::cout<<"Length of mesh "<< cellMidPoints.size() << std::endl;
-    std::vector<double> densities ( 167, 1.05 ); //muscle layer
-    std::vector<double> bone( 167, 1.92  );
-    std::vector<double> lung ( 665, 0.26 );
+    std::vector<double> densities ( 167, 1.04 ); //muscle layer
+    std::vector<double> bone( 167, 1.85  );
+    std::vector<double> lung ( 665, 0.3 ); //maybe this is just the lung tissue and after that there should be air?
     densities.insert(densities.end(),bone.begin(),bone.end());
     densities.insert(densities.end(),lung.begin(),lung.end());
     std::cout<<"Length of densities "<< densities.size() << std::endl;
