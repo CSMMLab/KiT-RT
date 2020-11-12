@@ -422,92 +422,123 @@ void Config::SetPostprocessing() {
 
     // --- Output Postprocessing ---
 
-    // Check for doublicates in VOLUME OUTPUT
-    std::map<VOLUME_OUTPUT, int> dublicate_map;
+    // Volume Output Postprocessing
+    {
+        // Check for doublicates in VOLUME OUTPUT
+        std::map<VOLUME_OUTPUT, int> dublicate_map;
 
-    for( unsigned short idx_volOutput = 0; idx_volOutput < _nVolumeOutput; idx_volOutput++ ) {
-        std::map<VOLUME_OUTPUT, int>::iterator it = dublicate_map.find( _volumeOutput[idx_volOutput] );
-        if( it == dublicate_map.end() ) {
-            dublicate_map.insert( std::pair<VOLUME_OUTPUT, int>( _volumeOutput[idx_volOutput], 0 ) );
+        for( unsigned short idx_volOutput = 0; idx_volOutput < _nVolumeOutput; idx_volOutput++ ) {
+            std::map<VOLUME_OUTPUT, int>::iterator it = dublicate_map.find( _volumeOutput[idx_volOutput] );
+            if( it == dublicate_map.end() ) {
+                dublicate_map.insert( std::pair<VOLUME_OUTPUT, int>( _volumeOutput[idx_volOutput], 0 ) );
+            }
+            else {
+                it->second++;
+            }
         }
-        else {
-            it->second++;
+        for( auto& e : dublicate_map ) {
+            if( e.second > 0 ) {
+                ErrorMessages::Error( "Each output group for option VOLUME_OUTPUT can only be set once.\nPlease check your .cfg file.",
+                                      CURRENT_FUNCTION );
+            }
+        }
+
+        // Check, if the choice of volume output is compatible to the solver
+        std::vector<VOLUME_OUTPUT> supportedGroups;
+
+        for( unsigned short idx_volOutput = 0; idx_volOutput < _nVolumeOutput; idx_volOutput++ ) {
+            switch( _solverName ) {
+                case SN_SOLVER:
+                    supportedGroups = { MINIMAL, ANALYTIC };
+                    if( supportedGroups.end() == std::find( supportedGroups.begin(), supportedGroups.end(), _volumeOutput[idx_volOutput] ) ) {
+                        ErrorMessages::Error( "SN_SOLVER only supports volume output MINIMAL and ANALYTIC.\nPlease check your .cfg file.",
+                                              CURRENT_FUNCTION );
+                    }
+                    if( _volumeOutput[idx_volOutput] == ANALYTIC && _problemName != PROBLEM_LineSource ) {
+                        ErrorMessages::Error( "Analytical solution (VOLUME_OUTPUT=ANALYTIC) is only available for the PROBLEM=LINESOURCE.\nPlease "
+                                              "check your .cfg file.",
+                                              CURRENT_FUNCTION );
+                    }
+                    break;
+                case MN_SOLVER:
+                    supportedGroups = { MINIMAL, MOMENTS, DUAL_MOMENTS, ANALYTIC };
+                    if( supportedGroups.end() == std::find( supportedGroups.begin(), supportedGroups.end(), _volumeOutput[idx_volOutput] ) ) {
+
+                        ErrorMessages::Error(
+                            "MN_SOLVER only supports volume output ANALYTIC, MINIMAL, MOMENTS and DUAL_MOMENTS.\nPlease check your .cfg file.",
+                            CURRENT_FUNCTION );
+                    }
+                    if( _volumeOutput[idx_volOutput] == ANALYTIC && _problemName != PROBLEM_LineSource ) {
+                        ErrorMessages::Error( "Analytical solution (VOLUME_OUTPUT=ANALYTIC) is only available for the PROBLEM=LINESOURCE.\nPlease "
+                                              "check your .cfg file.",
+                                              CURRENT_FUNCTION );
+                    }
+                    break;
+                case PN_SOLVER:
+                    supportedGroups = { MINIMAL, MOMENTS, ANALYTIC };
+                    if( supportedGroups.end() == std::find( supportedGroups.begin(), supportedGroups.end(), _volumeOutput[idx_volOutput] ) ) {
+
+                        ErrorMessages::Error( "PN_SOLVER only supports volume output ANALYTIC, MINIMAL and MOMENTS.\nPlease check your .cfg file.",
+                                              CURRENT_FUNCTION );
+                    }
+                    if( _volumeOutput[idx_volOutput] == ANALYTIC && _problemName != PROBLEM_LineSource ) {
+                        ErrorMessages::Error( "Analytical solution (VOLUME_OUTPUT=ANALYTIC) is only available for the PROBLEM=LINESOURCE.\nPlease "
+                                              "check your .cfg file.",
+                                              CURRENT_FUNCTION );
+                    }
+                    break;
+                case CSD_SN_SOLVER:
+                    supportedGroups = { MINIMAL, DOSE };
+                    if( supportedGroups.end() == std::find( supportedGroups.begin(), supportedGroups.end(), _volumeOutput[idx_volOutput] ) ) {
+
+                        ErrorMessages::Error( "CSD_SN_SOLVER only supports volume output ANALYTIC and MINIMAL.\nPlease check your .cfg file.",
+                                              CURRENT_FUNCTION );
+                    }
+                    break;
+            }
+        }
+
+        // Set default volume output
+        if( _nVolumeOutput == 0 ) {    // If no specific output is chosen,  use "MINIMAL"
+            _nVolumeOutput = 1;
+            _volumeOutput.push_back( MINIMAL );
         }
     }
-    for( auto& e : dublicate_map ) {
-        if( e.second > 0 ) {
-            ErrorMessages::Error( "Each output group for option VOLUME_OUTPUT can only be set once.\nPlease check your .cfg file.",
-                                  CURRENT_FUNCTION );
+
+    // Screen Output Postprocessing
+    {
+        // Check for doublicates in VOLUME OUTPUT
+        std::map<SCREEN_OUTPUT, int> dublicate_map;
+
+        for( unsigned short idx_screenOutput = 0; idx_screenOutput < _nScreenOutput; idx_screenOutput++ ) {
+            std::map<SCREEN_OUTPUT, int>::iterator it = dublicate_map.find( _screenOutput[idx_screenOutput] );
+            if( it == dublicate_map.end() ) {
+                dublicate_map.insert( std::pair<SCREEN_OUTPUT, int>( _screenOutput[idx_screenOutput], 0 ) );
+            }
+            else {
+                it->second++;
+            }
         }
-    }
-
-    // Check, if the choice of volume output is compatible to the solver
-    std::vector<VOLUME_OUTPUT> supportedGroups;
-
-    for( unsigned short idx_volOutput = 0; idx_volOutput < _nVolumeOutput; idx_volOutput++ ) {
-        switch( _solverName ) {
-            case SN_SOLVER:
-                supportedGroups = { MINIMAL, ANALYTIC };
-                if( supportedGroups.end() == std::find( supportedGroups.begin(), supportedGroups.end(), _volumeOutput[idx_volOutput] ) ) {
-                    ErrorMessages::Error( "SN_SOLVER only supports volume output MINIMAL and ANALYTIC.\nPlease check your .cfg file.",
-                                          CURRENT_FUNCTION );
-                }
-                if( _volumeOutput[idx_volOutput] == ANALYTIC && _problemName != PROBLEM_LineSource ) {
-                    ErrorMessages::Error(
-                        "Analytical solution (VOLUME_OUTPUT=ANALYTIC) is only available for the PROBLEM=LINESOURCE.\nPlease check your .cfg file.",
-                        CURRENT_FUNCTION );
-                }
-                break;
-            case MN_SOLVER:
-                supportedGroups = { MINIMAL, MOMENTS, DUAL_MOMENTS, ANALYTIC };
-                if( supportedGroups.end() == std::find( supportedGroups.begin(), supportedGroups.end(), _volumeOutput[idx_volOutput] ) ) {
-
-                    ErrorMessages::Error(
-                        "MN_SOLVER only supports volume output ANALYTIC, MINIMAL, MOMENTS and DUAL_MOMENTS.\nPlease check your .cfg file.",
-                        CURRENT_FUNCTION );
-                }
-                if( _volumeOutput[idx_volOutput] == ANALYTIC && _problemName != PROBLEM_LineSource ) {
-                    ErrorMessages::Error( "Analytical solution (VOLUME_OUTPUT=ANALYTIC) is only available for the PROBLEM=LINESOURCE.\nPlease "
-                                          "check your .cfg file.",
-                                          CURRENT_FUNCTION );
-                }
-                break;
-            case PN_SOLVER:
-                supportedGroups = { MINIMAL, MOMENTS, ANALYTIC };
-                if( supportedGroups.end() == std::find( supportedGroups.begin(), supportedGroups.end(), _volumeOutput[idx_volOutput] ) ) {
-
-                    ErrorMessages::Error( "PN_SOLVER only supports volume output ANALYTIC, MINIMAL and MOMENTS.\nPlease check your .cfg file.",
-                                          CURRENT_FUNCTION );
-                }
-                if( _volumeOutput[idx_volOutput] == ANALYTIC && _problemName != PROBLEM_LineSource ) {
-                    ErrorMessages::Error( "Analytical solution (VOLUME_OUTPUT=ANALYTIC) is only available for the PROBLEM=LINESOURCE.\nPlease "
-                                          "check your .cfg file.",
-                                          CURRENT_FUNCTION );
-                }
-                break;
-            case CSD_SN_SOLVER:
-                supportedGroups = { MINIMAL, DOSE };
-                if( supportedGroups.end() == std::find( supportedGroups.begin(), supportedGroups.end(), _volumeOutput[idx_volOutput] ) ) {
-
-                    ErrorMessages::Error( "CSD_SN_SOLVER only supports volume output ANALYTIC and MINIMAL.\nPlease check your .cfg file.",
-                                          CURRENT_FUNCTION );
-                }
-                break;
+        for( auto& e : dublicate_map ) {
+            if( e.second > 0 ) {
+                ErrorMessages::Error( "Each output field for option SCREEN_OUTPUT can only be set once.\nPlease check your .cfg file.",
+                                      CURRENT_FUNCTION );
+            }
         }
-    }
 
-    // Set default volume output
-    if( _nVolumeOutput == 0 ) {    // If no specific output is chosen,  use "MINIMAL"
-        _nVolumeOutput = 1;
-        _volumeOutput.push_back( MINIMAL );
-    }
+        // Set ITER always to index 0 . Assume only one instance of iter is chosen
+        std::vector<SCREEN_OUTPUT>::iterator it;
+        it = find( _screenOutput.begin(), _screenOutput.end(), ITER );
+        _screenOutput.erase( it );
+        _screenOutput.insert( _screenOutput.begin(), ITER );
 
-    // Set default screen output
-    if( _nScreenOutput == 0 ) {
-        _nScreenOutput = 3;
-        _screenOutput.push_back( ITER );
-        _screenOutput.push_back( RMS_FLUX );
-        _screenOutput.push_back( MASS );
+        // Set default screen output
+        if( _nScreenOutput == 0 ) {
+            _nScreenOutput = 3;
+            _screenOutput.push_back( ITER );
+            _screenOutput.push_back( RMS_FLUX );
+            _screenOutput.push_back( MASS );
+        }
     }
 }
 

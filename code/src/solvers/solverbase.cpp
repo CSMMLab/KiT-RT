@@ -146,7 +146,12 @@ void Solver::WriteScreenOutputFields( unsigned idx_pseudoTime ) {
 }
 
 void Solver::PrintScreen( std::shared_ptr<spdlog::logger> log ) {
-    log->info( "{:03.8f}   {:01.5e} {:01.5e}", _screenOutputFields[0], _screenOutputFields[1], _screenOutputFields[2] );
+    int rank;
+    MPI_Comm_rank( MPI_COMM_WORLD, &rank );
+
+    if( rank == 0 ) {
+        log->info( "{:03.8f}   {:01.5e} {:01.5e}", _screenOutputFields[0], _screenOutputFields[1], _screenOutputFields[2] );
+    }
 }
 
 void Solver::Solve() {
@@ -154,30 +159,36 @@ void Solver::Solve() {
     MPI_Comm_rank( MPI_COMM_WORLD, &rank );
 
     auto log = spdlog::get( "event" );
+    if( rank == 0 ) {
 
-    if( rank == 0 ) log->info( "{:10}   {:10}", "t", "mass" );
-
-    // Loop over energies (pseudo-time of continuous slowing down approach)
-    for( unsigned idx_energy = 0; idx_energy < _nEnergies; idx_energy++ ) {
-
-        // --- Prepare Boundaries and temp variables
-        IterPreprocessing();
-
-        // --- Compute Fluxes ---
-        FluxUpdate();
-
-        // --- Finite Volume Update ---
-        FVMUpdate( idx_energy );
-
-        // --- Postprocessing ---
-        IterPostprocessing();
-
-        // --- VTK and CSV Output ---
-        WriteOutputFields( idx_energy );
-        Save( idx_energy );
-
-        // --- Screen Output ---
-        WriteScreenOutputFields( idx_energy );
-        PrintScreen( log );
+        log->info( "------------------------------ Solver Starts ----------------------------" );
+        log->info( " The simulation will run for {} iterations.", _nEnergies );
+        log->info( "-------------------------------------------------------------------------" );
+        log->info( "{2}   {:10}", _screenOutputFieldNames[0], "mass" );
     }
+    if( rank == 0 )
+
+        // Loop over energies (pseudo-time of continuous slowing down approach)
+        for( unsigned idx_energy = 0; idx_energy < _nEnergies; idx_energy++ ) {
+
+            // --- Prepare Boundaries and temp variables
+            IterPreprocessing();
+
+            // --- Compute Fluxes ---
+            FluxUpdate();
+
+            // --- Finite Volume Update ---
+            FVMUpdate( idx_energy );
+
+            // --- Postprocessing ---
+            IterPostprocessing();
+
+            // --- VTK and CSV Output ---
+            WriteOutputFields( idx_energy );
+            Save( idx_energy );
+
+            // --- Screen Output ---
+            WriteScreenOutputFields( idx_energy );
+            PrintScreen( log );
+        }
 }

@@ -333,13 +333,23 @@ void PrintLogHeader( std::string inputFile ) {
     if( rank == 0 ) {
         auto log = spdlog::get( "event" );
 
-        log->info( "RTSN" );
-        log->info( "================================================================" );
+        // New design
+        log->info( "------------------------------------------------------------------------" );
+        log->info( "|    ____  __.______________     _____________________                 |" );
+        log->info( "|   |    |/ _|   \\__    ___/     \\______   \\__    ___/                 |" );
+        log->info( "|   |      < |   | |    |  ______ |       _/ |    |         Version    |" );
+        log->info( "|   |    |  \\|   | |    | /_____/ |    |   \\ |    |          0.0.2     |" );
+        log->info( "|   |____|__ \\___| |____|         |____|_  / |____|                    |" );
+        log->info( "|           \\/                           \\/                            |" );
+        log->info( "------------------------------------------------------------------------" );
+        log->info( "|    Copyright statement goes here                                    |" );
+        log->info( "------------------------------------------------------------------------\n" );
         log->info( "Git commit :\t{0}", GIT_HASH );
         log->info( "Config file:\t{0}", inputFile );
         log->info( "MPI Threads:\t{0}", nprocs );
         log->info( "OMP Threads:\t{0}", omp_get_max_threads() );
-        log->info( "================================================================" );
+        log->info( "\n-------------------------- Config File Info ----------------------------\n" );
+
         // print file content while omitting comments
         std::ifstream ifs( inputFile );
         if( ifs.is_open() ) {
@@ -349,8 +359,7 @@ void PrintLogHeader( std::string inputFile ) {
                 if( line[0] != '%' ) log->info( " {0}", line );
             }
         }
-        log->info( "================================================================" );
-        log->info( "" );
+        log->info( "------------------------------------------------------------------------\n" );
     }
     MPI_Barrier( MPI_COMM_WORLD );
 }
