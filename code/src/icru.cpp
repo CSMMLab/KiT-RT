@@ -540,19 +540,24 @@ double ICRU::DODCSC( double RMU, double EL ) {
 void ICRU::GetAngularScatteringXS( Matrix& angularXS, Vector& integratedXS ) {
     angularXS.resize( _QMU.size(), _E.size() );
 
-    std::vector<double> mu( _XMU.size() );
-    for( unsigned n = 0; n < mu.size(); ++n ) mu[n] = 1.0 - 2.0 * _XMU[n];
+    Vector QMU_trafo( _QMU.size() );
+    // for( unsigned n = 0; n < mu.size(); ++n ) mu[n] = 1.0 - 2.0 * _XMU[n];    // trafo
 
-    std::sort( mu.begin(), mu.end() );
+    // Ruecktrafo für _QM
+    for( unsigned n = 0; n < _QMU.size(); ++n ) {
+        QMU_trafo[n] = ( 1 - _QMU[n] ) / 2.0;    // trafo
+    }
+    // std::sort( mu.begin(), mu.end() );
 
     integratedXS.resize( _E.size() );
     for( unsigned i = 0; i < _E.size(); ++i ) {
         std::vector<double> dxse, dxsi, dxs;
-        angdcs( 3u, _E[i], dxse, dxsi, dxs );
-        Interpolation interpDXS( mu, dxs );
-        blaze::column( angularXS, i ) = interpDXS( _QMU );
-        for( unsigned j = 0; j < mu.size() - 1; ++j ) {
-            integratedXS[i] += 0.5 * ( mu[j + 1] - mu[j] ) * ( dxs[j + 1] + dxs[j] );
+        angdcs( 3u, _E[i], dxse, dxsi, dxs );    // speedup here possible
+        Interpolation interpDXS( _XMU, dxs );
+        blaze::column( angularXS, i ) = interpDXS( QMU_trafo );
+
+        for( unsigned j = 0; j < _XMU.size() - 1; ++j ) {
+            integratedXS[i] += 0.5 * ( _XMU[j + 1] - _XMU[j] ) * ( dxs[j + 1] + dxs[j] );
         }
     }
     angularXS *= H2OMolecularDensity;
