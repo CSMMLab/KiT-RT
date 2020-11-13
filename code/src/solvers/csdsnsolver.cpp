@@ -10,12 +10,13 @@
 #include <mpi.h>
 
 CSDSNSolver::CSDSNSolver( Config* settings ) : SNSolver( settings ) {
+    std::cout << "Start CSDN Constructor\n";
     _dose = std::vector<double>( _settings->GetNCells(), 0.0 );
 
     // Set angle and energies
     _angle           = Vector( _settings->GetNQuadPoints(), 0.0 );    // my
     _energies        = Vector( _nEnergies, 0.0 );                     // equidistant
-    double energyMin = 1e-1;
+    double energyMin = 2;
     double energyMax = 5e0;
     // write equidistant energy grid
 
@@ -80,7 +81,7 @@ CSDSNSolver::CSDSNSolver( Config* settings ) : SNSolver( settings ) {
         }
     }
     */
-    _s = Vector( _nEnergies, 1.0 );
+    // _s = Vector( _nEnergies, 1.0 );
     //_s = _problem->GetStoppingPower( _energies );
     database.GetStoppingPower( _s );
     _Q = _problem->GetExternalSource( _energies );
@@ -119,6 +120,7 @@ CSDSNSolver::CSDSNSolver( Config* settings ) : SNSolver( settings ) {
     */
     // Get patient density
     _density = std::vector<double>( _nCells, 1.0 );
+    std::cout << "End CSDN Constructor\n";
 }
 
 void CSDSNSolver::Solve() {
@@ -208,7 +210,7 @@ void CSDSNSolver::Solve() {
             }
             // compute scattering effects (_scatteringKernel is simply multiplication with quad weights)
             // std::cout << psiNew[j][0] << " | " << _sol[j][0] << std::endl;
-            // psiNew[j] += _dE * ( _sigmaSE[_nEnergies - n - 1] * _scatteringKernel * _sol[j] );    // multiply scattering matrix with psi
+            psiNew[j] += _dE * ( _sigmaSE[_nEnergies - n - 1] * _scatteringKernel * _sol[j] );    // multiply scattering matrix with psi
             // TODO: Check if _sigmaS^T*psi is correct
 
             // TODO: figure out a more elegant way
@@ -228,7 +230,12 @@ void CSDSNSolver::Solve() {
             }
             */
         }
-        _sol = psiNew;
+        std::cout << psiNew[0] << " | " << _sol[0] << std::endl;
+
+        for( unsigned j = 0; j < _nCells; ++j ) {
+            if( _boundaryCells[j] == BOUNDARY_TYPE::DIRICHLET ) continue;
+            _sol[j] = psiNew[j];
+        }
 
         // --- Postprocessing, Screen Output ---
         for( unsigned j = 0; j < _nCells; ++j ) {
