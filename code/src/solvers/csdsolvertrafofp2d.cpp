@@ -62,10 +62,10 @@ CSDSolverTrafoFP2D::CSDSolverTrafoFP2D( Config* settings ) : SNSolver( settings 
 
     double dMinus = 0.0;
     DPlus         = DMinus - 2 * _mu[0] * w[0];
-    for( unsigned j = 1; j < 2 * order; ++j ) {
+    for( unsigned j = 0; j < 2 * order - 1; ++j ) {
         DMinus   = DPlus;
         DPlus    = DMinus - 2 * _mu[j] * w[j];
-        dPlus    = ( sqrt( 1 - _mu[j] * _mu[j] ) - sqrt( 1 - _mu[j - 1] * _mu[j - 1] ) ) / ( _mu[1] - _mu[0] );
+        dPlus    = ( sqrt( 1 - _mu[j + 1] * _mu[j + 1] ) - sqrt( 1 - _mu[j] * _mu[j] ) ) / ( _mu[j + 1] - _mu[j] );
         c        = ( DPlus * dPlus - DMinus * dMinus ) / _wp[j];
         K        = 2 * ( 1 - _mu[j] * _mu[j] ) + c * sqrt( 1 - _mu[j] * _mu[j] );
         gamma[j] = M_PI * M_PI * K / ( 2 * order * ( 1 - std::cos( M_PI / order ) ) );
