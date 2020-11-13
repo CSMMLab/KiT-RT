@@ -56,7 +56,7 @@ CSDSolverTrafoFP2D::CSDSolverTrafoFP2D( Config* settings ) : SNSolver( settings 
     double DMinus = 0.0;
     double DPlus  = 0.0;
 
-    Vector gamma( order, 0.0 );
+    Vector gamma( 2 * order, 0.0 );
     double dPlus;
     double c, K;
 
@@ -150,6 +150,7 @@ CSDSolverTrafoFP2D::CSDSolverTrafoFP2D( Config* settings ) : SNSolver( settings 
 }
 
 void CSDSolverTrafoFP2D::Solve() {
+    std::cout << "Solve" << std::endl;
     auto log = spdlog::get( "event" );
 
     // save original energy field for boundary conditions
