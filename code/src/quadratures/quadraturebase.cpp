@@ -1,4 +1,5 @@
 #include "quadratures/quadraturebase.h"
+#include "quadratures/productquadrature.h"
 #include "quadratures/qgausslegendre1D.h"
 #include "quadratures/qgausslegendretensorized.h"
 #include "quadratures/qldfesa.h"
@@ -14,6 +15,7 @@ QuadratureBase* QuadratureBase::CreateQuadrature( QUAD_NAME name, unsigned order
     switch( name ) {
         case QUAD_MonteCarlo: return new QMonteCarlo( order );
         case QUAD_GaussLegendreTensorized: return new QGaussLegendreTensorized( order );
+        case QUAD_Product: return new ProductQuadrature( order );
         case QUAD_GaussLegendre1D: return new QGaussLegendre1D( order );
         case QUAD_LevelSymmetric: return new QLevelSymmetric( order );
         case QUAD_LDFESA: return new QLDFESA( order );

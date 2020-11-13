@@ -55,12 +55,13 @@ enum BOUNDARY_TYPE { DIRICHLET, NEUMANN, NONE, INVALID };
 /*! @brief Enum for all currently available quadratures in rtsn.
  *         Option enums are written in capital letters with underscores as spaces (e.g option "time integration" has option enum "TIME_INTEGRATION")
  */
-enum QUAD_NAME { QUAD_MonteCarlo, QUAD_GaussLegendreTensorized, QUAD_GaussLegendre1D, QUAD_LevelSymmetric, QUAD_Lebedev, QUAD_LDFESA };
+enum QUAD_NAME { QUAD_MonteCarlo, QUAD_GaussLegendreTensorized, QUAD_GaussLegendre1D, QUAD_LevelSymmetric, QUAD_Lebedev, QUAD_LDFESA, QUAD_Product };
 
 /*! @brief Conversion Map String to enum
  */
 inline std::map<std::string, QUAD_NAME> Quadrature_Map{ { "MONTE_CARLO", QUAD_MonteCarlo },
                                                         { "GAUSS_LEGENDRE_TENSORIZED", QUAD_GaussLegendreTensorized },
+                                                        { "PRODUCT", QUAD_Product },
                                                         { "GAUSS_LEGENDRE_1D", QUAD_GaussLegendre1D },
                                                         { "LEVEL_SYMMETRIC", QUAD_LevelSymmetric },
                                                         { "LEBEDEV", QUAD_Lebedev },
@@ -85,7 +86,7 @@ inline std::map<std::string, PROBLEM_NAME> Problem_Map{ { "LINESOURCE", PROBLEM_
                                                         { "WATERPHANTOM", PROBLEM_WaterPhantom },
                                                         { "AIRCAVITY", PROBLEM_AirCavity },
                                                         { "MUSCLEBONELUNG", PROBLEM_MuscleBoneLung },
-                                                        { "PHANTOM2D", PROBLEM_Phantom2D},
+                                                        { "PHANTOM2D", PROBLEM_Phantom2D },
                                                         { "LINESOURCE_PSEUDO_1D", PROBLEM_LineSource_Pseudo_1D },
                                                         { "LINESOURCE_PSEUDO_1D_PHYSICS", PROBLEM_LineSource_Pseudo_1D_Physics } };
 
@@ -95,10 +96,25 @@ enum KERNEL_NAME { KERNEL_Isotropic, KERNEL_Isotropic1D };
 inline std::map<std::string, KERNEL_NAME> Kernel_Map{ { "ISOTROPIC", KERNEL_Isotropic }, { "ISOTROPIC_1D", KERNEL_Isotropic1D } };
 
 // Solver name
-enum SOLVER_NAME { SN_SOLVER, CSD_SN_SOLVER, CSD_SN_NOTRAFO_SOLVER, CSD_SN_FOKKERPLANCK_SOLVER, CSD_SN_FOKKERPLANCK_TRAFO_SOLVER, PN_SOLVER, MN_SOLVER };
+enum SOLVER_NAME {
+    SN_SOLVER,
+    CSD_SN_SOLVER,
+    CSD_SN_NOTRAFO_SOLVER,
+    CSD_SN_FOKKERPLANCK_SOLVER,
+    CSD_SN_FOKKERPLANCK_TRAFO_SOLVER,
+    CSD_SN_FOKKERPLANCK_TRAFO_SOLVER_2D,
+    PN_SOLVER,
+    MN_SOLVER
+};
 
-inline std::map<std::string, SOLVER_NAME> Solver_Map{
-    { "SN_SOLVER", SN_SOLVER }, { "CSD_SN_SOLVER", CSD_SN_SOLVER },{ "CSD_SN_NOTRAFO_SOLVER", CSD_SN_NOTRAFO_SOLVER }, { "CSD_SN_FOKKERPLANCK_SOLVER", CSD_SN_FOKKERPLANCK_SOLVER }, { "CSD_SN_FOKKERPLANCK_TRAFO_SOLVER", CSD_SN_FOKKERPLANCK_TRAFO_SOLVER }, { "PN_SOLVER", PN_SOLVER }, { "MN_SOLVER", MN_SOLVER } };
+inline std::map<std::string, SOLVER_NAME> Solver_Map{ { "SN_SOLVER", SN_SOLVER },
+                                                      { "CSD_SN_SOLVER", CSD_SN_SOLVER },
+                                                      { "CSD_SN_NOTRAFO_SOLVER", CSD_SN_NOTRAFO_SOLVER },
+                                                      { "CSD_SN_FOKKERPLANCK_SOLVER", CSD_SN_FOKKERPLANCK_SOLVER },
+                                                      { "CSD_SN_FOKKERPLANCK_TRAFO_SOLVER", CSD_SN_FOKKERPLANCK_TRAFO_SOLVER },
+                                                      { "CSD_SN_FOKKERPLANCK_TRAFO_SOLVER_2D", CSD_SN_FOKKERPLANCK_TRAFO_SOLVER_2D },
+                                                      { "PN_SOLVER", PN_SOLVER },
+                                                      { "MN_SOLVER", MN_SOLVER } };
 
 // Entropy functional
 enum ENTROPY_NAME { QUADRATIC, MAXWELL_BOLZMANN, BOSE_EINSTEIN, FERMI_DIRAC };
