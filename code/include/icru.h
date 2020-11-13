@@ -54,9 +54,12 @@ class ICRU
     double _BETA2;
     double _R1;
 
-    Vector _E, _QMU;    // input energy and mu vectors
+    Vector _E, /*! @brief: User queried Energy  */
+        _QMU;  /*! @brief:User queried mu */
+
     std::vector<double> _ET, _ETL;
-    std::vector<double> _XMU, _XMUL;
+    std::vector<double> _XMU, /* angular variable mu of dataset */
+        _XMUL;
     std::vector<double> _ECS, _PCS;
     std::vector<double> _ETCS1, _ETCS2;
     std::vector<double> _PTCS1, _PTCS2;
@@ -142,8 +145,20 @@ class ICRU
     }
     ~ICRU(){};
 
+    /*! @brief: Computes the angular scattering cross sections and integrated XS by interpolating tabular data
+     *  @arg: Matrix& angularXS = Matrix where the angular XS will be saved
+     *  @arg: Vector& integratedXS = Vector, where the integratedXS will be saved
+     *  @returns: void */
     void GetAngularScatteringXS( Matrix& angularXS, Vector& integratedXS );
+
+    /*! @brief: Computes the stopping power by interpolating tabular data
+     *  @arg: Vector& stoppingPower = Vector, where the stopping power will be saved
+     *  @returns: void */
     void GetStoppingPower( Vector& stoppingPower );
+
+    /*! @brief: Computes the transport coefficients by interpolating tabular data
+     *  @arg: Matrix& xi = Vector, where the stopping power will be saved
+     *  @returns: void */
     void GetTransportCoefficients( Matrix& xi );
 };
 

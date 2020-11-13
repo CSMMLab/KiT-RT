@@ -13,13 +13,13 @@ CSDSNSolver::CSDSNSolver( Config* settings ) : SNSolver( settings ) {
     std::cout << "Start CSDN Constructor\n";
     _dose = std::vector<double>( _settings->GetNCells(), 0.0 );
 
-    // Set angle and energies
+    // --- Set angle and energies
     _angle           = Vector( _settings->GetNQuadPoints(), 0.0 );    // my
     _energies        = Vector( _nEnergies, 0.0 );                     // equidistant
-    double energyMin = 2;
+    double energyMin = 1e-1;
     double energyMax = 5e0;
-    // write equidistant energy grid
 
+    // --- Write equidistant energy grid
     _dE        = ComputeTimeStep( settings->GetCFL() );
     _nEnergies = unsigned( ( energyMax - energyMin ) / _dE );
     _energies.resize( _nEnergies );
@@ -27,11 +27,16 @@ CSDSNSolver::CSDSNSolver( Config* settings ) : SNSolver( settings ) {
         _energies[n] = energyMin + ( energyMax - energyMin ) / ( _nEnergies - 1 ) * n;
     }
 
+    // --- Create Quadrature Points from Quad Rule
+    /* Legacy Code -- unused: Will be deleted
     std::vector<double> buffer;
     for( auto q : _quadPoints )
         if( q[0] > 0.0 ) buffer.push_back( q[0] );
     std::sort( buffer.begin(), buffer.end() );
     Vector posMu( buffer.size(), buffer.data() );
+    */
+
+    // create 1D quadrature
 
     // write mu grid
     Matrix muMatrix( _settings->GetNQuadPoints(), _settings->GetNQuadPoints() );
@@ -50,9 +55,11 @@ CSDSNSolver::CSDSNSolver( Config* settings ) : SNSolver( settings ) {
     // store Matrix with mu values in vector format to call GetScatteringXS
     for( unsigned i = 0; i < muMatrix.rows(); ++i ) {
         for( unsigned j = 0; j < muMatrix.columns(); ++j ) {
-            angleVec[i * muMatrix.columns() + j] = std::fabs( muMatrix( i, j ) );    // icru xs go from 0 to 1 due to symmetry
+            angleVec[i * muMatrix.columns() + j] = muMatrix( i, j );
         }
     }
+
+    std::cout << "Here 3\n";
 
     ICRU database( angleVec, _energies );
     Matrix total;
@@ -84,6 +91,7 @@ CSDSNSolver::CSDSNSolver( Config* settings ) : SNSolver( settings ) {
     // _s = Vector( _nEnergies, 1.0 );
     //_s = _problem->GetStoppingPower( _energies );
     database.GetStoppingPower( _s );
+
     _Q = _problem->GetExternalSource( _energies );
 
     // recompute scattering kernel. TODO: add this to kernel function
@@ -184,6 +192,9 @@ void CSDSNSolver::Solve() {
             if( _quadPoints[k][0] > 0 ) {
                 _sol[0][k] = 1e5 * exp( -200.0 * pow( 1.0 - _quadPoints[k][0], 2 ) ) *
                              exp( -50.0 * pow( energyMax - energiesOrig[_nEnergies - n - 1], 2 ) ) * _density[0] * _s[_nEnergies - n - 1];
+                if( _sol[0][k] < 0 ) {
+                    ErrorMessages::Error( "boundary negative", CURRENT_FUNCTION );
+                }
             }
         }
 
@@ -230,9 +241,8 @@ void CSDSNSolver::Solve() {
             }
             */
         }
-        std::cout << psiNew[0] << " | " << _sol[0] << std::endl;
 
-        for( unsigned j = 0; j < _nCells; ++j ) {
+        for( unsigned j = 1; j < _nCells; ++j ) {
             if( _boundaryCells[j] == BOUNDARY_TYPE::DIRICHLET ) continue;
             _sol[j] = psiNew[j];
         }
@@ -244,6 +254,7 @@ void CSDSNSolver::Solve() {
                         _density[j];    // update dose with trapezoidal rule
             _solverOutput[j] = fluxNew[j];
         }
+        // std::cout << "dose at boundary: " << _dose[0] << " \n| " << _sol[0] << std::endl;
 
         Save( n );
         dFlux   = blaze::l2Norm( fluxNew - fluxOld );
