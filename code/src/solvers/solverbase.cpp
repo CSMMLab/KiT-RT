@@ -7,12 +7,12 @@
 #include "problems/problembase.h"
 #include "quadratures/quadraturebase.h"
 #include "solvers/csdsnsolver.h"
+#include "solvers/csdsnsolverfp.h"
+#include "solvers/csdsnsolvernotrafo.h"
+#include "solvers/csdsolvertrafofp.h"
 #include "solvers/mnsolver.h"
 #include "solvers/pnsolver.h"
 #include "solvers/snsolver.h"
-#include "solvers/csdsnsolvernotrafo.h"
-#include "solvers/csdsnsolverfp.h"
-#include "solvers/csdsolvertrafofp.h"
 
 Solver::Solver( Config* settings ) : _settings( settings ) {
     // @TODO save parameters from settings class
@@ -52,6 +52,10 @@ Solver::Solver( Config* settings ) : _settings( settings ) {
 
     // Solver Output
     _solverOutput.resize( _nCells );    // Currently only Flux
+
+    // store density
+    VectorVector cellMids = _mesh->GetCellMidPoints();
+    _density              = _problem->GetDensity( cellMids );
 }
 
 Solver::~Solver() {

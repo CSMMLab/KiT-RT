@@ -21,10 +21,16 @@ VectorVector AirCavity1D::SetupIC() {
     return psi;
 }
 
-std::vector<double> AirCavity1D::GetDensity( const VectorVector& cellMidPoints ) { 
-    std::vector<double> densities ( 4*cellMidPoints.size()/9, 1.0 );
-    std::vector<double> air( 2*cellMidPoints.size()/9, 0.00125  );
-    std::vector<double> water ( 3*cellMidPoints.size()/9, 1.0 );
-    densities.insert(densities.end(),air.begin(),air.end());
-    densities.insert(densities.end(),water.begin(),water.end());
-    return densities; }
+std::vector<double> AirCavity1D::GetDensity( const VectorVector& cellMidPoints ) {
+    std::vector<double> densities( cellMidPoints.size(), 1.0 );
+    /*std::vector<double> densities( 4 * cellMidPoints.size() / 9, 1.0 );
+    std::vector<double> air( 2 * cellMidPoints.size() / 9, 0.00125 );
+    std::vector<double> water( 3 * cellMidPoints.size() / 9, 1.0 );
+    densities.insert( densities.end(), air.begin(), air.end() );
+    densities.insert( densities.end(), water.begin(), water.end() );
+    return densities;*/
+    for( unsigned j = 0; j < cellMidPoints.size(); ++j ) {
+        if( cellMidPoints[j][0] > 1.5 - 2.5 && cellMidPoints[j][0] < 2.0 - 2.5 ) densities[j] = 0.01;
+    }
+    return densities;
+}

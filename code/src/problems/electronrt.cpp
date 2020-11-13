@@ -6,7 +6,7 @@ ElectronRT::ElectronRT( Config* settings, Mesh* mesh ) : ProblemBase( settings, 
     _physics = new Physics( settings->GetHydrogenFile(), settings->GetOxygenFile(), "../input/stopping_power.txt" );
 }
 
-ElectronRT::~ElectronRT() {}
+ElectronRT::~ElectronRT() { delete _physics; }
 
 VectorVector ElectronRT::GetScatteringXS( const Vector& energies ) {
     // @TODO
