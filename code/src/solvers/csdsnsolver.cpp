@@ -80,7 +80,7 @@ CSDSNSolver::CSDSNSolver( Config* settings ) : SNSolver( settings ) {
         }
     }
     */
-
+    _s = Vector( _nEnergies, 1.0 );
     //_s = _problem->GetStoppingPower( _energies );
     database.GetStoppingPower( _s );
     _Q = _problem->GetExternalSource( _energies );
@@ -125,6 +125,10 @@ void CSDSNSolver::Solve() {
     std::cout << "Solve" << std::endl;
     auto log = spdlog::get( "event" );
 
+    // save original energy field for boundary conditions
+    auto energiesOrig = _energies;
+    double energyMax  = 5e0;
+
     // angular flux at next time step (maybe store angular flux at all time steps, since time becomes energy?)
     VectorVector psiNew( _nCells, Vector( _nq, 0.0 ) );
     double dFlux = 1e10;
@@ -135,7 +139,9 @@ void CSDSNSolver::Solve() {
     }
     int rank;
     MPI_Comm_rank( MPI_COMM_WORLD, &rank );
-    if( rank == 0 ) log->info( "{:10}   {:10}", "E", "dFlux" );
+    if( rank == 0 ) log->info( "{:10}  {:10} {:10}", "E", "  _dE / densityMin", "dFlux" );
+
+    // --- Preprocessing ---
 
     // do substitution from psi to psiTildeHat (cf. Dissertation Kerstion Kuepper, Eq. 1.23)
     for( unsigned j = 0; j < _nCells; ++j ) {
@@ -165,9 +171,20 @@ void CSDSNSolver::Solve() {
 
     // cross sections do not need to be transformed to ETilde energy grid since e.g. TildeSigmaT(ETilde) = SigmaT(E(ETilde))
 
+    // --- end Preprocessing ---
+
     // loop over energies (pseudo-time)
     for( unsigned n = 0; n < _nEnergies - 1; ++n ) {
         _dE = fabs( _energies[n + 1] - _energies[n] );    // is the sign correct here?
+
+        // --- Set Dirichlet Boundary value ---
+        for( unsigned k = 0; k < _nq; ++k ) {
+            if( _quadPoints[k][0] > 0 ) {
+                _sol[0][k] = 1e5 * exp( -200.0 * pow( 1.0 - _quadPoints[k][0], 2 ) ) *
+                             exp( -50.0 * pow( energyMax - energiesOrig[_nEnergies - n - 1], 2 ) ) * _density[0] * _s[_nEnergies - n - 1];
+            }
+        }
+
         // loop over all spatial cells
         for( unsigned j = 0; j < _nCells; ++j ) {
             if( _boundaryCells[j] == BOUNDARY_TYPE::DIRICHLET ) continue;
@@ -190,7 +207,8 @@ void CSDSNSolver::Solve() {
                 psiNew[j][i] = _sol[j][i] - _dE * psiNew[j][i] - _dE * _sigmaTE[_nEnergies - n - 1] * _sol[j][i];
             }
             // compute scattering effects (_scatteringKernel is simply multiplication with quad weights)
-            psiNew[j] += _dE * ( _sigmaSE[_nEnergies - n - 1] * _scatteringKernel * _sol[j] );    // multiply scattering matrix with psi
+            // std::cout << psiNew[j][0] << " | " << _sol[j][0] << std::endl;
+            // psiNew[j] += _dE * ( _sigmaSE[_nEnergies - n - 1] * _scatteringKernel * _sol[j] );    // multiply scattering matrix with psi
             // TODO: Check if _sigmaS^T*psi is correct
 
             // TODO: figure out a more elegant way
@@ -212,6 +230,7 @@ void CSDSNSolver::Solve() {
         }
         _sol = psiNew;
 
+        // --- Postprocessing, Screen Output ---
         for( unsigned j = 0; j < _nCells; ++j ) {
             fluxNew[j] = dot( psiNew[j], _weights );
             _dose[j] += 0.5 * _dE * ( fluxNew[j] * _s[_nEnergies - n - 1] + fluxOld[j] * _s[_nEnergies - n - 2] ) /
@@ -219,7 +238,7 @@ void CSDSNSolver::Solve() {
             _solverOutput[j] = fluxNew[j];
         }
 
-        // Save( n );
+        Save( n );
         dFlux   = blaze::l2Norm( fluxNew - fluxOld );
         fluxOld = fluxNew;
         if( rank == 0 ) log->info( "{:03.8f}  {:01.5e}  {:01.5e}", _energies[n], _dE / densityMin, dFlux );

@@ -539,8 +539,8 @@ double ICRU::DODCSC( double RMU, double EL ) {
 
 void ICRU::GetAngularScatteringXS( Matrix& angularXS, Vector& integratedXS ) {
     angularXS.resize( _QMU.size(), _E.size() );
-    Vector mu( _XMU.size() );
-    for( unsigned n = 0; n < mu.size(); ++n ) mu[n] = 1.0 - 2.0 * _XMU[n];
+    // Vector mu( _XMU.size() );
+    // for( unsigned n = 0; n < mu.size(); ++n ) mu[n] = 1.0 - 2.0 * _XMU[n];
     integratedXS.resize( _E.size() );
     for( unsigned i = 0; i < _E.size(); ++i ) {
         std::vector<double> dxse, dxsi, dxs;
