@@ -96,8 +96,12 @@ class Config
     unsigned short _volumeOutputFrequency;    /*!< @brief Frequency of vtk write of volume output*/
 
     unsigned short _nScreenOutput;            /*!< @brief Number of screen outputs */
-    std::vector<SCREEN_OUTPUT> _screenOutput; /*!< @brief Output groups for screen output*/
+    std::vector<SCALAR_OUTPUT> _screenOutput; /*!< @brief Output groups for screen output*/
     unsigned short _screenOutputFrequency;    /*!< @brief Frequency of screen output*/
+
+    unsigned short _nHistoryOutput;            /*!< @brief Number of screen outputs */
+    std::vector<SCALAR_OUTPUT> _historyOutput; /*!< @brief Output groups for screen output*/
+    unsigned short _historyOutputFrequency;    /*!< @brief Frequency of screen output*/
 
     // --- Parsing Functionality and Initializing of Options ---
     /*!
@@ -269,9 +273,13 @@ class Config
     unsigned short inline GetNVolumeOutput() { return _nVolumeOutput; }
     unsigned short inline GetVolumeOutputFrequency() { return _volumeOutputFrequency; }
 
-    std::vector<SCREEN_OUTPUT> inline GetScreenOutput() { return _screenOutput; }
+    std::vector<SCALAR_OUTPUT> inline GetScreenOutput() { return _screenOutput; }
     unsigned short inline GetNScreenOutput() { return _nScreenOutput; }
     unsigned short inline GetScreenOutputFrequency() { return _screenOutputFrequency; }
+
+    std::vector<SCALAR_OUTPUT> inline GetHistoryOutput() { return _historyOutput; }
+    unsigned short inline GetNHistoryOutput() { return _nHistoryOutput; }
+    unsigned short inline GetHistoryOutputFrequency() { return _historyOutputFrequency; }
     // ---- Setters for option structure
 
     // Quadrature Structure

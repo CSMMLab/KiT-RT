@@ -28,8 +28,8 @@ class CSDSNSolver : public SNSolver
     void Solve() override;
 
   private:
-    void PrepareOutputFields() override;
-    void WriteOutputFields( unsigned idx_pseudoTime ) override;
+    void PrepareVolumeOutput() override;
+    void WriteVolumeOutput( unsigned idx_pseudoTime ) override;
 };
 
 #endif    // CSDSNSOLVER_H

@@ -48,7 +48,7 @@ PNSolver::PNSolver( Config* settings ) : Solver( settings ) {
     // TODO
 
     // Solver output
-    PrepareOutputFields();
+    PrepareVolumeOutput();
 }
 
 void PNSolver::IterPreprocessing() {
@@ -320,7 +320,7 @@ double PNSolver::LegendrePoly( double x, int l ) {    // Legacy. TO BE DELETED
     }
 }
 
-void PNSolver::PrepareOutputFields() {
+void PNSolver::PrepareVolumeOutput() {
     unsigned nGroups = (unsigned)_settings->GetNVolumeOutput();
 
     _outputFieldNames.resize( nGroups );
@@ -360,7 +360,7 @@ void PNSolver::PrepareOutputFields() {
     }
 }
 
-void PNSolver::WriteOutputFields( unsigned idx_pseudoTime ) {
+void PNSolver::WriteVolumeOutput( unsigned idx_pseudoTime ) {
     unsigned nGroups = (unsigned)_settings->GetNVolumeOutput();
 
     if( ( _settings->GetVolumeOutputFrequency() != 0 && idx_pseudoTime % (unsigned)_settings->GetVolumeOutputFrequency() == 0 ) ||

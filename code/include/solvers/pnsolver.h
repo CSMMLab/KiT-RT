@@ -42,10 +42,10 @@ class PNSolver : public Solver
 
     // IO
     /*! @brief Initializes the output groups and fields of this solver and names the fields */
-    void PrepareOutputFields() override;
+    void PrepareVolumeOutput() override;
     /*! @brief Function that prepares VTK export and csv export of the current solver iteration
         @returns: Mass of current iteration     */
-    void WriteOutputFields( unsigned idx_pseudoTime ) override;
+    void WriteVolumeOutput( unsigned idx_pseudoTime ) override;
 
     // Solver
     void FVMUpdate( unsigned idx_energy ) override;

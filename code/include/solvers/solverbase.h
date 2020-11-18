@@ -64,24 +64,16 @@ class Solver
     std::vector<double> _screenOutputFields;          /*! @brief: Solver Output: dimensions (FieldID). */
     std::vector<std::string> _screenOutputFieldNames; /*! @brief: Names of the outputFields: dimensions (FieldID) */
 
+    // Output related members
+    std::vector<double> _historyOutputFields;          /*! @brief: Solver Output: dimensions (FieldID). */
+    std::vector<std::string> _historyOutputFieldNames; /*! @brief: Names of the outputFields: dimensions (FieldID) */
+
     // Internal Members
     VectorVector _solNew; /*! @brief: VectorVector to store the new flux and later the new solution per iteration */    // REPLACES psiNEW
     Vector _fluxNew; /*! @brief: Vector to store the new Flux */
     Vector _flux;    /*! @brief: Vector to store the old Flux */
 
     // ---- Member functions ----
-
-    // IO
-    /*! @brief Initializes the output groups and fields of this solver and names the fields */
-    virtual void PrepareOutputFields() = 0;
-    /*! @brief Function that prepares VTK export and csv export of the current solver iteration  */
-    virtual void WriteOutputFields( unsigned idx_pseudoTime ) = 0;
-    /*! @brief: Initialized the output fields and their Names for the Screenoutput */
-    void PrepareScreenOutputFields();
-    /*! @brief Function that Screen Output and prints to Screen/Logger */
-    void WriteScreenOutputFields( unsigned idx_pseudoTime );
-    /*! @brief Prints ScreenOutputFields to Screen and to logger */
-    void PrintScreen( std::shared_ptr<spdlog::logger> log );
 
     // Solver
     /*! @brief Performs preprocessing for the current solver iteration */
@@ -94,38 +86,45 @@ class Solver
     virtual void FVMUpdate( unsigned idx_energy ) = 0;
 
     // Helper
-    /**
-     * @brief ComputeTimeStep calculates the maximal stable time step
-     * @param cfl is cfl number
-     */
+    /*! @brief ComputeTimeStep calculates the maximal stable time step */
     double ComputeTimeStep( double cfl ) const;
-
     /*! @brief: Computes the flux of the solution to check conservation properties */
     virtual void ComputeRadFlux() = 0;
 
+    // IO
+    /*! @brief Initializes the output groups and fields of this solver and names the fields */
+    virtual void PrepareVolumeOutput() = 0;
+    /*! @brief Function that prepares VTK export and csv export of the current solver iteration  */
+    virtual void WriteVolumeOutput( unsigned iteration ) = 0;
+    /*! @brief Save Output solution at given energy (pseudo time) to VTK file */
+    void Save( int currEnergy ) const;
+    /*! @brief: Initialized the output fields and their Names for the Screenoutput */
+    void PrepareScreenOutput();
+    /*! @brief Function that Screen Output and prints to Screen/Logger */
+    void WriteScreenOutput( unsigned iteration );
+    /*! @brief Prints ScreenOutputFields to Screen and to logger */
+    void PrintScreen( unsigned iteration );
+    /*! @brief Function that writes scalar historyOutputFields to a .csv file */
+    void WriteHistoryOutput();
+    /*! @brief: Initialized the historyOutputFields and their Names for Historyoutput */
+    void PrepareHistoryOutput();
+
   public:
-    /**
-     * @brief Solver constructor
-     * @param settings stores all needed information
-     */
+    /*! @brief Solver constructor
+     *  @param settings stores all needed information */
     Solver( Config* settings );
 
     ~Solver();
 
-    /**
-     * @brief Create constructor
-     * @param settings stores all needed information
-     * @return pointer to Solver
-     */
+    /*! @brief Create constructor
+     *  @param settings stores all needed information
+     *  @return pointer to Solver */
     static Solver* Create( Config* settings );
 
-    /**
-     * @brief Solve functions runs main time loop
-     */
+    /*! @brief Solve functions runs main time loop */
     virtual void Solve();
 
-    void Save() const;                 /*! @brief Save Output solution to VTK file */
-    void Save( int currEnergy ) const; /*! @brief Save Output solution at given energy (pseudo time) to VTK file */
+    /*! @brief Save Output solution to VTK file */
+    void Save() const;
 };
-
 #endif    // SOLVER_H

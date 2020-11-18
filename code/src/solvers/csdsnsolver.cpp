@@ -41,7 +41,7 @@ CSDSNSolver::CSDSNSolver( Config* settings ) : SNSolver( settings ) {
     _density = Vector( _nCells, 1.0 );
 
     // Solver output
-    PrepareOutputFields();
+    PrepareVolumeOutput();
 }
 
 void CSDSNSolver::Solve() {
@@ -143,7 +143,7 @@ void CSDSNSolver::Solve() {
         }
 
         // --- VTK and CSV Output ---
-        WriteOutputFields( n );
+        WriteVolumeOutput( n );
         Save( n );
 
         // --- Screen Output ---
@@ -154,7 +154,7 @@ void CSDSNSolver::Solve() {
     }
 }
 
-void CSDSNSolver::PrepareOutputFields() {
+void CSDSNSolver::PrepareVolumeOutput() {
     unsigned nGroups = (unsigned)_settings->GetNVolumeOutput();
 
     _outputFieldNames.resize( nGroups );
@@ -187,7 +187,7 @@ void CSDSNSolver::PrepareOutputFields() {
     }
 }
 
-void CSDSNSolver::WriteOutputFields( unsigned idx_pseudoTime ) {
+void CSDSNSolver::WriteVolumeOutput( unsigned idx_pseudoTime ) {
     double mass      = 0.0;
     unsigned nGroups = (unsigned)_settings->GetNVolumeOutput();
 

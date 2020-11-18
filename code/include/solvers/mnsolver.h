@@ -48,8 +48,8 @@ class MNSolver : public Solver
     /*! @brief Function that writes NN Training Data in a .csv file */
     void WriteNNTrainingData( unsigned idx_pseudoTime );
 
-    void PrepareOutputFields() override;
-    void WriteOutputFields( unsigned idx_pseudoTime ) override;
+    void PrepareVolumeOutput() override;
+    void WriteVolumeOutput( unsigned idx_pseudoTime ) override;
 
     // Solver
     void FVMUpdate( unsigned idx_energy ) override;

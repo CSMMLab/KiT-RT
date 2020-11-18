@@ -51,7 +51,7 @@ MNSolver::MNSolver( Config* settings ) : Solver( settings ) {
     ComputeMoments();
 
     // Solver output
-    PrepareOutputFields();
+    PrepareVolumeOutput();
 }
 
 MNSolver::~MNSolver() {
@@ -180,7 +180,7 @@ void MNSolver::FVMUpdate( unsigned idx_energy ) {
     }
 }
 
-void MNSolver::PrepareOutputFields() {
+void MNSolver::PrepareVolumeOutput() {
     unsigned nGroups = (unsigned)_settings->GetNVolumeOutput();
 
     _outputFieldNames.resize( nGroups );
@@ -244,9 +244,10 @@ void MNSolver::PrepareOutputFields() {
     }
 }
 
-void MNSolver::WriteOutputFields( unsigned idx_pseudoTime ) {
+void MNSolver::WriteVolumeOutput( unsigned idx_pseudoTime ) {
     unsigned nGroups = (unsigned)_settings->GetNVolumeOutput();
 
+    // Check if volume output fields are written to file this iteration
     if( ( _settings->GetVolumeOutputFrequency() != 0 && idx_pseudoTime % (unsigned)_settings->GetVolumeOutputFrequency() == 0 ) ||
         ( idx_pseudoTime == _nEnergies - 1 ) /* need sol at last iteration */ ) {
 

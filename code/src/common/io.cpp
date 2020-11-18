@@ -133,8 +133,8 @@ void ExportVTK( const std::string fileName,
 
         writer->Write();
 
-        auto log = spdlog::get( "event" );
-        log->info( "Result successfully exported to '{0}'!", fileNameWithExt );
+        // auto log = spdlog::get( "event" );
+        // log->info( "Result successfully exported to '{0}'!", fileNameWithExt );
     }
     MPI_Barrier( MPI_COMM_WORLD );
 }
@@ -335,12 +335,12 @@ void PrintLogHeader( std::string inputFile ) {
 
         // New design
         log->info( "------------------------------------------------------------------------" );
-        log->info( "|    ____  __.______________     _____________________                 |" );
-        log->info( "|   |    |/ _|   \\__    ___/     \\______   \\__    ___/                 |" );
-        log->info( "|   |      < |   | |    |  ______ |       _/ |    |         Version    |" );
-        log->info( "|   |    |  \\|   | |    | /_____/ |    |   \\ |    |          0.0.2     |" );
-        log->info( "|   |____|__ \\___| |____|         |____|_  / |____|                    |" );
-        log->info( "|           \\/                           \\/                            |" );
+        log->info( "|    _  _____ _____     ____ _____                                     |" );
+        log->info( "|   | |/ /_ _|_   _|   |  _ \\_   _|                                    |" );
+        log->info( "|   | ' / | |  | |_____| |_) || |            Version                   |" );
+        log->info( "|   | . \\ | |  | |_____|  _ < | |             0.0.2                    |" );
+        log->info( "|   |_|\\_\\___| |_|     |_| \\_\\|_|                                      |" );
+        log->info( "|                                                                      |" );
         log->info( "------------------------------------------------------------------------" );
         log->info( "|    Copyright statement goes here                                    |" );
         log->info( "------------------------------------------------------------------------\n" );
@@ -348,7 +348,8 @@ void PrintLogHeader( std::string inputFile ) {
         log->info( "Config file:\t{0}", inputFile );
         log->info( "MPI Threads:\t{0}", nprocs );
         log->info( "OMP Threads:\t{0}", omp_get_max_threads() );
-        log->info( "\n-------------------------- Config File Info ----------------------------\n" );
+        log->info( "\n" );
+        log->info( "-------------------------- Config File Info ----------------------------\n" );
 
         // print file content while omitting comments
         std::ifstream ifs( inputFile );

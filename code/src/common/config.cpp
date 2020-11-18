@@ -279,12 +279,16 @@ void Config::SetConfigOptions() {
     // Output related options
     /*! @brief Volume output \n DESCRIPTION: Describes output groups to write to vtk \ingroup Config */
     AddEnumListOption( "VOLUME_OUTPUT", _nVolumeOutput, _volumeOutput, VolOutput_Map );
-    /*! @brief Volume Output Frequency \n DESCRIPTION: Describes output write frequency \n DEFAULT 0 ,i.e. only last value \ingroup Config */
-    AddUnsignedShortOption( "OUTPUT_FREQUENCY", _volumeOutputFrequency, 0 );
-    /*! @brief Screen output \n DESCRIPTION: Describes scren output groups \ingroup Config */
-    AddEnumListOption( "SCREEN_OUTPUT", _nScreenOutput, _screenOutput, ScreenOutput_Map );
-    /*! @brief Screen Output Frequency \n DESCRIPTION: Describes screen output write frequency \n DEFAULT 0 ,i.e. only last value \ingroup Config */
-    AddUnsignedShortOption( "SCREEN_OUTPUT_FREQUENCY", _screenOutputFrequency, 0 );
+    /*! @brief Volume output Frequency \n DESCRIPTION: Describes output write frequency \n DEFAULT 0 ,i.e. only last value \ingroup Config */
+    AddUnsignedShortOption( "VOLUME_OUTPUT_FREQUENCY", _volumeOutputFrequency, 0 );
+    /*! @brief Screen output \n DESCRIPTION: Describes screen output fields \ingroup Config */
+    AddEnumListOption( "SCREEN_OUTPUT", _nScreenOutput, _screenOutput, ScalarOutput_Map );
+    /*! @brief Screen output Frequency \n DESCRIPTION: Describes screen output write frequency \n DEFAULT 1 \ingroup Config */
+    AddUnsignedShortOption( "SCREEN_OUTPUT_FREQUENCY", _screenOutputFrequency, 1 );
+    /*! @brief History output \n DESCRIPTION: Describes history output fields \ingroup Config */
+    AddEnumListOption( "HISTORY_OUTPUT", _nHistoryOutput, _historyOutput, ScalarOutput_Map );
+    /*! @brief History output Frequency \n DESCRIPTION: Describes history output write frequency \n DEFAULT 1 \ingroup Config */
+    AddUnsignedShortOption( "HISTORY_OUTPUT_FREQUENCY", _historyOutputFrequency, 1 );
 }
 
 void Config::SetConfigParsing( string case_filename ) {
@@ -507,13 +511,13 @@ void Config::SetPostprocessing() {
 
     // Screen Output Postprocessing
     {
-        // Check for doublicates in VOLUME OUTPUT
-        std::map<SCREEN_OUTPUT, int> dublicate_map;
+        // Check for doublicates in SCALAR OUTPUT
+        std::map<SCALAR_OUTPUT, int> dublicate_map;
 
         for( unsigned short idx_screenOutput = 0; idx_screenOutput < _nScreenOutput; idx_screenOutput++ ) {
-            std::map<SCREEN_OUTPUT, int>::iterator it = dublicate_map.find( _screenOutput[idx_screenOutput] );
+            std::map<SCALAR_OUTPUT, int>::iterator it = dublicate_map.find( _screenOutput[idx_screenOutput] );
             if( it == dublicate_map.end() ) {
-                dublicate_map.insert( std::pair<SCREEN_OUTPUT, int>( _screenOutput[idx_screenOutput], 0 ) );
+                dublicate_map.insert( std::pair<SCALAR_OUTPUT, int>( _screenOutput[idx_screenOutput], 0 ) );
             }
             else {
                 it->second++;
@@ -527,17 +531,57 @@ void Config::SetPostprocessing() {
         }
 
         // Set ITER always to index 0 . Assume only one instance of iter is chosen
-        std::vector<SCREEN_OUTPUT>::iterator it;
-        it = find( _screenOutput.begin(), _screenOutput.end(), ITER );
-        _screenOutput.erase( it );
-        _screenOutput.insert( _screenOutput.begin(), ITER );
-
+        if( _nScreenOutput > 0 ) {
+            std::vector<SCALAR_OUTPUT>::iterator it;
+            it = find( _screenOutput.begin(), _screenOutput.end(), ITER );
+            _screenOutput.erase( it );
+            _screenOutput.insert( _screenOutput.begin(), ITER );
+        }
         // Set default screen output
         if( _nScreenOutput == 0 ) {
-            _nScreenOutput = 3;
+            _nScreenOutput = 4;
             _screenOutput.push_back( ITER );
             _screenOutput.push_back( RMS_FLUX );
             _screenOutput.push_back( MASS );
+            _screenOutput.push_back( VTK_OUTPUT );
+        }
+    }
+
+    // History Output Postprocessing
+    {
+        // Check for doublicates in VOLUME OUTPUT
+        std::map<SCALAR_OUTPUT, int> dublicate_map;
+
+        for( unsigned short idx_screenOutput = 0; idx_screenOutput < _nHistoryOutput; idx_screenOutput++ ) {
+            std::map<SCALAR_OUTPUT, int>::iterator it = dublicate_map.find( _historyOutput[idx_screenOutput] );
+            if( it == dublicate_map.end() ) {
+                dublicate_map.insert( std::pair<SCALAR_OUTPUT, int>( _historyOutput[idx_screenOutput], 0 ) );
+            }
+            else {
+                it->second++;
+            }
+        }
+        for( auto& e : dublicate_map ) {
+            if( e.second > 0 ) {
+                ErrorMessages::Error( "Each output field for option SCREEN_OUTPUT can only be set once.\nPlease check your .cfg file.",
+                                      CURRENT_FUNCTION );
+            }
+        }
+
+        // Set ITER always to index 0 . Assume only one instance of iter is chosen
+        if( _nHistoryOutput > 0 ) {
+            std::vector<SCALAR_OUTPUT>::iterator it;
+            it = find( _historyOutput.begin(), _historyOutput.end(), ITER );
+            _historyOutput.erase( it );
+            _historyOutput.insert( _historyOutput.begin(), ITER );
+        }
+        // Set default screen output
+        if( _nHistoryOutput == 0 ) {
+            _nHistoryOutput = 4;
+            _historyOutput.push_back( ITER );
+            _historyOutput.push_back( RMS_FLUX );
+            _historyOutput.push_back( MASS );
+            _historyOutput.push_back( VTK_OUTPUT );
         }
     }
 }

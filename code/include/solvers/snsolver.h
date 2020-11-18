@@ -21,8 +21,8 @@ class SNSolver : public Solver
 
   private:
     // IO
-    void PrepareOutputFields() override;
-    void WriteOutputFields( unsigned idx_pseudoTime ) override;
+    void PrepareVolumeOutput() override;
+    void WriteVolumeOutput( unsigned idx_pseudoTime ) override;
 
     // Solver
     void FVMUpdate( unsigned idx_energy ) override;

@@ -21,7 +21,7 @@ SNSolver::SNSolver( Config* settings ) : Solver( settings ) {
     delete k;
 
     // Solver output
-    PrepareOutputFields();
+    PrepareVolumeOutput();
 }
 
 void SNSolver::IterPreprocessing() {
@@ -186,7 +186,7 @@ void SNSolver::FVMUpdate( unsigned idx_energy ) {
     }
 }
 
-void SNSolver::PrepareOutputFields() {
+void SNSolver::PrepareVolumeOutput() {
     unsigned nGroups = (unsigned)_settings->GetNVolumeOutput();
 
     _outputFieldNames.resize( nGroups );
@@ -220,7 +220,7 @@ void SNSolver::PrepareOutputFields() {
     }
 }
 
-void SNSolver::WriteOutputFields( unsigned idx_pseudoTime ) {
+void SNSolver::WriteVolumeOutput( unsigned idx_pseudoTime ) {
     unsigned nGroups = (unsigned)_settings->GetNVolumeOutput();
 
     if( ( _settings->GetVolumeOutputFrequency() != 0 && idx_pseudoTime % (unsigned)_settings->GetVolumeOutputFrequency() == 0 ) ||
