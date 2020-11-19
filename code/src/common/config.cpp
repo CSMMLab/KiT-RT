@@ -798,13 +798,6 @@ void Config::InitLogger() {
     if( spdlog::get( "tabular" ) == nullptr ) {
         // create sinks if level is not off
         std::vector<spdlog::sink_ptr> sinks;
-        if( terminalLogLvl != spdlog::level::off ) {
-            // create spdlog terminal sink
-            auto terminalSink = std::make_shared<spdlog::sinks::stdout_sink_mt>();
-            terminalSink->set_level( terminalLogLvl );
-            terminalSink->set_pattern( "%v" );
-            sinks.push_back( terminalSink );
-        }
         if( fileLogLvl != spdlog::level::off ) {
             // define filename on root
             int pe;

@@ -96,15 +96,18 @@ class Solver
     virtual void PrepareVolumeOutput() = 0;
     /*! @brief Function that prepares VTK export and csv export of the current solver iteration  */
     virtual void WriteVolumeOutput( unsigned iteration ) = 0;
-    /*! @brief Save Output solution at given energy (pseudo time) to VTK file */
+    /*! @brief Save Output solution at given energy (pseudo time) to VTK file. Write frequency is given by
+               option VOLUME_OUTPUT_FREQUENCY. Always prints last iteration without iteration affix.*/
     void PrintVolumeOutput( int currEnergy ) const;
-    /*! @brief: Initialized the output fields and their Names for the Screenoutput */
+    /*! @brief: Initialized the output fields and their Names for the screenoutput */
     void PrepareScreenOutput();
     /*! @brief Function that writes screen and history output fields */
     void WriteScalarOutput( unsigned iteration );
-    /*! @brief Prints ScreenOutputFields to Screen and to logger */
+    /*! @brief Prints ScreenOutputFields to Screen and to logger. Write frequency is given by
+               option SCREEN_OUTPUT_FREQUENCY. Always prints last iteration. */
     void PrintScreenOutput( unsigned iteration );
-    /*! @brief: Initialized the historyOutputFields and their Names for Historyoutput */
+    /*! @brief: Initialized the historyOutputFields and their Names for history output. Write frequency is given by
+               option HISTORY_OUTPUT_FREQUENCY. Always prints last iteration. */
     void PrepareHistoryOutput();
     /*! @brief Prints HistoryOutputFields to logger */
     void PrintHistoryOutput( unsigned iteration );
@@ -125,6 +128,6 @@ class Solver
     virtual void Solve();
 
     /*! @brief Save Output solution to VTK file */
-    void PrintVolumeOutput() const;
+    void PrintVolumeOutput() const;    // Only for debugging purposes.
 };
 #endif    // SOLVER_H

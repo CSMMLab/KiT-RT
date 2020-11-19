@@ -152,6 +152,9 @@ void Solver::PrintVolumeOutput( int currEnergy ) const {
     if( _settings->GetVolumeOutputFrequency() != 0 && currEnergy % (unsigned)_settings->GetVolumeOutputFrequency() == 0 ) {
         ExportVTK( _settings->GetOutputFile() + "_" + std::to_string( currEnergy ), _outputFields, _outputFieldNames, _mesh );
     }
+    if( currEnergy == _nEnergies - 1 ) {    // Last iteration write without suffix.
+        ExportVTK( _settings->GetOutputFile(), _outputFields, _outputFieldNames, _mesh );
+    }
 }
 
 // --- Helper ---
@@ -342,7 +345,7 @@ void Solver::PrintScreenOutput( unsigned iteration ) {
         if( _settings->GetScreenOutputFrequency() != 0 && iteration % (unsigned)_settings->GetScreenOutputFrequency() == 0 ) {
             log->info( lineToPrint );
         }
-        if( iteration == _nEnergies - 1 ) {    // Always print last iteration
+        else if( iteration == _nEnergies - 1 ) {    // Always print last iteration
             log->info( lineToPrint );
         }
     }
@@ -394,7 +397,7 @@ void Solver::PrintHistoryOutput( unsigned iteration ) {
         if( _settings->GetHistoryOutputFrequency() != 0 && iteration % (unsigned)_settings->GetHistoryOutputFrequency() == 0 ) {
             log->info( lineToPrint );
         }
-        if( iteration == _nEnergies - 1 ) {    // Always print last iteration
+        else if( iteration == _nEnergies - 1 ) {    // Always print last iteration
             log->info( lineToPrint );
         }
     }
