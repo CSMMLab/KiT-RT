@@ -141,8 +141,8 @@ void Solver::Solve() {
     }
     if( rank == 0 ) {
         log->info( hLine );
-        log->info( "\n" );
-        log->info( "------------------------------ Solver Finished ---------------------------" );
+        log->info( "| Postprocessing screen output goes here." );
+        log->info( "----------------------------- Solver Finished ---------------------------" );
     }
 }
 
