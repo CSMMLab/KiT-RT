@@ -79,7 +79,9 @@ void Solver::Solve() {
     int rank;
     MPI_Comm_rank( MPI_COMM_WORLD, &rank );
 
-    auto log          = spdlog::get( "event" );
+    auto log    = spdlog::get( "event" );
+    auto logCSV = spdlog::get( "tabular" );
+
     std::string hLine = "--";
 
     if( rank == 0 ) {
@@ -105,6 +107,14 @@ void Solver::Solve() {
         log->info( hLine );
         log->info( lineToPrint );
         log->info( hLine );
+
+        std::string lineToPrintCSV = "";
+        for( unsigned idxFields = 0; idxFields < _settings->GetNHistoryOutput() - 1; idxFields++ ) {
+            std::string tmp = _historyOutputFieldNames[idxFields];
+            lineToPrintCSV += tmp + ",";
+        }
+        lineToPrintCSV += _historyOutputFieldNames[_settings->GetNHistoryOutput() - 1];
+        logCSV->info( lineToPrintCSV );
     }
 
     // Loop over energies (pseudo-time of continuous slowing down approach)
@@ -122,13 +132,12 @@ void Solver::Solve() {
         // --- Postprocessing ---
         IterPostprocessing();
 
-        // --- VTK and CSV Output ---
+        // --- Solver Output ---
         WriteVolumeOutput( iter );
-        Save( iter );
-
-        // --- Screen Output ---
-        WriteScreenOutput( iter );
-        PrintScreen( iter );
+        WriteScalarOutput( iter );
+        PrintScreenOutput( iter );
+        PrintHistoryOutput( iter );
+        PrintVolumeOutput( iter );
     }
     if( rank == 0 ) {
         log->info( hLine );
@@ -137,9 +146,9 @@ void Solver::Solve() {
     }
 }
 
-void Solver::Save() const { ExportVTK( _settings->GetOutputFile(), _outputFields, _outputFieldNames, _mesh ); }
+void Solver::PrintVolumeOutput() const { ExportVTK( _settings->GetOutputFile(), _outputFields, _outputFieldNames, _mesh ); }
 
-void Solver::Save( int currEnergy ) const {
+void Solver::PrintVolumeOutput( int currEnergy ) const {
     if( _settings->GetVolumeOutputFrequency() != 0 && currEnergy % (unsigned)_settings->GetVolumeOutputFrequency() == 0 ) {
         ExportVTK( _settings->GetOutputFile() + "_" + std::to_string( currEnergy ), _outputFields, _outputFieldNames, _mesh );
     }
@@ -185,11 +194,12 @@ void Solver::PrepareScreenOutput() {
     }
 }
 
-void Solver::WriteScreenOutput( unsigned iteration ) {
+void Solver::WriteScalarOutput( unsigned iteration ) {
 
     unsigned nFields = (unsigned)_settings->GetNScreenOutput();
     double mass      = 0.0;
 
+    // -- Screen Output
     for( unsigned idx_field = 0; idx_field < nFields; idx_field++ ) {
         // Prepare all Output Fields per group
         // Different procedure, depending on the Group...
@@ -216,12 +226,77 @@ void Solver::WriteScreenOutput( unsigned iteration ) {
                 }
                 break;
 
-            default: ErrorMessages::Error( "Screen Output Group not defined!", CURRENT_FUNCTION ); break;
+            case CSV_OUTPUT:
+                _screenOutputFields[idx_field] = 0;
+                if( ( _settings->GetHistoryOutputFrequency() != 0 && iteration % (unsigned)_settings->GetHistoryOutputFrequency() == 0 ) ||
+                    ( iteration == _nEnergies - 1 ) /* need sol at last iteration */ ) {
+                    _screenOutputFields[idx_field] = 1;
+                }
+                break;
+
+            default: ErrorMessages::Error( "Screen output group not defined!", CURRENT_FUNCTION ); break;
+        }
+    }
+
+    // --- History output ---
+    nFields = (unsigned)_settings->GetNHistoryOutput();
+
+    std::vector<SCALAR_OUTPUT> screenOutputFields = _settings->GetScreenOutput();
+    for( unsigned idx_field = 0; idx_field < nFields; idx_field++ ) {
+
+        // Check first, if the field was already filled by screenoutput writer!
+        std::vector<SCALAR_OUTPUT>::iterator itScreenOutput =
+            std::find( screenOutputFields.begin(), screenOutputFields.end(), _settings->GetHistoryOutput()[idx_field] );
+
+        // Prepare all Output Fields per group
+        // Different procedure, depending on the Group...
+        switch( _settings->GetHistoryOutput()[idx_field] ) {
+            case MASS:
+                if( screenOutputFields.end() == itScreenOutput ) {
+                    for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
+                        mass += _fluxNew[idx_cell] * _areas[idx_cell];
+                    }
+                    _historyOutputFields[idx_field] = mass;
+                }
+                else {
+                    _historyOutputFields[idx_field] = *itScreenOutput;
+                }
+                break;
+
+            case ITER: _historyOutputFields[idx_field] = iteration; break;
+
+            case RMS_FLUX:
+                if( screenOutputFields.end() == itScreenOutput ) {
+                    _screenOutputFields[idx_field] = blaze::l2Norm( _fluxNew - _flux );
+                    _flux                          = _fluxNew;
+                }
+                else {
+                    _historyOutputFields[idx_field] = *itScreenOutput;
+                }
+                break;
+
+            case VTK_OUTPUT:
+                _historyOutputFields[idx_field] = 0;
+                if( ( _settings->GetVolumeOutputFrequency() != 0 && iteration % (unsigned)_settings->GetVolumeOutputFrequency() == 0 ) ||
+                    ( iteration == _nEnergies - 1 ) /* need sol at last iteration */ ) {
+                    _historyOutputFields[idx_field] = 1;
+                }
+                break;
+
+            case CSV_OUTPUT:
+                _historyOutputFields[idx_field] = 0;
+                if( ( _settings->GetHistoryOutputFrequency() != 0 && iteration % (unsigned)_settings->GetHistoryOutputFrequency() == 0 ) ||
+                    ( iteration == _nEnergies - 1 ) /* need sol at last iteration */ ) {
+                    _historyOutputFields[idx_field] = 1;
+                }
+                break;
+
+            default: ErrorMessages::Error( "History output group not defined!", CURRENT_FUNCTION ); break;
         }
     }
 }
 
-void Solver::PrintScreen( unsigned iteration ) {
+void Solver::PrintScreenOutput( unsigned iteration ) {
     int rank;
     MPI_Comm_rank( MPI_COMM_WORLD, &rank );
     auto log = spdlog::get( "event" );
@@ -231,13 +306,14 @@ void Solver::PrintScreen( unsigned iteration ) {
 
     // assemble the line to print
     std::string lineToPrint = "| ";
+    std::string tmp;
     for( unsigned idx_field = 0; idx_field < _settings->GetNScreenOutput(); idx_field++ ) {
-        std::string tmp = std::to_string( _screenOutputFields[idx_field] );
+        tmp = std::to_string( _screenOutputFields[idx_field] );
 
         // Format outputs correctly
         std::vector<SCALAR_OUTPUT> integerFields    = { ITER };
         std::vector<SCALAR_OUTPUT> scientificFields = { RMS_FLUX, MASS };
-        std::vector<SCALAR_OUTPUT> booleanFields    = { VTK_OUTPUT };
+        std::vector<SCALAR_OUTPUT> booleanFields    = { VTK_OUTPUT, CSV_OUTPUT };
 
         if( !( integerFields.end() == std::find( integerFields.begin(), integerFields.end(), _settings->GetScreenOutput()[idx_field] ) ) ) {
             tmp = std::to_string( (int)_screenOutputFields[idx_field] );
@@ -283,18 +359,43 @@ void Solver::PrepareHistoryOutput() {
         // Prepare all Output Fields per group
 
         // Different procedure, depending on the Group...
-        switch( _settings->GetScreenOutput()[idx_field] ) {
+        switch( _settings->GetHistoryOutput()[idx_field] ) {
             case MASS: _historyOutputFieldNames[idx_field] = "Mass"; break;
 
             case ITER: _historyOutputFieldNames[idx_field] = "Iter"; break;
 
-            case RMS_FLUX: _historyOutputFieldNames[idx_field] = "RMS flux"; break;
+            case RMS_FLUX: _historyOutputFieldNames[idx_field] = "RMS_flux"; break;
 
-            case VTK_OUTPUT: _historyOutputFieldNames[idx_field] = "VTK out"; break;
+            case VTK_OUTPUT: _historyOutputFieldNames[idx_field] = "VTK_out"; break;
 
-            case CSV_OUTPUT: _historyOutputFieldNames[idx_field] = "CSV out"; break;
+            case CSV_OUTPUT: _historyOutputFieldNames[idx_field] = "CSV_out"; break;
 
             default: ErrorMessages::Error( "History output field not defined!", CURRENT_FUNCTION ); break;
+        }
+    }
+}
+
+void Solver::PrintHistoryOutput( unsigned iteration ) {
+    int rank;
+    MPI_Comm_rank( MPI_COMM_WORLD, &rank );
+    auto log = spdlog::get( "tabular" );
+
+    // assemble the line to print
+    std::string lineToPrint = "";
+    std::string tmp;
+    for( unsigned idx_field = 0; idx_field < _settings->GetNScreenOutput() - 1; idx_field++ ) {
+        tmp = std::to_string( _screenOutputFields[idx_field] );
+        lineToPrint += tmp + ",";
+    }
+    tmp = std::to_string( _screenOutputFields[_settings->GetNScreenOutput() - 1] );
+    lineToPrint += tmp;    // Last element without comma
+
+    if( rank == 0 ) {
+        if( _settings->GetHistoryOutputFrequency() != 0 && iteration % (unsigned)_settings->GetHistoryOutputFrequency() == 0 ) {
+            log->info( lineToPrint );
+        }
+        if( iteration == _nEnergies - 1 ) {    // Always print last iteration
+            log->info( lineToPrint );
         }
     }
 }

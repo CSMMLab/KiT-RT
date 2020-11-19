@@ -144,7 +144,7 @@ void CSDSNSolver::Solve() {
 
         // --- VTK and CSV Output ---
         WriteVolumeOutput( n );
-        Save( n );
+        PrintVolumeOutput( n );
 
         // --- Screen Output ---
         dFlux   = blaze::l2Norm( fluxNew - fluxOld );

@@ -97,17 +97,17 @@ class Solver
     /*! @brief Function that prepares VTK export and csv export of the current solver iteration  */
     virtual void WriteVolumeOutput( unsigned iteration ) = 0;
     /*! @brief Save Output solution at given energy (pseudo time) to VTK file */
-    void Save( int currEnergy ) const;
+    void PrintVolumeOutput( int currEnergy ) const;
     /*! @brief: Initialized the output fields and their Names for the Screenoutput */
     void PrepareScreenOutput();
-    /*! @brief Function that Screen Output and prints to Screen/Logger */
-    void WriteScreenOutput( unsigned iteration );
+    /*! @brief Function that writes screen and history output fields */
+    void WriteScalarOutput( unsigned iteration );
     /*! @brief Prints ScreenOutputFields to Screen and to logger */
-    void PrintScreen( unsigned iteration );
-    /*! @brief Function that writes scalar historyOutputFields to a .csv file */
-    void WriteHistoryOutput();
+    void PrintScreenOutput( unsigned iteration );
     /*! @brief: Initialized the historyOutputFields and their Names for Historyoutput */
     void PrepareHistoryOutput();
+    /*! @brief Prints HistoryOutputFields to logger */
+    void PrintHistoryOutput( unsigned iteration );
 
   public:
     /*! @brief Solver constructor
@@ -125,6 +125,6 @@ class Solver
     virtual void Solve();
 
     /*! @brief Save Output solution to VTK file */
-    void Save() const;
+    void PrintVolumeOutput() const;
 };
 #endif    // SOLVER_H

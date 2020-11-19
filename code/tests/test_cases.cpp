@@ -37,7 +37,7 @@ TEST_CASE( "checkerboard_SN", "[validation_tests]" ) {
     Config* config = new Config( config_file_name );
     Solver* solver = Solver::Create( config );
     solver->Solve();
-    solver->Save();
+    solver->PrintVolumeOutput();
 
     auto test      = readVTKFile( std::string( TESTS_PATH ) + "../result/rtsn_test_checkerboard_SN.vtk" );
     auto reference = readVTKFile( std::string( TESTS_PATH ) + "input/checkerboard_SN_reference.vtk" );
@@ -55,7 +55,7 @@ TEST_CASE( "checkerboard_PN", "[validation_tests]" ) {
     Config* config = new Config( config_file_name );
     Solver* solver = Solver::Create( config );
     solver->Solve();
-    solver->Save();
+    solver->PrintVolumeOutput();
 
     auto test      = readVTKFile( std::string( TESTS_PATH ) + "../result/rtsn_test_checkerboard_PN.vtk" );
     auto reference = readVTKFile( std::string( TESTS_PATH ) + "input/checkerboard_PN_reference.vtk" );
@@ -73,7 +73,7 @@ TEST_CASE( "checkerboard_MN", "[validation_tests]" ) {
     Config* config = new Config( config_file_name );
     Solver* solver = Solver::Create( config );
     solver->Solve();
-    solver->Save();
+    solver->PrintVolumeOutput();
 
     auto test      = readVTKFile( std::string( TESTS_PATH ) + "../result/rtsn_test_checkerboard_MN.vtk" );
     auto reference = readVTKFile( std::string( TESTS_PATH ) + "input/checkerboard_MN_reference.vtk" );
@@ -91,7 +91,7 @@ TEST_CASE( "linesource_SN", "[validation_tests]" ) {
     Config* config = new Config( config_file_name );
     Solver* solver = Solver::Create( config );
     solver->Solve();
-    solver->Save();
+    solver->PrintVolumeOutput();
 
     auto test      = readVTKFile( std::string( TESTS_PATH ) + "../result/rtsn_test_linesource_SN.vtk" );
     auto reference = readVTKFile( std::string( TESTS_PATH ) + "input/linesource_SN_reference.vtk" );
@@ -109,7 +109,7 @@ TEST_CASE( "linesource_PN", "[validation_tests]" ) {
     Config* config = new Config( config_file_name );
     Solver* solver = Solver::Create( config );
     solver->Solve();
-    solver->Save();
+    solver->PrintVolumeOutput();
 
     auto test      = readVTKFile( std::string( TESTS_PATH ) + "../result/rtsn_test_linesource_PN.vtk" );
     auto reference = readVTKFile( std::string( TESTS_PATH ) + "input/linesource_PN_reference.vtk" );
@@ -130,7 +130,7 @@ TEST_CASE( "linesource_MN", "[validation_tests]" ) {
         Config* config = new Config( config_file_name );
         Solver* solver = Solver::Create( config );
         solver->Solve();
-        solver->Save();
+        solver->PrintVolumeOutput();
 
         auto test      = readVTKFile( std::string( TESTS_PATH ) + "../result/rtsn_test_linesource_MN_Quad.vtk" );
         auto reference = readVTKFile( std::string( TESTS_PATH ) + "input/linesource_MN_Quad_reference.vtk" );
@@ -149,7 +149,7 @@ TEST_CASE( "linesource_MN", "[validation_tests]" ) {
         Config* config = new Config( config_file_name );
         Solver* solver = Solver::Create( config );
         solver->Solve();
-        solver->Save();
+        solver->PrintVolumeOutput();
 
         auto test      = readVTKFile( std::string( TESTS_PATH ) + "../result/rtsn_test_linesource_MN_MB.vtk" );
         auto reference = readVTKFile( std::string( TESTS_PATH ) + "input/linesource_MN_MB_reference.vtk" );
