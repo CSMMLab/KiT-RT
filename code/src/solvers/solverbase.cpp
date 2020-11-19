@@ -102,8 +102,8 @@ void Solver::Solve() {
             lineToPrint += tmp + " |";
             hLine += tmpLine;
         }
-        log->info( "------------------------------ Solver Starts ----------------------------" );
-        log->info( " The simulation will run for {} iterations.", _nEnergies );
+        log->info( "----------------------------- Solver Starts ----------------------------" );
+        log->info( "| The simulation will run for {} iterations.", _nEnergies );
         log->info( hLine );
         log->info( lineToPrint );
         log->info( hLine );

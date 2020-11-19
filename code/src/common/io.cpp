@@ -342,25 +342,26 @@ void PrintLogHeader( std::string inputFile ) {
         log->info( "|   |_|\\_\\___| |_|     |_| \\_\\|_|                                      |" );
         log->info( "|                                                                      |" );
         log->info( "------------------------------------------------------------------------" );
-        log->info( "|    Copyright statement goes here                                    |" );
-        log->info( "------------------------------------------------------------------------\n" );
-        log->info( "Git commit :\t{0}", GIT_HASH );
-        log->info( "Config file:\t{0}", inputFile );
-        log->info( "MPI Threads:\t{0}", nprocs );
-        log->info( "OMP Threads:\t{0}", omp_get_max_threads() );
-        log->info( "\n" );
-        log->info( "-------------------------- Config File Info ----------------------------\n" );
-
+        log->info( "|    Copyright statement goes here                                     |" );
+        log->info( "------------------------------------------------------------------------" );
+        log->info( "|" );
+        log->info( "| Git commit :\t{0}", GIT_HASH );
+        log->info( "| Config file:\t{0}", inputFile );
+        log->info( "| MPI Threads:\t{0}", nprocs );
+        log->info( "| OMP Threads:\t{0}", omp_get_max_threads() );
+        log->info( "|" );
+        log->info( "-------------------------- Config File Info ----------------------------" );
+        log->info( "|" );
         // print file content while omitting comments
         std::ifstream ifs( inputFile );
         if( ifs.is_open() ) {
             std::string line;
             while( !ifs.eof() ) {
                 std::getline( ifs, line );
-                if( line[0] != '%' ) log->info( " {0}", line );
+                if( line[0] != '%' ) log->info( "| {0}", line );
             }
         }
-        log->info( "------------------------------------------------------------------------\n" );
+        // log->info( "------------------------------------------------------------------------" );
     }
     MPI_Barrier( MPI_COMM_WORLD );
 }
