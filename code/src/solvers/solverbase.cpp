@@ -102,14 +102,14 @@ void Solver::Solve() {
             lineToPrint += tmp + " |";
             hLine += tmpLine;
         }
-        log->info( "----------------------------- Solver Starts ----------------------------" );
+        log->info( "---------------------------- Solver Starts -----------------------------" );
         log->info( "| The simulation will run for {} iterations.", _nEnergies );
         log->info( hLine );
         log->info( lineToPrint );
         log->info( hLine );
 
         std::string lineToPrintCSV = "";
-        for( unsigned idxFields = 0; idxFields < _settings->GetNHistoryOutput() - 1; idxFields++ ) {
+        for( int idxFields = 0; idxFields < _settings->GetNHistoryOutput() - 1; idxFields++ ) {
             std::string tmp = _historyOutputFieldNames[idxFields];
             lineToPrintCSV += tmp + ",";
         }
@@ -142,7 +142,7 @@ void Solver::Solve() {
     if( rank == 0 ) {
         log->info( hLine );
         log->info( "| Postprocessing screen output goes here." );
-        log->info( "----------------------------- Solver Finished ---------------------------" );
+        log->info( "--------------------------- Solver Finished ----------------------------" );
     }
 }
 
@@ -152,7 +152,7 @@ void Solver::PrintVolumeOutput( int currEnergy ) const {
     if( _settings->GetVolumeOutputFrequency() != 0 && currEnergy % (unsigned)_settings->GetVolumeOutputFrequency() == 0 ) {
         ExportVTK( _settings->GetOutputFile() + "_" + std::to_string( currEnergy ), _outputFields, _outputFieldNames, _mesh );
     }
-    if( currEnergy == _nEnergies - 1 ) {    // Last iteration write without suffix.
+    if( currEnergy == (int)_nEnergies - 1 ) {    // Last iteration write without suffix.
         ExportVTK( _settings->GetOutputFile(), _outputFields, _outputFieldNames, _mesh );
     }
 }
@@ -386,7 +386,7 @@ void Solver::PrintHistoryOutput( unsigned iteration ) {
     // assemble the line to print
     std::string lineToPrint = "";
     std::string tmp;
-    for( unsigned idx_field = 0; idx_field < _settings->GetNScreenOutput() - 1; idx_field++ ) {
+    for( int idx_field = 0; idx_field < _settings->GetNScreenOutput() - 1; idx_field++ ) {
         tmp = std::to_string( _screenOutputFields[idx_field] );
         lineToPrint += tmp + ",";
     }

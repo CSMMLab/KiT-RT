@@ -31,6 +31,7 @@ std::vector<double> readVTKFile( std::string filename ) {
     return data;
 }
 
+// --- Validation Tests Solver ---
 TEST_CASE( "checkerboard_SN", "[validation_tests]" ) {
     std::string config_file_name = std::string( TESTS_PATH ) + "input/checkerboard_SN.cfg";
 
@@ -160,4 +161,55 @@ TEST_CASE( "linesource_MN", "[validation_tests]" ) {
             REQUIRE( std::fabs( test[i] - reference[i] ) < eps );
         }
     }
+}
+
+// --- Validation Tests Output ---
+TEST_CASE( "screen_output", "[output]" ) {
+
+    spdlog::drop_all();    // Make sure to write in own logging file
+
+    std::string config_file_name       = std::string( TESTS_PATH ) + "input/validate_logger.cfg";
+    std::string screenLoggerReference  = std::string( TESTS_PATH ) + "input/validate_screen_output_reference";
+    std::string screenLogger           = std::string( TESTS_PATH ) + "../result/logs/validate_screen_output";
+    std::string historyLoggerReference = std::string( TESTS_PATH ) + "input/validate_screen_output_csv_reference";
+    std::string historyLogger          = std::string( TESTS_PATH ) + "../result/logs/validate_screen_output_csv";
+
+    Config* config = new Config( config_file_name );
+    Solver* solver = Solver::Create( config );
+    solver->Solve();
+    // --- Read and validate logger ---
+    std::ifstream screenLoggerReferenceStream( screenLoggerReference );
+    std::ifstream screenLoggerStream( screenLogger );
+    std::ifstream historyLoggerReferenceStream( historyLoggerReference );
+    std::ifstream historyLoggerStream( historyLogger );
+
+    std::string line, lineRef;
+    bool lineValid;
+    while( !screenLoggerReferenceStream.eof() && !screenLoggerStream.eof() ) {
+        std::getline( screenLoggerReferenceStream, lineRef );
+        std::getline( screenLoggerStream, line );
+
+        lineValid = lineRef.compare( line ) == 0;
+        if( !lineValid ) {
+            std::cout << lineRef << "\n" << line << "\n";
+        }
+        REQUIRE( lineValid );
+    }
+    bool eqLen = screenLoggerReferenceStream.eof() && screenLoggerStream.eof();
+    if( !eqLen ) {
+        std::cout << "Files of unequal length!\n";
+    }
+    REQUIRE( eqLen );    // Files must be of same length
+
+    while( !historyLoggerReferenceStream.eof() && !historyLoggerStream.eof() ) {
+        std::getline( historyLoggerReferenceStream, lineRef );
+        std::getline( historyLoggerStream, line );
+        lineValid = lineRef.compare( line ) == 0;
+        REQUIRE( lineValid );
+    }
+    eqLen = historyLoggerReferenceStream.eof() && historyLoggerStream.eof();
+    if( !eqLen ) {
+        std::cout << "Files of unequal length!\n";
+    }
+    REQUIRE( eqLen );    // Files must be of same length
 }

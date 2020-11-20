@@ -34,12 +34,13 @@ class Config
 
     // --- Options ---
     // File Structure
-    std::string _inputDir;   /*!< @brief Directory for input files*/
-    std::string _outputDir;  /*!< @brief Directory for output files*/
-    std::string _outputFile; /*!< @brief Name of output file*/
-    std::string _logDir;     /*!< @brief Directory of log file*/
-    std::string _meshFile;   /*!< @brief Name of mesh file*/
-    std::string _ctFile;     /*!< @brief Name of CT file*/
+    std::string _inputDir;    /*!< @brief Directory for input files*/
+    std::string _outputDir;   /*!< @brief Directory for output files*/
+    std::string _outputFile;  /*!< @brief Name of output file*/
+    std::string _logDir;      /*!< @brief Directory of log file*/
+    std::string _logFileName; /*!< @brief Name of log file*/
+    std::string _meshFile;    /*!< @brief Name of mesh file*/
+    std::string _ctFile;      /*!< @brief Name of CT file*/
 
     // Quadrature
     QUAD_NAME _quadName;       /*!< @brief Quadrature Name*/
@@ -226,6 +227,7 @@ class Config
     std::string inline GetCTFile() const { return std::filesystem::path( _ctFile ).lexically_normal(); }
     std::string inline GetHydrogenFile() const { return std::filesystem::path( _hydrogenFile ).lexically_normal(); }
     std::string inline GetLogDir() const { return std::filesystem::path( _logDir ).lexically_normal(); }
+    std::string inline GetLogFile() const { return std::filesystem::path( _logFileName ).lexically_normal(); }
     std::string inline GetMeshFile() const { return std::filesystem::path( _meshFile ).lexically_normal(); }
     std::string inline GetOutputDir() const { return std::filesystem::path( _outputDir ).lexically_normal(); }
     std::string inline GetOutputFile() const { return std::filesystem::path( _outputFile ).lexically_normal(); }

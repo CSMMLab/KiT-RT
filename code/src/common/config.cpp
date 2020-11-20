@@ -202,7 +202,9 @@ void Config::SetConfigOptions() {
     /*! @brief OUTPUT_FILE \n DESCRIPTION: Name of output file \n DEFAULT "output" @ingroup Config.*/
     AddStringOption( "OUTPUT_FILE", _outputFile, string( "output" ) );
     /*! @brief LOG_DIR \n DESCRIPTION: Relative Directory of log files \n DEFAULT "/out" @ingroup Config.*/
-    AddStringOption( "LOG_DIR", _logDir, string( "/out" ) );
+    AddStringOption( "LOG_DIR", _logDir, string( "/out/logs" ) );
+    /*! @brief LOG_DIR \n DESCRIPTION: Name of log files \n DEFAULT "/out" @ingroup Config.*/
+    AddStringOption( "LOG_FILE", _logFileName, string( "use_date" ) );
     /*! @brief MESH_FILE \n DESCRIPTION: Name of mesh file \n DEFAULT "" \ingroup Config.*/
     AddStringOption( "MESH_FILE", _meshFile, string( "mesh.su2" ) );
     /*! @brief MESH_FILE \n DESCRIPTION: Name of mesh file \n DEFAULT "" \ingroup Config.*/
@@ -764,8 +766,12 @@ void Config::InitLogger() {
                 tstruct = *localtime( &now );
                 strftime( buf, sizeof( buf ), "%Y-%m-%d_%X", &tstruct );
 
-                // set filename to date and time
-                std::string filename = buf;
+                // set filename
+                std::string filename;
+                if( _logFileName.compare( "use_date" ) == 0 )
+                    filename = buf;    // set filename to date and time
+                else
+                    filename = _logFileName;
 
                 // in case of existing files append '_#'
                 int ctr = 0;
@@ -812,8 +818,12 @@ void Config::InitLogger() {
                 tstruct = *localtime( &now );
                 strftime( buf, sizeof( buf ), "%Y-%m-%d_%X_csv", &tstruct );
 
-                // set filename to date and time
-                std::string filename = buf;
+                // set filename
+                std::string filename;
+                if( _logFileName.compare( "use_date" ) == 0 )
+                    filename = buf;    // set filename to date and time
+                else
+                    filename = _logFileName + "_csv";
 
                 // in case of existing files append '_#'
                 int ctr = 0;
