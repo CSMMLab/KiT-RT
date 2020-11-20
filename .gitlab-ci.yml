@@ -5,24 +5,27 @@ stages:
 
 unit_tests:
   stage: unit_tests
-  variables:
-    CTEST_OUTPUT_ON_FAILURE: "TRUE"
   script:
     - git submodule update --init --recursive
     - cd code/build/release
-    - cmake -G Ninja -DCMAKE_BUILD_TYPE=Release ../../
+    - cmake -G Ninja -DCMAKE_BUILD_TYPE=Debug ../../
     - ninja
-    - ninja test
-  timeout: 2h
-  only:
-    refs:
-      - develop
-      - master
-      - merge_requests
-    changes:
-      - "code/include/**/*"
-      - "code/tests/**/*"
-      - "code/src/**/*"
-      - "code/CMakeLists.txt"
-      - "scripts/Dockerfile"
-      - ".gitmodules"
+    - OMP_NUM_THREADS=1 ./unit_tests -r junit > unit_tests_report.xml
+    - gcovr -e ../../ext/ -e ../../tests/ -r ../../
+  artifacts:
+    when: always
+    paths:
+      - code/build/release/unit_tests_report.xml
+    reports:
+      junit: code/build/release/unit_tests_report.xml
+  timeout: 4h
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event" || $CI_COMMIT_BRANCH == "master" || $CI_COMMIT_BRANCH == "develop"
+      changes:
+        - "code/include/**/*"
+        - "code/tests/**/*"
+        - "code/src/**/*"
+        - "code/CMakeLists.txt"
+        - "scripts/Dockerfile"
+        - ".gitmodules"
+    - if: $CI_PIPELINE_SOURCE == "web"

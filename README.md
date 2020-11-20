@@ -1,3 +1,5 @@
+[![pipeline status](https://git.scc.kit.edu/rtsn/rtsn/badges/master/pipeline.svg)](https://git.scc.kit.edu/rtsn/rtsn/-/commits/master) [![coverage report](https://git.scc.kit.edu/rtsn/rtsn/badges/master/coverage.svg)](https://git.scc.kit.edu/rtsn/rtsn/-/commits/master)
+
 # KiT-RT - an HPC Radio Therapy $`S_n`$ framework
 TBD 
 ## What KiT-RT is capable of
@@ -52,17 +54,17 @@ The resulting executable will automatically be placed in the `code/bin` folder.
 
 ## Run
 ### Local
-Execute the compiled binary and hand over a valid *TOML*-styled config file.
+Execute the compiled binary from the `bin` folder and hand over a valid *TOML*-styled config file.
 Example from inside the `code` directory:
 
 ```bash
-./bin/KiT-RT input/example.cfg
+./KiT-RT ../input/example.cfg
 ```
 
 In order to run the code in parallel execute:
 
 ```bash
-OMP_NUM_THREADS=N mpirun -np J ./bin/KiT-RT input/example.cfg
+OMP_NUM_THREADS=N mpirun -np J ./KiT-RT ../input/example.cfg
 ```
 
 with `N` equal to the number of shared memory threads and `J` equal to the number of distrubuted memory threads.
