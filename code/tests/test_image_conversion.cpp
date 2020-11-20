@@ -8,7 +8,7 @@
 #include "toolboxes/cubic2dspline.h"
 #include "toolboxes/textprocessingtoolbox.h"
 
-TEST_CASE( "convert image data to grayscale matrix", "[image I/O]" ) {
+TEST_CASE( "img2grayscaleMat_conv", "[image_io]" ) {    // convert image data to grayscale matrix
     std::string config_file_name = std::string( TESTS_PATH ) + "input/image_conversion.cfg";
 
     Config* config = new Config( config_file_name );    // just to init spdlog

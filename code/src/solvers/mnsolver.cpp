@@ -51,7 +51,7 @@ MNSolver::MNSolver( Config* settings ) : Solver( settings ) {
     ComputeMoments();
 
     // Solver output
-    PrepareOutputFields();
+    PrepareVolumeOutput();
 }
 
 MNSolver::~MNSolver() {
@@ -125,74 +125,62 @@ void MNSolver::ComputeRealizableSolution( unsigned idx_cell ) {
     }
 }
 
-void MNSolver::Solve() {
+void MNSolver::IterPreprocessing() {
 
-    int rank;
-    MPI_Comm_rank( MPI_COMM_WORLD, &rank );
+    // ------- Reconstruction Step ----------------
 
-    auto log = spdlog::get( "event" );
+    _optimizer->SolveMultiCell( _alpha, _sol, _moments );
 
-    // angular flux at next time step (maybe store angular flux at all time steps, since time becomes energy?)
-    VectorVector psiNew = _sol;
-
-    double mass = 0;
-
-    Save( -1 );
-
-    if( rank == 0 ) log->info( "{:10}  {:10}", "t", "mass" );
-
-    // if( rank == 0 ) log->info( "{:03.8f}   {:01.5e} {:01.5e}", -1.0, dFlux, mass1 ); Should be deleted
-
-    // Loop over energies (pseudo-time of continuous slowing down approach)
-    for( unsigned idx_energy = 0; idx_energy < _nEnergies; idx_energy++ ) {
-
-        // ------- Reconstruction Step ----------------
-
-        _optimizer->SolveMultiCell( _alpha, _sol, _moments );
-
-        // Loop over the grid cells
-        for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
-
-            // ------- Relizablity Reconstruction Step ----
-
-            ComputeRealizableSolution( idx_cell );
-
-            // ------- Flux Computation Step --------------
-
-            // Dirichlet Boundaries are finished now
-            if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::DIRICHLET ) continue;
-
-            psiNew[idx_cell] = ConstructFlux( idx_cell );
-
-            // ------ Finite Volume Update Step ------
-
-            // NEED TO VECTORIZE
-            for( unsigned idx_system = 0; idx_system < _nTotalEntries; idx_system++ ) {
-
-                psiNew[idx_cell][idx_system] = _sol[idx_cell][idx_system] -
-                                               ( _dE / _areas[idx_cell] ) * psiNew[idx_cell][idx_system] /* cell averaged flux */
-                                               - _dE * _sol[idx_cell][idx_system] *
-                                                     ( _sigmaT[idx_energy][idx_cell]                                    /* absorbtion influence */
-                                                       + _sigmaS[idx_energy][idx_cell] * _scatterMatDiag[idx_system] ); /* scattering influence */
-            }
-
-            psiNew[idx_cell][0] += _dE * _Q[0][idx_cell][0];
-        }
-
-        // Update Solution
-        _sol = psiNew;
-
-        // --- VTK and CSV Output ---
-        mass = WriteOutputFields( idx_energy );
-        Save( idx_energy );
-        // WriteNNTrainingData( idx_energy );
-
-        // --- Screen Output ---
-        if( rank == 0 ) log->info( "{:03.8f}   {:01.5e}", _energies[idx_energy], mass );
+    // ------- Relizablity Reconstruction Step ----
+    for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
+        ComputeRealizableSolution( idx_cell );
     }
 }
 
-void MNSolver::PrepareOutputFields() {
+void MNSolver::IterPostprocessing() {
+    // --- Update Solution ---
+    _sol = _solNew;
+
+    // --- Compute Flux for solution and Screen Output ---
+    ComputeRadFlux();
+}
+
+void MNSolver::ComputeRadFlux() {
+    double firstMomentScaleFactor = sqrt( 4 * M_PI );
+    for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
+        _fluxNew[idx_cell] = _sol[idx_cell][0] * firstMomentScaleFactor;
+    }
+}
+
+void MNSolver::FluxUpdate() {
+    // Loop over the grid cells
+    for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
+        // Dirichlet Boundaries stay
+        if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::DIRICHLET ) continue;
+        _solNew[idx_cell] = ConstructFlux( idx_cell );
+    }
+}
+
+void MNSolver::FVMUpdate( unsigned idx_energy ) {
+    // Loop over the grid cells
+    for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
+        // Dirichlet Boundaries stay
+        if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::DIRICHLET ) continue;
+
+        for( unsigned idx_system = 0; idx_system < _nTotalEntries; idx_system++ ) {
+
+            _solNew[idx_cell][idx_system] = _sol[idx_cell][idx_system] -
+                                            ( _dE / _areas[idx_cell] ) * _solNew[idx_cell][idx_system] /* cell averaged flux */
+                                            - _dE * _sol[idx_cell][idx_system] *
+                                                  ( _sigmaT[idx_energy][idx_cell]                                    /* absorbtion influence */
+                                                    + _sigmaS[idx_energy][idx_cell] * _scatterMatDiag[idx_system] ); /* scattering influence */
+        }
+
+        _solNew[idx_cell][0] += _dE * _Q[0][idx_cell][0];
+    }
+}
+
+void MNSolver::PrepareVolumeOutput() {
     unsigned nGroups = (unsigned)_settings->GetNVolumeOutput();
 
     _outputFieldNames.resize( nGroups );
@@ -256,25 +244,18 @@ void MNSolver::PrepareOutputFields() {
     }
 }
 
-double MNSolver::WriteOutputFields( unsigned idx_pseudoTime ) {
-    double mass                   = 0.0;
-    unsigned nGroups              = (unsigned)_settings->GetNVolumeOutput();
-    double firstMomentScaleFactor = sqrt( 4 * M_PI );
+void MNSolver::WriteVolumeOutput( unsigned idx_pseudoTime ) {
+    unsigned nGroups = (unsigned)_settings->GetNVolumeOutput();
 
-    // Compute total "mass" of the system ==> to check conservation properties
-    for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
-        mass += _sol[idx_cell][0] * _areas[idx_cell];    // Should probably go to postprocessing
-    }
-    mass *= firstMomentScaleFactor;
-
-    if( ( _settings->GetOutputFrequency() != 0 && idx_pseudoTime % (unsigned)_settings->GetOutputFrequency() == 0 ) ||
+    // Check if volume output fields are written to file this iteration
+    if( ( _settings->GetVolumeOutputFrequency() != 0 && idx_pseudoTime % (unsigned)_settings->GetVolumeOutputFrequency() == 0 ) ||
         ( idx_pseudoTime == _nEnergies - 1 ) /* need sol at last iteration */ ) {
 
         for( unsigned idx_group = 0; idx_group < nGroups; idx_group++ ) {
             switch( _settings->GetVolumeOutput()[idx_group] ) {
                 case MINIMAL:
                     for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
-                        _outputFields[idx_group][0][idx_cell] = firstMomentScaleFactor * _sol[idx_cell][0];
+                        _outputFields[idx_group][0][idx_cell] = _fluxNew[idx_cell];
                     }
                     break;
                 case MOMENTS:
@@ -305,15 +286,6 @@ double MNSolver::WriteOutputFields( unsigned idx_pseudoTime ) {
                 default: ErrorMessages::Error( "Volume Output Group not defined for MN Solver!", CURRENT_FUNCTION ); break;
             }
         }
-    }
-    return mass;
-}
-
-void MNSolver::Save() const { ExportVTK( _settings->GetOutputFile(), _outputFields, _outputFieldNames, _mesh ); }
-
-void MNSolver::Save( int currEnergy ) const {
-    if( _settings->GetOutputFrequency() != 0 && currEnergy % (unsigned)_settings->GetOutputFrequency() == 0 ) {
-        ExportVTK( _settings->GetOutputFile() + "_" + std::to_string( currEnergy ), _outputFields, _outputFieldNames, _mesh );
     }
 }
 

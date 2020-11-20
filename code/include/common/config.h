@@ -34,12 +34,13 @@ class Config
 
     // --- Options ---
     // File Structure
-    std::string _inputDir;   /*!< @brief Directory for input files*/
-    std::string _outputDir;  /*!< @brief Directory for output files*/
-    std::string _outputFile; /*!< @brief Name of output file*/
-    std::string _logDir;     /*!< @brief Directory of log file*/
-    std::string _meshFile;   /*!< @brief Name of mesh file*/
-    std::string _ctFile;     /*!< @brief Name of CT file*/
+    std::string _inputDir;    /*!< @brief Directory for input files*/
+    std::string _outputDir;   /*!< @brief Directory for output files*/
+    std::string _outputFile;  /*!< @brief Name of output file*/
+    std::string _logDir;      /*!< @brief Directory of log file*/
+    std::string _logFileName; /*!< @brief Name of log file*/
+    std::string _meshFile;    /*!< @brief Name of mesh file*/
+    std::string _ctFile;      /*!< @brief Name of CT file*/
 
     // Quadrature
     QUAD_NAME _quadName;       /*!< @brief Quadrature Name*/
@@ -93,7 +94,15 @@ class Config
     // Output Options
     unsigned short _nVolumeOutput;            /*!< @brief Number of volume outputs */
     std::vector<VOLUME_OUTPUT> _volumeOutput; /*!< @brief Output groups for volume output*/
-    unsigned short _outputFrequency;          /*!< @brief Frequency of vtk write of volume output*/
+    unsigned short _volumeOutputFrequency;    /*!< @brief Frequency of vtk write of volume output*/
+
+    unsigned short _nScreenOutput;            /*!< @brief Number of screen outputs */
+    std::vector<SCALAR_OUTPUT> _screenOutput; /*!< @brief Output groups for screen output*/
+    unsigned short _screenOutputFrequency;    /*!< @brief Frequency of screen output*/
+
+    unsigned short _nHistoryOutput;            /*!< @brief Number of screen outputs */
+    std::vector<SCALAR_OUTPUT> _historyOutput; /*!< @brief Output groups for screen output*/
+    unsigned short _historyOutputFrequency;    /*!< @brief Frequency of screen output*/
 
     // --- Parsing Functionality and Initializing of Options ---
     /*!
@@ -218,6 +227,7 @@ class Config
     std::string inline GetCTFile() const { return std::filesystem::path( _ctFile ).lexically_normal(); }
     std::string inline GetHydrogenFile() const { return std::filesystem::path( _hydrogenFile ).lexically_normal(); }
     std::string inline GetLogDir() const { return std::filesystem::path( _logDir ).lexically_normal(); }
+    std::string inline GetLogFile() const { return std::filesystem::path( _logFileName ).lexically_normal(); }
     std::string inline GetMeshFile() const { return std::filesystem::path( _meshFile ).lexically_normal(); }
     std::string inline GetOutputDir() const { return std::filesystem::path( _outputDir ).lexically_normal(); }
     std::string inline GetOutputFile() const { return std::filesystem::path( _outputFile ).lexically_normal(); }
@@ -263,8 +273,15 @@ class Config
     // Output Structure
     std::vector<VOLUME_OUTPUT> inline GetVolumeOutput() { return _volumeOutput; }
     unsigned short inline GetNVolumeOutput() { return _nVolumeOutput; }
-    unsigned short inline GetOutputFrequency() { return _outputFrequency; }
+    unsigned short inline GetVolumeOutputFrequency() { return _volumeOutputFrequency; }
 
+    std::vector<SCALAR_OUTPUT> inline GetScreenOutput() { return _screenOutput; }
+    unsigned short inline GetNScreenOutput() { return _nScreenOutput; }
+    unsigned short inline GetScreenOutputFrequency() { return _screenOutputFrequency; }
+
+    std::vector<SCALAR_OUTPUT> inline GetHistoryOutput() { return _historyOutput; }
+    unsigned short inline GetNHistoryOutput() { return _nHistoryOutput; }
+    unsigned short inline GetHistoryOutputFrequency() { return _historyOutputFrequency; }
     // ---- Setters for option structure
 
     // Quadrature Structure

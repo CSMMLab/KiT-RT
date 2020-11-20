@@ -76,9 +76,15 @@ enum OPTIMIZER_NAME { NEWTON, ML };
 inline std::map<std::string, OPTIMIZER_NAME> Optimizer_Map{ { "NEWTON", NEWTON }, { "ML", ML } };
 
 // Volume output
-enum VOLUME_OUTPUT { ANALYTIC, MINIMAL, MOMENTS, DUAL_MOMENTS };
+enum VOLUME_OUTPUT { ANALYTIC, MINIMAL, MOMENTS, DUAL_MOMENTS, DOSE };
 
 inline std::map<std::string, VOLUME_OUTPUT> VolOutput_Map{
-    { "ANALYTIC", ANALYTIC }, { "MINIMAL", MINIMAL }, { "MOMENTS", MOMENTS }, { "DUAL_MOMENTS", DUAL_MOMENTS } };
+    { "ANALYTIC", ANALYTIC }, { "MINIMAL", MINIMAL }, { "MOMENTS", MOMENTS }, { "DUAL_MOMENTS", DUAL_MOMENTS }, { "DOSE", DOSE } };
+
+// Scalar output
+enum SCALAR_OUTPUT { ITER, MASS, RMS_FLUX, VTK_OUTPUT, CSV_OUTPUT };
+
+inline std::map<std::string, SCALAR_OUTPUT> ScalarOutput_Map{
+    { "ITER", ITER }, { "MASS", MASS }, { "RMS_FLUX", RMS_FLUX }, { "VTK_OUTPUT", VTK_OUTPUT }, { "CSV_OUTPUT", CSV_OUTPUT } };
 
 #endif    // GLOBAL_CONSTANTS_H

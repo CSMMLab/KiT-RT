@@ -12,7 +12,7 @@ def add_block(x0,y0,length,char_length,geom):
     ])
     return geom.add_polygon(coords, char_length)
 
-char_length = 0.15
+char_length = 0.2
 geom = pg.opencascade.Geometry()
 domain = add_block(-0.6, -0.6, 1.2, char_length, geom)
 geom.add_raw_code('psource = newp;\nPoint(psource) = {0.0, 0.0, 0.0, '+str(char_length)+'};\nPoint{psource} In Surface{'+domain.id+'};')

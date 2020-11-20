@@ -48,87 +48,75 @@ PNSolver::PNSolver( Config* settings ) : Solver( settings ) {
     // TODO
 
     // Solver output
-    PrepareOutputFields();
+    PrepareVolumeOutput();
 }
 
-void PNSolver::Solve() {
+void PNSolver::IterPreprocessing() {
+    // Nothing to preprocess for PNSolver
+}
 
-    int rank;
-    MPI_Comm_rank( MPI_COMM_WORLD, &rank );
+void PNSolver::IterPostprocessing() {
+    // --- Update Solution ---
+    _sol = _solNew;
 
-    auto log = spdlog::get( "event" );
+    // --- Compute Flux for solution and Screen Output ---
+    ComputeRadFlux();
+}
 
-    VectorVector psiNew = _sol;
+void PNSolver::ComputeRadFlux() {
+    double firstMomentScaleFactor = sqrt( 4 * M_PI );
+    for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
+        _fluxNew[idx_cell] = _sol[idx_cell][0] * firstMomentScaleFactor;
+    }
+}
 
-    double mass = 0;
+void PNSolver::FluxUpdate() {
+    // Loop over all spatial cells
+    for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
 
-    Save( -1 );    // Save initial condition
+        // Dirichlet cells stay at IC, farfield assumption
+        if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::DIRICHLET ) continue;
 
-    unsigned idx_system = 0;
-
-    if( rank == 0 ) log->info( "{:10}   {:10}", "t", "mass" );
-
-    //   Remove
-    mass = WriteOutputFields( 0 );
-    if( rank == 0 ) log->info( " {:01.5e}  {:01.5e}", 0.0, mass );
-
-    // Loop over energies (pseudo-time of continuous slowing down approach)
-    for( unsigned idx_energy = 0; idx_energy < _nEnergies; idx_energy++ ) {
-        // Loop over all spatial cells
-        for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
-            if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::DIRICHLET ) continue;    // Dirichlet cells stay at IC, farfield assumption
-
-            // Reset temporary variable psiNew
-            for( int idx_lDegree = 0; idx_lDegree <= int( _LMaxDegree ); idx_lDegree++ ) {
-                for( int idx_kOrder = -idx_lDegree; idx_kOrder <= idx_lDegree; idx_kOrder++ ) {
-                    idx_system                   = unsigned( GlobalIndex( idx_lDegree, idx_kOrder ) );
-                    psiNew[idx_cell][idx_system] = 0.0;
-                }
-            }
-
-            // Loop over all neighbor cells (edges) of cell j and compute numerical fluxes
-            for( unsigned idx_neighbor = 0; idx_neighbor < _neighbors[idx_cell].size(); idx_neighbor++ ) {
-
-                // Compute flux contribution and store in psiNew to save memory
-                if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::NEUMANN && _neighbors[idx_cell][idx_neighbor] == _nCells )
-                    psiNew[idx_cell] += _g->Flux(
-                        _AxPlus, _AxMinus, _AyPlus, _AyMinus, _AzPlus, _AzMinus, _sol[idx_cell], _sol[idx_cell], _normals[idx_cell][idx_neighbor] );
-                else
-                    psiNew[idx_cell] += _g->Flux( _AxPlus,
-                                                  _AxMinus,
-                                                  _AyPlus,
-                                                  _AyMinus,
-                                                  _AzPlus,
-                                                  _AzMinus,
-                                                  _sol[idx_cell],
-                                                  _sol[_neighbors[idx_cell][idx_neighbor]],
-                                                  _normals[idx_cell][idx_neighbor] );
-            }
-
-            // time update angular flux with numerical flux and total scattering cross section
-            for( int idx_lOrder = 0; idx_lOrder <= int( _LMaxDegree ); idx_lOrder++ ) {
-                for( int idx_kOrder = -idx_lOrder; idx_kOrder <= idx_lOrder; idx_kOrder++ ) {
-                    idx_system = unsigned( GlobalIndex( idx_lOrder, idx_kOrder ) );
-
-                    psiNew[idx_cell][idx_system] = _sol[idx_cell][idx_system] -
-                                                   ( _dE / _areas[idx_cell] ) * psiNew[idx_cell][idx_system] /* cell averaged flux */
-                                                   - _dE * _sol[idx_cell][idx_system] *
-                                                         ( _sigmaT[idx_energy][idx_cell]                                    /* absorbtion influence */
-                                                           + _sigmaS[idx_energy][idx_cell] * _scatterMatDiag[idx_system] ); /* scattering influence */
-                }
-            }
-            psiNew[idx_cell][0] += _dE * _Q[0][idx_cell][0];
+        // Reset temporary variable psiNew
+        for( unsigned idx_sys = 0; idx_sys < _nTotalEntries; idx_sys++ ) {
+            _solNew[idx_cell][idx_sys] = 0.0;
         }
 
-        // Update Solution
-        _sol = psiNew;
+        // Loop over all neighbor cells (edges) of cell j and compute numerical fluxes
+        for( unsigned idx_neighbor = 0; idx_neighbor < _neighbors[idx_cell].size(); idx_neighbor++ ) {
 
-        // --- VTK and CSV Output ---
-        mass = WriteOutputFields( idx_energy );
-        Save( idx_energy );
+            // Compute flux contribution and store in psiNew to save memory
+            if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::NEUMANN && _neighbors[idx_cell][idx_neighbor] == _nCells )
+                _solNew[idx_cell] += _g->Flux(
+                    _AxPlus, _AxMinus, _AyPlus, _AyMinus, _AzPlus, _AzMinus, _sol[idx_cell], _sol[idx_cell], _normals[idx_cell][idx_neighbor] );
+            else
+                _solNew[idx_cell] += _g->Flux( _AxPlus,
+                                               _AxMinus,
+                                               _AyPlus,
+                                               _AyMinus,
+                                               _AzPlus,
+                                               _AzMinus,
+                                               _sol[idx_cell],
+                                               _sol[_neighbors[idx_cell][idx_neighbor]],
+                                               _normals[idx_cell][idx_neighbor] );
+        }
+    }
+}
 
-        // --- Screen Output ---
-        if( rank == 0 ) log->info( "{:03.8f}  {:01.5e}", _energies[idx_energy], mass );
+void PNSolver::FVMUpdate( unsigned idx_energy ) {
+    // Loop over all spatial cells
+    for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
+        // Dirichlet cells stay at IC, farfield assumption
+        if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::DIRICHLET ) continue;
+        // Flux update
+        for( unsigned idx_sys = 0; idx_sys < _nTotalEntries; idx_sys++ ) {
+            _solNew[idx_cell][idx_sys] = _sol[idx_cell][idx_sys] - ( _dE / _areas[idx_cell] ) * _solNew[idx_cell][idx_sys] /* cell averaged flux */
+                                         - _dE * _sol[idx_cell][idx_sys] *
+                                               ( _sigmaT[idx_energy][idx_cell]                                 /* absorbtion influence */
+                                                 + _sigmaS[idx_energy][idx_cell] * _scatterMatDiag[idx_sys] ); /* scattering influence */
+        }
+        // Source Term
+        _solNew[idx_cell][0] += _dE * _Q[0][idx_cell][0];
     }
 }
 
@@ -332,7 +320,7 @@ double PNSolver::LegendrePoly( double x, int l ) {    // Legacy. TO BE DELETED
     }
 }
 
-void PNSolver::PrepareOutputFields() {
+void PNSolver::PrepareVolumeOutput() {
     unsigned nGroups = (unsigned)_settings->GetNVolumeOutput();
 
     _outputFieldNames.resize( nGroups );
@@ -372,24 +360,16 @@ void PNSolver::PrepareOutputFields() {
     }
 }
 
-double PNSolver::WriteOutputFields( unsigned idx_pseudoTime ) {
-    double mass                   = 0.0;
-    unsigned nGroups              = (unsigned)_settings->GetNVolumeOutput();
-    double firstMomentScaleFactor = sqrt( 4 * M_PI );
+void PNSolver::WriteVolumeOutput( unsigned idx_pseudoTime ) {
+    unsigned nGroups = (unsigned)_settings->GetNVolumeOutput();
 
-    // Compute total "mass" of the system ==> to check conservation properties
-    for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
-        mass += _sol[idx_cell][0] * _areas[idx_cell];    // Should probably go to postprocessing
-    }
-    mass *= firstMomentScaleFactor;
-
-    if( ( _settings->GetOutputFrequency() != 0 && idx_pseudoTime % (unsigned)_settings->GetOutputFrequency() == 0 ) ||
+    if( ( _settings->GetVolumeOutputFrequency() != 0 && idx_pseudoTime % (unsigned)_settings->GetVolumeOutputFrequency() == 0 ) ||
         ( idx_pseudoTime == _nEnergies - 1 ) /* need sol at last iteration */ ) {
         for( unsigned idx_group = 0; idx_group < nGroups; idx_group++ ) {
             switch( _settings->GetVolumeOutput()[idx_group] ) {
                 case MINIMAL:
                     for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
-                        _outputFields[idx_group][0][idx_cell] = firstMomentScaleFactor * _sol[idx_cell][0];
+                        _outputFields[idx_group][0][idx_cell] = _fluxNew[idx_cell];
                     }
                     break;
                 case MOMENTS:
@@ -402,15 +382,6 @@ double PNSolver::WriteOutputFields( unsigned idx_pseudoTime ) {
                 default: ErrorMessages::Error( "Volume Output Group not defined for PN Solver!", CURRENT_FUNCTION ); break;
             }
         }
-    }
-    return mass;
-}
-
-void PNSolver::Save() const { ExportVTK( _settings->GetOutputFile(), _outputFields, _outputFieldNames, _mesh ); }
-
-void PNSolver::Save( int currEnergy ) const {
-    if( _settings->GetOutputFrequency() != 0 && currEnergy % (unsigned)_settings->GetOutputFrequency() == 0 ) {
-        ExportVTK( _settings->GetOutputFile() + "_" + std::to_string( currEnergy ), _outputFields, _outputFieldNames, _mesh );
     }
 }
 

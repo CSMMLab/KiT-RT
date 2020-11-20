@@ -67,7 +67,7 @@ void SNSolverMPI::Solve() {
     }*/
 }
 
-void SNSolverMPI::Save() const {
+void SNSolverMPI::PrintVolumeOutput() const {
     std::vector<std::string> fieldNames{ "flux" };
     std::vector<std::vector<std::string>> fieldNamesWrapper{ fieldNames };
 

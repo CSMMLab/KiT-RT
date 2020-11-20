@@ -133,8 +133,8 @@ void ExportVTK( const std::string fileName,
 
         writer->Write();
 
-        auto log = spdlog::get( "event" );
-        log->info( "Result successfully exported to '{0}'!", fileNameWithExt );
+        // auto log = spdlog::get( "event" );
+        // log->info( "Result successfully exported to '{0}'!", fileNameWithExt );
     }
     MPI_Barrier( MPI_COMM_WORLD );
 }
@@ -333,24 +333,35 @@ void PrintLogHeader( std::string inputFile ) {
     if( rank == 0 ) {
         auto log = spdlog::get( "event" );
 
-        log->info( "RTSN" );
-        log->info( "================================================================" );
-        log->info( "Git commit :\t{0}", GIT_HASH );
-        log->info( "Config file:\t{0}", inputFile );
-        log->info( "MPI Threads:\t{0}", nprocs );
-        log->info( "OMP Threads:\t{0}", omp_get_max_threads() );
-        log->info( "================================================================" );
+        // New design
+        log->info( "------------------------------------------------------------------------" );
+        log->info( "|    _  _____ _____     ____ _____                                     |" );
+        log->info( "|   | |/ /_ _|_   _|   |  _ \\_   _|                                    |" );
+        log->info( "|   | ' / | |  | |_____| |_) || |            Version                   |" );
+        log->info( "|   | . \\ | |  | |_____|  _ < | |             0.0.2                    |" );
+        log->info( "|   |_|\\_\\___| |_|     |_| \\_\\|_|                                      |" );
+        log->info( "|                                                                      |" );
+        log->info( "------------------------------------------------------------------------" );
+        log->info( "|    Copyright statement goes here                                     |" );
+        log->info( "------------------------------------------------------------------------" );
+        log->info( "|" );
+        log->info( "| Git commit :\t{0}", GIT_HASH );
+        log->info( "| Config file:\t{0}", inputFile );
+        log->info( "| MPI Threads:\t{0}", nprocs );
+        log->info( "| OMP Threads:\t{0}", omp_get_max_threads() );
+        log->info( "|" );
+        log->info( "-------------------------- Config File Info ----------------------------" );
+        log->info( "|" );
         // print file content while omitting comments
         std::ifstream ifs( inputFile );
         if( ifs.is_open() ) {
             std::string line;
             while( !ifs.eof() ) {
                 std::getline( ifs, line );
-                if( line[0] != '%' ) log->info( " {0}", line );
+                if( line[0] != '%' ) log->info( "| {0}", line );
             }
         }
-        log->info( "================================================================" );
-        log->info( "" );
+        // log->info( "------------------------------------------------------------------------" );
     }
     MPI_Barrier( MPI_COMM_WORLD );
 }
