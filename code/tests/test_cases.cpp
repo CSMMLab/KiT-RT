@@ -164,19 +164,35 @@ TEST_CASE( "linesource_MN", "[validation_tests]" ) {
 }
 
 // --- Validation Tests Output ---
+void tokenize( std::string const& str, const char delim, std::vector<std::string>& out ) {
+    size_t start;
+    size_t end = 0;
+
+    while( ( start = str.find_first_not_of( delim, end ) ) != std::string::npos ) {
+        end = str.find( delim, start );
+        out.push_back( str.substr( start, end - start ) );
+    }
+}
+
 TEST_CASE( "screen_output", "[output]" ) {
 
     spdlog::drop_all();    // Make sure to write in own logging file
 
     std::string config_file_name       = std::string( TESTS_PATH ) + "input/validate_logger.cfg";
-    std::string screenLoggerReference  = std::string( TESTS_PATH ) + "input/validate_screen_output_reference";
-    std::string screenLogger           = std::string( TESTS_PATH ) + "../result/logs/validate_screen_output";
-    std::string historyLoggerReference = std::string( TESTS_PATH ) + "input/validate_screen_output_csv_reference";
-    std::string historyLogger          = std::string( TESTS_PATH ) + "../result/logs/validate_screen_output_csv";
+    std::string screenLoggerReference  = std::string( TESTS_PATH ) + "input/validate_logger_reference";
+    std::string screenLogger           = std::string( TESTS_PATH ) + "../result/logs/validate_logger_output";
+    std::string historyLoggerReference = std::string( TESTS_PATH ) + "input/validate_logger_csv_reference";
+    std::string historyLogger          = std::string( TESTS_PATH ) + "../result/logs/validate_logger_output_csv";
 
     Config* config = new Config( config_file_name );
     Solver* solver = Solver::Create( config );
     solver->Solve();
+
+    // Force Logger to flush
+    auto log    = spdlog::get( "event" );
+    auto logCSV = spdlog::get( "tabular" );
+    log->flush();
+    logCSV->flush();
     // --- Read and validate logger ---
     std::ifstream screenLoggerReferenceStream( screenLoggerReference );
     std::ifstream screenLoggerStream( screenLogger );
@@ -185,15 +201,29 @@ TEST_CASE( "screen_output", "[output]" ) {
 
     std::string line, lineRef;
     bool lineValid;
+    const char delimScreen = '|';
+    const char delimHist   = ',';
+
+    // --- Screen Logger
     while( !screenLoggerReferenceStream.eof() && !screenLoggerStream.eof() ) {
         std::getline( screenLoggerReferenceStream, lineRef );
         std::getline( screenLoggerStream, line );
 
-        lineValid = lineRef.compare( line ) == 0;
-        if( !lineValid ) {
-            std::cout << lineRef << "\n" << line << "\n";
+        // ignore date (before first "|")
+        std::vector<std::string> out;
+        std::vector<std::string> outRef;
+        tokenize( line, delimScreen, out );
+        tokenize( lineRef, delimScreen, outRef );
+
+        REQUIRE( out.size() == outRef.size() );    // Sanity check
+
+        for( unsigned idx_token = 1; idx_token < out.size(); idx_token++ ) {    // Skip date  ==> start from 1
+            lineValid = outRef[idx_token].compare( out[idx_token] ) == 0;
+            if( !lineValid ) {
+                std::cout << lineRef << "\n" << line << "\n";
+            }
+            REQUIRE( lineValid );
         }
-        REQUIRE( lineValid );
     }
     bool eqLen = screenLoggerReferenceStream.eof() && screenLoggerStream.eof();
     if( !eqLen ) {
@@ -201,11 +231,25 @@ TEST_CASE( "screen_output", "[output]" ) {
     }
     REQUIRE( eqLen );    // Files must be of same length
 
+    // --- History Logger
     while( !historyLoggerReferenceStream.eof() && !historyLoggerStream.eof() ) {
         std::getline( historyLoggerReferenceStream, lineRef );
         std::getline( historyLoggerStream, line );
-        lineValid = lineRef.compare( line ) == 0;
-        REQUIRE( lineValid );
+        // ignore date (before first "|")
+        std::vector<std::string> out;
+        std::vector<std::string> outRef;
+        tokenize( line, delimHist, out );
+        tokenize( lineRef, delimHist, outRef );
+
+        REQUIRE( out.size() == outRef.size() );    // sanity check
+
+        for( unsigned idx_token = 1; idx_token < out.size(); idx_token++ ) {    // Skip date  ==> start from 1
+            lineValid = outRef[idx_token].compare( out[idx_token] ) == 0;
+            if( !lineValid ) {
+                std::cout << lineRef << "\n" << line << "\n";
+            }
+            REQUIRE( lineValid );
+        }
     }
     eqLen = historyLoggerReferenceStream.eof() && historyLoggerStream.eof();
     if( !eqLen ) {
