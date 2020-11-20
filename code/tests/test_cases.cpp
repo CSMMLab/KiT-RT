@@ -215,6 +215,8 @@ TEST_CASE( "screen_output", "[output]" ) {
         tokenize( line, delimScreen, out );
         tokenize( lineRef, delimScreen, outRef );
 
+        if( out.size() != outRef.size() ) std::cout << lineRef << "\n" << line << "\n";
+
         REQUIRE( out.size() == outRef.size() );    // Sanity check
 
         for( unsigned idx_token = 1; idx_token < out.size(); idx_token++ ) {    // Skip date  ==> start from 1
@@ -241,6 +243,7 @@ TEST_CASE( "screen_output", "[output]" ) {
         tokenize( line, delimHist, out );
         tokenize( lineRef, delimHist, outRef );
 
+        if( out.size() != outRef.size() ) std::cout << lineRef << "\n" << line << "\n";
         REQUIRE( out.size() == outRef.size() );    // sanity check
 
         for( unsigned idx_token = 1; idx_token < out.size(); idx_token++ ) {    // Skip date  ==> start from 1
