@@ -12,6 +12,8 @@ set( KITRT_DEBUG_OPTIONS -Wall -Wextra -Wpedantic )
 
 
 ### LIBRARIES ###################################
+set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
+
 find_package( OpenMP REQUIRED )
 
 find_package( MPI REQUIRED )
@@ -38,7 +40,7 @@ else()
     message( STATUS "Blaze: BLAS mode disabled" )
     add_compile_definitions( BLAZE_BLAS_MODE=0 )
 endif()
-include( ${CMAKE_SOURCE_DIR}/cmake/blaze-cache-config.cmake )
+include( blaze-cache-config )
 include_directories( ${CMAKE_SOURCE_DIR}/ext/blaze )
 
 add_compile_definitions( METIS_EXPORT= )
@@ -81,6 +83,7 @@ target_compile_options( ${CMAKE_PROJECT_NAME} PUBLIC "$<$<CONFIG:RELEASE>:${KITR
 ### BUILD UNIT TESTS ############################
 include( CTest )
 set( CATCH_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/ext/Catch2/single_include/catch2 )
+add_compile_definitions( BUILD_TESTING )
 add_compile_definitions( TESTS_PATH="${CMAKE_SOURCE_DIR}/tests/" )
 add_library( Catch INTERFACE )
 target_include_directories( Catch INTERFACE ${CATCH_INCLUDE_DIR} )
@@ -89,6 +92,11 @@ list( REMOVE_ITEM SRCS "src/main.cpp" )
 add_executable( unit_tests ${TEST_SRCS} ${SRCS} ${EXT_SRCS} )
 target_link_libraries( unit_tests Catch ${CORE_LIBRARIES} )
 target_compile_options( unit_tests PUBLIC "$<$<CONFIG:DEBUG>:${KITRT_DEBUG_OPTIONS}>" )
+if( CMAKE_COMPILER_IS_GNUCXX )
+    set( CODE_COVERAGE_OPTIONS --coverage -g -O0 -w )
+    target_compile_options( unit_tests PUBLIC "$<$<CONFIG:DEBUG>:${CODE_COVERAGE_OPTIONS}>" )
+    target_link_libraries( unit_tests Catch gcov )
+endif()
 target_compile_options( unit_tests PUBLIC "$<$<CONFIG:RELWITHDEBINFO>:${KITRT_RELWITHDEBINFO_OPTIONS}>" )
 target_compile_options( unit_tests PUBLIC "$<$<CONFIG:RELEASE>:${KITRT_RELEASE_OPTIONS}>" )
 add_test( NAME unit_tests COMMAND unit_tests )
