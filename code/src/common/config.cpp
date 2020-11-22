@@ -728,7 +728,7 @@ void Config::InitLogger() {
     // Choose Logger
 #ifdef BUILD_TESTING
     terminalLogLvl = spdlog::level::err;
-    fileLogLvl     = spdlog::level::off;
+    fileLogLvl     = spdlog::level::info;
 #elif NDEBUG
     terminalLogLvl = spdlog::level::info;
     fileLogLvl     = spdlog::level::info;
@@ -742,7 +742,7 @@ void Config::InitLogger() {
         std::filesystem::create_directory( _logDir );
     }
 
-    if( spdlog::get( "event" ) == nullptr ) {
+    if( !spdlog::get( "event" ) ) {
         // create sinks if level is not off
         std::vector<spdlog::sink_ptr> sinks;
         if( terminalLogLvl != spdlog::level::off ) {
@@ -801,7 +801,7 @@ void Config::InitLogger() {
         spdlog::flush_every( std::chrono::seconds( 5 ) );
     }
 
-    if( spdlog::get( "tabular" ) == nullptr ) {
+    if( !spdlog::get( "tabular" ) ) {
         // create sinks if level is not off
         std::vector<spdlog::sink_ptr> sinks;
         if( fileLogLvl != spdlog::level::off ) {
@@ -848,8 +848,8 @@ void Config::InitLogger() {
         }
 
         // register all sinks
-        auto event_logger = std::make_shared<spdlog::logger>( "tabular", begin( sinks ), end( sinks ) );
-        spdlog::register_logger( event_logger );
+        auto tabular_logger = std::make_shared<spdlog::logger>( "tabular", begin( sinks ), end( sinks ) );
+        spdlog::register_logger( tabular_logger );
         spdlog::flush_every( std::chrono::seconds( 5 ) );
     }
 }
