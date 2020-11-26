@@ -15,11 +15,11 @@ class NewtonOptimizer : public OptimizerBase
     void Solve( Vector& lambda, Vector& sol, VectorVector& moments, unsigned idx_cell = 0 ) override;
     void SolveMultiCell( VectorVector& lambda, VectorVector& sol, VectorVector& moments ) override;
 
-  private:
     /*! @brief: Computes the objective function
                 grad = <eta(alpha*m)> - alpha*sol */
     double ComputeObjFunc( Vector& alpha, Vector& sol, VectorVector& moments );
 
+  private:
     /*! @brief: Computes gradient of objective function and stores it in grad
                 grad = <m*eta*'(alpha*m)> - sol */
     void ComputeGradient( Vector& alpha, Vector& sol, VectorVector& moments, Vector& grad );

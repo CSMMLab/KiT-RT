@@ -6,6 +6,7 @@
 
 #include "toolboxes/datagenerator.h"
 #include "common/config.h"
+#include "optimizers/newtonoptimizer.h"
 #include "quadratures/quadraturebase.h"
 #include "solvers/sphericalharmonics.h"
 
@@ -20,7 +21,7 @@ nnDataGenerator::nnDataGenerator( Config* settings ) {
     _LMaxDegree    = settings->GetMaxMomentDegree();
     _nTotalEntries = (unsigned)GlobalIndex( _LMaxDegree, _LMaxDegree ) + 1;
 
-    // build quadrature object and store frequently used params
+    // Quadrature
     _quadrature       = QuadratureBase::CreateQuadrature( settings );
     _nq               = _quadrature->GetNq();
     _quadPoints       = _quadrature->GetPoints();
@@ -28,14 +29,18 @@ nnDataGenerator::nnDataGenerator( Config* settings ) {
     _quadPointsSphere = _quadrature->GetPointsSphere();
     _settings->SetNQuadPoints( _nq );
 
+    // Spherical Harmonics
     _basis   = new SphericalHarmonics( _LMaxDegree );
     _moments = VectorVector( _nq, Vector( _nTotalEntries, 0.0 ) );
     ComputeMoments();
 
+    // Optimizer
+    _optimizer = new NewtonOptimizer( _settings );
+
     // Initialize Training Data
-    _uSol     = std::vector( _setSize, std::vector( _nTotalEntries, 0.0 ) );
-    _alpha    = std::vector( _setSize, std::vector( _nTotalEntries, 0.0 ) );
-    _hEntropy = std::vector( _setSize, 0.0 );
+    _uSol     = VectorVector( _setSize, Vector( _nTotalEntries, 0.0 ) );
+    _alpha    = VectorVector( _setSize, Vector( _nTotalEntries, 0.0 ) );
+    _hEntropy = std::vector<double>( _setSize, 0.0 );
 }
 
 void nnDataGenerator::computeTrainingData() {
@@ -44,6 +49,15 @@ void nnDataGenerator::computeTrainingData() {
 
     // --- sample u ---
     sampleSolutionU();
+
+    // --- compute alphas ---
+    _optimizer->SolveMultiCell( _alpha, _uSol, _moments );
+
+    // --- compute entropy functional ---
+    computeEntropyH();
+
+    // --- Print everything ----
+    printTrainingData();
 }
 
 int nnDataGenerator::GlobalIndex( int l, int k ) const {
@@ -65,11 +79,24 @@ void nnDataGenerator::ComputeMoments() {
 
 void nnDataGenerator::sampleSolutionU() {
     double du = 100.0 / (double)_setSize;    // Prototype: u is sampled from [0,100]
-    auto log  = spdlog::get( "event" );
 
     for( unsigned idx_set = 0; idx_set < _setSize; idx_set++ ) {
         _uSol[idx_set][0] = du * idx_set;
-        log->info( "{}", _uSol[idx_set][0] );
     }
-    log->flush();
+}
+
+void nnDataGenerator::computeEntropyH() {
+    for( unsigned idx_set = 0; idx_set < _setSize; idx_set++ ) {
+        _hEntropy[idx_set] = _optimizer->ComputeObjFunc( _alpha[idx_set], _uSol[idx_set], _moments );
+    }
+}
+
+void nnDataGenerator::printTrainingData() {
+    auto log    = spdlog::get( "event" );
+    auto logCSV = spdlog::get( "tabular" );
+
+    for( unsigned idx_set = 0; idx_set < _setSize; idx_set++ ) {
+        log->info( "{}, {}, {}", _uSol[idx_set][0], _alpha[idx_set][0], _hEntropy[idx_set] );
+        logCSV->info( "{}, {}, {}", _uSol[idx_set][0], _alpha[idx_set][0], _hEntropy[idx_set] );
+    }
 }

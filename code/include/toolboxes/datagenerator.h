@@ -13,6 +13,7 @@
 class SphericalHarmonics;
 class QuadratureBase;
 class Config;
+class NewtonOptimizer;
 
 class nnDataGenerator
 {
@@ -37,9 +38,9 @@ class nnDataGenerator
   private:
     Config* _settings; /*! @brief config class for global information */
 
-    std::vector<std::vector<double>> _uSol;  /*! @brief: vector with moments. Size: (setSize,basisSize)*/
-    std::vector<std::vector<double>> _alpha; /*! @brief: vector with Lagrange multipliers. Size: (setSize,basisSize)*/
-    std::vector<double> _hEntropy;           /*! @brief: vector with entropy values. Size: (setSize) */
+    VectorVector _uSol;            /*! @brief: vector with moments. Size: (setSize,basisSize)*/
+    VectorVector _alpha;           /*! @brief: vector with Lagrange multipliers. Size: (setSize,basisSize)*/
+    std::vector<double> _hEntropy; /*! @brief: vector with entropy values. Size: (setSize) */
 
     unsigned _setSize;
     unsigned short _LMaxDegree; /*! @brief: Max Order of Spherical Harmonics */
@@ -54,6 +55,7 @@ class nnDataGenerator
     SphericalHarmonics* _basis; /*! @brief: Class to compute and store current spherical harmonics basis */
     VectorVector _moments;      /*! @brief: Moment Vector pre-computed at each quadrature point: dim= _nq x _nTotalEntries */
 
+    NewtonOptimizer* _optimizer; /*! @brief: Class to solve minimal entropy problem */
     // Helper functions
     /*! @brief : computes the global index of the moment corresponding to basis function (l,k)
      *  @param : degree l, it must hold: 0 <= l <=_nq
@@ -64,6 +66,8 @@ class nnDataGenerator
     void ComputeMoments(); /*! @brief : Pre-Compute Moments at all quadrature points. */
 
     // Main methods
-    void sampleSolutionU(); /*! @brief : Samples solution vectors u */
+    void sampleSolutionU();   /*! @brief : Samples solution vectors u */
+    void computeEntropyH();   /*! @brief : Compute the entropy functional at (u,alpha) */
+    void printTrainingData(); /*! @brief : Print computed training data to csv file and screen */
 };
 #endif    // DATAGENERATOR_H
