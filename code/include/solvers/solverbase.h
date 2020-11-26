@@ -25,12 +25,12 @@ class Solver
 
     // --------- Often used variables of member classes for faster access ----
 
-    unsigned _nEnergies;             /*! @brief number of energy/time steps, number of nodal energy values for CSD */
-    double _dE;                      /*! @brief energy/time step size */
-    Vector _energies;                // energy groups used in the simulation [keV]
-    std::vector<double> _density;    // patient density, dim(_density) = _nCells
-    Vector _s;                       // stopping power, dim(_s) = _nTimeSteps
-    std::vector<VectorVector> _Q;    /*!  @brief  external source term */
+    unsigned _nEnergies;          /*! @brief number of energy/time steps, number of nodal energy values for CSD */
+    double _dE;                   /*! @brief energy/time step size */
+    Vector _energies;             /*! @brief energy groups used in the simulation [keV] */
+    std::vector<double> _density; /*! @brief patient density, dim(_density) = _nCells */
+    Vector _s;                    /*! @brief stopping power, dim(_s) = _nTimeSteps    */
+    std::vector<VectorVector> _Q; /*! @brief external source term */
 
     VectorVector _sigmaS; /*!  @brief scattering cross section for all energies */
     VectorVector _sigmaT; /*!  @brief total cross section for all energies */
@@ -38,9 +38,6 @@ class Solver
     // quadrature related numbers
     QuadratureBase* _quadrature; /*! @brief quadrature to create members below */
     unsigned _nq;                /*! @brief number of quadrature points */
-
-    // VectorVector _quadPoints;    /*!  @brief quadrature points, dim(_quadPoints) = (_nSystem,spatialDim) */
-    // Vector _weights;             /*!  @brief quadrature weights, dim(_weights) = (_NCells) */
 
     // Mesh related members
     unsigned _nCells;                          /*! @brief number of spatial cells */

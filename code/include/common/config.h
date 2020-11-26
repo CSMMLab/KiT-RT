@@ -67,7 +67,7 @@ class Config
     bool _cleanFluxMat;
     bool _allGaussPts; /*!< @brief If true, the SN Solver uses all Gauss pts in the quadrature */
 
-    bool _csd;                 /*!< @brief If true, continuous slowing down approximation will be used */
+    bool _csd;                 // LEGACY! /*!< @brief If true, continuous slowing down approximation will be used */
     std::string _hydrogenFile; /*!< @brief Name of hydrogen cross section file */
     std::string _oxygenFile;   /*!< @brief Name of oxygen cross section file */
 
@@ -103,6 +103,11 @@ class Config
     unsigned short _nHistoryOutput;            /*!< @brief Number of screen outputs */
     std::vector<SCALAR_OUTPUT> _historyOutput; /*!< @brief Output groups for screen output*/
     unsigned short _historyOutputFrequency;    /*!< @brief Frequency of screen output*/
+
+    // Data Generator Settings
+    /*!< @brief Check, if data generator mode is active. If yes, no solver is called, but instead the data generator is executed */
+    bool _dataGeneratorMode;
+    unsigned long _tainingSetSize; /*!< @brief Size of training data set for data generator */
 
     // --- Parsing Functionality and Initializing of Options ---
     /*!
@@ -282,6 +287,11 @@ class Config
     std::vector<SCALAR_OUTPUT> inline GetHistoryOutput() { return _historyOutput; }
     unsigned short inline GetNHistoryOutput() { return _nHistoryOutput; }
     unsigned short inline GetHistoryOutputFrequency() { return _historyOutputFrequency; }
+
+    // Data generator
+    bool inline GetDataGeneratorMode() { return _dataGeneratorMode; }
+    unsigned long inline GetTrainingDataSetSize() { return _tainingSetSize; }
+
     // ---- Setters for option structure
 
     // Quadrature Structure
@@ -289,6 +299,7 @@ class Config
     void SetQuadName( QUAD_NAME quadName ) { _quadName = quadName; }    /*! @brief Never change the quadName! This is only for the test framework. */
     void SetQuadOrder( unsigned quadOrder ) { _quadOrder = quadOrder; } /*! @brief Never change the quadOrder! This is only for the test framework. */
     void SetSNAllGaussPts( bool useall ) { _allGaussPts = useall; }     /*! @brief Never change the this! This is only for the test framework. */
+
     // Mesh Structure
     void SetNCells( unsigned nCells ) { _nCells = nCells; }
 };

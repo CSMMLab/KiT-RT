@@ -16,20 +16,17 @@
 #include <mpi.h>
 
 #include <fstream>
-//#include <chrono>
 
 MNSolver::MNSolver( Config* settings ) : Solver( settings ) {
-
-    // Is this good (fast) code using a constructor list?
     _LMaxDegree    = settings->GetMaxMomentDegree();
     _nTotalEntries = GlobalIndex( _LMaxDegree, int( _LMaxDegree ) ) + 1;
 
     // build quadrature object and store quadrature points and weights
-    _quadPoints       = _quadrature->GetPoints();
-    _weights          = _quadrature->GetWeights();
-    _nq               = _quadrature->GetNq();
+    _quadPoints = _quadrature->GetPoints();
+    _weights    = _quadrature->GetWeights();
+    //_nq               = _quadrature->GetNq();
     _quadPointsSphere = _quadrature->GetPointsSphere();
-    _settings->SetNQuadPoints( _nq );
+    //_settings->SetNQuadPoints( _nq );
 
     // Initialize Scatter Matrix --
     _scatterMatDiag = Vector( _nTotalEntries, 0.0 );

@@ -22,7 +22,7 @@ class MNSolver : public Solver
   private:
     // --- Private member variables ---
     unsigned _nTotalEntries;    /*! @brief: Total number of equations in the system */
-    unsigned short _LMaxDegree; /*! @brief: Max Order of Moments */
+    unsigned short _LMaxDegree; /*! @brief: Max Order of Spherical Harmonics  */
 
     // Moment basis
     SphericalHarmonics* _basis; /*! @brief: Class to compute and store current spherical harmonics basis */

@@ -291,6 +291,13 @@ void Config::SetConfigOptions() {
     AddEnumListOption( "HISTORY_OUTPUT", _nHistoryOutput, _historyOutput, ScalarOutput_Map );
     /*! @brief History output Frequency \n DESCRIPTION: Describes history output write frequency \n DEFAULT 1 \ingroup Config */
     AddUnsignedShortOption( "HISTORY_OUTPUT_FREQUENCY", _historyOutputFrequency, 1 );
+
+    // Data generator related options
+    /*! @brief Size of training data set \n DESCRIPTION: Size of training data set  \n DEFAULT 1 \ingroup Config */
+    AddUnsignedLongOption( "TRAINING_SET_SIZE", _tainingSetSize, 1 );
+    /*! @brief Data generator mode \n DESCRIPTION: Check, if data generator mode is active. If yes, no solver is called, but instead the data
+     *         generator is executed \n DEFAULT false \ingroup Config */
+    AddBoolOption( "DATA_GENERATOR_MODE", _dataGeneratorMode, false );
 }
 
 void Config::SetConfigParsing( string case_filename ) {

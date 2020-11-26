@@ -11,7 +11,9 @@
 #include "solvers/pnsolver.h"
 #include "solvers/snsolver.h"
 
-Solver::Solver( Config* settings ) : _settings( settings ) {
+Solver::Solver( Config* settings ) {
+    _settings = settings;
+
     // @TODO save parameters from settings class
 
     // build mesh and store  and store frequently used params
