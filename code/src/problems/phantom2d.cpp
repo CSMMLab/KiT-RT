@@ -24,8 +24,8 @@ VectorVector Phantom2D::SetupIC() {
 std::vector<double> Phantom2D::GetDensity( const VectorVector& cellMidPoints ) {
     std::string imageFile = "../tests/input/phantom.png";
     std::string meshFile  = _settings->GetMeshFile();
-    Matrix gsImage = createSU2MeshFromImage( imageFile, meshFile );
-    auto bounds      = _mesh->GetBounds();
+    Matrix gsImage        = createSU2MeshFromImage( imageFile, meshFile );
+    auto bounds           = _mesh->GetBounds();
 
     double xMin = bounds[0].first;
     double xMax = bounds[0].second;
@@ -46,6 +46,5 @@ std::vector<double> Phantom2D::GetDensity( const VectorVector& cellMidPoints ) {
     for( unsigned i = 0; i < _mesh->GetNumCells(); ++i ) {
         result[i] = std::clamp( interp( cellMidPoints[i][0], cellMidPoints[i][1] ), 0.0, 1.0 );
     }
-
- 
-  }
+    return result;
+}
