@@ -1,7 +1,9 @@
 /*!
- * @file io.h
- * @brief Creates required input from given config file
+ * @file: io.h
+ * @brief: Creates required input from given config file
+ * @author: J. Wolters
  */
+
 #ifndef IO_H
 #define IO_H
 
@@ -14,7 +16,7 @@ class Config;
 class Mesh;
 
 /*!
- * @brief 
+ * @brief
  * @param[in] fileName -name of the file that results shall be exported to
  * @param[in] results - results of computation
  * @param[in] fieldNames - specify different output values
@@ -29,7 +31,6 @@ void ExportVTK( const std::string fileName,
  * @brief Loads mesh from an SU2 file, returns Mesh element
  */
 Mesh* LoadSU2MeshFromFile( const Config* settings );
-
 
 /*!
  * @brief Parses arguments given when calling program from command line

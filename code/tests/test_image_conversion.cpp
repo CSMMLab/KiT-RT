@@ -13,7 +13,7 @@ TEST_CASE( "convert image data to grayscale matrix", "[image I/O]" ) {
 
     Config* config = new Config( config_file_name );    // just to init spdlog
 
-    std::string testImage = "../tests/input/phantom.png";
+    std::string testImage = "../tests/input/mini_phantom.png";
     std::string testMesh  = config->GetMeshFile();
 
     Matrix gsImage = createSU2MeshFromImage( testImage, testMesh );
