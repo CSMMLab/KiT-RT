@@ -26,7 +26,9 @@ class CSDSolverTrafoFP : public SNSolver
     double _beta; /*!  @brief  Coefficient of GFP operators (see Olbrant 2010, Appendix B)*/
 
     Matrix _xi;  /*!  @brief matrix of transport coefficients */
-
+    Vector _xi1;
+    Vector _xi2;
+    
     unsigned _FPMethod; /*!  @brief Encodes different ways of computing coefficients alpha, alpha2 & beta, _FPMethod == 1, 2 ,3 stand for methods with increasing accuracy (see Olbrant 2010, Appendix B)*/
 
     bool _RT; /*!  @brief radiotherapy application (on/off), if true use crosssections + stopping powers from database  */
