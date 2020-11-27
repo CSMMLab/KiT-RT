@@ -54,7 +54,7 @@ CSDSolverTrafoFP::CSDSolverTrafoFP( Config* settings ) : SNSolver( settings ) {
     // Heney-Greenstein parameter
     double g = 0.8;
 
-    // determine momente of Heney-Greenstein
+    // determine transport coefficients of Heney-Greenstein
     _xi1 = Vector( _nEnergies, 1.0 - g );    // paper Olbrant, Frank (11)
     _xi2 = Vector( _nEnergies, 4.0 / 3.0 - 2.0 * g + 2.0 / 3.0 * g * g );
     _xi  = Matrix( 4, _nEnergies );

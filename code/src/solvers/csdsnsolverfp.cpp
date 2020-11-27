@@ -17,9 +17,9 @@ CSDSNSolverFP::CSDSNSolverFP( Config* settings ) : SNSolver( settings ) {
     // Set angle and energies
     _angle           = Vector( _settings->GetNQuadPoints(), 0.0 );    // my
     _energies        = Vector( _nEnergies, 0.0 );                     // equidistant
-     _energyMin = 1e-4;
-     //_energyMax = 10.0;
-     _energyMax = 5.0;
+    _energyMin = 1e-4;
+    //_energyMax = 10.0;
+    _energyMax = 5.0;
     // write equidistant energy grid
 
     _dE        = ComputeTimeStep( settings->GetCFL() );
@@ -62,8 +62,6 @@ CSDSNSolverFP::CSDSNSolverFP( Config* settings ) : SNSolver( settings ) {
     double g = 0.8;
 
     // determine momente of Heney-Greenstein
-    _xi1 = Vector(_nEnergies, 1.0 - g); // paper Olbrant, Frank (11)
-    _xi2 = Vector(_nEnergies, 4.0 / 3.0 - 2.0 * g + 2.0 / 3.0 * g * g);
     _xi = Matrix(3,_nEnergies);
 
     _s = Vector( _nEnergies, 1.0 );
