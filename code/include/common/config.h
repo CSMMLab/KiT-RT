@@ -1,6 +1,6 @@
 /*!
- * @file CConfig.h
- * @brief Classes for different Options in rtsn
+ * @file config.h
+ * @brief Class to handle all options and their pre and postprocessing.
  * @author S. Schotthöfer
  *
  * Disclaimer: This class structure was copied and modifed with open source permission from SU2 v7.0.3 https://su2code.github.io/
