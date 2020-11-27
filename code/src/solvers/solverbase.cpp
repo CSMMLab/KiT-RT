@@ -11,6 +11,7 @@
 #include "solvers/csdsnsolvernotrafo.h"
 #include "solvers/csdsolvertrafofp.h"
 #include "solvers/csdsolvertrafofp2d.h"
+#include "solvers/csdsolvertrafofpsh2d.h"
 #include "solvers/mnsolver.h"
 #include "solvers/pnsolver.h"
 #include "solvers/snsolver.h"
@@ -84,6 +85,7 @@ Solver* Solver::Create( Config* settings ) {
         case CSD_SN_FOKKERPLANCK_SOLVER: return new CSDSNSolverFP( settings );
         case CSD_SN_FOKKERPLANCK_TRAFO_SOLVER: return new CSDSolverTrafoFP( settings );
         case CSD_SN_FOKKERPLANCK_TRAFO_SOLVER_2D: return new CSDSolverTrafoFP2D( settings );
+        case CSD_SN_FOKKERPLANCK_TRAFO_SH_SOLVER_2D: return new CSDSolverTrafoFPSH2D( settings );
         case PN_SOLVER: return new PNSolver( settings );
         case MN_SOLVER: return new MNSolver( settings );
         default: return new SNSolver( settings );
