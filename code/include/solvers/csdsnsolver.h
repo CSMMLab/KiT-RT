@@ -4,8 +4,6 @@
 #include "icru.h"
 #include "solvers/snsolver.h"
 
-class Physics;
-
 class CSDSNSolver : public SNSolver
 {
   private:
@@ -27,12 +25,11 @@ class CSDSNSolver : public SNSolver
     /**
      * @brief Solve functions runs main time loop
      */
-    virtual void Solve();
-    /**
-     * @brief Output solution to VTK file
-     */
-    virtual void Save() const;
-    virtual void Save( int currEnergy ) const;
+    void Solve() override;
+
+  private:
+    void PrepareVolumeOutput() override;
+    void WriteVolumeOutput( unsigned idx_pseudoTime ) override;
 };
 
 #endif    // CSDSNSOLVER_H

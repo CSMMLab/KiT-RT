@@ -14,20 +14,26 @@ class SNSolver : public Solver
     Vector _weights;          /*!  @brief quadrature weights, dim(_weights) = (_nq) */
 
   public:
-    /**
-     * @brief SNSolver constructor
+    /*! @brief SNSolver constructor
      * @param settings stores all needed information
      */
     SNSolver( Config* settings );
-    /**
-     * @brief Solve functions runs main time loop
-     */
-    void Solve() override;
-    /**
-     * @brief Output solution to VTK file
-     */
-    void Save() const override;
-    void Save( int currEnergy ) const override;
+
+  private:
+    // IO
+    void PrepareVolumeOutput() override;
+    void WriteVolumeOutput( unsigned idx_pseudoTime ) override;
+
+    // Solver
+    void FVMUpdate( unsigned idx_energy ) override;
+    void FluxUpdate() override;
+    void IterPreprocessing() override;
+    void IterPostprocessing() override;
+
+    // Helper
+    void ComputeRadFlux();
+
+    // --- Member variables ---
 };
 
 #endif    // SNSOLVER_H

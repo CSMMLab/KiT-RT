@@ -1,5 +1,5 @@
 #include "catch.hpp"
-#include "interpolation.h"
+#include "toolboxes/interpolation.h"
 
 Vector testFunction1( const Vector& x ) {
     Vector res( x.size() );

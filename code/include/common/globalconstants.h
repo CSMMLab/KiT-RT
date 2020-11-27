@@ -119,13 +119,26 @@ inline std::map<std::string, SOLVER_NAME> Solver_Map{ { "SN_SOLVER", SN_SOLVER }
                                                       { "MN_SOLVER", MN_SOLVER } };
 
 // Entropy functional
-enum ENTROPY_NAME { QUADRATIC, MAXWELL_BOLZMANN, BOSE_EINSTEIN, FERMI_DIRAC };
+enum ENTROPY_NAME { QUADRATIC, MAXWELL_BOLTZMANN, BOSE_EINSTEIN, FERMI_DIRAC };
 
 inline std::map<std::string, ENTROPY_NAME> Entropy_Map{
-    { "QUADRATIC", QUADRATIC }, { "MAXWELL_BOLZMANN", MAXWELL_BOLZMANN }, { "BOSE_EINSTEIN", BOSE_EINSTEIN }, { "FERMI_DIRAC", FERMI_DIRAC } };
+    { "QUADRATIC", QUADRATIC }, { "MAXWELL_BOLTZMANN", MAXWELL_BOLTZMANN }, { "BOSE_EINSTEIN", BOSE_EINSTEIN }, { "FERMI_DIRAC", FERMI_DIRAC } };
 
-// Otpimizer
+// Optimizer
 enum OPTIMIZER_NAME { NEWTON, ML };
 
 inline std::map<std::string, OPTIMIZER_NAME> Optimizer_Map{ { "NEWTON", NEWTON }, { "ML", ML } };
+
+// Volume output
+enum VOLUME_OUTPUT { ANALYTIC, MINIMAL, MOMENTS, DUAL_MOMENTS, DOSE };
+
+inline std::map<std::string, VOLUME_OUTPUT> VolOutput_Map{
+    { "ANALYTIC", ANALYTIC }, { "MINIMAL", MINIMAL }, { "MOMENTS", MOMENTS }, { "DUAL_MOMENTS", DUAL_MOMENTS }, { "DOSE", DOSE } };
+
+// Scalar output
+enum SCALAR_OUTPUT { ITER, MASS, RMS_FLUX, VTK_OUTPUT, CSV_OUTPUT };
+
+inline std::map<std::string, SCALAR_OUTPUT> ScalarOutput_Map{
+    { "ITER", ITER }, { "MASS", MASS }, { "RMS_FLUX", RMS_FLUX }, { "VTK_OUTPUT", VTK_OUTPUT }, { "CSV_OUTPUT", CSV_OUTPUT } };
+
 #endif    // GLOBAL_CONSTANTS_H

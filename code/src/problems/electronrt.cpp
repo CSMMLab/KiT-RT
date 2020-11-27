@@ -38,7 +38,7 @@ VectorVector ElectronRT::SetupIC() {
     return VectorVector( _mesh->GetNumCells(), Vector( _settings->GetNQuadPoints(), 1e-10 ) );
 }
 
-void ElectronRT::LoadXSH20( std::string fileSigmaS, std::string fileSigmaT ) {
+void ElectronRT::LoadXSH20( std::string /*fileSigmaS*/, std::string /*fileSigmaT*/ ) {
     // @TODO
 }
 

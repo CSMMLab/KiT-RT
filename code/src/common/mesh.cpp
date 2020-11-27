@@ -1,31 +1,34 @@
 #include "common/mesh.h"
+#include "toolboxes/errormessages.h"
 
-#include <algorithm>
 #include <mpi.h>
 #include <omp.h>
 
-#include "metis.h"
-#include "parmetis.h"
-
-#include "toolboxes/errormessages.h"
-
-#include "reconstructor.h"
+#include "toolboxes/reconstructor.h"
 
 Mesh::Mesh( std::vector<Vector> nodes,
             std::vector<std::vector<unsigned>> cells,
             std::vector<std::pair<BOUNDARY_TYPE, std::vector<unsigned>>> boundaries )
     : _dim( nodes[0].size() ), _numCells( cells.size() ), _numNodes( nodes.size() ), _numNodesPerCell( cells[0].size() ),
       _numBoundaries( boundaries.size() ), _ghostCellID( _numCells ), _nodes( nodes ), _cells( cells ), _boundaries( boundaries ) {
+    if( _dim == 2 ) {
+        _numNodesPerBoundary = 2u;
+    }
+    else {
+        ErrorMessages::Error( "Unsupported mesh dimension!", CURRENT_FUNCTION );
+    }
+
     ComputeCellAreas();
     ComputeCellMidpoints();
     ComputeConnectivity();
-    ComputePartitioning();
+    // ComputePartitioning();
     ComputeBounds();
 }
 
 Mesh::~Mesh() {}
 
 void Mesh::ComputeConnectivity() {
+
     // get MPI info
     int comm_size, comm_rank;
     MPI_Comm_size( MPI_COMM_WORLD, &comm_size );
@@ -52,20 +55,26 @@ void Mesh::ComputeConnectivity() {
         std::sort( sortedBoundaries[i].begin(), sortedBoundaries[i].end() );
     }
 
-    // determine neighbor cells and normals with MPI and OpenMP
-    //#pragma omp parallel for
+    blaze::CompressedMatrix<bool> connMat( _numCells, _numNodes );
+    for( unsigned i = mpiCellStart; i < mpiCellEnd; ++i ) {
+        for( auto j : _cells[i] ) connMat.set( i, j, true );
+    }
+
+// determine neighbor cells and normals with MPI and OpenMP
+#pragma omp parallel for
     for( unsigned i = mpiCellStart; i < mpiCellEnd; ++i ) {
         std::vector<unsigned>* cellsI = &sortedCells[i];
         for( unsigned j = 0; j < _numCells; ++j ) {
             if( i == j ) continue;
-            std::vector<unsigned>* cellsJ = &sortedCells[j];
-            std::vector<unsigned> commonElements;
-            std::set_intersection( cellsI->begin(),
-                                   cellsI->end(),
-                                   cellsJ->begin(),
-                                   cellsJ->end(),
-                                   std::back_inserter( commonElements ) );    // find common nodes of two cells
-            if( commonElements.size() == _dim ) {                             // in 2D cells are neighbors if they share two nodes
+            if( static_cast<unsigned>( blaze::dot( blaze::row( connMat, i ), blaze::row( connMat, j ) ) ) ==
+                _numNodesPerBoundary ) {    // in 2D cells are neighbors if they share two nodes std::vector<unsigned>* cellsJ = &sortedCells[j];
+                std::vector<unsigned>* cellsJ = &sortedCells[j];
+                std::vector<unsigned> commonElements;
+                std::set_intersection( cellsI->begin(),
+                                       cellsI->end(),
+                                       cellsJ->begin(),
+                                       cellsJ->end(),
+                                       std::back_inserter( commonElements ) );    // find common nodes of two cells
                 // determine unused index
                 unsigned pos0 = _numNodesPerCell * ( i - mpiCellStart );
                 unsigned pos  = pos0;
@@ -214,15 +223,16 @@ Vector Mesh::ComputeOutwardFacingNormal( const Vector& nodeA, const Vector& node
     return n;
 }
 
+/*
 void Mesh::ComputePartitioning() {
     int comm_size, comm_rank;
     MPI_Comm comm = MPI_COMM_WORLD;
     MPI_Comm_size( comm, &comm_size );
     MPI_Comm_rank( comm, &comm_rank );
-    unsigned ompNThreads = omp_get_max_threads();
+    unsigned ompNumThreads = omp_get_max_threads();
 
     // only run coloring if multiple OpenMP threads are present
-    if( ompNThreads > 1 ) {
+    if( ompNumThreads > 1 ) {
         // setup adjacency relationship of nodes
         blaze::CompressedMatrix<bool> adjMatrix( _numNodes, _numNodes );
         for( unsigned i = 0; i < _numNodes; ++i ) {
@@ -264,7 +274,7 @@ void Mesh::ComputePartitioning() {
         std::vector<int> partitions;
         int edgecut  = 0;
         int ncon     = 1;
-        int nparts   = ompNThreads;
+        int nparts   = ompNumThreads;
         real_t ubvec = static_cast<real_t>( 1.05 );    // parameter taken from SU2
 
         if( comm_size > 1 ) {    // if multiple MPI threads -> use parmetis
@@ -349,6 +359,7 @@ void Mesh::ComputePartitioning() {
         _colors.resize( _numCells, 0u );
     }
 }
+*/
 
 void Mesh::ComputeSlopes( unsigned nq, VectorVector& psiDerX, VectorVector& psiDerY, const VectorVector& psi ) const {
     for( unsigned k = 0; k < nq; ++k ) {

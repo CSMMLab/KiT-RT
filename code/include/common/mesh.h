@@ -23,6 +23,7 @@ class Mesh
     const unsigned _numBoundaries;   /*! @brief: number of boundary cells in the mesh */
     const unsigned _ghostCellID; /*! @brief: Id of the ghost cell. (we use only one ghost cell). equal to _numCells and therefore has the ID of the
                                     last cell + 1 */
+    unsigned _numNodesPerBoundary;
 
     std::vector<std::pair<double, double>> _bounds;    // ???
 
@@ -46,7 +47,8 @@ class Mesh
     void ComputeCellAreas();     /*! @brief: Computes only the areas of the mesh cells. Write to _cellAreas. */
     void ComputeCellMidpoints(); /*! @brief: Compute only the midpoints of the cells. Write to _cellMidPoints*/
     void ComputeConnectivity();  /*! @brief: Computes _cellNeighbors and _nodeNeighbors, i.e. neighborship relation in mesh*/
-    void ComputePartitioning();  /*! @brief: Computes local partitioning for openMP */
+
+    // void ComputePartitioning();  /*! @brief: Computes local partitioning for openMP */
 
     /*! @brief: Computes outward facing normal of two neighboring nodes nodeA and nodeB with common cellCellcenter.
      *          Normals are scaled with their respective edge length

@@ -1,11 +1,18 @@
+/*!
+ * \file io.cpp
+ * \brief Set of utility io functions for rtns
+ * \author  J. Kusch, S. Schotthoefer, P. Stammer,  J. Wolters, T. Xiao
+ */
+
 #include "common/io.h"
+#include "common/config.h"
+#include "common/mesh.h"
+#include "common/typedef.h"
+
 #include "toolboxes/errormessages.h"
 #include "toolboxes/textprocessingtoolbox.h"
 
-//#include <chrono>
-//#include <filesystem>
 #include <iostream>
-//#include <string>
 
 #include <mpi.h>
 #include <omp.h>
@@ -24,10 +31,8 @@
 
 #include <Python.h>
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
+#define PY_ARRAY_UNIQUE_SYMBOL KITRT_IO_ARRAY_API
 #include <numpy/arrayobject.h>
-
-#include "common/config.h"
-#include "common/mesh.h"
 
 using vtkPointsSP                 = vtkSmartPointer<vtkPoints>;
 using vtkUnstructuredGridSP       = vtkSmartPointer<vtkUnstructuredGrid>;
@@ -39,8 +44,8 @@ using vtkCellDataToPointDataSP    = vtkSmartPointer<vtkCellDataToPointData>;
 // using vtkPointDataToCellDataSP    = vtkSmartPointer<vtkPointDataToCellData>;
 
 void ExportVTK( const std::string fileName,
-                const std::vector<std::vector<std::vector<double>>>& results,
-                const std::vector<std::string> fieldNames,
+                const std::vector<std::vector<std::vector<double>>>& outputFields,
+                const std::vector<std::vector<std::string>>& outputFieldNames,
                 const Mesh* mesh ) {
     int rank;
     MPI_Comm_rank( MPI_COMM_WORLD, &rank );
@@ -98,21 +103,20 @@ void ExportVTK( const std::string fileName,
             grid->SetCells( VTK_QUAD, cellArray );
         }
 
-        for( unsigned i = 0; i < results.size(); i++ ) {
-            auto cellData = vtkDoubleArraySP::New();
-            cellData->SetName( fieldNames[i].c_str() );
-            switch( results[i].size() ) {
-                case 1:
-                    for( unsigned j = 0; j < numCells; j++ ) {
-                        cellData->InsertNextValue( results[i][0][j] );
-                    }
-                    break;
-                default:
-                    auto log = spdlog::get( "event" );
-                    ErrorMessages::Error( "Please implement output for results of size " + std::to_string( results[i].size() ) + "!",
-                                          CURRENT_FUNCTION );
+        // Write the output
+        for( unsigned idx_group = 0; idx_group < outputFields.size(); idx_group++ ) {
+
+            for( unsigned idx_field = 0; idx_field < outputFields[idx_group].size(); idx_field++ ) {    // Loop over all output fields
+
+                auto cellData = vtkDoubleArraySP::New();
+                cellData->SetName( outputFieldNames[idx_group][idx_field].c_str() );
+
+                for( unsigned idx_cell = 0; idx_cell < numCells; idx_cell++ ) {
+                    cellData->InsertNextValue( outputFields[idx_group][idx_field][idx_cell] );
+                }
+
+                grid->GetCellData()->AddArray( cellData );
             }
-            grid->GetCellData()->AddArray( cellData );
         }
 
         grid->SetPoints( pts );
@@ -129,8 +133,8 @@ void ExportVTK( const std::string fileName,
 
         writer->Write();
 
-        auto log = spdlog::get( "event" );
-        log->info( "Result successfully exported to '{0}'!", fileNameWithExt );
+        // auto log = spdlog::get( "event" );
+        // log->info( "Result successfully exported to '{0}'!", fileNameWithExt );
     }
     MPI_Barrier( MPI_COMM_WORLD );
 }
@@ -329,24 +333,35 @@ void PrintLogHeader( std::string inputFile ) {
     if( rank == 0 ) {
         auto log = spdlog::get( "event" );
 
-        log->info( "RTSN" );
-        log->info( "================================================================" );
-        log->info( "Git commit :\t{0}", GIT_HASH );
-        log->info( "Config file:\t{0}", inputFile );
-        log->info( "MPI Threads:\t{0}", nprocs );
-        log->info( "OMP Threads:\t{0}", omp_get_max_threads() );
-        log->info( "================================================================" );
+        // New design
+        log->info( "------------------------------------------------------------------------" );
+        log->info( "|    _  _____ _____     ____ _____                                     |" );
+        log->info( "|   | |/ /_ _|_   _|   |  _ \\_   _|                                    |" );
+        log->info( "|   | ' / | |  | |_____| |_) || |            Version                   |" );
+        log->info( "|   | . \\ | |  | |_____|  _ < | |             0.0.2                    |" );
+        log->info( "|   |_|\\_\\___| |_|     |_| \\_\\|_|                                      |" );
+        log->info( "|                                                                      |" );
+        log->info( "------------------------------------------------------------------------" );
+        log->info( "|    Copyright statement goes here                                     |" );
+        log->info( "------------------------------------------------------------------------" );
+        log->info( "|" );
+        log->info( "| Git commit :\t{0}", GIT_HASH );
+        log->info( "| Config file:\t{0}", inputFile );
+        log->info( "| MPI Threads:\t{0}", nprocs );
+        log->info( "| OMP Threads:\t{0}", omp_get_max_threads() );
+        log->info( "|" );
+        log->info( "-------------------------- Config File Info ----------------------------" );
+        log->info( "|" );
         // print file content while omitting comments
         std::ifstream ifs( inputFile );
         if( ifs.is_open() ) {
             std::string line;
             while( !ifs.eof() ) {
                 std::getline( ifs, line );
-                if( line[0] != '%' ) log->info( " {0}", line );
+                if( line[0] != '%' ) log->info( "| {0}", line );
             }
         }
-        log->info( "================================================================" );
-        log->info( "" );
+        // log->info( "------------------------------------------------------------------------" );
     }
     MPI_Barrier( MPI_COMM_WORLD );
 }
@@ -362,7 +377,7 @@ Matrix createSU2MeshFromImage( std::string imageName, std::string SU2Filename ) 
         ErrorMessages::Error( "Output directory '" + outDir.string() + "' does not exists!", CURRENT_FUNCTION );
     }
 
-    std::string pyPath = RTSN_PYTHON_PATH;
+    std::string pyPath = KITRT_PYTHON_PATH;
 
     if( !Py_IsInitialized() ) {
         Py_InitializeEx( 0 );

@@ -1,6 +1,6 @@
 #include "catch.hpp"
 #include "common/globalconstants.h"
-#include "physics.h"
+#include "toolboxes/physics.h"
 
 TEST_CASE( "stopping power computation is equal to ESTAR database", "[physics]" ) {
     /* not working yet

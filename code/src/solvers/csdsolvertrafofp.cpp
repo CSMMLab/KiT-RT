@@ -98,8 +98,8 @@ CSDSolverTrafoFP::CSDSolverTrafoFP( Config* settings ) : SNSolver( settings ) {
         */
     }
 
-    _density = std::vector<double> ( _nCells, 1.0 );
-    //exit(EXIT_SUCCESS);
+    _density = std::vector<double>( _nCells, 1.0 );
+    // exit(EXIT_SUCCESS);
 }
 
 void CSDSolverTrafoFP::Solve() {
@@ -258,19 +258,23 @@ void CSDSolverTrafoFP::Solve() {
 
 void CSDSolverTrafoFP::Save() const {
     std::vector<std::string> fieldNames{ "dose", "normalized dose" };
+    std::vector<std::vector<std::string>> fieldNamesWrapper{ fieldNames };
+
     std::vector<std::vector<double>> dose( 1, _dose );
     std::vector<std::vector<double>> normalizedDose( 1, _dose );
     double maxDose = *std::max_element( _dose.begin(), _dose.end() );
     for( unsigned i = 0; i < _dose.size(); ++i ) normalizedDose[0][i] /= maxDose;
     std::vector<std::vector<std::vector<double>>> results{ dose, normalizedDose };
-    ExportVTK( _settings->GetOutputFile(), results, fieldNames, _mesh );
+    ExportVTK( _settings->GetOutputFile(), results, fieldNamesWrapper, _mesh );
 }
 
 void CSDSolverTrafoFP::Save( int currEnergy ) const {
     std::vector<std::string> fieldNames{ "flux" };
+    std::vector<std::vector<std::string>> fieldNamesWrapper{ fieldNames };
+
     std::vector<std::vector<double>> scalarField( 1, _solverOutput );
     std::vector<std::vector<std::vector<double>>> results{ scalarField };
-    ExportVTK( _settings->GetOutputFile() + "_" + std::to_string( currEnergy ), results, fieldNames, _mesh );
+    ExportVTK( _settings->GetOutputFile() + "_" + std::to_string( currEnergy ), results, fieldNamesWrapper, _mesh );
 }
 
 void CSDSolverTrafoFP::GenerateEnergyGrid( bool refinement ) {

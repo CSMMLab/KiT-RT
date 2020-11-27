@@ -11,7 +11,14 @@
 
 #include "quadratures/qdummy.h"
 
-QDummy::QDummy( unsigned order ) : QuadratureBase( order ) {
+QDummy::QDummy( Config* settings ) : QuadratureBase( settings ) {
+    SetName();
+    SetNq();
+    SetPointsAndWeights();
+    SetConnectivity();
+}
+
+QDummy::QDummy( unsigned quadOrder ) : QuadratureBase( quadOrder ) {
     SetName();
     SetNq();
     SetPointsAndWeights();

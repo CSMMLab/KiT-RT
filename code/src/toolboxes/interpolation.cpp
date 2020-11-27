@@ -1,4 +1,4 @@
-#include "interpolation.h"
+#include "toolboxes/interpolation.h"
 #include "toolboxes/errormessages.h"
 #include <blaze/math/lapack/posv.h>
 

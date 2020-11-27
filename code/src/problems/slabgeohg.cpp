@@ -1,7 +1,7 @@
 #include "problems/slabgeohg.h"
 #include "common/config.h"
 #include "common/mesh.h"
-#include "physics.h"
+#include "toolboxes/physics.h"
 
 // ---- SlabGeoHG ----
 
@@ -20,8 +20,8 @@ std::vector<VectorVector> SlabGeoHG::GetExternalSource( const Vector& energies )
 VectorVector SlabGeoHG::SetupIC() {
     VectorVector psi( _mesh->GetNumCells(), Vector( _settings->GetNQuadPoints(), 0.0 ) );
     auto boundaryCells = _mesh->GetBoundaryTypes();
-    auto cellMids = _mesh->GetCellMidPoints();
-    double t      = 3.2e-4;    // pseudo time for gaussian smoothing
+    auto cellMids      = _mesh->GetCellMidPoints();
+    double t           = 3.2e-4;    // pseudo time for gaussian smoothing
 
     return psi;
 }

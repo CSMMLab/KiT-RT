@@ -20,7 +20,7 @@ class SNSolverMPI : public SNSolver
     /**
      * @brief Output solution to VTK file
      */
-    virtual void Save() const;
+    virtual void PrintVolumeOutput() const;
 };
 
 #endif    // SNSOLVERMPI_H
