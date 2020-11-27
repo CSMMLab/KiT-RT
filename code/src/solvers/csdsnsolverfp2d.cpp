@@ -160,41 +160,33 @@ void CSDSNSolverFP2D::Solve() {
     Vector fluxNew( _nCells, 0.0 );
     Vector fluxOld( _nCells, 0.0 );
 
-    /*
-    unsigned order = _quadrature->GetOrder();
-    auto psiStruct = Matrix( order, 2 * order, 0.0 );
+    auto psiStruct = std::vector<Matrix>( _nCells, Matrix( order, 2 * order, 0.0 ) );
+    auto psi1 = psiStruct;
+    auto psi2 = psiStruct;
+
+    Vector coeff(order, 0.0);
     double A = 0.0;
     double A1 = 0.0;
     double A2 = 0.0;
     double A3 = 0.0;
     double A4Plus = 0.0;
     double A4Minus = 0.0;
-
     double DPlus = 0.0;
     double DMinus = 0.0;
-    for( unsigned k = 0; k < 2 * order; ++k ) {
+    for( unsigned k = 0; k < order; ++k ) {
         DMinus = DPlus;
-        DPlus  = DMinus - 2 * _mu[k] * _weights[k];
+        DPlus  = DMinus - 2 * _mu[k] * _wp[k];
 
-        if (k > 0 && k < 2 * order - 1) {
+        if (k > 0 && k < order - 1) {
             A4Plus = (sqrt(1.0 - _mu[k+1] * _mu[k+1]) - sqrt(1.0 - _mu[k] * _mu[k])) / (_mu[k+1] - _mu[k]);
             A4Minus = (sqrt(1.0 - _mu[k] * _mu[k]) - sqrt(1.0 - _mu[k-1] * _mu[k-1])) / (_mu[k] - _mu[k-1]);
             A3 = (DPlus * A4Plus - DMinus * A4Minus) / _wp[k];
-            A2 = 2.0 * (1.0 - pow(_mu[k], 2)) + A3 * sqrt(1.0 - pow(_mu[k], 2));
-            A1 = pow(3.1415926, 2) * A2 / 2.0 / _nq / (1.0 - cos(3.1415926 / _nq));
-            A = A1 / (1.0 - pow(_mu[k], 2));
-        }
-
-        if( k > 0 ) {
-            _R( k - 1, k - 1 ) = A / ( _phi[k] - _phi[k - 1] ) / _wa[k];
-            _R( k, k ) = A / ( _phi[k] - _phi[k - 1] ) / _wa[k];
-        }
-        if( k < _nq - 1 ) {
-            _R( k + 1, k - 1 ) = A / ( _phi[k + 1] - _phi[k] ) / _wa[k];
-            _R( k, k - 1 ) -= A / ( _phi[k + 1] - _phi[k] ) / _wa[k];
+            A2 = 2.0 * (1.0 - _mu[k] * _mu[k]) + A3 * sqrt(1.0 - _mu[k] * _mu[k]);
+            A1 = pow(M_PI, 2) * A2 / order / (1.0 - cos(2.0 * M_PI / _nq));
+            A = A1 / (1.0 - _mu[k] * _mu[k]);
+            coeff[k] = A;
         }
     }
-    */
 
     int rank;
     MPI_Comm_rank( MPI_COMM_WORLD, &rank );
@@ -219,7 +211,7 @@ void CSDSNSolverFP2D::Solve() {
         if( densityMin > _density[j] ) densityMin = _density[j];
     }
 
-    VectorVector psi1 = _sol;
+    //VectorVector psi1 = _sol;
 
     // cross sections do not need to be transformed to ETilde energy grid since e.g. TildeSigmaT(ETilde) = SigmaT(E(ETilde))
     
@@ -245,11 +237,13 @@ void CSDSNSolverFP2D::Solve() {
 // loop over all spatial cells
 // scattering step
 //#pragma omp parallel for
-        //for( unsigned j = 0; j < _nCells; ++j ) {
-        //    if( _boundaryCells[j] == BOUNDARY_TYPE::DIRICHLET ) continue;
-        //    psi1[j] = blaze::solve( _IL, _sol[j] );
-        //    psi1[j] = _alpha * _L * psi1[j];
-        //}
+        for( unsigned j = 0; j < _nCells; ++j ) {
+            if( _boundaryCells[j] == BOUNDARY_TYPE::DIRICHLET ) continue;
+            //psi1[j] = blaze::solve( _IL, _sol[j] );
+            //psi1[j] = _alpha * _L * psi1[j];
+
+            psi1[j] = blaze::solve( _L, psiStruct[j] );
+        }
         std::cout<<"point 1"<<std::endl;
 // advection step
         for( unsigned j = 0; j < _nCells; ++j ) {
@@ -270,6 +264,15 @@ void CSDSNSolverFP2D::Solve() {
                 //psiNew[j][i] = _sol[j][i] - _dE * psiNew[j][i] + _dE * psi1[j][i]/ ( _density[j] * _s[n + 1] ) +
                 //        ( _s[n] / _s[n + 1] - 1 ) * _sol[j][i];
                 psiNew[j][i] = _sol[j][i] - _dE * psiNew[j][i] + ( _s[n] / _s[n + 1] - 1 ) * _sol[j][i];
+
+                // fokker-planck
+                for( unsigned jj = 0; jj < order; ++jj ) {
+                    for( unsigned ii = 0; ii < 2 * order; ++ii ) {
+                        psiStruct[j](jj, ii) = _sol[j][jj * ( 2 * order ) + ii];
+                    }
+                }
+
+
             }
         }
         std::cout<<"point 2"<<std::endl;
