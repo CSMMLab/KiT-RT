@@ -1,10 +1,6 @@
 #include "common/mesh.h"
-#include "toolboxes/errormessages.h"
 
-#include <mpi.h>
-#include <omp.h>
-
-#include "toolboxes/reconstructor.h"
+#include <chrono>
 
 Mesh::Mesh( std::vector<Vector> nodes,
             std::vector<std::vector<unsigned>> cells,
@@ -223,7 +219,6 @@ Vector Mesh::ComputeOutwardFacingNormal( const Vector& nodeA, const Vector& node
     return n;
 }
 
-/*
 void Mesh::ComputePartitioning() {
     int comm_size, comm_rank;
     MPI_Comm comm = MPI_COMM_WORLD;
@@ -359,7 +354,6 @@ void Mesh::ComputePartitioning() {
         _colors.resize( _numCells, 0u );
     }
 }
-*/
 
 void Mesh::ComputeSlopes( unsigned nq, VectorVector& psiDerX, VectorVector& psiDerY, const VectorVector& psi ) const {
     for( unsigned k = 0; k < nq; ++k ) {
