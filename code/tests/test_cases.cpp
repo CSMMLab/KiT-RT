@@ -43,9 +43,11 @@ TEST_CASE( "checkerboard_SN", "[validation_tests]" ) {
 
     double eps = 1e-3;
     REQUIRE( test.size() == reference.size() );
+    bool errorWithinBounds = true;
     for( unsigned i = 0; i < test.size(); ++i ) {
-        REQUIRE( std::fabs( test[i] - reference[i] ) < eps );
+        if( std::fabs( test[i] - reference[i] ) > eps ) errorWithinBounds = false;
     }
+    REQUIRE( errorWithinBounds );
 }
 
 TEST_CASE( "checkerboard_PN", "[validation_tests]" ) {
@@ -61,9 +63,11 @@ TEST_CASE( "checkerboard_PN", "[validation_tests]" ) {
 
     double eps = 1e-3;
     REQUIRE( test.size() == reference.size() );
+    bool errorWithinBounds = true;
     for( unsigned i = 0; i < test.size(); ++i ) {
-        REQUIRE( std::fabs( test[i] - reference[i] ) < eps );
+        if( std::fabs( test[i] - reference[i] ) > eps ) errorWithinBounds = false;
     }
+    REQUIRE( errorWithinBounds );
 }
 
 TEST_CASE( "checkerboard_MN", "[validation_tests]" ) {
@@ -79,9 +83,11 @@ TEST_CASE( "checkerboard_MN", "[validation_tests]" ) {
 
     double eps = 1e-3;
     REQUIRE( test.size() == reference.size() );
+    bool errorWithinBounds = true;
     for( unsigned i = 0; i < test.size(); ++i ) {
-        REQUIRE( std::fabs( test[i] - reference[i] ) < eps );
+        if( std::fabs( test[i] - reference[i] ) > eps ) errorWithinBounds = false;
     }
+    REQUIRE( errorWithinBounds );
 }
 
 TEST_CASE( "linesource_SN", "[validation_tests]" ) {
@@ -97,9 +103,11 @@ TEST_CASE( "linesource_SN", "[validation_tests]" ) {
 
     double eps = 1e-3;
     REQUIRE( test.size() == reference.size() );
+    bool errorWithinBounds = true;
     for( unsigned i = 0; i < test.size(); ++i ) {
-        REQUIRE( std::fabs( test[i] - reference[i] ) < eps );
+        if( std::fabs( test[i] - reference[i] ) > eps ) errorWithinBounds = false;
     }
+    REQUIRE( errorWithinBounds );
 }
 
 TEST_CASE( "linesource_PN", "[validation_tests]" ) {
@@ -116,9 +124,11 @@ TEST_CASE( "linesource_PN", "[validation_tests]" ) {
     double eps = 1e-3;
 
     REQUIRE( test.size() == reference.size() );
+    bool errorWithinBounds = true;
     for( unsigned i = 0; i < test.size(); ++i ) {
-        REQUIRE( std::fabs( test[i] - reference[i] ) < eps );
+        if( std::fabs( test[i] - reference[i] ) > eps ) errorWithinBounds = false;
     }
+    REQUIRE( errorWithinBounds );
 }
 
 TEST_CASE( "linesource_MN", "[validation_tests]" ) {
@@ -137,9 +147,11 @@ TEST_CASE( "linesource_MN", "[validation_tests]" ) {
         double eps = 1e-3;
 
         REQUIRE( test.size() == reference.size() );
+        bool errorWithinBounds = true;
         for( unsigned i = 0; i < test.size(); ++i ) {
-            REQUIRE( std::fabs( test[i] - reference[i] ) < eps );
+            if( std::fabs( test[i] - reference[i] ) > eps ) errorWithinBounds = false;
         }
+        REQUIRE( errorWithinBounds );
     }
 
     SECTION( "Maxwell Boltzmann Entropy" ) {
@@ -155,9 +167,11 @@ TEST_CASE( "linesource_MN", "[validation_tests]" ) {
 
         double eps = 1e-3;
         REQUIRE( test.size() == reference.size() );
+        bool errorWithinBounds = true;
         for( unsigned i = 0; i < test.size(); ++i ) {
-            REQUIRE( std::fabs( test[i] - reference[i] ) < eps );
+            if( std::fabs( test[i] - reference[i] ) > eps ) errorWithinBounds = false;
         }
+        REQUIRE( errorWithinBounds );
     }
 }
 
@@ -173,7 +187,6 @@ void tokenize( std::string const& str, const char delim, std::vector<std::string
 }
 
 TEST_CASE( "screen_output", "[output]" ) {
-
     spdlog::drop_all();    // Make sure to write in own logging file
 
     std::string config_file_name       = std::string( TESTS_PATH ) + "input/validate_logger.cfg";
@@ -198,7 +211,6 @@ TEST_CASE( "screen_output", "[output]" ) {
     std::ifstream historyLoggerStream( historyLogger );
 
     std::string line, lineRef;
-    bool lineValid;
     const char delimScreen = '|';
     const char delimHist   = ',';
 
@@ -213,22 +225,15 @@ TEST_CASE( "screen_output", "[output]" ) {
         tokenize( line, delimScreen, out );
         tokenize( lineRef, delimScreen, outRef );
 
-        if( out.size() != outRef.size() ) std::cout << lineRef << "\n" << line << "\n";
-
         REQUIRE( out.size() == outRef.size() );    // Sanity check
 
+        bool lineValid = true;
         for( unsigned idx_token = 1; idx_token < out.size(); idx_token++ ) {    // Skip date  ==> start from 1
-            lineValid = outRef[idx_token].compare( out[idx_token] ) == 0;
-            if( !lineValid ) {
-                std::cout << lineRef << "\n" << line << "\n";
-            }
-            REQUIRE( lineValid );
+            if( outRef[idx_token].compare( out[idx_token] ) != 0 ) lineValid = false;
         }
+        REQUIRE( lineValid );
     }
     bool eqLen = screenLoggerReferenceStream.eof() && screenLoggerStream.eof();
-    if( !eqLen ) {
-        std::cout << "Files of unequal length!\n";
-    }
     REQUIRE( eqLen );    // Files must be of same length
 
     // --- History Logger
@@ -241,20 +246,14 @@ TEST_CASE( "screen_output", "[output]" ) {
         tokenize( line, delimHist, out );
         tokenize( lineRef, delimHist, outRef );
 
-        if( out.size() != outRef.size() ) std::cout << lineRef << "\n" << line << "\n";
         REQUIRE( out.size() == outRef.size() );    // sanity check
 
+        bool lineValid = true;
         for( unsigned idx_token = 1; idx_token < out.size(); idx_token++ ) {    // Skip date  ==> start from 1
-            lineValid = outRef[idx_token].compare( out[idx_token] ) == 0;
-            if( !lineValid ) {
-                std::cout << lineRef << "\n" << line << "\n";
-            }
-            REQUIRE( lineValid );
+            if( outRef[idx_token].compare( out[idx_token] ) != 0 ) lineValid = false;
         }
+        REQUIRE( lineValid );
     }
     eqLen = historyLoggerReferenceStream.eof() && historyLoggerStream.eof();
-    if( !eqLen ) {
-        std::cout << "Files of unequal length!\n";
-    }
     REQUIRE( eqLen );    // Files must be of same length
 }
