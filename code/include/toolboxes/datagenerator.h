@@ -56,12 +56,12 @@ class nnDataGenerator
     VectorVector _moments;      /*! @brief: Moment Vector pre-computed at each quadrature point: dim= _nq x _nTotalEntries */
 
     NewtonOptimizer* _optimizer; /*! @brief: Class to solve minimal entropy problem */
+
     // Helper functions
     /*! @brief : computes the global index of the moment corresponding to basis function (l,k)
      *  @param : degree l, it must hold: 0 <= l <=_nq
      *  @param : order k, it must hold: -l <=k <= l
-     *  @returns : global index
-     */
+     *  @returns : global index */
     int GlobalIndex( int l, int k ) const;
     void ComputeMoments(); /*! @brief : Pre-Compute Moments at all quadrature points. */
 
