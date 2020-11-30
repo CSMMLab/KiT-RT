@@ -6,13 +6,13 @@
 #include "toolboxes/errormessages.h"
 
 NewtonOptimizer::NewtonOptimizer( Config* settings ) : OptimizerBase( settings ) {
-    _quadrature       = QuadratureBase::CreateQuadrature( settings->GetQuadName(), settings->GetQuadOrder() );
+    _quadrature       = QuadratureBase::CreateQuadrature( settings );
     _nq               = _quadrature->GetNq();
     _weights          = _quadrature->GetWeights();
     _quadPointsSphere = _quadrature->GetPointsSphere();
     _maxIterations    = settings->GetNewtonIter();
     _alpha            = settings->GetNewtonStepSize();
-    _maxLineSearches  = settings->GetMaxLineSearches();
+    _maxLineSearches  = settings->GetNewtonMaxLineSearches();
     _epsilon          = settings->GetNewtonOptimizerEpsilon();
 }
 
@@ -62,7 +62,24 @@ void NewtonOptimizer::ComputeHessian( Vector& alpha, VectorVector& moments, Matr
     }
 }
 
-void NewtonOptimizer::Solve( Vector& lambda, Vector& sol, VectorVector& moments ) {
+void NewtonOptimizer::SolveMultiCell( VectorVector& lambda, VectorVector& sol, VectorVector& moments ) {
+
+    unsigned nCells = lambda.size();
+
+    // if we  have quadratic entropy, then alpha = u;
+    if( _settings->GetEntropyName() == QUADRATIC && _settings->GetNewtonFastMode() ) {
+        for( unsigned idx_cell = 0; idx_cell < nCells; idx_cell++ ) {
+            lambda[idx_cell] = sol[idx_cell];
+        }
+        return;
+    }
+
+    for( unsigned idx_cell = 0; idx_cell < nCells; idx_cell++ ) {
+        Solve( lambda[idx_cell], sol[idx_cell], moments );
+    }
+}
+
+void NewtonOptimizer::Solve( Vector& lambda, Vector& sol, VectorVector& moments, unsigned idx_cell ) {
 
     /* solve the problem argmin ( <eta(alpha*m)>-alpha*u))
      * where alpha = Lagrange multiplier
@@ -141,7 +158,7 @@ void NewtonOptimizer::Solve( Vector& lambda, Vector& sol, VectorVector& moments 
                 return;
             }
             else if( ++lineSearchCounter > _maxLineSearches ) {
-                ErrorMessages::Error( "Newton needed too many refinement steps!", CURRENT_FUNCTION );
+                ErrorMessages::Error( "Newton needed too many refinement steps!  at cell " + std::to_string( idx_cell ), CURRENT_FUNCTION );
             }
         }
         lambda = lambdaNew;
@@ -150,5 +167,7 @@ void NewtonOptimizer::Solve( Vector& lambda, Vector& sol, VectorVector& moments 
             return;
         }
     }
-    ErrorMessages::Error( "Newton did not converge!", CURRENT_FUNCTION );
+    ErrorMessages::Error( "Newton did not converge! Norm of gradient is: " + std::to_string( norm( dlambdaNew ) ) + " at cell " +
+                              std::to_string( idx_cell ),
+                          CURRENT_FUNCTION );
 }

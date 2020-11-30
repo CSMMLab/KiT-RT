@@ -39,9 +39,8 @@ int main( int argc, char** argv ) {
 
     // Run solver and export
     solver->Solve();
-    solver->Save();
+    solver->PrintVolumeOutput();
 
-    //  if( Py_IsInitialized() ) Py_Finalize();
     MPI_Finalize();
     return EXIT_SUCCESS;
 }

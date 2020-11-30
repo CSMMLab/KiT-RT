@@ -3,9 +3,9 @@
 #include "common/mesh.h"
 
 // ---- Checkerboard Sn ----
-//Constructor for Ckeckerboard case with Sn
+// Constructor for Ckeckerboard case with Sn
 Checkerboard_SN::Checkerboard_SN( Config* settings, Mesh* mesh ) : ProblemBase( settings, mesh ) {
-    _physics      = nullptr;
+    _physics = nullptr;
 
     // Initialise crosssections to 1
     _scatteringXS = Vector( _mesh->GetNumCells(), 1.0 );
@@ -67,11 +67,11 @@ bool Checkerboard_SN::isSource( const Vector& pos ) const {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // ---- Checkerboard Pn ----
-//Constructor for checkerboard case with Pn
+// Constructor for checkerboard case with Pn
 Checkerboard_PN::Checkerboard_PN( Config* settings, Mesh* mesh ) : ProblemBase( settings, mesh ) {
-    _physics      = nullptr;
+    _physics = nullptr;
 
-    //Initialise crosssections = 1 (scattering)
+    // Initialise crosssections = 1 (scattering)
     _scatteringXS = Vector( _mesh->GetNumCells(), 1.0 );
     _totalXS      = Vector( _mesh->GetNumCells(), 1.0 );
 
@@ -95,7 +95,7 @@ std::vector<VectorVector> Checkerboard_PN::GetExternalSource( const Vector& ener
     VectorVector Q( _mesh->GetNumCells(), Vector( 1u, 0.0 ) );
     auto cellMids = _mesh->GetCellMidPoints();
     for( unsigned j = 0; j < cellMids.size(); ++j ) {
-        if( isSource( cellMids[j] ) ) Q[j] = std::sqrt( 4 * M_PI );    // isotropic source
+        if( isSource( cellMids[j] ) ) Q[j] = 1.0 / std::sqrt( 4 * M_PI );    // isotropic source
     }
     return std::vector<VectorVector>( 1u, Q );
 }

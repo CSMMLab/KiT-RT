@@ -1,6 +1,12 @@
 #include "quadratures/qmontecarlo.h"
 
-QMonteCarlo::QMonteCarlo( unsigned order ) : QuadratureBase( order ) {
+QMonteCarlo::QMonteCarlo( Config* settings ) : QuadratureBase( settings ) {
+    SetName();
+    SetNq();
+    SetPointsAndWeights();
+    SetConnectivity();
+}
+QMonteCarlo::QMonteCarlo( unsigned quadOrder ) : QuadratureBase( quadOrder ) {
     SetName();
     SetNq();
     SetPointsAndWeights();

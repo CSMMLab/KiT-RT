@@ -2,7 +2,7 @@
 #include "common/config.h"
 #include "common/mesh.h"
 
-//Constructor: Legacy code, physics class is no longer used
+// Constructor: Legacy code, physics class is no longer used
 ElectronRT::ElectronRT( Config* settings, Mesh* mesh ) : ProblemBase( settings, mesh ) {
     _physics = new Physics( settings->GetHydrogenFile(), settings->GetOxygenFile(), "../input/stopping_power.txt" );
 }
@@ -45,9 +45,9 @@ VectorVector ElectronRT::SetupIC() {
     return VectorVector( _mesh->GetNumCells(), Vector( _settings->GetNQuadPoints(), 1e-10 ) );
 }
 
-void ElectronRT::LoadXSH20( std::string fileSigmaS, std::string fileSigmaT ) {
-    // @TODO 
-    // Specified in subclasses 
+void ElectronRT::LoadXSH20( std::string /*fileSigmaS*/, std::string /*fileSigmaT*/ ) {
+    // @TODO
+    // Specified in subclasses
 }
 
 

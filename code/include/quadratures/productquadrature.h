@@ -12,7 +12,9 @@ class ProductQuadrature : public QuadratureBase
     bool CheckOrder();
 
   public:
+    ProductQuadrature( Config* settings );
     ProductQuadrature( unsigned order );
+
     virtual ~ProductQuadrature() {}
 
     inline void SetName() override { _name = "Product quadrature"; }

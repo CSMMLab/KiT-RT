@@ -1,9 +1,3 @@
-/*!
- * @file mesh.h
- * @brief Class for mesh description and partitioning
- * @author J. Wolters
- */
-
 #ifndef MESH_H
 #define MESH_H
 
@@ -11,7 +5,15 @@
 #include "common/globalconstants.h"
 #include "common/typedef.h"
 
+#include <algorithm>
+#include <mpi.h>
+#include <omp.h>
 #include <vector>
+
+#include "metis.h"
+#include "parmetis.h"
+#include "toolboxes/errormessages.h"
+#include "toolboxes/reconstructor.h"
 
 class Mesh
 {
@@ -23,7 +25,7 @@ class Mesh
     const unsigned _numBoundaries;   /*! @brief: number of boundary cells in the mesh */
     const unsigned _ghostCellID; /*! @brief: Id of the ghost cell. (we use only one ghost cell). equal to _numCells and therefore has the ID of the
                                     last cell + 1 */
-
+    unsigned _numNodesPerBoundary;
     std::vector<std::pair<double, double>> _bounds;    // ???
 
     std::vector<Vector> _nodes;                /*! @brief: nodes in the mesh. dimension:_numNodes<_dim> */

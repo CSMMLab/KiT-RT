@@ -1,6 +1,6 @@
 #include "catch.hpp"
 #include "common/globalconstants.h"
-#include "physics.h"
+#include "toolboxes/physics.h"
 
 TEST_CASE( "stopping power computation is equal to ESTAR database", "[physics]" ) {
     /* not working yet
@@ -50,7 +50,6 @@ TEST_CASE( "checking angular integral of scattering cross sections to be unity",
         for( unsigned a = 1; a < angles.size(); ++a ) {
             integral_sXS[e] += 0.5 * ( angles[a] - angles[a - 1] ) * ( sXS[e][a] + sXS[e][a - 1] );
         }
-        std::cout << integral_sXS[e] << " " << tXS[e] << std::endl;
         REQUIRE( std::fabs( integral_sXS[e] - tXS[e] ) / std::fabs( tXS[e] ) < 0.05 );
     }
     */

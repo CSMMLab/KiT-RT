@@ -1,13 +1,9 @@
 /*!
- * \file optionstructure.h
- * \brief Classes for different Options in KiT-RT
- * \author S. Schotthöfer
+ * \file OptionStructure.h
+ * \brief Classes for different Options in rtsn
+ * \author S. Schotthoefer
  *
  * Disclaimer: This class structure was copied and modifed with open source permission from SU2 v7.0.3 https://su2code.github.io/
- *
- * Info: This is the backend for the option framework. Ideally, you should not change anything here.
- *       The only exception is, if you want to add a new option, i.e. an option of a new datatype.
- *       Orient yourself on the structure of similar option types, i.e. int option is similar to double option.
  */
 
 #ifndef OPTION_STRUCTURE_H
@@ -40,49 +36,6 @@ class OptionBase
     std::string BadValue( std::vector<std::string>& option_value, std::string type_id, std::string option_name );
 };
 
-template <class Tenum> class OptionEnum : public OptionBase
-{
-
-    std::map<std::string, Tenum> _map; /*! @brief: Map <String name of the option in cfg file, enum field name of cpp framework> */
-    Tenum& _field;                     /*! @brief: Reference to the enum fieldname */
-    Tenum _def;                        /*! @brief: Default value */
-    std::string _name;                 /*! @brief: string identifier for the option */
-
-  public:
-    OptionEnum( std::string option_field_name, const std::map<std::string, Tenum> m, Tenum& option_field, Tenum default_value )
-        : _field( option_field ) {
-        this->_map  = m;
-        this->_def  = default_value;
-        this->_name = option_field_name;
-    }
-
-    ~OptionEnum() override{};
-
-    std::string SetValue( std::vector<std::string> option_value ) override {
-        OptionBase::SetValue( option_value );
-        // Check if there is more than one string
-        std::string out = OptionCheckMultipleValues( option_value, "enum", this->_name );
-        if( out.compare( "" ) != 0 ) {
-            return out;
-        }
-        // Check to see if the enum value is in the map
-        if( this->_map.find( option_value[0] ) == _map.end() ) {
-            std::string str;
-            str.append( this->_name );
-            str.append( ": invalid option value " );
-            str.append( option_value[0] );
-            str.append( ". Check current RTSN options in config_template.cfg." );
-            return str;
-        }
-        // If it is there, set the option value
-        Tenum val    = this->_map[option_value[0]];
-        this->_field = val;
-        return "";
-    }
-
-    void SetDefault() override { this->_field = this->_def; }
-};
-
 class OptionDouble : public OptionBase
 {
     double& _field;    /*! @brief: Reference to the double field value */
@@ -101,7 +54,7 @@ class OptionDouble : public OptionBase
 
 class OptionString : public OptionBase
 {
-    std::string& _field; /*! @brief: Reference to the int field value */
+    std::string& _field; /*! @brief: Reference to the string field value */
     std::string _def;    /*! @brief: Default value */
     std::string _name;   /*! @brief: string identifier for the option */
 
@@ -209,6 +162,101 @@ class OptionStringList : public OptionBase
     std::string SetValue( std::vector<std::string> option_value ) override;
 
     void SetDefault() override;
+};
+
+// Template classes (TODO: Find a way to split code to .cpp)
+
+template <class Tenum> class OptionEnum : public OptionBase
+{
+
+    std::map<std::string, Tenum> _map; /*! @brief: Map <String name of the option in cfg file, enum field name of cpp framework> */
+    Tenum& _field;                     /*! @brief: Reference to the enum fieldname */
+    Tenum _def;                        /*! @brief: Default value */
+    std::string _name;                 /*! @brief: string identifier for the option */
+
+  public:
+    OptionEnum( std::string option_field_name, const std::map<std::string, Tenum> m, Tenum& option_field, Tenum default_value )
+        : _field( option_field ) {
+        this->_map  = m;
+        this->_def  = default_value;
+        this->_name = option_field_name;
+    }
+
+    ~OptionEnum() override {}
+
+    std::string SetValue( std::vector<std::string> option_value ) override {
+        OptionBase::SetValue( option_value );
+        // Check if there is more than one string
+        std::string out = OptionCheckMultipleValues( option_value, "enum", this->_name );
+        if( out.compare( "" ) != 0 ) {
+            return out;
+        }
+        // Check to see if the enum value is in the map
+        if( this->_map.find( option_value[0] ) == _map.end() ) {
+            std::string str;
+            str.append( this->_name );
+            str.append( ": invalid option value " );
+            str.append( option_value[0] );
+            str.append( ". Check current RTSN options in config_template.cfg." );
+            return str;
+        }
+        // If it is there, set the option value
+        Tenum val    = this->_map[option_value[0]];
+        this->_field = val;
+        return "";
+    }
+
+    void SetDefault() override { this->_field = this->_def; }
+};
+
+template <class Tenum> class OptionEnumList : public OptionBase
+{
+
+    std::map<std::string, Tenum> _map; /*! @brief: Map <String name of the option in cfg file, enum field name of cpp framework> */
+    std::vector<Tenum>& _field;        /*! @brief: Reference to the enum list fieldname. No default value */
+    std::string _name;                 /*! @brief: string identifier for the option */
+    unsigned short& _size;             /*! @brief: Size of enum list */
+
+  public:
+    OptionEnumList( std::string option_field_name, const std::map<std::string, Tenum> m, std::vector<Tenum>& option_field, unsigned short& list_size )
+        : _field( option_field ), _size( list_size ) {
+        this->_map  = m;
+        this->_name = option_field_name;
+    }
+
+    ~OptionEnumList() override {}
+
+    std::string SetValue( std::vector<std::string> option_value ) override {
+        OptionBase::SetValue( option_value );
+        if( option_value.size() == 1 && option_value[0].compare( "NONE" ) == 0 ) {
+            this->_size = 0;
+            return "";
+        }
+        // size is the length of the option list
+        this->_size = option_value.size();
+        std::vector<Tenum> enums( _size );
+        // unsigned short* enums = new unsigned short[_size];
+        for( int i = 0; i < this->_size; i++ ) {
+            // Check to see if the enum value is in the map
+            if( this->_map.find( option_value[i] ) == _map.end() ) {
+                std::string str;
+                str.append( this->_name );
+                str.append( ": invalid option value " );
+                str.append( option_value[i] );
+                str.append( ". Check current RTSN options in config_template.cfg." );
+                return str;
+            }
+            // If it is there, set the option value
+            enums[i] = this->_map[option_value[i]];
+        }
+        this->_field = enums;
+        return "";
+    }
+
+    void SetDefault() override {
+        // No default to set
+        _size = 0;
+    }
 };
 
 #endif    // OPTION_STRUCTURE_H

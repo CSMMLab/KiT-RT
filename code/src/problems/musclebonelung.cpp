@@ -21,13 +21,13 @@ VectorVector MuscleBoneLung::SetupIC() {
     return psi;
 }
 
-std::vector<double>  MuscleBoneLung::GetDensity( const VectorVector& cellMidPoints ) { 
-    std::vector<double> densities ( 167, 1.04 ); //muscle layer
-    std::vector<double> bone( 167, 1.85  ); // bone layer
-    std::vector<double> lung ( 665, 0.3 ); // lung layer (maybe this is just the lung tissue and after that there should be air?)
+std::vector<double> MuscleBoneLung::GetDensity( const VectorVector& cellMidPoints ) {
+    std::vector<double> densities( 167, 1.04 );    // muscle layer
+    std::vector<double> bone( 167, 1.85 );
+    std::vector<double> lung( 665, 0.3 );    // maybe this is just the lung tissue and after that there should be air?
 
     //Concatenate layers
-    densities.insert(densities.end(),bone.begin(),bone.end());
-    densities.insert(densities.end(),lung.begin(),lung.end());
-    
-    return densities; }
+    densities.insert( densities.end(), bone.begin(), bone.end() );
+    densities.insert( densities.end(), lung.begin(), lung.end() );
+    return densities;
+}

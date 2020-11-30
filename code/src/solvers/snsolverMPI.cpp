@@ -67,15 +67,17 @@ void SNSolverMPI::Solve() {
     }*/
 }
 
-void SNSolverMPI::Save() const {
+void SNSolverMPI::PrintVolumeOutput() const {
     std::vector<std::string> fieldNames{ "flux" };
+    std::vector<std::vector<std::string>> fieldNamesWrapper{ fieldNames };
+
     std::vector<double> flux( _nCells, 0.0 );
     for( unsigned i = 0; i < _nCells; ++i ) {
         flux[i] = dot( _sol[i], _weights );
     }
     std::vector<std::vector<double>> scalarField( 1, flux );
     std::vector<std::vector<std::vector<double>>> results{ scalarField };
-    ExportVTK( _settings->GetOutputFile(), results, fieldNames, _mesh );
+    ExportVTK( _settings->GetOutputFile(), results, fieldNamesWrapper, _mesh );
     auto log = spdlog::get( "event" );
     log->info( "Result successfully exported to '{0}'!", _settings->GetOutputFile() );
 }

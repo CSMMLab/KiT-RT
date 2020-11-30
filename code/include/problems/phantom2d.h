@@ -8,7 +8,7 @@
 #include "common/config.h"
 #include "common/io.h"
 #include "common/mesh.h"
-#include "interpolation.h"
+#include "toolboxes/interpolation.h"
 
 class Phantom2D : public ElectronRT
 {

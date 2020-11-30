@@ -1,5 +1,5 @@
 #include "catch.hpp"
-#include "interpolation.h"
+#include "toolboxes/interpolation.h"
 
 Vector testFunction1( const Vector& x ) {
     Vector res( x.size() );
@@ -34,9 +34,11 @@ TEST_CASE( "interpolation tests", "[interpolation]" ) {
         Interpolation interp( x, y, Interpolation::linear );
         Vector res = interp( xq );
         REQUIRE( res.size() == ref.size() );
+        bool errorWithinBounds = true;
         for( unsigned i = 0; i < res.size(); ++i ) {
-            REQUIRE( std::fabs( res[i] - ref[i] ) < 1e-6 );
+            if( std::fabs( res[i] - ref[i] ) > 1e-6 ) errorWithinBounds = false;
         }
+        REQUIRE( errorWithinBounds );
     }
 
     SECTION( "loglinear" ) {
@@ -47,9 +49,11 @@ TEST_CASE( "interpolation tests", "[interpolation]" ) {
         Interpolation interp( x, y, Interpolation::loglinear );
         Vector res = interp( xq );
         REQUIRE( res.size() == ref.size() );
+        bool errorWithinBounds = true;
         for( unsigned i = 0; i < res.size(); ++i ) {
-            REQUIRE( std::fabs( res[i] - ref[i] ) < 1e-6 );
+            if( std::fabs( res[i] - ref[i] ) > 1e-6 ) errorWithinBounds = false;
         }
+        REQUIRE( errorWithinBounds );
     }
 
     SECTION( "cubic" ) {
@@ -60,8 +64,10 @@ TEST_CASE( "interpolation tests", "[interpolation]" ) {
         Interpolation interp( x, y, Interpolation::cubic );
         Vector res = interp( xq );
         REQUIRE( res.size() == ref.size() );
+        bool errorWithinBounds = true;
         for( unsigned i = 0; i < res.size(); ++i ) {
-            REQUIRE( std::fabs( res[i] - ref[i] ) < 1e-6 );
+            if( std::fabs( res[i] - ref[i] ) > 1e-6 ) errorWithinBounds = false;
         }
+        REQUIRE( errorWithinBounds );
     }
 }

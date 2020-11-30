@@ -15,8 +15,8 @@ CSDSNSolverFP::CSDSNSolverFP( Config* settings ) : SNSolver( settings ) {
     _dose = std::vector<double>( _settings->GetNCells(), 0.0 );
 
     // Set angle and energies
-    _angle           = Vector( _settings->GetNQuadPoints(), 0.0 );    // my
-    _energies        = Vector( _nEnergies, 0.0 );                     // equidistant
+    _angle     = Vector( _settings->GetNQuadPoints(), 0.0 );    // my
+    _energies  = Vector( _nEnergies, 0.0 );                     // equidistant
     _energyMin = 1e-4;
     //_energyMax = 10.0;
     _energyMax = 5.0;
@@ -24,7 +24,7 @@ CSDSNSolverFP::CSDSNSolverFP( Config* settings ) : SNSolver( settings ) {
 
     _dE        = ComputeTimeStep( settings->GetCFL() );
     _nEnergies = unsigned( ( _energyMax - _energyMin ) / _dE );
-    std::cout<<"nEnergies = "<<_nEnergies<<std::endl;
+    std::cout << "nEnergies = " << _nEnergies << std::endl;
     _energies.resize( _nEnergies );
     for( unsigned n = 0; n < _nEnergies; ++n ) {
         _energies[n] = _energyMin + ( _energyMax - _energyMin ) / ( _nEnergies - 1 ) * n;
@@ -62,39 +62,17 @@ CSDSNSolverFP::CSDSNSolverFP( Config* settings ) : SNSolver( settings ) {
     double g = 0.8;
 
     // determine momente of Heney-Greenstein
-    _xi = Matrix(3,_nEnergies);
+    _xi = Matrix( 3, _nEnergies );
 
     _s = Vector( _nEnergies, 1.0 );
 
     _RT = true;
 
     // read in medical data if radiation therapy option selected
-    if(_RT){
-        //_nEnergies = 1000;
-        //_energies.resize(_nEnergies);
-        //_xi = Matrix(6,_nEnergies);
-        //double minExp = -4.0;
-        //double  maxExp = 1.5;
-        //for( int n = 0; n<_nEnergies; ++n){
-        //    double exponent = minExp + ( maxExp - minExp ) / ( _nEnergies - 1 ) * n;
-        //    _energies[n] = pow(10.0,exponent);
-        //}
-        ICRU database( abs(mu), _energies );
+    if( _RT ) {
+        ICRU database( abs( mu ), _energies );
         database.GetTransportCoefficients( _xi );
         database.GetStoppingPower( _s );
-/*
-        // print coefficients
-        std::cout<<"E = [";
-        for( unsigned n = 0; n<_nEnergies; ++n){
-            std::cout<<_energies[n]<<"; ";
-        }
-        std::cout<<"];"<<std::endl;
-        std::cout<<"xi = [";
-        for( unsigned n = 0; n<_nEnergies; ++n){
-            std::cout<<_xi(0,n)<<" "<<_xi(1,n)<<" "<<_xi(2,n)<<" "<<_xi(3,n)<<" "<<_xi(4,n)<<" "<<_xi(5,n)<<"; ";
-        }
-        std::cout<<"];"<<std::endl;*/
-
     }
 
     // recompute scattering kernel. TODO: add this to kernel function
@@ -105,30 +83,26 @@ CSDSNSolverFP::CSDSNSolverFP( Config* settings ) : SNSolver( settings ) {
         _scatteringKernel( p, p ) = _weights[p];
     }
 
-
     _density = std::vector<double>( _nCells, 1.0 );
-    //exit(EXIT_SUCCESS);
+    // exit(EXIT_SUCCESS);
 }
 
 void CSDSNSolverFP::Solve() {
-    std::cout << "Solve Fokker-Planck with Heney-Greenstein kernel using "<<_nEnergies<<" energies " << std::endl;
-
+    std::cout << "Solve Fokker-Planck with Heney-Greenstein kernel using " << _nEnergies << " energies " << std::endl;
 
     auto log      = spdlog::get( "event" );
     auto cellMids = _mesh->GetCellMidPoints();
 
-    _density = _problem->GetDensity(cellMids);
+    _density = _problem->GetDensity( cellMids );
 
     // setup IC and incoming BC on left
     // auto cellMids = _settings->GetCellMidPoints();
     _sol = std::vector<Vector>( _nCells, Vector( _nq, 0.0 ) );
     for( unsigned k = 0; k < _nq; ++k ) {
-        if( _quadPoints[k][0] > 0 && !_RT) _sol[0][k] = 1e5 * exp( -10.0 * pow( 1.0 - _quadPoints[k][0], 2 ) );
+        if( _quadPoints[k][0] > 0 && !_RT ) _sol[0][k] = 1e5 * exp( -10.0 * pow( 1.0 - _quadPoints[k][0], 2 ) );
     }
     _boundaryCells[0]           = BOUNDARY_TYPE::DIRICHLET;
     _boundaryCells[_nCells - 1] = BOUNDARY_TYPE::DIRICHLET;
-
-
 
     Matrix identity( _nq, _nq, 0.0 );
     for( unsigned k = 0; k < _nq; ++k ) identity( k, k ) = 1.0;
@@ -170,30 +144,30 @@ void CSDSNSolverFP::Solve() {
     for( unsigned n = 0; n < _nEnergies - 1; ++n ) {
         _dE = fabs( _energies[n + 1] - _energies[n] );    // is the sign correct here?
         // set alpha and beta
-        _alpha = _xi(1,_nEnergies-n-1) / 2.0 + _xi(2,_nEnergies-n-1) / 8.0;
-        _beta  = _xi(2,_nEnergies-n-1) / 8.0 / _xi(1,_nEnergies-n-1);
+        _alpha = _xi( 1, _nEnergies - n - 1 ) / 2.0 + _xi( 2, _nEnergies - n - 1 ) / 8.0;
+        _beta  = _xi( 2, _nEnergies - n - 1 ) / 8.0 / _xi( 1, _nEnergies - n - 1 );
 
         _IL = identity - _beta * _L;
 
         // write BC
-        if(_RT){
+        if( _RT ) {
             for( unsigned k = 0; k < _nq; ++k ) {
                 if( _quadPoints[k][0] > 0 ) {
-                        _sol[0][k] = 1e5 * exp( -200.0 * pow( 1.0 - _quadPoints[k][0], 2 ) ) * exp(-50*pow(_energyMax-_energies[n],2));
+                    _sol[0][k] = 1e5 * exp( -200.0 * pow( 1.0 - _quadPoints[k][0], 2 ) ) * exp( -50 * pow( _energyMax - _energies[n], 2 ) );
                 }
             }
         }
 
-// loop over all spatial cells
-// scattering step
-//#pragma omp parallel for
+        // loop over all spatial cells
+        // scattering step
+        //#pragma omp parallel for
         for( unsigned j = 0; j < _nCells; ++j ) {
             if( _boundaryCells[j] == BOUNDARY_TYPE::DIRICHLET ) continue;
             psi1[j] = blaze::solve( _IL, _sol[j] );
             psi1[j] = _alpha * _L * psi1[j];
         }
-// advection step
-//#pragma omp parallel for
+        // advection step
+        //#pragma omp parallel for
         for( unsigned j = 0; j < _nCells; ++j ) {
             if( _boundaryCells[j] == BOUNDARY_TYPE::DIRICHLET ) continue;
             // loop over all ordinates
@@ -206,11 +180,11 @@ void CSDSNSolverFP::Solve() {
                         continue;    // adiabatic wall, add nothing
                     else
                         psiNew[j][i] += _g->Flux( _quadPoints[i], _sol[j][i], _sol[_neighbors[j][idx_neighbor]][i], _normals[j][idx_neighbor] ) /
-                                        _areas[j] / ( _density[j] * _s[n + 1] );;
+                                        _areas[j] / ( _density[j] * _s[n + 1] );
                 }
                 // time update angular flux with numerical flux and total scattering cross section
-                psiNew[j][i] = _sol[j][i] - _dE * psiNew[j][i] + _dE * psi1[j][i]/ ( _density[j] * _s[n + 1] ) +
-                        ( _s[n] / _s[n + 1] - 1 ) * _sol[j][i];
+                psiNew[j][i] =
+                    _sol[j][i] - _dE * psiNew[j][i] + _dE * psi1[j][i] / ( _density[j] * _s[n + 1] ) + ( _s[n] / _s[n + 1] - 1 ) * _sol[j][i];
             }
         }
         for( unsigned j = 0; j < _nCells; ++j ) {
@@ -218,7 +192,7 @@ void CSDSNSolverFP::Solve() {
             _sol[j] = psiNew[j];
         }
 
-//#pragma omp parallel for
+        //#pragma omp parallel for
         for( unsigned j = 0; j < _nCells; ++j ) {
             fluxNew[j] = 0.0;
             for( unsigned k = 0; k < _nq; ++k ) {
@@ -239,17 +213,21 @@ void CSDSNSolverFP::Solve() {
 
 void CSDSNSolverFP::Save() const {
     std::vector<std::string> fieldNames{ "dose", "normalized dose" };
+    std::vector<std::vector<std::string>> fieldNamesWrapper{ fieldNames };
+
     std::vector<std::vector<double>> dose( 1, _dose );
     std::vector<std::vector<double>> normalizedDose( 1, _dose );
     double maxDose = *std::max_element( _dose.begin(), _dose.end() );
     for( unsigned i = 0; i < _dose.size(); ++i ) normalizedDose[0][i] /= maxDose;
     std::vector<std::vector<std::vector<double>>> results{ dose, normalizedDose };
-    ExportVTK( _settings->GetOutputFile(), results, fieldNames, _mesh );
+    ExportVTK( _settings->GetOutputFile(), results, fieldNamesWrapper, _mesh );
 }
 
 void CSDSNSolverFP::Save( int currEnergy ) const {
     std::vector<std::string> fieldNames{ "flux" };
+    std::vector<std::vector<std::string>> fieldNamesWrapper{ fieldNames };
+
     std::vector<std::vector<double>> scalarField( 1, _solverOutput );
     std::vector<std::vector<std::vector<double>>> results{ scalarField };
-    ExportVTK( _settings->GetOutputFile() + "_" + std::to_string( currEnergy ), results, fieldNames, _mesh );
+    ExportVTK( _settings->GetOutputFile() + "_" + std::to_string( currEnergy ), results, fieldNamesWrapper, _mesh );
 }

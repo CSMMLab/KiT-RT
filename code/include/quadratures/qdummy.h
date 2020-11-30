@@ -17,7 +17,8 @@
 class QDummy : public QuadratureBase
 {
   public:
-    QDummy( unsigned order );
+    QDummy( Config* settings );
+    QDummy( unsigned quadOrder );
     virtual ~QDummy() {}
 
     void SetName() override;

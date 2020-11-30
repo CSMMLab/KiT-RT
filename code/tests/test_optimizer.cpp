@@ -7,8 +7,7 @@
 #include "solvers/sphericalharmonics.h"
 
 TEST_CASE( "Test the Newton Optimizer", "[optimizers]" ) {
-
-    char filename[] = "../tests/input/unit_newtonOptimizer.cfg";
+    std::string filename = std::string( TESTS_PATH ) + "input/unit_optimizerNewton.cfg";
 
     // Load Settings from File
     Config* config = new Config( filename );
@@ -17,7 +16,7 @@ TEST_CASE( "Test the Newton Optimizer", "[optimizers]" ) {
     SphericalHarmonics basis( config->GetMaxMomentDegree() );
 
     // Get Quadrature
-    QuadratureBase* quad = QuadratureBase::CreateQuadrature( config->GetQuadName(), config->GetQuadOrder() );
+    QuadratureBase* quad = QuadratureBase::CreateQuadrature( config );
 
     // Get Optimizer (Newton)
     OptimizerBase* optimizer = OptimizerBase::Create( config );
