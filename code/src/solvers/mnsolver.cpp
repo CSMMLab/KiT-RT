@@ -1,22 +1,28 @@
 #include "solvers/mnsolver.h"
+#include "common/config.h"
+#include "common/io.h"
+#include "common/mesh.h"
 #include "entropies/entropybase.h"
 #include "fluxes/numericalflux.h"
-#include "io.h"
 #include "optimizers/optimizerbase.h"
+#include "problems/problembase.h"
 #include "quadratures/quadraturebase.h"
-#include "settings/config.h"
 #include "solvers/sphericalharmonics.h"
+#include "toolboxes/errormessages.h"
 #include "toolboxes/textprocessingtoolbox.h"
 
+// externals
+#include "spdlog/spdlog.h"
 #include <mpi.h>
 
+#include <fstream>
 //#include <chrono>
 
 MNSolver::MNSolver( Config* settings ) : Solver( settings ) {
 
     // Is this good (fast) code using a constructor list?
-    _nMaxMomentsOrder = settings->GetMaxMomentDegree();
-    _nTotalEntries    = GlobalIndex( _nMaxMomentsOrder, int( _nMaxMomentsOrder ) ) + 1;
+    _LMaxDegree    = settings->GetMaxMomentDegree();
+    _nTotalEntries = GlobalIndex( _LMaxDegree, int( _LMaxDegree ) ) + 1;
 
     // build quadrature object and store quadrature points and weights
     _quadPoints       = _quadrature->GetPoints();
@@ -25,19 +31,9 @@ MNSolver::MNSolver( Config* settings ) : Solver( settings ) {
     _quadPointsSphere = _quadrature->GetPointsSphere();
     _settings->SetNQuadPoints( _nq );
 
-    // transform sigmaT and sigmaS in sigmaA.
-    _sigmaA = VectorVector( _nEnergies, Vector( _nCells, 0 ) );    // Get rid of this extra vektor!
-
-    for( unsigned n = 0; n < _nEnergies; n++ ) {
-        for( unsigned j = 0; j < _nCells; j++ ) {
-            _sigmaA[n][j] = 0;    //_sigmaT[n][j] - _sigmaS[n][j];
-            _sigmaS[n][j] = 1;
-        }
-    }
-
-    // Initialize Scatter Matrix
-    _scatterMatDiag    = Vector( _nTotalEntries, 1.0 );
-    _scatterMatDiag[0] = 0.0;    // First entry is zero by construction.
+    // Initialize Scatter Matrix --
+    _scatterMatDiag = Vector( _nTotalEntries, 0.0 );
+    ComputeScatterMatrix();
 
     // Initialize Entropy
     _entropy = EntropyBase::Create( _settings );
@@ -49,16 +45,28 @@ MNSolver::MNSolver( Config* settings ) : Solver( settings ) {
     _alpha = VectorVector( _nCells, Vector( _nTotalEntries, 0.0 ) );
 
     // Initialize and Pre-Compute Moments at quadrature points
-    _basis = new SphericalHarmonics( _nMaxMomentsOrder );
+    _basis = new SphericalHarmonics( _LMaxDegree );
 
     _moments = VectorVector( _nq, Vector( _nTotalEntries, 0.0 ) );
     ComputeMoments();
+
+    // Solver output
+    PrepareVolumeOutput();
 }
 
 MNSolver::~MNSolver() {
     delete _entropy;
     delete _optimizer;
     delete _basis;
+}
+
+void MNSolver::ComputeScatterMatrix() {
+
+    // --- Isotropic ---
+    _scatterMatDiag[0] = -1.0;
+    for( unsigned idx_diag = 1; idx_diag < _nTotalEntries; idx_diag++ ) {
+        _scatterMatDiag[idx_diag] = 0.0;
+    }
 }
 
 int MNSolver::GlobalIndex( int l, int k ) const {
@@ -101,105 +109,201 @@ Vector MNSolver::ConstructFlux( unsigned idx_cell ) {
             entropyFlux += _g->Flux( _quadPoints[idx_quad], entropyL, entropyR, _normals[idx_cell][idx_neigh] );
         }
         flux += _moments[idx_quad] * ( _weights[idx_quad] * entropyFlux );
+
+        // ------- Relizablity Reconstruction Step ----
     }
     return flux;
 }
 
-void MNSolver::Solve() {
-
-    int rank;
-    MPI_Comm_rank( MPI_COMM_WORLD, &rank );
-
-    auto log = spdlog::get( "event" );
-
-    // angular flux at next time step (maybe store angular flux at all time steps, since time becomes energy?)
-    VectorVector psiNew = _sol;
-    double dFlux        = 1e10;
-    Vector fluxNew( _nCells, 0.0 );
-    Vector fluxOld( _nCells, 0.0 );
-
-    double mass1 = 0;
-    for( unsigned i = 0; i < _nCells; ++i ) {
-        _solverOutput[i] = _sol[i][0];
-        mass1 += _sol[i][0] * _areas[i];
+void MNSolver::ComputeRealizableSolution( unsigned idx_cell ) {
+    double entropyReconstruction = 0.0;
+    _sol[idx_cell]               = 0;
+    for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
+        // Make entropyReconstruction a member vector, s.t. it does not have to be re-evaluated in ConstructFlux
+        entropyReconstruction = _entropy->EntropyPrimeDual( blaze::dot( _alpha[idx_cell], _moments[idx_quad] ) );
+        _sol[idx_cell] += _moments[idx_quad] * ( _weights[idx_quad] * entropyReconstruction );
     }
+}
 
-    dFlux   = blaze::l2Norm( fluxNew - fluxOld );
-    fluxOld = fluxNew;
+void MNSolver::IterPreprocessing() {
 
-    Save( -1 );
+    // ------- Reconstruction Step ----------------
 
-    if( rank == 0 ) log->info( "{:10}   {:10}", "t", "dFlux" );
-    if( rank == 0 ) log->info( "{:03.8f}   {:01.5e} {:01.5e}", -1.0, dFlux, mass1 );
+    _optimizer->SolveMultiCell( _alpha, _sol, _moments );
 
-    // Time measurement
-    // auto start = chrono::steady_clock::now();
-    // auto end   = chrono::steady_clock::now();
+    // ------- Relizablity Reconstruction Step ----
+    for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
+        ComputeRealizableSolution( idx_cell );
+    }
+}
 
-    // Loop over energies (pseudo-time of continuous slowing down approach)
+void MNSolver::IterPostprocessing() {
+    // --- Update Solution ---
+    _sol = _solNew;
 
-    for( unsigned idx_energy = 0; idx_energy < _nEnergies; idx_energy++ ) {
+    // --- Compute Flux for solution and Screen Output ---
+    ComputeRadFlux();
+}
 
-        // Loop over the grid cells
-        for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
+void MNSolver::ComputeRadFlux() {
+    double firstMomentScaleFactor = sqrt( 4 * M_PI );
+    for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
+        _fluxNew[idx_cell] = _sol[idx_cell][0] * firstMomentScaleFactor;
+    }
+}
 
-            // ------- Reconstruction Step -------
+void MNSolver::FluxUpdate() {
+    // Loop over the grid cells
+    for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
+        // Dirichlet Boundaries stay
+        if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::DIRICHLET ) continue;
+        _solNew[idx_cell] = ConstructFlux( idx_cell );
+    }
+}
 
-            // _alpha[idx_cell] = _sol[idx_cell];
-            _optimizer->Solve( _alpha[idx_cell], _sol[idx_cell], _moments );
+void MNSolver::FVMUpdate( unsigned idx_energy ) {
+    // Loop over the grid cells
+    for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
+        // Dirichlet Boundaries stay
+        if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::DIRICHLET ) continue;
 
-            // ------- Flux Computation Step ---------
+        for( unsigned idx_system = 0; idx_system < _nTotalEntries; idx_system++ ) {
 
-            // Dirichlet Boundaries are finished now
-            if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::DIRICHLET ) continue;
+            _solNew[idx_cell][idx_system] = _sol[idx_cell][idx_system] -
+                                            ( _dE / _areas[idx_cell] ) * _solNew[idx_cell][idx_system] /* cell averaged flux */
+                                            - _dE * _sol[idx_cell][idx_system] *
+                                                  ( _sigmaT[idx_energy][idx_cell]                                    /* absorbtion influence */
+                                                    + _sigmaS[idx_energy][idx_cell] * _scatterMatDiag[idx_system] ); /* scattering influence */
+        }
 
-            psiNew[idx_cell] = ConstructFlux( idx_cell );
+        _solNew[idx_cell][0] += _dE * _Q[0][idx_cell][0];
+    }
+}
 
-            // ------ FVM Step ------
+void MNSolver::PrepareVolumeOutput() {
+    unsigned nGroups = (unsigned)_settings->GetNVolumeOutput();
 
-            // NEED TO VECTORIZE
-            for( unsigned idx_system = 0; idx_system < _nTotalEntries; idx_system++ ) {
+    _outputFieldNames.resize( nGroups );
+    _outputFields.resize( nGroups );
 
-                psiNew[idx_cell][idx_system] = _sol[idx_cell][idx_system] -
-                                               ( _dE / _areas[idx_cell] ) * psiNew[idx_cell][idx_system] /* cell averaged flux */
-                                               - _dE * _sol[idx_cell][idx_system] *
-                                                     ( _sigmaA[idx_energy][idx_cell]                                    /* absorbtion influence */
-                                                       + _sigmaS[idx_energy][idx_cell] * _scatterMatDiag[idx_system] ); /* scattering influence */
+    // Prepare all OutputGroups ==> Specified in option VOLUME_OUTPUT
+    for( unsigned idx_group = 0; idx_group < nGroups; idx_group++ ) {
+        // Prepare all Output Fields per group
+
+        // Different procedure, depending on the Group...
+        switch( _settings->GetVolumeOutput()[idx_group] ) {
+            case MINIMAL:
+                // Currently only one entry ==> rad flux
+                _outputFields[idx_group].resize( 1 );
+                _outputFieldNames[idx_group].resize( 1 );
+
+                _outputFields[idx_group][0].resize( _nCells );
+                _outputFieldNames[idx_group][0] = "radiation flux density";
+                break;
+
+            case MOMENTS:
+                // As many entries as there are moments in the system
+                _outputFields[idx_group].resize( _nTotalEntries );
+                _outputFieldNames[idx_group].resize( _nTotalEntries );
+
+                for( int idx_l = 0; idx_l <= (int)_LMaxDegree; idx_l++ ) {
+                    for( int idx_k = -idx_l; idx_k <= idx_l; idx_k++ ) {
+                        _outputFields[idx_group][GlobalIndex( idx_l, idx_k )].resize( _nCells );
+
+                        _outputFieldNames[idx_group][GlobalIndex( idx_l, idx_k )] =
+                            std::string( "u_" + std::to_string( idx_l ) + "^" + std::to_string( idx_k ) );
+                    }
+                }
+                break;
+
+            case DUAL_MOMENTS:
+                // As many entries as there are moments in the system
+                _outputFields[idx_group].resize( _nTotalEntries );
+                _outputFieldNames[idx_group].resize( _nTotalEntries );
+
+                for( int idx_l = 0; idx_l <= (int)_LMaxDegree; idx_l++ ) {
+                    for( int idx_k = -idx_l; idx_k <= idx_l; idx_k++ ) {
+                        _outputFields[idx_group][GlobalIndex( idx_l, idx_k )].resize( _nCells );
+
+                        _outputFieldNames[idx_group][GlobalIndex( idx_l, idx_k )] =
+                            std::string( "alpha_" + std::to_string( idx_l ) + "^" + std::to_string( idx_k ) );
+                    }
+                }
+                break;
+
+            case ANALYTIC:
+                // one entry per cell
+                _outputFields[idx_group].resize( 1 );
+                _outputFieldNames[idx_group].resize( 1 );
+                _outputFields[idx_group][0].resize( _nCells );
+                _outputFieldNames[idx_group][0] = std::string( "analytic radiation flux density" );
+                break;
+
+            default: ErrorMessages::Error( "Volume Output Group not defined for MN Solver!", CURRENT_FUNCTION ); break;
+        }
+    }
+}
+
+void MNSolver::WriteVolumeOutput( unsigned idx_pseudoTime ) {
+    unsigned nGroups = (unsigned)_settings->GetNVolumeOutput();
+
+    // Check if volume output fields are written to file this iteration
+    if( ( _settings->GetVolumeOutputFrequency() != 0 && idx_pseudoTime % (unsigned)_settings->GetVolumeOutputFrequency() == 0 ) ||
+        ( idx_pseudoTime == _nEnergies - 1 ) /* need sol at last iteration */ ) {
+
+        for( unsigned idx_group = 0; idx_group < nGroups; idx_group++ ) {
+            switch( _settings->GetVolumeOutput()[idx_group] ) {
+                case MINIMAL:
+                    for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
+                        _outputFields[idx_group][0][idx_cell] = _fluxNew[idx_cell];
+                    }
+                    break;
+                case MOMENTS:
+                    for( unsigned idx_sys = 0; idx_sys < _nTotalEntries; idx_sys++ ) {
+                        for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
+                            _outputFields[idx_group][idx_sys][idx_cell] = _sol[idx_cell][idx_sys];
+                        }
+                    }
+                    break;
+                case DUAL_MOMENTS:
+                    for( unsigned idx_sys = 0; idx_sys < _nTotalEntries; idx_sys++ ) {
+                        for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
+                            _outputFields[idx_group][idx_sys][idx_cell] = _alpha[idx_cell][idx_sys];
+                        }
+                    }
+                    break;
+                case ANALYTIC:
+                    // Compute total "mass" of the system ==> to check conservation properties
+                    for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
+
+                        double time = idx_pseudoTime * _dE;
+
+                        _outputFields[idx_group][0][idx_cell] = _problem->GetAnalyticalSolution(
+                            _mesh->GetCellMidPoints()[idx_cell][0], _mesh->GetCellMidPoints()[idx_cell][1], time, _sigmaS[idx_pseudoTime][idx_cell] );
+                    }
+                    break;
+
+                default: ErrorMessages::Error( "Volume Output Group not defined for MN Solver!", CURRENT_FUNCTION ); break;
             }
         }
-        _sol = psiNew;
+    }
+}
 
-        // pseudo time iteration output
-        double mass = 0.0;
-        for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
-            fluxNew[idx_cell]       = _sol[idx_cell][0];    // zeroth moment is raditation densitiy we are interested in
-            _solverOutput[idx_cell] = _sol[idx_cell][0];
-            mass += _sol[idx_cell][0] * _areas[idx_cell];
+void MNSolver::WriteNNTrainingData( unsigned idx_pseudoTime ) {
+    std::string filename = "trainNN.csv";
+    std::ofstream myfile;
+    myfile.open( filename, std::ofstream::app );
+
+    for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
+        myfile << 0 << ", " << _nTotalEntries << "," << idx_pseudoTime;
+        for( unsigned idx_sys = 0; idx_sys < _nTotalEntries; idx_sys++ ) {
+            myfile << "," << _sol[idx_cell][idx_sys];
         }
-
-        dFlux   = blaze::l2Norm( fluxNew - fluxOld );
-        fluxOld = fluxNew;
-        if( rank == 0 ) log->info( "{:03.8f}   {:01.5e} {:01.5e}", _energies[idx_energy], dFlux, mass );
-        Save( idx_energy );
+        myfile << " \n" << 1 << ", " << _nTotalEntries << "," << idx_pseudoTime;
+        for( unsigned idx_sys = 0; idx_sys < _nTotalEntries; idx_sys++ ) {
+            myfile << "," << _alpha[idx_cell][idx_sys];
+        }
+        myfile << "\n";
     }
-}
-
-void MNSolver::Save() const {
-    std::vector<std::string> fieldNames{ "flux" };
-    std::vector<double> flux;
-    flux.resize( _nCells );
-
-    for( unsigned i = 0; i < _nCells; ++i ) {
-        flux[i] = _sol[i][0];
-    }
-    std::vector<std::vector<double>> scalarField( 1, flux );
-    std::vector<std::vector<std::vector<double>>> results{ scalarField };
-    ExportVTK( _settings->GetOutputFile(), results, fieldNames, _mesh );
-}
-
-void MNSolver::Save( int currEnergy ) const {
-    std::vector<std::string> fieldNames{ "flux" };
-    std::vector<std::vector<double>> scalarField( 1, _solverOutput );
-    std::vector<std::vector<std::vector<double>>> results{ scalarField };
-    ExportVTK( _settings->GetOutputFile() + "_" + std::to_string( currEnergy ), results, fieldNames, _mesh );
+    myfile.close();
 }

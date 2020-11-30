@@ -1,6 +1,6 @@
 #include "fluxes/numericalflux.h"
+#include "common/globalconstants.h"
 #include "fluxes/upwindflux.h"
-#include "settings/globalconstants.h"
 
 NumericalFlux::NumericalFlux() {}
 

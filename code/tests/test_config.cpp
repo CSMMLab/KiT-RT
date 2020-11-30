@@ -1,9 +1,8 @@
 #include "catch.hpp"
-#include "settings/config.h"
+#include "common/config.h"
 
 TEST_CASE( "Read in Config Template" ) {
-
-    char filename[] = "../tests/input/configTest.cfg";
+    std::string filename = std::string( TESTS_PATH ) + "input/unit_tests/common/unit_config.cfg";
 
     // Load Settings from File
     Config* config = new Config( filename );

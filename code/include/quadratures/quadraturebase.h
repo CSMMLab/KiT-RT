@@ -1,13 +1,16 @@
 #ifndef QUADRATURE_H
 #define QUADRATURE_H
 
-#include "settings/globalconstants.h"
-#include "settings/typedef.h"
+#include "common/globalconstants.h"
+#include "common/typedef.h"
+
+class Config;
 
 class QuadratureBase
 {
   public:
-    QuadratureBase( unsigned order );
+    QuadratureBase( Config* settings );
+    QuadratureBase( unsigned order );    // Only for productquadrature... refactor this!
     virtual ~QuadratureBase() {}
 
     // Aux functions
@@ -32,10 +35,15 @@ class QuadratureBase
 
     // Quadrature Hub
     /*! @brief Creates a quadrature rule with a given name and a given order.
-     *  @param: std::string name: Name of the quadrature rule
-     *  @param: unsigned order: Order of the quadrature rule
+     *  @param: Config* settings: Settings to handle quadrature options
      *  @returns Quadrature* quadrature: returns pointer to instance of the given derived quadrature class */
-    static QuadratureBase* CreateQuadrature( QUAD_NAME name, unsigned order );
+    static QuadratureBase* CreateQuadrature( Config* settings );
+
+    /*! @brief Creates a quadrature rule with a given name and a given order.
+     *  @param: name: name of quadrature as enum
+     *  @param: quadOrder: order of quadrature
+     *  @returns Quadrature* quadrature: returns pointer to instance of the given derived quadrature class */
+    static QuadratureBase* CreateQuadrature( QUAD_NAME name, unsigned quadOrder );
 
     // Getter
     inline std::string GetName() const { return _name; }      /*! @returns std::string _name:  name of the quadrature */
@@ -61,7 +69,7 @@ class QuadratureBase
     virtual void SetPointsAndWeights() = 0;
 
     // Member variables
-    // TODO Config* _settings;           /*! @brief pointer to settings class that manages the solver */
+    Config* _settings;           /*! @brief pointer to settings class that manages the solver */
     std::string _name;           /*! @brief name of the quadrature */
     unsigned _order;             /*! @brief order of the quadrature */
     unsigned _nq;                /*! @brief number of gridpoints of the quadrature */

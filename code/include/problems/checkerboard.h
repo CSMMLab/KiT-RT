@@ -3,25 +3,55 @@
 
 #include "problembase.h"
 
-class Checkerboard : public ProblemBase
+class Checkerboard_SN : public ProblemBase
 {
   private:
-    Vector _scatteringXS;
-    Vector _totalXS;
+    Vector _scatteringXS;     /*! @brief Vector of scattering crosssections */
+    Vector _totalXS;      /*! @brief Vector of total crosssections */
 
-    Checkerboard() = delete;
+    Checkerboard_SN() = delete;
 
-    bool isAbsorption( const Vector& pos ) const;
-    bool isSource( const Vector& pos ) const;
+    bool isAbsorption( const Vector& pos ) const; /*! @return True if pos is in absorption region, False otherwise */
+    bool isSource( const Vector& pos ) const; /*! @return True if pos is in source region, False otherwise */
 
   public:
-    Checkerboard( Config* settings, Mesh* mesh );
-    virtual ~Checkerboard();
+    Checkerboard_SN( Config* settings, Mesh* mesh );
+    virtual ~Checkerboard_SN();
 
-    virtual VectorVector GetScatteringXS( const std::vector<double>& energies );
-    virtual VectorVector GetTotalXS( const std::vector<double>& energies );
-    virtual std::vector<VectorVector> GetExternalSource( const std::vector<double>& energies );
-    virtual std::vector<double> GetStoppingPower( const std::vector<double>& energies );
+    virtual VectorVector GetScatteringXS( const Vector& energies );
+    virtual VectorVector GetTotalXS( const Vector& energies );
+    virtual std::vector<VectorVector> GetExternalSource( const Vector& energies );
+    virtual VectorVector SetupIC();
+};
+
+class Checkerboard_PN : public ProblemBase
+{
+  private:
+    Vector _scatteringXS;     /*! @brief Vector of scattering crosssections */
+    Vector _totalXS;      /*! @brief Vector of total crosssections */
+
+    Checkerboard_PN() = delete;
+
+    bool isAbsorption( const Vector& pos ) const; /*! @return True if pos is in absorption region, False otherwise */
+    bool isSource( const Vector& pos ) const; /*! @return True if pos is in source region, False otherwise */
+
+    /**
+     * @brief Gets the global index for given order l of Legendre polynomials and given
+     *        order k of Legendre functions.
+     *        Note: This is code doubling from PNSolver::GlobalIndex
+     * @param l : order of Legendre polynomial
+     * @param k : order of Legendre function
+     * @returns global index
+     */
+    int GlobalIndex( int l, int k ) const;
+
+  public:
+    Checkerboard_PN( Config* settings, Mesh* mesh );
+    virtual ~Checkerboard_PN();
+
+    virtual VectorVector GetScatteringXS( const Vector& energies );
+    virtual VectorVector GetTotalXS( const Vector& energies );
+    virtual std::vector<VectorVector> GetExternalSource( const Vector& energies );
     virtual VectorVector SetupIC();
 };
 

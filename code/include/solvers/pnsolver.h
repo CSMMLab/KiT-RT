@@ -11,15 +11,13 @@ class PNSolver : public Solver
      */
     PNSolver( Config* settings );
 
-    virtual void Solve() override;              /*! @brief Solve functions runs main time loop. (Run Solver) */
-    void Save() const override;                 /*! @brief Save Output solution to VTK file */
-    void Save( int currEnergy ) const override; /*! @brief Save Output solution at given energy (pseudo time) to VTK file */
+    /*! @brief PNSolver destructor */
+    ~PNSolver();
 
-  protected:
+  private:
     unsigned _nTotalEntries; /*! @brief: total number of equations in the system */
     unsigned _LMaxDegree;    /*! @brief: maximal degree of the spherical harmonics basis*/
 
-    VectorVector _sigmaA; /*!  @brief: Absorption coefficient for all energies*/
     // System Matrix for x, y and z flux
     //    ==> not needed after computation of A+ and A- ==> maybe safe only temporarly and remove as member?
     SymMatrix _Ax; /*! @brief:  Flux Jacbioan in x direction */
@@ -37,10 +35,28 @@ class PNSolver : public Solver
     Matrix _AzMinus; /*! @brief:  Flux Jacbioan in z direction, negative part */
     Matrix _AzAbs;   /*! @brief:  Flux Jacbioan in z direction, absolute part */
 
-    // double _combinedSpectralRadius; /*! @brief:  Combined spectral radius of sum of flux jacobians*/
+    Vector _scatterMatDiag; /*! @brief: diagonal of the scattering matrix (its a diagonal matrix by construction). Contains eigenvalues of the
+                               scattering kernel.  */
 
-    Vector _scatterMatDiag; /*! @brief: diagonal of the scattering matrix (its a diagonal matrix by construction) */
+    // ---- Member functions ----
 
+    // IO
+    /*! @brief Initializes the output groups and fields of this solver and names the fields */
+    void PrepareVolumeOutput() override;
+    /*! @brief Function that prepares VTK export and csv export of the current solver iteration
+        @returns: Mass of current iteration     */
+    void WriteVolumeOutput( unsigned idx_pseudoTime ) override;
+
+    // Solver
+    void FVMUpdate( unsigned idx_energy ) override;
+    void FluxUpdate() override;
+    void IterPreprocessing() override;
+    void IterPostprocessing();
+
+    // Helper
+    void ComputeRadFlux();
+
+    // Initialization of the Solver
     /*! @brief: parameter functions for setting up system matrix
      *  @param: degree l, it must hold: 0 <= l <=_nq
      *  @param : order k, it must hold: -l <=k <= l
@@ -80,7 +96,7 @@ class PNSolver : public Solver
     void ComputeSystemMatrices();
     /*! @brief:  function for computing and setting up flux matrices for upwinding */
     void ComputeFluxComponents();
-    /*! @brief:  fucntion for computing and setting up diagonal matrix for scattering kernel */
+    /*! @brief:  fucntion for computing and setting up EV matrix for scattering kernel */
     void ComputeScatterMatrix();
     /*! @brief:  Computes Legedre polinomial of oder l at point x */
     double LegendrePoly( double x, int l );

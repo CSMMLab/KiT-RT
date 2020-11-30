@@ -1,14 +1,17 @@
 #include "solvers/solverbase.h"
+#include "common/config.h"
+#include "common/globalconstants.h"
+#include "common/io.h"
+#include "common/mesh.h"
 #include "fluxes/numericalflux.h"
-#include "io.h"
-#include "mesh.h"
 #include "problems/problembase.h"
 #include "quadratures/quadraturebase.h"
-#include "settings/config.h"
-#include "settings/globalconstants.h"
+#include "solvers/csdsnsolver.h"
 #include "solvers/mnsolver.h"
 #include "solvers/pnsolver.h"
 #include "solvers/snsolver.h"
+
+#include <mpi.h>
 
 Solver::Solver( Config* settings ) : _settings( settings ) {
     // @TODO save parameters from settings class
@@ -22,22 +25,24 @@ Solver::Solver( Config* settings ) : _settings( settings ) {
     _settings->SetNCells( _nCells );
 
     // build quadrature object and store frequently used params
-    _quadrature = QuadratureBase::CreateQuadrature( settings->GetQuadName(), settings->GetQuadOrder() );
+    _quadrature = QuadratureBase::CreateQuadrature( settings );
     _nq         = _quadrature->GetNq();
     _settings->SetNQuadPoints( _nq );
 
     // set time step
     _dE        = ComputeTimeStep( settings->GetCFL() );
     _nEnergies = unsigned( settings->GetTEnd() / _dE );
-    for( unsigned i = 0; i < _nEnergies; ++i ) _energies.push_back( ( i + 1 ) * _dE );
+    _energies.resize( _nEnergies );
+    for( unsigned i = 0; i < _nEnergies; ++i ) _energies[i] = ( i + 1 ) * _dE;
 
     // setup problem  and store frequently used params
     _problem = ProblemBase::Create( _settings, _mesh );
     _sol     = _problem->SetupIC();
-    _s       = _problem->GetStoppingPower( _energies );
-    _sigmaT  = _problem->GetTotalXS( _energies );
-    _sigmaS  = _problem->GetScatteringXS( _energies );
-    _Q       = _problem->GetExternalSource( _energies );
+    _solNew  = _sol;    // setup temporary sol variable
+
+    _sigmaT = _problem->GetTotalXS( _energies );
+    _sigmaS = _problem->GetScatteringXS( _energies );
+    _Q      = _problem->GetExternalSource( _energies );
 
     // setup numerical flux
     _g = NumericalFlux::Create();
@@ -46,7 +51,14 @@ Solver::Solver( Config* settings ) : _settings( settings ) {
     _boundaryCells = _mesh->GetBoundaryTypes();
 
     // Solver Output
-    _solverOutput.resize( _nCells );    // Currently only Flux
+    _solverOutput.resize( _nCells );    // LEGACY! Only used for CSD SN
+
+    PrepareScreenOutput();     // Screen Output
+    PrepareHistoryOutput();    // History Output
+
+    // initialize Helper Variables
+    _fluxNew = Vector( _nCells, 0 );
+    _flux    = Vector( _nCells, 0 );
 }
 
 Solver::~Solver() {
@@ -55,6 +67,99 @@ Solver::~Solver() {
     delete _problem;
 }
 
+Solver* Solver::Create( Config* settings ) {
+    switch( settings->GetSolverName() ) {
+        case SN_SOLVER: return new SNSolver( settings );
+        case CSD_SN_SOLVER: return new CSDSNSolver( settings );
+        case PN_SOLVER: return new PNSolver( settings );
+        case MN_SOLVER: return new MNSolver( settings );
+        default: return new SNSolver( settings );
+    }
+}
+
+void Solver::Solve() {
+    int rank;
+    MPI_Comm_rank( MPI_COMM_WORLD, &rank );
+
+    auto log    = spdlog::get( "event" );
+    auto logCSV = spdlog::get( "tabular" );
+
+    std::string hLine = "--";
+
+    if( rank == 0 ) {
+        unsigned strLen  = 10;    // max width of one column
+        char paddingChar = ' ';
+
+        // Assemble Header for Screen Output
+        std::string lineToPrint = "| ";
+        std::string tmpLine     = "------------";
+        for( unsigned idxFields = 0; idxFields < _settings->GetNScreenOutput(); idxFields++ ) {
+            std::string tmp = _screenOutputFieldNames[idxFields];
+
+            if( strLen > tmp.size() )    // Padding
+                tmp.insert( 0, strLen - tmp.size(), paddingChar );
+            else if( strLen < tmp.size() )    // Cutting
+                tmp.resize( strLen );
+
+            lineToPrint += tmp + " |";
+            hLine += tmpLine;
+        }
+        log->info( "---------------------------- Solver Starts -----------------------------" );
+        log->info( "| The simulation will run for {} iterations.", _nEnergies );
+        log->info( hLine );
+        log->info( lineToPrint );
+        log->info( hLine );
+
+        std::string lineToPrintCSV = "";
+        for( int idxFields = 0; idxFields < _settings->GetNHistoryOutput() - 1; idxFields++ ) {
+            std::string tmp = _historyOutputFieldNames[idxFields];
+            lineToPrintCSV += tmp + ",";
+        }
+        lineToPrintCSV += _historyOutputFieldNames[_settings->GetNHistoryOutput() - 1];
+        logCSV->info( lineToPrintCSV );
+    }
+
+    // Loop over energies (pseudo-time of continuous slowing down approach)
+    for( unsigned iter = 0; iter < _nEnergies; iter++ ) {
+
+        // --- Prepare Boundaries and temp variables
+        IterPreprocessing();
+
+        // --- Compute Fluxes ---
+        FluxUpdate();
+
+        // --- Finite Volume Update ---
+        FVMUpdate( iter );
+
+        // --- Postprocessing ---
+        IterPostprocessing();
+
+        // --- Solver Output ---
+        WriteVolumeOutput( iter );
+        WriteScalarOutput( iter );
+        PrintScreenOutput( iter );
+        PrintHistoryOutput( iter );
+        PrintVolumeOutput( iter );
+    }
+    if( rank == 0 ) {
+        log->info( hLine );
+        log->info( "| Postprocessing screen output goes here." );
+        log->info( "--------------------------- Solver Finished ----------------------------" );
+    }
+}
+
+void Solver::PrintVolumeOutput() const { ExportVTK( _settings->GetOutputFile(), _outputFields, _outputFieldNames, _mesh ); }
+
+void Solver::PrintVolumeOutput( int currEnergy ) const {
+    if( _settings->GetVolumeOutputFrequency() != 0 && currEnergy % (unsigned)_settings->GetVolumeOutputFrequency() == 0 ) {
+        ExportVTK( _settings->GetOutputFile() + "_" + std::to_string( currEnergy ), _outputFields, _outputFieldNames, _mesh );
+    }
+    if( currEnergy == (int)_nEnergies - 1 ) {    // Last iteration write without suffix.
+        ExportVTK( _settings->GetOutputFile(), _outputFields, _outputFieldNames, _mesh );
+    }
+}
+
+// --- Helper ---
 double Solver::ComputeTimeStep( double cfl ) const {
     double maxEdge = -1.0;
     for( unsigned j = 0; j < _nCells; j++ ) {
@@ -66,24 +171,236 @@ double Solver::ComputeTimeStep( double cfl ) const {
     return cfl * maxEdge;
 }
 
-Solver* Solver::Create( Config* settings ) {
-    switch( settings->GetSolverName() ) {
-        case SN_SOLVER: return new SNSolver( settings );
-        case PN_SOLVER: return new PNSolver( settings );
-        case MN_SOLVER: return new MNSolver( settings );
-        default: return new SNSolver( settings );
+// --- IO ----
+void Solver::PrepareScreenOutput() {
+    unsigned nFields = (unsigned)_settings->GetNScreenOutput();
+
+    _screenOutputFieldNames.resize( nFields );
+    _screenOutputFields.resize( nFields );
+
+    // Prepare all output Fields ==> Specified in option SCREEN_OUTPUT
+    for( unsigned idx_field = 0; idx_field < nFields; idx_field++ ) {
+        // Prepare all Output Fields per group
+
+        // Different procedure, depending on the Group...
+        switch( _settings->GetScreenOutput()[idx_field] ) {
+            case MASS: _screenOutputFieldNames[idx_field] = "Mass"; break;
+
+            case ITER: _screenOutputFieldNames[idx_field] = "Iter"; break;
+
+            case RMS_FLUX: _screenOutputFieldNames[idx_field] = "RMS flux"; break;
+
+            case VTK_OUTPUT: _screenOutputFieldNames[idx_field] = "VTK out"; break;
+
+            case CSV_OUTPUT: _screenOutputFieldNames[idx_field] = "CSV out"; break;
+
+            default: ErrorMessages::Error( "Screen output field not defined!", CURRENT_FUNCTION ); break;
+        }
     }
 }
 
-void Solver::Save() const {
-    std::vector<std::string> fieldNames{ "flux" };
-    std::vector<double> flux;
-    flux.resize( _nCells );
+void Solver::WriteScalarOutput( unsigned iteration ) {
 
-    for( unsigned i = 0; i < _nCells; ++i ) {
-        flux[i] = _sol[i][0];
+    unsigned nFields = (unsigned)_settings->GetNScreenOutput();
+    double mass      = 0.0;
+
+    // -- Screen Output
+    for( unsigned idx_field = 0; idx_field < nFields; idx_field++ ) {
+        // Prepare all Output Fields per group
+        // Different procedure, depending on the Group...
+        switch( _settings->GetScreenOutput()[idx_field] ) {
+            case MASS:
+                for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
+                    mass += _fluxNew[idx_cell] * _areas[idx_cell];
+                }
+                _screenOutputFields[idx_field] = mass;
+                break;
+
+            case ITER: _screenOutputFields[idx_field] = iteration; break;
+
+            case RMS_FLUX:
+                _screenOutputFields[idx_field] = blaze::l2Norm( _fluxNew - _flux );
+                _flux                          = _fluxNew;
+                break;
+
+            case VTK_OUTPUT:
+                _screenOutputFields[idx_field] = 0;
+                if( ( _settings->GetVolumeOutputFrequency() != 0 && iteration % (unsigned)_settings->GetVolumeOutputFrequency() == 0 ) ||
+                    ( iteration == _nEnergies - 1 ) /* need sol at last iteration */ ) {
+                    _screenOutputFields[idx_field] = 1;
+                }
+                break;
+
+            case CSV_OUTPUT:
+                _screenOutputFields[idx_field] = 0;
+                if( ( _settings->GetHistoryOutputFrequency() != 0 && iteration % (unsigned)_settings->GetHistoryOutputFrequency() == 0 ) ||
+                    ( iteration == _nEnergies - 1 ) /* need sol at last iteration */ ) {
+                    _screenOutputFields[idx_field] = 1;
+                }
+                break;
+
+            default: ErrorMessages::Error( "Screen output group not defined!", CURRENT_FUNCTION ); break;
+        }
     }
-    std::vector<std::vector<double>> scalarField( 1, flux );
-    std::vector<std::vector<std::vector<double>>> results{ scalarField };
-    ExportVTK( _settings->GetOutputFile() + "_" + std::to_string( _nEnergies ), results, fieldNames, _mesh );
+
+    // --- History output ---
+    nFields = (unsigned)_settings->GetNHistoryOutput();
+
+    std::vector<SCALAR_OUTPUT> screenOutputFields = _settings->GetScreenOutput();
+    for( unsigned idx_field = 0; idx_field < nFields; idx_field++ ) {
+
+        // Check first, if the field was already filled by screenoutput writer!
+        std::vector<SCALAR_OUTPUT>::iterator itScreenOutput =
+            std::find( screenOutputFields.begin(), screenOutputFields.end(), _settings->GetHistoryOutput()[idx_field] );
+
+        // Prepare all Output Fields per group
+        // Different procedure, depending on the Group...
+        switch( _settings->GetHistoryOutput()[idx_field] ) {
+            case MASS:
+                if( screenOutputFields.end() == itScreenOutput ) {
+                    for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
+                        mass += _fluxNew[idx_cell] * _areas[idx_cell];
+                    }
+                    _historyOutputFields[idx_field] = mass;
+                }
+                else {
+                    _historyOutputFields[idx_field] = *itScreenOutput;
+                }
+                break;
+
+            case ITER: _historyOutputFields[idx_field] = iteration; break;
+
+            case RMS_FLUX:
+                if( screenOutputFields.end() == itScreenOutput ) {
+                    _screenOutputFields[idx_field] = blaze::l2Norm( _fluxNew - _flux );
+                    _flux                          = _fluxNew;
+                }
+                else {
+                    _historyOutputFields[idx_field] = *itScreenOutput;
+                }
+                break;
+
+            case VTK_OUTPUT:
+                _historyOutputFields[idx_field] = 0;
+                if( ( _settings->GetVolumeOutputFrequency() != 0 && iteration % (unsigned)_settings->GetVolumeOutputFrequency() == 0 ) ||
+                    ( iteration == _nEnergies - 1 ) /* need sol at last iteration */ ) {
+                    _historyOutputFields[idx_field] = 1;
+                }
+                break;
+
+            case CSV_OUTPUT:
+                _historyOutputFields[idx_field] = 0;
+                if( ( _settings->GetHistoryOutputFrequency() != 0 && iteration % (unsigned)_settings->GetHistoryOutputFrequency() == 0 ) ||
+                    ( iteration == _nEnergies - 1 ) /* need sol at last iteration */ ) {
+                    _historyOutputFields[idx_field] = 1;
+                }
+                break;
+
+            default: ErrorMessages::Error( "History output group not defined!", CURRENT_FUNCTION ); break;
+        }
+    }
+}
+
+void Solver::PrintScreenOutput( unsigned iteration ) {
+    int rank;
+    MPI_Comm_rank( MPI_COMM_WORLD, &rank );
+    auto log = spdlog::get( "event" );
+
+    unsigned strLen  = 10;    // max width of one column
+    char paddingChar = ' ';
+
+    // assemble the line to print
+    std::string lineToPrint = "| ";
+    std::string tmp;
+    for( unsigned idx_field = 0; idx_field < _settings->GetNScreenOutput(); idx_field++ ) {
+        tmp = std::to_string( _screenOutputFields[idx_field] );
+
+        // Format outputs correctly
+        std::vector<SCALAR_OUTPUT> integerFields    = { ITER };
+        std::vector<SCALAR_OUTPUT> scientificFields = { RMS_FLUX, MASS };
+        std::vector<SCALAR_OUTPUT> booleanFields    = { VTK_OUTPUT, CSV_OUTPUT };
+
+        if( !( integerFields.end() == std::find( integerFields.begin(), integerFields.end(), _settings->GetScreenOutput()[idx_field] ) ) ) {
+            tmp = std::to_string( (int)_screenOutputFields[idx_field] );
+        }
+        else if( !( booleanFields.end() == std::find( booleanFields.begin(), booleanFields.end(), _settings->GetScreenOutput()[idx_field] ) ) ) {
+            tmp = "no";
+            if( (bool)_screenOutputFields[idx_field] ) tmp = "yes";
+        }
+        else if( !( scientificFields.end() ==
+                    std::find( scientificFields.begin(), scientificFields.end(), _settings->GetScreenOutput()[idx_field] ) ) ) {
+
+            std::stringstream ss;
+            ss << _screenOutputFields[idx_field];
+            tmp = ss.str();
+            tmp.erase( std::remove( tmp.begin(), tmp.end(), '+' ), tmp.end() );    // removing the '+' sign
+        }
+
+        if( strLen > tmp.size() )    // Padding
+            tmp.insert( 0, strLen - tmp.size(), paddingChar );
+        else if( strLen < tmp.size() )    // Cutting
+            tmp.resize( strLen );
+
+        lineToPrint += tmp + " |";
+    }
+    if( rank == 0 ) {
+        if( _settings->GetScreenOutputFrequency() != 0 && iteration % (unsigned)_settings->GetScreenOutputFrequency() == 0 ) {
+            log->info( lineToPrint );
+        }
+        else if( iteration == _nEnergies - 1 ) {    // Always print last iteration
+            log->info( lineToPrint );
+        }
+    }
+}
+
+void Solver::PrepareHistoryOutput() {
+    unsigned nFields = (unsigned)_settings->GetNHistoryOutput();
+
+    _historyOutputFieldNames.resize( nFields );
+    _historyOutputFields.resize( nFields );
+
+    // Prepare all output Fields ==> Specified in option SCREEN_OUTPUT
+    for( unsigned idx_field = 0; idx_field < nFields; idx_field++ ) {
+        // Prepare all Output Fields per group
+
+        // Different procedure, depending on the Group...
+        switch( _settings->GetHistoryOutput()[idx_field] ) {
+            case MASS: _historyOutputFieldNames[idx_field] = "Mass"; break;
+
+            case ITER: _historyOutputFieldNames[idx_field] = "Iter"; break;
+
+            case RMS_FLUX: _historyOutputFieldNames[idx_field] = "RMS_flux"; break;
+
+            case VTK_OUTPUT: _historyOutputFieldNames[idx_field] = "VTK_out"; break;
+
+            case CSV_OUTPUT: _historyOutputFieldNames[idx_field] = "CSV_out"; break;
+
+            default: ErrorMessages::Error( "History output field not defined!", CURRENT_FUNCTION ); break;
+        }
+    }
+}
+
+void Solver::PrintHistoryOutput( unsigned iteration ) {
+    int rank;
+    MPI_Comm_rank( MPI_COMM_WORLD, &rank );
+    auto log = spdlog::get( "tabular" );
+
+    // assemble the line to print
+    std::string lineToPrint = "";
+    std::string tmp;
+    for( int idx_field = 0; idx_field < _settings->GetNScreenOutput() - 1; idx_field++ ) {
+        tmp = std::to_string( _screenOutputFields[idx_field] );
+        lineToPrint += tmp + ",";
+    }
+    tmp = std::to_string( _screenOutputFields[_settings->GetNScreenOutput() - 1] );
+    lineToPrint += tmp;    // Last element without comma
+
+    if( rank == 0 ) {
+        if( _settings->GetHistoryOutputFrequency() != 0 && iteration % (unsigned)_settings->GetHistoryOutputFrequency() == 0 ) {
+            log->info( lineToPrint );
+        }
+        else if( iteration == _nEnergies - 1 ) {    // Always print last iteration
+            log->info( lineToPrint );
+        }
+    }
 }

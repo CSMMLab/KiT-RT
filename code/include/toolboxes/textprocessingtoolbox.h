@@ -8,7 +8,7 @@
 #ifndef TEXTPROCESSINGTOOLBOX_H
 #define TEXTPROCESSINGTOOLBOX_H
 
-#include "settings/typedef.h"
+#include "common/typedef.h"
 #include <iostream>
 #include <string>
 #include <vector>
@@ -46,7 +46,7 @@ inline std::vector<std::string> Split( const std::string& s, char delimiter ) {
  * \brief utility function for printing a VectorVector
  * \param [in] VectorVector we want to print
  */
-inline const void PrintVectorVector( const VectorVector vectorIn ) {
+inline void PrintVectorVector( const VectorVector vectorIn ) {
     unsigned dimOuter = vectorIn.size();
     unsigned dimInner = vectorIn[0].size();
 
