@@ -6,7 +6,7 @@
 #include "quadratures/quadraturebase.h"
 
 TEST_CASE( "test all scattering kernels", "[kernel]" ) {
-    std::string filename = std::string( TESTS_PATH ) + "input/unit_kernel.cfg";
+    std::string filename = std::string( TESTS_PATH ) + "input/unit_tests/kernels/unit_kernel.cfg";
 
     // Load Settings from File
     Config* config = new Config( filename );

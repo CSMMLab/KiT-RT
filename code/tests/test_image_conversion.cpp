@@ -9,11 +9,11 @@
 #include "toolboxes/textprocessingtoolbox.h"
 
 TEST_CASE( "convert image data to grayscale matrix", "[image I/O]" ) {
-    std::string config_file_name = std::string( TESTS_PATH ) + "input/image_conversion.cfg";
+    std::string config_file_name = std::string( TESTS_PATH ) + "input/unit_tests/common/image_conversion.cfg";
 
     Config* config = new Config( config_file_name );    // just to init spdlog
 
-    std::string testImage = std::string( TESTS_PATH ) + "input/mini_phantom.png";
+    std::string testImage = std::string( TESTS_PATH ) + "input/unit_tests/common/mini_phantom.png";
     std::string testMesh  = config->GetMeshFile();
 
     Matrix gsImage = createSU2MeshFromImage( testImage, testMesh );
@@ -26,7 +26,7 @@ TEST_CASE( "convert image data to grayscale matrix", "[image I/O]" ) {
         REQUIRE( blaze::max( gsImage ) <= 1.0 );           // upper bound
 
         // load reference matrix from csv file
-        std::string refMatrixFile = std::string( TESTS_PATH ) + "input/phantom.csv";
+        std::string refMatrixFile = std::string( TESTS_PATH ) + "input/unit_tests/common/phantom.csv";
         std::ifstream data( refMatrixFile );
         REQUIRE( data.is_open() );
         std::string line;

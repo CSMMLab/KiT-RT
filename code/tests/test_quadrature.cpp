@@ -31,7 +31,7 @@ double f( double x, double y, double z ) {
 double sin( double x, double /*y*/, double /*z*/ ) { return sin( x ); }
 
 TEST_CASE( "Quadrature Tests", "[quadrature]" ) {
-    std::string filename = std::string( TESTS_PATH ) + "input/unit_quadrature.cfg";
+    std::string filename = std::string( TESTS_PATH ) + "input/unit_tests/quadratures/unit_quadrature.cfg";
 
     // Load Settings from File
     Config* config = new Config( filename );
