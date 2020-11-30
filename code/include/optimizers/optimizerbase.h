@@ -18,7 +18,7 @@ class OptimizerBase
   public:
     OptimizerBase( Config* settings );
 
-    ~OptimizerBase();
+    virtual ~OptimizerBase();
 
     /*! @brief: Optimizer creator: Depending on the chosen option, this function creates an object of the chosen child class of OptimizerBase */
     static OptimizerBase* Create( Config* settings );
