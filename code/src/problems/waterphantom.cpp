@@ -15,4 +15,5 @@ VectorVector WaterPhantom::SetupIC() {
     return psi;
 }
 
+// Density of water = 1 everywhere
 std::vector<double> WaterPhantom::GetDensity( const VectorVector& cellMidPoints ) { return std::vector<double>( cellMidPoints.size(), 1.0 ); }

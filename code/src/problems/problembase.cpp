@@ -18,6 +18,8 @@ ProblemBase::~ProblemBase() {}
 
 ProblemBase* ProblemBase::Create( Config* settings, Mesh* mesh ) {
     auto name = settings->GetProblemName();
+    
+    // Choose problem type
     switch( name ) {
         case PROBLEM_LineSource: {
             if( settings->GetSolverName() == PN_SOLVER || settings->GetSolverName() == MN_SOLVER )
@@ -42,10 +44,13 @@ ProblemBase* ProblemBase::Create( Config* settings, Mesh* mesh ) {
     }
 }
 
+// Default densities = 1
 std::vector<double> ProblemBase::GetDensity( const VectorVector& cellMidPoints ) { return std::vector<double>( cellMidPoints.size(), 1.0 ); }
 
+// Legacy code: Scattering crossection loaded from database ENDF with physics class -> later overwritten with ICRU data
 VectorVector ProblemBase::GetScatteringXSE( const Vector& energies, const Vector& angles ) { return _physics->GetScatteringXS( energies, angles ); }
 
+// Stopping powers from phyics class or default = -1
 Vector ProblemBase::GetStoppingPower( const Vector& energies ) {
     if( _physics ) {
         return _physics->GetStoppingPower( energies );

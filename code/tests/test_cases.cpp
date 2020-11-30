@@ -66,6 +66,7 @@ TEST_CASE( "linesource_SN", "[validation_tests]" ) {
     }
 }
 
+/*
 TEST_CASE( "linesource_PN", "[validation_tests]" ) {
     char config_file_name[MAX_STRING_SIZE] = "../tests/input/linesource_PN.cfg";
 
@@ -101,3 +102,4 @@ TEST_CASE( "linesource_MN", "[validation_tests]" ) {
         REQUIRE( std::fabs( test[i] - reference[i] ) < eps );
     }
 }
+*/

@@ -1,3 +1,9 @@
+/*!
+ * @file newtonoptimizer.h
+ * @brief class for solving the minimal entropy optimization problem using a newton optimizer with line search.
+ * @author S. Schotthöfer
+ */
+
 #ifndef NEWTONOPTIMIZER_H
 #define NEWTONOPTIMIZER_H
 
@@ -10,7 +16,7 @@ class NewtonOptimizer : public OptimizerBase
   public:
     NewtonOptimizer( Config* settings );
 
-    inline ~NewtonOptimizer() {}
+    ~NewtonOptimizer();
 
     void Solve( Vector& lambda, Vector& u, VectorVector& moments ) override;
 

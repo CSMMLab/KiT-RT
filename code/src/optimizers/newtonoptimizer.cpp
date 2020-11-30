@@ -1,6 +1,7 @@
 
 #include "optimizers/newtonoptimizer.h"
 #include "common/config.h"
+#include "entropies/entropybase.h"
 #include "quadratures/quadraturebase.h"
 #include "toolboxes/errormessages.h"
 
@@ -14,6 +15,8 @@ NewtonOptimizer::NewtonOptimizer( Config* settings ) : OptimizerBase( settings )
     _maxLineSearches  = settings->GetMaxLineSearches();
     _epsilon          = settings->GetNewtonOptimizerEpsilon();
 }
+
+NewtonOptimizer::~NewtonOptimizer() { delete _quadrature; }
 
 double NewtonOptimizer::ComputeObjFunc( Vector& alpha, Vector& sol, VectorVector& moments ) {
     double result = 0.0;

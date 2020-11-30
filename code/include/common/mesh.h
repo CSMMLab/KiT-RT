@@ -21,7 +21,8 @@ class Mesh
     const unsigned _numNodes;        /*! @brief: number of nodes in the mesh (for node centered view)*/
     const unsigned _numNodesPerCell; /*! @brief: number of nodes per cell */
     const unsigned _numBoundaries;   /*! @brief: number of boundary cells in the mesh */
-    const unsigned _ghostCellID;     // used for what?    /*! @brief: equal to _numCells and therefore has the ID of the last cell + 1 */
+    const unsigned _ghostCellID; /*! @brief: Id of the ghost cell. (we use only one ghost cell). equal to _numCells and therefore has the ID of the
+                                    last cell + 1 */
 
     std::vector<std::pair<double, double>> _bounds;    // ???
 
@@ -44,8 +45,8 @@ class Mesh
 
     void ComputeCellAreas();     /*! @brief: Computes only the areas of the mesh cells. Write to _cellAreas. */
     void ComputeCellMidpoints(); /*! @brief: Compute only the midpoints of the cells. Write to _cellMidPoints*/
-    void ComputeConnectivity();  /*! @brief: Computes ??? */
-    void ComputePartitioning();  /*! @brief: Computes ??? */
+    void ComputeConnectivity();  /*! @brief: Computes _cellNeighbors and _nodeNeighbors, i.e. neighborship relation in mesh*/
+    void ComputePartitioning();  /*! @brief: Computes local partitioning for openMP */
 
     /*! @brief: Computes outward facing normal of two neighboring nodes nodeA and nodeB with common cellCellcenter.
      *          Normals are scaled with their respective edge length
@@ -54,7 +55,7 @@ class Mesh
      *  @param: cellCenter: Center of the cell that has nodeA and nodeB as nodes.
      *  @return: outward facing normal */
     Vector ComputeOutwardFacingNormal( const Vector& nodeA, const Vector& nodeB, const Vector& cellCenter );
-    void ComputeBounds(); /*! @brief: Computes ??? */
+    void ComputeBounds(); /*! @brief: Computes the spatial bounds of a 2D domain. */
 
   public:
     Mesh() = delete;    //  no default constructor
@@ -111,7 +112,7 @@ class Mesh
      *  @return dimension: scalar */
     double GetDistanceToOrigin( unsigned idx_cell ) const;
 
-    /*! @brief ComputeSlopes calculates the slope in every cell into x and y direction
+    /*! @brief ComputeSlopes calculates the slope in every cell into x and y direction using the divergence theorem.
      *  @param nq is number of quadrature points
      *  @param psiDerX is slope in x direction (gets computed. Slope is stored here)
      *  @param psiDerY is slope in y direction (gets computed. Slope is stored here)
@@ -119,7 +120,17 @@ class Mesh
     // Not used
     void ComputeSlopes( unsigned nq, VectorVector& psiDerX, VectorVector& psiDerY, const VectorVector& psi ) const;
 
+    /*! @brief:Structured mesh slope reconstruction with flux limiters.
+     *  @param nq is number of quadrature points
+     *  @param psiDerX is slope in x direction (gets computed. Slope is stored here)
+     *  @param psiDerY is slope in y direction (gets computed. Slope is stored here)
+     *  @param psi is solution for which slope is computed */
     void ReconstructSlopesS( unsigned nq, VectorVector& psiDerX, VectorVector& psiDerY, const VectorVector& psi ) const;
+    /*! @brief: Use gauss theorem and limiters. For unstructured mesh *
+     *  @param nq is number of quadrature points
+     *  @param psiDerX is slope in x direction (gets computed. Slope is stored here)
+     *  @param psiDerY is slope in y direction (gets computed. Slope is stored here)
+     *  @param psi is solution for which slope is computed */
     void ReconstructSlopesU( unsigned nq, VectorVector& psiDerX, VectorVector& psiDerY, const VectorVector& psi ) const;
 };
 

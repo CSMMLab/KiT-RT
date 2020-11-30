@@ -1,16 +1,6 @@
-#include "solvers/csdsolvertrafofp.h"
-#include "common/config.h"
-#include "common/io.h"
-#include "fluxes/numericalflux.h"
-#include "kernels/scatteringkernelbase.h"
-#include "problems/problembase.h"
-#include "quadratures/quadraturebase.h"
+#include "solvers/csdsolvertrafofpsh2d.h"
 
-// externals
-#include "spdlog/spdlog.h"
-#include <mpi.h>
-
-CSDSolverTrafoFP::CSDSolverTrafoFP( Config* settings ) : SNSolver( settings ) {
+CSDSolverTrafoFPSH2D::CSDSolverTrafoFPSH2D( Config* settings ) : SNSolver( settings ) {
     _dose = std::vector<double>( _settings->GetNCells(), 0.0 );
 
     // Set angle and energies
@@ -21,40 +11,58 @@ CSDSolverTrafoFP::CSDSolverTrafoFP( Config* settings ) : SNSolver( settings ) {
     // write equidistant energy grid (false) or refined grid (true)
     GenerateEnergyGrid( false );
 
-    // create 1D quadrature
-    unsigned nq            = _settings->GetNQuadPoints();
-    QuadratureBase* quad1D = QuadratureBase::CreateQuadrature( QUAD_GaussLegendre1D, nq );
+    // create quadrature
+    unsigned order    = _quadrature->GetOrder();
+    unsigned nq       = _settings->GetNQuadPoints();
+    _quadPoints       = _quadrature->GetPoints();
+    _weights          = _quadrature->GetWeights();
+    _quadPointsSphere = _quadrature->GetPointsSphere();
+
+    // transform structured quadrature
+    _mu  = Vector( 2 * order );
+    _phi = Vector( 2 * order );
+    _wp  = Vector( 2 * order );
+    _wa  = Vector( 2 * order );
+
+    // create quadrature 1D to compute mu grid
+    QuadratureBase* quad1D = QuadratureBase::CreateQuadrature( QUAD_GaussLegendre1D, 2 * order );
     Vector w               = quad1D->GetWeights();
     VectorVector muVec     = quad1D->GetPoints();
-    Vector mu( nq );
-    for( unsigned k = 0; k < nq; ++k ) {
-        mu[k] = muVec[k][0];
+    for( unsigned k = 0; k < 2 * order; ++k ) {
+        _mu[k] = muVec[k][0];
+        _wp[k] = w[k];
     }
 
-    // setup Laplace Beltrami matrix L in slab geometry
-    _L = Matrix( nq, nq, 0.0 );
+    for( unsigned i = 0; i < 2 * order; ++i ) {
+        _phi[i] = ( i + 0.5 ) * M_PI / order;
+        _wa[i]  = M_PI / order;
+    }
 
     _FPMethod = 2;
 
     double DMinus = 0.0;
     double DPlus  = 0.0;
-    for( unsigned k = 0; k < nq; ++k ) {
-        DMinus = DPlus;
-        DPlus  = DMinus - 2 * mu[k] * w[k];
-        if( k > 0 ) {
-            _L( k, k - 1 ) = DMinus / ( mu[k] - mu[k - 1] ) / w[k];
-            _L( k, k )     = -DMinus / ( mu[k] - mu[k - 1] ) / w[k];
-        }
-        if( k < nq - 1 ) {
-            _L( k, k + 1 ) = DPlus / ( mu[k + 1] - mu[k] ) / w[k];
-            _L( k, k ) += -DPlus / ( mu[k + 1] - mu[k] ) / w[k];
-        }
+
+    Vector gamma( 2 * order, 0.0 );
+    double dPlus;
+    double c, K;
+
+    double dMinus = 0.0;
+    DPlus         = DMinus - 2 * _mu[0] * w[0];
+    for( unsigned j = 0; j < 2 * order - 1; ++j ) {
+        DMinus   = DPlus;
+        DPlus    = DMinus - 2 * _mu[j] * w[j];
+        dPlus    = ( sqrt( 1 - _mu[j + 1] * _mu[j + 1] ) - sqrt( 1 - _mu[j] * _mu[j] ) ) / ( _mu[j + 1] - _mu[j] );
+        c        = ( DPlus * dPlus - DMinus * dMinus ) / _wp[j];
+        K        = 2 * ( 1 - _mu[j] * _mu[j] ) + c * sqrt( 1 - _mu[j] * _mu[j] );
+        gamma[j] = M_PI * M_PI * K / ( 2 * order * ( 1 - std::cos( M_PI / order ) ) );
+        dMinus   = dPlus;
     }
 
     // Heney-Greenstein parameter
     double g = 0.8;
 
-    // determine transport coefficients of Heney-Greenstein
+    // determine momente of Heney-Greenstein
     _xi1 = Vector( _nEnergies, 1.0 - g );    // paper Olbrant, Frank (11)
     _xi2 = Vector( _nEnergies, 4.0 / 3.0 - 2.0 * g + 2.0 / 3.0 * g * g );
     _xi  = Matrix( 4, _nEnergies );
@@ -70,39 +78,54 @@ CSDSolverTrafoFP::CSDSolverTrafoFP( Config* settings ) : SNSolver( settings ) {
 
     // read in medical data if radiation therapy option selected
     if( _RT ) {
-        /*
-        _nEnergies = 100;
-        _energies.resize(_nEnergies);
-        _xi = Matrix(6,_nEnergies);
-        double minExp = -4.0;
-        double  maxExp = 1.5;
-        for( int n = 0; n<_nEnergies; ++n){
-            double exponent = minExp + ( maxExp - minExp ) / ( _nEnergies - 1 ) * n;
-            _energies[n] = pow(10.0,exponent);
-        }*/
-        ICRU database( mu, _energies );
+        ICRU database( _mu, _energies );
         database.GetTransportCoefficients( _xi );
         database.GetStoppingPower( _s );
-        /*
-        // print coefficients
-        std::cout<<"E = [";
-        for( unsigned n = 0; n<_nEnergies; ++n){
-            std::cout<<_energies[n]<<"; ";
-        }
-        std::cout<<"];"<<std::endl;
-        std::cout<<"xi = [";
-        for( unsigned n = 0; n<_nEnergies; ++n){
-            std::cout<<_xi(0,n)<<" "<<_xi(1,n)<<" "<<_xi(2,n)<<" "<<_xi(3,n)<<" "<<_xi(4,n)<<" "<<_xi(5,n)<<"; ";
-        }
-        std::cout<<"];"<<std::endl;
-        */
     }
 
-    _density = std::vector<double> ( _nCells, 1.0 );
-    //exit(EXIT_SUCCESS);
+    _quadPointsSphere = _quadrature->GetPointsSphere();
+
+    SphericalHarmonics sph( _nq );
+    Matrix Y = blaze::zero<double>( ( _nq + 1 ) * ( _nq + 1 ), _nq );
+
+    for( unsigned q = 0; q < _nq; q++ ) {
+        blaze::column( Y, q ) = sph.ComputeSphericalBasis( _quadPointsSphere[q][0], _quadPointsSphere[q][1] );
+    }
+
+    _O = blaze::trans( Y );
+    _M = _O;
+
+    for( unsigned j = 0; j < _nq; ++j ) {
+        blaze::column( _M, j ) *= _weights;
+    }
+
+    _M.transpose();
+
+    _S               = Matrix( ( _nq + 1 ) * ( _nq + 1 ), ( _nq + 1 ) * ( _nq + 1 ), 0.0 );
+    unsigned counter = 0;
+    for( unsigned l = 0; l < _nq + 1; ++l ) {
+        for( int m = -static_cast<int>( l ); m <= static_cast<int>( l ); ++m ) {
+            if( !_RT ) {
+                _S( counter, counter ) = std::pow( g, l );
+            }
+            else
+                _S( counter, counter ) = -l * ( l + 1 );
+            counter++;
+        }
+    }
+
+    Vector v = ( _O * _S * _M ) * Vector( _nq, 1.0 );
+    for( unsigned q = 0; q < _nq; ++q ) {
+        blaze::column( _O, q ) /= v[q];
+    }
+
+    _density = std::vector<double>( _nCells, 1.0 );
+
+    _L = _O * _S * _M;
 }
 
-void CSDSolverTrafoFP::Solve() {
+void CSDSolverTrafoFPSH2D::Solve() {
+    std::cout << "Solve SH" << std::endl;
     auto log = spdlog::get( "event" );
 
     // save original energy field for boundary conditions
@@ -200,13 +223,15 @@ void CSDSolverTrafoFP::Solve() {
         }
 
         // add FP scattering term implicitly
+#pragma omp parallel for
         for( unsigned j = 0; j < _nCells; ++j ) {
             if( _boundaryCells[j] == BOUNDARY_TYPE::DIRICHLET ) continue;
             //_sol[j] = blaze::solve( identity - _dE * _alpha2 * _L, psiNew[j] );
             _sol[j] = _IL * blaze::solve( _IL - _dE * _alpha * _L, _sol[j] );
         }
 
-        // loop over all spatial cells
+// loop over all spatial cells
+#pragma omp parallel for
         for( unsigned j = 0; j < _nCells; ++j ) {
             if( _boundaryCells[j] == BOUNDARY_TYPE::DIRICHLET ) continue;
             // loop over all ordinates
@@ -229,6 +254,7 @@ void CSDSolverTrafoFP::Solve() {
             }
         }
 
+#pragma omp parallel for
         for( unsigned j = 0; j < _nCells; ++j ) {
             if( _boundaryCells[j] == BOUNDARY_TYPE::DIRICHLET ) continue;
             _sol[j] = psiNew[j];
@@ -256,7 +282,7 @@ void CSDSolverTrafoFP::Solve() {
     Save( 1 );
 }
 
-void CSDSolverTrafoFP::Save() const {
+void CSDSolverTrafoFPSH2D::Save() const {
     std::vector<std::string> fieldNames{ "dose", "normalized dose" };
     std::vector<std::vector<double>> dose( 1, _dose );
     std::vector<std::vector<double>> normalizedDose( 1, _dose );
@@ -266,14 +292,14 @@ void CSDSolverTrafoFP::Save() const {
     ExportVTK( _settings->GetOutputFile(), results, fieldNames, _mesh );
 }
 
-void CSDSolverTrafoFP::Save( int currEnergy ) const {
+void CSDSolverTrafoFPSH2D::Save( int currEnergy ) const {
     std::vector<std::string> fieldNames{ "flux" };
     std::vector<std::vector<double>> scalarField( 1, _solverOutput );
     std::vector<std::vector<std::vector<double>>> results{ scalarField };
     ExportVTK( _settings->GetOutputFile() + "_" + std::to_string( currEnergy ), results, fieldNames, _mesh );
 }
 
-void CSDSolverTrafoFP::GenerateEnergyGrid( bool refinement ) {
+void CSDSolverTrafoFPSH2D::GenerateEnergyGrid( bool refinement ) {
     _dE = ComputeTimeStep( _settings->GetCFL() );
     if( !refinement ) {
         _nEnergies = unsigned( ( _energyMax - _energyMin ) / _dE );
