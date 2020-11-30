@@ -6,6 +6,7 @@
 
 #include "toolboxes/datagenerator.h"
 #include "common/config.h"
+#include "entropies/entropybase.h"
 #include "optimizers/newtonoptimizer.h"
 #include "quadratures/quadraturebase.h"
 #include "solvers/sphericalharmonics.h"
@@ -37,6 +38,9 @@ nnDataGenerator::nnDataGenerator( Config* settings ) {
     // Optimizer
     _optimizer = new NewtonOptimizer( _settings );
 
+    // Entropy
+    _entropy = EntropyBase::Create( _settings );
+
     // Initialize Training Data
     _uSol     = VectorVector( _setSize, Vector( _nTotalEntries, 0.0 ) );
     _alpha    = VectorVector( _setSize, Vector( _nTotalEntries, 0.0 ) );
@@ -54,7 +58,7 @@ void nnDataGenerator::computeTrainingData() {
     _optimizer->SolveMultiCell( _alpha, _uSol, _moments );
 
     // --- compute entropy functional ---
-    computeEntropyH();
+    computeEntropyH_primal();
 
     // --- Print everything ----
     printTrainingData();
@@ -85,9 +89,22 @@ void nnDataGenerator::sampleSolutionU() {
     }
 }
 
-void nnDataGenerator::computeEntropyH() {
+void nnDataGenerator::computeEntropyH_dual() {
     for( unsigned idx_set = 0; idx_set < _setSize; idx_set++ ) {
         _hEntropy[idx_set] = _optimizer->ComputeObjFunc( _alpha[idx_set], _uSol[idx_set], _moments );
+    }
+}
+
+void nnDataGenerator::computeEntropyH_primal() {
+    double result = 0.0;
+
+    for( unsigned idx_set = 0; idx_set < _setSize; idx_set++ ) {
+        result = 0.0;
+        // Integrate (eta(eta'_*(alpha*m))
+        for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
+            result += _entropy->Entropy( _entropy->EntropyPrimeDual( dot( _alpha[idx_set], _moments[idx_quad] ) ) ) * _weights[idx_quad];
+        }
+        _hEntropy[idx_set] = result;
     }
 }
 

@@ -14,6 +14,7 @@ class SphericalHarmonics;
 class QuadratureBase;
 class Config;
 class NewtonOptimizer;
+class EntropyBase;
 
 class nnDataGenerator
 {
@@ -56,6 +57,7 @@ class nnDataGenerator
     VectorVector _moments;      /*! @brief: Moment Vector pre-computed at each quadrature point: dim= _nq x _nTotalEntries */
 
     NewtonOptimizer* _optimizer; /*! @brief: Class to solve minimal entropy problem */
+    EntropyBase* _entropy;       /*! @brief: Class to handle entropy functional evaluations */
 
     // Helper functions
     /*! @brief : computes the global index of the moment corresponding to basis function (l,k)
@@ -66,8 +68,11 @@ class nnDataGenerator
     void ComputeMoments(); /*! @brief : Pre-Compute Moments at all quadrature points. */
 
     // Main methods
-    void sampleSolutionU();   /*! @brief : Samples solution vectors u */
-    void computeEntropyH();   /*! @brief : Compute the entropy functional at (u,alpha) */
+    void sampleSolutionU();        /*! @brief : Samples solution vectors u */
+    void computeEntropyH_dual();   /*! @brief : Compute the entropy functional at (u,alpha) in dual formulation */
+    void computeEntropyH_primal(); /*! @brief:  Compute the entropy functional at (u,alpha) in primal formulation */
+
+    // IO routines
     void printTrainingData(); /*! @brief : Print computed training data to csv file and screen */
 };
 #endif    // DATAGENERATOR_H
