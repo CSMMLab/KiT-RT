@@ -51,7 +51,7 @@ void Mesh::ComputeConnectivity() {
         std::sort( sortedBoundaries[i].begin(), sortedBoundaries[i].end() );
     }
 
-    blaze::CompressedMatrix<bool> connMat( _numCells, _numNodes );
+    blaze::CompressedMatrix<unsigned> connMat( _numCells, _numNodes );
     for( unsigned i = mpiCellStart; i < mpiCellEnd; ++i ) {
         for( auto j : _cells[i] ) connMat.set( i, j, true );
     }
