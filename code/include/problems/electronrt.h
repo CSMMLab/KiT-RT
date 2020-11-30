@@ -22,7 +22,7 @@ class ElectronRT : public ProblemBase
 
     virtual VectorVector GetScatteringXS( const Vector& energies );
     virtual VectorVector GetTotalXS( const Vector& energies );
-    virtual VectorVector GetScatteringXSE( const Vector& energies, const Vector& angles );
+    virtual std::vector<Matrix> GetScatteringXSE( const Vector& energies, const Matrix& angles );
     virtual Vector GetTotalXSE( const Vector& energies );
     virtual std::vector<VectorVector> GetExternalSource( const Vector& energies );
     virtual VectorVector SetupIC();

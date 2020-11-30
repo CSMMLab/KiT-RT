@@ -4,48 +4,144 @@
 #include "fluxes/numericalflux.h"
 #include "kernels/scatteringkernelbase.h"
 #include "problems/problembase.h"
-#include "toolboxes/errormessages.h"
 
 // externals
 #include "spdlog/spdlog.h"
 #include <mpi.h>
 
 CSDSNSolver::CSDSNSolver( Config* settings ) : SNSolver( settings ) {
-
+    std::cout << "Start CSDN Constructor\n";
     _dose = std::vector<double>( _settings->GetNCells(), 0.0 );
 
-    // Set angle and energies
+    // --- Set angle and energies
     _angle           = Vector( _settings->GetNQuadPoints(), 0.0 );    // my
     _energies        = Vector( _nEnergies, 0.0 );                     // equidistant
     double energyMin = 1e-1;
     double energyMax = 5e0;
-    // write equidistant energy grid
 
+    // --- Write equidistant energy grid
     _dE        = ComputeTimeStep( settings->GetCFL() );
     _nEnergies = unsigned( ( energyMax - energyMin ) / _dE );
     _energies.resize( _nEnergies );
     for( unsigned n = 0; n < _nEnergies; ++n ) {
         _energies[n] = energyMin + ( energyMax - energyMin ) / ( _nEnergies - 1 ) * n;
     }
+
+    // --- Create Quadrature Points from Quad Rule
+    /* Legacy Code -- unused: Will be deleted
+    std::vector<double> buffer;
+    for( auto q : _quadPoints )
+        if( q[0] > 0.0 ) buffer.push_back( q[0] );
+    std::sort( buffer.begin(), buffer.end() );
+    Vector posMu( buffer.size(), buffer.data() );
+    */
+
+    // create 1D quadrature
+
     // write mu grid
-    for( unsigned k = 0; k < _settings->GetNQuadPoints(); ++k ) {
-        _angle[k] = _quadPoints[k][2];
+    Matrix muMatrix( _settings->GetNQuadPoints(), _settings->GetNQuadPoints() );
+    for( unsigned l = 0; l < _settings->GetNQuadPoints(); ++l ) {
+        for( unsigned k = 0; k < _settings->GetNQuadPoints(); ++k ) {
+            double inner = 0.0;
+            for( unsigned j = 0; j < 3; ++j ) {
+                inner += _quadPoints[l][j] * _quadPoints[k][j];    // compute mu at Omega_l*Omega_k
+            }
+            muMatrix( l, k ) = inner;
+        }
     }
 
-    _sigmaSE = _problem->GetScatteringXSE( _energies, _angle );
-    _sigmaTE = _problem->GetTotalXSE( _energies );
-    _s       = _problem->GetStoppingPower( _energies );
-    _Q       = _problem->GetExternalSource( _energies );
+    _sigmaSE = std::vector<Matrix>( _energies.size(), Matrix( muMatrix.rows(), muMatrix.columns(), 0.0 ) );
+    Vector angleVec( muMatrix.columns() * muMatrix.rows() );
+    // store Matrix with mu values in vector format to call GetScatteringXS
+    for( unsigned i = 0; i < muMatrix.rows(); ++i ) {
+        for( unsigned j = 0; j < muMatrix.columns(); ++j ) {
+            angleVec[i * muMatrix.columns() + j] = muMatrix( i, j );
+        }
+    }
 
+    std::cout << "Here 3\n";
+
+    ICRU database( angleVec, _energies );
+    Matrix total;
+    database.GetAngularScatteringXS( total, _sigmaTE );
+
+    // rearrange output to matrix format
+    for( unsigned n = 0; n < _energies.size(); ++n ) {
+        for( unsigned i = 0; i < muMatrix.rows(); ++i ) {
+            for( unsigned j = 0; j < muMatrix.columns(); ++j ) {
+                _sigmaSE[n]( i, j ) = total( i * muMatrix.columns() + j, n );
+            }
+        }
+    }
+
+    // compute scaling s.t. scattering kernel integrates to one for chosen quadrature
+    /*
+    for( unsigned n = 0; n < _nEnergies; ++n ) {
+        for( unsigned p = 0; p < _nq; ++p ) {
+            double cp = 0.0;
+            for( unsigned q = 0; q < _nq; ++q ) {
+                cp += _weights[q] * _sigmaSE[n]( p, q );
+            }
+            for( unsigned q = 0; q < _nq; ++q ) {
+                _sigmaSE[n]( p, q ) = _sigmaTE[n] / cp * _sigmaSE[n]( p, q );
+            }
+        }
+    }
+    */
+    // _s = Vector( _nEnergies, 1.0 );
+    //_s = _problem->GetStoppingPower( _energies );
+    database.GetStoppingPower( _s );
+
+    _Q = _problem->GetExternalSource( _energies );
+
+    // recompute scattering kernel. TODO: add this to kernel function
+    for( unsigned p = 0; p < _nq; ++p ) {
+        for( unsigned q = 0; q < _nq; ++q ) {
+            _scatteringKernel( p, q ) = 0.0;
+        }
+        _scatteringKernel( p, p ) = _weights[p];
+    }
+
+    /*
+        // test 1
+        for( unsigned n = 0; n < _nEnergies; ++n ) {
+            for( unsigned p = 0; p < _nq; ++p ) {
+                double tmp = 0.0;
+                for( unsigned q = 0; q < _nq; ++q ) {
+                    tmp += _sigmaSE[n]( p, q ) * _scatteringKernel( q, q );
+                }
+
+                std::cout << tmp << " ";
+            }
+            std::cout << std::endl;
+        }
+
+        // exit( EXIT_FAILURE );
+
+        // test scattering
+        Vector ones( _nq, 1.0 );
+        for( unsigned n = 0; n < _nEnergies; ++n ) {
+            std::cout << ( _sigmaSE[_nEnergies - n - 1] * _scatteringKernel * ones )[0] << " " << _sigmaTE[_nEnergies - n - 1] << std::endl;
+        }
+
+        // exit( EXIT_FAILURE );
+    */
     // Get patient density
-    _density = Vector( _nCells, 1.0 );
+    _density = std::vector<double>( _nCells, 1.0 );
 
     // Solver output
     PrepareVolumeOutput();
+
+    std::cout << "End CSDN Constructor\n";
 }
 
 void CSDSNSolver::Solve() {
+    std::cout << "Solve" << std::endl;
     auto log = spdlog::get( "event" );
+
+    // save original energy field for boundary conditions
+    auto energiesOrig = _energies;
+    double energyMax  = 5e0;
 
     // angular flux at next time step (maybe store angular flux at all time steps, since time becomes energy?)
     VectorVector psiNew( _nCells, Vector( _nq, 0.0 ) );
@@ -57,7 +153,9 @@ void CSDSNSolver::Solve() {
     }
     int rank;
     MPI_Comm_rank( MPI_COMM_WORLD, &rank );
-    if( rank == 0 ) log->info( "{:10}   {:10}", "E", "dFlux" );
+    if( rank == 0 ) log->info( "{:10}  {:10} {:10}", "E", "  _dE / densityMin", "dFlux" );
+
+    // --- Preprocessing ---
 
     // do substitution from psi to psiTildeHat (cf. Dissertation Kerstion Kuepper, Eq. 1.23)
     for( unsigned j = 0; j < _nCells; ++j ) {
@@ -67,9 +165,10 @@ void CSDSNSolver::Solve() {
     }
 
     // store transformed energies ETilde instead of E in _energies vector (cf. Dissertation Kerstion Kuepper, Eq. 1.25)
-    double tmp = 0.0;
-    for( unsigned n = 0; n < _nEnergies; ++n ) {
-        tmp          = tmp + _dE / _s[n];
+    double tmp   = 0.0;
+    _energies[0] = 0.0;
+    for( unsigned n = 1; n < _nEnergies; ++n ) {
+        tmp          = tmp + _dE * 0.5 * ( 1.0 / _s[n] + 1.0 / _s[n - 1] );
         _energies[n] = tmp;
     }
 
@@ -86,9 +185,23 @@ void CSDSNSolver::Solve() {
 
     // cross sections do not need to be transformed to ETilde energy grid since e.g. TildeSigmaT(ETilde) = SigmaT(E(ETilde))
 
+    // --- end Preprocessing ---
+
     // loop over energies (pseudo-time)
     for( unsigned n = 0; n < _nEnergies - 1; ++n ) {
         _dE = fabs( _energies[n + 1] - _energies[n] );    // is the sign correct here?
+
+        // --- Set Dirichlet Boundary value ---
+        for( unsigned k = 0; k < _nq; ++k ) {
+            if( _quadPoints[k][0] > 0 ) {
+                _sol[0][k] = 1e5 * exp( -200.0 * pow( 1.0 - _quadPoints[k][0], 2 ) ) *
+                             exp( -50.0 * pow( energyMax - energiesOrig[_nEnergies - n - 1], 2 ) ) * _density[0] * _s[_nEnergies - n - 1];
+                if( _sol[0][k] < 0 ) {
+                    ErrorMessages::Error( "boundary negative", CURRENT_FUNCTION );
+                }
+            }
+        }
+
         // loop over all spatial cells
         for( unsigned j = 0; j < _nCells; ++j ) {
             if( _boundaryCells[j] == BOUNDARY_TYPE::DIRICHLET ) continue;
@@ -104,17 +217,20 @@ void CSDSNSolver::Solve() {
                         psiNew[j][i] += _g->Flux( _quadPoints[i],
                                                   _sol[j][i] / _density[j],
                                                   _sol[_neighbors[j][idx_neighbor]][i] / _density[_neighbors[j][idx_neighbor]],
-                                                  _normals[j][idx_neighbor] );
+                                                  _normals[j][idx_neighbor] ) /
+                                        _areas[j];
                 }
                 // time update angular flux with numerical flux and total scattering cross section
-                psiNew[j][i] = _sol[j][i] - ( _dE / _areas[j] ) * psiNew[j][i] - _dE * _sigmaTE[n] * _sol[j][i];
+                psiNew[j][i] = _sol[j][i] - _dE * psiNew[j][i] - _dE * _sigmaTE[_nEnergies - n - 1] * _sol[j][i];
             }
             // compute scattering effects (_scatteringKernel is simply multiplication with quad weights)
-            psiNew[j] += _dE * ( blaze::trans( _sigmaSE[n] ) * _scatteringKernel * _sol[j] );    // multiply scattering matrix with psi
+            // std::cout << psiNew[j][0] << " | " << _sol[j][0] << std::endl;
+            psiNew[j] += _dE * ( _sigmaSE[_nEnergies - n - 1] * _scatteringKernel * _sol[j] );    // multiply scattering matrix with psi
             // TODO: Check if _sigmaS^T*psi is correct
 
             // TODO: figure out a more elegant way
             // add external source contribution
+            /*
             if( _Q.size() == 1u ) {            // constant source for all energies
                 if( _Q[0][j].size() == 1u )    // isotropic source
                     psiNew[j] += _dE * _Q[0][j][0] * _s[_nEnergies - n - 1];
@@ -127,26 +243,29 @@ void CSDSNSolver::Solve() {
                 else
                     psiNew[j] += _dE * _Q[n][j] * _s[_nEnergies - n - 1];
             }
-        }
-        _sol = psiNew;
-        // do backsubstitution from psiTildeHat to psi (cf. Dissertation Kerstion Kuepper, Eq. 1.23)
-        for( unsigned j = 0; j < _nCells; ++j ) {
-            for( unsigned i = 0; i < _nq; ++i ) {
-                psiNew[j][i] = _sol[j][i] * _density[j] * _s[_nEnergies - n - 1];    // note that _s[0] is stopping power at lowest energy
-            }
+            */
         }
 
+        for( unsigned j = 1; j < _nCells; ++j ) {
+            if( _boundaryCells[j] == BOUNDARY_TYPE::DIRICHLET ) continue;
+            _sol[j] = psiNew[j];
+        }
+
+        // --- Postprocessing, Screen Output ---
         for( unsigned j = 0; j < _nCells; ++j ) {
             fluxNew[j] = dot( psiNew[j], _weights );
-            _dose[j] += 0.5 * _dE * ( fluxNew[j] + fluxOld[j] ) / _density[j];    // update dose with trapezoidal rule
+            _dose[j] += 0.5 * _dE * ( fluxNew[j] * _s[_nEnergies - n - 1] + fluxOld[j] * _s[_nEnergies - n - 2] ) /
+                        _density[j];    // update dose with trapezoidal rule
             _solverOutput[j] = fluxNew[j];
         }
+        // std::cout << "dose at boundary: " << _dose[0] << " \n| " << _sol[0] << std::endl;
 
         // --- VTK and CSV Output ---
         WriteVolumeOutput( n );
         PrintVolumeOutput( n );
 
         // --- Screen Output ---
+
         dFlux   = blaze::l2Norm( fluxNew - fluxOld );
         fluxOld = fluxNew;
         if( rank == 0 ) log->info( "{:03.8f}  {:01.5e}  {:01.5e}", _energies[n], _dE / densityMin, dFlux );

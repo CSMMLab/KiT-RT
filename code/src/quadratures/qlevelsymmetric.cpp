@@ -3,9 +3,16 @@
 #include "toolboxes/errormessages.h"
 
 QLevelSymmetric::QLevelSymmetric( Config* settings ) : QLookupQuadrature( settings ) {
-
     SetAvailOrders();
+    SetName();
+    CheckOrder();    // Check if order is available
+    SetNq();         // Set number of quadrature points
+    SetPointsAndWeights();
+    SetConnectivity();
+}
 
+QLevelSymmetric::QLevelSymmetric( unsigned quadOrder ) : QLookupQuadrature( quadOrder ) {
+    SetAvailOrders();
     SetName();
     CheckOrder();    // Check if order is available
     SetNq();         // Set number of quadrature points

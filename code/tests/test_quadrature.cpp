@@ -31,7 +31,7 @@ double f( double x, double y, double z ) {
 double sin( double x, double /*y*/, double /*z*/ ) { return sin( x ); }
 
 TEST_CASE( "Quadrature Tests", "[quadrature]" ) {
-    std::string filename = std::string( TESTS_PATH ) + "input/unit_quadrature.cfg";
+    std::string filename = std::string( TESTS_PATH ) + "input/unit_tests/quadratures/unit_quadrature.cfg";
 
     // Load Settings from File
     Config* config = new Config( filename );
@@ -114,6 +114,8 @@ TEST_CASE( "Quadrature Tests", "[quadrature]" ) {
                 // Set quadOrder
                 config->SetQuadOrder( quadratureorder );
 
+                bool errorWithinBounds = true;
+
                 QuadratureBase* Q   = QuadratureBase::CreateQuadrature( config );
                 VectorVector points = Q->GetPoints();
                 for( unsigned i = 0; i < Q->GetNq(); i++ ) {
@@ -126,7 +128,7 @@ TEST_CASE( "Quadrature Tests", "[quadrature]" ) {
                                 lowAccuracyTesting );
                         printf( "Computed result %.15f", norm( points[i] ) );
                     }
-                    REQUIRE( approxequal( 1.0, norm( points[i] ), lowAccuracyTesting ) );
+                    if( !approxequal( 1.0, norm( points[i] ), lowAccuracyTesting ) ) errorWithinBounds = false;
                 }
 
                 // Special case for Gauss Legendre with half weights
@@ -147,11 +149,12 @@ TEST_CASE( "Quadrature Tests", "[quadrature]" ) {
                                     lowAccuracyTesting );
                             printf( "Computed result %.15f", norm( points[i] ) );
                         }
-                        REQUIRE( approxequal( 1.0, norm( points[i] ), lowAccuracyTesting ) );
+                        if( !approxequal( 1.0, norm( points[i] ), lowAccuracyTesting ) ) errorWithinBounds = false;
                     }
 
                     config->SetSNAllGaussPts( true );
                 }
+                REQUIRE( errorWithinBounds );
             }
         }
     }

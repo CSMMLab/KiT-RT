@@ -104,8 +104,8 @@ std::pair<Vector, Matrix> QGaussLegendreTensorized::ComputeEigenValTriDiagMatrix
     Vector d( n, 0.0 ), e( n, 0.0 );
     Matrix z( n, n, 0.0 );
     for( unsigned i = 0; i < n; ++i ) {
-        d[i]          = mat( i, i );
-        z( i, i )     = 1.0;
+        d[i]      = mat( i, i );
+        z( i, i ) = 1.0;
         i == 0 ? e[i] = 0.0 : e[i] = mat( i, i - 1 );
     }
 

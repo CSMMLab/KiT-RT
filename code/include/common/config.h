@@ -1,6 +1,6 @@
 /*!
- * @file CConfig.h
- * @brief Classes for different Options in rtsn
+ * @file config.h
+ * @brief Class to handle all options and their pre and postprocessing.
  * @author S. Schotthöfer
  *
  * Disclaimer: This class structure was copied and modifed with open source permission from SU2 v7.0.3 https://su2code.github.io/
@@ -148,12 +148,10 @@ class Config
     /*--- all_options is a map containing all of the options. This is used during config file parsing
      to track the options which have not been set (so the default values can be used). Without this map
      there would be no list of all the config file options. ---*/
-
     std::map<std::string, bool> _allOptions;
 
     /*--- brief param is a map from the option name (config file string) to its decoder (the specific child
-     class of COptionBase that turns the string into a value) ---*/
-
+     class of OptionBase that turns the string into a value) ---*/
     std::map<std::string, OptionBase*> _optionMap;
 
     // ---- Option Types ----

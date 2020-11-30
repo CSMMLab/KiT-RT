@@ -3,9 +3,15 @@
 #include "toolboxes/errormessages.h"
 
 QLDFESA::QLDFESA( Config* settings ) : QLookupQuadrature( settings ) {
-
     SetAvailOrders();
-
+    SetName();
+    CheckOrder();    // Check if order is available
+    SetNq();         // Set number of quadrature points
+    SetPointsAndWeights();
+    SetConnectivity();
+}
+QLDFESA::QLDFESA( unsigned quadOrder ) : QLookupQuadrature( quadOrder ) {
+    SetAvailOrders();
     SetName();
     CheckOrder();    // Check if order is available
     SetNq();         // Set number of quadrature points

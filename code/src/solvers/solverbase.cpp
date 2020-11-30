@@ -11,6 +11,8 @@
 #include "solvers/pnsolver.h"
 #include "solvers/snsolver.h"
 
+#include <mpi.h>
+
 Solver::Solver( Config* settings ) : _settings( settings ) {
     // @TODO save parameters from settings class
 

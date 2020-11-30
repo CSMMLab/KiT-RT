@@ -6,6 +6,12 @@ QMonteCarlo::QMonteCarlo( Config* settings ) : QuadratureBase( settings ) {
     SetPointsAndWeights();
     SetConnectivity();
 }
+QMonteCarlo::QMonteCarlo( unsigned quadOrder ) : QuadratureBase( quadOrder ) {
+    SetName();
+    SetNq();
+    SetPointsAndWeights();
+    SetConnectivity();
+}
 
 void QMonteCarlo::SetPointsAndWeights() {
     // Nq random points on the sphere.

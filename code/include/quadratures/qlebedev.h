@@ -7,6 +7,8 @@ class QLebedev : public QLookupQuadrature
 {
   public:
     QLebedev( Config* settings );
+    QLebedev( unsigned quadOrder );
+
     virtual ~QLebedev() {}
 
     inline void SetName() override { _name = "Lebedev quadrature"; }

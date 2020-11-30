@@ -17,8 +17,8 @@ class ProblemBase
     Mesh* _mesh;
     Physics* _physics;
 
-    std::vector<double> _density;
-    std::vector<double> _stoppingPower;
+    std::vector<double> _density; /*! @brief: vector with patient densities */
+    std::vector<double> _stoppingPower; /*! @brief: vector with stopping powers*/
 
     ProblemBase() = delete;
 
@@ -38,6 +38,7 @@ class ProblemBase
      * @param density is vector with patient densities (at different spatial cells)
      */
     virtual VectorVector GetTotalXS( const Vector& energies ) = 0;
+    
     /**
      * @brief GetTotalXSE gives back vector of total cross sections for
      *        energies in vector energy
@@ -50,9 +51,16 @@ class ProblemBase
      *        in vector energy
      * @param energy is the energy the cross section is queried for
      */
-    virtual VectorVector GetScatteringXSE( const Vector& energies, const Vector& angles ) {
-        return VectorVector( energies.size(), Vector( angles.size() ) );
+    virtual std::vector<Matrix> GetScatteringXSE( const Vector& energies, const Matrix& angles ) {
+        return std::vector<Matrix>( energies.size(), Matrix( angles.rows(), angles.columns() ) );
     }
+
+    /**
+     * @brief GetScatteringXSE gives back vector (each energy) of scattering cross sections for energies
+     *        in vector energy
+     * @param energy is the energy the cross section is queried for
+     */
+    virtual VectorVector GetScatteringXSE( const Vector& energies, const Vector& angles );
 
     /**
      * @brief GetExternalSource gives back vector of vectors of source terms for each

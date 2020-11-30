@@ -3,9 +3,16 @@
 #include "toolboxes/errormessages.h"
 
 QLebedev::QLebedev( Config* settings ) : QLookupQuadrature( settings ) {
-
     SetAvailOrders();
+    SetName();
+    CheckOrder();    // Check if order is available
+    SetNq();         // Set number of quadrature points
+    SetPointsAndWeights();
+    SetConnectivity();
+}
 
+QLebedev::QLebedev( unsigned quadOrder ) : QLookupQuadrature( quadOrder ) {
+    SetAvailOrders();
     SetName();
     CheckOrder();    // Check if order is available
     SetNq();         // Set number of quadrature points

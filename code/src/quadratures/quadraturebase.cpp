@@ -1,5 +1,6 @@
 #include "quadratures/quadraturebase.h"
 #include "common/config.h"
+#include "quadratures/productquadrature.h"
 #include "quadratures/qgausslegendre1D.h"
 #include "quadratures/qgausslegendretensorized.h"
 #include "quadratures/qldfesa.h"
@@ -13,6 +14,8 @@ QuadratureBase::QuadratureBase( Config* settings ) {
     _order    = settings->GetQuadOrder();
 }
 
+QuadratureBase::QuadratureBase( unsigned order ) : _order( order ) { _settings = nullptr; }
+
 QuadratureBase* QuadratureBase::CreateQuadrature( Config* settings ) {
     QUAD_NAME name = settings->GetQuadName();
 
@@ -23,7 +26,24 @@ QuadratureBase* QuadratureBase::CreateQuadrature( Config* settings ) {
         case QUAD_LevelSymmetric: return new QLevelSymmetric( settings );
         case QUAD_LDFESA: return new QLDFESA( settings );
         case QUAD_Lebedev: return new QLebedev( settings );
-        default: return new QMonteCarlo( settings );    // Use MonteCarlo as default
+        case QUAD_Product: return new ProductQuadrature( settings );
+        default: ErrorMessages::Error( "Creator for the chose quadrature does not yet exist. This is is the fault of the coder!", CURRENT_FUNCTION );
+    }
+}
+
+QuadratureBase* QuadratureBase::CreateQuadrature( QUAD_NAME name, unsigned quadOrder ) {
+
+    switch( name ) {
+        case QUAD_MonteCarlo: return new QMonteCarlo( quadOrder );
+        case QUAD_GaussLegendreTensorized:
+            ErrorMessages::Error( "This quadrature must be initialized with a settings constructor!", CURRENT_FUNCTION );
+            break;
+        case QUAD_GaussLegendre1D: return new QGaussLegendre1D( quadOrder );
+        case QUAD_LevelSymmetric: return new QLevelSymmetric( quadOrder );
+        case QUAD_LDFESA: return new QLDFESA( quadOrder );
+        case QUAD_Lebedev: return new QLebedev( quadOrder );
+        case QUAD_Product: return new ProductQuadrature( quadOrder );
+        default: ErrorMessages::Error( "Creator for the chose quadrature does not yet exist. This is is the fault of the coder!", CURRENT_FUNCTION );
     }
 }
 

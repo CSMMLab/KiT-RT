@@ -6,10 +6,12 @@
 #include "kernels/scatteringkernelbase.h"
 #include "problems/problembase.h"
 #include "quadratures/quadraturebase.h"
+#include "toolboxes/errormessages.h"
 
 // externals
 #include "spdlog/spdlog.h"
 #include <mpi.h>
+#include <iostream>
 
 SNSolver::SNSolver( Config* settings ) : Solver( settings ) {
 

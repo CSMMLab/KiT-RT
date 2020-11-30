@@ -30,7 +30,7 @@ double P2_2( double my ) { return sqrt( 15 / ( 16 * M_PI ) ) * ( 1 - my * my ); 
 
 TEST_CASE( "test the spherical harmonics basis computation", "[spherical_harmonics]" ) {
 
-    std::string filename = std::string( TESTS_PATH ) + "input/unit_harmonics.cfg";
+    std::string filename = std::string( TESTS_PATH ) + "input/unit_tests/solvers/unit_harmonics.cfg";
 
     // Load Settings from File
     Config* config = new Config( filename );
@@ -42,31 +42,35 @@ TEST_CASE( "test the spherical harmonics basis computation", "[spherical_harmoni
     SECTION( "Test against analytical solution" ) {
         std::vector<double> legendre;
         Vector moment;
+        std::vector<bool> validLegendrePoly( 6, true );
+        std::vector<bool> validMoment( 9, true );
         for( double my = -1.0; my < 1.0; my += 0.1 ) {
 
             legendre = testBase.GetAssLegendrePoly( my );
 
-            REQUIRE( std::fabs( legendre[0] - P0_0( my ) ) < 1e2 * std::numeric_limits<double>::epsilon() );
-            REQUIRE( std::fabs( legendre[1] - P1_0( my ) ) < 1e2 * std::numeric_limits<double>::epsilon() );
-            REQUIRE( std::fabs( legendre[2] - P1_1( my ) ) < 1e2 * std::numeric_limits<double>::epsilon() );
-            REQUIRE( std::fabs( legendre[3] - P2_0( my ) ) < 1e2 * std::numeric_limits<double>::epsilon() );
-            REQUIRE( std::fabs( legendre[4] - P2_1( my ) ) < 1e2 * std::numeric_limits<double>::epsilon() );
-            REQUIRE( std::fabs( legendre[5] - P2_2( my ) ) < 1e2 * std::numeric_limits<double>::epsilon() );
+            if( std::fabs( legendre[0] - P0_0( my ) ) > 1e2 * std::numeric_limits<double>::epsilon() ) validLegendrePoly[0] = false;
+            if( std::fabs( legendre[1] - P1_0( my ) ) > 1e2 * std::numeric_limits<double>::epsilon() ) validLegendrePoly[1] = false;
+            if( std::fabs( legendre[2] - P1_1( my ) ) > 1e2 * std::numeric_limits<double>::epsilon() ) validLegendrePoly[2] = false;
+            if( std::fabs( legendre[3] - P2_0( my ) ) > 1e2 * std::numeric_limits<double>::epsilon() ) validLegendrePoly[3] = false;
+            if( std::fabs( legendre[4] - P2_1( my ) ) > 1e2 * std::numeric_limits<double>::epsilon() ) validLegendrePoly[4] = false;
+            if( std::fabs( legendre[5] - P2_2( my ) ) > 1e2 * std::numeric_limits<double>::epsilon() ) validLegendrePoly[5] = false;
 
             for( double phi = 0.0; phi < 2 * M_PI; phi += 0.1 ) {
                 moment = testBase.ComputeSphericalBasis( my, phi );
 
-                REQUIRE( std::fabs( moment[0] - Y0_0( my, phi ) ) < 1e2 * std::numeric_limits<double>::epsilon() );
-                REQUIRE( std::fabs( moment[1] - Y1_m1( my, phi ) ) < 1e2 * std::numeric_limits<double>::epsilon() );
-                REQUIRE( std::fabs( moment[2] - Y1_0( my, phi ) ) < 1e2 * std::numeric_limits<double>::epsilon() );
-                REQUIRE( std::fabs( moment[3] - Y1_1( my, phi ) ) < 1e2 * std::numeric_limits<double>::epsilon() );
-                REQUIRE( std::fabs( moment[4] - Y2_m2( my, phi ) ) < 1e2 * std::numeric_limits<double>::epsilon() );
-                REQUIRE( std::fabs( moment[5] - Y2_m1( my, phi ) ) < 1e2 * std::numeric_limits<double>::epsilon() );
-                REQUIRE( std::fabs( moment[6] - Y2_0( my, phi ) ) < 1e2 * std::numeric_limits<double>::epsilon() );
-                REQUIRE( std::fabs( moment[7] - Y2_1( my, phi ) ) < 1e2 * std::numeric_limits<double>::epsilon() );
-                REQUIRE( std::fabs( moment[8] - Y2_2( my, phi ) ) < 1e2 * std::numeric_limits<double>::epsilon() );
+                if( std::fabs( moment[0] - Y0_0( my, phi ) ) > 1e2 * std::numeric_limits<double>::epsilon() ) validMoment[0] = false;
+                if( std::fabs( moment[1] - Y1_m1( my, phi ) ) > 1e2 * std::numeric_limits<double>::epsilon() ) validMoment[1] = false;
+                if( std::fabs( moment[2] - Y1_0( my, phi ) ) > 1e2 * std::numeric_limits<double>::epsilon() ) validMoment[2] = false;
+                if( std::fabs( moment[3] - Y1_1( my, phi ) ) > 1e2 * std::numeric_limits<double>::epsilon() ) validMoment[3] = false;
+                if( std::fabs( moment[4] - Y2_m2( my, phi ) ) > 1e2 * std::numeric_limits<double>::epsilon() ) validMoment[4] = false;
+                if( std::fabs( moment[5] - Y2_m1( my, phi ) ) > 1e2 * std::numeric_limits<double>::epsilon() ) validMoment[5] = false;
+                if( std::fabs( moment[6] - Y2_0( my, phi ) ) > 1e2 * std::numeric_limits<double>::epsilon() ) validMoment[6] = false;
+                if( std::fabs( moment[7] - Y2_1( my, phi ) ) > 1e2 * std::numeric_limits<double>::epsilon() ) validMoment[7] = false;
+                if( std::fabs( moment[8] - Y2_2( my, phi ) ) > 1e2 * std::numeric_limits<double>::epsilon() ) validMoment[8] = false;
             }
         }
+        REQUIRE( std::all_of( validLegendrePoly.begin(), validLegendrePoly.end(), []( bool v ) { return v; } ) );
+        REQUIRE( std::all_of( validMoment.begin(), validMoment.end(), []( bool v ) { return v; } ) );
     }
 
     // Remove title line
@@ -82,10 +86,11 @@ TEST_CASE( "test the spherical harmonics basis computation", "[spherical_harmoni
         Vector values( 9, 0.0 );
         Vector result( 4, 0.0 );
 
-        case_file.open( "harmonicBasis_reference.csv", std::ios::in );
+        case_file.open( "unit_test/solvers/harmonicBasis_reference.csv", std::ios::in );
 
         getline( case_file, text_line );
 
+        bool errorWithinBounds = true;
         while( getline( case_file, text_line ) ) {
 
             // give line to stringstream
@@ -97,9 +102,10 @@ TEST_CASE( "test the spherical harmonics basis computation", "[spherical_harmoni
             result = testBase.ComputeSphericalBasis( my, phi );
 
             for( unsigned idx = 0; idx < 9; idx++ ) {
-                REQUIRE( std::fabs( result[idx] - values[idx] ) < 1e2 * std::numeric_limits<double>::epsilon() );
+                if( std::fabs( result[idx] - values[idx] ) > 1e2 * std::numeric_limits<double>::epsilon() ) errorWithinBounds = false;
             }
         }
+        REQUIRE( errorWithinBounds );
         case_file.close();
     }
 
@@ -128,24 +134,22 @@ TEST_CASE( "test the spherical harmonics basis computation", "[spherical_harmoni
             }
         }
 
+        bool errorWithinBounds = true;
+        bool orthogonality     = true;
         for( unsigned idx_row = 0; idx_row < 9; idx_row++ ) {
             for( unsigned idx_col = 0; idx_col < 9; idx_col++ ) {
                 if( idx_row == idx_col ) {
-                    if( std::fabs( results( idx_row, idx_col ) - 1.0 ) > 1e2 * std::numeric_limits<double>::epsilon() ) {
-                        std::cout << "Error in entry (" << idx_row << ", " << idx_col << ") with result." << results( idx_row, idx_col ) << std::endl;
-                    }
                     // Orthogonality
-                    REQUIRE( std::fabs( results( idx_row, idx_col ) - 1.0 ) < 1e2 * std::numeric_limits<double>::epsilon() );
+                    if( std::fabs( results( idx_row, idx_col ) - 1.0 ) > 1e2 * std::numeric_limits<double>::epsilon() ) orthogonality = false;
                 }
                 else {
-                    if( std::fabs( results( idx_row, idx_col ) ) > 1e2 * std::numeric_limits<double>::epsilon() ) {
-                        std::cout << "Error in entry (" << idx_row << ", " << idx_col << ") with result." << results( idx_row, idx_col ) << std::endl;
-                    }
                     // Normality
-                    REQUIRE( std::fabs( results( idx_row, idx_col ) ) < 1e2 * std::numeric_limits<double>::epsilon() );
+                    if( std::fabs( results( idx_row, idx_col ) ) > 1e2 * std::numeric_limits<double>::epsilon() ) errorWithinBounds = false;
                 }
             }
         }
+        REQUIRE( errorWithinBounds );
+        REQUIRE( orthogonality );
     }
 
     SECTION( "test parity - carthesian coordinates" ) {
@@ -158,6 +162,7 @@ TEST_CASE( "test the spherical harmonics basis computation", "[spherical_harmoni
 
         double x, y, z;
 
+        bool errorWithinBounds = true;
         for( unsigned idx_quad = 0; idx_quad < quad.GetNq(); idx_quad++ ) {
             x       = quad.GetPoints()[idx_quad][0];
             y       = quad.GetPoints()[idx_quad][1];
@@ -177,10 +182,11 @@ TEST_CASE( "test the spherical harmonics basis computation", "[spherical_harmoni
                     else
                         result = moment2[idx_sys] + moment1[idx_sys];
 
-                    REQUIRE( std::fabs( result ) < 1e2 * std::numeric_limits<double>::epsilon() );
+                    if( std::fabs( result ) > 1e2 * std::numeric_limits<double>::epsilon() ) errorWithinBounds = false;
                 }
             }
         }
+        REQUIRE( errorWithinBounds );
     }
 
     SECTION( "test parity - polar coordinates" ) {
@@ -192,6 +198,7 @@ TEST_CASE( "test the spherical harmonics basis computation", "[spherical_harmoni
         double result = 0.;
 
         // // test in polar coordinates
+        bool errorWithinBounds = true;
         for( double my = -1.0; my < 1.0; my += 0.1 ) {
             for( double phi = 0.0; phi < 2 * M_PI; phi += 0.1 ) {
                 moment2 = testBase.ComputeSphericalBasis( my, phi );
@@ -206,10 +213,11 @@ TEST_CASE( "test the spherical harmonics basis computation", "[spherical_harmoni
                         else
                             result = moment2[idx_sys] + moment1[idx_sys];
 
-                        REQUIRE( std::fabs( result ) < 1e2 * std::numeric_limits<double>::epsilon() );
+                        if( std::fabs( result ) > 1e2 * std::numeric_limits<double>::epsilon() ) errorWithinBounds = false;
                     }
                 }
             }
         }
+        REQUIRE( errorWithinBounds );
     }
 }
