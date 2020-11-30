@@ -18,10 +18,13 @@ TEST_CASE( "test all scattering kernels", "[kernel]" ) {
         auto weights = quad->GetWeights();
         Isotropic kernel( quad );
         Matrix scatteringMatrix = kernel.GetScatteringKernel();
+        bool errorWithinBounds  = true;
         for( unsigned i = 0; i < scatteringMatrix.rows(); ++i ) {
             for( unsigned j = 0; j < scatteringMatrix.columns(); ++j ) {
-                REQUIRE( std::fabs( scatteringMatrix( i, j ) - ( weights[j] / ( 4 * M_PI ) ) ) < std::numeric_limits<double>::epsilon() );
+                if( std::fabs( scatteringMatrix( i, j ) - ( weights[j] / ( 4 * M_PI ) ) ) > std::numeric_limits<double>::epsilon() )
+                    errorWithinBounds = false;
             }
         }
+        REQUIRE( errorWithinBounds );
     }
 }

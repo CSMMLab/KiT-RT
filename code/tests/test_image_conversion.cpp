@@ -47,11 +47,13 @@ TEST_CASE( "convert image data to grayscale matrix", "[image I/O]" ) {
             return x.size() == refMatrix[0].size();
         } ) );    // consistency check if all columns of the read-in file have equal length
 
+        bool matricesEqual = true;
         for( unsigned i = 0; i < gsImage.rows(); ++i ) {
             for( unsigned j = 0; j < gsImage.columns(); ++j ) {
-                REQUIRE( refMatrix[i][j] == gsImage( i, j ) );    // all values match
+                if( refMatrix[i][j] != gsImage( i, j ) ) matricesEqual = false;    // all values match
             }
         }
+        REQUIRE( matricesEqual );
     }
 
     SECTION( "interpolation of grayscale matrix onto the generated mesh" ) {

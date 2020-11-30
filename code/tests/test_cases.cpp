@@ -46,9 +46,11 @@ TEST_CASE( "SN_SOLVER", "[validation_tests]" ) {
 
         double eps = 1e-3;
         REQUIRE( test.size() == reference.size() );
+        bool errorWithinBounds = true;
         for( unsigned i = 0; i < test.size(); ++i ) {
-            REQUIRE( std::fabs( test[i] - reference[i] ) < eps );
+            if( std::fabs( test[i] - reference[i] ) > eps ) errorWithinBounds = false;
         }
+        REQUIRE( errorWithinBounds );
     }
 
     SECTION( "linesource" ) {
@@ -64,9 +66,11 @@ TEST_CASE( "SN_SOLVER", "[validation_tests]" ) {
 
         double eps = 1e-3;
         REQUIRE( test.size() == reference.size() );
+        bool errorWithinBounds = true;
         for( unsigned i = 0; i < test.size(); ++i ) {
-            REQUIRE( std::fabs( test[i] - reference[i] ) < eps );
+            if( std::fabs( test[i] - reference[i] ) > eps ) errorWithinBounds = false;
         }
+        REQUIRE( errorWithinBounds );
     }
 }
 
@@ -83,11 +87,13 @@ TEST_CASE( "PN_SOLVER", "[validation_tests]" ) {
         auto test      = readVTKFile( std::string( TESTS_PATH ) + "result/rtsn_test_checkerboard_PN.vtk" );
         auto reference = readVTKFile( std::string( TESTS_PATH ) + pn_fileDir + "checkerboard_PN_reference.vtk" );
 
-        double eps = 1e-3;
+        double eps             = 1e-3;
+        bool errorWithinBounds = true;
         REQUIRE( test.size() == reference.size() );
         for( unsigned i = 0; i < test.size(); ++i ) {
-            REQUIRE( std::fabs( test[i] - reference[i] ) < eps );
+            if( std::fabs( test[i] - reference[i] ) > eps ) errorWithinBounds = false;
         }
+        REQUIRE( errorWithinBounds );
     }
 
     SECTION( "linesource" ) {
@@ -101,12 +107,14 @@ TEST_CASE( "PN_SOLVER", "[validation_tests]" ) {
         auto test      = readVTKFile( std::string( TESTS_PATH ) + "result/rtsn_test_linesource_PN.vtk" );
         auto reference = readVTKFile( std::string( TESTS_PATH ) + pn_fileDir + "linesource_PN_reference.vtk" );
 
-        double eps = 1e-3;
+        double eps             = 1e-3;
+        bool errorWithinBounds = true;
 
         REQUIRE( test.size() == reference.size() );
         for( unsigned i = 0; i < test.size(); ++i ) {
-            REQUIRE( std::fabs( test[i] - reference[i] ) < eps );
+            if( std::fabs( test[i] - reference[i] ) > eps ) errorWithinBounds = false;
         }
+        REQUIRE( errorWithinBounds );
     }
 }
 
@@ -124,11 +132,14 @@ TEST_CASE( "MN_SOLVER", "[validation_tests]" ) {
         auto test      = readVTKFile( std::string( TESTS_PATH ) + "result/rtsn_test_checkerboard_MN.vtk" );
         auto reference = readVTKFile( std::string( TESTS_PATH ) + mn_fileDir + "checkerboard_MN_reference.vtk" );
 
-        double eps = 1e-3;
+        double eps             = 1e-3;
+        bool errorWithinBounds = true;
+
         REQUIRE( test.size() == reference.size() );
         for( unsigned i = 0; i < test.size(); ++i ) {
-            REQUIRE( std::fabs( test[i] - reference[i] ) < eps );
+            if( std::fabs( test[i] - reference[i] ) > eps ) errorWithinBounds = false;
         }
+        REQUIRE( errorWithinBounds );
     }
 
     SECTION( "linesource" ) {
@@ -145,12 +156,14 @@ TEST_CASE( "MN_SOLVER", "[validation_tests]" ) {
             auto test      = readVTKFile( std::string( TESTS_PATH ) + "result/rtsn_test_linesource_MN_Quad.vtk" );
             auto reference = readVTKFile( std::string( TESTS_PATH ) + mn_fileDir + "linesource_MN_Quad_reference.vtk" );
 
-            double eps = 1e-3;
+            double eps             = 1e-3;
+            bool errorWithinBounds = true;
 
             REQUIRE( test.size() == reference.size() );
             for( unsigned i = 0; i < test.size(); ++i ) {
-                REQUIRE( std::fabs( test[i] - reference[i] ) < eps );
+                if( std::fabs( test[i] - reference[i] ) > eps ) errorWithinBounds = false;
             }
+            REQUIRE( errorWithinBounds );
         }
 
         {    // ---  Maxwell Boltzmann Entropy ---
@@ -164,11 +177,14 @@ TEST_CASE( "MN_SOLVER", "[validation_tests]" ) {
             auto test      = readVTKFile( std::string( TESTS_PATH ) + "result/rtsn_test_linesource_MN_MB.vtk" );
             auto reference = readVTKFile( std::string( TESTS_PATH ) + mn_fileDir + "linesource_MN_MB_reference.vtk" );
 
-            double eps = 1e-3;
+            double eps             = 1e-3;
+            bool errorWithinBounds = true;
+
             REQUIRE( test.size() == reference.size() );
             for( unsigned i = 0; i < test.size(); ++i ) {
-                REQUIRE( std::fabs( test[i] - reference[i] ) < eps );
+                if( std::fabs( test[i] - reference[i] ) > eps ) errorWithinBounds = false;
             }
+            REQUIRE( errorWithinBounds );
         }
     }
 }

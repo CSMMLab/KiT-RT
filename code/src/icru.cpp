@@ -257,7 +257,6 @@ void ICRU::ELINIT( std::vector<double> IZ, std::vector<double> STF ) {
 
 void ICRU::DCSEL0( double E ) {
     if( E < 49.9999e0 || E > 1.0001e8 ) {
-        std::cout << "Energy " << E << std::endl;
         ErrorMessages::Error( "Outside of supported energy range", CURRENT_FUNCTION );
     }
     double EL = std::log( E );

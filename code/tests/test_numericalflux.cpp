@@ -30,6 +30,9 @@ TEST_CASE( "unit numericalflux tests", "[numericalflux]" ) {
         Vector psiLVect{ 1.0, 2.0, 3.0, 4.0 };
         Vector psiRVect{ 3.0, 4.0, 1.0, 2.0 };
 
+        bool fluxCancelingScalar = true;
+        bool fluxCancelingMatrix = true;
+
         for( unsigned l = 0; l < 10; ++l ) {
             Vector n( 2, 0.0 );
             std::default_random_engine generator;
@@ -56,16 +59,18 @@ TEST_CASE( "unit numericalflux tests", "[numericalflux]" ) {
             // ---- Test all fluxes ----
 
             // a) Upwinding methods - scalar
-            REQUIRE( std::fabs( g.Flux( omega, psiL, psiR, n ) - ( -g.Flux( omega, psiR, psiL, -n ) ) ) <
-                     1e2 * std::numeric_limits<double>::epsilon() );
+            if( std::fabs( g.Flux( omega, psiL, psiR, n ) - ( -g.Flux( omega, psiR, psiL, -n ) ) ) > 1e2 * std::numeric_limits<double>::epsilon() )
+                fluxCancelingScalar = false;
 
             // b) Upwinding methods - Systems  MatrixFlux, 4x4 Matrices, i.e. P1 case;
 
             resultFluxPlus  = g.Flux( AxP, AxM, AyP, AyM, AyP, AyM, psiLVect, psiRVect, n );
             resultFluxMinus = g.Flux( AxP, AxM, AyP, AyM, AyP, AyM, psiRVect, psiLVect, -n );
 
-            REQUIRE( blaze::norm( resultFluxPlus + resultFluxMinus ) < 1e2 * std::numeric_limits<double>::epsilon() );
+            if( blaze::norm( resultFluxPlus + resultFluxMinus ) > 1e2 * std::numeric_limits<double>::epsilon() ) fluxCancelingMatrix = false;
         }
+        REQUIRE( fluxCancelingScalar );
+        REQUIRE( fluxCancelingMatrix );
     }
 
     SECTION( "test consistency" ) {
@@ -74,6 +79,9 @@ TEST_CASE( "unit numericalflux tests", "[numericalflux]" ) {
         Vector resultFlux( 4, 0 );
         Vector resultFluxOrig( 4, 0 );
         Vector psiLVect{ 1.0, 2.0, 3.0, 4.0 };
+
+        bool consitencyScalar = true;
+        bool consitencyMatrix = true;
 
         for( unsigned l = 0; l < 10; ++l ) {
             std::default_random_engine generator;
@@ -102,14 +110,16 @@ TEST_CASE( "unit numericalflux tests", "[numericalflux]" ) {
 
             // a) Upwinding methods - scalar
 
-            REQUIRE( std::fabs( g.Flux( omega, psi, psi, n ) - inner * psi ) < 1e2 * std::numeric_limits<double>::epsilon() );
+            if( std::fabs( g.Flux( omega, psi, psi, n ) - inner * psi ) > 1e2 * std::numeric_limits<double>::epsilon() ) consitencyScalar = false;
 
             // b) Upwinding methods -  MatrixFlux, 4x4 Matrices, i.e. P1 case;
 
             resultFluxOrig = ( n[0] * ( AxP + AxM ) * psiLVect + +n[1] * ( AyP + AyM ) * psiLVect );
             resultFlux     = g.Flux( AxP, AxM, AyP, AyM, AyP, AyM, psiLVect, psiLVect, n );
 
-            REQUIRE( blaze::norm( resultFlux - resultFluxOrig ) < 1e2 * std::numeric_limits<double>::epsilon() );
+            if( blaze::norm( resultFlux - resultFluxOrig ) > 1e2 * std::numeric_limits<double>::epsilon() ) consitencyMatrix = false;
         }
+        REQUIRE( consitencyScalar );
+        REQUIRE( consitencyMatrix );
     }
 }
