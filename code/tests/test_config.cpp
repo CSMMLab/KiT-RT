@@ -2,7 +2,7 @@
 #include "common/config.h"
 
 TEST_CASE( "Read in Config Template" ) {
-    std::string filename = std::string( TESTS_PATH ) + "input/unit_config.cfg";
+    std::string filename = std::string( TESTS_PATH ) + "input/unit_tests/common/unit_config.cfg";
 
     // Load Settings from File
     Config* config = new Config( filename );

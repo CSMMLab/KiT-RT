@@ -30,7 +30,7 @@ double P2_2( double my ) { return sqrt( 15 / ( 16 * M_PI ) ) * ( 1 - my * my ); 
 
 TEST_CASE( "test the spherical harmonics basis computation", "[spherical_harmonics]" ) {
 
-    std::string filename = std::string( TESTS_PATH ) + "input/unit_harmonics.cfg";
+    std::string filename = std::string( TESTS_PATH ) + "input/unit_tests/solvers/unit_harmonics.cfg";
 
     // Load Settings from File
     Config* config = new Config( filename );
@@ -86,7 +86,7 @@ TEST_CASE( "test the spherical harmonics basis computation", "[spherical_harmoni
         Vector values( 9, 0.0 );
         Vector result( 4, 0.0 );
 
-        case_file.open( "harmonicBasis_reference.csv", std::ios::in );
+        case_file.open( "unit_test/solvers/harmonicBasis_reference.csv", std::ios::in );
 
         getline( case_file, text_line );
 
