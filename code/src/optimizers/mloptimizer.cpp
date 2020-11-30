@@ -97,7 +97,7 @@ void MLOptimizer::initialize_python() {
         PyRun_SimpleString( ( "import sys\nsys.path.append('" + pyPath + "')" ).c_str() );
     }
 
-    std::cout << "Python working directory is: " << pyPath << " \n";
+    // std::cout << "Python working directory is: " << pyPath << " \n";
     init_numpy();
 }
 
