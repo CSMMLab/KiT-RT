@@ -9,14 +9,15 @@
 #include "toolboxes/textprocessingtoolbox.h"
 
 TEST_CASE( "convert image data to grayscale matrix", "[image I/O]" ) {
-    std::string config_file_name = "../tests/input/image_conversion.cfg";
+    std::string config_file_name = std::string( TESTS_PATH ) + "input/image_conversion.cfg";
 
     Config* config = new Config( config_file_name );    // just to init spdlog
 
-    std::string testImage = "../tests/input/mini_phantom.png";
+    std::string testImage = std::string( TESTS_PATH ) + "input/mini_phantom.png";
     std::string testMesh  = config->GetMeshFile();
 
     Matrix gsImage = createSU2MeshFromImage( testImage, testMesh );
+    gsImage.transpose();
     SECTION( "grayscale matrix" ) {
         REQUIRE( std::filesystem::exists( testMesh ) );    // mesh has been created
         REQUIRE( gsImage.rows() > 0 );                     // atleast some data is stored
@@ -66,11 +67,9 @@ TEST_CASE( "convert image data to grayscale matrix", "[image I/O]" ) {
         unsigned m = gsImage.rows();
         unsigned n = gsImage.columns();
 
-        Vector x( m + 1 ), y( n + 1 );
-        for( unsigned i = 0; i < m + 1; ++i ) {
-            x[i] = static_cast<double>( i ) / static_cast<double>( m ) * ( xMax - xMin );
-        }
-        for( unsigned i = 0; i < n + 1; ++i ) y[i] = static_cast<double>( i ) / static_cast<double>( n ) * ( yMax - yMin );
+        Vector x( m ), y( n );
+        for( unsigned i = 0; i < m; ++i ) x[i] = static_cast<double>( i ) / static_cast<double>( m - 1 ) * ( xMax - xMin );
+        for( unsigned i = 0; i < n; ++i ) y[i] = static_cast<double>( i ) / static_cast<double>( n - 1 ) * ( yMax - yMin );
 
         Interpolation interp( x, y, gsImage );
         std::vector<double> result( mesh->GetNumCells(), 0.0 );

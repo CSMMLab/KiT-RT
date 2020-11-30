@@ -20,7 +20,7 @@ Interpolation::Interpolation( const Vector& x, const Vector& y, const Matrix& da
 
 // Set-up: check validity of input
 void Interpolation::Setup() {
-     // 1D
+    // 1D
     if( _dim == 1u ) {
         // Length of tables must be equal
         if( _x.size() != _y.size() ) ErrorMessages::Error( "Vectors are of unequal length!", CURRENT_FUNCTION );
@@ -28,7 +28,7 @@ void Interpolation::Setup() {
 
         // Values must be sorted ascendingly (property is used later when searching tables)
         for( unsigned i = 0; i < _x.size() - 1u; i++ ) {
-            if( !( _x[i] <_x[i + 1] ) ) ErrorMessages::Error( "x is not sorted ascendingly!", CURRENT_FUNCTION );
+            if( !( _x[i] < _x[i + 1] ) ) ErrorMessages::Error( "x is not sorted ascendingly!", CURRENT_FUNCTION );
         }
     }
 
@@ -37,7 +37,7 @@ void Interpolation::Setup() {
         // Length of tables must be equal
         if( _x.size() != _data.rows() ) ErrorMessages::Error( "x and data are of unequal length!", CURRENT_FUNCTION );
         if( _y.size() != _data.columns() ) ErrorMessages::Error( "y and data are of unequal length!", CURRENT_FUNCTION );
-        
+
         // Values must be sorted ascendingly (property is used later when searching tables)
         for( unsigned i = 0; i < _x.size() - 1u; i++ ) {
             if( !( _x[i] < _x[i + 1] ) ) ErrorMessages::Error( "x is not sorted ascendingly!", CURRENT_FUNCTION );
@@ -50,7 +50,7 @@ void Interpolation::Setup() {
 
 // 1D interpolation
 double Interpolation::operator()( double x ) const {
-    // Check whether 1D 
+    // Check whether 1D
     if( _dim != 1u ) ErrorMessages::Error( "Invalid data dimension for operator(x)!", CURRENT_FUNCTION );
     // x must be between min and max of table values
     if( x < _x[0] || x > _x[_x.size() - 1u] ) ErrorMessages::Error( "Extrapolation is not supported!", CURRENT_FUNCTION );
@@ -94,7 +94,7 @@ double Interpolation::operator()( double x, double y ) const {
         unsigned xId = IndexOfClosestValue( x, _x );
         unsigned yId = IndexOfClosestValue( y, _y );
 
-        // store all 16 interpolation points needed 
+        // store all 16 interpolation points needed
         double points[4][4];
         for( int i = -1; i < 3; ++i ) {
             unsigned idx_y;
@@ -127,7 +127,7 @@ double Interpolation::operator()( double x, double y ) const {
     }
 }
 
-// extension of 1D interpolation to Vector input 
+// extension of 1D interpolation to Vector input
 Vector Interpolation::operator()( Vector v ) const {
     Vector res( v.size() );
     for( unsigned i = 0; i < v.size(); ++i ) {
@@ -153,8 +153,7 @@ inline double Interpolation::EvalCubic1DSpline( double param[4], double x ) cons
                                     x * ( 3.0 * ( param[1] - param[2] ) + param[3] - param[0] ) ) ) );
 }
 
-
-//find index of closes value to 'value' in vector 'v'
+// find index of closes value to 'value' in vector 'v'
 unsigned Interpolation::IndexOfClosestValue( double value, const Vector& v ) const {
     auto i = std::min_element( begin( v ), end( v ), [=]( double x, double y ) { return abs( x - value ) < abs( y - value ); } );
     return std::distance( begin( v ), i );
