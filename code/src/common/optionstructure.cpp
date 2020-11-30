@@ -35,8 +35,10 @@ std::string OptionBase::BadValue( std::vector<std::string>& option_value, std::s
     newString.append( option_name );
     newString.append( ": improper option value for type " );
     newString.append( type_id );
-    // newString.append( ". Value chosen: " );
-    // newString.append( option_value );
+    newString.append( ". Value chosen: " );
+    for( unsigned i = 0; i < option_value.size(); i++ ) {
+        newString.append( option_value[i] );
+    }
     return newString;
 }
 
