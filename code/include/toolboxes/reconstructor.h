@@ -1,8 +1,17 @@
+/*!
+ * @file: reconstructor.h
+ * @brief: Class to create second order (in space) schemes for the advection solver.
+ *         This class is currently unused. But in the future, the second order capabilities of the code
+ *         may be stored here.
+ * @author: T. Xiao
+ */
+
 #ifndef RECONSTRUCTOR_H
 #define RECONSTRUCTOR_H
 
-#include "common/config.h"
-#include "common/typedef.h"
+#include <string>
+
+class Config;
 
 class Reconstructor
 {
@@ -13,7 +22,7 @@ class Reconstructor
      */
     Reconstructor( Config* settings );
 
-    /** Method 1: structured developing
+    /*! Method 1: structured developing
      * @brief Slope of angular flux psi inside a given cell
      * @param Omega fixed ordinate for flux computation
      * @param psiL left solution state

@@ -21,7 +21,7 @@ def generate(image_name, mesh_name):
     width, height = gsImage.shape
     xRes = dimensions[0]/width
     yRes = dimensions[1]/height
-    char_length = min(xRes,yRes)*5 #arbitrary
+    char_length = min(xRes,yRes)*10 #arbitrary
     geom = pg.opencascade.Geometry()
     domain = add_rectangle(0.0, 0.0, dimensions[0], dimensions[1], char_length, geom)
     geom.add_physical(domain.lines, label="void")

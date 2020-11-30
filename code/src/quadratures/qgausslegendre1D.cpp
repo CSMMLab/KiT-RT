@@ -9,6 +9,14 @@ QGaussLegendre1D::QGaussLegendre1D( Config* settings ) : QuadratureBase( setting
     SetConnectivity();
 }
 
+QGaussLegendre1D::QGaussLegendre1D( unsigned quadOrder ) : QuadratureBase( quadOrder ) {
+    SetName();
+    CheckOrder();
+    SetNq();
+    SetPointsAndWeights();
+    SetConnectivity();
+}
+
 void QGaussLegendre1D::SetPointsAndWeights() {
     Vector nodes1D( _order ), weights1D( _order );
 
@@ -64,8 +72,8 @@ std::pair<Vector, Matrix> QGaussLegendre1D::ComputeEigenValTriDiagMatrix( const 
     Vector d( n, 0.0 ), e( n, 0.0 );
     Matrix z( n, n, 0.0 );
     for( unsigned i = 0; i < n; ++i ) {
-        d[i]          = mat( i, i );
-        z( i, i )     = 1.0;
+        d[i]      = mat( i, i );
+        z( i, i ) = 1.0;
         i == 0 ? e[i] = 0.0 : e[i] = mat( i, i - 1 );
     }
 

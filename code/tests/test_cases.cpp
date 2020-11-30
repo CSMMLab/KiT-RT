@@ -1,4 +1,3 @@
-#include <cstdio>
 #include <vtkCellData.h>
 #include <vtkSmartPointer.h>
 #include <vtkUnstructuredGrid.h>
@@ -31,134 +30,161 @@ std::vector<double> readVTKFile( std::string filename ) {
     return data;
 }
 
-// --- Validation Tests Solver ---
-TEST_CASE( "checkerboard_SN", "[validation_tests]" ) {
-    std::string config_file_name = std::string( TESTS_PATH ) + "input/checkerboard_SN.cfg";
-
-    Config* config = new Config( config_file_name );
-    Solver* solver = Solver::Create( config );
-    solver->Solve();
-    solver->PrintVolumeOutput();
-
-    auto test      = readVTKFile( std::string( TESTS_PATH ) + "../result/rtsn_test_checkerboard_SN.vtk" );
-    auto reference = readVTKFile( std::string( TESTS_PATH ) + "input/checkerboard_SN_reference.vtk" );
-
-    double eps = 1e-3;
-    REQUIRE( test.size() == reference.size() );
-    for( unsigned i = 0; i < test.size(); ++i ) {
-        REQUIRE( std::fabs( test[i] - reference[i] ) < eps );
-    }
-}
-
-TEST_CASE( "checkerboard_PN", "[validation_tests]" ) {
-    std::string config_file_name = std::string( TESTS_PATH ) + "input/checkerboard_PN.cfg";
-
-    Config* config = new Config( config_file_name );
-    Solver* solver = Solver::Create( config );
-    solver->Solve();
-    solver->PrintVolumeOutput();
-
-    auto test      = readVTKFile( std::string( TESTS_PATH ) + "../result/rtsn_test_checkerboard_PN.vtk" );
-    auto reference = readVTKFile( std::string( TESTS_PATH ) + "input/checkerboard_PN_reference.vtk" );
-
-    double eps = 1e-3;
-    REQUIRE( test.size() == reference.size() );
-    for( unsigned i = 0; i < test.size(); ++i ) {
-        REQUIRE( std::fabs( test[i] - reference[i] ) < eps );
-    }
-}
-
-TEST_CASE( "checkerboard_MN", "[validation_tests]" ) {
-    std::string config_file_name = std::string( TESTS_PATH ) + "input/checkerboard_MN.cfg";
-
-    Config* config = new Config( config_file_name );
-    Solver* solver = Solver::Create( config );
-    solver->Solve();
-    solver->PrintVolumeOutput();
-
-    auto test      = readVTKFile( std::string( TESTS_PATH ) + "../result/rtsn_test_checkerboard_MN.vtk" );
-    auto reference = readVTKFile( std::string( TESTS_PATH ) + "input/checkerboard_MN_reference.vtk" );
-
-    double eps = 1e-3;
-    REQUIRE( test.size() == reference.size() );
-    for( unsigned i = 0; i < test.size(); ++i ) {
-        REQUIRE( std::fabs( test[i] - reference[i] ) < eps );
-    }
-}
-
-TEST_CASE( "linesource_SN", "[validation_tests]" ) {
-    std::string config_file_name = std::string( TESTS_PATH ) + "input/linesource_SN.cfg";
-
-    Config* config = new Config( config_file_name );
-    Solver* solver = Solver::Create( config );
-    solver->Solve();
-    solver->PrintVolumeOutput();
-
-    auto test      = readVTKFile( std::string( TESTS_PATH ) + "../result/rtsn_test_linesource_SN.vtk" );
-    auto reference = readVTKFile( std::string( TESTS_PATH ) + "input/linesource_SN_reference.vtk" );
-
-    double eps = 1e-3;
-    REQUIRE( test.size() == reference.size() );
-    for( unsigned i = 0; i < test.size(); ++i ) {
-        REQUIRE( std::fabs( test[i] - reference[i] ) < eps );
-    }
-}
-
-TEST_CASE( "linesource_PN", "[validation_tests]" ) {
-    std::string config_file_name = std::string( TESTS_PATH ) + "input/linesource_PN.cfg";
-
-    Config* config = new Config( config_file_name );
-    Solver* solver = Solver::Create( config );
-    solver->Solve();
-    solver->PrintVolumeOutput();
-
-    auto test      = readVTKFile( std::string( TESTS_PATH ) + "../result/rtsn_test_linesource_PN.vtk" );
-    auto reference = readVTKFile( std::string( TESTS_PATH ) + "input/linesource_PN_reference.vtk" );
-
-    double eps = 1e-3;
-
-    REQUIRE( test.size() == reference.size() );
-    for( unsigned i = 0; i < test.size(); ++i ) {
-        REQUIRE( std::fabs( test[i] - reference[i] ) < eps );
-    }
-}
-
-TEST_CASE( "linesource_MN", "[validation_tests]" ) {
-
-    SECTION( "Quadratic Entropy" ) {
-        std::string config_file_name = std::string( TESTS_PATH ) + "input/linesource_MN_Quad.cfg";
+TEST_CASE( "SN_SOLVER", "[validation_tests]" ) {
+    std::string sn_fileDir = "input/validation_tests/SN_solver/";
+    SECTION( "checkerboard" ) {
+        std::string config_file_name = std::string( TESTS_PATH ) + sn_fileDir + "checkerboard_SN.cfg";
 
         Config* config = new Config( config_file_name );
         Solver* solver = Solver::Create( config );
+
         solver->Solve();
         solver->PrintVolumeOutput();
 
-        auto test      = readVTKFile( std::string( TESTS_PATH ) + "../result/rtsn_test_linesource_MN_Quad.vtk" );
-        auto reference = readVTKFile( std::string( TESTS_PATH ) + "input/linesource_MN_Quad_reference.vtk" );
+        auto test      = readVTKFile( std::string( TESTS_PATH ) + "result/rtsn_test_checkerboard_SN.vtk" );
+        auto reference = readVTKFile( std::string( TESTS_PATH ) + sn_fileDir + "checkerboard_SN_reference.vtk" );
 
         double eps = 1e-3;
-
         REQUIRE( test.size() == reference.size() );
+        bool errorWithinBounds = true;
         for( unsigned i = 0; i < test.size(); ++i ) {
-            REQUIRE( std::fabs( test[i] - reference[i] ) < eps );
+            if( std::fabs( test[i] - reference[i] ) > eps ) errorWithinBounds = false;
         }
+        REQUIRE( errorWithinBounds );
     }
 
-    SECTION( "Maxwell Boltzmann Entropy" ) {
-        std::string config_file_name = std::string( TESTS_PATH ) + "input/linesource_MN_MB.cfg";
+    SECTION( "linesource" ) {
+        std::string config_file_name = std::string( TESTS_PATH ) + sn_fileDir + "linesource_SN.cfg";
 
         Config* config = new Config( config_file_name );
         Solver* solver = Solver::Create( config );
         solver->Solve();
         solver->PrintVolumeOutput();
 
-        auto test      = readVTKFile( std::string( TESTS_PATH ) + "../result/rtsn_test_linesource_MN_MB.vtk" );
-        auto reference = readVTKFile( std::string( TESTS_PATH ) + "input/linesource_MN_MB_reference.vtk" );
+        auto test      = readVTKFile( std::string( TESTS_PATH ) + "result/rtsn_test_linesource_SN.vtk" );
+        auto reference = readVTKFile( std::string( TESTS_PATH ) + sn_fileDir + "linesource_SN_reference.vtk" );
 
         double eps = 1e-3;
         REQUIRE( test.size() == reference.size() );
+        bool errorWithinBounds = true;
         for( unsigned i = 0; i < test.size(); ++i ) {
-            REQUIRE( std::fabs( test[i] - reference[i] ) < eps );
+            if( std::fabs( test[i] - reference[i] ) > eps ) errorWithinBounds = false;
+        }
+        REQUIRE( errorWithinBounds );
+    }
+}
+
+TEST_CASE( "PN_SOLVER", "[validation_tests]" ) {
+    std::string pn_fileDir = "input/validation_tests/PN_solver/";
+    SECTION( "checkerboard" ) {
+        std::string config_file_name = std::string( TESTS_PATH ) + pn_fileDir + "checkerboard_PN.cfg";
+
+        Config* config = new Config( config_file_name );
+        Solver* solver = Solver::Create( config );
+        solver->Solve();
+        solver->PrintVolumeOutput();
+
+        auto test      = readVTKFile( std::string( TESTS_PATH ) + "result/rtsn_test_checkerboard_PN.vtk" );
+        auto reference = readVTKFile( std::string( TESTS_PATH ) + pn_fileDir + "checkerboard_PN_reference.vtk" );
+
+        double eps             = 1e-3;
+        bool errorWithinBounds = true;
+        REQUIRE( test.size() == reference.size() );
+        for( unsigned i = 0; i < test.size(); ++i ) {
+            if( std::fabs( test[i] - reference[i] ) > eps ) errorWithinBounds = false;
+        }
+        REQUIRE( errorWithinBounds );
+    }
+
+    SECTION( "linesource" ) {
+        std::string config_file_name = std::string( TESTS_PATH ) + pn_fileDir + "linesource_PN.cfg";
+
+        Config* config = new Config( config_file_name );
+        Solver* solver = Solver::Create( config );
+        solver->Solve();
+        solver->PrintVolumeOutput();
+
+        auto test      = readVTKFile( std::string( TESTS_PATH ) + "result/rtsn_test_linesource_PN.vtk" );
+        auto reference = readVTKFile( std::string( TESTS_PATH ) + pn_fileDir + "linesource_PN_reference.vtk" );
+
+        double eps             = 1e-3;
+        bool errorWithinBounds = true;
+
+        REQUIRE( test.size() == reference.size() );
+        for( unsigned i = 0; i < test.size(); ++i ) {
+            if( std::fabs( test[i] - reference[i] ) > eps ) errorWithinBounds = false;
+        }
+        REQUIRE( errorWithinBounds );
+    }
+}
+
+TEST_CASE( "MN_SOLVER", "[validation_tests]" ) {
+    std::string mn_fileDir = "input/validation_tests/MN_solver/";
+
+    SECTION( "checkerboard" ) {
+        std::string config_file_name = std::string( TESTS_PATH ) + mn_fileDir + "checkerboard_MN.cfg";
+
+        Config* config = new Config( config_file_name );
+        Solver* solver = Solver::Create( config );
+        solver->Solve();
+        solver->PrintVolumeOutput();
+
+        auto test      = readVTKFile( std::string( TESTS_PATH ) + "result/rtsn_test_checkerboard_MN.vtk" );
+        auto reference = readVTKFile( std::string( TESTS_PATH ) + mn_fileDir + "checkerboard_MN_reference.vtk" );
+
+        double eps             = 1e-3;
+        bool errorWithinBounds = true;
+
+        REQUIRE( test.size() == reference.size() );
+        for( unsigned i = 0; i < test.size(); ++i ) {
+            if( std::fabs( test[i] - reference[i] ) > eps ) errorWithinBounds = false;
+        }
+        REQUIRE( errorWithinBounds );
+    }
+
+    SECTION( "linesource" ) {
+
+        // --- Quadratic Entropy
+        {
+            std::string config_file_name = std::string( TESTS_PATH ) + mn_fileDir + "linesource_MN_Quad.cfg";
+
+            Config* config = new Config( config_file_name );
+            Solver* solver = Solver::Create( config );
+            solver->Solve();
+            solver->PrintVolumeOutput();
+
+            auto test      = readVTKFile( std::string( TESTS_PATH ) + "result/rtsn_test_linesource_MN_Quad.vtk" );
+            auto reference = readVTKFile( std::string( TESTS_PATH ) + mn_fileDir + "linesource_MN_Quad_reference.vtk" );
+
+            double eps             = 1e-3;
+            bool errorWithinBounds = true;
+
+            REQUIRE( test.size() == reference.size() );
+            for( unsigned i = 0; i < test.size(); ++i ) {
+                if( std::fabs( test[i] - reference[i] ) > eps ) errorWithinBounds = false;
+            }
+            REQUIRE( errorWithinBounds );
+        }
+
+        {    // ---  Maxwell Boltzmann Entropy ---
+            std::string config_file_name = std::string( TESTS_PATH ) + mn_fileDir + "linesource_MN_MB.cfg";
+
+            Config* config = new Config( config_file_name );
+            Solver* solver = Solver::Create( config );
+            solver->Solve();
+            solver->PrintVolumeOutput();
+
+            auto test      = readVTKFile( std::string( TESTS_PATH ) + "result/rtsn_test_linesource_MN_MB.vtk" );
+            auto reference = readVTKFile( std::string( TESTS_PATH ) + mn_fileDir + "linesource_MN_MB_reference.vtk" );
+
+            double eps             = 1e-3;
+            bool errorWithinBounds = true;
+
+            REQUIRE( test.size() == reference.size() );
+            for( unsigned i = 0; i < test.size(); ++i ) {
+                if( std::fabs( test[i] - reference[i] ) > eps ) errorWithinBounds = false;
+            }
+            REQUIRE( errorWithinBounds );
         }
     }
 }
@@ -175,14 +201,14 @@ void tokenize( std::string const& str, const char delim, std::vector<std::string
 }
 
 TEST_CASE( "screen_output", "[output]" ) {
-
+    std::string out_fileDir = "input/validation_tests/output/";
     spdlog::drop_all();    // Make sure to write in own logging file
 
-    std::string config_file_name       = std::string( TESTS_PATH ) + "input/validate_logger.cfg";
-    std::string screenLoggerReference  = std::string( TESTS_PATH ) + "input/validate_logger_reference";
-    std::string screenLogger           = std::string( TESTS_PATH ) + "../result/logs/validate_logger_output";
-    std::string historyLoggerReference = std::string( TESTS_PATH ) + "input/validate_logger_csv_reference";
-    std::string historyLogger          = std::string( TESTS_PATH ) + "../result/logs/validate_logger_output_csv";
+    std::string config_file_name       = std::string( TESTS_PATH ) + out_fileDir + "validate_logger.cfg";
+    std::string screenLoggerReference  = std::string( TESTS_PATH ) + out_fileDir + "validate_logger_reference";
+    std::string screenLogger           = std::string( TESTS_PATH ) + "result/logs/validate_logger_output";
+    std::string historyLoggerReference = std::string( TESTS_PATH ) + out_fileDir + "validate_logger_csv_reference";
+    std::string historyLogger          = std::string( TESTS_PATH ) + "result/logs/validate_logger_output_csv";
 
     Config* config = new Config( config_file_name );
     Solver* solver = Solver::Create( config );
@@ -218,7 +244,7 @@ TEST_CASE( "screen_output", "[output]" ) {
         if( out.size() != outRef.size() ) std::cout << lineRef << "\n" << line << "\n";
 
         REQUIRE( out.size() == outRef.size() );    // Sanity check
-
+        // token is an colum of the csv
         for( unsigned idx_token = 1; idx_token < out.size(); idx_token++ ) {    // Skip date  ==> start from 1
             lineValid = outRef[idx_token].compare( out[idx_token] ) == 0;
             if( !lineValid ) {

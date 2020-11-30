@@ -12,7 +12,7 @@ set( KITRT_DEBUG_OPTIONS -Wall -Wextra -Wpedantic )
 
 
 ### LIBRARIES ###################################
-set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
+set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake ${CMAKE_MODULE_PATH})
 
 find_package( OpenMP REQUIRED )
 
@@ -82,6 +82,8 @@ target_compile_options( ${CMAKE_PROJECT_NAME} PUBLIC "$<$<CONFIG:RELEASE>:${KITR
 
 ### BUILD UNIT TESTS ############################
 include( CTest )
+set( CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/ext/Catch2/contrib ${CMAKE_MODULE_PATH} )
+include( Catch )
 set( CATCH_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/ext/Catch2/single_include/catch2 )
 add_compile_definitions( BUILD_TESTING )
 add_compile_definitions( TESTS_PATH="${CMAKE_SOURCE_DIR}/tests/" )
@@ -99,6 +101,6 @@ if( CMAKE_COMPILER_IS_GNUCXX )
 endif()
 target_compile_options( unit_tests PUBLIC "$<$<CONFIG:RELWITHDEBINFO>:${KITRT_RELWITHDEBINFO_OPTIONS}>" )
 target_compile_options( unit_tests PUBLIC "$<$<CONFIG:RELEASE>:${KITRT_RELEASE_OPTIONS}>" )
-add_test( NAME unit_tests COMMAND unit_tests )
+catch_discover_tests( unit_tests )
 enable_testing()
 #################################################

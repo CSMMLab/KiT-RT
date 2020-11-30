@@ -5,6 +5,8 @@
 
 QLookupQuadrature::QLookupQuadrature( Config* settings ) : QuadratureBase( settings ) {}
 
+QLookupQuadrature::QLookupQuadrature( unsigned quadOrder ) : QuadratureBase( quadOrder ) {}
+
 void QLookupQuadrature::printAvailOrders() const {
     auto log                    = spdlog::get( "event" );
     std::string availableOrders = "";

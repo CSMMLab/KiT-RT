@@ -7,6 +7,7 @@ class QMonteCarlo : public QuadratureBase
 {
   public:
     QMonteCarlo( Config* settings );
+    QMonteCarlo( unsigned quadOrder );
     inline ~QMonteCarlo() {}
 
     inline void SetName() override { _name = "Monte Carlo Quadrature."; }

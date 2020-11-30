@@ -1,3 +1,9 @@
+/*!
+ * @file isotropic1D.h
+ * @brief Class for computing an isotropic scattering kernel of 1D kinetic equations
+ * @author ?
+ */
+
 #ifndef ISOTROPIC1D_H
 #define ISOTROPIC1D_H
 

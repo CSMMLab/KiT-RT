@@ -18,6 +18,13 @@ QDummy::QDummy( Config* settings ) : QuadratureBase( settings ) {
     SetConnectivity();
 }
 
+QDummy::QDummy( unsigned quadOrder ) : QuadratureBase( quadOrder ) {
+    SetName();
+    SetNq();
+    SetPointsAndWeights();
+    SetConnectivity();
+}
+
 void QDummy::SetName() {
     _name = "";
     // @TODO: DUMMYCOMPUTATION

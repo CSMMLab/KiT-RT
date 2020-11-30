@@ -10,6 +10,8 @@
 
 // --- Members of OptionBase ----
 
+OptionBase::~OptionBase() {}
+
 std::vector<std::string> OptionBase::GetValue() { return _value; }
 
 std::string OptionBase::SetValue( std::vector<std::string> value ) {
@@ -17,7 +19,7 @@ std::string OptionBase::SetValue( std::vector<std::string> value ) {
     return "";
 }
 
-std::string OptionBase::optionCheckMultipleValues( std::vector<std::string>& option_value, std::string type_id, std::string option_name ) {
+std::string OptionBase::OptionCheckMultipleValues( std::vector<std::string>& option_value, std::string type_id, std::string option_name ) {
     if( option_value.size() != 1 ) {
         std::string newString;
         newString.append( option_name );
@@ -28,11 +30,15 @@ std::string OptionBase::optionCheckMultipleValues( std::vector<std::string>& opt
     return "";
 }
 
-std::string OptionBase::badValue( std::vector<std::string>& /*option_value*/, std::string type_id, std::string option_name ) {
+std::string OptionBase::BadValue( std::vector<std::string>& option_value, std::string type_id, std::string option_name ) {
     std::string newString;
     newString.append( option_name );
     newString.append( ": improper option value for type " );
     newString.append( type_id );
+    newString.append( ". Value chosen: " );
+    for( unsigned i = 0; i < option_value.size(); i++ ) {
+        newString.append( option_value[i] );
+    }
     return newString;
 }
 
@@ -46,7 +52,7 @@ OptionDouble::OptionDouble( std::string option_field_name, double& option_field,
 std::string OptionDouble::SetValue( std::vector<std::string> option_value ) {
     OptionBase::SetValue( option_value );
     // check if there is more than one value
-    std::string out = optionCheckMultipleValues( option_value, "double", this->_name );
+    std::string out = OptionCheckMultipleValues( option_value, "double", this->_name );
     if( out.compare( "" ) != 0 ) {
         return out;
     }
@@ -56,7 +62,7 @@ std::string OptionDouble::SetValue( std::vector<std::string> option_value ) {
         this->_field = val;
         return "";
     }
-    return badValue( option_value, "double", this->_name );
+    return BadValue( option_value, "double", this->_name );
 }
 
 void OptionDouble::SetDefault() { this->_field = this->_def; }
@@ -71,7 +77,7 @@ OptionString::OptionString( std::string option_field_name, std::string& option_f
 std::string OptionString::SetValue( std::vector<std::string> option_value ) {
     OptionBase::SetValue( option_value );
     // check if there is more than one value
-    std::string out = optionCheckMultipleValues( option_value, "double", this->_name );
+    std::string out = OptionCheckMultipleValues( option_value, "double", this->_name );
     if( out.compare( "" ) != 0 ) {
         return out;
     }
@@ -90,7 +96,7 @@ OptionInt::OptionInt( std::string option_field_name, int& option_field, int defa
 
 std::string OptionInt::SetValue( std::vector<std::string> option_value ) {
     OptionBase::SetValue( option_value );
-    std::string out = optionCheckMultipleValues( option_value, "int", this->_name );
+    std::string out = OptionCheckMultipleValues( option_value, "int", this->_name );
     if( out.compare( "" ) != 0 ) {
         return out;
     }
@@ -100,7 +106,7 @@ std::string OptionInt::SetValue( std::vector<std::string> option_value ) {
         this->_field = val;
         return "";
     }
-    return badValue( option_value, "int", this->_name );
+    return BadValue( option_value, "int", this->_name );
 }
 void OptionInt::SetDefault() { this->_field = this->_def; }
 
@@ -113,7 +119,7 @@ OptionULong::OptionULong( std::string option_field_name, unsigned long& option_f
 
 std::string OptionULong::SetValue( std::vector<std::string> option_value ) {
     OptionBase::SetValue( option_value );
-    std::string out = optionCheckMultipleValues( option_value, "unsigned long", this->_name );
+    std::string out = OptionCheckMultipleValues( option_value, "unsigned long", this->_name );
     if( out.compare( "" ) != 0 ) {
         return out;
     }
@@ -123,7 +129,7 @@ std::string OptionULong::SetValue( std::vector<std::string> option_value ) {
         this->_field = val;
         return "";
     }
-    return badValue( option_value, "unsigned long", this->_name );
+    return BadValue( option_value, "unsigned long", this->_name );
 }
 
 void OptionULong::SetDefault() { this->_field = this->_def; }
@@ -137,7 +143,7 @@ OptionUShort::OptionUShort( std::string option_field_name, unsigned short& optio
 
 std::string OptionUShort::SetValue( std::vector<std::string> option_value ) {
     OptionBase::SetValue( option_value );
-    std::string out = optionCheckMultipleValues( option_value, "unsigned short", this->_name );
+    std::string out = OptionCheckMultipleValues( option_value, "unsigned short", this->_name );
     if( out.compare( "" ) != 0 ) {
         return out;
     }
@@ -147,7 +153,7 @@ std::string OptionUShort::SetValue( std::vector<std::string> option_value ) {
         this->_field = val;
         return "";
     }
-    return badValue( option_value, "unsigned short", this->_name );
+    return BadValue( option_value, "unsigned short", this->_name );
 }
 
 void OptionUShort::SetDefault() { this->_field = this->_def; }
@@ -161,7 +167,7 @@ OptionLong::OptionLong( std::string option_field_name, long& option_field, long 
 
 std::string OptionLong::SetValue( std::vector<std::string> option_value ) {
     OptionBase::SetValue( option_value );
-    std::string out = optionCheckMultipleValues( option_value, "long", this->_name );
+    std::string out = OptionCheckMultipleValues( option_value, "long", this->_name );
     if( out.compare( "" ) != 0 ) {
         return out;
     }
@@ -171,7 +177,7 @@ std::string OptionLong::SetValue( std::vector<std::string> option_value ) {
         this->_field = val;
         return "";
     }
-    return badValue( option_value, "long", this->_name );
+    return BadValue( option_value, "long", this->_name );
 }
 
 void OptionLong::SetDefault() { this->_field = this->_def; }
@@ -186,7 +192,7 @@ OptionBool::OptionBool( std::string option_field_name, bool& option_field, bool 
 std::string OptionBool::SetValue( std::vector<std::string> option_value ) {
     OptionBase::SetValue( option_value );
     // check if there is more than one value
-    std::string out = optionCheckMultipleValues( option_value, "bool", this->_name );
+    std::string out = OptionCheckMultipleValues( option_value, "bool", this->_name );
     if( out.compare( "" ) != 0 ) {
         return out;
     }
@@ -198,7 +204,7 @@ std::string OptionBool::SetValue( std::vector<std::string> option_value ) {
         this->_field = false;
         return "";
     }
-    return badValue( option_value, "bool", this->_name );
+    return BadValue( option_value, "bool", this->_name );
 }
 
 void OptionBool::SetDefault() { this->_field = this->_def; }

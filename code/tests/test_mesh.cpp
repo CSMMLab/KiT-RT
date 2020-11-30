@@ -7,7 +7,7 @@
 #include "common/mesh.h"
 
 TEST_CASE( "unit mesh tests", "[mesh]" ) {
-    std::string config_file_name = std::string( TESTS_PATH ) + "input/unit_mesh.cfg";
+    std::string config_file_name = std::string( TESTS_PATH ) + "input/unit_tests/common/unit_mesh.cfg";
 
     Config* config = new Config( config_file_name );
     Mesh* mesh     = LoadSU2MeshFromFile( config );
@@ -21,9 +21,10 @@ TEST_CASE( "unit mesh tests", "[mesh]" ) {
     }
 
     SECTION( "neighbor and faces are sorted equally" ) {
-        auto n         = mesh->GetNormals();
-        auto neighbors = mesh->GetNeighbours();
-        double eps     = 1e-7;
+        auto n                 = mesh->GetNormals();
+        auto neighbors         = mesh->GetNeighbours();
+        double eps             = 1e-7;
+        bool errorWithinBounds = true;
         for( unsigned i = 0; i < mesh->GetNumCells(); ++i ) {
             for( unsigned j = 0; j < mesh->GetNumNodesPerCell(); ++j ) {
                 unsigned pos;
@@ -32,29 +33,35 @@ TEST_CASE( "unit mesh tests", "[mesh]" ) {
                 for( unsigned k = 0; k < neighbors[nID].size(); ++k ) {
                     if( neighbors[nID][k] == i ) pos = k;
                 }
-                REQUIRE( blaze::l2Norm( n[i][j] + n[nID][pos] ) < eps );
+                if( blaze::l2Norm( n[i][j] + n[nID][pos] ) > eps ) errorWithinBounds = false;
             }
         }
+        REQUIRE( errorWithinBounds );
     }
 
     SECTION( "sum over all normals yields zero" ) {
-        auto n     = mesh->GetNormals();
-        double eps = 1e-7;
+        auto n                 = mesh->GetNormals();
+        double eps             = 1e-7;
+        bool errorWithinBounds = true;
         for( unsigned i = 0; i < mesh->GetNumCells(); ++i ) {
             Vector sum( 2, 0.0 );
             for( unsigned j = 0; j < mesh->GetNumNodesPerCell(); ++j ) {
                 sum += n[i][j];
             }
-            REQUIRE( blaze::l2Norm( sum ) < eps );
+            if( blaze::l2Norm( sum ) > eps ) errorWithinBounds = false;
         }
+        REQUIRE( errorWithinBounds );
     }
 
     SECTION( "mesh does not have any unassigned faces" ) {
-        auto neighbors    = mesh->GetNeighbours();
-        auto boundaryType = mesh->GetBoundaryTypes();
+        auto neighbors         = mesh->GetNeighbours();
+        auto boundaryType      = mesh->GetBoundaryTypes();
+        bool noUnassignedFaces = true;
         for( unsigned i = 0; i < mesh->GetNumCells(); ++i ) {
-            REQUIRE( ( neighbors[i].size() == mesh->GetNumNodesPerCell() ||
-                       ( neighbors[i].size() < mesh->GetNumNodesPerCell() && boundaryType[i] != BOUNDARY_TYPE::NONE ) ) );
+            if( !( neighbors[i].size() == mesh->GetNumNodesPerCell() ||
+                   ( neighbors[i].size() < mesh->GetNumNodesPerCell() && boundaryType[i] != BOUNDARY_TYPE::NONE ) ) )
+                noUnassignedFaces = false;
         }
+        REQUIRE( noUnassignedFaces );
     }
 }

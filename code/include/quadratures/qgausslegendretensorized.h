@@ -13,6 +13,7 @@ class QGaussLegendreTensorized : public QuadratureBase
 
   public:
     QGaussLegendreTensorized( Config* settings );
+
     virtual ~QGaussLegendreTensorized() {}
 
     inline void SetName() override { _name = "Tensorized Gauss-Legendre quadrature"; }

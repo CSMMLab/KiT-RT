@@ -10,6 +10,7 @@ class QuadratureBase
 {
   public:
     QuadratureBase( Config* settings );
+    QuadratureBase( unsigned order );    // Only for productquadrature... refactor this!
     virtual ~QuadratureBase() {}
 
     // Aux functions
@@ -37,6 +38,12 @@ class QuadratureBase
      *  @param: Config* settings: Settings to handle quadrature options
      *  @returns Quadrature* quadrature: returns pointer to instance of the given derived quadrature class */
     static QuadratureBase* CreateQuadrature( Config* settings );
+
+    /*! @brief Creates a quadrature rule with a given name and a given order.
+     *  @param: name: name of quadrature as enum
+     *  @param: quadOrder: order of quadrature
+     *  @returns Quadrature* quadrature: returns pointer to instance of the given derived quadrature class */
+    static QuadratureBase* CreateQuadrature( QUAD_NAME name, unsigned quadOrder );
 
     // Getter
     inline std::string GetName() const { return _name; }      /*! @returns std::string _name:  name of the quadrature */

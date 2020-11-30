@@ -1,6 +1,7 @@
 #include "toolboxes/reconstructor.h"
+#include "common/config.h"
 
-Reconstructor::Reconstructor( Config* /*settings*/ ) {}
+Reconstructor::Reconstructor( Config* settings ) {}
 
 double FortSign( double a, double b ) {
     if( b > 0.0 ) return abs( a );
@@ -24,7 +25,7 @@ double LSuperBee( double sL, double sR ) {
 
 double LVanAlbaba( double sL, double sR ) { return ( sL * sL * sR + sL * sR * sR ) / ( sL * sL + sR * sR + 0.0000001 ); }
 
-double LWENOJS( double /*x*/ ) { return 0.0; }
+double LWENOJS( double x ) { return 0.0; }
 
 double Reconstructor::ReconstructSlopeStruct( double uL, double uC, double uR, double dxL, double dxR, std::string limiter ) const {
     double sL = ( uC - uL ) / dxL;

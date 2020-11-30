@@ -154,7 +154,7 @@ LineSource_SN_Pseudo1D_Physics::LineSource_SN_Pseudo1D_Physics( Config* settings
     _physics = new Physics( settings->GetHydrogenFile(), settings->GetOxygenFile(), "../input/stopping_power.txt" );
 }
 
-VectorVector LineSource_SN_Pseudo1D_Physics::GetScatteringXSE( const Vector& energies, const Vector& angles ) {
+std::vector<Matrix> LineSource_SN_Pseudo1D_Physics::GetScatteringXSE( const Vector& energies, const Matrix& angles ) {
     return _physics->GetScatteringXS( energies, angles );
 }
 
