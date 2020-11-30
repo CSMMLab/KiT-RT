@@ -5,9 +5,9 @@
 #include "problems/electronrt.h"
 #include "problems/linesource.h"
 #include "problems/musclebonelung.h"
+#include "problems/phantom2d.h"
 #include "problems/problembase.h"
 #include "problems/waterphantom.h"
-#include "problems/phantom2d.h"
 
 ProblemBase::ProblemBase( Config* settings, Mesh* mesh ) {
     _settings = settings;

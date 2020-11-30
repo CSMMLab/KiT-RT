@@ -34,7 +34,7 @@ class Interpolation
     inline double EvalCubic1DSpline( double param[4], double x ) const;
 
   public:
-    //In constructor tabulated values are initialised
+    // In constructor tabulated values are initialised
     /*!
      * @brief constructor linear interpolation for std::vector input
      * @param[in] x - table values for x
@@ -59,7 +59,7 @@ class Interpolation
      */
     Interpolation( const Vector& x, const Vector& y, const Matrix& data, TYPE type = cubic );
 
-    //Here the interpolation between the previously defined table values is performed
+    // Here the interpolation between the previously defined table values is performed
     /*!
      * @brief defines one dimensional interpolation at x
      * @param[in] x - value at which to interpolate
@@ -68,21 +68,21 @@ class Interpolation
     double operator()( double x ) const;
 
     /*!
-     * @brief defines interpolation for a Vector of values 
+     * @brief defines interpolation for a Vector of values
      * @param[in] v - values at which to interpolate
      * @param[out] y - corresponding interpolated values
      */
     Vector operator()( Vector v ) const;
-    
+
     /*!
-     * @brief defines interpolation for a std::vector of values 
+     * @brief defines interpolation for a std::vector of values
      * @param[in] v - values at which to interpolate
      * @param[out] y - corresponding interpolated values
      */
     std::vector<double> operator()( std::vector<double> v ) const;
 
     /*!
-     * @brief defines 2D interpolation at x and y  
+     * @brief defines 2D interpolation at x and y
      * @param[in] x - value at which to interpolate
      * @param[in] y - value at which to interpolate
      * @param[out] data - corresponding interpolated value
