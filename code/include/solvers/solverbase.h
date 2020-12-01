@@ -14,6 +14,7 @@ class Mesh;
 class Config;
 class ProblemBase;
 class QuadratureBase;
+class Reconstructor;
 
 class Solver
 {
@@ -50,6 +51,15 @@ class Solver
     std::vector<std::vector<Vector>> _normals;
     /*! @brief edge neighbor cell ids, dim(_neighbors) = (_NCells,nEdgesPerCell) */
     std::vector<std::vector<unsigned>> _neighbors;
+
+    Reconstructor* _reconstructor; /*! @brief reconstructor class for high order scheme */
+    unsigned _reconsOrder;
+    VectorVector _psiDx;
+    VectorVector _psiDy;
+    
+    VectorVector _cellMidPoints;
+    std::vector<std::vector<Vector>> _interfaceMidPoints;
+
 
     // Solution related members
     VectorVector _sol;                 /*! @brief solution of the PDE, e.g. angular flux or moments */
