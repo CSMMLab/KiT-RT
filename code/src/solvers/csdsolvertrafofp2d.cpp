@@ -4,7 +4,7 @@
 #include "fluxes/numericalflux.h"
 #include "kernels/scatteringkernelbase.h"
 #include "problems/problembase.h"
-#include "quadratures/productquadrature.h"
+#include "quadratures/qproduct.h"
 #include "quadratures/quadraturebase.h"
 
 // externals

@@ -26,7 +26,7 @@ QuadratureBase* QuadratureBase::CreateQuadrature( Config* settings ) {
         case QUAD_LevelSymmetric: return new QLevelSymmetric( settings );
         case QUAD_LDFESA: return new QLDFESA( settings );
         case QUAD_Lebedev: return new QLebedev( settings );
-        case QUAD_Product: return new ProductQuadrature( settings );
+        case QUAD_Product: return new QProduct( settings );
         default: ErrorMessages::Error( "Creator for the chose quadrature does not yet exist. This is is the fault of the coder!", CURRENT_FUNCTION );
     }
 }
@@ -42,7 +42,7 @@ QuadratureBase* QuadratureBase::CreateQuadrature( QUAD_NAME name, unsigned quadO
         case QUAD_LevelSymmetric: return new QLevelSymmetric( quadOrder );
         case QUAD_LDFESA: return new QLDFESA( quadOrder );
         case QUAD_Lebedev: return new QLebedev( quadOrder );
-        case QUAD_Product: return new ProductQuadrature( quadOrder );
+        case QUAD_Product: return new QProduct( quadOrder );
         default: ErrorMessages::Error( "Creator for the chose quadrature does not yet exist. This is is the fault of the coder!", CURRENT_FUNCTION );
     }
 }
