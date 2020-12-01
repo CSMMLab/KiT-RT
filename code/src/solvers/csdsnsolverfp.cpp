@@ -58,9 +58,6 @@ CSDSNSolverFP::CSDSNSolverFP( Config* settings ) : SNSolver( settings ) {
         }
     }
 
-    // Heney-Greenstein parameter
-    double g = 0.8;
-
     // determine momente of Heney-Greenstein
     _xi = Matrix( 3, _nEnergies );
 

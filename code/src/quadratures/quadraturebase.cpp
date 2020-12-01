@@ -18,7 +18,6 @@ QuadratureBase::QuadratureBase( unsigned order ) : _order( order ) { _settings =
 
 QuadratureBase* QuadratureBase::CreateQuadrature( Config* settings ) {
     QUAD_NAME name = settings->GetQuadName();
-
     switch( name ) {
         case QUAD_MonteCarlo: return new QMonteCarlo( settings );
         case QUAD_GaussLegendreTensorized: return new QGaussLegendreTensorized( settings );
@@ -29,15 +28,14 @@ QuadratureBase* QuadratureBase::CreateQuadrature( Config* settings ) {
         case QUAD_Product: return new QProduct( settings );
         default: ErrorMessages::Error( "Creator for the chose quadrature does not yet exist. This is is the fault of the coder!", CURRENT_FUNCTION );
     }
+    return nullptr;
 }
 
 QuadratureBase* QuadratureBase::CreateQuadrature( QUAD_NAME name, unsigned quadOrder ) {
-
     switch( name ) {
         case QUAD_MonteCarlo: return new QMonteCarlo( quadOrder );
         case QUAD_GaussLegendreTensorized:
             ErrorMessages::Error( "This quadrature must be initialized with a settings constructor!", CURRENT_FUNCTION );
-            break;
         case QUAD_GaussLegendre1D: return new QGaussLegendre1D( quadOrder );
         case QUAD_LevelSymmetric: return new QLevelSymmetric( quadOrder );
         case QUAD_LDFESA: return new QLDFESA( quadOrder );
@@ -45,6 +43,7 @@ QuadratureBase* QuadratureBase::CreateQuadrature( QUAD_NAME name, unsigned quadO
         case QUAD_Product: return new QProduct( quadOrder );
         default: ErrorMessages::Error( "Creator for the chose quadrature does not yet exist. This is is the fault of the coder!", CURRENT_FUNCTION );
     }
+    return nullptr;
 }
 
 double QuadratureBase::Integrate( double( f )( double x0, double x1, double x2 ) ) {
