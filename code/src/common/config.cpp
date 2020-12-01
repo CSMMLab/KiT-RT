@@ -493,6 +493,11 @@ void Config::SetPostprocessing() {
                                               CURRENT_FUNCTION );
                     }
                     break;
+                case CSD_SN_NOTRAFO_SOLVER:
+                case CSD_SN_FOKKERPLANCK_SOLVER:
+                case CSD_SN_FOKKERPLANCK_TRAFO_SOLVER:
+                case CSD_SN_FOKKERPLANCK_TRAFO_SOLVER_2D:
+                case CSD_SN_FOKKERPLANCK_TRAFO_SH_SOLVER_2D:
                 case CSD_SN_SOLVER:
                     supportedGroups = { MINIMAL, DOSE };
                     if( supportedGroups.end() == std::find( supportedGroups.begin(), supportedGroups.end(), _volumeOutput[idx_volOutput] ) ) {

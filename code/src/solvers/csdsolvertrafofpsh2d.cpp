@@ -13,7 +13,6 @@ CSDSolverTrafoFPSH2D::CSDSolverTrafoFPSH2D( Config* settings ) : SNSolver( setti
 
     // create quadrature
     unsigned order    = _quadrature->GetOrder();
-    unsigned nq       = _settings->GetNQuadPoints();
     _quadPoints       = _quadrature->GetPoints();
     _weights          = _quadrature->GetWeights();
     _quadPointsSphere = _quadrature->GetPointsSphere();
