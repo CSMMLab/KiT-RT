@@ -23,7 +23,7 @@ CSDSolverTrafoFP::CSDSolverTrafoFP( Config* settings ) : SNSolver( settings ) {
 
     // create 1D quadrature
     unsigned nq            = _settings->GetNQuadPoints();
-    QuadratureBase* quad1D = QuadratureBase::CreateQuadrature( QUAD_GaussLegendre1D, nq );
+    QuadratureBase* quad1D = QuadratureBase::Create( QUAD_GaussLegendre1D, nq );
     Vector w               = quad1D->GetWeights();
     VectorVector muVec     = quad1D->GetPoints();
     Vector mu( nq );

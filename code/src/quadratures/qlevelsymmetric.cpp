@@ -1,5 +1,5 @@
 #include "quadratures/qlevelsymmetric.h"
-#include "quadratures/lookuptable_levelsymmetric.h"
+//#include "quadratures/lookuptable_levelsymmetric.h"
 #include "toolboxes/errormessages.h"
 
 QLevelSymmetric::QLevelSymmetric( Config* settings ) : QLookupQuadrature( settings ) {
@@ -35,16 +35,16 @@ std::string QLevelSymmetric::GetLookupTable() {
     unsigned char* lookupTable = nullptr;
 
     switch( _order ) {
-        case 2: lookupTable = __2_levelsym_txt; break;
-        case 4: lookupTable = __4_levelsym_txt; break;
-        case 6: lookupTable = __6_levelsym_txt; break;
-        case 8: lookupTable = __8_levelsym_txt; break;
-        case 10: lookupTable = __10_levelsym_txt; break;
-        case 12: lookupTable = __12_levelsym_txt; break;
-        case 14: lookupTable = __14_levelsym_txt; break;
-        case 16: lookupTable = __16_levelsym_txt; break;
-        case 18: lookupTable = __18_levelsym_txt; break;
-        case 20: lookupTable = __20_levelsym_txt; break;
+        // case 2: lookupTable = __2_levelsym_txt; break;
+        // case 4: lookupTable = __4_levelsym_txt; break;
+        // case 6: lookupTable = __6_levelsym_txt; break;
+        // case 8: lookupTable = __8_levelsym_txt; break;
+        // case 10: lookupTable = __10_levelsym_txt; break;
+        // case 12: lookupTable = __12_levelsym_txt; break;
+        // case 14: lookupTable = __14_levelsym_txt; break;
+        // case 16: lookupTable = __16_levelsym_txt; break;
+        // case 18: lookupTable = __18_levelsym_txt; break;
+        // case 20: lookupTable = __20_levelsym_txt; break;
         default: ErrorMessages::Error( "Invalid quadrature order chosen!", CURRENT_FUNCTION );
     }
 

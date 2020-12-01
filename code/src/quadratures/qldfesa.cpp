@@ -1,5 +1,5 @@
 #include "quadratures/qldfesa.h"
-#include "quadratures/lookuptable_ldfesa.h"
+//#include "quadratures/lookuptable_ldfesa.h"
 #include "toolboxes/errormessages.h"
 
 QLDFESA::QLDFESA( Config* settings ) : QLookupQuadrature( settings ) {
@@ -34,9 +34,9 @@ std::string QLDFESA::GetLookupTable() {
     unsigned char* lookupTable = nullptr;
 
     switch( _order ) {
-        case 1: lookupTable = __1_ldfesa_txt; break;
-        case 2: lookupTable = __2_ldfesa_txt; break;
-        case 3: lookupTable = __3_ldfesa_txt; break;
+        // case 1: lookupTable = __1_ldfesa_txt; break;
+        // case 2: lookupTable = __2_ldfesa_txt; break;
+        // case 3: lookupTable = __3_ldfesa_txt; break;
         default: ErrorMessages::Error( "Invalid quadrature order chosen!", CURRENT_FUNCTION );
     }
 

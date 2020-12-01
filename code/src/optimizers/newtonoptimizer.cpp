@@ -6,7 +6,7 @@
 #include "toolboxes/errormessages.h"
 
 NewtonOptimizer::NewtonOptimizer( Config* settings ) : OptimizerBase( settings ) {
-    _quadrature       = QuadratureBase::CreateQuadrature( settings );
+    _quadrature       = QuadratureBase::Create( settings );
     _nq               = _quadrature->GetNq();
     _weights          = _quadrature->GetWeights();
     _quadPointsSphere = _quadrature->GetPointsSphere();

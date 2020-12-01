@@ -4,7 +4,7 @@
 #include "fluxes/numericalflux.h"
 #include "kernels/scatteringkernelbase.h"
 #include "problems/problembase.h"
-#include "quadratures/productquadrature.h"
+#include "quadratures/qproduct.h"
 #include "quadratures/quadraturebase.h"
 
 // externals
@@ -36,7 +36,7 @@ CSDSolverTrafoFP2D::CSDSolverTrafoFP2D( Config* settings ) : SNSolver( settings 
     _wa  = Vector( 2 * order );
 
     // create quadrature 1D to compute mu grid
-    QuadratureBase* quad1D = QuadratureBase::CreateQuadrature( QUAD_GaussLegendre1D, 2 * order );
+    QuadratureBase* quad1D = QuadratureBase::Create( QUAD_GaussLegendre1D, 2 * order );
     Vector w               = quad1D->GetWeights();
     VectorVector muVec     = quad1D->GetPoints();
     for( unsigned k = 0; k < 2 * order; ++k ) {

@@ -52,7 +52,7 @@ TEST_CASE( "Quadrature Tests", "[quadrature]" ) {
                 // Set quadOrder
                 config->SetQuadOrder( quadratureorder );
 
-                QuadratureBase* Q = QuadratureBase::CreateQuadrature( config );
+                QuadratureBase* Q = QuadratureBase::Create( config );
 
                 if( quadraturename == QUAD_GaussLegendre1D ) {
                     if( !approxequal( Q->SumUpWeights(), 2, lowAccuracyTesting ) ) {
@@ -79,7 +79,7 @@ TEST_CASE( "Quadrature Tests", "[quadrature]" ) {
                 // Special case for Gauss Legendre with half weights
                 if( quadraturename == QUAD_GaussLegendreTensorized ) {
                     config->SetSNAllGaussPts( false );
-                    QuadratureBase* Q = QuadratureBase::CreateQuadrature( config );
+                    QuadratureBase* Q = QuadratureBase::Create( config );
                     if( !approxequal( Q->SumUpWeights(), 4 * M_PI, lowAccuracyTesting ) ) {
                         printf( "Quadrature %d at order %d . Error : %.15f  (low accuracy testing was set to %d). Reduced number of quadrature "
                                 "points used. \n",
@@ -116,7 +116,7 @@ TEST_CASE( "Quadrature Tests", "[quadrature]" ) {
 
                 bool errorWithinBounds = true;
 
-                QuadratureBase* Q   = QuadratureBase::CreateQuadrature( config );
+                QuadratureBase* Q   = QuadratureBase::Create( config );
                 VectorVector points = Q->GetPoints();
                 for( unsigned i = 0; i < Q->GetNq(); i++ ) {
                     if( !approxequal( 1.0, norm( points[i] ), lowAccuracyTesting ) ) {
@@ -134,7 +134,7 @@ TEST_CASE( "Quadrature Tests", "[quadrature]" ) {
                 // Special case for Gauss Legendre with half weights
                 if( quadraturename == QUAD_GaussLegendreTensorized ) {
                     config->SetSNAllGaussPts( false );
-                    QuadratureBase* Q = QuadratureBase::CreateQuadrature( config );
+                    QuadratureBase* Q = QuadratureBase::Create( config );
 
                     VectorVector points = Q->GetPoints();
                     for( unsigned i = 0; i < Q->GetNq(); i++ ) {
@@ -169,14 +169,14 @@ TEST_CASE( "Quadrature Tests", "[quadrature]" ) {
                 // Set quadOrder
                 config->SetQuadOrder( quadratureorder );
 
-                QuadratureBase* Q = QuadratureBase::CreateQuadrature( config );
+                QuadratureBase* Q = QuadratureBase::Create( config );
                 REQUIRE( Q->GetNq() == size( Q->GetWeights() ) );
 
                 // Special case for Gauss Legendre with half weights
 
                 if( quadraturename == QUAD_GaussLegendreTensorized ) {
                     config->SetSNAllGaussPts( false );
-                    QuadratureBase* Q = QuadratureBase::CreateQuadrature( config );
+                    QuadratureBase* Q = QuadratureBase::Create( config );
                     REQUIRE( Q->GetNq() == size( Q->GetWeights() ) );
                     config->SetSNAllGaussPts( true );
                 }
@@ -194,13 +194,13 @@ TEST_CASE( "Quadrature Tests", "[quadrature]" ) {
                 // Set quadOrder
                 config->SetQuadOrder( quadratureorder );
 
-                QuadratureBase* Q = QuadratureBase::CreateQuadrature( config );
+                QuadratureBase* Q = QuadratureBase::Create( config );
                 REQUIRE( Q->GetNq() == size( Q->GetPoints() ) );
 
                 // Special case for Gauss Legendre with half weights
                 if( quadraturename == QUAD_GaussLegendreTensorized ) {
                     config->SetSNAllGaussPts( false );
-                    QuadratureBase* Q = QuadratureBase::CreateQuadrature( config );
+                    QuadratureBase* Q = QuadratureBase::Create( config );
                     REQUIRE( Q->GetNq() == size( Q->GetPoints() ) );
                     config->SetSNAllGaussPts( true );
                 }
@@ -224,7 +224,7 @@ TEST_CASE( "Quadrature Tests", "[quadrature]" ) {
                 // Set quadOrder
                 config->SetQuadOrder( quadratureorder );
 
-                QuadratureBase* Q = QuadratureBase::CreateQuadrature( config );
+                QuadratureBase* Q = QuadratureBase::Create( config );
 
                 if( quadraturename == QUAD_GaussLegendre1D ) {
                     if( !approxequal( Q->Integrate( sin ), 0, lowAccuracyTesting ) ) {
@@ -252,7 +252,7 @@ TEST_CASE( "Quadrature Tests", "[quadrature]" ) {
                 // Special case for Gauss Legendre with half weights
                 if( quadraturename == QUAD_GaussLegendreTensorized ) {
                     config->SetSNAllGaussPts( false );
-                    QuadratureBase* Q = QuadratureBase::CreateQuadrature( config );
+                    QuadratureBase* Q = QuadratureBase::Create( config );
 
                     if( !approxequal( Q->Integrate( f ), 4.0 * M_PI, lowAccuracyTesting ) ) {
                         printf(

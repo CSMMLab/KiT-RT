@@ -16,7 +16,7 @@ TEST_CASE( "Test the Newton Optimizer", "[optimizers]" ) {
     SphericalHarmonics basis( config->GetMaxMomentDegree() );
 
     // Get Quadrature
-    QuadratureBase* quad = QuadratureBase::CreateQuadrature( config );
+    QuadratureBase* quad = QuadratureBase::Create( config );
 
     // Get Optimizer (Newton)
     OptimizerBase* optimizer = OptimizerBase::Create( config );
