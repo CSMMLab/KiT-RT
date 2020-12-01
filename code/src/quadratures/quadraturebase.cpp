@@ -1,12 +1,12 @@
 #include "quadratures/quadraturebase.h"
 #include "common/config.h"
-#include "quadratures/productquadrature.h"
 #include "quadratures/qgausslegendre1D.h"
 #include "quadratures/qgausslegendretensorized.h"
 #include "quadratures/qldfesa.h"
 #include "quadratures/qlebedev.h"
 #include "quadratures/qlevelsymmetric.h"
 #include "quadratures/qmontecarlo.h"
+#include "quadratures/qproduct.h"
 #include "toolboxes/errormessages.h"
 
 QuadratureBase::QuadratureBase( Config* settings ) {

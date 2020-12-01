@@ -1,3 +1,8 @@
+/*! @file: quadraturebase.h
+ *  @brief: Base class for all quadrature rules in KiT-RT
+ *  @author: S. Schotthöfer
+ */
+
 #ifndef QUADRATURE_H
 #define QUADRATURE_H
 
@@ -9,8 +14,12 @@ class Config;
 class QuadratureBase
 {
   public:
+    /*! @brief: Constructor using settings class. This is the recommended constructor.
+     *  @param: Config* settings: Settings class storing all important options */
     QuadratureBase( Config* settings );
-    QuadratureBase( unsigned order );    // Only for productquadrature... refactor this!
+    /*! @brief: Constructor using directly the order of the quadrature. Not applicable for GaussLegendre, that need additional options.
+                It sets member _settings = nulltpr.*/
+    QuadratureBase( unsigned order );
     virtual ~QuadratureBase() {}
 
     // Aux functions
