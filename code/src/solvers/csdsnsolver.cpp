@@ -3,6 +3,7 @@
 #include "common/io.h"
 #include "fluxes/numericalflux.h"
 #include "kernels/scatteringkernelbase.h"
+#include "problems/icru.h"
 #include "problems/problembase.h"
 
 // externals

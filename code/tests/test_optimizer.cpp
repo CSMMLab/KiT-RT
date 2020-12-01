@@ -4,7 +4,7 @@
 #include "common/config.h"
 #include "optimizers/optimizerbase.h"
 #include "quadratures/quadraturebase.h"
-#include "solvers/sphericalharmonics.h"
+#include "toolboxes/sphericalharmonics.h"
 
 TEST_CASE( "Test the Newton Optimizer", "[optimizers]" ) {
     std::string filename = std::string( TESTS_PATH ) + "input/unit_tests/optimizers/unit_optimizerNewton.cfg";

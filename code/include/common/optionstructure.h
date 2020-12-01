@@ -22,7 +22,7 @@ class OptionBase
     std::vector<std::string> _value; /*! @brief: String name of the option */
 
   public:
-    OptionBase(){};
+    OptionBase() {}
     virtual ~OptionBase() = 0;
 
     virtual std::string SetValue( std::vector<std::string> value ); /*! @brief: Set string name of the option */
@@ -45,7 +45,7 @@ class OptionDouble : public OptionBase
   public:
     OptionDouble( std::string option_field_name, double& option_field, double default_value );
 
-    ~OptionDouble() override{};
+    ~OptionDouble() override {}
 
     std::string SetValue( std::vector<std::string> option_value ) override;
 
@@ -61,7 +61,7 @@ class OptionString : public OptionBase
   public:
     OptionString( std::string option_field_name, std::string& option_field, std::string default_value );
 
-    ~OptionString() override{};
+    ~OptionString() override {}
 
     std::string SetValue( std::vector<std::string> option_value ) override;
 
@@ -77,7 +77,7 @@ class OptionInt : public OptionBase
   public:
     OptionInt( std::string option_field_name, int& option_field, int default_value );
 
-    ~OptionInt() override{};
+    ~OptionInt() override {}
 
     std::string SetValue( std::vector<std::string> option_value ) override;
 
@@ -93,7 +93,7 @@ class OptionULong : public OptionBase
   public:
     OptionULong( std::string option_field_name, unsigned long& option_field, unsigned long default_value );
 
-    ~OptionULong() override{};
+    ~OptionULong() override {}
 
     std::string SetValue( std::vector<std::string> option_value ) override;
 
@@ -109,7 +109,7 @@ class OptionUShort : public OptionBase
   public:
     OptionUShort( std::string option_field_name, unsigned short& option_field, unsigned short default_value );
 
-    ~OptionUShort() override{};
+    ~OptionUShort() override {}
 
     std::string SetValue( std::vector<std::string> option_value ) override;
 
@@ -125,7 +125,7 @@ class OptionLong : public OptionBase
   public:
     OptionLong( std::string option_field_name, long& option_field, long default_value );
 
-    ~OptionLong() override{};
+    ~OptionLong() override {}
 
     std::string SetValue( std::vector<std::string> option_value ) override;
 
@@ -141,7 +141,7 @@ class OptionBool : public OptionBase
   public:
     OptionBool( std::string option_field_name, bool& option_field, bool default_value );
 
-    ~OptionBool() override{};
+    ~OptionBool() override {}
 
     std::string SetValue( std::vector<std::string> option_value ) override;
 
@@ -157,7 +157,7 @@ class OptionStringList : public OptionBase
   public:
     OptionStringList( std::string option_field_name, unsigned short& list_size, std::vector<std::string>& option_field );
 
-    ~OptionStringList() override{};
+    ~OptionStringList() override {}
 
     std::string SetValue( std::vector<std::string> option_value ) override;
 

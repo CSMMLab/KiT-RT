@@ -16,7 +16,6 @@
 #include "spdlog/sinks/basic_file_sink.h"
 #include "spdlog/sinks/stdout_sinks.h"
 #include "spdlog/spdlog.h"
-#include <cassert>
 #include <filesystem>
 #include <fstream>
 #include <mpi.h>
@@ -74,6 +73,12 @@ Config::Config( string case_filename ) {
 
 Config::~Config( void ) {
     // Delete all introduced arrays!
+
+    // delete _option map values proberly
+    for( auto const& x : _optionMap ) {
+        delete x.second;
+        _optionMap.erase( x.first );
+    }
 }
 
 // ---- Add Options ----

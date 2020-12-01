@@ -1,7 +1,6 @@
 #ifndef CSDSNSOLVERFP_H
 #define CSDSNSOLVERFP_H
 
-#include "icru.h"
 #include "solvers/snsolver.h"
 
 class Physics;
@@ -22,9 +21,9 @@ class CSDSNSolverFP : public SNSolver
     Matrix _IL; /*!  @brief Laplace Beltrami Matrix */
 
     double _alpha; /*!  @brief  Coefficient of GFP operators (see Olbrant 2010, eq. (8)*/
-    double _beta; /*!  @brief  Coefficient of GFP operators (see Olbrant 2010, eq. (8)*/
+    double _beta;  /*!  @brief  Coefficient of GFP operators (see Olbrant 2010, eq. (8)*/
 
-    Matrix _xi;  /*!  @brief matrix of transport coefficients */
+    Matrix _xi; /*!  @brief matrix of transport coefficients */
 
     bool _RT; /*!  @brief radiotherapy application (on/off), if true use crosssections + stopping powers from database  */
 

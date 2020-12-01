@@ -3,6 +3,7 @@
 #include "common/io.h"
 #include "fluxes/numericalflux.h"
 #include "kernels/scatteringkernelbase.h"
+#include "problems/icru.h"
 #include "problems/problembase.h"
 #include "quadratures/qproduct.h"
 #include "quadratures/quadraturebase.h"

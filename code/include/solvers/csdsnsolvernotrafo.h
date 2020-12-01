@@ -1,7 +1,6 @@
 #ifndef CSDSNSOLVERNOTRAFO_H
 #define CSDSNSOLVERNOTRAFO_H
 
-#include "icru.h"
 #include "solvers/snsolver.h"
 
 class Physics;

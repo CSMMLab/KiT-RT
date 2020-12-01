@@ -4,6 +4,7 @@
 #include "common/mesh.h"
 #include "fluxes/numericalflux.h"
 #include "kernels/scatteringkernelbase.h"
+#include "problems/icru.h"
 #include "problems/problembase.h"
 #include "quadratures/quadraturebase.h"
 
