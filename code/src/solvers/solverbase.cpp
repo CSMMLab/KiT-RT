@@ -29,12 +29,12 @@ Solver::Solver( Config* settings ) : _settings( settings ) {
     _nq         = _quadrature->GetNq();
     _settings->SetNQuadPoints( _nq );
 
-    auto nodes         = _mesh->GetNodes();
-    auto cells         = _mesh->GetCells();
-
+    // build slope related params
     _reconstructor = Reconstructor::Create( settings );
     _reconsOrder = _reconstructor->GetReconsOrder();
-
+    
+    auto nodes         = _mesh->GetNodes();
+    auto cells         = _mesh->GetCells();
     std::vector<std::vector<Vector>> interfaceMidPoints( _nCells, std::vector<Vector>( _mesh->GetNumNodesPerCell(), Vector( 2, 1e-10 ) ) );
     for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
         for( unsigned k = 0; k < _mesh->GetDim(); ++k ) {
@@ -48,10 +48,8 @@ Solver::Solver( Config* settings ) : _settings( settings ) {
     _interfaceMidPoints = interfaceMidPoints;
     _cellMidPoints = _mesh->GetCellMidPoints();
 
-    VectorVector psiDx( _nCells, Vector( _nq, 0.0 ) );
-    VectorVector psiDy( _nCells, Vector( _nq, 0.0 ) );
-    _psiDx = psiDx;
-    _psiDy = psiDy;
+    _psiDx = VectorVector( _nCells, Vector( _nq, 0.0 ) );
+    _psiDy = VectorVector( _nCells, Vector( _nq, 0.0 ) );
 
     // set time step
     _dE        = ComputeTimeStep( settings->GetCFL() );
