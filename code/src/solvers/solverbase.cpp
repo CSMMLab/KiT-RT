@@ -7,6 +7,8 @@
 #include "problems/problembase.h"
 #include "quadratures/quadraturebase.h"
 #include "solvers/csdsnsolver.h"
+#include "solvers/csdsolvertrafofp.h"
+
 #include "solvers/mnsolver.h"
 #include "solvers/pnsolver.h"
 #include "solvers/snsolver.h"
@@ -70,11 +72,13 @@ Solver::~Solver() {
 Solver* Solver::Create( Config* settings ) {
     switch( settings->GetSolverName() ) {
         case SN_SOLVER: return new SNSolver( settings );
-        case CSD_SN_SOLVER: return new CSDSNSolver( settings );
         case PN_SOLVER: return new PNSolver( settings );
         case MN_SOLVER: return new MNSolver( settings );
-        default: return new SNSolver( settings );
+        case CSD_SN_SOLVER: return new CSDSNSolver( settings );
+        case CSD_SN_FOKKERPLANCK_TRAFO_SOLVER: return new CSDSolverTrafoFP( settings );
+        default: ErrorMessages::Error( "Creator for the chosen solver does not yet exist. This is is the fault of the coder!", CURRENT_FUNCTION );
     }
+    return nullptr;
 }
 
 void Solver::Solve() {
