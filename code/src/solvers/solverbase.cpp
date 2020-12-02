@@ -32,7 +32,7 @@ Solver::Solver( Config* settings ) : _settings( settings ) {
     // build slope related params
     _reconstructor = Reconstructor::Create( settings );
     _reconsOrder = _reconstructor->GetReconsOrder();
-    
+
     auto nodes         = _mesh->GetNodes();
     auto cells         = _mesh->GetCells();
     std::vector<std::vector<Vector>> interfaceMidPoints( _nCells, std::vector<Vector>( _mesh->GetNumNodesPerCell(), Vector( 2, 1e-10 ) ) );
