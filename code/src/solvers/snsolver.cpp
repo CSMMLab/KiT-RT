@@ -55,7 +55,6 @@ void SNSolver::FluxUpdate() {
     // left and right angular flux of interface, used in numerical flux evaluation
     double psiL;
     double psiR;
-    double mass;
 
     // derivatives of angular flux in x and y directions
     VectorVector psiDx( _nCells, Vector( _nq, 0.0 ) );
@@ -98,7 +97,12 @@ void SNSolver::FluxUpdate() {
         //_mesh->ReconstructSlopesS( _nq, psiDx, psiDy, _psi );    // structured reconstruction (not stable currently)
     }
     */
-
+    if( _reconsOrder > 1 ) {
+        _mesh->ReconstructSlopesU( _nq, _psiDx, _psiDy, _sol );    // unstructured reconstruction
+        //_mesh->ReconstructSlopesS( _nq, _psiDx, _psiDy, _psi );    // structured reconstruction (not stable currently)
+    }
+    double psiL;
+    double psiR;
     // Loop over all spatial cells
     for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
         // Dirichlet cells stay at IC, farfield assumption
@@ -114,45 +118,40 @@ void SNSolver::FluxUpdate() {
                     _solNew[idx_cell][idx_quad] +=
                         _g->Flux( _quadPoints[idx_quad], _sol[idx_cell][idx_quad], _sol[idx_cell][idx_quad], _normals[idx_cell][idx_neighbor] );
                 else {
-                    /*                    switch( reconsOrder ) {
-                                            // first order solver
-                                            case 1:
-                                                psiNew[idx_cells][idx_quad] += _g->Flux( _quadPoints[idx_quad],
-                                                                                         _sol[idx_cells][idx_quad],
-                                                                                         _sol[_neighbors[idx_cells][idx_neighbor]][idx_quad],
-                                                                                         _normals[idx_cells][idx_neighbor] );
-                                                break;
-                                            // second order solver
-                                            case 2:
-                                                // left status of interface
-                                                psiL = _sol[idx_cells][idx_quad] +
-                                                       psiDx[idx_cells][idx_quad] * ( interfaceMidPoints[idx_cells][idx_neighbor][0] -
-                       cellMidPoints[idx_cells][0] ) + psiDy[idx_cells][idx_quad] * ( interfaceMidPoints[idx_cells][idx_neighbor][1] -
-                       cellMidPoints[idx_cells][1] );
-                                                // right status of interface
-                                                psiR = _sol[_neighbors[idx_cells][idx_neighbor]][idx_quad] +
-                                                       psiDx[_neighbors[idx_cells][idx_neighbor]][idx_quad] *
-                                                           ( interfaceMidPoints[idx_cells][idx_neighbor][0] -
-                       cellMidPoints[_neighbors[idx_cells][idx_neighbor]][0] ) + psiDy[_neighbors[idx_cells][idx_neighbor]][idx_quad] * (
-                       interfaceMidPoints[idx_cells][idx_neighbor][1] - cellMidPoints[_neighbors[idx_cells][idx_neighbor]][1] );
-                                                // positivity check (if not satisfied, deduce to first order)
-                                                if( psiL < 0.0 || psiR < 0.0 ) {
-                                                    psiL = _sol[idx_cells][idx_quad];
-                                                    psiR = _sol[_neighbors[idx_cells][idx_neighbor]][idx_quad];
-                                                }
-                                                // flux evaluation
-                                                psiNew[idx_cells][idx_quad] += _g->Flux( _quadPoints[idx_quad], psiL, psiR,
-                       _normals[idx_cells][idx_neighbor] ); break;
-                                            // higher order solver
-                                            case 3: std::cout << "higher order is WIP" << std::endl; break;
-                                            // default: first order solver
-                                            default:
-                                            */
-                    _solNew[idx_cell][idx_quad] += _g->Flux( _quadPoints[idx_quad],
-                                                             _sol[idx_cell][idx_quad],
-                                                             _sol[_neighbors[idx_cell][idx_neighbor]][idx_quad],
-                                                             _normals[idx_cell][idx_neighbor] );
-                    // }
+                        switch( _reconsOrder ) {
+                            // first order solver
+                            case 1:
+                                _solNew[idx_cell][idx_quad] += _g->Flux( _quadPoints[idx_quad],
+                                                                            _sol[idx_cell][idx_quad],
+                                                                            _sol[_neighbors[idx_cell][idx_neighbor]][idx_quad],
+                                                                            _normals[idx_cell][idx_neighbor] );
+                                break;
+                            // second order solver
+                            case 2:
+                                // left status of interface
+                                psiL = _sol[idx_cell][idx_quad] +
+                                        _psiDx[idx_cell][idx_quad] * ( _interfaceMidPoints[idx_cell][idx_neighbor][0] - _cellMidPoints[idx_cell][0] ) + 
+                                        _psiDy[idx_cell][idx_quad] * ( _interfaceMidPoints[idx_cell][idx_neighbor][1] - _cellMidPoints[idx_cell][1] );
+                                // right status of interface
+                                psiR = _sol[_neighbors[idx_cell][idx_neighbor]][idx_quad] +
+                                        _psiDx[_neighbors[idx_cell][idx_neighbor]][idx_quad] * ( _interfaceMidPoints[idx_cell][idx_neighbor][0] - _cellMidPoints[_neighbors[idx_cell][idx_neighbor]][0] ) + 
+                                        _psiDy[_neighbors[idx_cell][idx_neighbor]][idx_quad] * ( _interfaceMidPoints[idx_cell][idx_neighbor][1] - _cellMidPoints[_neighbors[idx_cell][idx_neighbor]][1] );
+                                // positivity check (if not satisfied, deduce to first order)
+                                if( psiL < 0.0 || psiR < 0.0 ) {
+                                    psiL = _sol[idx_cell][idx_quad];
+                                    psiR = _sol[_neighbors[idx_cell][idx_neighbor]][idx_quad];
+                                }
+                                // flux evaluation
+                                _solNew[idx_cell][idx_quad] += _g->Flux( _quadPoints[idx_quad], psiL, psiR, _normals[idx_cell][idx_neighbor] ); break;
+                                // higher order solver
+                                case 3: std::cout << "higher order is WIP" << std::endl; break;
+                                // default: first order solver
+                            default: 
+                                _solNew[idx_cell][idx_quad] += _g->Flux( _quadPoints[idx_quad],
+                                                               _sol[idx_cell][idx_quad],
+                                                               _sol[_neighbors[idx_cell][idx_neighbor]][idx_quad],
+                                                               _normals[idx_cell][idx_neighbor] );
+                    }
                 }
             }
         }
