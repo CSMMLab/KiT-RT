@@ -30,7 +30,7 @@ int main( int argc, char** argv ) {
 
     // Run solver and export
     solver->Solve();
-    solver->PrintVolumeOutput();
+    // solver->PrintVolumeOutput();
 
     MPI_Finalize();
     return EXIT_SUCCESS;

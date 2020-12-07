@@ -255,11 +255,13 @@ void CSDSolverTrafoFP::Solve() {
         if( std::isinf( dFlux ) || std::isnan( dFlux ) ) break;
     }
     Save( 1 );
+    Save();
 }
 
 void CSDSolverTrafoFP::Save() const {
-    std::vector<std::string> fieldNames{ "dose", "normalized dose" };
-    std::vector<std::vector<std::string>> fieldNamesWrapper{ fieldNames };
+    std::vector<std::string> fieldName1{ "dose" };
+    std::vector<std::string> fieldName2{ " normalized dose" };
+    std::vector<std::vector<std::string>> fieldNamesWrapper{ fieldName1, fieldName2 };
 
     std::vector<std::vector<double>> dose( 1, _dose );
     std::vector<std::vector<double>> normalizedDose( 1, _dose );
