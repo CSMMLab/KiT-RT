@@ -31,6 +31,9 @@ MNSolver::MNSolver( Config* settings ) : Solver( settings ) {
     _quadPointsSphere = _quadrature->GetPointsSphere();
     _settings->SetNQuadPoints( _nq );
 
+    _solDx = VectorVector( _nCells, Vector( _nTotalEntries, 0.0 ) );
+    _solDy = VectorVector( _nCells, Vector( _nTotalEntries, 0.0 ) );
+
     // Initialize Scatter Matrix --
     _scatterMatDiag = Vector( _nTotalEntries, 0.0 );
     ComputeScatterMatrix();
@@ -88,7 +91,10 @@ void MNSolver::ComputeMoments() {
 
 Vector MNSolver::ConstructFlux( unsigned idx_cell ) {
 
-    // ---- Integration of Moment of flux ----
+    Vector alphaL( _nTotalEntries, 0.0 );
+    Vector alphaR( _nTotalEntries, 0.0 );
+
+    //--- Integration of Moment of flux ---
     double entropyL, entropyR, entropyFlux;
 
     Vector flux( _nTotalEntries, 0.0 );
@@ -97,15 +103,33 @@ Vector MNSolver::ConstructFlux( unsigned idx_cell ) {
 
         entropyFlux = 0.0;    // Reset temorary flux
 
-        entropyL = _entropy->EntropyPrimeDual( blaze::dot( _alpha[idx_cell], _moments[idx_quad] ) );
-
         for( unsigned idx_neigh = 0; idx_neigh < _neighbors[idx_cell].size(); idx_neigh++ ) {
+
+            if( _reconsOrder > 1 ) {
+                alphaL = _alpha[idx_cell] +
+                        _solDx[idx_cell] * ( _interfaceMidPoints[idx_cell][idx_neigh][0] - _cellMidPoints[idx_cell][0] ) + 
+                        _solDy[idx_cell] * ( _interfaceMidPoints[idx_cell][idx_neigh][1] - _cellMidPoints[idx_cell][1] );
+                }
+            else {
+                alphaL = _alpha[idx_cell];
+            }
+            entropyL = _entropy->EntropyPrimeDual( blaze::dot( alphaL, _moments[idx_quad] ) );
+
             // Store fluxes in psiNew, to save memory
             if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::NEUMANN && _neighbors[idx_cell][idx_neigh] == _nCells )
                 entropyR = entropyL;
             else {
-                entropyR = _entropy->EntropyPrimeDual( blaze::dot( _alpha[_neighbors[idx_cell][idx_neigh]], _moments[idx_quad] ) );
+                if( _reconsOrder > 1 ) {
+                    alphaR = _alpha[_neighbors[idx_cell][idx_neigh]] +
+                             _solDx[_neighbors[idx_cell][idx_neigh]] * ( _interfaceMidPoints[idx_cell][idx_neigh][0] - _cellMidPoints[_neighbors[idx_cell][idx_neigh]][0] ) + 
+                             _solDy[_neighbors[idx_cell][idx_neigh]] * ( _interfaceMidPoints[idx_cell][idx_neigh][1] - _cellMidPoints[_neighbors[idx_cell][idx_neigh]][1] );
+                }
+                else {
+                    alphaR = _alpha[_neighbors[idx_cell][idx_neigh]];
+                }
+                entropyR = _entropy->EntropyPrimeDual( blaze::dot( alphaR, _moments[idx_quad] ) );
             }
+
             entropyFlux += _g->Flux( _quadPoints[idx_quad], entropyL, entropyR, _normals[idx_cell][idx_neigh] );
         }
         flux += _moments[idx_quad] * ( _weights[idx_quad] * entropyFlux );
@@ -153,6 +177,10 @@ void MNSolver::ComputeRadFlux() {
 }
 
 void MNSolver::FluxUpdate() {
+    if( _reconsOrder > 1 ) {
+        _mesh->ReconstructSlopesU( _nTotalEntries, _solDx, _solDy, _alpha );    // unstructured reconstruction
+    }
+
     // Loop over the grid cells
     for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
         // Dirichlet Boundaries stay

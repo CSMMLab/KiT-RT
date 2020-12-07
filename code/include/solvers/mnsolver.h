@@ -42,6 +42,9 @@ class MNSolver : public Solver
                                            Layout: _nCells x _nTotalEntries*/
     OptimizerBase* _optimizer; /*! @brief: Class to solve minimal entropy problem */
 
+    VectorVector _solDx;
+    VectorVector _solDy;
+    
     // ---- Private Member functions ---
 
     // IO

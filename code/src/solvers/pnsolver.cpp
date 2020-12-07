@@ -126,7 +126,8 @@ void PNSolver::FluxUpdate() {
                         solR = _sol[_neighbors[idx_cell][idx_neighbor]] +
                                _solDx[_neighbors[idx_cell][idx_neighbor]] * ( _interfaceMidPoints[idx_cell][idx_neighbor][0] - _cellMidPoints[_neighbors[idx_cell][idx_neighbor]][0] ) + 
                                _solDy[_neighbors[idx_cell][idx_neighbor]] * ( _interfaceMidPoints[idx_cell][idx_neighbor][1] - _cellMidPoints[_neighbors[idx_cell][idx_neighbor]][1] );
-                        // positivity check (if not satisfied, deduce to first order)
+                        // positivity checker (if not satisfied, deduce to first order)
+                        // I manually turned it off here since Pn produces negative solutions essentially
                         //if( min(solL) < 0.0 || min(solR) < 0.0 ) {
                         //    solL = _sol[idx_cell];
                         //    solR = _sol[_neighbors[idx_cell][idx_neighbor]];
