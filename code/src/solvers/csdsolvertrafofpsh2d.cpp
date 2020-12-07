@@ -1,4 +1,5 @@
 #include "solvers/csdsolvertrafofpsh2d.h"
+#include "problems/icru.h"
 
 CSDSolverTrafoFPSH2D::CSDSolverTrafoFPSH2D( Config* settings ) : SNSolver( settings ) {
     _dose = std::vector<double>( _settings->GetNCells(), 0.0 );
@@ -13,7 +14,6 @@ CSDSolverTrafoFPSH2D::CSDSolverTrafoFPSH2D( Config* settings ) : SNSolver( setti
 
     // create quadrature
     unsigned order    = _quadrature->GetOrder();
-    unsigned nq       = _settings->GetNQuadPoints();
     _quadPoints       = _quadrature->GetPoints();
     _weights          = _quadrature->GetWeights();
     _quadPointsSphere = _quadrature->GetPointsSphere();
@@ -25,7 +25,7 @@ CSDSolverTrafoFPSH2D::CSDSolverTrafoFPSH2D( Config* settings ) : SNSolver( setti
     _wa  = Vector( 2 * order );
 
     // create quadrature 1D to compute mu grid
-    QuadratureBase* quad1D = QuadratureBase::CreateQuadrature( QUAD_GaussLegendre1D, 2 * order );
+    QuadratureBase* quad1D = QuadratureBase::Create( QUAD_GaussLegendre1D, 2 * order );
     Vector w               = quad1D->GetWeights();
     VectorVector muVec     = quad1D->GetPoints();
     for( unsigned k = 0; k < 2 * order; ++k ) {

@@ -1,3 +1,8 @@
+/*! @file: quadraturebase.h
+ *  @brief: Base class for all quadrature rules in KiT-RT
+ *  @author: S. Schotthöfer
+ */
+
 #ifndef QUADRATURE_H
 #define QUADRATURE_H
 
@@ -9,8 +14,13 @@ class Config;
 class QuadratureBase
 {
   public:
+    /*! @brief: Constructor using settings class. This is the recommended constructor.
+     *  @param: Config* settings: Settings class storing all important options.
+     */
     QuadratureBase( Config* settings );
-    QuadratureBase( unsigned order );    // Only for productquadrature... refactor this!
+    /*! @brief: Constructor using directly the order of the quadrature. Not applicable for GaussLegendre, that need additional options.
+                It sets member _settings = nulltpr.*/
+    QuadratureBase( unsigned order );
     virtual ~QuadratureBase() {}
 
     // Aux functions
@@ -37,13 +47,13 @@ class QuadratureBase
     /*! @brief Creates a quadrature rule with a given name and a given order.
      *  @param: Config* settings: Settings to handle quadrature options
      *  @returns Quadrature* quadrature: returns pointer to instance of the given derived quadrature class */
-    static QuadratureBase* CreateQuadrature( Config* settings );
+    static QuadratureBase* Create( Config* settings );
 
     /*! @brief Creates a quadrature rule with a given name and a given order.
      *  @param: name: name of quadrature as enum
      *  @param: quadOrder: order of quadrature
      *  @returns Quadrature* quadrature: returns pointer to instance of the given derived quadrature class */
-    static QuadratureBase* CreateQuadrature( QUAD_NAME name, unsigned quadOrder );
+    static QuadratureBase* Create( QUAD_NAME name, unsigned quadOrder );
 
     // Getter
     inline std::string GetName() const { return _name; }      /*! @returns std::string _name:  name of the quadrature */

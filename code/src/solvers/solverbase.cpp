@@ -25,7 +25,7 @@ Solver::Solver( Config* settings ) : _settings( settings ) {
     _settings->SetNCells( _nCells );
 
     // build quadrature object and store frequently used params
-    _quadrature = QuadratureBase::CreateQuadrature( settings );
+    _quadrature = QuadratureBase::Create( settings );
     _nq         = _quadrature->GetNq();
     _settings->SetNQuadPoints( _nq );
 

@@ -7,8 +7,8 @@
 #include "optimizers/optimizerbase.h"
 #include "problems/problembase.h"
 #include "quadratures/quadraturebase.h"
-#include "solvers/sphericalharmonics.h"
 #include "toolboxes/errormessages.h"
+#include "toolboxes/sphericalharmonics.h"
 #include "toolboxes/textprocessingtoolbox.h"
 
 // externals
