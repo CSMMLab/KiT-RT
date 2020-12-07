@@ -85,6 +85,9 @@ Solver::Solver( Config* settings ) : _settings( settings ) {
     // initialize Helper Variables
     _fluxNew = Vector( _nCells, 0 );
     _flux    = Vector( _nCells, 0 );
+
+    // write density
+    _density = _problem->GetDensity( _mesh->GetCellMidPoints() );
 }
 
 Solver::~Solver() {

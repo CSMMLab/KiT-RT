@@ -149,14 +149,15 @@ CSDSolverTrafoFP2D::CSDSolverTrafoFP2D( Config* settings ) : SNSolver( settings 
 
     //_density = std::vector<double>( _nCells, 1.0 );
     // exit(EXIT_SUCCESS);
-    double densityMin = 0.1;
-    for( unsigned j = 0; j < _nCells; ++j ) {
-        if( _density[j] < densityMin ) _density[j] = densityMin;
-    }
 }
 
 void CSDSolverTrafoFP2D::Solve() {
     auto log = spdlog::get( "event" );
+
+    double densityMin = 0.1;
+    for( unsigned j = 0; j < _nCells; ++j ) {
+        if( _density[j] < densityMin ) _density[j] = densityMin;
+    }
 
     // save original energy field for boundary conditions
     auto energiesOrig = _energies;
@@ -209,7 +210,7 @@ void CSDSolverTrafoFP2D::Solve() {
     }
 
     // determine minimal density for CFL computation
-    double densityMin = _density[0];
+    densityMin = _density[0];
     for( unsigned j = 1; j < _nCells; ++j ) {
         if( densityMin > _density[j] ) densityMin = _density[j];
     }
