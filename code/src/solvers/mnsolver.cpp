@@ -31,6 +31,7 @@ MNSolver::MNSolver( Config* settings ) : Solver( settings ) {
     _quadPointsSphere = _quadrature->GetPointsSphere();
     _settings->SetNQuadPoints( _nq );
 
+    // Initialize temporary storages of alpha derivatives
     _solDx = VectorVector( _nCells, Vector( _nTotalEntries, 0.0 ) );
     _solDy = VectorVector( _nCells, Vector( _nTotalEntries, 0.0 ) );
 
@@ -91,20 +92,19 @@ void MNSolver::ComputeMoments() {
 
 Vector MNSolver::ConstructFlux( unsigned idx_cell ) {
 
+    //--- Integration of moments of flux ---
+    double entropyL, entropyR, entropyFlux;
+    Vector flux( _nTotalEntries, 0.0 );
+
+    //--- Temporary storages of reconstructed alpha ---
     Vector alphaL( _nTotalEntries, 0.0 );
     Vector alphaR( _nTotalEntries, 0.0 );
 
-    //--- Integration of Moment of flux ---
-    double entropyL, entropyR, entropyFlux;
-
-    Vector flux( _nTotalEntries, 0.0 );
-
     for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
-
-        entropyFlux = 0.0;    // Reset temorary flux
+        entropyFlux = 0.0;    // reset temorary flux
 
         for( unsigned idx_neigh = 0; idx_neigh < _neighbors[idx_cell].size(); idx_neigh++ ) {
-
+            // Left side reconstruction
             if( _reconsOrder > 1 ) {
                 alphaL = _alpha[idx_cell] +
                         _solDx[idx_cell] * ( _interfaceMidPoints[idx_cell][idx_neigh][0] - _cellMidPoints[idx_cell][0] ) + 
@@ -115,7 +115,7 @@ Vector MNSolver::ConstructFlux( unsigned idx_cell ) {
             }
             entropyL = _entropy->EntropyPrimeDual( blaze::dot( alphaL, _moments[idx_quad] ) );
 
-            // Store fluxes in psiNew, to save memory
+            // Right side reconstruction
             if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::NEUMANN && _neighbors[idx_cell][idx_neigh] == _nCells )
                 entropyR = entropyL;
             else {
@@ -130,11 +130,11 @@ Vector MNSolver::ConstructFlux( unsigned idx_cell ) {
                 entropyR = _entropy->EntropyPrimeDual( blaze::dot( alphaR, _moments[idx_quad] ) );
             }
 
+            // Entropy flux
             entropyFlux += _g->Flux( _quadPoints[idx_quad], entropyL, entropyR, _normals[idx_cell][idx_neigh] );
         }
+        // Solution flux
         flux += _moments[idx_quad] * ( _weights[idx_quad] * entropyFlux );
-
-        // ------- Relizablity Reconstruction Step ----
     }
     return flux;
 }

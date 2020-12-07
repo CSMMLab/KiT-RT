@@ -32,6 +32,7 @@ PNSolver::PNSolver( Config* settings ) : Solver( settings ) {
     // Initialize Scatter Matrix
     _scatterMatDiag = Vector( _nTotalEntries, 0 );
 
+    // Initialize temporary storages of solution derivatives
     _solDx = VectorVector( _nCells, Vector( _nTotalEntries, 0.0 ) );
     _solDy = VectorVector( _nCells, Vector( _nTotalEntries, 0.0 ) );
 
