@@ -187,7 +187,8 @@ void CSDSolverTrafoFP2D::Solve() {
     MPI_Comm_rank( MPI_COMM_WORLD, &rank );
     if( rank == 0 ) log->info( "{:10}   {:10}", "E", "dFlux" );
 
-    // do substitution from psi to psiTildeHat (cf. Dissertation Kerstion Kuepper, Eq. 1.23)
+// do substitution from psi to psiTildeHat (cf. Dissertation Kerstion Kuepper, Eq. 1.23)
+#pragma omp parallel for
     for( unsigned j = 0; j < _nCells; ++j ) {
         for( unsigned k = 0; k < _nq; ++k ) {
             _sol[j][k] = _sol[j][k] * _density[j] * _s[_nEnergies - 1];    // note that _s[_nEnergies - 1] is stopping power at highest energy
@@ -252,14 +253,16 @@ void CSDSolverTrafoFP2D::Solve() {
             }
         }
 
-        // add FP scattering term implicitly
+// add FP scattering term implicitly
+#pragma omp parallel for
         for( unsigned j = 0; j < _nCells; ++j ) {
             if( _boundaryCells[j] == BOUNDARY_TYPE::DIRICHLET ) continue;
             //_sol[j] = blaze::solve( identity - _dE * _alpha2 * _L, psiNew[j] );
             _sol[j] = _IL * blaze::solve( _IL - _dE * _alpha * _L, _sol[j] );
         }
 
-        // loop over all spatial cells
+// loop over all spatial cells
+#pragma omp parallel for
         for( unsigned j = 0; j < _nCells; ++j ) {
             if( _boundaryCells[j] == BOUNDARY_TYPE::DIRICHLET ) continue;
             // loop over all ordinates
@@ -287,6 +290,7 @@ void CSDSolverTrafoFP2D::Solve() {
             _sol[j] = psiNew[j];
         }
 
+#pragma omp parallel for
         for( unsigned j = 0; j < _nCells; ++j ) {
             fluxNew[j] = dot( _sol[j], _weights );
             if( n > 0 ) {
@@ -308,11 +312,13 @@ void CSDSolverTrafoFP2D::Solve() {
     }
     for( unsigned j = 0; j < _nCells; ++j ) _solverOutput[j] = _density[j];
     Save( 1 );
+    Save();
 }
 
 void CSDSolverTrafoFP2D::Save() const {
-    std::vector<std::string> fieldNames{ "dose", "normalized dose" };
-    std::vector<std::vector<std::string>> fieldNamesWrapper{ fieldNames };
+    std::vector<std::string> fieldName1{ "dose" };
+    std::vector<std::string> fieldName2{ " normalized dose" };
+    std::vector<std::vector<std::string>> fieldNamesWrapper{ fieldName1, fieldName2 };
 
     std::vector<std::vector<double>> dose( 1, _dose );
     std::vector<std::vector<double>> normalizedDose( 1, _dose );
