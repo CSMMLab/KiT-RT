@@ -104,7 +104,7 @@ CSDSolverTrafoFP::CSDSolverTrafoFP( Config* settings ) : SNSolver( settings ) {
 }
 
 void CSDSolverTrafoFP::Solve() {
-  PrepareVolumeOutput();
+    PrepareVolumeOutput();
     auto log = spdlog::get( "event" );
 
     // save original energy field for boundary conditions
@@ -168,7 +168,6 @@ void CSDSolverTrafoFP::Solve() {
 
     // loop over energies (pseudo-time)
     for( unsigned n = 0; n < _nEnergies - 1; ++n ) {
-        _dE = fabs( _energies[n + 1] - _energies[n] );    // is the sign correct here?
 
         // --- Prepare Boundaries and temp variables
         IterPreprocessing( n );
@@ -189,8 +188,6 @@ void CSDSolverTrafoFP::Solve() {
         PrintHistoryOutput( n );
         PrintVolumeOutput( n );
     }
-    // Save( 1 );
-    // Save();
 }
 
 void CSDSolverTrafoFP::IterPreprocessing( unsigned idx_pseudotime ) {
@@ -239,6 +236,7 @@ void CSDSolverTrafoFP::IterPreprocessing( unsigned idx_pseudotime ) {
 }
 
 void CSDSolverTrafoFP::FluxUpdate() {
+#pragma omp parallel for
     for( unsigned j = 0; j < _nCells; ++j ) {
         if( _boundaryCells[j] == BOUNDARY_TYPE::DIRICHLET ) continue;
         // loop over all ordinates
@@ -256,12 +254,12 @@ void CSDSolverTrafoFP::FluxUpdate() {
                                                _normals[j][idx_neighbor] ) /
                                      _areas[j];
             }
-     
         }
     }
 }
 
 void CSDSolverTrafoFP::FVMUpdate( unsigned idx_energy ) {
+#pragma omp parallel for
     for( unsigned j = 0; j < _nCells; ++j ) {
         if( _boundaryCells[j] == BOUNDARY_TYPE::DIRICHLET ) continue;
         // loop over all ordinates
