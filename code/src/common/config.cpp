@@ -241,6 +241,11 @@ void Config::SetConfigOptions() {
     /*! @brief ContinuousSlowingDown \n DESCRIPTION: If true, the program uses the continuous slowing down approximation to treat energy dependent
      * problems. \n DEFAULT false \ingroup Config */
     AddBoolOption( "CONTINUOUS_SLOWING_DOWN", _csd, false );
+
+    // Problem Relateed Options
+    /*! @brief MaterialDir \n DESCRIPTION: Relative Path to the data directory (used in the ICRU database class), starting from the directory of the
+     * cfg file . \n DEFAULT "../data/material/" \ingroup Config */
+    AddStringOption( "DATA_DIR", _dataDir, string( "../data/" ) );
     /*! @brief HydogenFile \n DESCRIPTION: If the continuous slowing down approximation is used, this referes to the cross section file for hydrogen.
      * . \n DEFAULT "h.dat" \ingroup Config */
     AddStringOption( "HYDROGEN_FILE", _hydrogenFile, string( "ENDL_H.txt" ) );

@@ -58,16 +58,20 @@ class Config
     ENTROPY_NAME _entropyName;       /*!< @brief Name of the used Entropy Functional */
     unsigned short _maxMomentDegree; /*!< @brief Maximal Order of Moments for PN and MN Solver */
     unsigned short _reconsOrder;     /*!< @brief Spatial Order of Accuracy for Solver */
+    /*!< @brief If true, very low entries (10^-10 or smaller) of the flux matrices will be set to zero,
+     * to improve floating point accuracy */
+    bool _cleanFluxMat;
+    bool _allGaussPts;     /*!< @brief If true, the SN Solver uses all Gauss pts in the quadrature */
+    bool _csd; /*LEGACY */ /*!< @brief If true, continuous slowing down approximation will be used */
+
+    // --- Problems ---
 
     // Linesource
     double _sigmaS; /*!< @brief Scattering coeffient for Linesource test case */
 
-    /*!< @brief If true, very low entries (10^-10 or smaller) of the flux matrices will be set to zero,
-     * to improve floating point accuracy */
-    bool _cleanFluxMat;
-    bool _allGaussPts; /*!< @brief If true, the SN Solver uses all Gauss pts in the quadrature */
-
-    bool _csd;                      /*!< @brief If true, continuous slowing down approximation will be used */
+    // Database ICRU
+    std::string _dataDir; /*!< @brief material directory */
+    // ElectronRT
     std::string _hydrogenFile;      /*!< @brief Name of hydrogen cross section file path*/
     std::string _oxygenFile;        /*!< @brief Name of oxygen cross section file path */
     std::string _stoppingPowerFile; /*!< @brief Name of stopping power file path */
@@ -224,14 +228,18 @@ class Config
      */
     // File structure
     std::string inline GetCTFile() const { return std::filesystem::path( _ctFile ).lexically_normal(); }
-    std::string inline GetHydrogenFile() const { return std::filesystem::path( _hydrogenFile ).lexically_normal(); }
     std::string inline GetLogDir() const { return std::filesystem::path( _logDir ).lexically_normal(); }
     std::string inline GetLogFile() const { return std::filesystem::path( _logFileName ).lexically_normal(); }
     std::string inline GetMeshFile() const { return std::filesystem::path( _meshFile ).lexically_normal(); }
     std::string inline GetOutputDir() const { return std::filesystem::path( _outputDir ).lexically_normal(); }
     std::string inline GetOutputFile() const { return std::filesystem::path( _outputFile ).lexically_normal(); }
+
+    // Problem Files
+    std::string inline GetHydrogenFile() const { return std::filesystem::path( _hydrogenFile ).lexically_normal(); }
     std::string inline GetOxygenFile() const { return std::filesystem::path( _oxygenFile ).lexically_normal(); }
     std::string inline GetStoppingPowerFile() const { return std::filesystem::path( _stoppingPowerFile ).lexically_normal(); }
+    std::string inline GetDataDir() const { return std::filesystem::path( _dataDir ).lexically_normal(); }
+
     // Quadrature Structure
     unsigned GetNQuadPoints() { return _nQuadPoints; }
     QUAD_NAME inline GetQuadName() const { return _quadName; }

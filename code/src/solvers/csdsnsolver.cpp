@@ -62,7 +62,7 @@ CSDSNSolver::CSDSNSolver( Config* settings ) : SNSolver( settings ) {
 
     std::cout << "Here 3\n";
 
-    ICRU database( angleVec, _energies );
+    ICRU database( angleVec, _energies, _settings );
     Matrix total;
     database.GetAngularScatteringXS( total, _sigmaTE );
 

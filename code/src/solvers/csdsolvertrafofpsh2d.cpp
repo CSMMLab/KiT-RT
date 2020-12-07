@@ -78,7 +78,7 @@ CSDSolverTrafoFPSH2D::CSDSolverTrafoFPSH2D( Config* settings ) : SNSolver( setti
 
     // read in medical data if radiation therapy option selected
     if( _RT ) {
-        ICRU database( _mu, _energies );
+        ICRU database( _mu, _energies, _settings );
         database.GetTransportCoefficients( _xi );
         database.GetStoppingPower( _s );
     }

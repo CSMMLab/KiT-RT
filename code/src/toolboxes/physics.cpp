@@ -21,7 +21,10 @@ void Physics::LoadDatabase( std::string fileName_H, std::string fileName_O, std:
     std::vector<VectorVector> data_O;
 
     // Read data for H
-    std::tie( headers_H, data_H ) = ReadENDL( fileName_H );
+    if( fileName_H.empty() )
+        ErrorMessages::Error( "Hydrogen file not found.", CURRENT_FUNCTION );
+    else
+        std::tie( headers_H, data_H ) = ReadENDL( fileName_H );
 
     for( unsigned i = 0; i < headers_H.size(); ++i ) {
         auto header = headers_H[i];
@@ -38,7 +41,10 @@ void Physics::LoadDatabase( std::string fileName_H, std::string fileName_O, std:
     }
 
     // Read data for O
-    std::tie( headers_O, data_O ) = ReadENDL( fileName_O );
+    if( fileName_O.empty() )
+        ErrorMessages::Error( "Oxygen file not found.", CURRENT_FUNCTION );
+    else
+        std::tie( headers_O, data_O ) = ReadENDL( fileName_O );
 
     // Find required quantities and transfer to matrix
     for( unsigned i = 0; i < headers_O.size(); ++i ) {
@@ -63,7 +69,10 @@ void Physics::LoadDatabase( std::string fileName_H, std::string fileName_O, std:
     _xsTotalH2O[H] = total_XS_H;
     _xsTotalH2O[O] = total_XS_O;
 
-    if( !( fileName_stppower.empty() ) ) _stpowH2O = ReadStoppingPowers( fileName_stppower );
+    if( fileName_stppower.empty() )
+        ErrorMessages::Error( "Stopping power file not found.", CURRENT_FUNCTION );
+    else
+        _stpowH2O = ReadStoppingPowers( fileName_stppower );
 }
 
 std::vector<Matrix> Physics::GetScatteringXS( const Vector& energies, const Matrix& angle ) {

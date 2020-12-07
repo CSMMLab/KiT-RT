@@ -1,4 +1,58 @@
 #include "problems/icru.h"
+#include "common/config.h"
+
+ICRU::ICRU( const Vector& mu, const Vector& energy, Config* settings ) : _NE( 96 ), _NA( 606 ), _E( 1e6 * energy ), _QMU( mu ) {
+    _settings = settings;
+
+    std::vector<double> TH( _NA ), THR( _NA );
+    _XMU.resize( _NA );
+    for( unsigned i = 0; i < _NA; ++i ) {
+        if( i == 0 ) {
+            TH[i]   = 0.0e0;
+            THR[i]  = TH[i] * M_PI / 180.0e0;
+            _XMU[i] = ( 1.0e0 - std::cos( THR[i] ) ) / 2.0e0;
+        }
+        else if( i == 1 ) {
+            TH[i]   = 1.0e-4;
+            THR[i]  = TH[i] * M_PI / 180.0e0;
+            _XMU[i] = ( 1.0e0 - std::cos( THR[i] ) ) / 2.0e0;
+        }
+        else {
+            if( TH[i - 1] < 0.9999e-3 )
+                TH[i] = TH[i - 1] + 2.5e-5;
+            else if( TH[i - 1] < 0.9999e-2 )
+                TH[i] = TH[i - 1] + 2.5e-4;
+            else if( TH[i - 1] < 0.9999e-1 )
+                TH[i] = TH[i - 1] + 2.5e-3;
+            else if( TH[i - 1] < 0.9999e+0 )
+                TH[i] = TH[i - 1] + 2.5e-2;
+            else if( TH[i - 1] < 0.9999e+1 )
+                TH[i] = TH[i - 1] + 1.0e-1;
+            else if( TH[i - 1] < 2.4999e+1 )
+                TH[i] = TH[i - 1] + 2.5e-1;
+            else
+                TH[i] = TH[i - 1] + 5.0e-1;
+
+            THR[i]  = TH[i] * M_PI / 180.0e0;
+            _XMU[i] = std::max( ( 1.0e0 - std::cos( THR[i] ) ) / 2.0e0, 1.0e-35 );
+        }
+    }
+
+    _ET.resize( _NE );
+    _ETL.resize( _NE );
+    _XMUL.resize( _NA );
+    _ECS.resize( _NE );
+    _ETCS1.resize( _NE );
+    _ETCS2.resize( _NE );
+    _PCS.resize( _NE );
+    _PTCS1.resize( _NE );
+    _PTCS2.resize( _NE );
+    _DCSI.resize( _NA );
+    _DCSIL.resize( _NA );
+
+    _EDCS.resize( _NE, _NA );
+    _PDCS.resize( _NE, _NA );
+}
 
 void ICRU::angdcs( unsigned ncor, double e, std::vector<double>& dxse, std::vector<double>& dxsi, std::vector<double>& dxs ) {
 
@@ -7,13 +61,17 @@ void ICRU::angdcs( unsigned ncor, double e, std::vector<double>& dxse, std::vect
         ErrorMessages::Error( "The material number " + std::to_string( NM ) + " is not defined.", CURRENT_FUNCTION );
     }
 
-    std::string PATHMT = "../data/material/";
+    std::string PATHMT = _settings->GetDataDir() + "material/";
     std::stringstream ss;
     ss << std::setw( 3 ) << std::setfill( '0' ) << materialID;
 
     std::string FILE1 = PATHMT + "mater" + ss.str() + ".stp";
 
     std::ifstream f( FILE1 );
+    if( !f.good() ) {
+        ErrorMessages::FileNotFoundError( FILE1, CURRENT_FUNCTION );
+    }
+
     std::string line;
     for( unsigned i = 0; i < 5; ++i ) std::getline( f, line );
     // double RHO = std::stod( line.substr( line.find_first_of( "=" ) + 1, 16 ) );
@@ -88,13 +146,17 @@ void ICRU::angdcs( unsigned ncor, std::vector<std::vector<double>>& dxs ) {
         ErrorMessages::Error( "The material number " + std::to_string( NM ) + " is not defined.", CURRENT_FUNCTION );
     }
 
-    std::string PATHMT = "../data/material/";
+    std::string PATHMT = _settings->GetDataDir() + "material/";
     std::stringstream ss;
     ss << std::setw( 3 ) << std::setfill( '0' ) << materialID;
 
     std::string FILE1 = PATHMT + "mater" + ss.str() + ".stp";
 
     std::ifstream f( FILE1 );
+    if( !f.good() ) {
+        ErrorMessages::FileNotFoundError( FILE1, CURRENT_FUNCTION );
+    }
+
     std::string line;
     for( unsigned i = 0; i < 5; ++i ) std::getline( f, line );
     // double RHO = std::stod( line.substr( line.find_first_of( "=" ) + 1, 16 ) );
@@ -207,7 +269,7 @@ void ICRU::ELINIT( std::vector<double> IZ, std::vector<double> STF ) {
         if( NS > 999 ) NS = 999;
 
         //  Electrons.
-        std::string PATHEL = "../data/elsep-database/";
+        std::string PATHEL = _settings->GetDataDir() + "elsep-database/";
         std::stringstream ss;
         ss << std::setw( 3 ) << std::setfill( '0' ) << NS;
 
@@ -215,12 +277,16 @@ void ICRU::ELINIT( std::vector<double> IZ, std::vector<double> STF ) {
 
         _DCSI.resize( _NA );
         std::ifstream file( FILE1 );
+        if( !file.good() ) {
+            ErrorMessages::FileNotFoundError( FILE1, CURRENT_FUNCTION );
+        }
+
         for( unsigned IE = 0; IE < _NE; ++IE ) {
             int IELEC, IZR;
             double ENR, CSE, TCS1E, TCS2E;
             file >> IELEC >> IZR >> ENR >> CSE >> TCS1E >> TCS2E;
             if( particle != ParticleType::ELECTRON || IZR != IZZ || std::fabs( ENR - _ET[IE] ) > 1.0e-3 ) {
-                ErrorMessages::Error( "Corrupt data file", CURRENT_FUNCTION );
+                ErrorMessages::Error( "Corrupt data file for elsep-database.", CURRENT_FUNCTION );
             }
             for( unsigned IA = 0; IA < _NA; ++IA ) file >> _DCSI[IA];
             _ECS[IE]   = _ECS[IE] + STFF * CSE;
@@ -584,7 +650,7 @@ void ICRU::GetTransportCoefficients( Matrix& xi ) {
 }
 
 void ICRU::GetStoppingPower( Vector& stoppingPower ) {
-    std::string PATHMT = "../data/material/";
+    std::string PATHMT = _settings->GetDataDir() + "material/";
     std::stringstream ss;
     ss << std::setw( 3 ) << std::setfill( '0' ) << materialID;
 
@@ -593,6 +659,10 @@ void ICRU::GetStoppingPower( Vector& stoppingPower ) {
     std::vector<double> energy, stppwr;
 
     std::ifstream f( FILE1 );
+    if( !f.good() ) {
+        ErrorMessages::FileNotFoundError( FILE1, CURRENT_FUNCTION );
+    }
+
     std::string line;
     for( unsigned i = 0; i < 23; ++i ) std::getline( f, line );
     double e, ecol, erad, pcol, prad;

@@ -129,7 +129,7 @@ CSDSolverTrafoFP2D::CSDSolverTrafoFP2D( Config* settings ) : SNSolver( settings 
             double exponent = minExp + ( maxExp - minExp ) / ( _nEnergies - 1 ) * n;
             _energies[n] = pow(10.0,exponent);
         }*/
-        ICRU database( _mu, _energies );
+        ICRU database( _mu, _energies, _settings );
         database.GetTransportCoefficients( _xi );
         database.GetStoppingPower( _s );
         /*
