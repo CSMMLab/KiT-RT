@@ -135,7 +135,8 @@ void CSDSolverTrafoFP::Solve() {
     MPI_Comm_rank( MPI_COMM_WORLD, &rank );
     if( rank == 0 ) log->info( "{:10}   {:10}", "E", "dFlux" );
 
-    // do substitution from psi to psiTildeHat (cf. Dissertation Kerstion Kuepper, Eq. 1.23)
+// do substitution from psi to psiTildeHat (cf. Dissertation Kerstion Kuepper, Eq. 1.23)
+#pragma omp parallel for
     for( unsigned j = 0; j < _nCells; ++j ) {
         for( unsigned k = 0; k < _nq; ++k ) {
             _sol[j][k] = _sol[j][k] * _density[j] * _s[_nEnergies - 1];    // note that _s[_nEnergies - 1] is stopping power at highest energy
@@ -201,13 +202,15 @@ void CSDSolverTrafoFP::Solve() {
         }
 
         // add FP scattering term implicitly
+#pragma omp parallel for
         for( unsigned j = 0; j < _nCells; ++j ) {
             if( _boundaryCells[j] == BOUNDARY_TYPE::DIRICHLET ) continue;
             //_sol[j] = blaze::solve( identity - _dE * _alpha2 * _L, psiNew[j] );
             _sol[j] = _IL * blaze::solve( _IL - _dE * _alpha * _L, _sol[j] );
         }
 
-        // loop over all spatial cells
+// loop over all spatial cells
+#pragma omp parallel for
         for( unsigned j = 0; j < _nCells; ++j ) {
             if( _boundaryCells[j] == BOUNDARY_TYPE::DIRICHLET ) continue;
             // loop over all ordinates
@@ -230,11 +233,13 @@ void CSDSolverTrafoFP::Solve() {
             }
         }
 
+#pragma omp parallel for
         for( unsigned j = 0; j < _nCells; ++j ) {
             if( _boundaryCells[j] == BOUNDARY_TYPE::DIRICHLET ) continue;
             _sol[j] = psiNew[j];
         }
 
+#pragma omp parallel for
         for( unsigned j = 0; j < _nCells; ++j ) {
             fluxNew[j] = dot( _sol[j], _weights );
             if( n > 0 ) {
