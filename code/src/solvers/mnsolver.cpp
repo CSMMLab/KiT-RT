@@ -109,8 +109,6 @@ Vector MNSolver::ConstructFlux( unsigned idx_cell ) {
             entropyFlux += _g->Flux( _quadPoints[idx_quad], entropyL, entropyR, _normals[idx_cell][idx_neigh] );
         }
         flux += _moments[idx_quad] * ( _weights[idx_quad] * entropyFlux );
-
-        // ------- Relizablity Reconstruction Step ----
     }
     return flux;
 }
@@ -128,10 +126,9 @@ void MNSolver::ComputeRealizableSolution( unsigned idx_cell ) {
 void MNSolver::IterPreprocessing() {
 
     // ------- Reconstruction Step ----------------
-
     _optimizer->SolveMultiCell( _alpha, _sol, _moments );
 
-    // ------- Relizablity Reconstruction Step ----
+    // ------- Relizablity Preservation Step ----
     for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
         ComputeRealizableSolution( idx_cell );
     }
