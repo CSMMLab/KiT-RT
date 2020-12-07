@@ -53,7 +53,7 @@ class PNSolver : public Solver
     // Solver
     void FVMUpdate( unsigned idx_energy ) override;
     void FluxUpdate() override;
-    void IterPreprocessing() override;
+    void IterPreprocessing( unsigned idx_pseudotime ) override;
     void IterPostprocessing();
 
     // Helper

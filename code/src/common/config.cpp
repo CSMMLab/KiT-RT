@@ -507,16 +507,16 @@ void Config::SetPostprocessing() {
                                               CURRENT_FUNCTION );
                     }
                     break;
-                case CSD_SN_NOTRAFO_SOLVER:
-                case CSD_SN_FOKKERPLANCK_SOLVER:
-                case CSD_SN_FOKKERPLANCK_TRAFO_SOLVER:
-                case CSD_SN_FOKKERPLANCK_TRAFO_SOLVER_2D:
-                case CSD_SN_FOKKERPLANCK_TRAFO_SH_SOLVER_2D:
-                case CSD_SN_SOLVER:
-                    supportedGroups = { MINIMAL, DOSE };
+                case CSD_SN_NOTRAFO_SOLVER:                     // Fallthrough
+                case CSD_SN_FOKKERPLANCK_SOLVER:                // Fallthrough
+                case CSD_SN_FOKKERPLANCK_TRAFO_SOLVER:          // Fallthrough
+                case CSD_SN_FOKKERPLANCK_TRAFO_SOLVER_2D:       // Fallthrough
+                case CSD_SN_FOKKERPLANCK_TRAFO_SH_SOLVER_2D:    // Fallthrough
+                case CSD_SN_SOLVER:                             // Fallthrough
+                    supportedGroups = { MINIMAL, MEDICAL };
                     if( supportedGroups.end() == std::find( supportedGroups.begin(), supportedGroups.end(), _volumeOutput[idx_volOutput] ) ) {
 
-                        ErrorMessages::Error( "CSD_SN_SOLVER only supports volume output ANALYTIC and MINIMAL.\nPlease check your .cfg file.",
+                        ErrorMessages::Error( "CSD_SN_SOLVER types only supports volume output MEDICAL and MINIMAL.\nPlease check your .cfg file.",
                                               CURRENT_FUNCTION );
                     }
                     break;
@@ -635,10 +635,9 @@ bool Config::TokenizeString( string& str, string& option_name, vector<string>& o
     string name_part, value_part;
     pos = str.find( "=" );
     if( pos == string::npos ) {
-        cerr << "Error in TokenizeString(): "
-             << "line in the configuration file with no \"=\" sign." << endl;
-        cout << "Look for: " << str << endl;
-        cout << "str.length() = " << str.length() << endl;
+        string errmsg = "Error in Config::TokenizeString(): line in the configuration file with no \"=\" sign.  ";
+        errmsg += "\nLook for: \n  str.length() = " + str.length();
+        spdlog::error( errmsg );
         throw( -1 );
     }
     name_part  = str.substr( 0, pos );
@@ -648,16 +647,18 @@ bool Config::TokenizeString( string& str, string& option_name, vector<string>& o
     last_pos = name_part.find_first_not_of( delimiters, 0 );
     pos      = name_part.find_first_of( delimiters, last_pos );
     if( ( name_part.length() == 0 ) || ( last_pos == string::npos ) ) {
-        cerr << "Error in CConfig::TokenizeString(): "
-             << "line in the configuration file with no name before the \"=\" sign." << endl;
+        string errmsg = "Error in Config::TokenizeString(): ";
+        errmsg += "line in the configuration file with no name before the \"=\" sign.\n";
+        spdlog::error( errmsg );
         throw( -1 );
     }
     if( pos == string::npos ) pos = name_part.length();
     option_name = name_part.substr( last_pos, pos - last_pos );
     last_pos    = name_part.find_first_not_of( delimiters, pos );
     if( last_pos != string::npos ) {
-        cerr << "Error in TokenizeString(): "
-             << "two or more options before an \"=\" sign in the configuration file." << endl;
+        string errmsg = "Error in  Config::TokenizeString(): ";
+        errmsg += "two or more options before an \"=\" sign in the configuration file.";
+        spdlog::error( errmsg );
         throw( -1 );
     }
     TextProcessingToolbox::StringToUpperCase( option_name );
@@ -675,8 +676,9 @@ bool Config::TokenizeString( string& str, string& option_name, vector<string>& o
         pos = value_part.find_first_of( delimiters, last_pos );
     }
     if( option_value.size() == 0 ) {
-        cerr << "Error in TokenizeString(): "
-             << "option " << option_name << " in configuration file with no value assigned." << endl;
+        string errmsg = "Error in  Config::TokenizeString(): ";
+        errmsg += "option " + option_name + " in configuration file with no value assigned.\n";
+        spdlog::error( errmsg );
         throw( -1 );
     }
 

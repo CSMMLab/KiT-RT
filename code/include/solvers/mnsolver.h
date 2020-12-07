@@ -54,7 +54,7 @@ class MNSolver : public Solver
     // Solver
     void FVMUpdate( unsigned idx_energy ) override;
     void FluxUpdate() override;
-    void IterPreprocessing() override;
+    void IterPreprocessing( unsigned idx_pseudotime ) override;
     void IterPostprocessing();
     /*! @brief : Construct flux by computing the Moment of the  sum of FVM discretization at the interface of cell
      *  @param : idx_cell = current cell id

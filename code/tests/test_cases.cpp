@@ -199,7 +199,7 @@ TEST_CASE( "CSD_SN_FP_SOLVER", "[validation_tests]" ) {
         Solver* solver = Solver::Create( config );
         solver->Solve();
         solver->PrintVolumeOutput();
-        auto test      = readVTKFile( std::string( TESTS_PATH ) + "result/rtsn_test_waterphantom_1D_CSD_FP_1.vtk" );
+        auto test      = readVTKFile( std::string( TESTS_PATH ) + "result/rtsn_test_waterphantom_1D_CSD_FP.vtk" );
         auto reference = readVTKFile( std::string( TESTS_PATH ) + csd_sn_fileDir + "waterphantom_1D_CSD_SN_FP_reference.vtk" );
 
         double eps = 1e-3;

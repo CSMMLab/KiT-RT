@@ -79,14 +79,14 @@ class Solver
 
     // Internal Members
     VectorVector _solNew; /*! @brief: VectorVector to store the new flux and later the new solution per iteration */    // REPLACES psiNEW
-    Vector _fluxNew; /*! @brief: Vector to store the new Flux */
-    Vector _flux;    /*! @brief: Vector to store the old Flux */
+    Vector _fluxNew; /*! @brief: Vector to store the new Flux. Dim _nCells */
+    Vector _flux;    /*! @brief: Vector to store the old Flux. Dim _nCells*/
 
     // ---- Member functions ----
 
     // Solver
     /*! @brief Performs preprocessing for the current solver iteration */
-    virtual void IterPreprocessing() = 0;
+    virtual void IterPreprocessing( unsigned idx_pseudotime ) = 0;
     /*! @brief Performs postprocessing for the current solver iteration */
     virtual void IterPostprocessing() = 0;
     /*! @brief Constructs  the flux update for the current iteration and stores it in psiNew*/

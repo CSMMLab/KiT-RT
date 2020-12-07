@@ -49,9 +49,6 @@ MNSolver::MNSolver( Config* settings ) : Solver( settings ) {
 
     _moments = VectorVector( _nq, Vector( _nTotalEntries, 0.0 ) );
     ComputeMoments();
-
-    // Solver output
-    PrepareVolumeOutput();
 }
 
 MNSolver::~MNSolver() {
@@ -123,7 +120,7 @@ void MNSolver::ComputeRealizableSolution( unsigned idx_cell ) {
     }
 }
 
-void MNSolver::IterPreprocessing() {
+void MNSolver::IterPreprocessing( unsigned idx_pseudotime ) {
 
     // ------- Reconstruction Step ----------------
     _optimizer->SolveMultiCell( _alpha, _sol, _moments );

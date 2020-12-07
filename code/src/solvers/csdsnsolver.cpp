@@ -294,7 +294,7 @@ void CSDSNSolver::PrepareVolumeOutput() {
                 _outputFieldNames[idx_group][0] = "radiation flux density";
                 break;
 
-            case DOSE:
+            case MEDICAL:
                 // one entry per cell
                 _outputFields[idx_group].resize( 1 );
                 _outputFieldNames[idx_group].resize( 1 );
@@ -329,7 +329,7 @@ void CSDSNSolver::WriteVolumeOutput( unsigned idx_pseudoTime ) {
                     }
                     break;
 
-                case DOSE:
+                case MEDICAL:
                     for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
                         _outputFields[idx_group][0][idx_cell] = _dose[idx_cell];    // Remove DOSE
                     }

@@ -145,11 +145,14 @@ void Solver::Solve() {
         logCSV->info( lineToPrintCSV );
     }
 
+    // Prepare Solver output
+    PrepareVolumeOutput();
+
     // Loop over energies (pseudo-time of continuous slowing down approach)
     for( unsigned iter = 0; iter < _nEnergies; iter++ ) {
 
         // --- Prepare Boundaries and temp variables
-        IterPreprocessing();
+        IterPreprocessing( iter );
 
         // --- Compute Fluxes ---
         FluxUpdate();
