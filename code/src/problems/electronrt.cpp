@@ -4,7 +4,7 @@
 
 // Constructor: Legacy code, physics class is no longer used
 ElectronRT::ElectronRT( Config* settings, Mesh* mesh ) : ProblemBase( settings, mesh ) {
-    _physics = new Physics( settings->GetHydrogenFile(), settings->GetOxygenFile(), settings->GetStoppingPowerFile() );
+    _physics = new EPICS( settings->GetHydrogenFile(), settings->GetOxygenFile(), settings->GetStoppingPowerFile() );
 }
 
 ElectronRT::~ElectronRT() { delete _physics; }

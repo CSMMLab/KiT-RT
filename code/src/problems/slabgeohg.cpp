@@ -1,7 +1,7 @@
 #include "problems/slabgeohg.h"
 #include "common/config.h"
 #include "common/mesh.h"
-#include "toolboxes/physics.h"
+#include "problems/epics.h"
 
 // ---- SlabGeoHG ----
 

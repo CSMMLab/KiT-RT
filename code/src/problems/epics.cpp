@@ -1,14 +1,14 @@
-#include "toolboxes/physics.h"
+#include "problems/epics.h"
 
-Physics::Physics( std::string fileName_H, std::string fileName_O, std::string fileName_stppower ) {
+EPICS::EPICS( std::string fileName_H, std::string fileName_O, std::string fileName_stppower ) {
     _xsScatteringH2O.resize( 2 );
     _xsTotalH2O.resize( 2 );
     LoadDatabase( fileName_H, fileName_O, fileName_stppower );
 }
 
-Physics::~Physics() {}
+EPICS::~EPICS() {}
 
-void Physics::LoadDatabase( std::string fileName_H, std::string fileName_O, std::string fileName_stppower ) {
+void EPICS::LoadDatabase( std::string fileName_H, std::string fileName_O, std::string fileName_stppower ) {
     VectorVector scattering_XS_H;
     VectorVector scattering_XS_O;
 
@@ -24,7 +24,7 @@ void Physics::LoadDatabase( std::string fileName_H, std::string fileName_O, std:
     if( fileName_H.empty() )
         ErrorMessages::Error( "Hydrogen file not found.", CURRENT_FUNCTION );
     else
-        std::tie( headers_H, data_H ) = ReadENDL( fileName_H );
+        std::tie( headers_H, data_H ) = ReadEPICS( fileName_H );
 
     for( unsigned i = 0; i < headers_H.size(); ++i ) {
         auto header = headers_H[i];
@@ -44,7 +44,7 @@ void Physics::LoadDatabase( std::string fileName_H, std::string fileName_O, std:
     if( fileName_O.empty() )
         ErrorMessages::Error( "Oxygen file not found.", CURRENT_FUNCTION );
     else
-        std::tie( headers_O, data_O ) = ReadENDL( fileName_O );
+        std::tie( headers_O, data_O ) = ReadEPICS( fileName_O );
 
     // Find required quantities and transfer to matrix
     for( unsigned i = 0; i < headers_O.size(); ++i ) {
@@ -75,7 +75,7 @@ void Physics::LoadDatabase( std::string fileName_H, std::string fileName_O, std:
         _stpowH2O = ReadStoppingPowers( fileName_stppower );
 }
 
-std::vector<Matrix> Physics::GetScatteringXS( const Vector& energies, const Matrix& angle ) {
+std::vector<Matrix> EPICS::GetScatteringXS( const Vector& energies, const Matrix& angle ) {
     std::vector<Matrix> out( energies.size(), Matrix( angle.rows(), angle.columns() ) );
     Vector angleVec( angle.columns() * angle.rows() );
     // store Matrix with mu values in vector format to call GetScatteringXS
@@ -98,7 +98,7 @@ std::vector<Matrix> Physics::GetScatteringXS( const Vector& energies, const Matr
     return out;
 }
 
-VectorVector Physics::GetScatteringXS( Vector energies, Vector angle ) {
+VectorVector EPICS::GetScatteringXS( Vector energies, Vector angle ) {
     auto scatter_XS_H = _xsScatteringH2O[H];
     auto scatter_XS_O = _xsScatteringH2O[O];
 
@@ -128,8 +128,7 @@ VectorVector Physics::GetScatteringXS( Vector energies, Vector angle ) {
             integral_sXS += 0.5 * ( angle[a] - angle[a - 1] ) * ( sXS[a] + sXS[a - 1] );
         }
         // intermediateGrid.back() /= integral_sXS;    // re-normalize to yield a valid distribution in a statistical sense; behaves poorly due to
-        // great
-        // differences in order of magnitude
+        // great differences in order of magnitude
     }
     VectorVector xs( energies.size(), Vector( angle.size() ) );
     for( unsigned j = 0; j < angle.size(); ++j ) {
@@ -148,7 +147,7 @@ VectorVector Physics::GetScatteringXS( Vector energies, Vector angle ) {
     return xs;
 }
 
-VectorVector Physics::GetTotalXS( Vector energies, Vector density ) {
+VectorVector EPICS::GetTotalXS( Vector energies, Vector density ) {
     VectorVector total_XS( energies.size() );
 
     Interpolation xsH( _xsTotalH2O[H][0], _xsTotalH2O[H][1], Interpolation::linear );
@@ -161,7 +160,7 @@ VectorVector Physics::GetTotalXS( Vector energies, Vector density ) {
     return total_XS;
 }
 
-VectorVector Physics::ReorderScatteringXS( const VectorVector& data ) const {
+VectorVector EPICS::ReorderScatteringXS( const VectorVector& data ) const {
     VectorVector ret( data[0].size(), Vector( data.size() ) );
     for( unsigned i = 0; i < data.size(); i++ ) {
         for( unsigned j = 0; j < data[0].size(); j++ ) {
@@ -171,7 +170,7 @@ VectorVector Physics::ReorderScatteringXS( const VectorVector& data ) const {
     return ret;
 }
 
-VectorVector Physics::ReorderTotalXS( const VectorVector& data ) const {
+VectorVector EPICS::ReorderTotalXS( const VectorVector& data ) const {
     VectorVector ret( data[0].size(), Vector( data.size() ) );
     for( unsigned i = 0; i < data.size(); i++ ) {
         for( unsigned j = 0; j < data[0].size(); j++ ) {
@@ -181,7 +180,7 @@ VectorVector Physics::ReorderTotalXS( const VectorVector& data ) const {
     return ret;
 }
 
-Vector Physics::GetTotalXSE( Vector energies ) {
+Vector EPICS::GetTotalXSE( Vector energies ) {
     Vector total_XS( energies.size() );
 
     auto total_XS_H = ReorderTotalXS( _xsTotalH2O[H] );
@@ -197,9 +196,10 @@ Vector Physics::GetTotalXSE( Vector energies ) {
     return total_XS;
 }
 
-Vector Physics::GetStoppingPower( Vector energies ) {
+Vector EPICS::GetStoppingPower( Vector energies ) {
     if( _stpowH2O.empty() ) {
-        return ComputeStoppingPower( energies );
+        ErrorMessages::Error( "ComputeStoppingPower( Vector energies ) is deprecated!", CURRENT_FUNCTION );
+        return Vector( 1, -1.0 );
     }
     else {
         Vector stopping_power( energies.size() );
@@ -211,7 +211,7 @@ Vector Physics::GetStoppingPower( Vector energies ) {
     }
 }
 
-std::tuple<std::vector<VectorVector>, std::vector<VectorVector>> Physics::ReadENDL( std::string filename ) {
+std::tuple<std::vector<VectorVector>, std::vector<VectorVector>> EPICS::ReadEPICS( std::string filename ) {
     std::vector<VectorVector> _headers;
     std::vector<VectorVector> _data;
 
@@ -225,12 +225,12 @@ std::tuple<std::vector<VectorVector>, std::vector<VectorVector>> Physics::ReadEN
     case_file.open( filename, std::ios::in );
 
     if( case_file.fail() ) {
-        ErrorMessages::Error( "The ENDL file is missing!!", CURRENT_FUNCTION );
+        ErrorMessages::Error( "The EPICS file is missing!!", CURRENT_FUNCTION );
     }
 
     std::map<std::string, bool> included_options;
 
-    /*--- Parse the physics file and save the values ---*/
+    /*--- Parse the EPICS file and save the values ---*/
 
     // list of entries (dataLine) of a datapackage, later becomes one entry in the list _data;
     std::list<Vector> dataPackList;
@@ -272,7 +272,7 @@ std::tuple<std::vector<VectorVector>, std::vector<VectorVector>> Physics::ReadEN
                 header = true;
             }
         }
-        // check if line is an endline, then reset indices and save packs
+        // check if line is an EPICSine, then reset indices and save packs
         if( lineLenght == 1 ) {
 
             _headers.push_back( headerPack );
@@ -302,7 +302,7 @@ std::tuple<std::vector<VectorVector>, std::vector<VectorVector>> Physics::ReadEN
     return { _headers, _data };
 }
 
-VectorVector Physics::ReadStoppingPowers( std::string fileName ) {
+VectorVector EPICS::ReadStoppingPowers( std::string fileName ) {
     VectorVector stp_powers;
     std::string text_line;
 
@@ -334,43 +334,4 @@ VectorVector Physics::ReadStoppingPowers( std::string fileName ) {
     stp_powers.push_back( Vector( stp_power.size(), stp_power.data() ) );
 
     return stp_powers;
-}
-
-Vector Physics::ComputeStoppingPower( const Vector& energies ) const {
-
-    Vector stoppingPower( energies.size() );
-    for( unsigned i = 0; i < energies.size(); ++i ) {
-        long double e = energies[i] * 1e6 * ELECTRON_VOLT;    // MeV -> J
-        long double J = 0, S = 0;
-        for( int i = 0; i < 2; i++ ) {
-            if( H2OAtomicNumbers[i] <= 6 )
-                J = ELECTRON_VOLT * 11.5 * H2OAtomicNumbers[i];
-            else
-                J = ELECTRON_VOLT * ( 9.76 * H2OAtomicNumbers[i] + 58.8 * std::pow( H2OAtomicNumbers[i], -0.19 ) );
-            S += H2OMassFractions[i] * H2OAtomicNumbers[i] / H2OAtomicWeights[i] * ( AVOGADRO_CONSTANT * 1e3 ) * std::log( SQRT05E / J * e );
-        }
-        S = C1 * S / e;
-
-        stoppingPower[i] = static_cast<double>( S / ( ELECTRON_VOLT * H2OMassDensity * 1e5 ) );
-    }
-    /* OpenMC formula
-    Vector stoppingPower( energies.size() );
-    for( unsigned i = 0; i < energies.size(); ++i ) {
-        long double S_rad = 0, S_col = 0;
-        for( int i = 0; i < 2; i++ ) {
-            S_rad += H20MassFractions[i] * ( 1.0 );
-            long double beta  = 0;
-            long double T     = 0;
-            long double I     = 0;
-            long double tau   = T / ELECTRON_MASS;
-            long double F     = ( 1 - beta * beta ) * ( 1 + tau * tau / 8 - ( 2 * tau + 1 * M_LN2 ) );
-            long double delta = 0;
-            S_col += H20MassFractions[i] * ( 2.0 * PI * ELECTRON_RADIUS * ELECTRON_ENERGY / beta * AVOGADRO_CONSTANT * H20AtomicNumbers[i] /
-                                             H2OAtomicWeights[i] * ( std::log( ( T * T ) / ( I * I ) ) + std::log( 1.0 + tau / 2.0 ) + F - delta )
-    );
-        }
-        stoppingPower[i] = static_cast<double>( S_rad + S_col );
-    }
-    */
-    return stoppingPower;
 }
