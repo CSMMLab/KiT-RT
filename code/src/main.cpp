@@ -1,25 +1,16 @@
+/*! @file: main.cpp
+ *  @brief: Main method to call the KiT-RT solver suite
+ *  @author: J. Kusch, S. Schotthöfer, P. Stammer, J. Wolters, T. Xiao
+ *  @version: 0.1
+ */
+
 #include <Python.h>
 #include <mpi.h>
-
-#include "common/io.h"
-#include "solvers/solverbase.h"
-
-#include "common/config.h"
-
-#include "solvers/sphericalharmonics.h"
-#include <fstream>
-#include <iostream>
 #include <string>
 
-// ----
-#include "optimizers/optimizerbase.h"
-#include "quadratures/qgausslegendretensorized.h"
-#include "quadratures/qmontecarlo.h"
-#include "solvers/sphericalharmonics.h"
-
-double testFunc( double my, double phi ) { return my * my + phi; }
-
-double testFunc2( double x, double y, double z ) { return x + y + z; }
+#include "common/config.h"
+#include "common/io.h"
+#include "solvers/solverbase.h"
 
 int main( int argc, char** argv ) {
     MPI_Init( &argc, &argv );

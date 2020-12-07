@@ -1,4 +1,4 @@
-#include "solvers/sphericalharmonics.h"
+#include "toolboxes/sphericalharmonics.h"
 #include <math.h>
 
 SphericalHarmonics::SphericalHarmonics( unsigned L_degree ) {

@@ -8,12 +8,11 @@
 #include "common/config.h"
 #include "common/io.h"
 #include "fluxes/numericalflux.h"
-#include "icru.h"
 #include "kernels/scatteringkernelbase.h"
 #include "problems/problembase.h"
 #include "quadratures/quadraturebase.h"
 #include "solvers/snsolver.h"
-#include "sphericalharmonics.h"
+#include "toolboxes/sphericalharmonics.h"
 
 class Physics;
 

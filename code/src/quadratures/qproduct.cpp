@@ -1,21 +1,21 @@
-#include "quadratures/productquadrature.h"
+#include "quadratures/qproduct.h"
 #include "toolboxes/errormessages.h"
 
-ProductQuadrature::ProductQuadrature( unsigned order ) : QuadratureBase( order ) {
+QProduct::QProduct( unsigned order ) : QuadratureBase( order ) {
     SetName();
     SetNq();
     SetPointsAndWeights();
     SetConnectivity();
 }
 
-ProductQuadrature::ProductQuadrature( Config* settings ) : QuadratureBase( settings ) {
+QProduct::QProduct( Config* settings ) : QuadratureBase( settings ) {
     SetName();
     SetNq();
     SetPointsAndWeights();
     SetConnectivity();
 }
 
-void ProductQuadrature::SetPointsAndWeights() {
+void QProduct::SetPointsAndWeights() {
     Vector nodes1D( 2 * _order ), weights1D( 2 * _order );
 
     // construct companion matrix
@@ -82,13 +82,13 @@ void ProductQuadrature::SetPointsAndWeights() {
     }
 }
 
-void ProductQuadrature::SetConnectivity() {    // TODO
+void QProduct::SetConnectivity() {    // TODO
     // Not initialized for this quadrature.
     VectorVectorU connectivity;
     _connectivity = connectivity;
 }
 
-std::pair<Vector, Matrix> ProductQuadrature::ComputeEigenValTriDiagMatrix( const Matrix& mat ) {
+std::pair<Vector, Matrix> QProduct::ComputeEigenValTriDiagMatrix( const Matrix& mat ) {
     // copied from 'Numerical Recipes' and updated + modified to work with blaze
     unsigned n = mat.rows();
 
@@ -155,14 +155,14 @@ std::pair<Vector, Matrix> ProductQuadrature::ComputeEigenValTriDiagMatrix( const
     return std::make_pair( d, z );
 }
 
-double ProductQuadrature::Pythag( const double a, const double b ) {
+double QProduct::Pythag( const double a, const double b ) {
     // copied from 'Numerical Recipes'
     double absa = std::fabs( a ), absb = std::fabs( b );
     return ( absa > absb ? absa * std::sqrt( 1.0 + ( absb / absa ) * ( absb / absa ) )
                          : ( absb == 0.0 ? 0.0 : absb * std::sqrt( 1.0 + ( absa / absb ) * ( absa / absb ) ) ) );
 }
 
-bool ProductQuadrature::CheckOrder() {
+bool QProduct::CheckOrder() {
     if( _order % 2 == 1 ) {    // order needs to be even
         ErrorMessages::Error( "ERROR! Order " + std::to_string( _order ) + " for " + GetName() + " not available. \n Order must be an even number. ",
                               CURRENT_FUNCTION );
