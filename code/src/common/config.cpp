@@ -408,6 +408,7 @@ void Config::SetPostprocessing() {
     _hydrogenFile      = _inputDir + _hydrogenFile;
     _oxygenFile        = _inputDir + _oxygenFile;
     _stoppingPowerFile = _inputDir + _stoppingPowerFile;
+    _dataDir           = _inputDir + _dataDir;
 
     // create directories if they dont exist
     if( !std::filesystem::exists( _outputDir ) ) std::filesystem::create_directory( _outputDir );
