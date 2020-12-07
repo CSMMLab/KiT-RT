@@ -247,6 +247,8 @@ void Config::SetConfigOptions() {
     /*! @brief OxygenFile \n DESCRIPTION: If the continuous slowing down approximation is used, this referes to the cross section file for oxygen.
      * . \n DEFAULT "o.dat" \ingroup Config */
     AddStringOption( "OXYGEN_FILE", _oxygenFile, string( "ENDL_O.txt" ) );
+    /*! @brief StoppingPowerFile \n DESCRIPTION: Only temporary added. \ingroup Config */
+    AddStringOption( "STOPPING_POWER_FILE", _stoppingPowerFile, string( "stopping_power.txt" ) );
     /*! @brief SN_ALL_GAUSS_PTS \n DESCRIPTION: If true, the SN Solver uses all Gauss Quadrature Points for 2d. \n DEFAULT false \ingroup Config */
     AddBoolOption( "SN_ALL_GAUSS_PTS", _allGaussPts, false );
 
@@ -393,13 +395,14 @@ void Config::SetPostprocessing() {
     if( _inputDir[_inputDir.size() - 1] != '/' ) _inputDir.append( "/" );
 
     // setup relative paths
-    _logDir       = _inputDir + _logDir;
-    _outputDir    = _inputDir + _outputDir;
-    _meshFile     = _inputDir + _meshFile;
-    _outputFile   = _outputDir + _outputFile;
-    _ctFile       = _inputDir + _ctFile;
-    _hydrogenFile = _inputDir + _hydrogenFile;
-    _oxygenFile   = _inputDir + _oxygenFile;
+    _logDir            = _inputDir + _logDir;
+    _outputDir         = _inputDir + _outputDir;
+    _meshFile          = _inputDir + _meshFile;
+    _outputFile        = _outputDir + _outputFile;
+    _ctFile            = _inputDir + _ctFile;
+    _hydrogenFile      = _inputDir + _hydrogenFile;
+    _oxygenFile        = _inputDir + _oxygenFile;
+    _stoppingPowerFile = _inputDir + _stoppingPowerFile;
 
     // create directories if they dont exist
     if( !std::filesystem::exists( _outputDir ) ) std::filesystem::create_directory( _outputDir );

@@ -67,9 +67,10 @@ class Config
     bool _cleanFluxMat;
     bool _allGaussPts; /*!< @brief If true, the SN Solver uses all Gauss pts in the quadrature */
 
-    bool _csd;                 /*!< @brief If true, continuous slowing down approximation will be used */
-    std::string _hydrogenFile; /*!< @brief Name of hydrogen cross section file */
-    std::string _oxygenFile;   /*!< @brief Name of oxygen cross section file */
+    bool _csd;                      /*!< @brief If true, continuous slowing down approximation will be used */
+    std::string _hydrogenFile;      /*!< @brief Name of hydrogen cross section file path*/
+    std::string _oxygenFile;        /*!< @brief Name of oxygen cross section file path */
+    std::string _stoppingPowerFile; /*!< @brief Name of stopping power file path */
 
     // Boundary Conditions
     /*!< @brief List of all Pairs (marker, BOUNDARY_TYPE), e.g. (farfield,DIRICHLET).
@@ -230,7 +231,7 @@ class Config
     std::string inline GetOutputDir() const { return std::filesystem::path( _outputDir ).lexically_normal(); }
     std::string inline GetOutputFile() const { return std::filesystem::path( _outputFile ).lexically_normal(); }
     std::string inline GetOxygenFile() const { return std::filesystem::path( _oxygenFile ).lexically_normal(); }
-
+    std::string inline GetStoppingPowerFile() const { return std::filesystem::path( _stoppingPowerFile ).lexically_normal(); }
     // Quadrature Structure
     unsigned GetNQuadPoints() { return _nQuadPoints; }
     QUAD_NAME inline GetQuadName() const { return _quadName; }

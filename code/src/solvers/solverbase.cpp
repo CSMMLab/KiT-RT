@@ -7,6 +7,8 @@
 #include "problems/problembase.h"
 #include "quadratures/quadraturebase.h"
 #include "solvers/csdsnsolver.h"
+#include "solvers/csdsolvertrafofp.h"
+
 #include "solvers/mnsolver.h"
 #include "solvers/pnsolver.h"
 #include "solvers/snsolver.h"
@@ -30,11 +32,11 @@ Solver::Solver( Config* settings ) : _settings( settings ) {
     _settings->SetNQuadPoints( _nq );
 
     // build slope related params
-    _reconstructor = Reconstructor::Create( settings );
-    _reconsOrder = _reconstructor->GetReconsOrder();
+    _reconstructor = new Reconstructor( settings );
+    _reconsOrder   = _reconstructor->GetReconsOrder();
 
-    auto nodes         = _mesh->GetNodes();
-    auto cells         = _mesh->GetCells();
+    auto nodes = _mesh->GetNodes();
+    auto cells = _mesh->GetCells();
     std::vector<std::vector<Vector>> interfaceMidPoints( _nCells, std::vector<Vector>( _mesh->GetNumNodesPerCell(), Vector( 2, 1e-10 ) ) );
     for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
         for( unsigned k = 0; k < _mesh->GetDim(); ++k ) {
@@ -46,7 +48,7 @@ Solver::Solver( Config* settings ) : _settings( settings ) {
         }
     }
     _interfaceMidPoints = interfaceMidPoints;
-    _cellMidPoints = _mesh->GetCellMidPoints();
+    _cellMidPoints      = _mesh->GetCellMidPoints();
 
     _psiDx = VectorVector( _nCells, Vector( _nq, 0.0 ) );
     _psiDy = VectorVector( _nCells, Vector( _nq, 0.0 ) );
@@ -92,11 +94,13 @@ Solver::~Solver() {
 Solver* Solver::Create( Config* settings ) {
     switch( settings->GetSolverName() ) {
         case SN_SOLVER: return new SNSolver( settings );
-        case CSD_SN_SOLVER: return new CSDSNSolver( settings );
         case PN_SOLVER: return new PNSolver( settings );
         case MN_SOLVER: return new MNSolver( settings );
-        default: return new SNSolver( settings );
+        case CSD_SN_SOLVER: return new CSDSNSolver( settings );
+        case CSD_SN_FOKKERPLANCK_TRAFO_SOLVER: return new CSDSolverTrafoFP( settings );
+        default: ErrorMessages::Error( "Creator for the chosen solver does not yet exist. This is is the fault of the coder!", CURRENT_FUNCTION );
     }
+    return nullptr;
 }
 
 void Solver::Solve() {
