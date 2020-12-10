@@ -89,11 +89,19 @@ void nnDataGenerator::ComputeMoments() {
 }
 
 void nnDataGenerator::sampleSolutionU() {
+    // Use necessary conditions from Monreal, Dissertation, Chapter 3.2.1, Page 26
+
+    // --- sample u in order 0 ---
+    // u_0 = <1*psi>
     double du = 100.0 / (double)_setSize;    // Prototype: u is sampled from [0,100]
 
     for( unsigned idx_set = 0; idx_set < _setSize; idx_set++ ) {
         _uSol[idx_set][0] = du * idx_set;
     }
+
+    //  --- sample u in order 1 ---
+    /* order 1 has 3 elements. (omega_x, omega_y,  omega_z) = omega, let u_1 = (u_x, u_y, u_z) = <omega*psi>
+     * Condition u_0 >= norm(u_1)   */
 }
 
 void nnDataGenerator::computeEntropyH_dual() {
