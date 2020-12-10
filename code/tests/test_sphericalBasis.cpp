@@ -3,6 +3,7 @@
 #include "common/config.h"
 #include "quadratures/qgausslegendretensorized.h"
 #include "toolboxes/sphericalharmonics.h"
+#include "toolboxes/sphericalmonomials.h"
 
 #include <fstream>
 #include <iostream>
@@ -28,7 +29,7 @@ double P2_0( double my ) { return sqrt( 5 / ( 8 * M_PI ) ) * ( 3 * my * my - 1 )
 double P2_1( double my ) { return -1 * sqrt( 15 / ( 4 * M_PI ) ) * my * sqrt( 1 - my * my ); }
 double P2_2( double my ) { return sqrt( 15 / ( 16 * M_PI ) ) * ( 1 - my * my ); }
 
-TEST_CASE( "test the spherical harmonics basis computation", "[spherical_harmonics]" ) {
+TEST_CASE( "test  spherical harmonics basis ", "[spherical_harmonics]" ) {
 
     std::string filename = std::string( TESTS_PATH ) + "input/unit_tests/solvers/unit_harmonics.cfg";
 
@@ -219,5 +220,59 @@ TEST_CASE( "test the spherical harmonics basis computation", "[spherical_harmoni
             }
         }
         REQUIRE( errorWithinBounds );
+    }
+}
+
+double Omega_x( double my, double phi ) { return sqrt( 1 - my * my ) * sin( phi ); }
+double Omega_y( double my, double phi ) { return sqrt( 1 - my * my ) * cos( phi ); }
+double Omega_z( double my ) { return my; }
+
+double SphericalMonomial_0( double /* my */, double /* phi */ ) { return 1; }
+double SphericalMonomial_1( double my, double /*phi*/ ) { return Omega_z( my ); }                          // omega_z
+double SphericalMonomial_2( double my, double phi ) { return Omega_y( my, phi ); }                         // omega_y
+double SphericalMonomial_3( double my, double phi ) { return Omega_x( my, phi ); }                         // omega_x
+double SphericalMonomial_4( double my, double /*phi*/ ) { return Omega_z( my ) * Omega_z( my ); }          // omega_z^2
+double SphericalMonomial_5( double my, double phi ) { return Omega_y( my, phi ) * Omega_z( my ); }         // omega_y*omega_z
+double SphericalMonomial_6( double my, double phi ) { return Omega_y( my, phi ) * Omega_y( my, phi ); }    // omega_y^2
+double SphericalMonomial_7( double my, double phi ) { return Omega_x( my, phi ) * Omega_z( my ); }         // omega_x*omega_z
+double SphericalMonomial_8( double my, double phi ) { return Omega_x( my, phi ) * Omega_y( my, phi ); }    // omega_x*omega_y
+double SphericalMonomial_9( double my, double phi ) { return Omega_x( my, phi ) * Omega_x( my, phi ); }    // omega_x^2
+
+TEST_CASE( "test spherical monomial basis", "[spherical_monomials]" ) {
+    unsigned maxMomentDegree = 2;    //==> 6+3+1 basis functions
+    SphericalMonomials testBase( maxMomentDegree );
+
+    SECTION( "Test against analytical solution" ) {
+        Vector moment;
+        std::vector<bool> validMoment( 10, true );
+        for( double my = -1.0; my < 1.0; my += 0.1 ) {
+
+            for( double phi = 0.0; phi < 2 * M_PI; phi += 0.1 ) {
+                moment = testBase.ComputeSphericalBasis( my, phi );
+
+                std::cout << "(algo|real): (" << moment[0] << " | " << SphericalMonomial_0( my, phi ) << ")" << std::endl;
+                std::cout << "(algo|real): (" << moment[1] << " | " << SphericalMonomial_1( my, phi ) << ")" << std::endl;
+                std::cout << "(algo|real): (" << moment[2] << " | " << SphericalMonomial_2( my, phi ) << ")" << std::endl;
+                std::cout << "(algo|real): (" << moment[3] << " | " << SphericalMonomial_3( my, phi ) << ")" << std::endl;
+                std::cout << "(algo|real): (" << moment[4] << " | " << SphericalMonomial_4( my, phi ) << ")" << std::endl;
+                std::cout << "(algo|real): (" << moment[5] << " | " << SphericalMonomial_5( my, phi ) << ")" << std::endl;
+                std::cout << "(algo|real): (" << moment[6] << " | " << SphericalMonomial_6( my, phi ) << ")" << std::endl;
+                std::cout << "(algo|real): (" << moment[7] << " | " << SphericalMonomial_7( my, phi ) << ")" << std::endl;
+                std::cout << "(algo|real): (" << moment[8] << " | " << SphericalMonomial_8( my, phi ) << ")" << std::endl;
+                std::cout << "(algo|real): (" << moment[9] << " | " << SphericalMonomial_9( my, phi ) << ")" << std::endl;
+
+                if( std::fabs( moment[0] - SphericalMonomial_0( my, phi ) ) > 1e2 * std::numeric_limits<double>::epsilon() ) validMoment[0] = false;
+                if( std::fabs( moment[1] - SphericalMonomial_1( my, phi ) ) > 1e2 * std::numeric_limits<double>::epsilon() ) validMoment[1] = false;
+                if( std::fabs( moment[2] - SphericalMonomial_2( my, phi ) ) > 1e2 * std::numeric_limits<double>::epsilon() ) validMoment[2] = false;
+                if( std::fabs( moment[3] - SphericalMonomial_3( my, phi ) ) > 1e2 * std::numeric_limits<double>::epsilon() ) validMoment[3] = false;
+                if( std::fabs( moment[4] - SphericalMonomial_4( my, phi ) ) > 1e2 * std::numeric_limits<double>::epsilon() ) validMoment[4] = false;
+                if( std::fabs( moment[5] - SphericalMonomial_5( my, phi ) ) > 1e2 * std::numeric_limits<double>::epsilon() ) validMoment[5] = false;
+                if( std::fabs( moment[6] - SphericalMonomial_6( my, phi ) ) > 1e2 * std::numeric_limits<double>::epsilon() ) validMoment[6] = false;
+                if( std::fabs( moment[7] - SphericalMonomial_7( my, phi ) ) > 1e2 * std::numeric_limits<double>::epsilon() ) validMoment[7] = false;
+                if( std::fabs( moment[8] - SphericalMonomial_8( my, phi ) ) > 1e2 * std::numeric_limits<double>::epsilon() ) validMoment[8] = false;
+                if( std::fabs( moment[9] - SphericalMonomial_9( my, phi ) ) > 1e2 * std::numeric_limits<double>::epsilon() ) validMoment[8] = false;
+            }
+        }
+        REQUIRE( std::all_of( validMoment.begin(), validMoment.end(), []( bool v ) { return v; } ) );
     }
 }

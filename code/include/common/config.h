@@ -83,6 +83,9 @@ class Config
     // Scattering Kernel
     KERNEL_NAME _kernelName; /*!< @brief Scattering Kernel Name*/
 
+    // Spherical Basis
+    SPHERICAL_BASIS_NAME _sphericalBasisName; /*!< @brief: Name of the basis on the unit sphere */
+
     // Optimizer
     OPTIMIZER_NAME _entropyOptimizerName; /*!< @brief Choice of optimizer */
     double _optimizerEpsilon;             /*!< @brief termination criterion epsilon for Newton Optmizer */
@@ -273,6 +276,8 @@ class Config
     // Scattering Kernel
     KERNEL_NAME inline GetKernelName() const { return _kernelName; }
 
+    // Basis name
+    SPHERICAL_BASIS_NAME inline GetSphericalBasisName() const { return _sphericalBasisName; }
     // Output Structure
     std::vector<VOLUME_OUTPUT> inline GetVolumeOutput() { return _volumeOutput; }
     unsigned short inline GetNVolumeOutput() { return _nVolumeOutput; }

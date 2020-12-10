@@ -69,7 +69,7 @@ class SphericalHarmonics : public SphericalBasisBase
      */
     std::vector<double> _assLegendreP;
 
-    /*! @brief sperical harmonic basis functions of
+    /*! @brief: spherical harmonic basis functions of
      *         degree  0 <= l <= L and order -l <= k <= l
      *         length : N = L² +2L
      */

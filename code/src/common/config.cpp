@@ -283,6 +283,10 @@ void Config::SetConfigOptions() {
     /*! @brief Scattering kernel \n DESCRIPTION: Describes used scattering kernel \n DEFAULT KERNEL_Isotropic \ingroup Config */
     AddEnumOption( "KERNEL", _kernelName, Kernel_Map, KERNEL_Isotropic );
 
+    /*! @brief Spherical Basis \n DESCRIPTION: Describes the chosen set of basis functions for on the unit sphere (e.g. for Moment methods) \n DEFAULT
+     * SPHERICAL_HARMONICS \ingroup Config */
+    AddEnumOption( "SPHERICAL_BASIS", _sphericalBasisName, SphericalBasis_Map, SPHERICAL_HARMONICS );
+
     // Output related options
     /*! @brief Volume output \n DESCRIPTION: Describes output groups to write to vtk \ingroup Config */
     AddEnumListOption( "VOLUME_OUTPUT", _nVolumeOutput, _volumeOutput, VolOutput_Map );

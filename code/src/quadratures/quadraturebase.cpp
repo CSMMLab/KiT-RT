@@ -29,6 +29,7 @@ QuadratureBase* QuadratureBase::Create( Config* settings ) {
         case QUAD_Product: return new QProduct( settings );
         default: ErrorMessages::Error( "Creator for the chose quadrature does not yet exist. This is is the fault of the coder!", CURRENT_FUNCTION );
     }
+    return nullptr;
 }
 
 QuadratureBase* QuadratureBase::Create( QUAD_NAME name, unsigned quadOrder ) {
@@ -45,6 +46,7 @@ QuadratureBase* QuadratureBase::Create( QUAD_NAME name, unsigned quadOrder ) {
         case QUAD_Product: return new QProduct( quadOrder );
         default: ErrorMessages::Error( "Creator for the chose quadrature does not yet exist. This is is the fault of the coder!", CURRENT_FUNCTION );
     }
+    return nullptr;
 }
 
 double QuadratureBase::Integrate( double( f )( double x0, double x1, double x2 ) ) {
