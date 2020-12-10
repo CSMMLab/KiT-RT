@@ -6,7 +6,7 @@
 #include <vector>
 
 std::vector<QUAD_NAME> quadraturenames = {
-    QUAD_MonteCarlo, QUAD_GaussLegendreTensorized, QUAD_GaussLegendre1D, QUAD_LevelSymmetric, QUAD_Lebedev, QUAD_LDFESA };
+    QUAD_MonteCarlo, QUAD_GaussLegendreTensorized, QUAD_GaussLegendre1D, QUAD_LevelSymmetric, QUAD_Lebedev, QUAD_LDFESA, QUAD_Product };
 
 std::vector<std::vector<int>> quadratureorders = {
     { 4, 5, 6, 7 },                            // Monte Carlo
@@ -15,7 +15,8 @@ std::vector<std::vector<int>> quadratureorders = {
     { 2, 4, 6, 8, 10, 12, 14, 16, 18, 20 },    // Available Orders for LevelSymmetric
     { 3,  5,  7,  9,  11, 13, 15, 17, 19, 21, 23,  25,  27,  29,  31,  35,
       41, 47, 53, 59, 65, 71, 77, 83, 89, 95, 101, 107, 113, 119, 125, 131 },    // Available orders for Lebedev
-    { 1, 2, 3 }                                                                  // Available Orders for LDFESA
+    { 1, 2, 3 },                                                                 // Available Orders for LDFESA
+    { 4, 6, 8, 10 }                                                              // Available Orders for Product
 };
 
 bool approxequal( double a, double b, bool lowAccuracy = false ) {
@@ -45,7 +46,7 @@ TEST_CASE( "Quadrature Tests", "[quadrature]" ) {
 
             lowAccuracyTesting = false;
             if( quadraturename == QUAD_GaussLegendreTensorized || quadraturename == QUAD_GaussLegendre1D || quadraturename == QUAD_LevelSymmetric ||
-                quadraturename == QUAD_Lebedev || quadraturename == QUAD_LDFESA )
+                quadraturename == QUAD_Lebedev || quadraturename == QUAD_LDFESA || quadraturename == QUAD_Product )
                 lowAccuracyTesting = true;
 
             for( auto quadratureorder : quadratureorders[quadraturename] ) {

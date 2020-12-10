@@ -1,8 +1,8 @@
 #ifndef ELECTRONRT_H
 #define ELECTRONRT_H
 
+#include "epics.h"
 #include "problembase.h"
-#include "toolboxes/physics.h"
 
 class ElectronRT : public ProblemBase
 {
