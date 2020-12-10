@@ -12,9 +12,10 @@
 #define SPHERICALHARMONICS_H
 
 #include "common/typedef.h"
+#include "toolboxes/sphericalbasisbase.h"
 #include <vector>
 
-class SphericalHarmonics
+class SphericalHarmonics : public SphericalBasisBase
 {
   public:
     /*! @brief : Sets up class for spherical harmonics basis based on legendre
@@ -30,13 +31,13 @@ class SphericalHarmonics
      *  @param  : phi - spherical coordinate, 0 <= phi <= 2*pi
      *  @return : vector of basis functions at point (my, phi) with size N = L² +2L
      */
-    Vector ComputeSphericalBasis( double my, double phi );
+    Vector ComputeSphericalBasis( double my, double phi ) override;
 
     /*! @brief  : Computes all N = L² +2L basis functions at point (x, y, z) on the unit sphere
      *  @param  : x,y,z = coordinates on unit sphere
      *  @return : vector of basis functions at point (x,y,z) with size N = L² +2L
      */
-    Vector ComputeSphericalBasis( double x, double y, double z );
+    Vector ComputeSphericalBasis( double x, double y, double z ) override;
 
     /*! @brief : helper function to get the global index for given k and l of
      *           the basis function Y_k^l.

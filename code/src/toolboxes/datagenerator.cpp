@@ -9,7 +9,7 @@
 #include "entropies/entropybase.h"
 #include "optimizers/newtonoptimizer.h"
 #include "quadratures/quadraturebase.h"
-#include "solvers/sphericalharmonics.h"
+#include "toolboxes/sphericalharmonics.h"
 
 #include "spdlog/spdlog.h"
 
@@ -23,7 +23,7 @@ nnDataGenerator::nnDataGenerator( Config* settings ) {
     _nTotalEntries = (unsigned)GlobalIndex( _LMaxDegree, _LMaxDegree ) + 1;
 
     // Quadrature
-    _quadrature       = QuadratureBase::CreateQuadrature( settings );
+    _quadrature       = QuadratureBase::Create( settings );
     _nq               = _quadrature->GetNq();
     _quadPoints       = _quadrature->GetPoints();
     _weights          = _quadrature->GetWeights();
