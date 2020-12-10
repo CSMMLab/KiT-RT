@@ -12,6 +12,8 @@
 #include "common/io.h"
 #include "solvers/solverbase.h"
 
+#include "toolboxes/datagenerator.h"
+
 int main( int argc, char** argv ) {
     MPI_Init( &argc, &argv );
     wchar_t* program = Py_DecodeLocale( argv[0], NULL );
@@ -25,12 +27,20 @@ int main( int argc, char** argv ) {
     // Print input file and run info to file
     PrintLogHeader( filename );
 
-    // Build solver
-    Solver* solver = Solver::Create( config );
+    if( config->GetDataGeneratorMode() ) {
+        // Build Data generator
+        nnDataGenerator* datagen = new nnDataGenerator( config );
+        // Generate Data and export
+        datagen->computeTrainingData();
+    }
+    else {
+        // Build solver
+        Solver* solver = Solver::Create( config );
 
-    // Run solver and export
-    solver->Solve();
-    solver->PrintVolumeOutput();
+        // Run solver and export
+        solver->Solve();
+        solver->PrintVolumeOutput();
+    }
 
     MPI_Finalize();
     return EXIT_SUCCESS;

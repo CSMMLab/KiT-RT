@@ -8,10 +8,10 @@
 #define SPHERICALMONOMIALS_H
 
 #include "common/typedef.h"
-#include "toolboxes/sphericalbasisbase.h"
+#include "toolboxes/sphericalbase.h"
 #include <vector>
 
-class SphericalMonomials : public SphericalBasisBase
+class SphericalMonomials : public SphericalBase
 {
   public:
     /*! @brief : Sets up class for monomial basis on sphere up to degree L.
@@ -34,6 +34,11 @@ class SphericalMonomials : public SphericalBasisBase
      */
     Vector ComputeSphericalBasis( double x, double y, double z ) override;
 
+    /*! @brief: Computes the length of the basis vector for a given max degree and
+     *          spatial dimension dim. len of a single oder: (degree + _spatialDim -1) over (degree)
+     *  @return: lenght of whole basis */
+    unsigned GetBasisSize() override;
+
   private:
     /*! @brief: maximal degree of the spherical monomial basis (this is "L" in the comments)*/
     unsigned _LMaxDegree;
@@ -51,11 +56,6 @@ class SphericalMonomials : public SphericalBasisBase
      *          spatial dimension dim. len of a single oder: (degree + _spatialDim -1) over (degree)
      *  @return: lenght of a single dimension */
     unsigned ComputeDimensionSize( unsigned degree );
-
-    /*! @brief: Computes the length of the basis vector for a given max degree and
-     *          spatial dimension dim. len of a single oder: (degree + _spatialDim -1) over (degree)
-     *  @return: lenght of whole basis */
-    unsigned ComputeBasisSize( unsigned degree );
 
     /*! @brief: Function to compute factorial of n (n!) in recursive manner */
     unsigned Factorial( unsigned n );

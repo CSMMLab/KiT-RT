@@ -1,26 +1,26 @@
 /*!
- * @file sphericalbasisbase.h
+ * @file sphericalbase.h
  * @brief Base Class to handle basis classes on the unit sphere
  * @author S. Schotthöfer
  *
  */
 
-#ifndef SPHERICALBASISBASE_H
-#define SPHERICALBASISBASE_H
+#ifndef SPHERICALBASE_H
+#define SPHERICALBASE_H
 
 #include "common/typedef.h"
 class Config;
 
-class SphericalBasisBase
+class SphericalBase
 {
   public:
-    SphericalBasisBase() {}
-    ~SphericalBasisBase() {}
+    SphericalBase() {}
+    ~SphericalBase() {}
 
     /*! @brief: Create a set of basis functions on the unit sphere defined in settings
      *  @param: Pointer to the config file
      *  @returns: Pointer to the createt basis class */
-    static SphericalBasisBase* Create( Config* settings );
+    static SphericalBase* Create( Config* settings );
 
     /*! @brief  : Computes all N basis functions at point (my, phi)
      *  @param  : my = cos(theta) - spherical coordinate, -1 <= x <= 1
@@ -34,6 +34,8 @@ class SphericalBasisBase
      *  @return : vector of basis functions at point (x,y,z) with size N
      */
     virtual Vector ComputeSphericalBasis( double x, double y, double z ) = 0;
+
+    virtual unsigned GetBasisSize() = 0;
 };
 
-#endif    // SPHERICALBASISBASE_H
+#endif    // SPHERICALBASE_H

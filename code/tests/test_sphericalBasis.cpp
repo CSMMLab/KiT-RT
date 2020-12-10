@@ -6,7 +6,6 @@
 #include "toolboxes/sphericalmonomials.h"
 
 #include <fstream>
-#include <iostream>
 #include <sstream>
 
 double Y0_0( double, double ) { return sqrt( 1 / ( 4 * M_PI ) ); }

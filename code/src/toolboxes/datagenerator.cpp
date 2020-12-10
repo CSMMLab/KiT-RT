@@ -9,7 +9,8 @@
 #include "entropies/entropybase.h"
 #include "optimizers/newtonoptimizer.h"
 #include "quadratures/quadraturebase.h"
-#include "toolboxes/sphericalharmonics.h"
+#include "toolboxes/errormessages.h"
+#include "toolboxes/sphericalbase.h"
 
 #include "spdlog/spdlog.h"
 
@@ -19,8 +20,7 @@ nnDataGenerator::nnDataGenerator( Config* settings ) {
     _settings = settings;
     _setSize  = settings->GetTrainingDataSetSize();
 
-    _LMaxDegree    = settings->GetMaxMomentDegree();
-    _nTotalEntries = (unsigned)GlobalIndex( _LMaxDegree, _LMaxDegree ) + 1;
+    _LMaxDegree = settings->GetMaxMomentDegree();
 
     // Quadrature
     _quadrature       = QuadratureBase::Create( settings );
@@ -31,8 +31,15 @@ nnDataGenerator::nnDataGenerator( Config* settings ) {
     _settings->SetNQuadPoints( _nq );
 
     // Spherical Harmonics
-    _basis   = new SphericalHarmonics( _LMaxDegree );
+    if( _settings->GetSphericalBasisName() == SPHERICAL_HARMONICS && _LMaxDegree > 0 ) {
+        ErrorMessages::Error( "No sampling algorithm for spherical harmonics basis with degree higher than 0 implemented", CURRENT_FUNCTION );
+    }
+    _basis = SphericalBase::Create( _settings );
+
+    _nTotalEntries = _basis->GetBasisSize();
+
     _moments = VectorVector( _nq, Vector( _nTotalEntries, 0.0 ) );
+
     ComputeMoments();
 
     // Optimizer

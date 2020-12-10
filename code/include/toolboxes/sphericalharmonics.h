@@ -12,10 +12,10 @@
 #define SPHERICALHARMONICS_H
 
 #include "common/typedef.h"
-#include "toolboxes/sphericalbasisbase.h"
+#include "toolboxes/sphericalbase.h"
 #include <vector>
 
-class SphericalHarmonics : public SphericalBasisBase
+class SphericalHarmonics : public SphericalBase
 {
   public:
     /*! @brief : Sets up class for spherical harmonics basis based on legendre
@@ -44,7 +44,7 @@ class SphericalHarmonics : public SphericalBasisBase
      *  @param : l_degree - current degree of basis function, 0 <= l <= L
      *  @param : k_order  - current order of basis function,  -l <= k <= l
      */
-    unsigned inline GlobalIdxBasis( unsigned l_degree, unsigned k_order ) { return k_order + l_degree + l_degree * l_degree; }
+    unsigned GlobalIdxBasis( unsigned l_degree, unsigned k_order );
 
     /*! @brief : Computes an entire set of (komplex congjugate) P_l^k and stores
      *           it in the vector _assLegendreP
@@ -52,6 +52,9 @@ class SphericalHarmonics : public SphericalBasisBase
      *  @return : Associated Legendre Polynomial at my for all l and k
      */
     std::vector<double> GetAssLegendrePoly( const double my );
+
+    /*! @brief: Returns length of the basis, i.e. number of elements of the basis */
+    unsigned GetBasisSize() override;
 
   private:
     /*! @brief: maximal degree of the spherical harmonics basis (this is "L" in the comments)*/

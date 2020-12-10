@@ -10,8 +10,7 @@ SphericalMonomials::SphericalMonomials( unsigned L_degree ) {
     _LMaxDegree = L_degree;
     _spatialDim = 3;    // Spatial dimension 2 is hardcoded
 
-    unsigned basisSize = ComputeBasisSize( L_degree );
-    _YBasis            = Vector( basisSize );
+    _YBasis = Vector( GetBasisSize() );
 }
 
 Vector SphericalMonomials::ComputeSphericalBasis( double my, double phi ) {
@@ -22,11 +21,9 @@ Vector SphericalMonomials::ComputeSphericalBasis( double my, double phi ) {
         double omega_X = Omega_x( my, phi );
         double omega_Y = Omega_y( my, phi );
         double omega_Z = Omega_z( my );
-        double tmp     = .0;
         for( unsigned a = 0; a <= idx_degree; a++ ) {
             for( unsigned b = 0; b <= idx_degree - a; b++ ) {
                 unsigned c          = idx_degree - a - b;    // c uniquely defined
-                tmp                 = Power( omega_X, a ) * Power( omega_Y, b ) * Power( omega_Z, c );
                 _YBasis[idx_vector] = Power( omega_X, a ) * Power( omega_Y, b ) * Power( omega_Z, c );
                 idx_vector++;
             }
@@ -48,19 +45,16 @@ Vector SphericalMonomials::ComputeSphericalBasis( double x, double y, double z )
     return ComputeSphericalBasis( my, phi );
 }
 
-/*! @brief: Computes the length of the basis vector for a given max degree and
- *          spatial dimension dim. len of a single oder: (degree + _spatialDim -1) over (degree)
- *  @return: lenght of whole basis */
-unsigned SphericalMonomials::ComputeDimensionSize( unsigned degree ) {
-    return Factorial( degree + _spatialDim - 1 ) / ( Factorial( degree ) * Factorial( _spatialDim - 1 ) );
-}
-
-unsigned SphericalMonomials::ComputeBasisSize( unsigned degree ) {
+unsigned SphericalMonomials::GetBasisSize() {
     unsigned basisLen = 0;
-    for( unsigned idx_degree = 0; idx_degree <= degree; idx_degree++ ) {
+    for( unsigned idx_degree = 0; idx_degree <= _LMaxDegree; idx_degree++ ) {
         basisLen += ComputeDimensionSize( idx_degree );
     }
     return basisLen;
+}
+
+unsigned SphericalMonomials::ComputeDimensionSize( unsigned degree ) {
+    return Factorial( degree + _spatialDim - 1 ) / ( Factorial( degree ) * Factorial( _spatialDim - 1 ) );
 }
 
 unsigned SphericalMonomials::Factorial( unsigned n ) { return ( n == 1 || n == 0 ) ? 1 : Factorial( n - 1 ) * n; }

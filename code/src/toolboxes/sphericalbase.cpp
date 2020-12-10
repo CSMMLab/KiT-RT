@@ -1,17 +1,16 @@
 /*!
- * @file sphericalbasisbase.cpp
+ * @file sphericalbase.cpp
  * @brief Base Class to handle basis classes on the unit sphere
  * @author S. Schotthöfer
- *
  */
 
-#include "toolboxes/sphericalbasisbase.h"
 #include "common/config.h"
 #include "toolboxes/errormessages.h"
+#include "toolboxes/sphericalbase.h"
 #include "toolboxes/sphericalharmonics.h"
 #include "toolboxes/sphericalmonomials.h"
 
-SphericalBasisBase* SphericalBasisBase::Create( Config* settings ) {
+SphericalBase* SphericalBase::Create( Config* settings ) {
     SPHERICAL_BASIS_NAME name = settings->GetSphericalBasisName();
     unsigned maxMomentDegree  = settings->GetMaxMomentDegree();
 
