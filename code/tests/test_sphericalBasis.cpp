@@ -250,17 +250,6 @@ TEST_CASE( "test spherical monomial basis", "[spherical_monomials]" ) {
             for( double phi = 0.0; phi < 2 * M_PI; phi += 0.1 ) {
                 moment = testBase.ComputeSphericalBasis( my, phi );
 
-                std::cout << "(algo|real): (" << moment[0] << " | " << SphericalMonomial_0( my, phi ) << ")" << std::endl;
-                std::cout << "(algo|real): (" << moment[1] << " | " << SphericalMonomial_1( my, phi ) << ")" << std::endl;
-                std::cout << "(algo|real): (" << moment[2] << " | " << SphericalMonomial_2( my, phi ) << ")" << std::endl;
-                std::cout << "(algo|real): (" << moment[3] << " | " << SphericalMonomial_3( my, phi ) << ")" << std::endl;
-                std::cout << "(algo|real): (" << moment[4] << " | " << SphericalMonomial_4( my, phi ) << ")" << std::endl;
-                std::cout << "(algo|real): (" << moment[5] << " | " << SphericalMonomial_5( my, phi ) << ")" << std::endl;
-                std::cout << "(algo|real): (" << moment[6] << " | " << SphericalMonomial_6( my, phi ) << ")" << std::endl;
-                std::cout << "(algo|real): (" << moment[7] << " | " << SphericalMonomial_7( my, phi ) << ")" << std::endl;
-                std::cout << "(algo|real): (" << moment[8] << " | " << SphericalMonomial_8( my, phi ) << ")" << std::endl;
-                std::cout << "(algo|real): (" << moment[9] << " | " << SphericalMonomial_9( my, phi ) << ")" << std::endl;
-
                 if( std::fabs( moment[0] - SphericalMonomial_0( my, phi ) ) > 1e2 * std::numeric_limits<double>::epsilon() ) validMoment[0] = false;
                 if( std::fabs( moment[1] - SphericalMonomial_1( my, phi ) ) > 1e2 * std::numeric_limits<double>::epsilon() ) validMoment[1] = false;
                 if( std::fabs( moment[2] - SphericalMonomial_2( my, phi ) ) > 1e2 * std::numeric_limits<double>::epsilon() ) validMoment[2] = false;
