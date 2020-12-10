@@ -1,7 +1,6 @@
 #ifndef CSDSNSOLVER_H
 #define CSDSNSOLVER_H
 
-#include "icru.h"
 #include "solvers/snsolver.h"
 
 class CSDSNSolver : public SNSolver

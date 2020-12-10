@@ -91,19 +91,19 @@ double Interpolation::operator()( double x, double y ) const {
     if( _type == cubic ) {
 
         // find closest values to x and y in table (lower bounds)
-        unsigned xId = IndexOfClosestValue( x, _x );
-        unsigned yId = IndexOfClosestValue( y, _y );
+        int xId = IndexOfClosestValue( x, _x );
+        int yId = IndexOfClosestValue( y, _y );
 
         // store all 16 interpolation points needed
         double points[4][4];
         for( int i = -1; i < 3; ++i ) {
             unsigned idx_y;
             idx_y = yId + i < 0 ? 0 : yId + i;
-            idx_y = yId + i > _data.rows() - 1 ? _data.rows() - 1 : yId + i;
+            idx_y = yId + i > static_cast<int>( _data.rows() - 1 ) ? _data.rows() - 1 : yId + i;
             for( int j = -1; j < 3; ++j ) {
                 unsigned idx_x;
                 idx_x = xId + j < 0 ? 0 : xId + j;
-                idx_x = xId + j > _data.columns() - 1 ? _data.columns() - 1 : xId + j;
+                idx_x = xId + j > static_cast<int>( _data.columns() - 1 ) ? _data.columns() - 1 : xId + j;
 
                 points[i + 1][j + 1] = _data( idx_x, idx_y );
             }

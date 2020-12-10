@@ -1,27 +1,16 @@
+/*! @file: main.cpp
+ *  @brief: Main method to call the KiT-RT solver suite
+ *  @author: J. Kusch, S. Schotthöfer, P. Stammer, J. Wolters, T. Xiao
+ *  @version: 0.1
+ */
+
 #include <Python.h>
 #include <mpi.h>
-
-#include "common/io.h"
-#include "solvers/solverbase.h"
-
-#include "common/config.h"
-
-#include "solvers/sphericalharmonics.h"
-#include <fstream>
-#include <iostream>
 #include <string>
 
-// ----
-#include "optimizers/optimizerbase.h"
-#include "quadratures/qgausslegendretensorized.h"
-#include "quadratures/qmontecarlo.h"
-#include "solvers/sphericalharmonics.h"
-
-#include "toolboxes/datagenerator.h"
-
-double testFunc( double my, double phi ) { return my * my + phi; }
-
-double testFunc2( double x, double y, double z ) { return x + y + z; }
+#include "common/config.h"
+#include "common/io.h"
+#include "solvers/solverbase.h"
 
 int main( int argc, char** argv ) {
     MPI_Init( &argc, &argv );
@@ -32,23 +21,17 @@ int main( int argc, char** argv ) {
 
     // CD  Load Settings from File
     Config* config = new Config( filename );
+
     // Print input file and run info to file
     PrintLogHeader( filename );
 
-    if( config->GetDataGeneratorMode() ) {
-        // Build Data generator
-        nnDataGenerator* datagen = new nnDataGenerator( config );
-        // Generate Data and export
-        datagen->computeTrainingData();
-    }
-    else {
-        // Build solver
-        Solver* solver = Solver::Create( config );
+    // Build solver
+    Solver* solver = Solver::Create( config );
 
-        // Run solver and export
-        solver->Solve();
-        solver->PrintVolumeOutput();
-    }
+    // Run solver and export
+    solver->Solve();
+    solver->PrintVolumeOutput();
+
     MPI_Finalize();
     return EXIT_SUCCESS;
 }

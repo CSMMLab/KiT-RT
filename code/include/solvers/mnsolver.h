@@ -42,6 +42,9 @@ class MNSolver : public Solver
                                            Layout: _nCells x _nTotalEntries*/
     OptimizerBase* _optimizer; /*! @brief: Class to solve minimal entropy problem */
 
+    VectorVector _solDx; /*! @brief:  temporary storage of x-derivatives of alpha */
+    VectorVector _solDy; /*! @brief:  temporary storage of y-derivatives of alpha */
+
     // ---- Private Member functions ---
 
     // IO
