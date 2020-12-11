@@ -8,7 +8,7 @@
 #include "problems/problembase.h"
 #include "quadratures/quadraturebase.h"
 #include "toolboxes/errormessages.h"
-#include "toolboxes/sphericalharmonics.h"
+#include "toolboxes/sphericalbase.h"
 #include "toolboxes/textprocessingtoolbox.h"
 
 // externals
@@ -19,7 +19,8 @@
 
 MNSolver::MNSolver( Config* settings ) : Solver( settings ) {
     _LMaxDegree    = settings->GetMaxMomentDegree();
-    _nTotalEntries = GlobalIndex( _LMaxDegree, int( _LMaxDegree ) ) + 1;
+    _basis         = SphericalBase::Create( _settings );
+    _nTotalEntries = _basis->GetBasisSize();
 
     // build quadrature object and store quadrature points and weights
     _quadPoints = _quadrature->GetPoints();
@@ -46,8 +47,6 @@ MNSolver::MNSolver( Config* settings ) : Solver( settings ) {
     _alpha = VectorVector( _nCells, Vector( _nTotalEntries, 0.0 ) );
 
     // Initialize and Pre-Compute Moments at quadrature points
-    _basis = new SphericalHarmonics( _LMaxDegree );
-
     _moments = VectorVector( _nq, Vector( _nTotalEntries, 0.0 ) );
     ComputeMoments();
 
@@ -103,10 +102,9 @@ Vector MNSolver::ConstructFlux( unsigned idx_cell ) {
         for( unsigned idx_neigh = 0; idx_neigh < _neighbors[idx_cell].size(); idx_neigh++ ) {
             // Left side reconstruction
             if( _reconsOrder > 1 ) {
-                alphaL = _alpha[idx_cell] +
-                        _solDx[idx_cell] * ( _interfaceMidPoints[idx_cell][idx_neigh][0] - _cellMidPoints[idx_cell][0] ) + 
-                        _solDy[idx_cell] * ( _interfaceMidPoints[idx_cell][idx_neigh][1] - _cellMidPoints[idx_cell][1] );
-                }
+                alphaL = _alpha[idx_cell] + _solDx[idx_cell] * ( _interfaceMidPoints[idx_cell][idx_neigh][0] - _cellMidPoints[idx_cell][0] ) +
+                         _solDy[idx_cell] * ( _interfaceMidPoints[idx_cell][idx_neigh][1] - _cellMidPoints[idx_cell][1] );
+            }
             else {
                 alphaL = _alpha[idx_cell];
             }
@@ -118,8 +116,10 @@ Vector MNSolver::ConstructFlux( unsigned idx_cell ) {
             else {
                 if( _reconsOrder > 1 ) {
                     alphaR = _alpha[_neighbors[idx_cell][idx_neigh]] +
-                             _solDx[_neighbors[idx_cell][idx_neigh]] * ( _interfaceMidPoints[idx_cell][idx_neigh][0] - _cellMidPoints[_neighbors[idx_cell][idx_neigh]][0] ) + 
-                             _solDy[_neighbors[idx_cell][idx_neigh]] * ( _interfaceMidPoints[idx_cell][idx_neigh][1] - _cellMidPoints[_neighbors[idx_cell][idx_neigh]][1] );
+                             _solDx[_neighbors[idx_cell][idx_neigh]] *
+                                 ( _interfaceMidPoints[idx_cell][idx_neigh][0] - _cellMidPoints[_neighbors[idx_cell][idx_neigh]][0] ) +
+                             _solDy[_neighbors[idx_cell][idx_neigh]] *
+                                 ( _interfaceMidPoints[idx_cell][idx_neigh][1] - _cellMidPoints[_neighbors[idx_cell][idx_neigh]][1] );
                 }
                 else {
                     alphaR = _alpha[_neighbors[idx_cell][idx_neigh]];

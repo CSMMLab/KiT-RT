@@ -43,7 +43,7 @@ class nnDataGenerator
     VectorVector _alpha;           /*! @brief: vector with Lagrange multipliers. Size: (setSize,basisSize)*/
     std::vector<double> _hEntropy; /*! @brief: vector with entropy values. Size: (setSize) */
 
-    unsigned _setSize;
+    unsigned long _setSize;
     unsigned short _LMaxDegree; /*! @brief: Max Order of Spherical Harmonics */
     unsigned _nTotalEntries;    /*! @brief: Total number of equations in the system */
 
@@ -59,20 +59,15 @@ class nnDataGenerator
     NewtonOptimizer* _optimizer; /*! @brief: Class to solve minimal entropy problem */
     EntropyBase* _entropy;       /*! @brief: Class to handle entropy functional evaluations */
 
-    // Helper functions
-    /*! @brief : computes the global index of the moment corresponding to basis function (l,k)
-     *  @param : degree l, it must hold: 0 <= l <=_nq
-     *  @param : order k, it must hold: -l <=k <= l
-     *  @returns : global index */
-    int GlobalIndex( int l, int k ) const;
-    void ComputeMoments(); /*! @brief : Pre-Compute Moments at all quadrature points. */
-
     // Main methods
-    void sampleSolutionU();        /*! @brief : Samples solution vectors u */
-    void computeEntropyH_dual();   /*! @brief : Compute the entropy functional at (u,alpha) in dual formulation */
-    void computeEntropyH_primal(); /*! @brief:  Compute the entropy functional at (u,alpha) in primal formulation */
+    void SampleSolutionU();        /*! @brief: Samples solution vectors u */
+    void ComputeEntropyH_dual();   /*! @brief: Compute the entropy functional at (u,alpha) in dual formulation */
+    void ComputeEntropyH_primal(); /*! @brief:  Compute the entropy functional at (u,alpha) in primal formulation */
 
     // IO routines
-    void printTrainingData(); /*! @brief : Print computed training data to csv file and screen */
+    void PrintTrainingData(); /*! @brief : Print computed training data to csv file and screen */
+
+    // Helper functions
+    void ComputeMoments(); /*! @brief: Pre-Compute Moments at all quadrature points. */
 };
 #endif    // DATAGENERATOR_H

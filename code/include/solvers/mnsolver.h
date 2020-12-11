@@ -4,7 +4,7 @@
 #include "solverbase.h"
 
 class EntropyBase;
-class SphericalHarmonics;
+class SphericalBase;
 class OptimizerBase;
 
 class MNSolver : public Solver
@@ -25,8 +25,8 @@ class MNSolver : public Solver
     unsigned short _LMaxDegree; /*! @brief: Max Order of Spherical Harmonics  */
 
     // Moment basis
-    SphericalHarmonics* _basis; /*! @brief: Class to compute and store current spherical harmonics basis */
-    VectorVector _moments;      /*! @brief: Moment Vector pre-computed at each quadrature point: dim= _nq x _nTotalEntries */
+    SphericalBase* _basis; /*! @brief: Class to compute and store current spherical harmonics basis */
+    VectorVector _moments; /*! @brief: Moment Vector pre-computed at each quadrature point: dim= _nq x _nTotalEntries */
 
     // Scattering
     Vector _scatterMatDiag; /*! @brief: Diagonal of the scattering matrix (its a diagonal matrix by construction) */

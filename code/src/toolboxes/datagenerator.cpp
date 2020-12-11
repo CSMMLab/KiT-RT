@@ -8,6 +8,7 @@
 #include "common/config.h"
 #include "entropies/entropybase.h"
 #include "optimizers/newtonoptimizer.h"
+#include "quadratures/qlebedev.h"
 #include "quadratures/quadraturebase.h"
 #include "toolboxes/errormessages.h"
 #include "toolboxes/sphericalbase.h"
@@ -59,22 +60,16 @@ void nnDataGenerator::computeTrainingData() {
     // Prototype: u is sampled from [0,100]
 
     // --- sample u ---
-    sampleSolutionU();
+    SampleSolutionU();
 
     // --- compute alphas ---
     _optimizer->SolveMultiCell( _alpha, _uSol, _moments );
 
     // --- compute entropy functional ---
-    computeEntropyH_primal();
+    ComputeEntropyH_primal();
 
     // --- Print everything ----
-    printTrainingData();
-}
-
-int nnDataGenerator::GlobalIndex( int l, int k ) const {
-    int numIndicesPrevLevel  = l * l;    // number of previous indices untill level l-1
-    int prevIndicesThisLevel = k + l;    // number of previous indices in current level
-    return numIndicesPrevLevel + prevIndicesThisLevel;
+    PrintTrainingData();
 }
 
 void nnDataGenerator::ComputeMoments() {
@@ -88,29 +83,83 @@ void nnDataGenerator::ComputeMoments() {
     }
 }
 
-void nnDataGenerator::sampleSolutionU() {
+void nnDataGenerator::SampleSolutionU() {
     // Use necessary conditions from Monreal, Dissertation, Chapter 3.2.1, Page 26
 
-    // --- sample u in order 0 ---
-    // u_0 = <1*psi>
-    double du = 100.0 / (double)_setSize;    // Prototype: u is sampled from [0,100]
+    // --- Determine stepsizes etc ---
+    double du0 = 10.0 / (double)_setSize;    // Prototype: u is sampled from [0,10]
 
-    for( unsigned idx_set = 0; idx_set < _setSize; idx_set++ ) {
-        _uSol[idx_set][0] = du * idx_set;
+    // different processes for different
+    if( _LMaxDegree == 0 ) {
+        // --- sample u in order 0 ---
+        // u_0 = <1*psi>
+
+        for( unsigned idx_set = 0; idx_set < _setSize; idx_set++ ) {
+            _uSol[idx_set][0] = du0 * idx_set;
+        }
     }
+    if( _LMaxDegree == 1 ) {
+        // Sample points on unit sphere. (Use Lebedev quadrature)
+        unsigned order       = 5;    // is avail.
+        QLebedev* quad       = new QLebedev( order );
+        VectorVector qpoints = quad->GetPoints();    // carthesian coordinates.
+        unsigned long nq     = (unsigned long)quad->GetNq();
 
-    //  --- sample u in order 1 ---
-    /* order 1 has 3 elements. (omega_x, omega_y,  omega_z) = omega, let u_1 = (u_x, u_y, u_z) = <omega*psi>
-     * Condition u_0 >= norm(u_1)   */
+        // Allocate memory.
+        unsigned long setSizeU0 = _setSize;
+        unsigned long setSizeU1 = nq * setSizeU0 * ( setSizeU0 + 1 ) / 2;
+        _setSize                = setSizeU1;
+
+        // REFACTOR THIS
+        _uSol     = VectorVector( _setSize, Vector( _nTotalEntries, 0.0 ) );
+        _alpha    = VectorVector( _setSize, Vector( _nTotalEntries, 0.0 ) );
+        _hEntropy = std::vector<double>( _setSize, 0.0 );
+
+        // --- sample u in order 0 ---
+        // u_0 = <1*psi>
+
+        for( unsigned long idx_set = 0; idx_set < setSizeU0; idx_set++ ) {
+            unsigned long outerIdx = ( idx_set - 1 ) * ( idx_set ) / 2;    // sum over all radii up to current
+            outerIdx *= nq;                                                // in each radius step, use all quad points
+
+            //  --- sample u in order 1 ---
+            /* order 1 has 3 elements. (omega_x, omega_y,  omega_z) = omega, let u_1 = (u_x, u_y, u_z) = <omega*psi>
+             * Condition u_0 >= norm(u_1)   */
+
+            // loop over all radii
+            for( unsigned long idx_subset = 0; idx_subset < idx_set; idx_subset++ ) {
+                double radius          = du0 * ( idx_subset );    // dont use radius 0
+                unsigned long localIdx = outerIdx + idx_subset * nq;
+
+                for( unsigned quad_idx = 0; quad_idx < nq; quad_idx++ ) {
+                    unsigned long radiusIdx = localIdx + quad_idx;    // gives the global index
+
+                    _uSol[radiusIdx][0] = radius;
+                    // scale quadpoints with radius
+                    _uSol[radiusIdx][1] = radius * qpoints[quad_idx][0];
+                    _uSol[radiusIdx][2] = radius * qpoints[quad_idx][1];
+                    _uSol[radiusIdx][3] = radius * qpoints[quad_idx][2];
+                    std::cout << " radiusIdx: " << radiusIdx << "\n";
+                    // std::cout << " _uSol[radiusIdx][0]: " << _uSol[radiusIdx][0] << "\n";
+                    // std::cout << " _uSol[radiusIdx][1]: " << _uSol[radiusIdx][1] << "\n";
+                    // std::cout << " _uSol[radiusIdx][2]: " << _uSol[radiusIdx][2] << "\n";
+                    // std::cout << " _uSol[radiusIdx][3]: " << _uSol[radiusIdx][3] << "\n";
+                }
+            }
+        }
+    }
+    else {
+        ErrorMessages::Error( "Sampling for order higher than 1 is not yet supported", CURRENT_FUNCTION );
+    }
 }
 
-void nnDataGenerator::computeEntropyH_dual() {
+void nnDataGenerator::ComputeEntropyH_dual() {
     for( unsigned idx_set = 0; idx_set < _setSize; idx_set++ ) {
         _hEntropy[idx_set] = _optimizer->ComputeObjFunc( _alpha[idx_set], _uSol[idx_set], _moments );
     }
 }
 
-void nnDataGenerator::computeEntropyH_primal() {
+void nnDataGenerator::ComputeEntropyH_primal() {
     double result = 0.0;
 
     for( unsigned idx_set = 0; idx_set < _setSize; idx_set++ ) {
@@ -123,7 +172,7 @@ void nnDataGenerator::computeEntropyH_primal() {
     }
 }
 
-void nnDataGenerator::printTrainingData() {
+void nnDataGenerator::PrintTrainingData() {
     auto log    = spdlog::get( "event" );
     auto logCSV = spdlog::get( "tabular" );
 
