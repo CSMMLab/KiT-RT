@@ -6,6 +6,7 @@
 #include "toolboxes/sphericalmonomials.h"
 
 #include <fstream>
+#include <iostream>
 #include <sstream>
 
 double Y0_0( double, double ) { return sqrt( 1 / ( 4 * M_PI ) ); }
@@ -38,6 +39,21 @@ TEST_CASE( "test  spherical harmonics basis ", "[spherical_harmonics]" ) {
     unsigned maxMomentDegree = 2;
 
     SphericalHarmonics testBase( maxMomentDegree );
+
+    SECTION( "Test Global Indexing" ) {
+        bool indexingRight = true;
+        if( testBase.GetGlobalIndexBasis( 0, 0 ) != 0 ) indexingRight = false;
+        if( testBase.GetGlobalIndexBasis( 1, -1 ) != 1 ) indexingRight = false;
+        if( testBase.GetGlobalIndexBasis( 1, 0 ) != 2 ) indexingRight = false;
+        if( testBase.GetGlobalIndexBasis( 1, 1 ) != 3 ) indexingRight = false;
+        if( testBase.GetGlobalIndexBasis( 2, -2 ) != 4 ) indexingRight = false;
+        if( testBase.GetGlobalIndexBasis( 2, -1 ) != 5 ) indexingRight = false;
+        if( testBase.GetGlobalIndexBasis( 2, 0 ) != 6 ) indexingRight = false;
+        if( testBase.GetGlobalIndexBasis( 2, 1 ) != 7 ) indexingRight = false;
+        if( testBase.GetGlobalIndexBasis( 2, 2 ) != 8 ) indexingRight = false;
+
+        REQUIRE( indexingRight );
+    }
 
     SECTION( "Test against analytical solution" ) {
         std::vector<double> legendre;
@@ -170,12 +186,12 @@ TEST_CASE( "test  spherical harmonics basis ", "[spherical_harmonics]" ) {
             moment1 = testBase.ComputeSphericalBasis( x, y, z );
             moment2 = testBase.ComputeSphericalBasis( -x, -y, -z );
 
-            int idx_sys;
+            unsigned idx_sys;
             double result = 0.;
 
             for( int l_idx = 0; l_idx <= int( maxMomentDegree ); l_idx++ ) {
                 for( int k_idx = -l_idx; k_idx <= l_idx; k_idx++ ) {
-                    idx_sys = testBase.GlobalIdxBasis( l_idx, k_idx );
+                    idx_sys = testBase.GetGlobalIndexBasis( l_idx, k_idx );
 
                     if( l_idx % 2 == 0 )
                         result = moment2[idx_sys] - moment1[idx_sys];
@@ -194,7 +210,7 @@ TEST_CASE( "test  spherical harmonics basis ", "[spherical_harmonics]" ) {
         Vector moment1 = testBase.ComputeSphericalBasis( 0, 0 );
         Vector moment2 = testBase.ComputeSphericalBasis( 0, 0 );
 
-        int idx_sys;
+        unsigned idx_sys;
         double result = 0.;
 
         // // test in polar coordinates
@@ -206,7 +222,7 @@ TEST_CASE( "test  spherical harmonics basis ", "[spherical_harmonics]" ) {
 
                 for( int l_idx = 0; l_idx <= int( maxMomentDegree ); l_idx++ ) {
                     for( int k_idx = -l_idx; k_idx <= l_idx; k_idx++ ) {
-                        idx_sys = testBase.GlobalIdxBasis( l_idx, k_idx );
+                        idx_sys = testBase.GetGlobalIndexBasis( l_idx, k_idx );
 
                         if( l_idx % 2 == 0 )
                             result = moment2[idx_sys] - moment1[idx_sys];
@@ -240,6 +256,30 @@ double SphericalMonomial_9( double my, double phi ) { return Omega_x( my, phi ) 
 TEST_CASE( "test spherical monomial basis", "[spherical_monomials]" ) {
     unsigned maxMomentDegree = 2;    //==> 6+3+1 basis functions
     SphericalMonomials testBase( maxMomentDegree );
+
+    SECTION( "Test Global Indexing" ) {
+
+        bool currDimRight = true;
+        if( testBase.GetCurrDegreeSize( 0 ) != 1 ) currDimRight = false;
+        if( testBase.GetCurrDegreeSize( 1 ) != 3 ) currDimRight = false;
+        if( testBase.GetCurrDegreeSize( 2 ) != 6 ) currDimRight = false;
+
+        REQUIRE( currDimRight );
+
+        bool indexingRight = true;
+        if( testBase.GetGlobalIndexBasis( 0, 0 ) != 0 ) indexingRight = false;
+        if( testBase.GetGlobalIndexBasis( 1, 0 ) != 1 ) indexingRight = false;
+        if( testBase.GetGlobalIndexBasis( 1, 1 ) != 2 ) indexingRight = false;
+        if( testBase.GetGlobalIndexBasis( 1, 2 ) != 3 ) indexingRight = false;
+        if( testBase.GetGlobalIndexBasis( 2, 0 ) != 4 ) indexingRight = false;
+        if( testBase.GetGlobalIndexBasis( 2, 1 ) != 5 ) indexingRight = false;
+        if( testBase.GetGlobalIndexBasis( 2, 2 ) != 6 ) indexingRight = false;
+        if( testBase.GetGlobalIndexBasis( 2, 3 ) != 7 ) indexingRight = false;
+        if( testBase.GetGlobalIndexBasis( 2, 4 ) != 8 ) indexingRight = false;
+        if( testBase.GetGlobalIndexBasis( 2, 5 ) != 9 ) indexingRight = false;
+
+        REQUIRE( indexingRight );
+    }
 
     SECTION( "Test against analytical solution" ) {
         Vector moment;
