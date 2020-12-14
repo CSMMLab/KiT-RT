@@ -74,12 +74,7 @@ class MNSolver : public Solver
     void ComputeScatterMatrix();
 
     // Helper
+    /*! @brief:  Computes the radiative flux from the solution vector of the moment system */
     void ComputeRadFlux();
-    /*! @brief : computes the global index of the moment corresponding to basis function (l,k)
-     *  @param : degree l, it must hold: 0 <= l <=_nq
-     *  @param : order k, it must hold: -l <=k <= l
-     *  @returns : global index
-     */
-    int GlobalIndex( int l, int k ) const;
 };
 #endif    // MNSOLVER_H

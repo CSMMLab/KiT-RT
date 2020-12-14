@@ -51,9 +51,6 @@ PNSolver::PNSolver( Config* settings ) : Solver( settings ) {
 
     // Compute moments of initial condition
     // TODO
-
-    // Solver output
-    PrepareVolumeOutput();
 }
 
 void PNSolver::IterPreprocessing() {
@@ -80,8 +77,8 @@ void PNSolver::FluxUpdate() {
         _mesh->ReconstructSlopesU( _nTotalEntries, _solDx, _solDy, _sol );    // unstructured reconstruction
         //_mesh->ComputeSlopes( _nTotalEntries, _solDx, _solDy, _sol );    // unstructured reconstruction
     }
-    //Vector solL( _nTotalEntries );
-    //Vector solR( _nTotalEntries );
+    // Vector solL( _nTotalEntries );
+    // Vector solR( _nTotalEntries );
     auto solL = _sol[2];
     auto solR = _sol[2];
 

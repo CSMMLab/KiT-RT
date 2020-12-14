@@ -5,6 +5,7 @@
  */
 
 #include "toolboxes/sphericalmonomials.h"
+#include "toolboxes/errormessages.h"
 
 SphericalMonomials::SphericalMonomials( unsigned L_degree ) {
     _LMaxDegree = L_degree;
@@ -48,13 +49,25 @@ Vector SphericalMonomials::ComputeSphericalBasis( double x, double y, double z )
 unsigned SphericalMonomials::GetBasisSize() {
     unsigned basisLen = 0;
     for( unsigned idx_degree = 0; idx_degree <= _LMaxDegree; idx_degree++ ) {
-        basisLen += ComputeDimensionSize( idx_degree );
+        basisLen += GetCurrDegreeSize( idx_degree );
     }
     return basisLen;
 }
 
-unsigned SphericalMonomials::ComputeDimensionSize( unsigned degree ) {
-    return Factorial( degree + _spatialDim - 1 ) / ( Factorial( degree ) * Factorial( _spatialDim - 1 ) );
+unsigned SphericalMonomials::GetCurrDegreeSize( unsigned currDegreeL ) {
+    return Factorial( currDegreeL + _spatialDim - 1 ) / ( Factorial( currDegreeL ) * Factorial( _spatialDim - 1 ) );
+}
+
+unsigned SphericalMonomials::GetGlobalIndexBasis( int l_degree, int k_order ) {
+    if( l_degree < 0 ) ErrorMessages::Error( "Negative polynomial degrees not supported.", CURRENT_FUNCTION );
+    if( k_order < 0 || k_order >= (int)GetCurrDegreeSize( l_degree ) )
+        ErrorMessages::Error( "Order k of spherical monomial basis out of bounds.", CURRENT_FUNCTION );
+
+    unsigned basisLen = 0;
+    for( unsigned idx_degree = 0; idx_degree < (unsigned)l_degree; idx_degree++ ) {
+        basisLen += GetCurrDegreeSize( idx_degree );
+    }
+    return basisLen + (unsigned)k_order;
 }
 
 unsigned SphericalMonomials::Factorial( unsigned n ) { return ( n == 1 || n == 0 ) ? 1 : Factorial( n - 1 ) * n; }

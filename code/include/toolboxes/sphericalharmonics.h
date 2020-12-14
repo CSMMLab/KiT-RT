@@ -39,13 +39,6 @@ class SphericalHarmonics : public SphericalBase
      */
     Vector ComputeSphericalBasis( double x, double y, double z ) override;
 
-    /*! @brief : helper function to get the global index for given k and l of
-     *           the basis function Y_k^l.
-     *  @param : l_degree - current degree of basis function, 0 <= l <= L
-     *  @param : k_order  - current order of basis function,  -l <= k <= l
-     */
-    unsigned GlobalIdxBasis( unsigned l_degree, unsigned k_order );
-
     /*! @brief : Computes an entire set of (komplex congjugate) P_l^k and stores
      *           it in the vector _assLegendreP
      *  @param : my = cos(theta)  - spherical coordinate, -1 <=  my <= 1
@@ -56,10 +49,17 @@ class SphericalHarmonics : public SphericalBase
     /*! @brief: Returns length of the basis, i.e. number of elements of the basis */
     unsigned GetBasisSize() override;
 
-  private:
-    /*! @brief: maximal degree of the spherical harmonics basis (this is "L" in the comments)*/
-    unsigned _LMaxDegree;
+    /*! @brief: Return number of basis functions with degree equals to currDegree
+     *  @param: currDegreeL = degree of polynomials that are counted   */
+    unsigned GetCurrDegreeSize( unsigned currDegree ) override;
 
+    /*! @brief : helper function to get the global index for given k and l of
+     *           the basis function Y_k^l.
+     *  @param : l_degree - current degree of basis function, 0 <= l <= L
+     *  @param : k_order  - current order of basis function,  -l <= k <= l      */
+    unsigned GetGlobalIndexBasis( int l_degree, int k_order ) override;
+
+  private:
     /*! @brief: coefficients for the computations of the basis
      *         length of _aParam, _bParam : L + (L*(L+1))/2
      */
@@ -97,7 +97,7 @@ class SphericalHarmonics : public SphericalBase
 
     /*! @brief: Computes the spherical harmonics basis function up to degree _LmaxDegree at
      *          polar coordinates (theta, psi) and stores the result in _YBasis;
-     *  @param:
+     *  @param: spherical coordinate phi
      */
     void ComputeYBasis( const double phi );
 };

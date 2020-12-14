@@ -39,10 +39,18 @@ class SphericalMonomials : public SphericalBase
      *  @return: lenght of whole basis */
     unsigned GetBasisSize() override;
 
-  private:
-    /*! @brief: maximal degree of the spherical monomial basis (this is "L" in the comments)*/
-    unsigned _LMaxDegree;
+    /*! @brief: Computes the amount of lin. independent monomials of degree currDegreeL and
+     *          spatial dimension dim. len of a single oder: (currDegreeL + _spatialDim -1) over (currDegreeL)
+     *  @param: currDegreeL = degree of polynomials that are counted
+     *  @return: lenght of a single dimension */
+    unsigned GetCurrDegreeSize( unsigned currDegreeL ) override;
 
+    /*! @brief: Computes global index of basis vector depending on order k and degree l
+     *  @param: l = degree of polynomials l = 0,1,2,3,...
+     *  @param: k = order of element of degree l. 0 <=k <=GetCurrDegreeSize(l) */
+    unsigned GetGlobalIndexBasis( int l_degree, int k_order ) override;
+
+  private:
     /*! @brief: Spatial dimension of the unit sphere (1,2,3) */
     unsigned _spatialDim;
 
@@ -51,11 +59,6 @@ class SphericalMonomials : public SphericalBase
      *         length : COmputed with ComputeBasisSize
      */
     Vector _YBasis;
-
-    /*! @brief: Computes the amount of lin. independent monomials of degree degree and
-     *          spatial dimension dim. len of a single oder: (degree + _spatialDim -1) over (degree)
-     *  @return: lenght of a single dimension */
-    unsigned ComputeDimensionSize( unsigned degree );
 
     /*! @brief: Function to compute factorial of n (n!) in recursive manner */
     unsigned Factorial( unsigned n );

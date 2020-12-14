@@ -21,9 +21,6 @@ SNSolver::SNSolver( Config* settings ) : Solver( settings ) {
     ScatteringKernel* k = ScatteringKernel::CreateScatteringKernel( settings->GetKernelName(), _quadrature );
     _scatteringKernel   = k->GetScatteringKernel();
     delete k;
-
-    // Solver output
-    PrepareVolumeOutput();
 }
 
 void SNSolver::IterPreprocessing() {

@@ -442,6 +442,12 @@ void Config::SetPostprocessing() {
         }
     }
 
+    // --- Solver setup ---
+    if( GetSolverName() == PN_SOLVER ) {
+        ErrorMessages::Error( "PN Solver only works with spherical harmonics basis.\nThis should be the default setting for option SPHERICAL_BASIS.",
+                              CURRENT_FUNCTION );
+    }
+
     // --- Output Postprocessing ---
 
     // Volume Output Postprocessing

@@ -15,7 +15,7 @@ class SphericalBase
 {
   public:
     SphericalBase() {}
-    ~SphericalBase() {}
+    virtual ~SphericalBase() {}
 
     /*! @brief: Create a set of basis functions on the unit sphere defined in settings
      *  @param: Pointer to the config file
@@ -35,7 +35,21 @@ class SphericalBase
      */
     virtual Vector ComputeSphericalBasis( double x, double y, double z ) = 0;
 
+    /*! @brief : Return size of complete Basisvector */
     virtual unsigned GetBasisSize() = 0;
+
+    /*! @brief: Return number of basis functions with degree equals to currDegree
+     *  @param: currDegree must be smaller equals _LMaxDegree     */
+    virtual unsigned GetCurrDegreeSize( unsigned currDegree ) = 0;
+
+    /*! @brief: Computes global index of basis vector depending on order k and degree l
+     *  @param: l_degree = degree of polynomials l = 0,1,2,3,...
+     *  @param: k_order = order of element of degree l. !ATTENTION. Requirements are different for monomials and harmonics! */
+    virtual unsigned GetGlobalIndexBasis( int l_degree, int k_order ) = 0;
+
+  protected:
+    /*! @brief: maximal (polynomial) degree of the spherical basis (this is "L" in the comments)*/
+    unsigned _LMaxDegree;
 };
 
 #endif    // SPHERICALBASE_H

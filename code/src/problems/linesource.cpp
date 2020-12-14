@@ -2,7 +2,7 @@
 #include "common/config.h"
 #include "common/mesh.h"
 #include "toolboxes/physics.h"
-
+#include "toolboxes/sphericalbase.h"
 #include <complex>
 
 // ---- Linesource ----
@@ -162,12 +162,6 @@ Vector LineSource_SN_Pseudo1D_Physics::GetTotalXSE( const Vector& energies ) { r
 
 // ---- LineSource_PN ----
 
-int LineSource_PN::GlobalIndex( int l, int k ) const {
-    int numIndicesPrevLevel  = l * l;    // number of previous indices untill level l-1
-    int prevIndicesThisLevel = k + l;    // number of previous indices in current level
-    return numIndicesPrevLevel + prevIndicesThisLevel;
-}
-
 LineSource_PN::LineSource_PN( Config* settings, Mesh* mesh ) : LineSource( settings, mesh ) {}
 
 LineSource_PN::~LineSource_PN() {}
@@ -184,7 +178,11 @@ std::vector<VectorVector> LineSource_PN::GetExternalSource( const Vector& /*ener
 
 VectorVector LineSource_PN::SetupIC() {
     // Compute number of equations in the system
-    int ntotalEquations = GlobalIndex( _settings->GetMaxMomentDegree(), _settings->GetMaxMomentDegree() ) + 1;
+
+    // In case of PN, spherical basis is per default SPHERICAL_HARMONICS
+    SphericalBase* tempBase  = SphericalBase::Create( _settings );
+    unsigned ntotalEquations = tempBase->GetBasisSize();
+    delete tempBase;    // Only temporally needed
 
     VectorVector psi( _mesh->GetNumCells(), Vector( ntotalEquations, 0 ) );    // zero could lead to problems?
     VectorVector cellMids = _mesh->GetCellMidPoints();
