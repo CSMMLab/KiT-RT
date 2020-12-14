@@ -117,32 +117,26 @@ void PNSolver::FluxUpdate() {
                     // second order solver
                     case 2:
                         // left status of interface
-                        solL = _sol[idx_cell] +
-                               _solDx[idx_cell] * ( _interfaceMidPoints[idx_cell][idx_neighbor][0] - _cellMidPoints[idx_cell][0] ) + 
+                        solL = _sol[idx_cell] + _solDx[idx_cell] * ( _interfaceMidPoints[idx_cell][idx_neighbor][0] - _cellMidPoints[idx_cell][0] ) +
                                _solDy[idx_cell] * ( _interfaceMidPoints[idx_cell][idx_neighbor][1] - _cellMidPoints[idx_cell][1] );
                         // right status of interface
                         solR = _sol[_neighbors[idx_cell][idx_neighbor]] +
-                               _solDx[_neighbors[idx_cell][idx_neighbor]] * ( _interfaceMidPoints[idx_cell][idx_neighbor][0] - _cellMidPoints[_neighbors[idx_cell][idx_neighbor]][0] ) + 
-                               _solDy[_neighbors[idx_cell][idx_neighbor]] * ( _interfaceMidPoints[idx_cell][idx_neighbor][1] - _cellMidPoints[_neighbors[idx_cell][idx_neighbor]][1] );
+                               _solDx[_neighbors[idx_cell][idx_neighbor]] *
+                                   ( _interfaceMidPoints[idx_cell][idx_neighbor][0] - _cellMidPoints[_neighbors[idx_cell][idx_neighbor]][0] ) +
+                               _solDy[_neighbors[idx_cell][idx_neighbor]] *
+                                   ( _interfaceMidPoints[idx_cell][idx_neighbor][1] - _cellMidPoints[_neighbors[idx_cell][idx_neighbor]][1] );
                         // positivity checker (if not satisfied, deduce to first order)
                         // I manually turned it off here since Pn produces negative solutions essentially
-                        //if( min(solL) < 0.0 || min(solR) < 0.0 ) {
+                        // if( min(solL) < 0.0 || min(solR) < 0.0 ) {
                         //    solL = _sol[idx_cell];
                         //    solR = _sol[_neighbors[idx_cell][idx_neighbor]];
                         //}
                         // flux evaluation
-                        _solNew[idx_cell] += _g->Flux( _AxPlus,
-                                                       _AxMinus,
-                                                       _AyPlus,
-                                                       _AyMinus,
-                                                       _AzPlus,
-                                                       _AzMinus,
-                                                       solL,
-                                                       solR,
-                                                       _normals[idx_cell][idx_neighbor] );
+                        _solNew[idx_cell] +=
+                            _g->Flux( _AxPlus, _AxMinus, _AyPlus, _AyMinus, _AzPlus, _AzMinus, solL, solR, _normals[idx_cell][idx_neighbor] );
                         break;
                     // default: first order solver
-                    default: 
+                    default:
                         _solNew[idx_cell] += _g->Flux( _AxPlus,
                                                        _AxMinus,
                                                        _AyPlus,
