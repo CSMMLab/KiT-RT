@@ -443,7 +443,7 @@ void Config::SetPostprocessing() {
     }
 
     // --- Solver setup ---
-    if( GetSolverName() == PN_SOLVER ) {
+    if( GetSolverName() == PN_SOLVER && GetSphericalBasisName() != SPHERICAL_HARMONICS ) {
         ErrorMessages::Error( "PN Solver only works with spherical harmonics basis.\nThis should be the default setting for option SPHERICAL_BASIS.",
                               CURRENT_FUNCTION );
     }
