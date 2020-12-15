@@ -51,19 +51,32 @@ QuadratureBase* QuadratureBase::Create( QUAD_NAME name, unsigned quadOrder ) {
 
 double QuadratureBase::Integrate( double( f )( double x0, double x1, double x2 ) ) {
     double result = 0.0;
+    double x      = 0.0;
+    double y      = 0.0;
+    double z      = 0.0;
+    double w      = 0.0;
     for( unsigned i = 0; i < _nq; i++ ) {
-        double x = _points[i][0];
-        double y = _points[i][1];
-        double z = _points[i][2];
-        double w = _weights[i];
+        x = _points[i][0];
+        y = _points[i][1];
+        z = _points[i][2];
+        w = _weights[i];
         result += w * f( x, y, z );
     }
     return result;
 }
 
-VectorVector QuadratureBase::GetPointsSphere() const {
-    ErrorMessages::Error( "Quadrature points in spherical coordinates are not supported\nfor this quadrature. Exiting", CURRENT_FUNCTION );
-    return _pointsSphere;
+double QuadratureBase::IntegrateSpherical( double( f )( double my, double phi ) ) {
+    double result = 0.0;
+    double my     = 0.0;
+    double phi    = 0.0;
+    double w      = 0.0;
+    for( unsigned i = 0; i < _nq; i++ ) {
+        my  = _pointsSphere[i][0];
+        phi = _pointsSphere[i][1];
+        w   = _weights[i];
+        result += w * f( my, phi );
+    }
+    return result;
 }
 
 std::vector<double> QuadratureBase::Integrate( std::vector<double>( f )( double x0, double x1, double x2 ), unsigned len ) {

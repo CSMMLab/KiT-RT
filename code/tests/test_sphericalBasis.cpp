@@ -238,20 +238,20 @@ TEST_CASE( "test  spherical harmonics basis ", "[spherical_harmonics]" ) {
     }
 }
 
-double Omega_x( double my, double phi ) { return sqrt( 1 - my * my ) * sin( phi ); }
-double Omega_y( double my, double phi ) { return sqrt( 1 - my * my ) * cos( phi ); }
-double Omega_z( double my ) { return my; }
+double Omega_xBase( double my, double phi ) { return sqrt( 1 - my * my ) * sin( phi ); }
+double Omega_yBase( double my, double phi ) { return sqrt( 1 - my * my ) * cos( phi ); }
+double Omega_zBase( double my ) { return my; }
 
 double SphericalMonomial_0( double /* my */, double /* phi */ ) { return 1; }
-double SphericalMonomial_1( double my, double /*phi*/ ) { return Omega_z( my ); }                          // omega_z
-double SphericalMonomial_2( double my, double phi ) { return Omega_y( my, phi ); }                         // omega_y
-double SphericalMonomial_3( double my, double phi ) { return Omega_x( my, phi ); }                         // omega_x
-double SphericalMonomial_4( double my, double /*phi*/ ) { return Omega_z( my ) * Omega_z( my ); }          // omega_z^2
-double SphericalMonomial_5( double my, double phi ) { return Omega_y( my, phi ) * Omega_z( my ); }         // omega_y*omega_z
-double SphericalMonomial_6( double my, double phi ) { return Omega_y( my, phi ) * Omega_y( my, phi ); }    // omega_y^2
-double SphericalMonomial_7( double my, double phi ) { return Omega_x( my, phi ) * Omega_z( my ); }         // omega_x*omega_z
-double SphericalMonomial_8( double my, double phi ) { return Omega_x( my, phi ) * Omega_y( my, phi ); }    // omega_x*omega_y
-double SphericalMonomial_9( double my, double phi ) { return Omega_x( my, phi ) * Omega_x( my, phi ); }    // omega_x^2
+double SphericalMonomial_1( double my, double /*phi*/ ) { return Omega_zBase( my ); }                              // omega_z
+double SphericalMonomial_2( double my, double phi ) { return Omega_yBase( my, phi ); }                             // omega_y
+double SphericalMonomial_3( double my, double phi ) { return Omega_xBase( my, phi ); }                             // omega_x
+double SphericalMonomial_4( double my, double /*phi*/ ) { return Omega_zBase( my ) * Omega_zBase( my ); }          // omega_z^2
+double SphericalMonomial_5( double my, double phi ) { return Omega_yBase( my, phi ) * Omega_zBase( my ); }         // omega_y*omega_z
+double SphericalMonomial_6( double my, double phi ) { return Omega_yBase( my, phi ) * Omega_yBase( my, phi ); }    // omega_y^2
+double SphericalMonomial_7( double my, double phi ) { return Omega_xBase( my, phi ) * Omega_zBase( my ); }         // omega_x*omega_z
+double SphericalMonomial_8( double my, double phi ) { return Omega_xBase( my, phi ) * Omega_yBase( my, phi ); }    // omega_x*omega_y
+double SphericalMonomial_9( double my, double phi ) { return Omega_xBase( my, phi ) * Omega_xBase( my, phi ); }    // omega_x^2
 
 TEST_CASE( "test spherical monomial basis", "[spherical_monomials]" ) {
     unsigned maxMomentDegree = 2;    //==> 6+3+1 basis functions
