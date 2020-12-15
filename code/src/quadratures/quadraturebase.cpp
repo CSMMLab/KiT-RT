@@ -51,30 +51,16 @@ QuadratureBase* QuadratureBase::Create( QUAD_NAME name, unsigned quadOrder ) {
 
 double QuadratureBase::Integrate( double( f )( double x0, double x1, double x2 ) ) {
     double result = 0.0;
-    double x      = 0.0;
-    double y      = 0.0;
-    double z      = 0.0;
-    double w      = 0.0;
     for( unsigned i = 0; i < _nq; i++ ) {
-        x = _points[i][0];
-        y = _points[i][1];
-        z = _points[i][2];
-        w = _weights[i];
-        result += w * f( x, y, z );
+        result += _weights[i] * f( _points[i][0], _points[i][1], _points[i][2] );
     }
     return result;
 }
 
 double QuadratureBase::IntegrateSpherical( double( f )( double my, double phi ) ) {
     double result = 0.0;
-    double my     = 0.0;
-    double phi    = 0.0;
-    double w      = 0.0;
     for( unsigned i = 0; i < _nq; i++ ) {
-        my  = _pointsSphere[i][0];
-        phi = _pointsSphere[i][1];
-        w   = _weights[i];
-        result += w * f( my, phi );
+        result += _weights[i] * f( _pointsSphere[i][0], _pointsSphere[i][1] );
     }
     return result;
 }
@@ -84,13 +70,9 @@ std::vector<double> QuadratureBase::Integrate( std::vector<double>( f )( double 
     std::vector<double> funcEval( len, 0.0 );
 
     for( unsigned i = 0; i < _nq; i++ ) {
-        double x = _points[i][0];
-        double y = _points[i][1];
-        double z = _points[i][2];
-        double w = _weights[i];
-        funcEval = f( x, y, z );
+        funcEval = f( _points[i][0], _points[i][1], _points[i][2] );
         for( unsigned idx_len = 0; idx_len < len; idx_len++ ) {
-            result[idx_len] += w * funcEval[idx_len];
+            result[idx_len] += _weights[i] * funcEval[idx_len];
         }
     }
     return result;
@@ -101,27 +83,19 @@ double QuadratureBase::SumUpWeights() { return sum( _weights ); }
 void QuadratureBase::PrintWeights() {
     auto log = spdlog::get( "event" );
     for( unsigned i = 0; i < _nq; i++ ) {
-        double w = _weights[i];
-        log->info( w );
+        log->info( _weights[i] );
     }
 }
 
 void QuadratureBase::PrintPoints() {
     auto log = spdlog::get( "event" );
     for( unsigned i = 0; i < _nq; i++ ) {
-        double x = _points[i][0];
-        double y = _points[i][1];
-        double z = _points[i][2];
-        log->info( "{0}, {1}, {2}", x, y, z );
+        log->info( "{0}, {1}, {2}", _points[i][0], _points[i][1], _points[i][2], );
     }
 }
 void QuadratureBase::PrintPointsAndWeights() {
     auto log = spdlog::get( "event" );
     for( unsigned i = 0; i < _nq; i++ ) {
-        double x = _points[i][0];
-        double y = _points[i][1];
-        double z = _points[i][2];
-        double w = _weights[i];
-        log->info( "{0}, {1}, {2}, {3}", x, y, z, w );
+        log->info( "{0}, {1}, {2}, {3}", _points[i][0], _points[i][1], _points[i][2], _weights[i] );
     }
 }
