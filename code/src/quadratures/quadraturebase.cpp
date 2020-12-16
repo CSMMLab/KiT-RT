@@ -90,7 +90,7 @@ void QuadratureBase::PrintWeights() {
 void QuadratureBase::PrintPoints() {
     auto log = spdlog::get( "event" );
     for( unsigned i = 0; i < _nq; i++ ) {
-        log->info( "{0}, {1}, {2}", _points[i][0], _points[i][1], _points[i][2], );
+        log->info( "{0}, {1}, {2}", _points[i][0], _points[i][1], _points[i][2] );
     }
 }
 void QuadratureBase::PrintPointsAndWeights() {

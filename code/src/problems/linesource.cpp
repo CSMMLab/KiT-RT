@@ -1,6 +1,7 @@
 #include "problems/linesource.h"
 #include "common/config.h"
 #include "common/mesh.h"
+#include "quadratures/quadraturebase.h"
 #include "toolboxes/physics.h"
 #include "toolboxes/sphericalbase.h"
 #include <complex>
@@ -182,10 +183,31 @@ VectorVector LineSource_PN::SetupIC() {
     // In case of PN, spherical basis is per default SPHERICAL_HARMONICS
     SphericalBase* tempBase  = SphericalBase::Create( _settings );
     unsigned ntotalEquations = tempBase->GetBasisSize();
-    delete tempBase;    // Only temporally needed
 
     VectorVector psi( _mesh->GetNumCells(), Vector( ntotalEquations, 0 ) );    // zero could lead to problems?
     VectorVector cellMids = _mesh->GetCellMidPoints();
+
+    Vector uIC( ntotalEquations, 0 );
+
+    if( _settings->GetSphericalBasisName() == SPHERICAL_MONOMIALS ) {
+        QuadratureBase* quad          = QuadratureBase::Create( _settings );
+        VectorVector quadPointsSphere = quad->GetPointsSphere();
+        Vector w                      = quad->GetWeights();
+
+        double my, phi;
+        VectorVector moments = VectorVector( quad->GetNq(), Vector( tempBase->GetBasisSize(), 0.0 ) );
+
+        for( unsigned idx_quad = 0; idx_quad < quad->GetNq(); idx_quad++ ) {
+            my                = quadPointsSphere[idx_quad][0];
+            phi               = quadPointsSphere[idx_quad][1];
+            moments[idx_quad] = tempBase->ComputeSphericalBasis( my, phi );
+        }
+        // Integrate <1*m> to get factors for monomial basis in isotropic scattering
+        for( unsigned idx_quad = 0; idx_quad < quad->GetNq(); idx_quad++ ) {
+            uIC += w[idx_quad] * moments[idx_quad];
+        }
+        delete quad;
+    }
 
     // Initial condition is dirac impulse at (x,y) = (0,0) ==> constant in angle ==> all moments - exept first - are zero.
     double t = 3.2e-4;    // pseudo time for gaussian smoothing (Approx to dirac impulse)
@@ -193,6 +215,13 @@ VectorVector LineSource_PN::SetupIC() {
         double x  = cellMids[j][0];
         double y  = cellMids[j][1];    // (x- 0.5) * (x- 0.5)
         psi[j][0] = /*sqrt( 4 * M_PI ) * */ 1.0 / ( 4.0 * M_PI * t ) * std::exp( -( x * x + y * y ) / ( 4 * t ) );
+
+        double c = 1.0 / ( 4.0 * M_PI * t ) * std::exp( -( x * x + y * y ) / ( 4 * t ) );
+
+        if( _settings->GetSphericalBasisName() == SPHERICAL_MONOMIALS ) {
+            psi[j] = c * uIC / uIC[0];    // Remember scaling
+        }
     }
+    delete tempBase;    // Only temporally needed
     return psi;
 }

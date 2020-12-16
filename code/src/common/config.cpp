@@ -233,7 +233,7 @@ void Config::SetConfigOptions() {
     AddEnumOption( "PROBLEM", _problemName, Problem_Map, PROBLEM_ElectronRT );
     /*! @brief Solver \n DESCRIPTION: Solver used for problem \n DEFAULT SN_SOLVER @ingroup Config. */
     AddEnumOption( "SOLVER", _solverName, Solver_Map, SN_SOLVER );
-    /*! @brief RECONS_ORDER \n DESCRIPTION: Reconstruction order for solver \n DEFAULT 1 \ingroup Config.*/
+    /*! @brief RECONS_ORDER \n DESCRIPTION: Reconstruction order for solver (spatial flux) \n DEFAULT 1 \ingroup Config.*/
     AddUnsignedShortOption( "RECONS_ORDER", _reconsOrder, 1 );
     /*! @brief CleanFluxMatrices \n DESCRIPTION:  If true, very low entries (10^-10 or smaller) of the flux matrices will be set to zero,
      * to improve floating point accuracy \n DEFAULT false \ingroup Config */
@@ -446,6 +446,10 @@ void Config::SetPostprocessing() {
     if( GetSolverName() == PN_SOLVER && GetSphericalBasisName() != SPHERICAL_HARMONICS ) {
         ErrorMessages::Error( "PN Solver only works with spherical harmonics basis.\nThis should be the default setting for option SPHERICAL_BASIS.",
                               CURRENT_FUNCTION );
+    }
+
+    if( GetSolverName() == MN_SOLVER && GetSphericalBasisName() == SPHERICAL_MONOMIALS && GetMaxMomentDegree() > 1 ) {
+        ErrorMessages::Error( "MN Solver only with monomial basis only stable up to degree 1. This is a TODO.", CURRENT_FUNCTION );
     }
 
     // --- Output Postprocessing ---
