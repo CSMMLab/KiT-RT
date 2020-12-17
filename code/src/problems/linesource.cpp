@@ -211,15 +211,18 @@ VectorVector LineSource_PN::SetupIC() {
 
     // Initial condition is dirac impulse at (x,y) = (0,0) ==> constant in angle ==> all moments - exept first - are zero.
     double t = 3.2e-4;    // pseudo time for gaussian smoothing (Approx to dirac impulse)
+
     for( unsigned j = 0; j < cellMids.size(); ++j ) {
-        double x  = cellMids[j][0];
-        double y  = cellMids[j][1];    // (x- 0.5) * (x- 0.5)
-        psi[j][0] = /*sqrt( 4 * M_PI ) * */ 1.0 / ( 4.0 * M_PI * t ) * std::exp( -( x * x + y * y ) / ( 4 * t ) );
+        double x = cellMids[j][0];
+        double y = cellMids[j][1];    // (x- 0.5) * (x- 0.5)
 
         double c = 1.0 / ( 4.0 * M_PI * t ) * std::exp( -( x * x + y * y ) / ( 4 * t ) );
 
         if( _settings->GetSphericalBasisName() == SPHERICAL_MONOMIALS ) {
             psi[j] = c * uIC / uIC[0];    // Remember scaling
+        }
+        if( _settings->GetSphericalBasisName() == SPHERICAL_HARMONICS ) {
+            psi[j][0] = c;
         }
     }
     delete tempBase;    // Only temporally needed

@@ -1,9 +1,11 @@
 /*!
  * @file config.h
- * @brief Class to handle all options and their pre and postprocessing.
+ * @brief: Class to handle all options and their pre and postprocessing.
+ *         DO NOT CREATE SETTERS FOR THIS CLASS! ALL OPTIONS ARE CONSTANT (after SetPostprocessing).
+ *
  * @author S. Schotthöfer
  *
- * Disclaimer: This class structure was copied and modifed with open source permission from SU2 v7.0.3 https://su2code.github.io/
+ * Disclaimer: This class structure was copied and (heavily) modifed with open source permission from SU2 v7.0.3 https://su2code.github.io/
  */
 
 #ifndef CONFIG_H
@@ -89,9 +91,9 @@ class Config
     // Optimizer
     OPTIMIZER_NAME _entropyOptimizerName; /*!< @brief Choice of optimizer */
     double _optimizerEpsilon;             /*!< @brief termination criterion epsilon for Newton Optmizer */
-    unsigned short _newtonIter;           /*!< @brief Maximal Number of newton iterations */
+    unsigned long _newtonIter;            /*!< @brief Maximal Number of newton iterations */
     double _newtonStepSize;               /*!< @brief Stepsize factor for newton optimizer */
-    unsigned short _newtonLineSearchIter; /*!< @brief Maximal Number of line search iterations for newton optimizer */
+    unsigned long _newtonLineSearchIter;  /*!< @brief Maximal Number of line search iterations for newton optimizer */
     bool _newtonFastMode;                 /*!< @brief If true, we skip the NewtonOptimizer for quadratic entropy and assign alpha = u */
 
     // Output Options
@@ -264,9 +266,9 @@ class Config
 
     //  Optimizer
     double inline GetNewtonOptimizerEpsilon() const { return _optimizerEpsilon; }
-    unsigned inline GetNewtonIter() const { return _newtonIter; }
+    unsigned long inline GetNewtonIter() const { return _newtonIter; }
     double inline GetNewtonStepSize() const { return _newtonStepSize; }
-    unsigned inline GetNewtonMaxLineSearches() const { return _newtonLineSearchIter; }
+    unsigned long inline GetNewtonMaxLineSearches() const { return _newtonLineSearchIter; }
     bool inline GetNewtonFastMode() const { return _newtonFastMode; }
     OPTIMIZER_NAME inline GetOptimizerName() const { return _entropyOptimizerName; }
 
@@ -296,15 +298,12 @@ class Config
     unsigned long inline GetTrainingDataSetSize() { return _tainingSetSize; }
 
     // ---- Setters for option structure
-
+    // This section is dangerous
     // Quadrature Structure
-    void SetNQuadPoints( unsigned nq ) { _nQuadPoints = nq; }
+    void SetNQuadPoints( unsigned nq ) { _nQuadPoints = nq; }           /*! @brief Never change the nq! This is only for the test framework. */
     void SetQuadName( QUAD_NAME quadName ) { _quadName = quadName; }    /*! @brief Never change the quadName! This is only for the test framework. */
     void SetQuadOrder( unsigned quadOrder ) { _quadOrder = quadOrder; } /*! @brief Never change the quadOrder! This is only for the test framework. */
     void SetSNAllGaussPts( bool useall ) { _allGaussPts = useall; }     /*! @brief Never change the this! This is only for the test framework. */
-
-    // Mesh Structure
-    void SetNCells( unsigned nCells ) { _nCells = nCells; }
 };
 
 #endif    // CONFIG_H

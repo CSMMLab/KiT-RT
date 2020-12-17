@@ -48,6 +48,7 @@ MNSolver::MNSolver( Config* settings ) : Solver( settings ) {
 
     // Initialize and Pre-Compute Moments at quadrature points
     _moments = VectorVector( _nq, Vector( _nTotalEntries, 0.0 ) );
+
     ComputeMoments();
 }
 
@@ -140,7 +141,6 @@ void MNSolver::ComputeRealizableSolution( unsigned idx_cell ) {
 void MNSolver::IterPreprocessing() {
 
     // ------- Reconstruction Step ----------------
-
     _optimizer->SolveMultiCell( _alpha, _sol, _moments );
 
     // ------- Relizablity Reconstruction Step ----

@@ -16,6 +16,7 @@
 #include "spdlog/spdlog.h"
 
 #include <iostream>
+#include <omp.h>
 
 nnDataGenerator::nnDataGenerator( Config* settings ) {
     _settings = settings;
@@ -29,7 +30,6 @@ nnDataGenerator::nnDataGenerator( Config* settings ) {
     _quadPoints       = _quadrature->GetPoints();
     _weights          = _quadrature->GetWeights();
     _quadPointsSphere = _quadrature->GetPointsSphere();
-    _settings->SetNQuadPoints( _nq );
 
     // Spherical Harmonics
     if( _settings->GetSphericalBasisName() == SPHERICAL_HARMONICS && _LMaxDegree > 0 ) {
@@ -55,12 +55,22 @@ nnDataGenerator::nnDataGenerator( Config* settings ) {
     _hEntropy = std::vector<double>( _setSize, 0.0 );
 }
 
+nnDataGenerator::~nnDataGenerator() {
+    delete _quadrature;
+    delete _entropy;
+}
+
 void nnDataGenerator::computeTrainingData() {
     // Prototype: Only for _LMaxDegree == 1
     // Prototype: u is sampled from [0,100]
 
     // --- sample u ---
     SampleSolutionU();
+
+    PrintLoadScreen();
+
+    // ---- Check realizability ---
+    CheckRealizability();
 
     // --- compute alphas ---
     _optimizer->SolveMultiCell( _alpha, _uSol, _moments );
@@ -100,14 +110,15 @@ void nnDataGenerator::SampleSolutionU() {
     }
     if( _LMaxDegree == 1 ) {
         // Sample points on unit sphere. (Use Lebedev quadrature)
-        unsigned order       = 5;    // is avail.
-        QLebedev* quad       = new QLebedev( order );
+        // unsigned order       = 5;         // is avail.
+        double epsilon       = 0.5;
+        QuadratureBase* quad = QuadratureBase::Create( _settings );
         VectorVector qpoints = quad->GetPoints();    // carthesian coordinates.
         unsigned long nq     = (unsigned long)quad->GetNq();
 
         // Allocate memory.
         unsigned long setSizeU0 = _setSize;
-        unsigned long setSizeU1 = nq * setSizeU0 * ( setSizeU0 + 1 ) / 2;
+        unsigned long setSizeU1 = nq * setSizeU0 * ( setSizeU0 - 1 ) / 2;
         _setSize                = setSizeU1;
 
         // REFACTOR THIS
@@ -118,7 +129,9 @@ void nnDataGenerator::SampleSolutionU() {
         // --- sample u in order 0 ---
         // u_0 = <1*psi>
 
+#pragma omp parallel for schedule( guided )
         for( unsigned long idx_set = 0; idx_set < setSizeU0; idx_set++ ) {
+
             unsigned long outerIdx = ( idx_set - 1 ) * ( idx_set ) / 2;    // sum over all radii up to current
             outerIdx *= nq;                                                // in each radius step, use all quad points
 
@@ -126,24 +139,22 @@ void nnDataGenerator::SampleSolutionU() {
             /* order 1 has 3 elements. (omega_x, omega_y,  omega_z) = omega, let u_1 = (u_x, u_y, u_z) = <omega*psi>
              * Condition u_0 >= norm(u_1)   */
 
+            unsigned long localIdx = 0;
+            double radius          = 0.0;
+            unsigned long innerIdx = 0;
             // loop over all radii
             for( unsigned long idx_subset = 0; idx_subset < idx_set; idx_subset++ ) {
-                double radius          = du0 * ( idx_subset );    // dont use radius 0
-                unsigned long localIdx = outerIdx + idx_subset * nq;
+                radius   = du0 * ( idx_subset + 1 );    // dont use radius 0 ==> shift by one
+                localIdx = outerIdx + idx_subset * nq;
 
-                for( unsigned quad_idx = 0; quad_idx < nq; quad_idx++ ) {
-                    unsigned long radiusIdx = localIdx + quad_idx;    // gives the global index
+                for( unsigned long quad_idx = 0; quad_idx < nq; quad_idx++ ) {
+                    innerIdx = localIdx + quad_idx;    // gives the global index
 
-                    _uSol[radiusIdx][0] = radius;
+                    _uSol[innerIdx][0] = radius + 2 * epsilon;
                     // scale quadpoints with radius
-                    _uSol[radiusIdx][1] = radius * qpoints[quad_idx][0];
-                    _uSol[radiusIdx][2] = radius * qpoints[quad_idx][1];
-                    _uSol[radiusIdx][3] = radius * qpoints[quad_idx][2];
-                    std::cout << " radiusIdx: " << radiusIdx << "\n";
-                    // std::cout << " _uSol[radiusIdx][0]: " << _uSol[radiusIdx][0] << "\n";
-                    // std::cout << " _uSol[radiusIdx][1]: " << _uSol[radiusIdx][1] << "\n";
-                    // std::cout << " _uSol[radiusIdx][2]: " << _uSol[radiusIdx][2] << "\n";
-                    // std::cout << " _uSol[radiusIdx][3]: " << _uSol[radiusIdx][3] << "\n";
+                    _uSol[innerIdx][1] = radius * qpoints[quad_idx][0];
+                    _uSol[innerIdx][2] = radius * qpoints[quad_idx][1];
+                    _uSol[innerIdx][3] = radius * qpoints[quad_idx][2];
                 }
             }
         }
@@ -175,9 +186,63 @@ void nnDataGenerator::ComputeEntropyH_primal() {
 void nnDataGenerator::PrintTrainingData() {
     auto log    = spdlog::get( "event" );
     auto logCSV = spdlog::get( "tabular" );
+    log->info( "---------------------- Data Generation Successful ------------------------" );
+
+    std::string uSolString  = "";
+    std::string alphaString = "";
+    for( unsigned idx_sys = 0; idx_sys < _nTotalEntries; idx_sys++ ) {
+        uSolString += "u_" + std::to_string( idx_sys ) + " , ";
+        alphaString += "alpha_" + std::to_string( idx_sys ) + " , ";
+    }
+    // log->info( uSolString + alphaString + " h" );
+    logCSV->info( uSolString + alphaString + " h" );
 
     for( unsigned idx_set = 0; idx_set < _setSize; idx_set++ ) {
-        log->info( "{}, {}, {}", _uSol[idx_set][0], _alpha[idx_set][0], _hEntropy[idx_set] );
-        logCSV->info( "{}, {}, {}", _uSol[idx_set][0], _alpha[idx_set][0], _hEntropy[idx_set] );
+        std::string uSolString  = "";
+        std::string alphaString = "";
+        for( unsigned idx_sys = 0; idx_sys < _nTotalEntries; idx_sys++ ) {
+            uSolString += std::to_string( _uSol[idx_set][idx_sys] ) + " , ";
+            alphaString += std::to_string( _alpha[idx_set][idx_sys] ) + " , ";
+        }
+        // log->info( uSolString + alphaString + " {}", _hEntropy[idx_set] );
+        logCSV->info( uSolString + alphaString + " {}", _hEntropy[idx_set] );
     }
 }
+
+void nnDataGenerator::CheckRealizability() {
+    if( _LMaxDegree == 1 ) {
+        double normU1 = 0.0;
+        Vector u1( 3, 0.0 );
+        for( unsigned idx_set = 0; idx_set < _setSize; idx_set++ ) {
+            if( _uSol[idx_set][0] == 0 ) {
+                if( _uSol[idx_set][1] > 0 || _uSol[idx_set][2] > 0 || _uSol[idx_set][3] > 0 ) {
+                    ErrorMessages::Error( "Moment not realizable [code 0].", CURRENT_FUNCTION );
+                }
+            }
+            else {
+                u1     = { _uSol[idx_set][1], _uSol[idx_set][2], _uSol[idx_set][3] };
+                normU1 = norm( u1 );
+                if( normU1 / _uSol[idx_set][0] >= 1 ) {
+                    // std::cout << "normU1 / _uSol[" << idx_set << "][0]: " << normU1 / _uSol[idx_set][0] << "\n";
+                    // std::cout << "normU1: " << normU1 << " | _uSol[idx_set][0] " << _uSol[idx_set][0] << "\n";
+                    ErrorMessages::Error( "Moment not realizable [code 1].", CURRENT_FUNCTION );
+                }
+                if( normU1 / _uSol[idx_set][0] <= 0 ) {
+                    // std::cout << "_uSol" << _uSol[idx_set][1] << " | " << _uSol[idx_set][2] << " | " << _uSol[idx_set][3] << " \n";
+                    // std::cout << "normU1 / _uSol[" << idx_set << "][0]: " << normU1 / _uSol[idx_set][0] << "\n";
+                    // std::cout << "normU1: " << normU1 << " | _uSol[idx_set][0] " << _uSol[idx_set][0] << "\n";
+                    ErrorMessages::Error( "Moment not realizable [code 2].", CURRENT_FUNCTION );
+                }
+            }
+        }
+    }
+}
+
+void nnDataGenerator::PrintLoadScreen() {
+    auto log = spdlog::get( "event" );
+    log->info( "------------------------ Data Generation Starts --------------------------" );
+    log->info( "| Generating {} datapoints.", _setSize );
+}
+// changed datatype of newton options;
+// changed moments in newton optimizer to const( safety reasons )
+//    .parallelized newton multicell optimizer.removed<iostream> from several files.Added datagenerator mode to GaussLegendreQuadrature

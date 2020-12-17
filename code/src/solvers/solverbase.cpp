@@ -23,7 +23,6 @@ Solver::Solver( Config* settings ) {
     _neighbors = _mesh->GetNeighbours();
     _normals   = _mesh->GetNormals();
     _nCells    = _mesh->GetNumCells();
-    _settings->SetNCells( _nCells );
 
     // build quadrature object and store frequently used params
     _quadrature = QuadratureBase::Create( settings );

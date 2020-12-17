@@ -25,7 +25,7 @@ class nnDataGenerator
      *   @param: setSize: number of elements in training set
      *           basisSize: length of spherical harmonics basis (maybe redundant)*/
     nnDataGenerator( Config* settings );
-    ~nnDataGenerator() {}
+    ~nnDataGenerator();
 
     /*! @brief: computes the training data set.
      *          Realizable set is sampled uniformly.
@@ -66,8 +66,10 @@ class nnDataGenerator
 
     // IO routines
     void PrintTrainingData(); /*! @brief : Print computed training data to csv file and screen */
-
+    void PrintLoadScreen();   /*! @brief: Print screen IO*/
     // Helper functions
     void ComputeMoments(); /*! @brief: Pre-Compute Moments at all quadrature points. */
+
+    void CheckRealizability();    // Debugging helper
 };
 #endif    // DATAGENERATOR_H
