@@ -68,8 +68,11 @@ class nnDataGenerator
     void PrintTrainingData(); /*! @brief : Print computed training data to csv file and screen */
     void PrintLoadScreen();   /*! @brief: Print screen IO*/
     // Helper functions
-    void ComputeMoments(); /*! @brief: Pre-Compute Moments at all quadrature points. */
-
+    void ComputeMoments();        /*! @brief: Pre-Compute Moments at all quadrature points. */
     void CheckRealizability();    // Debugging helper
+
+    inline VectorVector GetuSol() { return _uSol; }                /*! @brief: Get the computed solution vector uSol */
+    inline VectorVector GetAlpha() { return _alpha; }              /*! @brief: Get the computed vector alpha */
+    inline std::vector<double> GethEntropy() { return _hEntropy; } /*! @brief: Get the computed entropy value h */
 };
 #endif    // DATAGENERATOR_H

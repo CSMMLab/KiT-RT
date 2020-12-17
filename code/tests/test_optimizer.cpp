@@ -31,12 +31,11 @@ TEST_CASE( "Test the Newton Optimizer", "[optimizers]" ) {
     Vector alpha( nTotalEntries, 27.0 );
 
     // Get Moments
-    config->SetNQuadPoints( quad->GetNq() );
 
     VectorVector moments = VectorVector( quad->GetNq() );
     double my, phi;
     VectorVector quadPointsSphere = quad->GetPointsSphere();
-    for( unsigned idx_quad = 0; idx_quad < config->GetNQuadPoints(); idx_quad++ ) {
+    for( unsigned idx_quad = 0; idx_quad < quad->GetNq(); idx_quad++ ) {
         my  = quadPointsSphere[idx_quad][0];
         phi = quadPointsSphere[idx_quad][1];
 

@@ -304,6 +304,8 @@ void Config::SetConfigOptions() {
     // Data generator related options
     /*! @brief Size of training data set \n DESCRIPTION: Size of training data set  \n DEFAULT 1 \ingroup Config */
     AddUnsignedLongOption( "TRAINING_SET_SIZE", _tainingSetSize, 1 );
+    /*! @brief Size of training data set \n DESCRIPTION: Size of training data set  \n DEFAULT 10 \ingroup Config */
+    AddUnsignedLongOption( "MAX_VALUE_FIRST_MOMENT", _maxValFirstMoment, 10 );
     /*! @brief Data generator mode \n DESCRIPTION: Check, if data generator mode is active. If yes, no solver is called, but instead the data
      *         generator is executed \n DEFAULT false \ingroup Config */
     AddBoolOption( "DATA_GENERATOR_MODE", _dataGeneratorMode, false );

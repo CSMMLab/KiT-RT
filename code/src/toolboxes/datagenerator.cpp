@@ -97,7 +97,7 @@ void nnDataGenerator::SampleSolutionU() {
     // Use necessary conditions from Monreal, Dissertation, Chapter 3.2.1, Page 26
 
     // --- Determine stepsizes etc ---
-    double du0 = 10.0 / (double)_setSize;    // Prototype: u is sampled from [0,10]
+    double du0 = _settings->GetMaxValFirstMoment() / (double)_setSize;
 
     // different processes for different
     if( _LMaxDegree == 0 ) {
@@ -243,6 +243,3 @@ void nnDataGenerator::PrintLoadScreen() {
     log->info( "------------------------ Data Generation Starts --------------------------" );
     log->info( "| Generating {} datapoints.", _setSize );
 }
-// changed datatype of newton options;
-// changed moments in newton optimizer to const( safety reasons )
-//    .parallelized newton multicell optimizer.removed<iostream> from several files.Added datagenerator mode to GaussLegendreQuadrature
