@@ -109,9 +109,7 @@ void nnDataGenerator::SampleSolutionU() {
         }
     }
     if( _LMaxDegree == 1 ) {
-        // Sample points on unit sphere. (Use Lebedev quadrature)
-        // unsigned order       = 5;         // is avail.
-        double epsilon       = 0.5;
+        // Sample points on unit sphere.
         QuadratureBase* quad = QuadratureBase::Create( _settings );
         VectorVector qpoints = quad->GetPoints();    // carthesian coordinates.
         unsigned long nq     = (unsigned long)quad->GetNq();
@@ -138,6 +136,7 @@ void nnDataGenerator::SampleSolutionU() {
             //  --- sample u in order 1 ---
             /* order 1 has 3 elements. (omega_x, omega_y,  omega_z) = omega, let u_1 = (u_x, u_y, u_z) = <omega*psi>
              * Condition u_0 >= norm(u_1)   */
+            double radiusU0 = du0 * ( idx_set + 1 ) * ( 1 + 2 * _settings->GetBoundaryDistanceRealizableSet() );
 
             unsigned long localIdx = 0;
             double radius          = 0.0;
@@ -150,7 +149,7 @@ void nnDataGenerator::SampleSolutionU() {
                 for( unsigned long quad_idx = 0; quad_idx < nq; quad_idx++ ) {
                     innerIdx = localIdx + quad_idx;    // gives the global index
 
-                    _uSol[innerIdx][0] = radius + 2 * epsilon;
+                    _uSol[innerIdx][0] = radiusU0;    // Prevent 1st order moments to be too close to the boundary
                     // scale quadpoints with radius
                     _uSol[innerIdx][1] = radius * qpoints[quad_idx][0];
                     _uSol[innerIdx][2] = radius * qpoints[quad_idx][1];
@@ -210,28 +209,33 @@ void nnDataGenerator::PrintTrainingData() {
 }
 
 void nnDataGenerator::CheckRealizability() {
+    double epsilon = _settings->GetBoundaryDistanceRealizableSet();
     if( _LMaxDegree == 1 ) {
         double normU1 = 0.0;
         Vector u1( 3, 0.0 );
         for( unsigned idx_set = 0; idx_set < _setSize; idx_set++ ) {
-            if( _uSol[idx_set][0] == 0 ) {
-                if( _uSol[idx_set][1] > 0 || _uSol[idx_set][2] > 0 || _uSol[idx_set][3] > 0 ) {
+            if( _uSol[idx_set][0] < epsilon ) {
+                if( std::abs( _uSol[idx_set][1] ) > 0 || std::abs( _uSol[idx_set][2] ) > 0 || std::abs( _uSol[idx_set][3] ) > 0 ) {
                     ErrorMessages::Error( "Moment not realizable [code 0].", CURRENT_FUNCTION );
                 }
             }
             else {
                 u1     = { _uSol[idx_set][1], _uSol[idx_set][2], _uSol[idx_set][3] };
                 normU1 = norm( u1 );
-                if( normU1 / _uSol[idx_set][0] >= 1 ) {
+                if( normU1 / _uSol[idx_set][0] > 1 - 0.99 * epsilon ) {
                     // std::cout << "normU1 / _uSol[" << idx_set << "][0]: " << normU1 / _uSol[idx_set][0] << "\n";
                     // std::cout << "normU1: " << normU1 << " | _uSol[idx_set][0] " << _uSol[idx_set][0] << "\n";
-                    ErrorMessages::Error( "Moment not realizable [code 1].", CURRENT_FUNCTION );
+                    ErrorMessages::Error( "Moment to close to boundary of realizable set [code 1].\nBoundary ratio: " +
+                                              std::to_string( normU1 / _uSol[idx_set][0] ),
+                                          CURRENT_FUNCTION );
                 }
-                if( normU1 / _uSol[idx_set][0] <= 0 ) {
+                if( normU1 / _uSol[idx_set][0] <= 0 /*+ 0.5 * epsilon*/ ) {
                     // std::cout << "_uSol" << _uSol[idx_set][1] << " | " << _uSol[idx_set][2] << " | " << _uSol[idx_set][3] << " \n";
                     // std::cout << "normU1 / _uSol[" << idx_set << "][0]: " << normU1 / _uSol[idx_set][0] << "\n";
                     // std::cout << "normU1: " << normU1 << " | _uSol[idx_set][0] " << _uSol[idx_set][0] << "\n";
-                    ErrorMessages::Error( "Moment not realizable [code 2].", CURRENT_FUNCTION );
+                    ErrorMessages::Error( "Moment to close to boundary of realizable set [code 2].\nBoundary ratio: " +
+                                              std::to_string( normU1 / _uSol[idx_set][0] ),
+                                          CURRENT_FUNCTION );
                 }
             }
         }

@@ -175,8 +175,16 @@ void NewtonOptimizer::Solve( Vector& lambda, Vector& sol, const VectorVector& mo
             return;
         }
     }
-    ErrorMessages::Error( " Newton did not converge! Norm of gradient is: " + std::to_string( norm( dlambdaNew ) ) + " at cell " +
-                              std::to_string( idx_cell ) + ".\nObjective function value is " +
-                              std::to_string( ComputeObjFunc( lambda, sol, moments ) ) + " .",
+    std::string uSolString = "At moment: (" + std::to_string( sol[0] );
+    for( unsigned i = 1; i < nSize; i++ ) {
+        uSolString += " | " + std::to_string( sol[i] );
+    }
+    uSolString += ").";
+
+    Vector u1     = { sol[1], sol[2], sol[3] };
+    double normU1 = norm( u1 );
+    ErrorMessages::Error( "Newton did not converge at cell " + std::to_string( idx_cell ) + "\n" + uSolString +
+                              "\nNorm of gradient: " + std::to_string( norm( dlambdaNew ) ) + "\nObjective function value: " +
+                              std::to_string( ComputeObjFunc( lambda, sol, moments ) ) + "\nBoundary Ratio: " + std::to_string( normU1 / sol[0] ),
                           CURRENT_FUNCTION );
 }

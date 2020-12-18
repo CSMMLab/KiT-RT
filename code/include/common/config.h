@@ -112,8 +112,9 @@ class Config
     // Data Generator Settings
     /*!< @brief Check, if data generator mode is active. If yes, no solver is called, but instead the data generator is executed */
     bool _dataGeneratorMode;
-    unsigned long _tainingSetSize;    /*!< @brief Size of training data set for data generator */
-    unsigned long _maxValFirstMoment; /*!< @brief Size of training data set for data generator */
+    unsigned long _tainingSetSize;         /*!< @brief Size of training data set for data generator */
+    unsigned long _maxValFirstMoment;      /*!< @brief Size of training data set for data generator */
+    double _boundaryDistanceRealizableSet; /*! @brief Distance of the sampled moments to the boundary of the realizable set */
 
     // --- Parsing Functionality and Initializing of Options ---
     /*!
@@ -298,6 +299,7 @@ class Config
     bool inline GetDataGeneratorMode() { return _dataGeneratorMode; }
     unsigned long inline GetTrainingDataSetSize() { return _tainingSetSize; }
     unsigned long inline GetMaxValFirstMoment() { return _maxValFirstMoment; }
+    double GetBoundaryDistanceRealizableSet() { return _boundaryDistanceRealizableSet; }
 
     // ---- Setters for option structure
     // This section is dangerous

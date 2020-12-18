@@ -309,6 +309,9 @@ void Config::SetConfigOptions() {
     /*! @brief Data generator mode \n DESCRIPTION: Check, if data generator mode is active. If yes, no solver is called, but instead the data
      *         generator is executed \n DEFAULT false \ingroup Config */
     AddBoolOption( "DATA_GENERATOR_MODE", _dataGeneratorMode, false );
+    /*! @brief Distance to the boundary of the realizable set \n DESCRIPTION: Distance to the boundary of the realizable set  \n DEFAULT 0.1 \ingroup
+     * Config */
+    AddDoubleOption( "BOUNDARY_DISTANCE_REALIZABLE_SET", _boundaryDistanceRealizableSet, 0.1 );
 }
 
 void Config::SetConfigParsing( string case_filename ) {
