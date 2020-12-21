@@ -25,7 +25,7 @@ CSDSNSolverFP::CSDSNSolverFP( Config* settings ) : SNSolver( settings ) {
 
     _dE        = ComputeTimeStep( settings->GetCFL() );
     _nEnergies = unsigned( ( _energyMax - _energyMin ) / _dE );
-    std::cout << "nEnergies = " << _nEnergies << std::endl;
+    // std::cout << "nEnergies = " << _nEnergies << std::endl;
     _energies.resize( _nEnergies );
     for( unsigned n = 0; n < _nEnergies; ++n ) {
         _energies[n] = _energyMin + ( _energyMax - _energyMin ) / ( _nEnergies - 1 ) * n;
@@ -86,7 +86,7 @@ CSDSNSolverFP::CSDSNSolverFP( Config* settings ) : SNSolver( settings ) {
 }
 
 void CSDSNSolverFP::Solve() {
-    std::cout << "Solve Fokker-Planck with Heney-Greenstein kernel using " << _nEnergies << " energies " << std::endl;
+    // std::cout << "Solve Fokker-Planck with Heney-Greenstein kernel using " << _nEnergies << " energies " << std::endl;
 
     auto log      = spdlog::get( "event" );
     auto cellMids = _mesh->GetCellMidPoints();
