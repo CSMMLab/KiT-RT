@@ -119,7 +119,7 @@ double* MLOptimizer::callNetwork( const unsigned input_size, double* nn_input ) 
         ErrorMessages::Error( "'call_network' is null or not callable!", CURRENT_FUNCTION );
     }
 
-    long int dims[1] = { input_size };
+    long int dims[1] = { input_size };    // Why was this const?
 
     PyObject* inputArray = PyArray_SimpleNewFromData( 1, dims, NPY_DOUBLE, (void*)nn_input );
 
@@ -153,7 +153,7 @@ double* MLOptimizer::callNetworkMultiCell( const unsigned batch_size, const unsi
         ErrorMessages::Error( "'call_network' is null or not callable!", CURRENT_FUNCTION );
     }
 
-    const long int dims[2] = { batch_size, input_dim };
+    long int dims[2] = { batch_size, input_dim };    // Why was this const?
 
     PyObject* inputArray = PyArray_SimpleNewFromData( 2, dims, NPY_DOUBLE, (void*)nn_input );
 
