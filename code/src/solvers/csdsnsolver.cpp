@@ -11,7 +11,7 @@
 #include <mpi.h>
 
 CSDSNSolver::CSDSNSolver( Config* settings ) : SNSolver( settings ) {
-    std::cout << "Start CSDN Constructor\n";
+    // std::cout << "Start CSDN Constructor\n";
     _dose = std::vector<double>( _settings->GetNCells(), 0.0 );
 
     // --- Set angle and energies
@@ -60,7 +60,7 @@ CSDSNSolver::CSDSNSolver( Config* settings ) : SNSolver( settings ) {
         }
     }
 
-    std::cout << "Here 3\n";
+    // std::cout << "Here 3\n";
 
     ICRU database( angleVec, _energies );
     Matrix total;
@@ -133,11 +133,11 @@ CSDSNSolver::CSDSNSolver( Config* settings ) : SNSolver( settings ) {
     // Solver output
     PrepareVolumeOutput();
 
-    std::cout << "End CSDN Constructor\n";
+    // std::cout << "End CSDN Constructor\n";
 }
 
 void CSDSNSolver::Solve() {
-    std::cout << "Solve" << std::endl;
+    // std::cout << "Solve" << std::endl;
     auto log = spdlog::get( "event" );
 
     // save original energy field for boundary conditions
