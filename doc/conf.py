@@ -74,7 +74,7 @@ breathe_default_project = "KiT-RT"
 
 read_the_docs_build = os.environ.get('READTHEDOCS', None) == 'True'
 if read_the_docs_build:
-    inputDir = '../code/build/'
+    inputDir = '../code'
     outputDir = '../code/build/debug/docs/doxygen'
     if not os.path.exists(outputDir):
         os.makedirs(outputDir)
