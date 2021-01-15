@@ -77,7 +77,7 @@ if read_the_docs_build:
     with open("Doxyfile.in", "rt") as fin:
         with open("Doxyfile", "wt") as fout:
             for line in fin:
-                line.replace('@DOXYGEN_OUTPUT_DIR@', 'doxygen')
-                line.replace('@DOXYGEN_INPUT_DIR@', '../code/')
+                line = line.replace('@DOXYGEN_OUTPUT_DIR@', 'doxygen')
+                line = line.replace('@DOXYGEN_INPUT_DIR@', '../code/')
                 fout.write(line)
     subprocess.call('doxygen', shell=True)
