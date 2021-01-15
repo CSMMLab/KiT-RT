@@ -9,7 +9,11 @@ Welcome to KiT-RT's documentation!
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
-
+   introduction
+   authors
+   installation
+   configFiles
+   philosophy
 
 
 Indices and tables
