@@ -7,11 +7,7 @@ CSDSolverTrafoFPSH2D::CSDSolverTrafoFPSH2D( Config* settings ) : SNSolver( setti
     // Set angle and energies
     _energies  = Vector( _nEnergies, 0.0 );    // equidistant
     _energyMin = 1e-4 * 0.511;
-<<<<<<< HEAD
-    _energyMax = 0.01;
-=======
-    _energyMax = 1e0;
->>>>>>> c6cf8334fe33fac1fcb581369e11834873f00363
+    _energyMax = 2e0;
 
     // write equidistant energy grid (false) or refined grid (true)
     GenerateEnergyGrid( false );
@@ -290,11 +286,7 @@ void CSDSolverTrafoFPSH2D::Solve() {
     }
     for( unsigned j = 0; j < _nCells; ++j ) _solverOutput[j] = _density[j];
     Save( 1 );
-<<<<<<< HEAD
     Save();
-=======
-    // Save();
->>>>>>> c6cf8334fe33fac1fcb581369e11834873f00363
 }
 
 void CSDSolverTrafoFPSH2D::Save() const {
