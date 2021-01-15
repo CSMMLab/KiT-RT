@@ -20,6 +20,11 @@ TBD
  - VTK
  - git
  - ninja or make
+ - gmsh
+
+### Python dependencies
+- pygmsh version 6.1.1 'pip install pygmsh==6.1.1' (note that newer versions are not yet supported)
+
 
 ### Obtain submodules
 Note that an **active internet connection is required for the first build** in order to download the latest versions of the required submodules!
