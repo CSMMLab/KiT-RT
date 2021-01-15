@@ -89,7 +89,7 @@ void NewtonOptimizer::SolveMultiCell( VectorVector& lambda, VectorVector& sol, c
 
 void NewtonOptimizer::Solve( Vector& lambda, Vector& sol, const VectorVector& moments, unsigned idx_cell ) {
 
-    /* solve the problem argmin ( <eta(alpha*m)>-alpha*u))
+    /* solve the problem argmin ( <eta_*(alpha*m)>-alpha*u))
      * where alpha = Lagrange multiplier
      *           m = moment basis
      *           u = current "moment solution"

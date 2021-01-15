@@ -158,7 +158,7 @@ void nnDataGenerator::SampleSolutionU() {
             }
         }
     }
-    else {
+    if( _LMaxDegree > 1 ) {
         ErrorMessages::Error( "Sampling for order higher than 1 is not yet supported", CURRENT_FUNCTION );
     }
 }
