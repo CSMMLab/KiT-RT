@@ -7,22 +7,13 @@ Welcome to KiT-RT's documentation!
 ==================================
 
 .. toctree::
-   :maxdepth: 2
-   :caption: Contents:
+   :maxdepth: 1
+   
    introduction
    authors
    installation
    configFiles
    philosophy
-
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
-
 
 
 Docs
