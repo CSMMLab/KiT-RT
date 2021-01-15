@@ -43,6 +43,10 @@ class CSDSolverTrafoFP2D : public SNSolver
     double _energyMin;
     double _energyMax;
 
+    // Helper variables
+    Vector _energiesOrig; /*! @brief: original energy levels for CSD, lenght = _nEnergies */
+    Matrix _identity;     /*! @brif: identity matrix for FP scattering. Dim (_nq,_nq)*/
+
     void GenerateEnergyGrid( bool refinement );
 
   public:
@@ -60,6 +64,17 @@ class CSDSolverTrafoFP2D : public SNSolver
      */
     virtual void Save() const;
     virtual void Save( int currEnergy ) const;
+
+    // IO
+    void PrepareVolumeOutput() override final;
+    void WriteVolumeOutput( unsigned idx_pseudoTime ) override final;
+
+    // Solver
+    void FVMUpdate( unsigned idx_energy ) override final;
+    void FluxUpdate() override final;
+    void IterPreprocessing( unsigned idx_pseudotime ) override final;
+    void virtual IterPostprocessing() override final;
+    void SolverPreprocessing() override final;
 };
 
 #endif    // CSDSOLVERTRAFOFP2D_H
