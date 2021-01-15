@@ -286,7 +286,11 @@ void CSDSolverTrafoFPSH2D::Solve() {
     }
     for( unsigned j = 0; j < _nCells; ++j ) _solverOutput[j] = _density[j];
     Save( 1 );
+<<<<<<< HEAD
     Save();
+=======
+    // Save();
+>>>>>>> c6cf8334fe33fac1fcb581369e11834873f00363
 }
 
 void CSDSolverTrafoFPSH2D::Save() const {
@@ -303,19 +307,19 @@ void CSDSolverTrafoFPSH2D::Save() const {
 
     // Fill names
     outputFieldNames[0][0] = "dose";
-    outputFieldNames[0][1] = "normalized dose";
+    // outputFieldNames[0][1] = "normalized dose";
 
     // Fill fields
     outputFields[0][0].resize( _nCells );
-    outputFields[0][1].resize( _nCells );
+    // outputFields[0][1].resize( _nCells );
 
-    std::vector<double> normalizedDose = _dose;
-    double maxDose                     = *std::max_element( _dose.begin(), _dose.end() );
-    for( unsigned i = 0; i < _dose.size(); ++i ) normalizedDose[i] /= maxDose;
+    // std::vector<double> normalizedDose = _dose;
+    // double maxDose                     = *std::max_element( _dose.begin(), _dose.end() );
+    // for( unsigned i = 0; i < _dose.size(); ++i ) normalizedDose[i] /= maxDose;
 
     for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
         outputFields[0][0][idx_cell] = _dose[idx_cell];
-        outputFields[0][1][idx_cell] = normalizedDose[idx_cell];
+        // outputFields[0][1][idx_cell] = normalizedDose[idx_cell];
     }
 
     // debug
