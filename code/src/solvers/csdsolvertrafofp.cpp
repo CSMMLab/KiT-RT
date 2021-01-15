@@ -103,93 +103,6 @@ CSDSolverTrafoFP::CSDSolverTrafoFP( Config* settings ) : SNSolver( settings ) {
     // exit(EXIT_SUCCESS);
 }
 
-void CSDSolverTrafoFP::Solve() {
-    PrepareVolumeOutput();
-    auto log = spdlog::get( "event" );
-
-    // save original energy field for boundary conditions
-    _energiesOrig = _energies;
-
-    // setup incoming BC on left
-    _sol    = VectorVector( _density.size(), Vector( _settings->GetNQuadPoints(), 0.0 ) );    // hard coded IC, needs to be changed
-    _solNew = _sol;
-    for( unsigned k = 0; k < _nq; ++k ) {
-        if( _quadPoints[k][0] > 0 && !_RT ) _sol[0][k] = 1e5 * exp( -10.0 * pow( 1.0 - _quadPoints[k][0], 2 ) );
-    }
-
-    // hard coded boundary type for 1D testcases (otherwise cells will be NEUMANN)
-    _boundaryCells[0]           = BOUNDARY_TYPE::DIRICHLET;
-    _boundaryCells[_nCells - 1] = BOUNDARY_TYPE::DIRICHLET;
-
-    // setup identity matrix for FP scattering
-    _identity = Matrix( _nq, _nq, 0.0 );
-    for( unsigned k = 0; k < _nq; ++k ) _identity( k, k ) = 1.0;
-
-    // angular flux at next time step
-    // VectorVector psiNew( _nCells, Vector( _nq, 0.0 ) );
-    // double dFlux = 1e10;
-    // Vector fluxNew( _nCells, 0.0 );
-    // Vector fluxOld( _nCells, 0.0 );
-    // for( unsigned j = 0; j < _nCells; ++j ) {
-    //    fluxOld[j] = dot( _sol[j], _weights );
-    //}
-
-    int rank;
-    MPI_Comm_rank( MPI_COMM_WORLD, &rank );
-    if( rank == 0 ) log->info( "{:10}   {:10}", "E", "dFlux" );
-
-    // do substitution from psi to psiTildeHat (cf. Dissertation Kerstion Kuepper, Eq. 1.23)
-    for( unsigned j = 0; j < _nCells; ++j ) {
-        for( unsigned k = 0; k < _nq; ++k ) {
-            _sol[j][k] = _sol[j][k] * _density[j] * _s[_nEnergies - 1];    // note that _s[_nEnergies - 1] is stopping power at highest energy
-        }
-    }
-
-    // store transformed energies ETilde instead of E in _energies vector (cf. Dissertation Kerstion Kuepper, Eq. 1.25)
-    double tmp   = 0.0;
-    _energies[0] = 0.0;
-    for( unsigned n = 1; n < _nEnergies; ++n ) {
-        tmp          = tmp + _dE * 0.5 * ( 1.0 / _s[n] + 1.0 / _s[n - 1] );
-        _energies[n] = tmp;
-    }
-
-    // store transformed energies ETildeTilde instead of ETilde in _energies vector (cf. Dissertation Kerstion Kuepper, Eq. 1.25)
-    for( unsigned n = 0; n < _nEnergies; ++n ) {
-        _energies[n] = _energies[_nEnergies - 1] - _energies[n];
-    }
-
-    // determine minimal density for CFL computation
-    double densityMin = _density[0];
-    for( unsigned j = 1; j < _nCells; ++j ) {
-        if( densityMin > _density[j] ) densityMin = _density[j];
-    }
-
-    // cross sections do not need to be transformed to ETilde energy grid since e.g. TildeSigmaT(ETilde) = SigmaT(E(ETilde))
-
-    // loop over energies (pseudo-time)
-    for( unsigned n = 0; n < _nEnergies - 1; ++n ) {
-
-        // --- Prepare Boundaries and temp variables
-        IterPreprocessing( n );
-
-        // --- Compute Fluxes ---
-        FluxUpdate();
-
-        // --- Finite Volume Update ---
-        FVMUpdate( n );
-
-        // --- Postprocessing ---
-        IterPostprocessing();
-
-        // --- Solver Output ---
-        WriteVolumeOutput( n );
-        WriteScalarOutput( n );
-        PrintScreenOutput( n );
-        PrintHistoryOutput( n );
-        PrintVolumeOutput( n );
-    }
-}
-
 void CSDSolverTrafoFP::IterPreprocessing( unsigned idx_pseudotime ) {
     _dE = fabs( _energies[idx_pseudotime + 1] - _energies[idx_pseudotime] );    // is the sign correct here?
 
@@ -270,26 +183,72 @@ void CSDSolverTrafoFP::FVMUpdate( unsigned idx_energy ) {
     }
 }
 
-void CSDSolverTrafoFP::Save() const {
-    std::vector<std::string> fieldName1{ "dose" };
-    std::vector<std::string> fieldName2{ " normalized dose" };
-    std::vector<std::vector<std::string>> fieldNamesWrapper{ fieldName1, fieldName2 };
+void CSDSolverTrafoFP::IterPostprocessing() {
+    // --- Update Solution ---
+    _sol = _solNew;
 
-    std::vector<std::vector<double>> dose( 1, _dose );
-    std::vector<std::vector<double>> normalizedDose( 1, _dose );
-    double maxDose = *std::max_element( _dose.begin(), _dose.end() );
-    for( unsigned i = 0; i < _dose.size(); ++i ) normalizedDose[0][i] /= maxDose;
-    std::vector<std::vector<std::vector<double>>> results{ dose, normalizedDose };
-    ExportVTK( _settings->GetOutputFile(), results, fieldNamesWrapper, _mesh );
+    // --- Compute Flux for solution and Screen Output ---
+    ComputeRadFlux();
 }
 
-void CSDSolverTrafoFP::Save( int currEnergy ) const {
-    std::vector<std::string> fieldNames{ "flux" };
-    std::vector<std::vector<std::string>> fieldNamesWrapper{ fieldNames };
+void CSDSolverTrafoFP::SolverPreprocessing() {
 
-    std::vector<std::vector<double>> scalarField( 1, _solverOutput );
-    std::vector<std::vector<std::vector<double>>> results{ scalarField };
-    ExportVTK( _settings->GetOutputFile() + "_" + std::to_string( currEnergy ), results, fieldNamesWrapper, _mesh );
+    // TODO: TIDY UP SECTION!
+
+    // save original energy field for boundary conditions
+    _energiesOrig = _energies;
+
+    // setup incoming BC on left
+    _sol    = VectorVector( _density.size(), Vector( _settings->GetNQuadPoints(), 0.0 ) );    // hard coded IC, needs to be changed
+    _solNew = _sol;
+    for( unsigned k = 0; k < _nq; ++k ) {
+        if( _quadPoints[k][0] > 0 && !_RT ) _sol[0][k] = 1e5 * exp( -10.0 * pow( 1.0 - _quadPoints[k][0], 2 ) );
+    }
+
+    // hard coded boundary type for 1D testcases (otherwise cells will be NEUMANN)
+    _boundaryCells[0]           = BOUNDARY_TYPE::DIRICHLET;
+    _boundaryCells[_nCells - 1] = BOUNDARY_TYPE::DIRICHLET;
+
+    // setup identity matrix for FP scattering
+    _identity = Matrix( _nq, _nq, 0.0 );
+    for( unsigned k = 0; k < _nq; ++k ) _identity( k, k ) = 1.0;
+
+    // angular flux at next time step
+    // VectorVector psiNew( _nCells, Vector( _nq, 0.0 ) );
+    // double dFlux = 1e10;
+    // Vector fluxNew( _nCells, 0.0 );
+    // Vector fluxOld( _nCells, 0.0 );
+    // for( unsigned j = 0; j < _nCells; ++j ) {
+    //    fluxOld[j] = dot( _sol[j], _weights );
+    //}
+
+    // do substitution from psi to psiTildeHat (cf. Dissertation Kerstion Kuepper, Eq. 1.23)
+    for( unsigned j = 0; j < _nCells; ++j ) {
+        for( unsigned k = 0; k < _nq; ++k ) {
+            _sol[j][k] = _sol[j][k] * _density[j] * _s[_nEnergies - 1];    // note that _s[_nEnergies - 1] is stopping power at highest energy
+        }
+    }
+
+    // store transformed energies ETilde instead of E in _energies vector (cf. Dissertation Kerstion Kuepper, Eq. 1.25)
+    double tmp   = 0.0;
+    _energies[0] = 0.0;
+    for( unsigned n = 1; n < _nEnergies; ++n ) {
+        tmp          = tmp + _dE * 0.5 * ( 1.0 / _s[n] + 1.0 / _s[n - 1] );
+        _energies[n] = tmp;
+    }
+
+    // store transformed energies ETildeTilde instead of ETilde in _energies vector (cf. Dissertation Kerstion Kuepper, Eq. 1.25)
+    for( unsigned n = 0; n < _nEnergies; ++n ) {
+        _energies[n] = _energies[_nEnergies - 1] - _energies[n];
+    }
+
+    // determine minimal density for CFL computation
+    double densityMin = _density[0];
+    for( unsigned j = 1; j < _nCells; ++j ) {
+        if( densityMin > _density[j] ) densityMin = _density[j];
+    }
+
+    // cross sections do not need to be transformed to ETilde energy grid since e.g. TildeSigmaT(ETilde) = SigmaT(E(ETilde))
 }
 
 void CSDSolverTrafoFP::GenerateEnergyGrid( bool refinement ) {
@@ -326,13 +285,6 @@ void CSDSolverTrafoFP::GenerateEnergyGrid( bool refinement ) {
     }
 }
 
-void CSDSolverTrafoFP::IterPostprocessing() {
-    // --- Update Solution ---
-    _sol = _solNew;
-
-    // --- Compute Flux for solution and Screen Output ---
-    ComputeRadFlux();
-}
 void CSDSolverTrafoFP::PrepareVolumeOutput() {
     unsigned nGroups = (unsigned)_settings->GetNVolumeOutput();
 

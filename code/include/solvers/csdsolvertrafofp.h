@@ -48,15 +48,6 @@ class CSDSolverTrafoFP : public SNSolver
      * @param settings stores all needed information
      */
     CSDSolverTrafoFP( Config* settings );
-    /**
-     * @brief Solve functions runs main time loop
-     */
-    virtual void Solve();
-    /**
-     * @brief Output solution to VTK file
-     */
-    virtual void Save() const;
-    virtual void Save( int currEnergy ) const;
 
   private:
     // IO
@@ -68,6 +59,7 @@ class CSDSolverTrafoFP : public SNSolver
     void FluxUpdate() override final;
     void IterPreprocessing( unsigned idx_pseudotime ) override final;
     void virtual IterPostprocessing() override final;
+    void SolverPreprocessing() override final;
 };
 
 #endif    // CSDSOLVERTRAFOFP_H

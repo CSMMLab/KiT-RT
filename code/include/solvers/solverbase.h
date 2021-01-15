@@ -85,6 +85,8 @@ class Solver
     // ---- Member functions ----
 
     // Solver
+    /*! @brief Performs preprocessing steps before the pseudo time iteration is started */
+    virtual void SolverPreprocessing();
     /*! @brief Performs preprocessing for the current solver iteration */
     virtual void IterPreprocessing( unsigned idx_pseudotime ) = 0;
     /*! @brief Performs postprocessing for the current solver iteration */
