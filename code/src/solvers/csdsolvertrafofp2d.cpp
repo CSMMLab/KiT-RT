@@ -321,8 +321,8 @@ void CSDSolverTrafoFP2D::Save() const {
     std::vector<std::string> fieldName2{ " normalized dose" };
     std::vector<std::vector<std::string>> fieldNamesWrapper{ fieldName1, fieldName2 };
 
-    std::vector<std::vector<double>> dose{ _dose };
-    std::vector<std::vector<double>> normalizedDose{ _dose };
+    std::vector<std::vector<double>> dose( 1, _dose );
+    std::vector<std::vector<double>> normalizedDose( 1, _dose );
     double maxDose = *std::max_element( _dose.begin(), _dose.end() );
     for( unsigned i = 0; i < _dose.size(); ++i ) normalizedDose[0][i] /= maxDose;
     std::vector<std::vector<std::vector<double>>> results{ dose, normalizedDose };
