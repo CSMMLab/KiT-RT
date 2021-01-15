@@ -81,6 +81,7 @@ if read_the_docs_build:
     with open("Doxyfile.in", "rt") as fin:
         with open("Doxyfile", "wt") as fout:
             for line in fin:
+                line = line.replace('GENERATE_HTML          = YES', 'GENERATE_HTML          = NO')
                 line = line.replace('@DOXYGEN_OUTPUT_DIR@', outputDir)
                 line = line.replace('@DOXYGEN_INPUT_DIR@', inputDir)
                 fout.write(line)
