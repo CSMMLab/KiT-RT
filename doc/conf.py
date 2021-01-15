@@ -1,3 +1,5 @@
+import subprocess, os
+
 # Configuration file for the Sphinx documentation builder.
 #
 # This file only contains a selection of the most common options. For a full
@@ -69,3 +71,13 @@ breathe_projects = {
 }
 
 breathe_default_project = "KiT-RT"
+
+read_the_docs_build = os.environ.get('READTHEDOCS', None) == 'True'
+if read_the_docs_build:
+    with open("Doxyfile.in", "rt") as fin:
+        with open("Doxyfile", "wt") as fout:
+            for line in fin:
+                line.replace('@DOXYGEN_OUTPUT_DIR@', 'doxygen')
+                line.replace('@DOXYGEN_INPUT_DIR@', '../code/')
+                fout.write(line)
+    subprocess.call('doxygen', shell=True)
