@@ -74,10 +74,14 @@ breathe_default_project = "KiT-RT"
 
 read_the_docs_build = os.environ.get('READTHEDOCS', None) == 'True'
 if read_the_docs_build:
+    inputDir = '../code/build/'
+    outputDir = '../code/build/debug/docs/doxygen'
+    if not os.path.exists(outputDir):
+        os.makedirs(outputDir)
     with open("Doxyfile.in", "rt") as fin:
         with open("Doxyfile", "wt") as fout:
             for line in fin:
-                line = line.replace('@DOXYGEN_OUTPUT_DIR@', 'doxygen')
-                line = line.replace('@DOXYGEN_INPUT_DIR@', '../code/')
+                line = line.replace('@DOXYGEN_OUTPUT_DIR@', outputDir)
+                line = line.replace('@DOXYGEN_INPUT_DIR@', inputDir)
                 fout.write(line)
     subprocess.call('doxygen', shell=True)
