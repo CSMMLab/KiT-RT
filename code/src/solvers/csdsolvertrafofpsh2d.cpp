@@ -317,7 +317,6 @@ void CSDSolverTrafoFPSH2D::Save() const {
     outputFields[0][0].resize( _nCells );
     // outputFields[0][1].resize( _nCells );
 
-<<<<<<< HEAD
     // std::vector<double> normalizedDose = _dose;
     // double maxDose                     = *std::max_element( _dose.begin(), _dose.end() );
     // for( unsigned i = 0; i < _dose.size(); ++i ) normalizedDose[i] /= maxDose;
@@ -332,15 +331,6 @@ void CSDSolverTrafoFPSH2D::Save() const {
     //    std::cout << _dose[idx_cell] << "\n";
     //}
     ExportVTK( _settings->GetOutputFile() + "_TEST", outputFields, outputFieldNames, _mesh );
-=======
-    std::vector<std::vector<double>> dose( 1, _dose );
-    std::vector<std::vector<double>> normalizedDose( 1, _dose );
-    double maxDose = *std::max_element( _dose.begin(), _dose.end() );
-    for( unsigned i = 0; i < _dose.size(); ++i ) normalizedDose[0][i] /= maxDose;
-    std::vector<std::vector<std::vector<double>>> results{ dose, normalizedDose };
-    std::cout << "dose size " << dose.size() << std::endl;
-    ExportVTK( _settings->GetOutputFile(), results, fieldNamesWrapper, _mesh );
->>>>>>> c6cf8334fe33fac1fcb581369e11834873f00363
 }
 
 void CSDSolverTrafoFPSH2D::Save( int currEnergy ) const {
