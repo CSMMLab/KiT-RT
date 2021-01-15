@@ -212,6 +212,29 @@ TEST_CASE( "CSD_SN_FP_SOLVER", "[validation_tests]" ) {
     }
 }
 
+TEST_CASE( "CSD_SN_FP_2D_SOLVER", "[validation_tests]" ) {
+    std::string csd_sn_fileDir = "input/validation_tests/CSD_SN_FP_2D_solver/";
+    SECTION( "waterphantom 2D" ) {
+
+        std::string config_file_name = std::string( TESTS_PATH ) + csd_sn_fileDir + "waterphantom_2D.cfg";
+
+        Config* config = new Config( config_file_name );
+        Solver* solver = Solver::Create( config );
+        solver->Solve();
+        solver->PrintVolumeOutput();
+        auto test      = readVTKFile( std::string( TESTS_PATH ) + "result/rtsn_test_waterphantom_2D_CSD_FP.vtk" );
+        auto reference = readVTKFile( std::string( TESTS_PATH ) + csd_sn_fileDir + "waterphantom_2D_CSD_SN_FP_reference.vtk" );
+
+        double eps = 1e-3;
+        REQUIRE( test.size() == reference.size() );
+        bool errorWithinBounds = true;
+        for( unsigned i = 0; i < test.size(); ++i ) {
+            if( std::fabs( test[i] - reference[i] ) > eps ) errorWithinBounds = false;
+        }
+        REQUIRE( errorWithinBounds );
+    }
+}
+
 // --- Validation Tests Output ---
 void tokenize( std::string const& str, const char delim, std::vector<std::string>& out ) {
     size_t start;

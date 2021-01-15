@@ -7,7 +7,7 @@ CSDSolverTrafoFPSH2D::CSDSolverTrafoFPSH2D( Config* settings ) : SNSolver( setti
     // Set angle and energies
     _energies  = Vector( _nEnergies, 0.0 );    // equidistant
     _energyMin = 1e-4 * 0.511;
-    _energyMax = 10e0;
+    _energyMax = 0.01;
 
     // write equidistant energy grid (false) or refined grid (true)
     GenerateEnergyGrid( false );
@@ -280,18 +280,43 @@ void CSDSolverTrafoFPSH2D::Solve() {
         if( std::isinf( dFlux ) || std::isnan( dFlux ) ) break;
     }
     Save( 1 );
+    Save();
 }
 
 void CSDSolverTrafoFPSH2D::Save() const {
-    std::vector<std::string> fieldNames{ "dose", "normalized dose" };
-    std::vector<std::vector<std::string>> fieldNamesWrapper{ fieldNames };
+    std::vector<std::vector<std::vector<double>>> outputFields;
+    std::vector<std::vector<std::string>> outputFieldNames;
 
-    std::vector<std::vector<double>> dose( 1, _dose );
-    std::vector<std::vector<double>> normalizedDose( 1, _dose );
-    double maxDose = *std::max_element( _dose.begin(), _dose.end() );
-    for( unsigned i = 0; i < _dose.size(); ++i ) normalizedDose[0][i] /= maxDose;
-    std::vector<std::vector<std::vector<double>>> results{ dose, normalizedDose };
-    ExportVTK( _settings->GetOutputFile(), results, fieldNamesWrapper, _mesh );
+    // one group
+    outputFields.resize( 1 );
+    outputFieldNames.resize( 1 );
+
+    // 2 fields for this group
+    outputFields[0].resize( 1 );
+    outputFieldNames[0].resize( 1 );
+
+    // Fill names
+    outputFieldNames[0][0] = "dose";
+    // outputFieldNames[0][1] = "normalized dose";
+
+    // Fill fields
+    outputFields[0][0].resize( _nCells );
+    // outputFields[0][1].resize( _nCells );
+
+    // std::vector<double> normalizedDose = _dose;
+    // double maxDose                     = *std::max_element( _dose.begin(), _dose.end() );
+    // for( unsigned i = 0; i < _dose.size(); ++i ) normalizedDose[i] /= maxDose;
+
+    for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
+        outputFields[0][0][idx_cell] = _dose[idx_cell];
+        // outputFields[0][1][idx_cell] = normalizedDose[idx_cell];
+    }
+
+    // debug
+    // for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
+    //    std::cout << _dose[idx_cell] << "\n";
+    //}
+    ExportVTK( _settings->GetOutputFile() + "_TEST", outputFields, outputFieldNames, _mesh );
 }
 
 void CSDSolverTrafoFPSH2D::Save( int currEnergy ) const {
