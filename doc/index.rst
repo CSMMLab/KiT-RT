@@ -8,7 +8,7 @@ Welcome to KiT-RT's documentation!
 
 .. toctree::
    :maxdepth: 1
-   
+   :caption: Contents:
    introduction
    authors
    installation
