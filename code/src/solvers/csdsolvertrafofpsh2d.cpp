@@ -7,7 +7,7 @@ CSDSolverTrafoFPSH2D::CSDSolverTrafoFPSH2D( Config* settings ) : SNSolver( setti
     // Set angle and energies
     _energies  = Vector( _nEnergies, 0.0 );    // equidistant
     _energyMin = 1e-4 * 0.511;
-    _energyMax = 10e0;
+    _energyMax = 1e0;
 
     // write equidistant energy grid (false) or refined grid (true)
     GenerateEnergyGrid( false );
@@ -85,60 +85,64 @@ CSDSolverTrafoFPSH2D::CSDSolverTrafoFPSH2D( Config* settings ) : SNSolver( setti
 
     _quadPointsSphere = _quadrature->GetPointsSphere();
 
-    SphericalHarmonics sph( _nq );
-    Matrix Y = blaze::zero<double>( ( _nq + 1 ) * ( _nq + 1 ), _nq );
+    unsigned orderSph = order;
+    SphericalHarmonics sph( orderSph );
+    unsigned nSph = orderSph * orderSph + 2 * orderSph + 1;
+    Matrix Y      = blaze::zero<double>( nSph, _nq );
 
     for( unsigned q = 0; q < _nq; q++ ) {
         blaze::column( Y, q ) = sph.ComputeSphericalBasis( _quadPointsSphere[q][0], _quadPointsSphere[q][1] );
     }
 
+    _O = Y;
     _O = blaze::trans( Y );
-    _M = _O;
+    _M = _O;    // transposed to simplify weight multiplication. We will transpose _M later again
 
-    for( unsigned j = 0; j < _nq; ++j ) {
+    for( unsigned j = 0; j < nSph; ++j ) {
         blaze::column( _M, j ) *= _weights;
     }
 
     _M.transpose();
 
-    _S               = Matrix( ( _nq + 1 ) * ( _nq + 1 ), ( _nq + 1 ) * ( _nq + 1 ), 0.0 );
+    std::cout << _M * _O << std::endl;
+
+    _S               = Matrix( nSph, nSph, 0.0 );
     unsigned counter = 0;
-    for( unsigned l = 0; l < _nq + 1; ++l ) {
+    for( unsigned l = 0; l <= orderSph; ++l ) {
         for( int m = -static_cast<int>( l ); m <= static_cast<int>( l ); ++m ) {
-            if( !_RT ) {
-                _S( counter, counter ) = std::pow( g, l );
-            }
-            else
-                _S( counter, counter ) = -l * ( l + 1 );
+            // if( !_RT ) {
+            //    _S( counter, counter ) = std::pow( g, l );
+            //}
+            // else
+            _S( counter, counter ) = -l * ( l + 1 );
             counter++;
         }
     }
 
-    Vector v = ( _O * _S * _M ) * Vector( _nq, 1.0 );
-    for( unsigned q = 0; q < _nq; ++q ) {
-        blaze::column( _O, q ) /= v[q];
-    }
-
-    _density = std::vector<double>( _nCells, 1.0 );
+    //_density = std::vector<double>( _nCells, 1.0 );
 
     _L = _O * _S * _M;
 }
 
 void CSDSolverTrafoFPSH2D::Solve() {
-    std::cout << "Solve SH" << std::endl;
     auto log = spdlog::get( "event" );
+
+    double densityMin = 0.1;
+    for( unsigned j = 0; j < _nCells; ++j ) {
+        if( _density[j] < densityMin ) _density[j] = densityMin;
+    }
 
     // save original energy field for boundary conditions
     auto energiesOrig = _energies;
 
     // setup incoming BC on left
-    _sol = VectorVector( _density.size(), Vector( _settings->GetNQuadPoints(), 0.0 ) );    // hard coded IC, needs to be changed
-    for( unsigned k = 0; k < _nq; ++k ) {
-        if( _quadPoints[k][0] > 0 && !_RT ) _sol[0][k] = 1e5 * exp( -10.0 * pow( 1.0 - _quadPoints[k][0], 2 ) );
-    }
+    //_sol = VectorVector( _density.size(), Vector( _settings->GetNQuadPoints(), 0.0 ) );    // hard coded IC, needs to be changed
+    // for( unsigned k = 0; k < _nq; ++k ) {
+    //    if( _quadPoints[k][0] > 0 && !_RT ) _sol[0][k] = 1e5 * exp( -10.0 * pow( 1.0 - _quadPoints[k][0], 2 ) );
+    //}
     // hard coded boundary type for 1D testcases (otherwise cells will be NEUMANN)
-    _boundaryCells[0]           = BOUNDARY_TYPE::DIRICHLET;
-    _boundaryCells[_nCells - 1] = BOUNDARY_TYPE::DIRICHLET;
+    //_boundaryCells[0]           = BOUNDARY_TYPE::DIRICHLET;
+    //_boundaryCells[_nCells - 1] = BOUNDARY_TYPE::DIRICHLET;
 
     // setup identity matrix for FP scattering
     Matrix identity( _nq, _nq, 0.0 );
@@ -157,7 +161,8 @@ void CSDSolverTrafoFPSH2D::Solve() {
     MPI_Comm_rank( MPI_COMM_WORLD, &rank );
     if( rank == 0 ) log->info( "{:10}   {:10}", "E", "dFlux" );
 
-    // do substitution from psi to psiTildeHat (cf. Dissertation Kerstion Kuepper, Eq. 1.23)
+// do substitution from psi to psiTildeHat (cf. Dissertation Kerstion Kuepper, Eq. 1.23)
+#pragma omp parallel for
     for( unsigned j = 0; j < _nCells; ++j ) {
         for( unsigned k = 0; k < _nq; ++k ) {
             _sol[j][k] = _sol[j][k] * _density[j] * _s[_nEnergies - 1];    // note that _s[_nEnergies - 1] is stopping power at highest energy
@@ -178,7 +183,7 @@ void CSDSolverTrafoFPSH2D::Solve() {
     }
 
     // determine minimal density for CFL computation
-    double densityMin = _density[0];
+    densityMin = _density[0];
     for( unsigned j = 1; j < _nCells; ++j ) {
         if( densityMin > _density[j] ) densityMin = _density[j];
     }
@@ -213,7 +218,7 @@ void CSDSolverTrafoFPSH2D::Solve() {
         _IL = identity - _beta * _L;
 
         // write BC for water phantom
-        if( _RT ) {
+        if( _RT && false ) {
             for( unsigned k = 0; k < _nq; ++k ) {
                 if( _quadPoints[k][0] > 0 ) {
                     _sol[0][k] = 1e5 * exp( -200.0 * pow( 1.0 - _quadPoints[k][0], 2 ) ) *
@@ -222,7 +227,7 @@ void CSDSolverTrafoFPSH2D::Solve() {
             }
         }
 
-        // add FP scattering term implicitly
+// add FP scattering term implicitly
 #pragma omp parallel for
         for( unsigned j = 0; j < _nCells; ++j ) {
             if( _boundaryCells[j] == BOUNDARY_TYPE::DIRICHLET ) continue;
@@ -254,12 +259,12 @@ void CSDSolverTrafoFPSH2D::Solve() {
             }
         }
 
-#pragma omp parallel for
         for( unsigned j = 0; j < _nCells; ++j ) {
             if( _boundaryCells[j] == BOUNDARY_TYPE::DIRICHLET ) continue;
             _sol[j] = psiNew[j];
         }
 
+#pragma omp parallel for
         for( unsigned j = 0; j < _nCells; ++j ) {
             fluxNew[j] = dot( _sol[j], _weights );
             if( n > 0 ) {
@@ -279,7 +284,9 @@ void CSDSolverTrafoFPSH2D::Solve() {
             log->info( "{:03.8f}  {:03.8f}  {:01.5e}  {:01.5e}", energiesOrig[_nEnergies - n - 1], _energies[n], _dE / densityMin, dFlux );
         if( std::isinf( dFlux ) || std::isnan( dFlux ) ) break;
     }
+    for( unsigned j = 0; j < _nCells; ++j ) _solverOutput[j] = _density[j];
     Save( 1 );
+    // Save();
 }
 
 void CSDSolverTrafoFPSH2D::Save() const {
@@ -291,6 +298,7 @@ void CSDSolverTrafoFPSH2D::Save() const {
     double maxDose = *std::max_element( _dose.begin(), _dose.end() );
     for( unsigned i = 0; i < _dose.size(); ++i ) normalizedDose[0][i] /= maxDose;
     std::vector<std::vector<std::vector<double>>> results{ dose, normalizedDose };
+    std::cout << "dose size " << dose.size() << std::endl;
     ExportVTK( _settings->GetOutputFile(), results, fieldNamesWrapper, _mesh );
 }
 

@@ -88,6 +88,7 @@ Solver::Solver( Config* settings ) : _settings( settings ) {
 
     // write density
     _density = _problem->GetDensity( _mesh->GetCellMidPoints() );
+    //_density = std::vector( _mesh->GetCellMidPoints().size(), 0.0 );
 }
 
 Solver::~Solver() {
