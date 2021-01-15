@@ -286,11 +286,7 @@ void CSDSolverTrafoFPSH2D::Solve() {
     }
     for( unsigned j = 0; j < _nCells; ++j ) _solverOutput[j] = _density[j];
     Save( 1 );
-<<<<<<< HEAD
     Save();
-=======
-    // Save();
->>>>>>> c6cf8334fe33fac1fcb581369e11834873f00363
 }
 
 void CSDSolverTrafoFPSH2D::Save() const {
