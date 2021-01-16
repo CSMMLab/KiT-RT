@@ -2,7 +2,7 @@
 #include "catch.hpp"
 #include "common/config.h"
 #include "quadratures/qgausslegendretensorized.h"
-#include "solvers/sphericalharmonics.h"
+#include "toolboxes/sphericalharmonics.h"
 
 #include <fstream>
 #include <iostream>

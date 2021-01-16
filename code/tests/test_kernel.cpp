@@ -11,7 +11,7 @@ TEST_CASE( "test all scattering kernels", "[kernel]" ) {
     // Load Settings from File
     Config* config = new Config( filename );
 
-    QuadratureBase* quad = QuadratureBase::CreateQuadrature( config );    //@TODO: swap out for different quadrature rule
+    QuadratureBase* quad = QuadratureBase::Create( config );    //@TODO: swap out for different quadrature rule
 
     SECTION( "isotropic scattering kernel" ) {
 

@@ -1,21 +1,25 @@
+/*! @file: qproduct.h
+ *  @brief: Product quadrature implementation. Implementation is done accordingly to Kendall Atkinson 1981, Australian Matematical Society.
+ *  @author: J. Kusch
+ */
+
 #ifndef PRODUCTQUADRATURE_H
 #define PRODUCTQUADRATURE_H
 
 #include "quadraturebase.h"
 
-class ProductQuadrature : public QuadratureBase
+class QProduct : public QuadratureBase
 {
-    // Implementation is done accordingly to Kendall Atkinson 1981, Australian Matematical Society.
   private:
     double Pythag( const double a, const double b );
     std::pair<Vector, Matrix> ComputeEigenValTriDiagMatrix( const Matrix& mat );
     bool CheckOrder();
 
   public:
-    ProductQuadrature( Config* settings );
-    ProductQuadrature( unsigned order );
+    QProduct( Config* settings );
+    QProduct( unsigned order );
 
-    virtual ~ProductQuadrature() {}
+    virtual ~QProduct() {}
 
     inline void SetName() override { _name = "Product quadrature"; }
     inline void SetNq() override { _nq = 4 * pow( GetOrder(), 2 ); }

@@ -7,8 +7,8 @@
 #include "optimizers/optimizerbase.h"
 #include "problems/problembase.h"
 #include "quadratures/quadraturebase.h"
-#include "solvers/sphericalharmonics.h"
 #include "toolboxes/errormessages.h"
+#include "toolboxes/sphericalharmonics.h"
 #include "toolboxes/textprocessingtoolbox.h"
 
 // externals
@@ -30,6 +30,10 @@ MNSolver::MNSolver( Config* settings ) : Solver( settings ) {
     _nq               = _quadrature->GetNq();
     _quadPointsSphere = _quadrature->GetPointsSphere();
     _settings->SetNQuadPoints( _nq );
+
+    // Initialize temporary storages of alpha derivatives
+    _solDx = VectorVector( _nCells, Vector( _nTotalEntries, 0.0 ) );
+    _solDy = VectorVector( _nCells, Vector( _nTotalEntries, 0.0 ) );
 
     // Initialize Scatter Matrix --
     _scatterMatDiag = Vector( _nTotalEntries, 0.0 );
@@ -88,29 +92,49 @@ void MNSolver::ComputeMoments() {
 
 Vector MNSolver::ConstructFlux( unsigned idx_cell ) {
 
-    // ---- Integration of Moment of flux ----
+    //--- Integration of moments of flux ---
     double entropyL, entropyR, entropyFlux;
-
     Vector flux( _nTotalEntries, 0.0 );
 
+    //--- Temporary storages of reconstructed alpha ---
+    Vector alphaL( _nTotalEntries, 0.0 );
+    Vector alphaR( _nTotalEntries, 0.0 );
+
     for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
-
-        entropyFlux = 0.0;    // Reset temorary flux
-
-        entropyL = _entropy->EntropyPrimeDual( blaze::dot( _alpha[idx_cell], _moments[idx_quad] ) );
+        entropyFlux = 0.0;    // reset temorary flux
 
         for( unsigned idx_neigh = 0; idx_neigh < _neighbors[idx_cell].size(); idx_neigh++ ) {
-            // Store fluxes in psiNew, to save memory
+            // Left side reconstruction
+            if( _reconsOrder > 1 ) {
+                alphaL = _alpha[idx_cell] +
+                        _solDx[idx_cell] * ( _interfaceMidPoints[idx_cell][idx_neigh][0] - _cellMidPoints[idx_cell][0] ) + 
+                        _solDy[idx_cell] * ( _interfaceMidPoints[idx_cell][idx_neigh][1] - _cellMidPoints[idx_cell][1] );
+                }
+            else {
+                alphaL = _alpha[idx_cell];
+            }
+            entropyL = _entropy->EntropyPrimeDual( blaze::dot( alphaL, _moments[idx_quad] ) );
+
+            // Right side reconstruction
             if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::NEUMANN && _neighbors[idx_cell][idx_neigh] == _nCells )
                 entropyR = entropyL;
             else {
-                entropyR = _entropy->EntropyPrimeDual( blaze::dot( _alpha[_neighbors[idx_cell][idx_neigh]], _moments[idx_quad] ) );
+                if( _reconsOrder > 1 ) {
+                    alphaR = _alpha[_neighbors[idx_cell][idx_neigh]] +
+                             _solDx[_neighbors[idx_cell][idx_neigh]] * ( _interfaceMidPoints[idx_cell][idx_neigh][0] - _cellMidPoints[_neighbors[idx_cell][idx_neigh]][0] ) + 
+                             _solDy[_neighbors[idx_cell][idx_neigh]] * ( _interfaceMidPoints[idx_cell][idx_neigh][1] - _cellMidPoints[_neighbors[idx_cell][idx_neigh]][1] );
+                }
+                else {
+                    alphaR = _alpha[_neighbors[idx_cell][idx_neigh]];
+                }
+                entropyR = _entropy->EntropyPrimeDual( blaze::dot( alphaR, _moments[idx_quad] ) );
             }
+
+            // Entropy flux
             entropyFlux += _g->Flux( _quadPoints[idx_quad], entropyL, entropyR, _normals[idx_cell][idx_neigh] );
         }
+        // Solution flux
         flux += _moments[idx_quad] * ( _weights[idx_quad] * entropyFlux );
-
-        // ------- Relizablity Reconstruction Step ----
     }
     return flux;
 }
@@ -153,6 +177,10 @@ void MNSolver::ComputeRadFlux() {
 }
 
 void MNSolver::FluxUpdate() {
+    if( _reconsOrder > 1 ) {
+        _mesh->ReconstructSlopesU( _nTotalEntries, _solDx, _solDy, _alpha );    // unstructured reconstruction
+    }
+
     // Loop over the grid cells
     for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
         // Dirichlet Boundaries stay

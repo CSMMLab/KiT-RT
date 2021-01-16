@@ -1,5 +1,5 @@
 cmake_minimum_required( VERSION 3.12.4 )
-project( KiT-RT VERSION 0.0.2 LANGUAGES CXX )
+project( KiT-RT VERSION 0.1.0 LANGUAGES CXX )
 
 ### OPTIONS #####################################
 option( build_tests "enables compiling of unit_tests" OFF )

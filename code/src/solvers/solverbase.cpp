@@ -25,9 +25,31 @@ Solver::Solver( Config* settings ) : _settings( settings ) {
     _settings->SetNCells( _nCells );
 
     // build quadrature object and store frequently used params
-    _quadrature = QuadratureBase::CreateQuadrature( settings );
+    _quadrature = QuadratureBase::Create( settings );
     _nq         = _quadrature->GetNq();
     _settings->SetNQuadPoints( _nq );
+
+    // build slope related params
+    _reconstructor = Reconstructor::Create( settings );
+    _reconsOrder = _reconstructor->GetReconsOrder();
+
+    auto nodes         = _mesh->GetNodes();
+    auto cells         = _mesh->GetCells();
+    std::vector<std::vector<Vector>> interfaceMidPoints( _nCells, std::vector<Vector>( _mesh->GetNumNodesPerCell(), Vector( 2, 1e-10 ) ) );
+    for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
+        for( unsigned k = 0; k < _mesh->GetDim(); ++k ) {
+            for( unsigned j = 0; j < _neighbors[idx_cell].size() - 1; ++j ) {
+                interfaceMidPoints[idx_cell][j][k] = 0.5 * ( nodes[cells[idx_cell][j]][k] + nodes[cells[idx_cell][j + 1]][k] );
+            }
+            interfaceMidPoints[idx_cell][_neighbors[idx_cell].size() - 1][k] =
+                0.5 * ( nodes[cells[idx_cell][_neighbors[idx_cell].size() - 1]][k] + nodes[cells[idx_cell][0]][k] );
+        }
+    }
+    _interfaceMidPoints = interfaceMidPoints;
+    _cellMidPoints = _mesh->GetCellMidPoints();
+
+    _psiDx = VectorVector( _nCells, Vector( _nq, 0.0 ) );
+    _psiDy = VectorVector( _nCells, Vector( _nq, 0.0 ) );
 
     // set time step
     _dE        = ComputeTimeStep( settings->GetCFL() );
