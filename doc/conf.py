@@ -51,4 +51,4 @@ if read_the_docs_build:
                 line = line.replace('@DOXYGEN_OUTPUT_DIR@', outputDir)
                 line = line.replace('@DOXYGEN_INPUT_DIR@', inputDir)
                 fout.write(line)
-    #subprocess.call('doxygen', shell=True)
+    subprocess.call('doxygen', shell=True)
