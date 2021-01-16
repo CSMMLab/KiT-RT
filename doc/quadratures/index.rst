@@ -1,0 +1,6 @@
+Quadratures
+===========
+
+TODO
+
+.. toctree::
