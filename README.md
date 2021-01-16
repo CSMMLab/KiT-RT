@@ -1,4 +1,4 @@
-[![pipeline status](https://git.scc.kit.edu/rtsn/rtsn/badges/master/pipeline.svg)](https://git.scc.kit.edu/rtsn/rtsn/-/commits/master) [![coverage report](https://git.scc.kit.edu/rtsn/rtsn/badges/master/coverage.svg)](https://git.scc.kit.edu/rtsn/rtsn/-/commits/master)[![Documentation Status](https://readthedocs.org/projects/kit-rt/badge/?version=latest)](https://kit-rt.readthedocs.io/en/latest/?badge=latest)
+[![pipeline status](https://git.scc.kit.edu/rtsn/rtsn/badges/master/pipeline.svg)](https://git.scc.kit.edu/rtsn/rtsn/-/commits/master) [![coverage report](https://git.scc.kit.edu/rtsn/rtsn/badges/master/coverage.svg)](https://git.scc.kit.edu/rtsn/rtsn/-/commits/master) [![Documentation Status](https://readthedocs.org/projects/kit-rt/badge/?version=latest)](https://kit-rt.readthedocs.io/en/latest/?badge=latest)
 
 # KiT-RT - an HPC Radio Therapy $`S_n`$ framework
 TBD 
