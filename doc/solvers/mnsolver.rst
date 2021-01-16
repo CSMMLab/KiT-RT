@@ -1,0 +1,5 @@
+MNSolver
+========
+
+.. doxygenclass:: MNSolver
+   :members:

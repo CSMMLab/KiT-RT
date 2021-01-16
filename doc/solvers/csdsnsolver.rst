@@ -1,0 +1,5 @@
+CSDSNSolver
+===========
+
+.. doxygenclass:: CSDSNSolver
+   :members:

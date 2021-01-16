@@ -1,7 +1,9 @@
 Optimizers
 ==========
 
-TODO
-
 .. toctree::
    :maxdepth: 1
+
+   optimizerbase
+   mloptimizer
+   newtonoptimizer

@@ -1,7 +1,9 @@
 Entropies
 =========
 
-TODO
-
 .. toctree::
    :maxdepth: 1
+
+   entropybase
+   maxwellboltzmannentropy
+   quadraticentropy

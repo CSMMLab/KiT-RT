@@ -1,0 +1,5 @@
+MaxwellBoltzmannEntropy
+=======================
+
+.. doxygenclass:: MaxwellBoltzmannEntropy
+   :members:

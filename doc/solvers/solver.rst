@@ -1,0 +1,5 @@
+Solver
+==========
+
+.. doxygenclass:: Solver
+   :members:

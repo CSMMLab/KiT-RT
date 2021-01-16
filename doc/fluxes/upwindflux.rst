@@ -1,0 +1,5 @@
+UpwindFlux
+==========
+
+.. doxygenclass:: UpwindFlux
+   :members:
