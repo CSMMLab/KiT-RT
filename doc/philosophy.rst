@@ -27,19 +27,21 @@ Test the library installation in the docker container
 
 .. code-block:: bash 
 
-      docker run -it --rm rtsn/test:latest bash
+    docker run -it --rm rtsn/test:latest bash
 
 Note the steps required and add them to the `Dockerfile` in the `scripts` folder.
 Build the new container (takes some time)
 
 .. code-block:: bash 
-      cd docker build -t rtsn/test:latest .
+
+    cd docker build -t rtsn/test:latest .
 
 or commit your changes to the image (google that procedure).
 Push the new image to `hub.docker.com`
 
 .. code-block:: bash 
-     docker push rtsn/test:latest
+     
+   docker push rtsn/test:latest
 
 This last step requires a preceeding `docker login`. Ask Jannick for login credentials.
 
