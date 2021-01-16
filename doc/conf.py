@@ -9,11 +9,6 @@ release = 'v0.1'
 
 
 extensions = [
-    'sphinx.ext.autodoc',
-    'sphinx.ext.napoleon',
-    'sphinx.ext.autosummary',
-    'sphinx.ext.intersphinx',
-    'sphinx.ext.viewcode',
     'breathe',
     'sphinx_rtd_theme'
 ]
@@ -33,7 +28,7 @@ def setup(app):
     app.add_css_file('theme_overrides.css')
 
 breathe_projects = {
-    "KiT-RT": "../code/build/debug/docs/doxygen/xml/",
+    "KiT-RT": "../code/build/debug/docs/doxygen/xml",
 }
 
 breathe_default_project = "KiT-RT"
@@ -48,6 +43,8 @@ if read_the_docs_build:
         with open("Doxyfile", "wt") as fout:
             for line in fin:
                 line = line.replace('GENERATE_HTML          = YES', 'GENERATE_HTML          = NO')
+                line = line.replace('SEARCH_INCLUDES        = YES', 'SEARCH_INCLUDES        = NO')
+                line = line.replace('CLASS_DIAGRAMS         = YES', 'CLASS_DIAGRAMS         = NO')
                 line = line.replace('@DOXYGEN_OUTPUT_DIR@', outputDir)
                 line = line.replace('@DOXYGEN_INPUT_DIR@', inputDir)
                 fout.write(line)

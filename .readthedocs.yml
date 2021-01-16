@@ -11,3 +11,5 @@ sphinx:
 
 submodules:
   exclude: all
+
+formats: []
