@@ -1,5 +1,5 @@
-Class Mesh
-==========
+Mesh
+====
 
 .. doxygenclass:: Mesh
     :members:

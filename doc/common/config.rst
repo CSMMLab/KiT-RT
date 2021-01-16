@@ -1,5 +1,5 @@
-Class Config
-============
+Config
+======
 
 .. doxygenclass:: Config
    :members:
