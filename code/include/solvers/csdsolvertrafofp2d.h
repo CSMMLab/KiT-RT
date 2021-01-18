@@ -46,6 +46,7 @@ class CSDSolverTrafoFP2D : public SNSolver
     // Helper variables
     Vector _energiesOrig; /*! @brief: original energy levels for CSD, lenght = _nEnergies */
     Matrix _identity;     /*! @brif: identity matrix for FP scattering. Dim (_nq,_nq)*/
+    double _densityMin;   /*! @brief: Minimal density of _density vector */
 
     void GenerateEnergyGrid( bool refinement );
 

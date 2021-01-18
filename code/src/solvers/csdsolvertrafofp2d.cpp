@@ -18,7 +18,7 @@ CSDSolverTrafoFP2D::CSDSolverTrafoFP2D( Config* settings ) : SNSolver( settings 
     // Set angle and energies
     _energies  = Vector( _nEnergies, 0.0 );    // equidistant
     _energyMin = 1e-4 * 0.511;
-    _energyMax = 1.0;    // 50e0;
+    _energyMax = 0.01;    // 50e0;
 
     // write equidistant energy grid (false) or refined grid (true)
     GenerateEnergyGrid( false );
@@ -155,9 +155,9 @@ void CSDSolverTrafoFP2D::Solve() {
 
     auto log = spdlog::get( "event" );
 
-    double densityMin = 0.1;
+    _densityMin = 0.1;
     for( unsigned j = 0; j < _nCells; ++j ) {
-        if( _density[j] < densityMin ) _density[j] = densityMin;
+        if( _density[j] < _densityMin ) _density[j] = _densityMin;
     }
 
     // save original energy field for boundary conditions
@@ -212,9 +212,9 @@ void CSDSolverTrafoFP2D::Solve() {
     }
 
     // determine minimal density for CFL computation
-    densityMin = _density[0];
+    _densityMin = _density[0];
     for( unsigned j = 1; j < _nCells; ++j ) {
-        if( densityMin > _density[j] ) densityMin = _density[j];
+        if( _densityMin > _density[j] ) _densityMin = _density[j];
     }
 
     // cross sections do not need to be transformed to ETilde energy grid since e.g. TildeSigmaT(ETilde) = SigmaT(E(ETilde))
@@ -310,7 +310,7 @@ void CSDSolverTrafoFP2D::Solve() {
         dFlux   = blaze::l2Norm( fluxNew - fluxOld );
         fluxOld = fluxNew;
         if( rank == 0 )
-            log->info( "{:03.8f}  {:03.8f}  {:01.5e}  {:01.5e}", _energiesOrig[_nEnergies - n - 1], _energies[n], _dE / densityMin, dFlux );
+            log->info( "{:03.8f}  {:03.8f}  {:01.5e}  {:01.5e}", _energiesOrig[_nEnergies - n - 1], _energies[n], _dE / _densityMin, dFlux );
         if( std::isinf( dFlux ) || std::isnan( dFlux ) ) break;
     }
     for( unsigned j = 0; j < _nCells; ++j ) _solverOutput[j] = _density[j];
@@ -399,11 +399,16 @@ void CSDSolverTrafoFP2D::GenerateEnergyGrid( bool refinement ) {
 
 // IO
 void CSDSolverTrafoFP2D::PrepareVolumeOutput() {}
+
 void CSDSolverTrafoFP2D::WriteVolumeOutput( unsigned idx_pseudoTime ) {}
 
 // Solver
 void CSDSolverTrafoFP2D::FVMUpdate( unsigned idx_energy ) {}
+
 void CSDSolverTrafoFP2D::FluxUpdate() {}
+
 void CSDSolverTrafoFP2D::IterPreprocessing( unsigned idx_pseudotime ) {}
+
 void CSDSolverTrafoFP2D::IterPostprocessing() {}
+
 void CSDSolverTrafoFP2D::SolverPreprocessing() {}
