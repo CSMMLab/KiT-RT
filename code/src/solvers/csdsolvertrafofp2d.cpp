@@ -152,7 +152,7 @@ CSDSolverTrafoFP2D::CSDSolverTrafoFP2D( Config* settings ) : SNSolver( settings 
 }
 
 void CSDSolverTrafoFP2D::Solve() {
-    std::cout << "Solve FD" << std::endl;
+
     auto log = spdlog::get( "event" );
 
     double densityMin = 0.1;
@@ -161,7 +161,7 @@ void CSDSolverTrafoFP2D::Solve() {
     }
 
     // save original energy field for boundary conditions
-    auto energiesOrig = _energies;
+    _energiesOrig = _energies;
 
     // setup incoming BC on left
     //_sol = VectorVector( _density.size(), Vector( _settings->GetNQuadPoints(), 0.0 ) );    // hard coded IC, needs to be changed
@@ -173,8 +173,9 @@ void CSDSolverTrafoFP2D::Solve() {
     //_boundaryCells[_nCells - 1] = BOUNDARY_TYPE::DIRICHLET;
 
     // setup identity matrix for FP scattering
-    Matrix identity( _nq, _nq, 0.0 );
-    for( unsigned k = 0; k < _nq; ++k ) identity( k, k ) = 1.0;
+    _identity = Matrix( _nq, _nq, 0.0 );
+
+    for( unsigned k = 0; k < _nq; ++k ) _identity( k, k ) = 1.0;
 
     // angular flux at next time step
     VectorVector psiNew( _nCells, Vector( _nq, 0.0 ) );
@@ -243,14 +244,14 @@ void CSDSolverTrafoFP2D::Solve() {
             _alpha2 = xi1 / 2.0 - 9.0 / 8.0 * xi2 * xi2 / xi3 + 3.0 / 8.0 * xi2;
         }
 
-        _IL = identity - _beta * _L;
+        _IL = _identity - _beta * _L;
 
         // write BC for water phantom
         if( _RT && false ) {
             for( unsigned k = 0; k < _nq; ++k ) {
                 if( _quadPoints[k][0] > 0 ) {
                     _sol[0][k] = 1e5 * exp( -200.0 * pow( 1.0 - _quadPoints[k][0], 2 ) ) *
-                                 exp( -50.0 * pow( _energyMax - energiesOrig[_nEnergies - n - 1], 2 ) ) * _density[0] * _s[_nEnergies - n - 1];
+                                 exp( -50.0 * pow( _energyMax - _energiesOrig[_nEnergies - n - 1], 2 ) ) * _density[0] * _s[_nEnergies - n - 1];
                 }
             }
         }
@@ -259,7 +260,7 @@ void CSDSolverTrafoFP2D::Solve() {
 #pragma omp parallel for
         for( unsigned j = 0; j < _nCells; ++j ) {
             if( _boundaryCells[j] == BOUNDARY_TYPE::DIRICHLET ) continue;
-            //_sol[j] = blaze::solve( identity - _dE * _alpha2 * _L, psiNew[j] );
+            //_sol[j] = blaze::solve( _identity - _dE * _alpha2 * _L, psiNew[j] );
             _sol[j] = _IL * blaze::solve( _IL - _dE * _alpha * _L, _sol[j] );
         }
 
@@ -309,7 +310,7 @@ void CSDSolverTrafoFP2D::Solve() {
         dFlux   = blaze::l2Norm( fluxNew - fluxOld );
         fluxOld = fluxNew;
         if( rank == 0 )
-            log->info( "{:03.8f}  {:03.8f}  {:01.5e}  {:01.5e}", energiesOrig[_nEnergies - n - 1], _energies[n], _dE / densityMin, dFlux );
+            log->info( "{:03.8f}  {:03.8f}  {:01.5e}  {:01.5e}", _energiesOrig[_nEnergies - n - 1], _energies[n], _dE / densityMin, dFlux );
         if( std::isinf( dFlux ) || std::isnan( dFlux ) ) break;
     }
     for( unsigned j = 0; j < _nCells; ++j ) _solverOutput[j] = _density[j];
@@ -395,3 +396,14 @@ void CSDSolverTrafoFP2D::GenerateEnergyGrid( bool refinement ) {
         }
     }
 }
+
+// IO
+void CSDSolverTrafoFP2D::PrepareVolumeOutput() {}
+void CSDSolverTrafoFP2D::WriteVolumeOutput( unsigned idx_pseudoTime ) {}
+
+// Solver
+void CSDSolverTrafoFP2D::FVMUpdate( unsigned idx_energy ) {}
+void CSDSolverTrafoFP2D::FluxUpdate() {}
+void CSDSolverTrafoFP2D::IterPreprocessing( unsigned idx_pseudotime ) {}
+void CSDSolverTrafoFP2D::IterPostprocessing() {}
+void CSDSolverTrafoFP2D::SolverPreprocessing() {}

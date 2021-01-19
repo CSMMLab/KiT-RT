@@ -7,7 +7,7 @@ CSDSolverTrafoFPSH2D::CSDSolverTrafoFPSH2D( Config* settings ) : SNSolver( setti
     // Set angle and energies
     _energies  = Vector( _nEnergies, 0.0 );    // equidistant
     _energyMin = 1e-4 * 0.511;
-    _energyMax = 1e0;
+    _energyMax = 0.01;
 
     // write equidistant energy grid (false) or refined grid (true)
     GenerateEnergyGrid( false );
@@ -85,7 +85,7 @@ CSDSolverTrafoFPSH2D::CSDSolverTrafoFPSH2D( Config* settings ) : SNSolver( setti
 
     _quadPointsSphere = _quadrature->GetPointsSphere();
 
-    unsigned orderSph = order - 1;
+    unsigned orderSph = order;
     SphericalHarmonics sph( orderSph );
     unsigned nSph = orderSph * orderSph + 2 * orderSph + 1;
     Matrix Y      = blaze::zero<double>( nSph, _nq );
@@ -125,7 +125,6 @@ CSDSolverTrafoFPSH2D::CSDSolverTrafoFPSH2D( Config* settings ) : SNSolver( setti
 }
 
 void CSDSolverTrafoFPSH2D::Solve() {
-    std::cout << "Solve FD" << std::endl;
     auto log = spdlog::get( "event" );
 
     double densityMin = 0.1;

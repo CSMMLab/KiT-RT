@@ -156,6 +156,9 @@ void Solver::Solve() {
     // Prepare Solver output
     PrepareVolumeOutput();
 
+    // Preprocessing before first pseudo time step
+    SolverPreprocessing();
+
     // Loop over energies (pseudo-time of continuous slowing down approach)
     for( unsigned iter = 0; iter < _nEnergies; iter++ ) {
 
@@ -441,3 +444,5 @@ void Solver::PrintHistoryOutput( unsigned iteration ) {
         }
     }
 }
+
+void Solver::SolverPreprocessing() {}
