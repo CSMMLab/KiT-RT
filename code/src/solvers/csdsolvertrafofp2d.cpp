@@ -30,17 +30,22 @@ CSDSolverTrafoFP2D::CSDSolverTrafoFP2D( Config* settings ) : SNSolver( settings 
     _weights          = _quadrature->GetWeights();
     _quadPointsSphere = _quadrature->GetPointsSphere();
 
+    unsigned orderMu;
+    if( _settings->GetQuadName() == QUAD_GaussLegendreTensorized ) orderMu = order;
+    if( _settings->GetQuadName() == QUAD_Product ) orderMu = 2 * order;
+
     // transform structured quadrature
-    _mu  = Vector( 2 * order );
+    _mu  = Vector( orderMu );
     _phi = Vector( 2 * order );
-    _wp  = Vector( 2 * order );
+    _wp  = Vector( orderMu );
     _wa  = Vector( 2 * order );
 
     // create quadrature 1D to compute mu grid
-    QuadratureBase* quad1D = QuadratureBase::Create( QUAD_GaussLegendre1D, 2 * order );
+    QuadratureBase* quad1D = QuadratureBase::Create( QUAD_GaussLegendre1D, orderMu );
     Vector w               = quad1D->GetWeights();
     VectorVector muVec     = quad1D->GetPoints();
-    for( unsigned k = 0; k < 2 * order; ++k ) {
+
+    for( unsigned k = 0; k < orderMu; ++k ) {
         _mu[k] = muVec[k][0];
         _wp[k] = w[k];
     }
@@ -64,7 +69,7 @@ CSDSolverTrafoFP2D::CSDSolverTrafoFP2D( Config* settings ) : SNSolver( settings 
 
     double dMinus = 0.0;
     DPlus         = DMinus - 2 * _mu[0] * w[0];
-    for( unsigned j = 0; j < 2 * order - 1; ++j ) {
+    for( unsigned j = 0; j < orderMu - 1; ++j ) {
         DMinus   = DPlus;
         DPlus    = DMinus - 2 * _mu[j] * w[j];
         dPlus    = ( sqrt( 1 - _mu[j + 1] * _mu[j + 1] ) - sqrt( 1 - _mu[j] * _mu[j] ) ) / ( _mu[j + 1] - _mu[j] );
@@ -76,8 +81,8 @@ CSDSolverTrafoFP2D::CSDSolverTrafoFP2D( Config* settings ) : SNSolver( settings 
 
     DPlus = 0.0;
 
-    // implementation of 2D spherical Laplacian according to SN book, equation (1.136)
-    for( unsigned j = 0; j < 2 * order; ++j ) {
+    // implementation of 2D spherical Laplacian according book "Advances in Discrete Ordinates Methodology", equation (1.136)
+    for( unsigned j = 0; j < orderMu; ++j ) {
         DMinus = DPlus;
         DPlus  = DMinus - 2 * _mu[j] * _wp[j];
         for( unsigned i = 0; i < 2 * order; ++i ) {
@@ -89,7 +94,7 @@ CSDSolverTrafoFP2D::CSDSolverTrafoFP2D( Config* settings ) : SNSolver( settings 
                 _L( j * 2 * order + i, j * 2 * order + i - 1 ) = 1.0 / ( 1 - _mu[j] * _mu[j] ) * gamma[j] / ( _phi[i] - _phi[i - 1] ) / _wa[i];
                 _L( j * 2 * order + i, j * 2 * order + i ) += -1.0 / ( 1 - _mu[j] * _mu[j] ) * gamma[j] / ( _phi[i] - _phi[i - 1] ) / _wa[i];
             }
-            if( j < 2 * order - 1 ) {
+            if( j < orderMu - 1 ) {
                 _L( j * 2 * order + i, ( j + 1 ) * 2 * order + i ) = DPlus / ( _mu[j + 1] - _mu[j] ) / _wp[j];
                 _L( j * 2 * order + i, j * 2 * order + i ) += -DPlus / ( _mu[j + 1] - _mu[j] ) / _wp[j];
             }

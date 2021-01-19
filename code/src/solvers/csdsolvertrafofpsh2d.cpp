@@ -7,7 +7,7 @@ CSDSolverTrafoFPSH2D::CSDSolverTrafoFPSH2D( Config* settings ) : SNSolver( setti
     // Set angle and energies
     _energies  = Vector( _nEnergies, 0.0 );    // equidistant
     _energyMin = 1e-4 * 0.511;
-    _energyMax = 0.01;
+    _energyMax = 1.0;
 
     // write equidistant energy grid (false) or refined grid (true)
     GenerateEnergyGrid( false );
@@ -104,17 +104,11 @@ CSDSolverTrafoFPSH2D::CSDSolverTrafoFPSH2D( Config* settings ) : SNSolver( setti
 
     _M.transpose();
 
-    std::cout << _M * _O << std::endl;
-
     _S               = Matrix( nSph, nSph, 0.0 );
     unsigned counter = 0;
-    for( unsigned l = 0; l <= orderSph; ++l ) {
-        for( int m = -static_cast<int>( l ); m <= static_cast<int>( l ); ++m ) {
-            // if( !_RT ) {
-            //    _S( counter, counter ) = std::pow( g, l );
-            //}
-            // else
-            _S( counter, counter ) = -l * ( l + 1 );
+    for( int l = 0; l <= orderSph; ++l ) {
+        for( int m = -l; m <= l; ++m ) {
+            _S( counter, counter ) = double( -l * ( l + 1 ) );
             counter++;
         }
     }
@@ -122,6 +116,57 @@ CSDSolverTrafoFPSH2D::CSDSolverTrafoFPSH2D( Config* settings ) : SNSolver( setti
     //_density = std::vector<double>( _nCells, 1.0 );
 
     _L = _O * _S * _M;
+
+    // check against FD
+    // setup Laplace Beltrami matrix L in slab geometry
+    Matrix LFD( _nq, _nq, 0.0 );
+
+    _FPMethod = 2;
+
+    DMinus = 0.0;
+    DPlus  = 0.0;
+
+    dMinus = 0.0;
+    DPlus  = DMinus - 2 * _mu[0] * w[0];
+    for( unsigned j = 0; j < order - 1; ++j ) {
+        DMinus   = DPlus;
+        DPlus    = DMinus - 2 * _mu[j] * w[j];
+        dPlus    = ( sqrt( 1 - _mu[j + 1] * _mu[j + 1] ) - sqrt( 1 - _mu[j] * _mu[j] ) ) / ( _mu[j + 1] - _mu[j] );
+        c        = ( DPlus * dPlus - DMinus * dMinus ) / _wp[j];
+        K        = 2 * ( 1 - _mu[j] * _mu[j] ) + c * sqrt( 1 - _mu[j] * _mu[j] );
+        gamma[j] = M_PI * M_PI * K / ( 2 * order * ( 1 - std::cos( M_PI / order ) ) );
+        dMinus   = dPlus;
+    }
+
+    DPlus = 0.0;
+
+    // implementation of 2D spherical Laplacian according book "Advances in Discrete Ordinates Methodology", equation (1.136)
+    for( unsigned j = 0; j < order; ++j ) {
+        DMinus = DPlus;
+        DPlus  = DMinus - 2 * _mu[j] * _wp[j];
+        for( unsigned i = 0; i < 2 * order; ++i ) {
+            if( j > 0 ) {
+                LFD( j * 2 * order + i, ( j - 1 ) * 2 * order + i ) = DMinus / ( _mu[j] - _mu[j - 1] ) / _wp[j];
+                LFD( j * 2 * order + i, j * 2 * order + i )         = -DMinus / ( _mu[j] - _mu[j - 1] ) / _wp[j];
+            }
+            if( i > 0 ) {
+                LFD( j * 2 * order + i, j * 2 * order + i - 1 ) = 1.0 / ( 1 - _mu[j] * _mu[j] ) * gamma[j] / ( _phi[i] - _phi[i - 1] ) / _wa[i];
+                LFD( j * 2 * order + i, j * 2 * order + i ) += -1.0 / ( 1 - _mu[j] * _mu[j] ) * gamma[j] / ( _phi[i] - _phi[i - 1] ) / _wa[i];
+            }
+            if( j < order - 1 ) {
+                LFD( j * 2 * order + i, ( j + 1 ) * 2 * order + i ) = DPlus / ( _mu[j + 1] - _mu[j] ) / _wp[j];
+                LFD( j * 2 * order + i, j * 2 * order + i ) += -DPlus / ( _mu[j + 1] - _mu[j] ) / _wp[j];
+            }
+            if( i < 2 * order - 1 ) {
+                LFD( j * 2 * order + i, j * 2 * order + i + 1 ) = 1.0 / ( 1 - _mu[j] * _mu[j] ) * gamma[j] / ( _phi[i + 1] - _phi[i] ) / _wa[i];
+                LFD( j * 2 * order + i, j * 2 * order + i ) += -1.0 / ( 1 - _mu[j] * _mu[j] ) * gamma[j] / ( _phi[i + 1] - _phi[i] ) / _wa[i];
+            }
+        }
+    }
+
+    std::cout << _L << std::endl << std::endl;
+    std::cout << LFD << std::endl;
+    std::cout << _S << std::endl;
 }
 
 void CSDSolverTrafoFPSH2D::Solve() {
@@ -190,6 +235,7 @@ void CSDSolverTrafoFPSH2D::Solve() {
 
     // cross sections do not need to be transformed to ETilde energy grid since e.g. TildeSigmaT(ETilde) = SigmaT(E(ETilde))
 
+    std::cout << "nEnergies = " << _nEnergies << std::endl;
     // loop over energies (pseudo-time)
     for( unsigned n = 0; n < _nEnergies - 1; ++n ) {
         _dE = fabs( _energies[n + 1] - _energies[n] );    // is the sign correct here?
@@ -278,6 +324,7 @@ void CSDSolverTrafoFPSH2D::Solve() {
         }
 
         // Save( n );
+        std::cout << energiesOrig[_nEnergies - n - 1] << std::endl;
         dFlux   = blaze::l2Norm( fluxNew - fluxOld );
         fluxOld = fluxNew;
         if( rank == 0 )
