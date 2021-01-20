@@ -193,8 +193,8 @@ void nnDataGenerator::PrintTrainingData() {
         uSolString += "u_" + std::to_string( idx_sys ) + " , ";
         alphaString += "alpha_" + std::to_string( idx_sys ) + " , ";
     }
-    // log->info( uSolString + alphaString + " h" );
-    logCSV->info( uSolString + alphaString + " h" );
+    // log->info( uSolString + alphaString + "h" );
+    logCSV->info( uSolString + alphaString + "h" );
 
     for( unsigned idx_set = 0; idx_set < _setSize; idx_set++ ) {
         std::string uSolString  = "";
@@ -203,8 +203,8 @@ void nnDataGenerator::PrintTrainingData() {
             uSolString += std::to_string( _uSol[idx_set][idx_sys] ) + " , ";
             alphaString += std::to_string( _alpha[idx_set][idx_sys] ) + " , ";
         }
-        // log->info( uSolString + alphaString + " {}", _hEntropy[idx_set] );
-        logCSV->info( uSolString + alphaString + " {}", _hEntropy[idx_set] );
+        // log->info( uSolString + alphaString + "{}", _hEntropy[idx_set] );
+        logCSV->info( uSolString + alphaString + "{}", _hEntropy[idx_set] );
     }
 }
 
