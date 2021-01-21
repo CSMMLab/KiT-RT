@@ -57,10 +57,6 @@ class CSDSolverTrafoFP2D : public SNSolver
      */
     CSDSolverTrafoFP2D( Config* settings );
     /**
-     * @brief Solve functions runs main time loop
-     */
-    virtual void Solve();
-    /**
      * @brief Output solution to VTK file
      */
     virtual void Save() const;

@@ -327,7 +327,7 @@ void CSDSolverTrafoFP::WriteVolumeOutput( unsigned idx_pseudoTime ) {
     unsigned nGroups = (unsigned)_settings->GetNVolumeOutput();
     double maxDose;
     if( ( _settings->GetVolumeOutputFrequency() != 0 && idx_pseudoTime % (unsigned)_settings->GetVolumeOutputFrequency() == 0 ) ||
-        ( idx_pseudoTime == _nEnergies - 1 ) /* need sol at last iteration */ ) {
+        ( idx_pseudoTime == _maxIter - 1 ) /* need sol at last iteration */ ) {
 
         for( unsigned idx_group = 0; idx_group < nGroups; idx_group++ ) {
             switch( _settings->GetVolumeOutput()[idx_group] ) {

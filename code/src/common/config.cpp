@@ -240,7 +240,7 @@ void Config::SetConfigOptions() {
     AddBoolOption( "CLEAN_FLUX_MATRICES", _cleanFluxMat, false );
     /*! @brief ContinuousSlowingDown \n DESCRIPTION: If true, the program uses the continuous slowing down approximation to treat energy dependent
      * problems. \n DEFAULT false \ingroup Config */
-    AddBoolOption( "CONTINUOUS_SLOWING_DOWN", _csd, false );
+    // AddBoolOption( "CONTINUOUS_SLOWING_DOWN", _csd, false );
 
     // Problem Relateed Options
     /*! @brief MaterialDir \n DESCRIPTION: Relative Path to the data directory (used in the ICRU database class), starting from the directory of the
@@ -424,12 +424,21 @@ void Config::SetPostprocessing() {
         _boundaries.push_back( std::pair<std::string, BOUNDARY_TYPE>( _MarkerNeumann[i], NEUMANN ) );
     }
 
-    // Check, if mesh file exists
-    // if( !std::filesystem::exists( _meshFile ) ) {
-    //    ErrorMessages::Error( "Path to mesh file <" + _meshFile + "> does not exist. Please check your config file.", CURRENT_FUNCTION );
-    //}
+    // Set option ISCSD
+    switch( _solverName ) {
+        case CSD_SN_NOTRAFO_SOLVER:                     // Fallthrough
+        case CSD_SN_FOKKERPLANCK_SOLVER:                // Fallthrough
+        case CSD_SN_FOKKERPLANCK_TRAFO_SOLVER:          // Fallthrough
+        case CSD_SN_FOKKERPLANCK_TRAFO_SOLVER_2D:       // Fallthrough
+        case CSD_SN_FOKKERPLANCK_TRAFO_SH_SOLVER_2D:    // Fallthrough
+        case CSD_SN_SOLVER:                             // Fallthrough
+            _csd = true;
+            break;
+        default: _csd = false;
+    }
 
-    if( this->GetIsCSD() ) {
+    // Check, if mesh file exists
+    if( _solverName == CSD_SN_FOKKERPLANCK_TRAFO_SOLVER ) {    // Check if this is neccessary
         if( !std::filesystem::exists( this->GetHydrogenFile() ) ) {
             ErrorMessages::Error( "Path to mesh file <" + this->GetHydrogenFile() + "> does not exist. Please check your config file.",
                                   CURRENT_FUNCTION );

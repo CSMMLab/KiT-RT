@@ -18,7 +18,7 @@ CSDSolverTrafoFP2D::CSDSolverTrafoFP2D( Config* settings ) : SNSolver( settings 
     // Set angle and energies
     _energies  = Vector( _nEnergies, 0.0 );    // equidistant
     _energyMin = 1e-4 * 0.511;
-    _energyMax = 0.1;    // 50e0;
+    _energyMax = 0.01;    // 50e0;
 
     // write equidistant energy grid (false) or refined grid (true)
     GenerateEnergyGrid( false );
@@ -156,59 +156,6 @@ CSDSolverTrafoFP2D::CSDSolverTrafoFP2D( Config* settings ) : SNSolver( settings 
     // exit(EXIT_SUCCESS);
 }
 
-void CSDSolverTrafoFP2D::Solve() {
-
-    PrepareVolumeOutput();
-    SolverPreprocessing();
-
-    // begin temps
-    // double dFlux = 1e10;
-    // int rank;
-    // MPI_Comm_rank( MPI_COMM_WORLD, &rank );
-    // Vector fluxOld( _nCells, 0.0 );
-    // auto log = spdlog::get( "event" );
-    // end temps
-
-    // loop over energies (pseudo-time)
-    for( unsigned n = 0; n < _nEnergies - 1; ++n ) {
-        IterPreprocessing( n );
-        FluxUpdate();
-        FVMUpdate( n );
-
-        IterPostprocessing();
-
-        //#pragma omp parallel for
-        //        for( unsigned j = 0; j < _nCells; ++j ) {
-        //            _fluxNew[j] = dot( _sol[j], _weights );
-        //            if( n > 0 ) {
-        //                _dose[j] += 0.5 * _dE * ( _fluxNew[j] * _s[_nEnergies - n - 1] + fluxOld[j] * _s[_nEnergies - n] ) /
-        //                            _density[j];    // update dose with trapezoidal rule
-        //            }
-        //            else {
-        //                _dose[j] += _dE * _fluxNew[j] * _s[_nEnergies - n - 1] / _density[j];
-        //            }
-        //            _solverOutput[j] = _fluxNew[j];
-        //        }
-        //
-        //        // Save( n );
-        //        dFlux   = blaze::l2Norm( _fluxNew - fluxOld );
-        //        fluxOld = _fluxNew;
-        //        if( rank == 0 )
-        //            log->info( "{:03.8f}  {:03.8f}  {:01.5e}  {:01.5e}", _energiesOrig[_nEnergies - n - 1], _energies[n], _dE / _densityMin, dFlux
-        //            );
-        //        if( std::isinf( dFlux ) || std::isnan( dFlux ) ) break;
-
-        WriteVolumeOutput( n );
-        WriteScalarOutput( n );
-        PrintScreenOutput( n );
-        PrintHistoryOutput( n );
-        PrintVolumeOutput( n );
-    }
-    // for( unsigned j = 0; j < _nCells; ++j ) _solverOutput[j] = _density[j];
-    // Save( 1 );
-    // Save();
-}
-
 void CSDSolverTrafoFP2D::Save() const {
     std::vector<std::vector<std::vector<double>>> outputFields;
     std::vector<std::vector<std::string>> outputFieldNames;
@@ -331,7 +278,7 @@ void CSDSolverTrafoFP2D::WriteVolumeOutput( unsigned idx_pseudoTime ) {
     unsigned nGroups = (unsigned)_settings->GetNVolumeOutput();
     double maxDose;
     if( ( _settings->GetVolumeOutputFrequency() != 0 && idx_pseudoTime % (unsigned)_settings->GetVolumeOutputFrequency() == 0 ) ||
-        ( idx_pseudoTime == _nEnergies - 1 ) /* need sol at last iteration */ ) {
+        ( idx_pseudoTime == _maxIter - 1 ) /* need sol at last iteration */ ) {
 
         for( unsigned idx_group = 0; idx_group < nGroups; idx_group++ ) {
             switch( _settings->GetVolumeOutput()[idx_group] ) {
@@ -511,7 +458,6 @@ void CSDSolverTrafoFP2D::SolverPreprocessing() {
             _sol[j][k] = _sol[j][k] * _density[j] * _s[_nEnergies - 1];    // note that _s[_nEnergies - 1] is stopping power at highest energy
         }
     }
-
     // store transformed energies ETilde instead of E in _energies vector (cf. Dissertation Kerstion Kuepper, Eq. 1.25)
     double tmp   = 0.0;
     _energies[0] = 0.0;
@@ -530,6 +476,5 @@ void CSDSolverTrafoFP2D::SolverPreprocessing() {
     for( unsigned j = 1; j < _nCells; ++j ) {
         if( _densityMin > _density[j] ) _densityMin = _density[j];
     }
-
     // cross sections do not need to be transformed to ETilde energy grid since e.g. TildeSigmaT(ETilde) = SigmaT(E(ETilde))
 }

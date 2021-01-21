@@ -61,8 +61,8 @@ class Config
     /*!< @brief If true, very low entries (10^-10 or smaller) of the flux matrices will be set to zero,
      * to improve floating point accuracy */
     bool _cleanFluxMat;
-    bool _allGaussPts;     /*!< @brief If true, the SN Solver uses all Gauss pts in the quadrature */
-    bool _csd; /*LEGACY */ /*!< @brief If true, continuous slowing down approximation will be used */
+    bool _allGaussPts; /*!< @brief If true, the SN Solver uses all Gauss pts in the quadrature */
+    bool _csd;         /*!< @brief If true, continuous slowing down approximation will be used */
 
     // --- Problems ---
 

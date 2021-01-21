@@ -153,6 +153,12 @@ void Solver::Solve() {
         logCSV->info( lineToPrintCSV );
     }
 
+    // Adjust maxIter, depending if we have a normal run or a csd Run
+    _maxIter = _nEnergies;
+    if( _settings->GetIsCSD() ) {
+        _maxIter = _nEnergies - 1;    // Since CSD does not go the last energy step
+    }
+
     // Prepare Solver output
     PrepareVolumeOutput();
 
@@ -160,7 +166,7 @@ void Solver::Solve() {
     SolverPreprocessing();
 
     // Loop over energies (pseudo-time of continuous slowing down approach)
-    for( unsigned iter = 0; iter < _nEnergies; iter++ ) {
+    for( unsigned iter = 0; iter < _maxIter; iter++ ) {
 
         // --- Prepare Boundaries and temp variables
         IterPreprocessing( iter );
@@ -194,7 +200,7 @@ void Solver::PrintVolumeOutput( int currEnergy ) const {
     if( _settings->GetVolumeOutputFrequency() != 0 && currEnergy % (unsigned)_settings->GetVolumeOutputFrequency() == 0 ) {
         ExportVTK( _settings->GetOutputFile() + "_" + std::to_string( currEnergy ), _outputFields, _outputFieldNames, _mesh );
     }
-    if( currEnergy == (int)_nEnergies - 1 ) {    // Last iteration write without suffix.
+    if( currEnergy == (int)_maxIter - 1 ) {    // Last iteration write without suffix.
         ExportVTK( _settings->GetOutputFile(), _outputFields, _outputFieldNames, _mesh );
     }
 }
@@ -266,7 +272,7 @@ void Solver::WriteScalarOutput( unsigned iteration ) {
             case VTK_OUTPUT:
                 _screenOutputFields[idx_field] = 0;
                 if( ( _settings->GetVolumeOutputFrequency() != 0 && iteration % (unsigned)_settings->GetVolumeOutputFrequency() == 0 ) ||
-                    ( iteration == _nEnergies - 1 ) /* need sol at last iteration */ ) {
+                    ( iteration == _maxIter - 1 ) /* need sol at last iteration */ ) {
                     _screenOutputFields[idx_field] = 1;
                 }
                 break;
@@ -274,7 +280,7 @@ void Solver::WriteScalarOutput( unsigned iteration ) {
             case CSV_OUTPUT:
                 _screenOutputFields[idx_field] = 0;
                 if( ( _settings->GetHistoryOutputFrequency() != 0 && iteration % (unsigned)_settings->GetHistoryOutputFrequency() == 0 ) ||
-                    ( iteration == _nEnergies - 1 ) /* need sol at last iteration */ ) {
+                    ( iteration == _maxIter - 1 ) /* need sol at last iteration */ ) {
                     _screenOutputFields[idx_field] = 1;
                 }
                 break;
@@ -323,7 +329,7 @@ void Solver::WriteScalarOutput( unsigned iteration ) {
             case VTK_OUTPUT:
                 _historyOutputFields[idx_field] = 0;
                 if( ( _settings->GetVolumeOutputFrequency() != 0 && iteration % (unsigned)_settings->GetVolumeOutputFrequency() == 0 ) ||
-                    ( iteration == _nEnergies - 1 ) /* need sol at last iteration */ ) {
+                    ( iteration == _maxIter - 1 ) /* need sol at last iteration */ ) {
                     _historyOutputFields[idx_field] = 1;
                 }
                 break;
@@ -331,7 +337,7 @@ void Solver::WriteScalarOutput( unsigned iteration ) {
             case CSV_OUTPUT:
                 _historyOutputFields[idx_field] = 0;
                 if( ( _settings->GetHistoryOutputFrequency() != 0 && iteration % (unsigned)_settings->GetHistoryOutputFrequency() == 0 ) ||
-                    ( iteration == _nEnergies - 1 ) /* need sol at last iteration */ ) {
+                    ( iteration == _maxIter - 1 ) /* need sol at last iteration */ ) {
                     _historyOutputFields[idx_field] = 1;
                 }
                 break;
@@ -387,7 +393,7 @@ void Solver::PrintScreenOutput( unsigned iteration ) {
         if( _settings->GetScreenOutputFrequency() != 0 && iteration % (unsigned)_settings->GetScreenOutputFrequency() == 0 ) {
             log->info( lineToPrint );
         }
-        else if( iteration == _nEnergies - 1 ) {    // Always print last iteration
+        else if( iteration == _maxIter - 1 ) {    // Always print last iteration
             log->info( lineToPrint );
         }
     }

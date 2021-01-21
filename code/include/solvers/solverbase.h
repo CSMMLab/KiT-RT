@@ -26,7 +26,9 @@ class Solver
 
     // --------- Often used variables of member classes for faster access ----
 
-    unsigned _nEnergies;             /*! @brief number of energy/time steps, number of nodal energy values for CSD */
+    unsigned _nEnergies; /*! @brief number of energysteps, number of nodal energy values for CSD */
+    unsigned _maxIter;   /*! @brief number of time steps, for non CSD, this equals _nEnergies, for _csd, _maxIter = _nEnergies-1*/
+
     double _dE;                      /*! @brief energy/time step size */
     Vector _energies;                // energy groups used in the simulation [keV]
     std::vector<double> _density;    // patient density, dim(_density) = _nCells
