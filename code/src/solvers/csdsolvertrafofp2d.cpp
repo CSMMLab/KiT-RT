@@ -156,51 +156,6 @@ CSDSolverTrafoFP2D::CSDSolverTrafoFP2D( Config* settings ) : SNSolver( settings 
     // exit(EXIT_SUCCESS);
 }
 
-void CSDSolverTrafoFP2D::Save() const {
-    std::vector<std::vector<std::vector<double>>> outputFields;
-    std::vector<std::vector<std::string>> outputFieldNames;
-
-    // one group
-    outputFields.resize( 1 );
-    outputFieldNames.resize( 1 );
-
-    // 2 fields for this group
-    outputFields[0].resize( 1 );
-    outputFieldNames[0].resize( 1 );
-
-    // Fill names
-    outputFieldNames[0][0] = "dose";
-    // outputFieldNames[0][1] = "normalized dose";
-
-    // Fill fields
-    outputFields[0][0].resize( _nCells );
-    // outputFields[0][1].resize( _nCells );
-
-    // std::vector<double> normalizedDose = _dose;
-    // double maxDose                     = *std::max_element( _dose.begin(), _dose.end() );
-    // for( unsigned i = 0; i < _dose.size(); ++i ) normalizedDose[i] /= maxDose;
-
-    for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
-        outputFields[0][0][idx_cell] = _dose[idx_cell];
-        // outputFields[0][1][idx_cell] = normalizedDose[idx_cell];
-    }
-
-    // debug
-    // for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
-    //    std::cout << _dose[idx_cell] << "\n";
-    //}
-    ExportVTK( _settings->GetOutputFile() + "_TEST", outputFields, outputFieldNames, _mesh );
-}
-
-void CSDSolverTrafoFP2D::Save( int currEnergy ) const {
-    std::vector<std::string> fieldNames{ "flux" };
-    std::vector<std::vector<std::string>> fieldNamesWrapper{ fieldNames };
-
-    std::vector<std::vector<double>> scalarField( 1, _solverOutput );
-    std::vector<std::vector<std::vector<double>>> results{ scalarField };
-    ExportVTK( _settings->GetOutputFile() + "_" + std::to_string( currEnergy ), results, fieldNamesWrapper, _mesh );
-}
-
 void CSDSolverTrafoFP2D::GenerateEnergyGrid( bool refinement ) {
     _dE = ComputeTimeStep( _settings->GetCFL() );
     if( !refinement ) {

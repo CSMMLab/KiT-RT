@@ -187,6 +187,7 @@ void Solver::Solve() {
         PrintHistoryOutput( iter );
         PrintVolumeOutput( iter );
     }
+
     if( rank == 0 ) {
         log->info( hLine );
         log->info( "| Postprocessing screen output goes here." );

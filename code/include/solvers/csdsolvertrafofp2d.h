@@ -59,9 +59,8 @@ class CSDSolverTrafoFP2D : public SNSolver
     /**
      * @brief Output solution to VTK file
      */
-    virtual void Save() const;
-    virtual void Save( int currEnergy ) const;
 
+  private:
     // IO
     void PrepareVolumeOutput() override final;
     void WriteVolumeOutput( unsigned idx_pseudoTime ) override final;
