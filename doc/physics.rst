@@ -1,5 +1,5 @@
 ================
-Transport Theory
+Kinetic Theory
 ================
 
 The kinetic theory is dedicated to describe the dynamical behavior of a many-particle system through ensemble averaging.
@@ -27,13 +27,13 @@ characteristic scales. Consider the molecular motion of gases as an
 example. Down to the finest scale of a many-particle system, the
 Newton’s second law depicts particle motions via
 
-.. code:: math
+.. math::
 
    \mathbf{F} = m \mathbf{a}
 
 As a first order system it reads
 
-.. code:: math
+.. math::
 
    \frac{d \mathbf x}{dt} = \mathbf v, \ \frac{d \mathbf v}{dt} = \frac{\mathbf F}{m}
 
@@ -57,7 +57,7 @@ during most of time with mild intermolecular collisions. Such dynamics
 can be described with an operator splitting approach, i.e. the kinetic
 transport equation
 
-.. code:: math
+.. math::
 
    \frac{\partial f}{\partial t}+ \mathbf v \cdot \nabla_\mathbf x f + \mathbf a \cdot \nabla_\mathbf v f = Q(f)
 
@@ -66,7 +66,7 @@ collisions correspondingly. Different collision models can be inserted
 into such equation. If the particles only collide with a background
 material one obtains linear Boltzmann collision operator
 
-.. code:: math
+.. math::
 
    Q(f)=\int_{\mathbb R^3} \mathcal B(\mathbf v_*, \mathbf v) \left[ f(\mathbf v_*)-f(\mathbf v)\right] d\mathbf v_*
 
@@ -75,7 +75,7 @@ collisions at different velocities. If the interactions among particles
 are considered, the collision operator becomes nonlinear. For example,
 the two-body collision results in nonlinear Boltzmann equation
 
-.. code:: math
+.. math::
 
    Q(f)=\int_{\mathbb R^3} \int_{\mathcal S^2} \mathcal B(\cos \beta, |\mathbf{v}-\mathbf{v_*}|) \left[ f(\mathbf v')f(\mathbf v_*')-f(\mathbf v)f(\mathbf v_*)\right] d\mathbf \Omega d\mathbf v_*
 
