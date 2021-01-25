@@ -299,7 +299,7 @@ void ICRU::DCSEL0( double E ) {
         else if( particle == ParticleType::POSITRON )
             Y[IE] = std::log( _PTCS1[IE] );
         else {
-            std::cerr << "Unsupported particle type" << std::endl;
+            ErrorMessages::Error( "Unsupported particle type", CURRENT_FUNCTION );
             exit( EXIT_FAILURE );
         }
     }
@@ -348,7 +348,7 @@ void ICRU::SPLINE( const std::vector<double>& X,
 
     for( unsigned I = 0; I < N1; ++I ) {
         if( X[I + 1] - X[I] < 1.0e-13 ) {
-            std::cerr << "x values not increasing" << std::endl;
+            ErrorMessages::Error( "x values not increasing", CURRENT_FUNCTION );
             exit( EXIT_FAILURE );
         }
         A[I] = X[I + 1] - X[I];

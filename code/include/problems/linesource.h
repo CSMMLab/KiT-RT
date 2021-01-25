@@ -82,16 +82,6 @@ class LineSource_PN : public LineSource
   private:
     LineSource_PN() = delete;
 
-    /**
-     * @brief Gets the global index for given order l of Legendre polynomials and given
-     *        order k of Legendre functions.
-     *        Note: This is code doubling from PNSolver::GlobalIndex
-     * @param l : order of Legendre polynomial
-     * @param k : order of Legendre function
-     * @returns global index
-     */
-    int GlobalIndex( int l, int k ) const;
-
   public:
     LineSource_PN( Config* settings, Mesh* mesh );
     ~LineSource_PN();

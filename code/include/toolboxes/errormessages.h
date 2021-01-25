@@ -7,8 +7,6 @@
 #ifndef CRTSNERROR_H
 #define CRTSNERROR_H
 
-#include <iostream>
-
 #include "spdlog/spdlog.h"
 
 class ErrorMessages

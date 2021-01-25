@@ -1,4 +1,5 @@
 #include "toolboxes/sphericalharmonics.h"
+#include "toolboxes/errormessages.h"
 #include <math.h>
 
 SphericalHarmonics::SphericalHarmonics( unsigned L_degree ) {
@@ -12,8 +13,20 @@ SphericalHarmonics::SphericalHarmonics( unsigned L_degree ) {
 
     ComputeCoefficients();
 
-    unsigned basisSize = GlobalIdxBasis( _LMaxDegree, _LMaxDegree ) + 1;
-    _YBasis            = Vector( basisSize, 0.0 );
+    _YBasis = Vector( GetBasisSize(), 0.0 );
+}
+
+unsigned SphericalHarmonics::GetBasisSize() { return GetGlobalIndexBasis( _LMaxDegree, _LMaxDegree ) + 1; /* +1, since globalIdx computes indices */ }
+
+unsigned SphericalHarmonics::GetCurrDegreeSize( unsigned currDegreeL ) { return 2 * currDegreeL + 1; }
+
+unsigned SphericalHarmonics::GetGlobalIndexBasis( int l_degree, int k_order ) {
+    if( l_degree < 0 ) ErrorMessages::Error( "Negative polynomial degrees not supported.", CURRENT_FUNCTION );
+    if( k_order < -l_degree || k_order > l_degree )
+        ErrorMessages::Error( "Order k of spherical harmonics basis must be in bounds -l<= k <= l.", CURRENT_FUNCTION );
+
+    return (unsigned)( k_order + l_degree /*number of previous indices in current level*/ +
+                       l_degree * l_degree ) /* number of previous indices untill level l-1 */;
 }
 
 Vector SphericalHarmonics::ComputeSphericalBasis( double my, double phi ) {
@@ -92,7 +105,7 @@ void SphericalHarmonics::ComputeAssLegendrePoly( const double my ) {
 
 void SphericalHarmonics::ComputeYBasis( const double phi ) {
     for( unsigned l_idx = 0; l_idx <= _LMaxDegree; l_idx++ ) {
-        _YBasis[GlobalIdxBasis( l_idx, 0 )] = _assLegendreP[GlobalIdxAssLegendreP( l_idx, 0 )] * 0.5 * M_SQRT2;    // M_SQRT2 = sqrt(2)
+        _YBasis[GetGlobalIndexBasis( l_idx, 0 )] = _assLegendreP[GlobalIdxAssLegendreP( l_idx, 0 )] * 0.5 * M_SQRT2;    // M_SQRT2 = sqrt(2)
     }
 
     // helper constants
@@ -113,16 +126,8 @@ void SphericalHarmonics::ComputeYBasis( const double phi ) {
         c2 = c1;
         c1 = c;
         for( unsigned l_idx = k_idx; l_idx <= _LMaxDegree; l_idx++ ) {
-            _YBasis[GlobalIdxBasis( l_idx, -k_idx )] = _assLegendreP[GlobalIdxAssLegendreP( l_idx, k_idx )] * s;
-            _YBasis[GlobalIdxBasis( l_idx, k_idx )]  = _assLegendreP[GlobalIdxAssLegendreP( l_idx, k_idx )] * c;
+            _YBasis[GetGlobalIndexBasis( l_idx, -k_idx )] = _assLegendreP[GlobalIdxAssLegendreP( l_idx, k_idx )] * s;
+            _YBasis[GetGlobalIndexBasis( l_idx, k_idx )]  = _assLegendreP[GlobalIdxAssLegendreP( l_idx, k_idx )] * c;
         }
     }
-
-    // slower version
-    // for( int l_idx = 1; l_idx <= int( _LMaxDegree ); l_idx++ ) {
-    //     for( int k_idx = 1; k_idx <= l_idx; k_idx++ ) {
-    //         _YBasis[GlobalIdxBasis( l_idx, -k_idx )] = _assLegendreP[GlobalIdxAssLegendreP( l_idx, k_idx )] * sin( k_idx * phi );
-    //         _YBasis[GlobalIdxBasis( l_idx, k_idx )]  = _assLegendreP[GlobalIdxAssLegendreP( l_idx, k_idx )] * cos( k_idx * phi );
-    //     }
-    // }
 }

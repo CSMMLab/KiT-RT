@@ -233,7 +233,7 @@ void Config::SetConfigOptions() {
     AddEnumOption( "PROBLEM", _problemName, Problem_Map, PROBLEM_ElectronRT );
     /*! @brief Solver \n DESCRIPTION: Solver used for problem \n DEFAULT SN_SOLVER @ingroup Config. */
     AddEnumOption( "SOLVER", _solverName, Solver_Map, SN_SOLVER );
-    /*! @brief RECONS_ORDER \n DESCRIPTION: Reconstruction order for solver \n DEFAULT 1 \ingroup Config.*/
+    /*! @brief RECONS_ORDER \n DESCRIPTION: Reconstruction order for solver (spatial flux) \n DEFAULT 1 \ingroup Config.*/
     AddUnsignedShortOption( "RECONS_ORDER", _reconsOrder, 1 );
     /*! @brief CleanFluxMatrices \n DESCRIPTION:  If true, very low entries (10^-10 or smaller) of the flux matrices will be set to zero,
      * to improve floating point accuracy \n DEFAULT false \ingroup Config */
@@ -264,12 +264,12 @@ void Config::SetConfigOptions() {
     /*! @brief Newton Optimizer Epsilon \n DESCRIPTION:  Convergencce Epsilon for Newton Optimizer \n DEFAULT 1e-3 \ingroup Config */
     AddDoubleOption( "NEWTON_EPSILON", _optimizerEpsilon, 0.001 );
     /*! @brief Max Iter Newton Optmizers \n DESCRIPTION: Max number of newton iterations \n DEFAULT 10 \ingroup Config */
-    AddUnsignedShortOption( "NEWTON_ITER", _newtonIter, 100 );
+    AddUnsignedLongOption( "NEWTON_ITER", _newtonIter, 100 );
     /*! @brief Step Size Newton Optmizers \n DESCRIPTION: Step size for Newton optimizer \n DEFAULT 10 \ingroup Config */
     AddDoubleOption( "NEWTON_STEP_SIZE", _newtonStepSize, 0.1 );
     /*! @brief Max Iter for line search in Newton Optmizers \n DESCRIPTION: Max number of line search iter for newton optimizer \n DEFAULT 10 \ingroup
      * Config */
-    AddUnsignedShortOption( "NEWTON_LINE_SEARCH_ITER", _newtonLineSearchIter, 100 );
+    AddUnsignedLongOption( "NEWTON_LINE_SEARCH_ITER", _newtonLineSearchIter, 100 );
     /*! @brief Newton Fast mode \n DESCRIPTION:  If true, we skip the Newton optimizer for Quadratic entropy and set alpha = u \n DEFAULT false
      * \ingroup Config */
     AddBoolOption( "NEWTON_FAST_MODE", _newtonFastMode, false );
@@ -282,6 +282,10 @@ void Config::SetConfigOptions() {
 
     /*! @brief Scattering kernel \n DESCRIPTION: Describes used scattering kernel \n DEFAULT KERNEL_Isotropic \ingroup Config */
     AddEnumOption( "KERNEL", _kernelName, Kernel_Map, KERNEL_Isotropic );
+
+    /*! @brief Spherical Basis \n DESCRIPTION: Describes the chosen set of basis functions for on the unit sphere (e.g. for Moment methods) \n DEFAULT
+     * SPHERICAL_HARMONICS \ingroup Config */
+    AddEnumOption( "SPHERICAL_BASIS", _sphericalBasisName, SphericalBasis_Map, SPHERICAL_HARMONICS );
 
     // Output related options
     /*! @brief Volume output \n DESCRIPTION: Describes output groups to write to vtk \ingroup Config */
@@ -296,6 +300,18 @@ void Config::SetConfigOptions() {
     AddEnumListOption( "HISTORY_OUTPUT", _nHistoryOutput, _historyOutput, ScalarOutput_Map );
     /*! @brief History output Frequency \n DESCRIPTION: Describes history output write frequency \n DEFAULT 1 \ingroup Config */
     AddUnsignedShortOption( "HISTORY_OUTPUT_FREQUENCY", _historyOutputFrequency, 1 );
+
+    // Data generator related options
+    /*! @brief Size of training data set \n DESCRIPTION: Size of training data set  \n DEFAULT 1 \ingroup Config */
+    AddUnsignedLongOption( "TRAINING_SET_SIZE", _tainingSetSize, 1 );
+    /*! @brief Size of training data set \n DESCRIPTION: Size of training data set  \n DEFAULT 10 \ingroup Config */
+    AddUnsignedLongOption( "MAX_VALUE_FIRST_MOMENT", _maxValFirstMoment, 10 );
+    /*! @brief Data generator mode \n DESCRIPTION: Check, if data generator mode is active. If yes, no solver is called, but instead the data
+     *         generator is executed \n DEFAULT false \ingroup Config */
+    AddBoolOption( "DATA_GENERATOR_MODE", _dataGeneratorMode, false );
+    /*! @brief Distance to the boundary of the realizable set \n DESCRIPTION: Distance to the boundary of the realizable set  \n DEFAULT 0.1 \ingroup
+     * Config */
+    AddDoubleOption( "BOUNDARY_DISTANCE_REALIZABLE_SET", _boundaryDistanceRealizableSet, 0.1 );
 }
 
 void Config::SetConfigParsing( string case_filename ) {
@@ -429,6 +445,16 @@ void Config::SetPostprocessing() {
             ErrorMessages::Error( "Path to mesh file <" + this->GetOxygenFile() + "> does not exist. Please check your config file.",
                                   CURRENT_FUNCTION );
         }
+    }
+
+    // --- Solver setup ---
+    if( GetSolverName() == PN_SOLVER && GetSphericalBasisName() != SPHERICAL_HARMONICS ) {
+        ErrorMessages::Error( "PN Solver only works with spherical harmonics basis.\nThis should be the default setting for option SPHERICAL_BASIS.",
+                              CURRENT_FUNCTION );
+    }
+
+    if( GetSolverName() == MN_SOLVER && GetSphericalBasisName() == SPHERICAL_MONOMIALS && GetMaxMomentDegree() > 1 ) {
+        ErrorMessages::Error( "MN Solver only with monomial basis only stable up to degree 1. This is a TODO.", CURRENT_FUNCTION );
     }
 
     // --- Output Postprocessing ---

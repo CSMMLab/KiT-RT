@@ -141,4 +141,10 @@ enum SCALAR_OUTPUT { ITER, MASS, RMS_FLUX, VTK_OUTPUT, CSV_OUTPUT };
 inline std::map<std::string, SCALAR_OUTPUT> ScalarOutput_Map{
     { "ITER", ITER }, { "MASS", MASS }, { "RMS_FLUX", RMS_FLUX }, { "VTK_OUTPUT", VTK_OUTPUT }, { "CSV_OUTPUT", CSV_OUTPUT } };
 
+// Spherical Basis Name
+enum SPHERICAL_BASIS_NAME { SPHERICAL_HARMONICS, SPHERICAL_MONOMIALS };
+
+inline std::map<std::string, SPHERICAL_BASIS_NAME> SphericalBasis_Map{ { "SPHERICAL_HARMONICS", SPHERICAL_HARMONICS },
+                                                                       { "SPHERICAL_MONOMIALS", SPHERICAL_MONOMIALS } };
+
 #endif    // GLOBAL_CONSTANTS_H
