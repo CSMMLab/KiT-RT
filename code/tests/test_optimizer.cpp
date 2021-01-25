@@ -22,7 +22,7 @@ TEST_CASE( "Test the Newton Optimizer", "[optimizers]" ) {
     OptimizerBase* optimizer = OptimizerBase::Create( config );
 
     // Get dummy Moment Vector
-    unsigned nTotalEntries = basis.GlobalIdxBasis( config->GetMaxMomentDegree(), config->GetMaxMomentDegree() ) + 1;    // = 4
+    unsigned nTotalEntries = basis.GlobalIdxBasis( (int)config->GetMaxMomentDegree(), (int)config->GetMaxMomentDegree() ) + 1;    // = 4
     Vector u( nTotalEntries, -1.5 );
     u[1] = 0.0;
     u[2] = 1.0;

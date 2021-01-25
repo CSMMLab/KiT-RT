@@ -43,7 +43,7 @@ class SphericalHarmonics
      *  @param : l_degree - current degree of basis function, 0 <= l <= L
      *  @param : k_order  - current order of basis function,  -l <= k <= l
      */
-    unsigned inline GlobalIdxBasis( unsigned l_degree, unsigned k_order ) { return k_order + l_degree + l_degree * l_degree; }
+    unsigned inline GlobalIdxBasis( int l_degree, int k_order ) { return (unsigned)( k_order + l_degree + l_degree * l_degree ); }
 
     /*! @brief : Computes an entire set of (komplex congjugate) P_l^k and stores
      *           it in the vector _assLegendreP

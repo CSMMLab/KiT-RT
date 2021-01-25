@@ -12,7 +12,7 @@ SphericalHarmonics::SphericalHarmonics( unsigned L_degree ) {
 
     ComputeCoefficients();
 
-    unsigned basisSize = GlobalIdxBasis( _LMaxDegree, _LMaxDegree ) + 1;
+    unsigned basisSize = GlobalIdxBasis( (int)_LMaxDegree, (int)_LMaxDegree ) + 1;
     _YBasis            = Vector( basisSize, 0.0 );
 }
 
@@ -91,7 +91,7 @@ void SphericalHarmonics::ComputeAssLegendrePoly( const double my ) {
 }
 
 void SphericalHarmonics::ComputeYBasis( const double phi ) {
-    for( unsigned l_idx = 0; l_idx <= _LMaxDegree; l_idx++ ) {
+    for( int l_idx = 0; l_idx <= (int)_LMaxDegree; l_idx++ ) {
         _YBasis[GlobalIdxBasis( l_idx, 0 )] = _assLegendreP[GlobalIdxAssLegendreP( l_idx, 0 )] * 0.5 * M_SQRT2;    // M_SQRT2 = sqrt(2)
     }
 
@@ -105,14 +105,14 @@ void SphericalHarmonics::ComputeYBasis( const double phi ) {
     double s = 0.0;
     double c = 0.0;
 
-    for( unsigned k_idx = 1; k_idx <= _LMaxDegree; k_idx++ ) {
+    for( int k_idx = 1; k_idx <= (int)_LMaxDegree; k_idx++ ) {
         s  = tc * s1 - s2;    // addition theorem
         c  = tc * c1 - c2;    // addition theorem
         s2 = s1;
         s1 = s;
         c2 = c1;
         c1 = c;
-        for( unsigned l_idx = k_idx; l_idx <= _LMaxDegree; l_idx++ ) {
+        for( int l_idx = k_idx; l_idx <= (int)_LMaxDegree; l_idx++ ) {
             _YBasis[GlobalIdxBasis( l_idx, -k_idx )] = _assLegendreP[GlobalIdxAssLegendreP( l_idx, k_idx )] * s;
             _YBasis[GlobalIdxBasis( l_idx, k_idx )]  = _assLegendreP[GlobalIdxAssLegendreP( l_idx, k_idx )] * c;
         }
