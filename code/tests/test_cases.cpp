@@ -318,8 +318,7 @@ TEST_CASE( "Test the Data Generator", "[dataGen]" ) {
     bool lineValid;
     const char delimHist = ',';
 
-    bool testPassed  = true;
-    bool testPassed1 = true;
+    bool testPassed = true;
     // --- History Logger
     unsigned count = 0;
     while( !historyLoggerReferenceStream.eof() && !historyLoggerStream.eof() && count < 3 ) {
@@ -333,7 +332,7 @@ TEST_CASE( "Test the Data Generator", "[dataGen]" ) {
 
         if( out.size() != outRef.size() ) {
             std::cout << lineRef << "\n" << line << "\n";
-            testPassed1 = false;
+            testPassed = false;
             break;
         }
 
@@ -347,6 +346,5 @@ TEST_CASE( "Test the Data Generator", "[dataGen]" ) {
         }
         count++;
     }
-    REQUIRE( testPassed1 );
     REQUIRE( testPassed );
 }
