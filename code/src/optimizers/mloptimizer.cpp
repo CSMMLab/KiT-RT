@@ -25,7 +25,7 @@ MLOptimizer::MLOptimizer( Config* settings ) : OptimizerBase( settings ) {
 
 MLOptimizer::~MLOptimizer() { finalize_python(); }
 
-void MLOptimizer::Solve( Vector& lambda, Vector& u, VectorVector& /*moments*/, unsigned /*idx_cell*/ ) {
+void MLOptimizer::Solve( Vector& lambda, Vector& u, const VectorVector& /*moments*/, unsigned /*idx_cell*/ ) {
 
     // Convert Vector to array
     const unsigned input_size = u.size();
@@ -49,7 +49,7 @@ void MLOptimizer::Solve( Vector& lambda, Vector& u, VectorVector& /*moments*/, u
     delete[] nn_input;
 }
 
-void MLOptimizer::SolveMultiCell( VectorVector& lambda, VectorVector& u, VectorVector& /*moments*/ ) {
+void MLOptimizer::SolveMultiCell( VectorVector& lambda, VectorVector& u, const VectorVector& /*moments*/ ) {
 
     const unsigned batch_size = u.size();       // batch size = number of cells
     const unsigned sol_dim    = u[0].size();    // dimension of input vector = nTotalEntries
@@ -119,7 +119,7 @@ double* MLOptimizer::callNetwork( const unsigned input_size, double* nn_input ) 
         ErrorMessages::Error( "'call_network' is null or not callable!", CURRENT_FUNCTION );
     }
 
-    const long int dims[1] = { input_size };
+    long int dims[1] = { input_size };    // Why was this const?
 
     PyObject* inputArray = PyArray_SimpleNewFromData( 1, dims, NPY_DOUBLE, (void*)nn_input );
 
@@ -153,7 +153,7 @@ double* MLOptimizer::callNetworkMultiCell( const unsigned batch_size, const unsi
         ErrorMessages::Error( "'call_network' is null or not callable!", CURRENT_FUNCTION );
     }
 
-    const long int dims[2] = { batch_size, input_dim };
+    long int dims[2] = { batch_size, input_dim };    // Why was this const?
 
     PyObject* inputArray = PyArray_SimpleNewFromData( 2, dims, NPY_DOUBLE, (void*)nn_input );
 

@@ -125,7 +125,7 @@ CSDSolverTrafoFPSH2D::CSDSolverTrafoFPSH2D( Config* settings ) : SNSolver( setti
 }
 
 void CSDSolverTrafoFPSH2D::Solve() {
-    std::cout << "Solve SH" << std::endl;
+    // std::cout << "Solve SH" << std::endl;
     auto log = spdlog::get( "event" );
 
     // save original energy field for boundary conditions

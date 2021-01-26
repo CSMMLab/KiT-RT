@@ -1,6 +1,7 @@
 #include "quadratures/qlookupquadrature.h"
 #include "toolboxes/errormessages.h"
 #include <fstream>
+#include <math.h>
 #include <sstream>
 
 QLookupQuadrature::QLookupQuadrature( Config* settings ) : QuadratureBase( settings ) {}
@@ -39,6 +40,7 @@ void QLookupQuadrature::SetPointsAndWeights() {
 
     _weights.resize( _nq );
     _points.resize( _nq );
+    _pointsSphere.resize( _nq );
 
     double sumWeights = 0;
 
@@ -72,12 +74,31 @@ void QLookupQuadrature::SetPointsAndWeights() {
             if( ss.peek() == ',' ) ss.ignore();
         }
     }
+    // normalize the points
+    double norm = 0;
+    for( unsigned idx_point = 0; idx_point < _nq; idx_point++ ) {
 
+        norm = sqrt( _points[idx_point][0] * _points[idx_point][0] + _points[idx_point][1] * _points[idx_point][1] +
+                     _points[idx_point][2] * _points[idx_point][2] );
+        _points[idx_point][0] /= norm;
+        _points[idx_point][1] /= norm;
+        _points[idx_point][2] /= norm;
+    }
     // Correct the scaling of the weights
     for( unsigned idx = 0; idx < _nq; idx++ ) {
         _weights[idx] /= sumWeights;
         _weights[idx] *= 4.0 * M_PI;
     }
 
-    // Transform _points to _pointsSphere
+    // Transform _points to _pointsSphere ==>transform (x,y,z) into (my,phi)
+    for( unsigned idx = 0; idx < _nq; idx++ ) {
+        _pointsSphere[idx].resize( 2 );                                       // (my,phi)
+        _pointsSphere[idx][0] = _points[idx][2];                              // my = z
+        _pointsSphere[idx][1] = atan2( _points[idx][1], _points[idx][0] );    // phi in [-pi,pi]
+
+        // adapt intervall s.t. phi in [0,2pi]
+        if( _pointsSphere[idx][1] < 0 ) {
+            _pointsSphere[idx][1] = 2 * M_PI + _pointsSphere[idx][1];
+        }
+    }
 }

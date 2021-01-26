@@ -14,7 +14,8 @@ void QGaussLegendreTensorized::SetNq() {
     _nq = 2 * pow( GetOrder(), 2 );
 
     // 2d case SN solver only needs half of the sphere
-    if( _settings->GetSolverName() == SN_SOLVER && _settings->GetSNAllGaussPts() == false ) {
+    // Not used in DataGenerator Mode. (Maybe create an own Quadrature for halfpoints? This is a potential source for bugs)
+    if( _settings->GetDataGeneratorMode() == false && _settings->GetSolverName() == SN_SOLVER && _settings->GetSNAllGaussPts() == false ) {
         _nq = pow( GetOrder(), 2 );
     }
 }
@@ -58,7 +59,7 @@ void QGaussLegendreTensorized::SetPointsAndWeights() {
 
     unsigned range             = _order;    // By default, use all quad points
     double normalizationFactor = 1.0;
-    if( _settings->GetSolverName() == SN_SOLVER && _settings->GetSNAllGaussPts() == false ) {
+    if( _settings->GetDataGeneratorMode() == false && _settings->GetSolverName() == SN_SOLVER && _settings->GetSNAllGaussPts() == false ) {
         range = std::floor( _order / 2.0 );    // comment (steffen): why do we only need half of the points:
         //=> In 2D we would count everything twice. (not wrong with scaling)
         normalizationFactor = 2.0;

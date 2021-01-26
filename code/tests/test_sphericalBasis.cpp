@@ -3,6 +3,7 @@
 #include "common/config.h"
 #include "quadratures/qgausslegendretensorized.h"
 #include "toolboxes/sphericalharmonics.h"
+#include "toolboxes/sphericalmonomials.h"
 
 #include <fstream>
 #include <iostream>
@@ -28,7 +29,7 @@ double P2_0( double my ) { return sqrt( 5 / ( 8 * M_PI ) ) * ( 3 * my * my - 1 )
 double P2_1( double my ) { return -1 * sqrt( 15 / ( 4 * M_PI ) ) * my * sqrt( 1 - my * my ); }
 double P2_2( double my ) { return sqrt( 15 / ( 16 * M_PI ) ) * ( 1 - my * my ); }
 
-TEST_CASE( "test the spherical harmonics basis computation", "[spherical_harmonics]" ) {
+TEST_CASE( "test  spherical harmonics basis ", "[spherical_harmonics]" ) {
 
     std::string filename = std::string( TESTS_PATH ) + "input/unit_tests/solvers/unit_harmonics.cfg";
 
@@ -38,6 +39,21 @@ TEST_CASE( "test the spherical harmonics basis computation", "[spherical_harmoni
     unsigned maxMomentDegree = 2;
 
     SphericalHarmonics testBase( maxMomentDegree );
+
+    SECTION( "Test Global Indexing" ) {
+        bool indexingRight = true;
+        if( testBase.GetGlobalIndexBasis( 0, 0 ) != 0 ) indexingRight = false;
+        if( testBase.GetGlobalIndexBasis( 1, -1 ) != 1 ) indexingRight = false;
+        if( testBase.GetGlobalIndexBasis( 1, 0 ) != 2 ) indexingRight = false;
+        if( testBase.GetGlobalIndexBasis( 1, 1 ) != 3 ) indexingRight = false;
+        if( testBase.GetGlobalIndexBasis( 2, -2 ) != 4 ) indexingRight = false;
+        if( testBase.GetGlobalIndexBasis( 2, -1 ) != 5 ) indexingRight = false;
+        if( testBase.GetGlobalIndexBasis( 2, 0 ) != 6 ) indexingRight = false;
+        if( testBase.GetGlobalIndexBasis( 2, 1 ) != 7 ) indexingRight = false;
+        if( testBase.GetGlobalIndexBasis( 2, 2 ) != 8 ) indexingRight = false;
+
+        REQUIRE( indexingRight );
+    }
 
     SECTION( "Test against analytical solution" ) {
         std::vector<double> legendre;
@@ -170,12 +186,12 @@ TEST_CASE( "test the spherical harmonics basis computation", "[spherical_harmoni
             moment1 = testBase.ComputeSphericalBasis( x, y, z );
             moment2 = testBase.ComputeSphericalBasis( -x, -y, -z );
 
-            int idx_sys;
+            unsigned idx_sys;
             double result = 0.;
 
             for( int l_idx = 0; l_idx <= int( maxMomentDegree ); l_idx++ ) {
                 for( int k_idx = -l_idx; k_idx <= l_idx; k_idx++ ) {
-                    idx_sys = testBase.GlobalIdxBasis( l_idx, k_idx );
+                    idx_sys = testBase.GetGlobalIndexBasis( l_idx, k_idx );
 
                     if( l_idx % 2 == 0 )
                         result = moment2[idx_sys] - moment1[idx_sys];
@@ -194,7 +210,7 @@ TEST_CASE( "test the spherical harmonics basis computation", "[spherical_harmoni
         Vector moment1 = testBase.ComputeSphericalBasis( 0, 0 );
         Vector moment2 = testBase.ComputeSphericalBasis( 0, 0 );
 
-        int idx_sys;
+        unsigned idx_sys;
         double result = 0.;
 
         // // test in polar coordinates
@@ -206,7 +222,7 @@ TEST_CASE( "test the spherical harmonics basis computation", "[spherical_harmoni
 
                 for( int l_idx = 0; l_idx <= int( maxMomentDegree ); l_idx++ ) {
                     for( int k_idx = -l_idx; k_idx <= l_idx; k_idx++ ) {
-                        idx_sys = testBase.GlobalIdxBasis( l_idx, k_idx );
+                        idx_sys = testBase.GetGlobalIndexBasis( l_idx, k_idx );
 
                         if( l_idx % 2 == 0 )
                             result = moment2[idx_sys] - moment1[idx_sys];
@@ -219,5 +235,72 @@ TEST_CASE( "test the spherical harmonics basis computation", "[spherical_harmoni
             }
         }
         REQUIRE( errorWithinBounds );
+    }
+}
+
+double Omega_xBase( double my, double phi ) { return sqrt( 1 - my * my ) * sin( phi ); }
+double Omega_yBase( double my, double phi ) { return sqrt( 1 - my * my ) * cos( phi ); }
+double Omega_zBase( double my ) { return my; }
+
+double SphericalMonomial_0( double /* my */, double /* phi */ ) { return 1; }
+double SphericalMonomial_1( double my, double /*phi*/ ) { return Omega_zBase( my ); }                              // omega_z
+double SphericalMonomial_2( double my, double phi ) { return Omega_yBase( my, phi ); }                             // omega_y
+double SphericalMonomial_3( double my, double phi ) { return Omega_xBase( my, phi ); }                             // omega_x
+double SphericalMonomial_4( double my, double /*phi*/ ) { return Omega_zBase( my ) * Omega_zBase( my ); }          // omega_z^2
+double SphericalMonomial_5( double my, double phi ) { return Omega_yBase( my, phi ) * Omega_zBase( my ); }         // omega_y*omega_z
+double SphericalMonomial_6( double my, double phi ) { return Omega_yBase( my, phi ) * Omega_yBase( my, phi ); }    // omega_y^2
+double SphericalMonomial_7( double my, double phi ) { return Omega_xBase( my, phi ) * Omega_zBase( my ); }         // omega_x*omega_z
+double SphericalMonomial_8( double my, double phi ) { return Omega_xBase( my, phi ) * Omega_yBase( my, phi ); }    // omega_x*omega_y
+double SphericalMonomial_9( double my, double phi ) { return Omega_xBase( my, phi ) * Omega_xBase( my, phi ); }    // omega_x^2
+
+TEST_CASE( "test spherical monomial basis", "[spherical_monomials]" ) {
+    unsigned maxMomentDegree = 2;    //==> 6+3+1 basis functions
+    SphericalMonomials testBase( maxMomentDegree );
+
+    SECTION( "Test Global Indexing" ) {
+
+        bool currDimRight = true;
+        if( testBase.GetCurrDegreeSize( 0 ) != 1 ) currDimRight = false;
+        if( testBase.GetCurrDegreeSize( 1 ) != 3 ) currDimRight = false;
+        if( testBase.GetCurrDegreeSize( 2 ) != 6 ) currDimRight = false;
+
+        REQUIRE( currDimRight );
+
+        bool indexingRight = true;
+        if( testBase.GetGlobalIndexBasis( 0, 0 ) != 0 ) indexingRight = false;
+        if( testBase.GetGlobalIndexBasis( 1, 0 ) != 1 ) indexingRight = false;
+        if( testBase.GetGlobalIndexBasis( 1, 1 ) != 2 ) indexingRight = false;
+        if( testBase.GetGlobalIndexBasis( 1, 2 ) != 3 ) indexingRight = false;
+        if( testBase.GetGlobalIndexBasis( 2, 0 ) != 4 ) indexingRight = false;
+        if( testBase.GetGlobalIndexBasis( 2, 1 ) != 5 ) indexingRight = false;
+        if( testBase.GetGlobalIndexBasis( 2, 2 ) != 6 ) indexingRight = false;
+        if( testBase.GetGlobalIndexBasis( 2, 3 ) != 7 ) indexingRight = false;
+        if( testBase.GetGlobalIndexBasis( 2, 4 ) != 8 ) indexingRight = false;
+        if( testBase.GetGlobalIndexBasis( 2, 5 ) != 9 ) indexingRight = false;
+
+        REQUIRE( indexingRight );
+    }
+
+    SECTION( "Test against analytical solution" ) {
+        Vector moment;
+        std::vector<bool> validMoment( 10, true );
+        for( double my = -1.0; my < 1.0; my += 0.1 ) {
+
+            for( double phi = 0.0; phi < 2 * M_PI; phi += 0.1 ) {
+                moment = testBase.ComputeSphericalBasis( my, phi );
+
+                if( std::fabs( moment[0] - SphericalMonomial_0( my, phi ) ) > 1e2 * std::numeric_limits<double>::epsilon() ) validMoment[0] = false;
+                if( std::fabs( moment[1] - SphericalMonomial_1( my, phi ) ) > 1e2 * std::numeric_limits<double>::epsilon() ) validMoment[1] = false;
+                if( std::fabs( moment[2] - SphericalMonomial_2( my, phi ) ) > 1e2 * std::numeric_limits<double>::epsilon() ) validMoment[2] = false;
+                if( std::fabs( moment[3] - SphericalMonomial_3( my, phi ) ) > 1e2 * std::numeric_limits<double>::epsilon() ) validMoment[3] = false;
+                if( std::fabs( moment[4] - SphericalMonomial_4( my, phi ) ) > 1e2 * std::numeric_limits<double>::epsilon() ) validMoment[4] = false;
+                if( std::fabs( moment[5] - SphericalMonomial_5( my, phi ) ) > 1e2 * std::numeric_limits<double>::epsilon() ) validMoment[5] = false;
+                if( std::fabs( moment[6] - SphericalMonomial_6( my, phi ) ) > 1e2 * std::numeric_limits<double>::epsilon() ) validMoment[6] = false;
+                if( std::fabs( moment[7] - SphericalMonomial_7( my, phi ) ) > 1e2 * std::numeric_limits<double>::epsilon() ) validMoment[7] = false;
+                if( std::fabs( moment[8] - SphericalMonomial_8( my, phi ) ) > 1e2 * std::numeric_limits<double>::epsilon() ) validMoment[8] = false;
+                if( std::fabs( moment[9] - SphericalMonomial_9( my, phi ) ) > 1e2 * std::numeric_limits<double>::epsilon() ) validMoment[8] = false;
+            }
+        }
+        REQUIRE( std::all_of( validMoment.begin(), validMoment.end(), []( bool v ) { return v; } ) );
     }
 }

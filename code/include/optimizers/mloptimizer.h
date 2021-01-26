@@ -16,8 +16,8 @@ class MLOptimizer : public OptimizerBase
 
     inline ~MLOptimizer();
 
-    void Solve( Vector& lambda, Vector& u, VectorVector& moments, unsigned idx_cell = 0 ) override;
-    void SolveMultiCell( VectorVector& lambda, VectorVector& u, VectorVector& moments ) override;
+    void Solve( Vector& lambda, Vector& u, const VectorVector& moments, unsigned idx_cell = 0 ) override;
+    void SolveMultiCell( VectorVector& lambda, VectorVector& u, const VectorVector& moments ) override;
 
   private:
     double* callNetwork( const unsigned input_size, double* input );

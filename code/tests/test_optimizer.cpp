@@ -22,7 +22,7 @@ TEST_CASE( "Test the Newton Optimizer", "[optimizers]" ) {
     OptimizerBase* optimizer = OptimizerBase::Create( config );
 
     // Get dummy Moment Vector
-    unsigned nTotalEntries = basis.GlobalIdxBasis( config->GetMaxMomentDegree(), config->GetMaxMomentDegree() ) + 1;    // = 4
+    unsigned nTotalEntries = basis.GetGlobalIndexBasis( config->GetMaxMomentDegree(), config->GetMaxMomentDegree() ) + 1;    // = 4
     Vector u( nTotalEntries, -1.5 );
     u[1] = 0.0;
     u[2] = 1.0;
@@ -31,12 +31,11 @@ TEST_CASE( "Test the Newton Optimizer", "[optimizers]" ) {
     Vector alpha( nTotalEntries, 27.0 );
 
     // Get Moments
-    config->SetNQuadPoints( quad->GetNq() );
 
     VectorVector moments = VectorVector( quad->GetNq() );
     double my, phi;
     VectorVector quadPointsSphere = quad->GetPointsSphere();
-    for( unsigned idx_quad = 0; idx_quad < config->GetNQuadPoints(); idx_quad++ ) {
+    for( unsigned idx_quad = 0; idx_quad < quad->GetNq(); idx_quad++ ) {
         my  = quadPointsSphere[idx_quad][0];
         phi = quadPointsSphere[idx_quad][1];
 

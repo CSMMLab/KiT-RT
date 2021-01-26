@@ -98,7 +98,7 @@ Append `HINTS VTK_INSTALL_DIR` to the `find_package( VTK ... )` line in the CMak
 find_package( VTK REQUIRED COMPONENTS vtkIOGeometry vtkFiltersCore HINTS ~/VTK-install )
 ```
 
-Compile it
+Compile it (make sure you use GCC as compiler: module load compiler/gnu/10.2) 
 ```bash
 module load devel/cmake/3.16
 module load compiler/gnu/9.2
@@ -164,6 +164,8 @@ Please stick to the following coding style for easier code readability:
  - class variables start with an underscore and lowercase letters e.g. `_foo`
  - functions start with a capital letter e.g. `GetSettings()`
  - any variable/function names have capital letters at each individual word e.g. `GetAllCellsAdjacentTo(Cell i)`
+ - Abstract base classes for inheritance structures end with the suffix "Base" e.g. QuadratureBase, whith child classes 
+   QGaussLegendre or QProduct
 
 Please also use the provided `code/.clang-format` style format to format your code before pushing your latest commits.
 Some editors offer to automatically apply the style format upon saving a file (e.g. `Qtcreator`).

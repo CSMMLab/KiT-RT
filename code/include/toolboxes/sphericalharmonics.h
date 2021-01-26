@@ -12,9 +12,10 @@
 #define SPHERICALHARMONICS_H
 
 #include "common/typedef.h"
+#include "toolboxes/sphericalbase.h"
 #include <vector>
 
-class SphericalHarmonics
+class SphericalHarmonics : public SphericalBase
 {
   public:
     /*! @brief : Sets up class for spherical harmonics basis based on legendre
@@ -30,20 +31,13 @@ class SphericalHarmonics
      *  @param  : phi - spherical coordinate, 0 <= phi <= 2*pi
      *  @return : vector of basis functions at point (my, phi) with size N = L² +2L
      */
-    Vector ComputeSphericalBasis( double my, double phi );
+    Vector ComputeSphericalBasis( double my, double phi ) override;
 
     /*! @brief  : Computes all N = L² +2L basis functions at point (x, y, z) on the unit sphere
      *  @param  : x,y,z = coordinates on unit sphere
      *  @return : vector of basis functions at point (x,y,z) with size N = L² +2L
      */
-    Vector ComputeSphericalBasis( double x, double y, double z );
-
-    /*! @brief : helper function to get the global index for given k and l of
-     *           the basis function Y_k^l.
-     *  @param : l_degree - current degree of basis function, 0 <= l <= L
-     *  @param : k_order  - current order of basis function,  -l <= k <= l
-     */
-    unsigned inline GlobalIdxBasis( unsigned l_degree, unsigned k_order ) { return k_order + l_degree + l_degree * l_degree; }
+    Vector ComputeSphericalBasis( double x, double y, double z ) override;
 
     /*! @brief : Computes an entire set of (komplex congjugate) P_l^k and stores
      *           it in the vector _assLegendreP
@@ -52,10 +46,20 @@ class SphericalHarmonics
      */
     std::vector<double> GetAssLegendrePoly( const double my );
 
-  private:
-    /*! @brief: maximal degree of the spherical harmonics basis (this is "L" in the comments)*/
-    unsigned _LMaxDegree;
+    /*! @brief: Returns length of the basis, i.e. number of elements of the basis */
+    unsigned GetBasisSize() override;
 
+    /*! @brief: Return number of basis functions with degree equals to currDegree
+     *  @param: currDegreeL = degree of polynomials that are counted   */
+    unsigned GetCurrDegreeSize( unsigned currDegree ) override;
+
+    /*! @brief : helper function to get the global index for given k and l of
+     *           the basis function Y_k^l.
+     *  @param : l_degree - current degree of basis function, 0 <= l <= L
+     *  @param : k_order  - current order of basis function,  -l <= k <= l      */
+    unsigned GetGlobalIndexBasis( int l_degree, int k_order ) override;
+
+  private:
     /*! @brief: coefficients for the computations of the basis
      *         length of _aParam, _bParam : L + (L*(L+1))/2
      */
@@ -68,7 +72,7 @@ class SphericalHarmonics
      */
     std::vector<double> _assLegendreP;
 
-    /*! @brief sperical harmonic basis functions of
+    /*! @brief: spherical harmonic basis functions of
      *         degree  0 <= l <= L and order -l <= k <= l
      *         length : N = L² +2L
      */
@@ -93,7 +97,7 @@ class SphericalHarmonics
 
     /*! @brief: Computes the spherical harmonics basis function up to degree _LmaxDegree at
      *          polar coordinates (theta, psi) and stores the result in _YBasis;
-     *  @param:
+     *  @param: spherical coordinate phi
      */
     void ComputeYBasis( const double phi );
 };
