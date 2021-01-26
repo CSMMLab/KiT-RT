@@ -10,3 +10,6 @@
 [submodule "code/ext/parmetis"]
 	path = code/ext/parmetis
 	url = https://github.com/slydex/parmetis.git
+[submodule "code/ext/neuralEntropy"]
+	path = code/ext/neuralEntropy
+	url = https://github.com/ScSteffen/neuralEntropy.git
