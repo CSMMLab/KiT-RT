@@ -38,8 +38,8 @@ class PNSolver : public Solver
     Vector _scatterMatDiag; /*! @brief: diagonal of the scattering matrix (its a diagonal matrix by construction). Contains eigenvalues of the
                                scattering kernel.  */
 
-    VectorVector _solDx;
-    VectorVector _solDy;
+    VectorVector _solDx; /*! @brief:  temporary storage of x-derivatives of solution */
+    VectorVector _solDy; /*! @brief:  temporary storage of y-derivatives of solution */
 
     // ---- Member functions ----
 

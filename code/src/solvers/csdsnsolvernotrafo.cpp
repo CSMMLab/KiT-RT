@@ -91,7 +91,7 @@ CSDSNSolverNoTrafo::CSDSNSolverNoTrafo( Config* settings ) : SNSolver( settings 
 }
 
 void CSDSNSolverNoTrafo::Solve() {
-    std::cout << "Solve" << std::endl;
+    // std::cout << "Solve" << std::endl;
     auto log = spdlog::get( "event" );
 
     // angular flux at next time step (maybe store angular flux at all time steps, since time becomes energy?)

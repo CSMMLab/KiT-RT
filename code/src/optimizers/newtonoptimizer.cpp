@@ -1,9 +1,16 @@
+/*!
+ * @file newtonoptimizer.cpp
+ * @brief class for solving the minimal entropy optimization problem using a newton optimizer with line search.
+ * @author S. Schotthöfer
+ */
 
 #include "optimizers/newtonoptimizer.h"
 #include "common/config.h"
 #include "entropies/entropybase.h"
 #include "quadratures/quadraturebase.h"
 #include "toolboxes/errormessages.h"
+
+#include <omp.h>
 
 NewtonOptimizer::NewtonOptimizer( Config* settings ) : OptimizerBase( settings ) {
     _quadrature       = QuadratureBase::Create( settings );
@@ -18,7 +25,7 @@ NewtonOptimizer::NewtonOptimizer( Config* settings ) : OptimizerBase( settings )
 
 NewtonOptimizer::~NewtonOptimizer() { delete _quadrature; }
 
-double NewtonOptimizer::ComputeObjFunc( Vector& alpha, Vector& sol, VectorVector& moments ) {
+double NewtonOptimizer::ComputeObjFunc( Vector& alpha, Vector& sol, const VectorVector& moments ) {
     double result = 0.0;
 
     // Integrate
@@ -29,7 +36,7 @@ double NewtonOptimizer::ComputeObjFunc( Vector& alpha, Vector& sol, VectorVector
     return result;
 }
 
-void NewtonOptimizer::ComputeGradient( Vector& alpha, Vector& sol, VectorVector& moments, Vector& grad ) {
+void NewtonOptimizer::ComputeGradient( Vector& alpha, Vector& sol, const VectorVector& moments, Vector& grad ) {
 
     // Reset Vector
     for( unsigned idx_sys = 0; idx_sys < grad.size(); idx_sys++ ) {
@@ -43,7 +50,7 @@ void NewtonOptimizer::ComputeGradient( Vector& alpha, Vector& sol, VectorVector&
     grad -= sol;
 }
 
-void NewtonOptimizer::ComputeHessian( Vector& alpha, VectorVector& moments, Matrix& hessian ) {
+void NewtonOptimizer::ComputeHessian( Vector& alpha, const VectorVector& moments, Matrix& hessian ) {
     // Reset Matrix
     unsigned nSize = alpha.size();
 
@@ -62,7 +69,7 @@ void NewtonOptimizer::ComputeHessian( Vector& alpha, VectorVector& moments, Matr
     }
 }
 
-void NewtonOptimizer::SolveMultiCell( VectorVector& lambda, VectorVector& sol, VectorVector& moments ) {
+void NewtonOptimizer::SolveMultiCell( VectorVector& lambda, VectorVector& sol, const VectorVector& moments ) {
 
     unsigned nCells = lambda.size();
 
@@ -74,14 +81,15 @@ void NewtonOptimizer::SolveMultiCell( VectorVector& lambda, VectorVector& sol, V
         return;
     }
 
+#pragma omp parallel for schedule( guided )
     for( unsigned idx_cell = 0; idx_cell < nCells; idx_cell++ ) {
-        Solve( lambda[idx_cell], sol[idx_cell], moments );
+        Solve( lambda[idx_cell], sol[idx_cell], moments, idx_cell );
     }
 }
 
-void NewtonOptimizer::Solve( Vector& lambda, Vector& sol, VectorVector& moments, unsigned idx_cell ) {
+void NewtonOptimizer::Solve( Vector& lambda, Vector& sol, const VectorVector& moments, unsigned idx_cell ) {
 
-    /* solve the problem argmin ( <eta(alpha*m)>-alpha*u))
+    /* solve the problem argmin ( <eta_*(alpha*m)>-alpha*u))
      * where alpha = Lagrange multiplier
      *           m = moment basis
      *           u = current "moment solution"
@@ -167,7 +175,16 @@ void NewtonOptimizer::Solve( Vector& lambda, Vector& sol, VectorVector& moments,
             return;
         }
     }
-    ErrorMessages::Error( "Newton did not converge! Norm of gradient is: " + std::to_string( norm( dlambdaNew ) ) + " at cell " +
-                              std::to_string( idx_cell ),
+    std::string uSolString = "At moment: (" + std::to_string( sol[0] );
+    for( unsigned i = 1; i < nSize; i++ ) {
+        uSolString += " | " + std::to_string( sol[i] );
+    }
+    uSolString += ").";
+
+    Vector u1     = { sol[1], sol[2], sol[3] };
+    double normU1 = norm( u1 );
+    ErrorMessages::Error( "Newton did not converge at cell " + std::to_string( idx_cell ) + "\n" + uSolString +
+                              "\nNorm of gradient: " + std::to_string( norm( dlambdaNew ) ) + "\nObjective function value: " +
+                              std::to_string( ComputeObjFunc( lambda, sol, moments ) ) + "\nBoundary Ratio: " + std::to_string( normU1 / sol[0] ),
                           CURRENT_FUNCTION );
 }

@@ -54,8 +54,8 @@ double Interpolation::operator()( double x ) const {
     if( _dim != 1u ) ErrorMessages::Error( "Invalid data dimension for operator(x)!", CURRENT_FUNCTION );
     // x must be between min and max of table values
     if( x < _x[0] || x > _x[_x.size() - 1u] ) {
-        std::cout << x << "\t" << _x[0] << std::endl;
-        std::cout << x << "\t" << _x[_x.size() - 1u] << std::endl;
+        // std::cout << x << "\t" << _x[0] << std::endl;
+        // std::cout << x << "\t" << _x[_x.size() - 1u] << std::endl;
         ErrorMessages::Error( "Extrapolation is not supported!", CURRENT_FUNCTION );
     }
 

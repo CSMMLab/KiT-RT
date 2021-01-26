@@ -51,12 +51,13 @@ void QGaussLegendre1D::SetPointsAndWeights() {
     // resize points and weights
     _points.resize( _nq );
     _weights.resize( _nq );
-    unsigned dim = 3;
+    unsigned dim = 1;
     for( unsigned k = 0; k < _nq; ++k ) {
         _points[k].resize( dim );
         _points[k][0] = nodes1D[k];
         _weights[k]   = weights1D[k];
     }
+    _pointsSphere = _points;
 }
 
 void QGaussLegendre1D::SetConnectivity() {    // TODO
@@ -139,4 +140,30 @@ double QGaussLegendre1D::Pythag( const double a, const double b ) {
                          : ( absb == 0.0 ? 0.0 : absb * std::sqrt( 1.0 + ( absa / absb ) * ( absa / absb ) ) ) );
 }
 
-bool QGaussLegendre1D::CheckOrder() { return true; }
+bool QGaussLegendre1D::CheckOrder() {
+    return true;    // All orders viable
+}
+
+double QGaussLegendre1D::Integrate( double( f )( double x0, double x1, double x2 ) ) {    // Not Safe!
+    double result = 0.0;
+    double x      = 0.0;
+    double y      = 0.0;
+    double z      = 0.0;
+    double w      = 0.0;
+    for( unsigned i = 0; i < _nq; i++ ) {
+        x = _points[i][0];
+        w = _weights[i];
+        result += w * f( x, y, z );
+    }
+    return result;
+}
+
+double QGaussLegendre1D::IntegrateSpherical( double( f )( double my, double phi ) ) {
+    ErrorMessages::Error( "This method is not applicable for 1D quadratures.\n", CURRENT_FUNCTION );
+    return f( 0, 0 );
+}
+
+std::vector<double> QGaussLegendre1D::Integrate( std::vector<double>( f )( double x0, double x1, double x2 ), unsigned /* len */ ) {
+    ErrorMessages::Error( "This method is not applicable for 1D quadratures.\n", CURRENT_FUNCTION );
+    return { f( 0, 0, 0 ) };
+}

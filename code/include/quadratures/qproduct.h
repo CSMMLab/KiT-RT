@@ -25,8 +25,6 @@ class QProduct : public QuadratureBase
     inline void SetNq() override { _nq = 4 * pow( GetOrder(), 2 ); }
     void SetPointsAndWeights() override;
     void SetConnectivity() override;
-
-    inline VectorVector GetPointsSphere() const override { return _pointsSphere; }
 };
 
 #endif    // PRODUCTQUADRATURE_H

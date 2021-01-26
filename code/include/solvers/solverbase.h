@@ -55,12 +55,12 @@ class Solver
     std::vector<std::vector<unsigned>> _neighbors;
 
     // slope related params
-    Reconstructor* _reconstructor; /*! @brief reconstructor class for high order scheme */
-    unsigned _reconsOrder;
-    VectorVector _psiDx;
-    VectorVector _psiDy;
-    VectorVector _cellMidPoints;
-    std::vector<std::vector<Vector>> _interfaceMidPoints;
+    Reconstructor* _reconstructor;                        /*! @brief reconstructor object for high-order scheme */
+    unsigned _reconsOrder;                                /*! @brief reconstruction order (current: 1 & 2) */
+    VectorVector _psiDx;                                  /*! @brief slope of solutions in X direction */
+    VectorVector _psiDy;                                  /*! @brief slope of solutions in Y direction */
+    VectorVector _cellMidPoints;                          /*! @brief middle point locations of elements */
+    std::vector<std::vector<Vector>> _interfaceMidPoints; /*! @brief middle point locations of edges */
 
     // Solution related members
     VectorVector _sol;                 /*! @brief solution of the PDE, e.g. angular flux or moments */
@@ -124,6 +124,10 @@ class Solver
     void PrepareHistoryOutput();
     /*! @brief Prints HistoryOutputFields to logger */
     void PrintHistoryOutput( unsigned iteration );
+    /*! @brief Pre Solver Screen and Logger Output */
+    void DrawPreSolverOutput();
+    /*! @brief Post Solver Screen and Logger Output */
+    void DrawPostSolverOutput();
 
   public:
     /*! @brief Solver constructor
