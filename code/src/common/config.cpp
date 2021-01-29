@@ -899,7 +899,7 @@ void Config::InitLogger() {
             // create spdlog file sink
             auto fileSink = std::make_shared<spdlog::sinks::basic_file_sink_mt>( _logDir + cfilename );
             fileSink->set_level( fileLogLvl );
-            fileSink->set_pattern( "%Y-%m-%d %H:%M:%S.%f , %v" );
+            fileSink->set_pattern( "%Y-%m-%d %H:%M:%S.%f ,%v" );
             sinks.push_back( fileSink );
         }
 
