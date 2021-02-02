@@ -10,9 +10,9 @@
 
 MLOptimizer::MLOptimizer( Config* settings ) : OptimizerBase( settings ) {
 
-    initialize_python();
+    initializPython();
 
-    // initialize network
+    // initialize python script
     std::string moduleName = "callNeuralClosure";
 
     _pModule = PyImport_ImportModule( moduleName.c_str() );
@@ -21,9 +21,12 @@ MLOptimizer::MLOptimizer( Config* settings ) : OptimizerBase( settings ) {
         Py_DecRef( _pModule );
         ErrorMessages::Error( "'" + moduleName + "' can not be imported!", CURRENT_FUNCTION );
     }
+
+    // initialize Network
+    MLOptimizer::initialize_network();
 }
 
-MLOptimizer::~MLOptimizer() { finalize_python(); }
+MLOptimizer::~MLOptimizer() { finalizePython(); }
 
 void MLOptimizer::Solve( Vector& lambda, Vector& u, const VectorVector& /*moments*/, unsigned /*idx_cell*/ ) {
 
@@ -80,11 +83,11 @@ void MLOptimizer::SolveMultiCell( VectorVector& lambda, VectorVector& u, const V
     delete[] nn_output;
 }
 
-void MLOptimizer::init_numpy() {
+void MLOptimizer::initNumpy() {
     _import_array();    // Check, if this gives a mem Leak!
 }
 
-void MLOptimizer::initialize_python() {
+void MLOptimizer::initializePython() {
     // Initialize the Python Interpreter
     std::string pyPath = KITRT_PYTHON_PATH;
     pyPath             = pyPath + "/../ext/neuralEntropy/python";
@@ -98,15 +101,15 @@ void MLOptimizer::initialize_python() {
     }
 
     // std::cout << "Python working directory is: " << pyPath << " \n";
-    init_numpy();
+    initNumpy();
 }
 
-void MLOptimizer::finalize_python() {
+void MLOptimizer::finalizePython() {
     Py_DecRef( _pModule );
     Py_Finalize();
 }
 
-double* MLOptimizer::callNetwork( const unsigned input_size, double* nn_input ) {
+double* MLOptimizer::callNetwork( const unsigned inputDim, double* nnInput ) {
 
     PyObject *pArgs, *pReturn, *pFunc;    // *pModule,
     PyArrayObject* np_ret;
@@ -119,9 +122,9 @@ double* MLOptimizer::callNetwork( const unsigned input_size, double* nn_input ) 
         ErrorMessages::Error( "'call_network' is null or not callable!", CURRENT_FUNCTION );
     }
 
-    long int dims[1] = { input_size };    // Why was this const?
+    long int dims[1] = { inputDim };    // Why was this const?
 
-    PyObject* inputArray = PyArray_SimpleNewFromData( 1, dims, NPY_DOUBLE, (void*)nn_input );
+    PyObject* inputArray = PyArray_SimpleNewFromData( 1, dims, NPY_DOUBLE, (void*)nnInput );
 
     pArgs = PyTuple_New( 1 );
     PyTuple_SetItem( pArgs, 0, reinterpret_cast<PyObject*>( inputArray ) );
@@ -140,7 +143,7 @@ double* MLOptimizer::callNetwork( const unsigned input_size, double* nn_input ) 
     return nn_output;
 }
 
-double* MLOptimizer::callNetworkMultiCell( const unsigned batch_size, const unsigned input_dim, double* nn_input ) {
+double* MLOptimizer::callNetworkMultiCell( const unsigned batchSize, const unsigned inputDim, double* nnInput ) {
 
     PyObject *pArgs, *pReturn, *pFunc;
     PyArrayObject* np_ret;
@@ -153,9 +156,9 @@ double* MLOptimizer::callNetworkMultiCell( const unsigned batch_size, const unsi
         ErrorMessages::Error( "'call_network' is null or not callable!", CURRENT_FUNCTION );
     }
 
-    long int dims[2] = { batch_size, input_dim };    // Why was this const?
+    long int dims[2] = { batchSize, inputDim };    // Why was this const?
 
-    PyObject* inputArray = PyArray_SimpleNewFromData( 2, dims, NPY_DOUBLE, (void*)nn_input );
+    PyObject* inputArray = PyArray_SimpleNewFromData( 2, dims, NPY_DOUBLE, (void*)nnInput );
 
     pArgs = PyTuple_New( 1 );
     PyTuple_SetItem( pArgs, 0, reinterpret_cast<PyObject*>( inputArray ) );
