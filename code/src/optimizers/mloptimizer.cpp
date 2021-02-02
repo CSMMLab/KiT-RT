@@ -13,7 +13,7 @@ MLOptimizer::MLOptimizer( Config* settings ) : OptimizerBase( settings ) {
     initialize_python();
 
     // initialize network
-    std::string moduleName = "callNN_MK3";
+    std::string moduleName = "callNeuralClosure";
 
     _pModule = PyImport_ImportModule( moduleName.c_str() );
     if( !_pModule ) {
@@ -87,7 +87,7 @@ void MLOptimizer::init_numpy() {
 void MLOptimizer::initialize_python() {
     // Initialize the Python Interpreter
     std::string pyPath = KITRT_PYTHON_PATH;
-
+    pyPath             = pyPath + "/../ext/neuralEntropy/python";
     if( !Py_IsInitialized() ) {
 
         Py_InitializeEx( 0 );
