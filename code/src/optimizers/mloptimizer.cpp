@@ -7,10 +7,11 @@
 #include "common/config.h"
 #include "optimizers/mloptimizer.h"
 #include "toolboxes/errormessages.h"
+#include <iostream>
 
 MLOptimizer::MLOptimizer( Config* settings ) : OptimizerBase( settings ) {
 
-    initializPython();
+    initializePython();
 
     // initialize python script
     std::string moduleName = "callNeuralClosure";
@@ -23,7 +24,7 @@ MLOptimizer::MLOptimizer( Config* settings ) : OptimizerBase( settings ) {
     }
 
     // initialize Network
-    MLOptimizer::initialize_network();
+    initializeNetwork();
 }
 
 MLOptimizer::~MLOptimizer() { finalizePython(); }
@@ -104,6 +105,40 @@ void MLOptimizer::initializePython() {
     initNumpy();
 }
 
+void MLOptimizer::initializeNetwork() {
+    PyObject *pArgs, *pFunc;    // *pModule,
+    // PyArrayObject* np_ret;
+
+    pFunc = PyObject_GetAttrString( _pModule, "initModelCpp" );
+    if( !pFunc || !PyCallable_Check( pFunc ) ) {
+        PyErr_Print();
+        Py_DecRef( _pModule );
+        Py_DecRef( pFunc );
+        ErrorMessages::Error( "'initModelCpp' is null or not callable!", CURRENT_FUNCTION );
+    }
+
+    long int dims[1]     = { 2 };    // input: [modelNumber, maxDegree_N]
+    int* input           = new int[2];
+    input[0]             = (int)_settings->GetNeuralModel();
+    input[1]             = (int)_settings->GetMaxMomentDegree();
+    PyObject* inputArray = PyArray_SimpleNewFromData( 1, dims, NPY_INT, (void*)input );
+
+    pArgs = PyTuple_New( 1 );
+    PyTuple_SetItem( pArgs, 0, reinterpret_cast<PyObject*>( inputArray ) );
+
+    // Call Python function
+
+    PyObject_CallObject( pFunc, pArgs );    // PyObject
+
+    // np_ret = reinterpret_cast<PyArrayObject*>( pReturn );    // Cast from PyObject to PyArrayObject
+    //
+    // double* nn_output = reinterpret_cast<double*>( PyArray_DATA( np_ret ) );    // Get Output
+
+    // Finalizing
+    Py_DecRef( pFunc );
+    // Py_DECREF( np_ret );
+}
+
 void MLOptimizer::finalizePython() {
     Py_DecRef( _pModule );
     Py_Finalize();
@@ -114,12 +149,12 @@ double* MLOptimizer::callNetwork( const unsigned inputDim, double* nnInput ) {
     PyObject *pArgs, *pReturn, *pFunc;    // *pModule,
     PyArrayObject* np_ret;
 
-    pFunc = PyObject_GetAttrString( _pModule, "call_network" );
+    pFunc = PyObject_GetAttrString( _pModule, "callNetwork" );
     if( !pFunc || !PyCallable_Check( pFunc ) ) {
         PyErr_Print();
         Py_DecRef( _pModule );
         Py_DecRef( pFunc );
-        ErrorMessages::Error( "'call_network' is null or not callable!", CURRENT_FUNCTION );
+        ErrorMessages::Error( "'callNetwork' is null or not callable!", CURRENT_FUNCTION );
     }
 
     long int dims[1] = { inputDim };    // Why was this const?
@@ -148,12 +183,12 @@ double* MLOptimizer::callNetworkMultiCell( const unsigned batchSize, const unsig
     PyObject *pArgs, *pReturn, *pFunc;
     PyArrayObject* np_ret;
 
-    pFunc = PyObject_GetAttrString( _pModule, "call_networkBatchwise" );
+    pFunc = PyObject_GetAttrString( _pModule, "callNetworkBatchwise" );
     if( !pFunc || !PyCallable_Check( pFunc ) ) {
         PyErr_Print();
         Py_DecRef( _pModule );
         Py_DecRef( pFunc );
-        ErrorMessages::Error( "'call_network' is null or not callable!", CURRENT_FUNCTION );
+        ErrorMessages::Error( "'callNetworkBatchwise' is null or not callable!", CURRENT_FUNCTION );
     }
 
     long int dims[2] = { batchSize, inputDim };    // Why was this const?

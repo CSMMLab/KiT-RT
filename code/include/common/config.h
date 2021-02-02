@@ -61,7 +61,6 @@ class Config
     unsigned short _maxMomentDegree; /*!< @brief Maximal Order of Moments for PN and MN Solver */
     unsigned short _reconsOrder;     /*!< @brief Spatial Order of Accuracy for Solver */
 
-    
     /*!< @brief If true, very low entries (10^-10 or smaller) of the flux matrices will be set to zero,
      * to improve floating point accuracy */
     bool _cleanFluxMat;
@@ -103,6 +102,8 @@ class Config
     unsigned long _newtonLineSearchIter;  /*!< @brief Maximal Number of line search iterations for newton optimizer */
     bool _newtonFastMode;                 /*!< @brief If true, we skip the NewtonOptimizer for quadratic entropy and assign alpha = u */
 
+    // NeuralModel
+    unsigned short _neuralModel; /*!< @brief:  Version number of the employed neural model */
     // Output Options
     unsigned short _nVolumeOutput;            /*!< @brief Number of volume outputs */
     std::vector<VOLUME_OUTPUT> _volumeOutput; /*!< @brief Output groups for volume output*/
@@ -285,6 +286,9 @@ class Config
     unsigned long inline GetNewtonMaxLineSearches() const { return _newtonLineSearchIter; }
     bool inline GetNewtonFastMode() const { return _newtonFastMode; }
     OPTIMIZER_NAME inline GetOptimizerName() const { return _entropyOptimizerName; }
+
+    // Neural Closure
+    unsigned short inline GetNeuralModel() { return _neuralModel; }
 
     // Boundary Conditions
     BOUNDARY_TYPE GetBoundaryType( std::string nameMarker ) const; /*! @brief Get Boundary Type of given marker */

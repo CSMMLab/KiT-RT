@@ -281,6 +281,9 @@ void Config::SetConfigOptions() {
      * \ingroup Config */
     AddBoolOption( "NEWTON_FAST_MODE", _newtonFastMode, false );
 
+    // Neural Entropy Closure options
+    AddUnsignedShortOption( "NEURAL_MODEL", _neuralModel, 4 );
+
     // Mesh related options
     // Boundary Markers
     /*!\brief BC_DIRICHLET\n DESCRIPTION: Dirichlet wall boundary marker(s) \ingroup Config*/
