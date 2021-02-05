@@ -854,6 +854,21 @@ void Config::InitLogger() {
             sinks.push_back( fileSink );
         }
 
+        /*
+#ifdef BUILD_GUI
+        spdlog::level::level_enum guiLogLvl;
+#if NDEBUG
+        guiLogLvl = spdlog::level::info;
+#else
+        guiLogLvl = spdlog::level::debug;
+#endif
+        auto guiSink = std::make_shared<qt_sink_mt>();
+        guiSink->set_level( terminalLogLvl );
+        guiSink->set_pattern( "%v" );
+        sinks.push_back( guiSink );
+#endif
+*/
+
         // register all sinks
         auto event_logger = std::make_shared<spdlog::logger>( "event", begin( sinks ), end( sinks ) );
         spdlog::register_logger( event_logger );
