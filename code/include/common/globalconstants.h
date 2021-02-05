@@ -55,7 +55,16 @@ enum BOUNDARY_TYPE { DIRICHLET, NEUMANN, NONE, INVALID };
 /*! @brief Enum for all currently available quadratures in rtsn.
  *         Option enums are written in capital letters with underscores as spaces (e.g option "time integration" has option enum "TIME_INTEGRATION")
  */
-enum QUAD_NAME { QUAD_MonteCarlo, QUAD_GaussLegendreTensorized, QUAD_GaussLegendre1D, QUAD_LevelSymmetric, QUAD_Lebedev, QUAD_LDFESA, QUAD_Product };
+enum QUAD_NAME {
+    QUAD_MonteCarlo,
+    QUAD_GaussLegendreTensorized,
+    QUAD_GaussLegendre1D,
+    QUAD_LevelSymmetric,
+    QUAD_Lebedev,
+    QUAD_LDFESA,
+    QUAD_Product,
+    QUAD_GaussChebyshev1D
+};
 
 /*! @brief Conversion Map String to enum
  */
