@@ -60,13 +60,14 @@ CSDSolverTrafoFP2D::CSDSolverTrafoFP2D( Config* settings ) : SNSolver( settings 
 
     _FPMethod = 2;
 
-    double DMinus = 0.0;
-    double DPlus  = 0.0;
+    double DMinus = 0.0;    // is beta_{n-1/2}
+    double DPlus  = 0.0;    // is beta_{n+1/2}
 
     Vector gamma( 2 * order, 0.0 );
     double dPlus;
     double c, K;
 
+    // Setup Coefficients (see "Advances in Discrete Ordinates Methodology",  eq (1.137-1.140))
     double dMinus = 0.0;
     DPlus         = DMinus - 2 * _mu[0] * w[0];
     for( unsigned j = 0; j < orderMu - 1; ++j ) {

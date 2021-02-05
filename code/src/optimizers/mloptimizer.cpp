@@ -199,6 +199,7 @@ double* MLOptimizer::callNetworkMultiCell( const unsigned batchSize, const unsig
     PyTuple_SetItem( pArgs, 0, reinterpret_cast<PyObject*>( inputArray ) );
 
     // Call Python function
+
     pReturn = PyObject_CallObject( pFunc, pArgs );    // PyObject
 
     np_ret = reinterpret_cast<PyArrayObject*>( pReturn );    // Cast from PyObject to PyArrayObject

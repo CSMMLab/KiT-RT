@@ -19,8 +19,9 @@
 #include <omp.h>
 
 nnDataGenerator::nnDataGenerator( Config* settings ) {
-    _settings = settings;
-    _setSize  = settings->GetTrainingDataSetSize();
+    _settings   = settings;
+    _setSize    = settings->GetTrainingDataSetSize();
+    _gridSizeU0 = _setSize;
 
     _LMaxDegree = settings->GetMaxMomentDegree();
 
@@ -50,9 +51,30 @@ nnDataGenerator::nnDataGenerator( Config* settings ) {
     _entropy = EntropyBase::Create( _settings );
 
     // Initialize Training Data
-    _uSol     = VectorVector( _setSize, Vector( _nTotalEntries, 0.0 ) );
-    _alpha    = VectorVector( _setSize, Vector( _nTotalEntries, 0.0 ) );
-    _hEntropy = std::vector<double>( _setSize, 0.0 );
+    if( _LMaxDegree == 0 ) {
+        _uSol     = VectorVector( _setSize, Vector( _nTotalEntries, 0.0 ) );
+        _alpha    = VectorVector( _setSize, Vector( _nTotalEntries, 0.0 ) );
+        _hEntropy = std::vector<double>( _setSize, 0.0 );
+    }
+    else if( _LMaxDegree == 1 ) {
+        // Sample points on unit sphere.
+        QuadratureBase* quad = QuadratureBase::Create( _settings );
+        unsigned long nq     = (unsigned long)quad->GetNq();
+
+        // Allocate memory.
+        _setSize = nq * _gridSizeU0 * ( _gridSizeU0 - 1 ) / 2;
+
+        // REFACTOR THIS
+        _uSol     = VectorVector( _setSize, Vector( _nTotalEntries, 0.0 ) );
+        _alpha    = VectorVector( _setSize, Vector( _nTotalEntries, 0.0 ) );
+        _hEntropy = std::vector<double>( _setSize, 0.0 );
+
+        delete quad;
+    }
+
+    else {
+        ErrorMessages::Error( "Sampling of training data of degree higher than 1 is not yet implemented.", CURRENT_FUNCTION );
+    }
 }
 
 nnDataGenerator::~nnDataGenerator() {
@@ -74,6 +96,9 @@ void nnDataGenerator::computeTrainingData() {
 
     // --- compute alphas ---
     _optimizer->SolveMultiCell( _alpha, _uSol, _moments );
+
+    // --- Postprocessing
+    ComputeRealizableSolution();
 
     // --- compute entropy functional ---
     ComputeEntropyH_primal();
@@ -114,21 +139,11 @@ void nnDataGenerator::SampleSolutionU() {
         VectorVector qpoints = quad->GetPoints();    // carthesian coordinates.
         unsigned long nq     = (unsigned long)quad->GetNq();
 
-        // Allocate memory.
-        unsigned long setSizeU0 = _setSize;
-        unsigned long setSizeU1 = nq * setSizeU0 * ( setSizeU0 - 1 ) / 2;
-        _setSize                = setSizeU1;
-
-        // REFACTOR THIS
-        _uSol     = VectorVector( _setSize, Vector( _nTotalEntries, 0.0 ) );
-        _alpha    = VectorVector( _setSize, Vector( _nTotalEntries, 0.0 ) );
-        _hEntropy = std::vector<double>( _setSize, 0.0 );
-
         // --- sample u in order 0 ---
         // u_0 = <1*psi>
 
 #pragma omp parallel for schedule( guided )
-        for( unsigned long idx_set = 0; idx_set < setSizeU0; idx_set++ ) {
+        for( unsigned long idx_set = 0; idx_set < _gridSizeU0; idx_set++ ) {
 
             unsigned long outerIdx = ( idx_set - 1 ) * ( idx_set ) / 2;    // sum over all radii up to current
             outerIdx *= nq;                                                // in each radius step, use all quad points
@@ -242,6 +257,17 @@ void nnDataGenerator::CheckRealizability() {
     }
 }
 
+void nnDataGenerator::ComputeRealizableSolution() {
+    for( unsigned idx_sol = 0; idx_sol < _setSize; idx_sol++ ) {
+        double entropyReconstruction = 0.0;
+        _uSol[idx_sol]               = 0;
+        for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
+            // Make entropyReconstruction a member vector, s.t. it does not have to be re-evaluated in ConstructFlux
+            entropyReconstruction = _entropy->EntropyPrimeDual( blaze::dot( _alpha[idx_sol], _moments[idx_quad] ) );
+            _uSol[idx_sol] += _moments[idx_quad] * ( _weights[idx_quad] * entropyReconstruction );
+        }
+    }
+}
 void nnDataGenerator::PrintLoadScreen() {
     auto log = spdlog::get( "event" );
     log->info( "------------------------ Data Generation Starts --------------------------" );
