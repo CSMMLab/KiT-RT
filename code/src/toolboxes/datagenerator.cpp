@@ -19,9 +19,9 @@
 #include <omp.h>
 
 nnDataGenerator::nnDataGenerator( Config* settings ) {
-    _settings   = settings;
-    _setSize    = settings->GetTrainingDataSetSize();
-    _gridSizeU0 = _setSize;
+    _settings = settings;
+    _setSize  = settings->GetTrainingDataSetSize();
+    _gridSize = _setSize;
 
     _LMaxDegree = settings->GetMaxMomentDegree();
 
@@ -62,16 +62,32 @@ nnDataGenerator::nnDataGenerator( Config* settings ) {
         unsigned long nq     = (unsigned long)quad->GetNq();
 
         // Allocate memory.
-        _setSize = nq * _gridSizeU0 * ( _gridSizeU0 - 1 ) / 2;
+        _setSize = nq * _gridSize * ( _gridSize - 1 ) / 2;
 
-        // REFACTOR THIS
         _uSol     = VectorVector( _setSize, Vector( _nTotalEntries, 0.0 ) );
         _alpha    = VectorVector( _setSize, Vector( _nTotalEntries, 0.0 ) );
         _hEntropy = std::vector<double>( _setSize, 0.0 );
 
         delete quad;
     }
+    else if( _LMaxDegree == 2 && _settings->GetSphericalBasisName() == SPHERICAL_MONOMIALS && _settings->GetDim() == 1 ) {
+        // Carefull: This computes only normalized moments, i.e. sampling for u_0 = 1
+        unsigned c = 1;
+        double N1  = -1.0;
+        double N2;
+        double dN = 2.0 / (double)_setSize;
 
+        while( N1 < 1.0 ) {
+            N1 += dN;
+            N2 = N1 * N1;
+
+            while( N2 < 1.0 ) {
+                c++;
+                N2 += dN;
+            }
+        }
+        _setSize = c;
+    }
     else {
         ErrorMessages::Error( "Sampling of training data of degree higher than 1 is not yet implemented.", CURRENT_FUNCTION );
     }
@@ -133,7 +149,7 @@ void nnDataGenerator::SampleSolutionU() {
             _uSol[idx_set][0] = du0 * idx_set;
         }
     }
-    if( _LMaxDegree == 1 ) {
+    else if( _LMaxDegree == 1 && _settings->GetSphericalBasisName() == SPHERICAL_MONOMIALS ) {
         // Sample points on unit sphere.
         QuadratureBase* quad = QuadratureBase::Create( _settings );
         VectorVector qpoints = quad->GetPoints();    // carthesian coordinates.
@@ -143,7 +159,7 @@ void nnDataGenerator::SampleSolutionU() {
         // u_0 = <1*psi>
 
 #pragma omp parallel for schedule( guided )
-        for( unsigned long idx_set = 0; idx_set < _gridSizeU0; idx_set++ ) {
+        for( unsigned long idx_set = 0; idx_set < _gridSize; idx_set++ ) {
 
             unsigned long outerIdx = ( idx_set - 1 ) * ( idx_set ) / 2;    // sum over all radii up to current
             outerIdx *= nq;                                                // in each radius step, use all quad points
@@ -173,7 +189,27 @@ void nnDataGenerator::SampleSolutionU() {
             }
         }
     }
-    if( _LMaxDegree > 1 ) {
+    else if( _LMaxDegree == 2 && _settings->GetSphericalBasisName() == SPHERICAL_MONOMIALS && _settings->GetDim() == 1 ) {
+        // Carefull: This computes only normalized moments, i.e. sampling for u_0 = 1
+        unsigned c = 1;
+        double N1  = -1.0;
+        double N2;
+        double dN = 2.0 / (double)_setSize;
+
+        while( N1 < 1.0 ) {
+            N1 += dN;
+            N2 = N1 * N1;
+
+            while( N2 < 1.0 ) {
+                N2 += dN;
+                _uSol[c][0] = 1;     // u0 (normalized i.e. N0) by Monreals notation
+                _uSol[c][1] = N1;    // u1 (normalized i.e. N1) by Monreals notation
+                _uSol[c][2] = N2;    // u2 (normalized i.e. N2) by Monreals notation
+                c++;
+            }
+        }
+    }
+    else {
         ErrorMessages::Error( "Sampling for order higher than 1 is not yet supported", CURRENT_FUNCTION );
     }
 }

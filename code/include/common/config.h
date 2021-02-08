@@ -50,7 +50,17 @@ class Config
     unsigned _nQuadPoints;
 
     // Mesh
-    unsigned _nCells;
+    unsigned _nCells;    /*!< @brief: Number of cells in the mesh */
+    unsigned short _dim; /*!< @brief: spatial dimensionality of the mesh/test case */
+
+    // Boundary Conditions
+    /*!< @brief List of all Pairs (marker, BOUNDARY_TYPE), e.g. (farfield,DIRICHLET).
+         Each Boundary Conditions must have an entry in enum BOUNDARY_TYPE*/
+    std::vector<std::pair<std::string, BOUNDARY_TYPE>> _boundaries;
+    unsigned short _nMarkerDirichlet;          /*!< @brief Number of Dirichlet BC markers. Enum entry: DIRICHLET */
+    unsigned short _nMarkerNeumann;            /*!< @brief Number of Neumann BC markers. Enum entry: Neumann */
+    std::vector<std::string> _MarkerDirichlet; /*!< @brief Dirichlet BC markers. */
+    std::vector<std::string> _MarkerNeumann;   /*!< @brief Neumann BC markers. */
 
     // Solver
     double _CFL;                     /*!< @brief CFL Number for Solver*/
@@ -78,15 +88,6 @@ class Config
     std::string _hydrogenFile;      /*!< @brief Name of hydrogen cross section file path*/
     std::string _oxygenFile;        /*!< @brief Name of oxygen cross section file path */
     std::string _stoppingPowerFile; /*!< @brief Name of stopping power file path */
-
-    // Boundary Conditions
-    /*!< @brief List of all Pairs (marker, BOUNDARY_TYPE), e.g. (farfield,DIRICHLET).
-         Each Boundary Conditions must have an entry in enum BOUNDARY_TYPE*/
-    std::vector<std::pair<std::string, BOUNDARY_TYPE>> _boundaries;
-    unsigned short _nMarkerDirichlet;          /*!< @brief Number of Dirichlet BC markers. Enum entry: DIRICHLET */
-    unsigned short _nMarkerNeumann;            /*!< @brief Number of Neumann BC markers. Enum entry: Neumann */
-    std::vector<std::string> _MarkerDirichlet; /*!< @brief Dirichlet BC markers. */
-    std::vector<std::string> _MarkerNeumann;   /*!< @brief Neumann BC markers. */
 
     // Scattering Kernel
     KERNEL_NAME _kernelName; /*!< @brief Scattering Kernel Name*/
@@ -263,6 +264,7 @@ class Config
 
     // Mesh Structure
     unsigned GetNCells() { return _nCells; }
+    unsigned short GetDim() { return _dim; }
 
     // Solver Structure
     double inline GetCFL() const { return _CFL; }

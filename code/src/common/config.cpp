@@ -289,6 +289,7 @@ void Config::SetConfigOptions() {
     /*!\brief BC_DIRICHLET\n DESCRIPTION: Dirichlet wall boundary marker(s) \ingroup Config*/
     AddStringListOption( "BC_DIRICHLET", _nMarkerDirichlet, _MarkerDirichlet );
     AddStringListOption( "BC_NEUMANN", _nMarkerNeumann, _MarkerNeumann );
+    AddUnsignedShortOption( "SPATIAL_DIM", _dim, 2 );
 
     /*! @brief Scattering kernel \n DESCRIPTION: Describes used scattering kernel \n DEFAULT KERNEL_Isotropic \ingroup Config */
     AddEnumOption( "KERNEL", _kernelName, Kernel_Map, KERNEL_Isotropic );
@@ -641,6 +642,14 @@ void Config::SetPostprocessing() {
             _historyOutput.push_back( RMS_FLUX );
             _historyOutput.push_back( MASS );
             _historyOutput.push_back( VTK_OUTPUT );
+        }
+    }
+
+    // Mesh postprocessing
+    {
+        if( _dim < 1 || _dim > 2 ) {
+            std::string msg = "Dimension " + std::to_string( _dim ) + "not yet supported.\n";
+            ErrorMessages::Error( msg, CURRENT_FUNCTION );
         }
     }
 }

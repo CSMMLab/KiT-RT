@@ -254,10 +254,10 @@ double SphericalMonomial_8( double my, double phi ) { return Omega_xBase( my, ph
 double SphericalMonomial_9( double my, double phi ) { return Omega_xBase( my, phi ) * Omega_xBase( my, phi ); }    // omega_x^2
 
 TEST_CASE( "test spherical monomial basis", "[spherical_monomials]" ) {
-    unsigned maxMomentDegree = 2;    //==> 6+3+1 basis functions
-    SphericalMonomials testBase( maxMomentDegree );
+    unsigned maxMomentDegree = 2;                      //==> 6+3+1 basis functions
+    SphericalMonomials testBase( maxMomentDegree );    // Default constructor => _spatialDim = 3
 
-    SECTION( "Test Global Indexing" ) {
+    SECTION( "Test Global Indexing Dim 3" ) {
 
         bool currDimRight = true;
         if( testBase.GetCurrDegreeSize( 0 ) != 1 ) currDimRight = false;
@@ -281,7 +281,7 @@ TEST_CASE( "test spherical monomial basis", "[spherical_monomials]" ) {
         REQUIRE( indexingRight );
     }
 
-    SECTION( "Test against analytical solution" ) {
+    SECTION( "Test against analytical solution Dim 3" ) {
         Vector moment;
         std::vector<bool> validMoment( 10, true );
         for( double my = -1.0; my < 1.0; my += 0.1 ) {
@@ -301,6 +301,83 @@ TEST_CASE( "test spherical monomial basis", "[spherical_monomials]" ) {
                 if( std::fabs( moment[9] - SphericalMonomial_9( my, phi ) ) > 1e2 * std::numeric_limits<double>::epsilon() ) validMoment[8] = false;
             }
         }
+        REQUIRE( std::all_of( validMoment.begin(), validMoment.end(), []( bool v ) { return v; } ) );
+    }
+
+    SphericalMonomials testBase2D( maxMomentDegree, 2 );
+
+    SECTION( "Test Global Indexing Dim 2" ) {
+
+        bool currDimRight = true;
+        if( testBase2D.GetCurrDegreeSize( 0 ) != 1 ) currDimRight = false;
+        if( testBase2D.GetCurrDegreeSize( 1 ) != 2 ) currDimRight = false;
+        if( testBase2D.GetCurrDegreeSize( 2 ) != 3 ) currDimRight = false;
+
+        REQUIRE( currDimRight );
+
+        bool indexingRight = true;
+        if( testBase2D.GetGlobalIndexBasis( 0, 0 ) != 0 ) indexingRight = false;
+        if( testBase2D.GetGlobalIndexBasis( 1, 0 ) != 1 ) indexingRight = false;
+        if( testBase2D.GetGlobalIndexBasis( 1, 1 ) != 2 ) indexingRight = false;
+        if( testBase2D.GetGlobalIndexBasis( 2, 0 ) != 3 ) indexingRight = false;
+        if( testBase2D.GetGlobalIndexBasis( 2, 1 ) != 4 ) indexingRight = false;
+        if( testBase2D.GetGlobalIndexBasis( 2, 2 ) != 5 ) indexingRight = false;
+
+        REQUIRE( indexingRight );
+    }
+
+    SECTION( "Test against analytical solution Dim 2" ) {
+        Vector moment;
+        std::vector<bool> validMoment( 6, true );
+        for( double my = -1.0; my < 1.0; my += 0.1 ) {
+
+            for( double phi = 0.0; phi < 2 * M_PI; phi += 0.1 ) {
+                moment = testBase2D.ComputeSphericalBasis( my, phi );
+
+                if( std::fabs( moment[0] - SphericalMonomial_0( my, phi ) ) > 1e2 * std::numeric_limits<double>::epsilon() ) validMoment[0] = false;
+                if( std::fabs( moment[1] - SphericalMonomial_2( my, phi ) ) > 1e2 * std::numeric_limits<double>::epsilon() ) validMoment[1] = false;
+                if( std::fabs( moment[2] - SphericalMonomial_3( my, phi ) ) > 1e2 * std::numeric_limits<double>::epsilon() ) validMoment[2] = false;
+                if( std::fabs( moment[3] - SphericalMonomial_6( my, phi ) ) > 1e2 * std::numeric_limits<double>::epsilon() ) validMoment[3] = false;
+                if( std::fabs( moment[4] - SphericalMonomial_8( my, phi ) ) > 1e2 * std::numeric_limits<double>::epsilon() ) validMoment[4] = false;
+                if( std::fabs( moment[5] - SphericalMonomial_9( my, phi ) ) > 1e2 * std::numeric_limits<double>::epsilon() ) validMoment[5] = false;
+            }
+        }
+        REQUIRE( std::all_of( validMoment.begin(), validMoment.end(), []( bool v ) { return v; } ) );
+    }
+
+    SphericalMonomials testBase1D( maxMomentDegree, 1 );
+
+    SECTION( "Test Global Indexing Dim 1" ) {
+
+        bool currDimRight = true;
+        if( testBase1D.GetCurrDegreeSize( 0 ) != 1 ) currDimRight = false;
+        if( testBase1D.GetCurrDegreeSize( 1 ) != 1 ) currDimRight = false;
+        if( testBase1D.GetCurrDegreeSize( 2 ) != 1 ) currDimRight = false;
+
+        REQUIRE( currDimRight );
+
+        bool indexingRight = true;
+        if( testBase1D.GetGlobalIndexBasis( 0, 0 ) != 0 ) indexingRight = false;
+        if( testBase1D.GetGlobalIndexBasis( 1, 0 ) != 1 ) indexingRight = false;
+        if( testBase1D.GetGlobalIndexBasis( 2, 0 ) != 2 ) indexingRight = false;
+
+        REQUIRE( indexingRight );
+    }
+
+    SECTION( "Test against analytical solution Dim 1" ) {
+        Vector moment;
+        std::vector<bool> validMoment( 3, true );
+        for( double my = -1.0; my < 1.0; my += 0.1 ) {
+
+            for( double phi = 0.0; phi < 2 * M_PI; phi += 0.1 ) {
+                moment = testBase1D.ComputeSphericalBasis( my, phi );
+
+                if( std::fabs( moment[0] - SphericalMonomial_0( my, phi ) ) > 1e2 * std::numeric_limits<double>::epsilon() ) validMoment[0] = false;
+                if( std::fabs( moment[1] - SphericalMonomial_3( my, phi ) ) > 1e2 * std::numeric_limits<double>::epsilon() ) validMoment[1] = false;
+                if( std::fabs( moment[2] - SphericalMonomial_9( my, phi ) ) > 1e2 * std::numeric_limits<double>::epsilon() ) validMoment[2] = false;
+            }
+        }
+
         REQUIRE( std::all_of( validMoment.begin(), validMoment.end(), []( bool v ) { return v; } ) );
     }
 }

@@ -43,8 +43,9 @@ class nnDataGenerator
     VectorVector _alpha;           /*! @brief: vector with Lagrange multipliers. Size: (setSize,basisSize)*/
     std::vector<double> _hEntropy; /*! @brief: vector with entropy values. Size: (setSize) */
 
-    unsigned long _setSize;    /*! @brief: Size of the whole training Set */
-    unsigned long _gridSizeU0; /*! @brief: Size of the grid discretizing moment U0 for higher order sampling*/
+    unsigned long _setSize; /*! @brief: Size of the whole training Set */
+    unsigned long
+        _gridSize; /*! @brief: Size of the grid discretizing moment U0 for higher order sampling (has different uses for different samplers)*/
 
     unsigned short _LMaxDegree; /*! @brief: Max Order of Spherical Harmonics */
     unsigned _nTotalEntries;    /*! @brief: Total number of equations in the system */
