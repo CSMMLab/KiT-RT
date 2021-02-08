@@ -68,7 +68,7 @@ nnDataGenerator::nnDataGenerator( Config* settings ) {
         unsigned c = 1;
         double N1  = -1.0;
         double N2;
-        double dN = 2.0 / (double)_setSize;
+        double dN = 2.0 / (double)_gridSize;
 
         while( N1 < 1.0 ) {
             N1 += dN;
@@ -191,7 +191,7 @@ void nnDataGenerator::SampleSolutionU() {
         unsigned c = 0;
         double N1  = -1.0;
         double N2;
-        double dN = 2.0 / (double)_setSize;
+        double dN = 2.0 / (double)_gridSize;
 
         while( N1 < 1.0 ) {
             N1 += dN;
