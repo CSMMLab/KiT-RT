@@ -52,9 +52,6 @@ nnDataGenerator::nnDataGenerator( Config* settings ) {
 
     // Initialize Training Data
     if( _LMaxDegree == 0 ) {
-        _uSol     = VectorVector( _setSize, Vector( _nTotalEntries, 0.0 ) );
-        _alpha    = VectorVector( _setSize, Vector( _nTotalEntries, 0.0 ) );
-        _hEntropy = std::vector<double>( _setSize, 0.0 );
     }
     else if( _LMaxDegree == 1 ) {
         // Sample points on unit sphere.
@@ -63,10 +60,6 @@ nnDataGenerator::nnDataGenerator( Config* settings ) {
 
         // Allocate memory.
         _setSize = nq * _gridSize * ( _gridSize - 1 ) / 2;
-
-        _uSol     = VectorVector( _setSize, Vector( _nTotalEntries, 0.0 ) );
-        _alpha    = VectorVector( _setSize, Vector( _nTotalEntries, 0.0 ) );
-        _hEntropy = std::vector<double>( _setSize, 0.0 );
 
         delete quad;
     }
@@ -91,6 +84,10 @@ nnDataGenerator::nnDataGenerator( Config* settings ) {
     else {
         ErrorMessages::Error( "Sampling of training data of degree higher than 1 is not yet implemented.", CURRENT_FUNCTION );
     }
+
+    _uSol     = VectorVector( _setSize, Vector( _nTotalEntries, 0.0 ) );
+    _alpha    = VectorVector( _setSize, Vector( _nTotalEntries, 0.0 ) );
+    _hEntropy = std::vector<double>( _setSize, 0.0 );
 }
 
 nnDataGenerator::~nnDataGenerator() {
@@ -191,7 +188,7 @@ void nnDataGenerator::SampleSolutionU() {
     }
     else if( _LMaxDegree == 2 && _settings->GetSphericalBasisName() == SPHERICAL_MONOMIALS && _settings->GetDim() == 1 ) {
         // Carefull: This computes only normalized moments, i.e. sampling for u_0 = 1
-        unsigned c = 1;
+        unsigned c = 0;
         double N1  = -1.0;
         double N2;
         double dN = 2.0 / (double)_setSize;
