@@ -153,18 +153,18 @@ void MainWindow::initUI() {
     connect( run, SIGNAL( clicked() ), this, SLOT( runSimulation() ) );
 
     // quick debug settings
-    _outputDir->setText( "/home/jannick/Projects/rtsn/code/result" );
-    _outputFile->setText( "test" );
-    _logDir->setText( "/home/jannick/Projects/rtsn/code/result/logs" );
-    _meshFile->setText( "/home/jannick/Projects/rtsn/code/tests/input/mesh_files/checkerboard.su2" );
-    _problem->setCurrentIndex( 1 );
-    _solver->setCurrentIndex( 8 );
-    _cfl->setText( "0.5" );
-    _tEnd->setText( "0.4" );
-    _bc->setCurrentIndex( 1 );
-    _bcNames->setText( "void" );
-    _quadType->setCurrentIndex( 3 );
-    _quadOrder->setText( "15" );
+    //_outputDir->setText( "/home/jannick/Projects/rtsn/code/result" );
+    //_outputFile->setText( "test" );
+    //_logDir->setText( "/home/jannick/Projects/rtsn/code/result/logs" );
+    //_meshFile->setText( "/home/jannick/Projects/rtsn/code/tests/input/mesh_files/checkerboard.su2" );
+    //_problem->setCurrentIndex( 1 );
+    //_solver->setCurrentIndex( 8 );
+    //_cfl->setText( "0.5" );
+    //_tEnd->setText( "0.4" );
+    //_bc->setCurrentIndex( 1 );
+    //_bcNames->setText( "void" );
+    //_quadType->setCurrentIndex( 3 );
+    //_quadOrder->setText( "15" );
 }
 
 void MainWindow::setStatusBarText( const QString& text ) { statusBar()->showMessage( text ); }
