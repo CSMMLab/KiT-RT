@@ -19,6 +19,8 @@ class SNSolver : public Solver
      */
     SNSolver( Config* settings );
 
+    virtual ~SNSolver() {}
+
   protected:
     // IO
     void virtual PrepareVolumeOutput() override;

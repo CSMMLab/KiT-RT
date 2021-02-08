@@ -49,6 +49,8 @@ class CSDSolverTrafoFP : public SNSolver
      */
     CSDSolverTrafoFP( Config* settings );
 
+    virtual ~CSDSolverTrafoFP() {}
+
   private:
     // IO
     void PrepareVolumeOutput() override final;

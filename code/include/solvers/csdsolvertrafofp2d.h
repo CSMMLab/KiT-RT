@@ -56,6 +56,9 @@ class CSDSolverTrafoFP2D : public SNSolver
      * @param settings stores all needed information
      */
     CSDSolverTrafoFP2D( Config* settings );
+
+    virtual ~CSDSolverTrafoFP2D() {}
+
     /**
      * @brief Output solution to VTK file
      */

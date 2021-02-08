@@ -10,6 +10,7 @@
 #define QGAUSSCHEBYSHEV_H
 
 #include "quadraturebase.h"
+#include <iostream>
 
 class QGaussChebyshev1D : public QuadratureBase
 {

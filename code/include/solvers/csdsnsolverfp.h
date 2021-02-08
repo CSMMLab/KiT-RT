@@ -36,6 +36,9 @@ class CSDSNSolverFP : public SNSolver
      * @param settings stores all needed information
      */
     CSDSNSolverFP( Config* settings );
+
+    virtual ~CSDSNSolverFP() {}
+
     /**
      * @brief Solve functions runs main time loop
      */

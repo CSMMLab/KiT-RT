@@ -21,10 +21,11 @@ void QGaussChebyshev1D::SetPointsAndWeights() {
     _points.resize( _nq );
     _weights.resize( _nq );
     unsigned dim = 1;
-    for( unsigned k = 0; k < _nq; ++k ) {
-        _points[k].resize( dim );
-        _points[k][0] = -std::cos( ( 2 * k ) * M_PI / ( 2 * _nq ) );
-        _weights[k]   = M_PI / _nq;
+    for( unsigned k = 1; k <= _nq; ++k ) {
+        _points[k - 1].resize( dim );
+        _points[k - 1][0] = std::cos( ( 2 * k - 1 ) * M_PI / ( 2 * _nq ) );
+        _weights[k - 1]   = 1.0 / std::sqrt( 1 - _points[k - 1][0] * _points[k - 1][0] );
+        std::cout << _points[k - 1][0] << "\t" << _weights[k - 1] << std::endl;
     }
     _pointsSphere = _points;
 }
