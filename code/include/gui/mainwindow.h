@@ -1,9 +1,10 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
-#define vtkRenderingCore_AUTOINIT 2( vtkRenderingOpenGL2, vtkInteractionStyle )
+#define vtkRenderingCore_AUTOINIT 3( vtkRenderingOpenGL2, vtkInteractionStyle, vtkRenderingFreeType )
 
 #include <QComboBox>
+#include <QFileDialog>
 #include <QFileSystemWatcher>
 #include <QLabel>
 #include <QLineEdit>
@@ -11,6 +12,7 @@
 #include <QPushButton>
 #include <QShortcut>
 #include <QString>
+#include <QSurfaceFormat>
 
 #include <QVTKOpenGLWidget.h>
 #include <vtkCamera.h>
@@ -20,6 +22,7 @@
 #include <vtkGenericOpenGLRenderWindow.h>
 #include <vtkLookupTable.h>
 #include <vtkPolyDataMapper.h>
+#include <vtkProperty.h>
 #include <vtkRenderWindow.h>
 #include <vtkRenderer.h>
 #include <vtkScalarBarActor.h>
@@ -27,6 +30,7 @@
 #include <vtkUnstructuredGrid.h>
 #include <vtkUnstructuredGridReader.h>
 
+#include "cmap.h"
 #include "common/config.h"
 #include "common/globalconstants.h"
 #include "common/io.h"
@@ -40,6 +44,21 @@ class MainWindow : public QMainWindow
 {
   private:
     Q_OBJECT
+
+    QLineEdit* _outputDir;
+    QLineEdit* _outputFile;
+    QLineEdit* _logDir;
+    QLineEdit* _meshFile;
+    QLineEdit* _cfl;
+    QLineEdit* _tEnd;
+    QLineEdit* _bcNames;
+    QLineEdit* _quadOrder;
+
+    QComboBox* _problem;
+    QComboBox* _solver;
+    QComboBox* _bc;
+    QComboBox* _quadType;
+
     QFileSystemWatcher* _logfileWatcher;
     QVTKOpenGLWidget* _plotWindow;
     vtkSmartPointer<vtkRenderer> _renderer;
@@ -47,6 +66,7 @@ class MainWindow : public QMainWindow
 
     void initUI();
     void plotResult( const QString filepath );
+    void writeInputFile( const QString filename );
 
   public:
     explicit MainWindow();
@@ -56,6 +76,12 @@ class MainWindow : public QMainWindow
     void setStatusBarText( const QString& text );
     void appendLog( const QString& logfile );
     void runSimulation();
+
+    void selectOutputDir();
+    void selectLogDir();
+    void selectMeshFile();
+
+    void saveInputFile();
 
   private:
     Ui::MainWindow* ui;

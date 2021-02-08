@@ -134,7 +134,7 @@ class Solver
      *  @param settings stores all needed information */
     Solver( Config* settings );
 
-    ~Solver();
+    virtual ~Solver();
 
     /*! @brief Create constructor
      *  @param settings stores all needed information

@@ -121,7 +121,7 @@ endif()
 ### BUILD GUI ###################################
 if( BUILD_GUI )
     find_package( Qt5 COMPONENTS Core Widgets Gui OpenGL REQUIRED )
-    find_package( VTK COMPONENTS vtkInteractionStyle vtkRenderingOpenGL2 vtkGUISupportQt vtkInteractionWidgets REQUIRED )
+    find_package( VTK COMPONENTS vtkGUISupportQt vtkInteractionStyle vtkInteractionWidgets vtkRenderingAnnotation vtkRenderingCore vtkRenderingFreeType vtkRenderingOpenGL2 REQUIRED )
     include_directories( ${CMAKE_SOURCE_DIR}/include/gui )
     file( GLOB_RECURSE GUI_SRCS RELATIVE ${CMAKE_SOURCE_DIR} "src/gui/*" )
     file( GLOB_RECURSE GUI_INCL RELATIVE ${CMAKE_SOURCE_DIR} "include/gui/*" )

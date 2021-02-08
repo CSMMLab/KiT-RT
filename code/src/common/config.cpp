@@ -419,15 +419,15 @@ void Config::SetPostprocessing() {
     if( _inputDir[_inputDir.size() - 1] != '/' ) _inputDir.append( "/" );
 
     // setup relative paths
-    _logDir            = _inputDir + _logDir;
-    _outputDir         = _inputDir + _outputDir;
-    _meshFile          = _inputDir + _meshFile;
-    _outputFile        = _outputDir + _outputFile;
-    _ctFile            = _inputDir + _ctFile;
-    _hydrogenFile      = _inputDir + _hydrogenFile;
-    _oxygenFile        = _inputDir + _oxygenFile;
-    _stoppingPowerFile = _inputDir + _stoppingPowerFile;
-    _dataDir           = _inputDir + _dataDir;
+    _logDir            = std::filesystem::path( _inputDir ).append( _logDir ).lexically_normal();
+    _outputDir         = std::filesystem::path( _inputDir ).append( _outputDir ).lexically_normal();
+    _meshFile          = std::filesystem::path( _inputDir ).append( _meshFile ).lexically_normal();
+    _outputFile        = std::filesystem::path( _outputDir ).append( _outputFile ).lexically_normal();
+    _ctFile            = std::filesystem::path( _inputDir ).append( _ctFile ).lexically_normal();
+    _hydrogenFile      = std::filesystem::path( _inputDir ).append( _hydrogenFile ).lexically_normal();
+    _oxygenFile        = std::filesystem::path( _inputDir ).append( _oxygenFile ).lexically_normal();
+    _stoppingPowerFile = std::filesystem::path( _inputDir ).append( _stoppingPowerFile ).lexically_normal();
+    _dataDir           = std::filesystem::path( _inputDir ).append( _dataDir ).lexically_normal();
 
     // create directories if they dont exist
     if( !std::filesystem::exists( _outputDir ) ) std::filesystem::create_directory( _outputDir );
@@ -827,10 +827,10 @@ void Config::InitLogger() {
 
                 // set filename
                 std::string filename;
-                if( _logFileName.compare( "use_date" ) == 0 )
-                    filename = buf;    // set filename to date and time
-                else
-                    filename = _logFileName;
+                if( _logFileName.compare( "use_date" ) == 0 ) {
+                    _logFileName = buf;    // set filename to date and time
+                }
+                filename = _logFileName;
 
                 // in case of existing files append '_#'
                 int ctr = 0;
@@ -853,21 +853,6 @@ void Config::InitLogger() {
             fileSink->set_pattern( "%Y-%m-%d %H:%M:%S.%f | %v" );
             sinks.push_back( fileSink );
         }
-
-        /*
-#ifdef BUILD_GUI
-        spdlog::level::level_enum guiLogLvl;
-#if NDEBUG
-        guiLogLvl = spdlog::level::info;
-#else
-        guiLogLvl = spdlog::level::debug;
-#endif
-        auto guiSink = std::make_shared<qt_sink_mt>();
-        guiSink->set_level( terminalLogLvl );
-        guiSink->set_pattern( "%v" );
-        sinks.push_back( guiSink );
-#endif
-*/
 
         // register all sinks
         auto event_logger = std::make_shared<spdlog::logger>( "event", begin( sinks ), end( sinks ) );

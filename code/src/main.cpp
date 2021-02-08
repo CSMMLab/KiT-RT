@@ -22,6 +22,7 @@
 
 int main( int argc, char** argv ) {
 #ifdef BUILD_GUI
+    MPI_Init( &argc, &argv );
     QApplication app( argc, argv );
     MainWindow mw;
     mw.show();

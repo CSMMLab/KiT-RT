@@ -70,6 +70,8 @@ class CSDSolverTrafoFPSH2D : public SNSolver
      */
     CSDSolverTrafoFPSH2D( Config* settings );
 
+    virtual ~CSDSolverTrafoFPSH2D() {}
+
     /**
      * @brief Output solution to VTK file (LEGACY. But not remove, to compare)
      */

@@ -23,6 +23,9 @@ class CSDSNSolverNoTrafo : public SNSolver
      * @param settings stores all needed information
      */
     CSDSNSolverNoTrafo( Config* settings );
+
+    virtual ~CSDSNSolverNoTrafo() {}
+
     /**
      * @brief Solve functions runs main time loop
      */

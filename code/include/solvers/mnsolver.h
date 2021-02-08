@@ -17,7 +17,7 @@ class MNSolver : public Solver
     MNSolver( Config* settings );
 
     /*! @brief MNSolver destructor */
-    ~MNSolver();
+    virtual ~MNSolver();
 
   private:
     // --- Private member variables ---
