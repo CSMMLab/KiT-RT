@@ -1,8 +1,9 @@
 #include "problems/linesource.h"
 #include "common/config.h"
 #include "common/mesh.h"
-#include "toolboxes/physics.h"
-
+#include "problems/epics.h"
+#include "quadratures/quadraturebase.h"
+#include "toolboxes/sphericalbase.h"
 #include <complex>
 
 // ---- Linesource ----
@@ -151,7 +152,7 @@ VectorVector LineSource_SN_Pseudo1D::SetupIC() {
 // ---- LineSource_SN_Pseudo1D_Physics ----
 
 LineSource_SN_Pseudo1D_Physics::LineSource_SN_Pseudo1D_Physics( Config* settings, Mesh* mesh ) : LineSource_SN_Pseudo1D( settings, mesh ) {
-    _physics = new Physics( settings->GetHydrogenFile(), settings->GetOxygenFile(), "../input/stopping_power.txt" );
+    _physics = new EPICS( settings->GetHydrogenFile(), settings->GetOxygenFile(), "../input/stopping_power.txt" );
 }
 
 std::vector<Matrix> LineSource_SN_Pseudo1D_Physics::GetScatteringXSE( const Vector& energies, const Matrix& angles ) {
@@ -162,11 +163,6 @@ Vector LineSource_SN_Pseudo1D_Physics::GetTotalXSE( const Vector& energies ) { r
 
 // ---- LineSource_PN ----
 
-int LineSource_PN::GlobalIndex( int l, int k ) const {
-    int numIndicesPrevLevel  = l * l;    // number of previous indices untill level l-1
-    int prevIndicesThisLevel = k + l;    // number of previous indices in current level
-    return numIndicesPrevLevel + prevIndicesThisLevel;
-}
 
 LineSource_PN::LineSource_PN( Config* settings, Mesh* mesh ) : LineSource( settings, mesh ) {}
 
@@ -184,17 +180,52 @@ std::vector<VectorVector> LineSource_PN::GetExternalSource( const Vector& /*ener
 
 VectorVector LineSource_PN::SetupIC() {
     // Compute number of equations in the system
-    int ntotalEquations = GlobalIndex( _settings->GetMaxMomentDegree(), _settings->GetMaxMomentDegree() ) + 1;
+
+    // In case of PN, spherical basis is per default SPHERICAL_HARMONICS
+    SphericalBase* tempBase  = SphericalBase::Create( _settings );
+    unsigned ntotalEquations = tempBase->GetBasisSize();
 
     VectorVector psi( _mesh->GetNumCells(), Vector( ntotalEquations, 0 ) );    // zero could lead to problems?
     VectorVector cellMids = _mesh->GetCellMidPoints();
 
+    Vector uIC( ntotalEquations, 0 );
+
+    if( _settings->GetSphericalBasisName() == SPHERICAL_MONOMIALS ) {
+        QuadratureBase* quad          = QuadratureBase::Create( _settings );
+        VectorVector quadPointsSphere = quad->GetPointsSphere();
+        Vector w                      = quad->GetWeights();
+
+        double my, phi;
+        VectorVector moments = VectorVector( quad->GetNq(), Vector( tempBase->GetBasisSize(), 0.0 ) );
+
+        for( unsigned idx_quad = 0; idx_quad < quad->GetNq(); idx_quad++ ) {
+            my                = quadPointsSphere[idx_quad][0];
+            phi               = quadPointsSphere[idx_quad][1];
+            moments[idx_quad] = tempBase->ComputeSphericalBasis( my, phi );
+        }
+        // Integrate <1*m> to get factors for monomial basis in isotropic scattering
+        for( unsigned idx_quad = 0; idx_quad < quad->GetNq(); idx_quad++ ) {
+            uIC += w[idx_quad] * moments[idx_quad];
+        }
+        delete quad;
+    }
+
     // Initial condition is dirac impulse at (x,y) = (0,0) ==> constant in angle ==> all moments - exept first - are zero.
     double t = 3.2e-4;    // pseudo time for gaussian smoothing (Approx to dirac impulse)
+
     for( unsigned j = 0; j < cellMids.size(); ++j ) {
-        double x  = cellMids[j][0];
-        double y  = cellMids[j][1];    // (x- 0.5) * (x- 0.5)
-        psi[j][0] = /*sqrt( 4 * M_PI ) * */ 1.0 / ( 4.0 * M_PI * t ) * std::exp( -( x * x + y * y ) / ( 4 * t ) );
+        double x = cellMids[j][0];
+        double y = cellMids[j][1];    // (x- 0.5) * (x- 0.5)
+
+        double c = 1.0 / ( 4.0 * M_PI * t ) * std::exp( -( x * x + y * y ) / ( 4 * t ) );
+
+        if( _settings->GetSphericalBasisName() == SPHERICAL_MONOMIALS ) {
+            psi[j] = c * uIC / uIC[0];    // Remember scaling
+        }
+        if( _settings->GetSphericalBasisName() == SPHERICAL_HARMONICS ) {
+            psi[j][0] = c;
+        }
     }
+    delete tempBase;    // Only temporally needed
     return psi;
 }

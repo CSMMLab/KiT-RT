@@ -14,7 +14,6 @@ class QMonteCarlo : public QuadratureBase
     inline void SetNq() override { _nq = GetOrder(); }
     void SetPointsAndWeights() override;
     void SetConnectivity() override;
-    VectorVector GetPointsSphere() const override;
 };
 
 #endif    // QMONTECARLO_H

@@ -4,7 +4,7 @@
 #include "common/typedef.h"
 #include "fluxes/upwindflux.h"
 
-TEST_CASE( "unit numericalflux tests", "[numericalflux]" ) {
+TEST_CASE( "numerical flux unit tests", "[numericalflux]" ) {
 
     // Test Flux Jacobians
     Matrix AxP( 4, 4, 0 );

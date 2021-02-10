@@ -1,7 +1,6 @@
 #ifndef CSDSNSOLVERNOTRAFO_H
 #define CSDSNSOLVERNOTRAFO_H
 
-#include "icru.h"
 #include "solvers/snsolver.h"
 
 class Physics;
@@ -24,6 +23,9 @@ class CSDSNSolverNoTrafo : public SNSolver
      * @param settings stores all needed information
      */
     CSDSNSolverNoTrafo( Config* settings );
+
+    virtual ~CSDSNSolverNoTrafo() {}
+
     /**
      * @brief Solve functions runs main time loop
      */

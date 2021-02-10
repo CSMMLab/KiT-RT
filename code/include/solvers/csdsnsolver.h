@@ -1,7 +1,6 @@
 #ifndef CSDSNSOLVER_H
 #define CSDSNSOLVER_H
 
-#include "icru.h"
 #include "solvers/snsolver.h"
 
 class CSDSNSolver : public SNSolver
@@ -22,6 +21,9 @@ class CSDSNSolver : public SNSolver
      * @param settings stores all needed information
      */
     CSDSNSolver( Config* settings );
+
+    virtual ~CSDSNSolver() {}
+
     /**
      * @brief Solve functions runs main time loop
      */

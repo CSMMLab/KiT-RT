@@ -14,6 +14,7 @@ class Mesh;
 class Config;
 class ProblemBase;
 class QuadratureBase;
+class Reconstructor;
 
 class Solver
 {
@@ -25,7 +26,9 @@ class Solver
 
     // --------- Often used variables of member classes for faster access ----
 
-    unsigned _nEnergies;             /*! @brief number of energy/time steps, number of nodal energy values for CSD */
+    unsigned _nEnergies; /*! @brief number of energysteps, number of nodal energy values for CSD */
+    unsigned _maxIter;   /*! @brief number of time steps, for non CSD, this equals _nEnergies, for _csd, _maxIter = _nEnergies-1*/
+
     double _dE;                      /*! @brief energy/time step size */
     Vector _energies;                // energy groups used in the simulation [keV]
     std::vector<double> _density;    // patient density, dim(_density) = _nCells
@@ -51,6 +54,14 @@ class Solver
     /*! @brief edge neighbor cell ids, dim(_neighbors) = (_NCells,nEdgesPerCell) */
     std::vector<std::vector<unsigned>> _neighbors;
 
+    // slope related params
+    Reconstructor* _reconstructor;                        /*! @brief reconstructor object for high-order scheme */
+    unsigned _reconsOrder;                                /*! @brief reconstruction order (current: 1 & 2) */
+    VectorVector _psiDx;                                  /*! @brief slope of solutions in X direction */
+    VectorVector _psiDy;                                  /*! @brief slope of solutions in Y direction */
+    VectorVector _cellMidPoints;                          /*! @brief middle point locations of elements */
+    std::vector<std::vector<Vector>> _interfaceMidPoints; /*! @brief middle point locations of edges */
+
     // Solution related members
     VectorVector _sol;                 /*! @brief solution of the PDE, e.g. angular flux or moments */
     std::vector<double> _solverOutput; /*! @brief LEGACY: Outputfield for solver ==> Will be replaced by _outputFields in the near future */
@@ -70,14 +81,16 @@ class Solver
 
     // Internal Members
     VectorVector _solNew; /*! @brief: VectorVector to store the new flux and later the new solution per iteration */    // REPLACES psiNEW
-    Vector _fluxNew; /*! @brief: Vector to store the new Flux */
-    Vector _flux;    /*! @brief: Vector to store the old Flux */
+    Vector _fluxNew; /*! @brief: Vector to store the new Flux. Dim _nCells */
+    Vector _flux;    /*! @brief: Vector to store the old Flux. Dim _nCells*/
 
     // ---- Member functions ----
 
     // Solver
+    /*! @brief Performs preprocessing steps before the pseudo time iteration is started */
+    virtual void SolverPreprocessing();
     /*! @brief Performs preprocessing for the current solver iteration */
-    virtual void IterPreprocessing() = 0;
+    virtual void IterPreprocessing( unsigned idx_pseudotime ) = 0;
     /*! @brief Performs postprocessing for the current solver iteration */
     virtual void IterPostprocessing() = 0;
     /*! @brief Constructs  the flux update for the current iteration and stores it in psiNew*/
@@ -111,13 +124,17 @@ class Solver
     void PrepareHistoryOutput();
     /*! @brief Prints HistoryOutputFields to logger */
     void PrintHistoryOutput( unsigned iteration );
+    /*! @brief Pre Solver Screen and Logger Output */
+    void DrawPreSolverOutput();
+    /*! @brief Post Solver Screen and Logger Output */
+    void DrawPostSolverOutput();
 
   public:
     /*! @brief Solver constructor
      *  @param settings stores all needed information */
     Solver( Config* settings );
 
-    ~Solver();
+    virtual ~Solver();
 
     /*! @brief Create constructor
      *  @param settings stores all needed information

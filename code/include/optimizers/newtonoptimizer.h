@@ -18,26 +18,25 @@ class NewtonOptimizer : public OptimizerBase
 
     ~NewtonOptimizer();
 
-    void Solve( Vector& lambda, Vector& sol, VectorVector& moments, unsigned idx_cell = 0 ) override;
-    void SolveMultiCell( VectorVector& lambda, VectorVector& sol, VectorVector& moments ) override;
+    void Solve( Vector& lambda, Vector& sol, const VectorVector& moments, unsigned idx_cell = 0 ) override;
+    void SolveMultiCell( VectorVector& lambda, VectorVector& sol, const VectorVector& moments ) override;
 
-  private:
     /*! @brief: Computes the objective function
                 grad = <eta(alpha*m)> - alpha*sol */
-    double ComputeObjFunc( Vector& alpha, Vector& sol, VectorVector& moments );
+    double ComputeObjFunc( Vector& alpha, Vector& sol, const VectorVector& moments );
 
+  private:
     /*! @brief: Computes gradient of objective function and stores it in grad
                 grad = <m*eta*'(alpha*m)> - sol */
-    void ComputeGradient( Vector& alpha, Vector& sol, VectorVector& moments, Vector& grad );
+    void ComputeGradient( Vector& alpha, Vector& sol, const VectorVector& moments, Vector& grad );
 
     /*! @brief: Computes hessian of objective function and stores it in hessian
                 grad = <mXm*eta*'(alpha*m)> */
-    void ComputeHessian( Vector& alpha, VectorVector& moments, Matrix& hessian );
+    void ComputeHessian( Vector& alpha, const VectorVector& moments, Matrix& hessian );
 
     QuadratureBase* _quadrature; /*! @brief: used quadrature */    // THis is memory doubling! Try to use a pointer.
     unsigned _nq;                                                  /*! @brief: number of quadrature points */
     Vector _weights;                                               /*!  @brief quadrature weights, dim(_weights) = (_nq) */
-    VectorVector _quadPointsSphere;                                /*!  @brief (my,phi), dim(_quadPoints) = (_nq,2) */
 
     double _epsilon;                 /*! @brief: Termination criterion for newton optimizer */
     unsigned short _maxIterations;   /*! @brief: Max iterations of the newton solver */

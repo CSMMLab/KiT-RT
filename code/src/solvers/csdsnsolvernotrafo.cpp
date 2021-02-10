@@ -3,6 +3,7 @@
 #include "common/io.h"
 #include "fluxes/numericalflux.h"
 #include "kernels/scatteringkernelbase.h"
+#include "problems/icru.h"
 #include "problems/problembase.h"
 
 // externals
@@ -46,7 +47,7 @@ CSDSNSolverNoTrafo::CSDSNSolverNoTrafo( Config* settings ) : SNSolver( settings 
         }
     }
 
-    ICRU database( angleVec, _energies );
+    ICRU database( angleVec, _energies, _settings );
     Matrix total;
     database.GetAngularScatteringXS( total, _sigmaTE );
 
@@ -90,7 +91,7 @@ CSDSNSolverNoTrafo::CSDSNSolverNoTrafo( Config* settings ) : SNSolver( settings 
 }
 
 void CSDSNSolverNoTrafo::Solve() {
-    std::cout << "Solve" << std::endl;
+    // std::cout << "Solve" << std::endl;
     auto log = spdlog::get( "event" );
 
     // angular flux at next time step (maybe store angular flux at all time steps, since time becomes energy?)

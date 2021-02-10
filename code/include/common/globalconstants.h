@@ -1,4 +1,4 @@
-/*!
+﻿/*!
  * \file GlobalConstants.h
  * \brief All global defined (physical) constants, enums etc
  * \author <blank>
@@ -55,7 +55,16 @@ enum BOUNDARY_TYPE { DIRICHLET, NEUMANN, NONE, INVALID };
 /*! @brief Enum for all currently available quadratures in rtsn.
  *         Option enums are written in capital letters with underscores as spaces (e.g option "time integration" has option enum "TIME_INTEGRATION")
  */
-enum QUAD_NAME { QUAD_MonteCarlo, QUAD_GaussLegendreTensorized, QUAD_GaussLegendre1D, QUAD_LevelSymmetric, QUAD_Lebedev, QUAD_LDFESA, QUAD_Product };
+enum QUAD_NAME {
+    QUAD_MonteCarlo,
+    QUAD_GaussLegendreTensorized,
+    QUAD_GaussLegendre1D,
+    QUAD_LevelSymmetric,
+    QUAD_Lebedev,
+    QUAD_LDFESA,
+    QUAD_Product,
+    QUAD_GaussChebyshev1D
+};
 
 /*! @brief Conversion Map String to enum
  */
@@ -77,7 +86,8 @@ enum PROBLEM_NAME {
     PROBLEM_LineSource_Pseudo_1D_Physics,
     PROBLEM_AirCavity,
     PROBLEM_MuscleBoneLung,
-    PROBLEM_Phantom2D
+    PROBLEM_Phantom2D,
+    PROBLEM_IsotropicSource_2D
 };
 
 inline std::map<std::string, PROBLEM_NAME> Problem_Map{ { "LINESOURCE", PROBLEM_LineSource },
@@ -87,6 +97,7 @@ inline std::map<std::string, PROBLEM_NAME> Problem_Map{ { "LINESOURCE", PROBLEM_
                                                         { "AIRCAVITY", PROBLEM_AirCavity },
                                                         { "MUSCLEBONELUNG", PROBLEM_MuscleBoneLung },
                                                         { "PHANTOM2D", PROBLEM_Phantom2D },
+                                                        { "ISOTROPICPOINTSOURCE2D", PROBLEM_IsotropicSource_2D },
                                                         { "LINESOURCE_PSEUDO_1D", PROBLEM_LineSource_Pseudo_1D },
                                                         { "LINESOURCE_PSEUDO_1D_PHYSICS", PROBLEM_LineSource_Pseudo_1D_Physics } };
 
@@ -130,15 +141,21 @@ enum OPTIMIZER_NAME { NEWTON, ML };
 inline std::map<std::string, OPTIMIZER_NAME> Optimizer_Map{ { "NEWTON", NEWTON }, { "ML", ML } };
 
 // Volume output
-enum VOLUME_OUTPUT { ANALYTIC, MINIMAL, MOMENTS, DUAL_MOMENTS, DOSE };
+enum VOLUME_OUTPUT { ANALYTIC, MINIMAL, MOMENTS, DUAL_MOMENTS, MEDICAL };
 
 inline std::map<std::string, VOLUME_OUTPUT> VolOutput_Map{
-    { "ANALYTIC", ANALYTIC }, { "MINIMAL", MINIMAL }, { "MOMENTS", MOMENTS }, { "DUAL_MOMENTS", DUAL_MOMENTS }, { "DOSE", DOSE } };
+    { "ANALYTIC", ANALYTIC }, { "MINIMAL", MINIMAL }, { "MOMENTS", MOMENTS }, { "DUAL_MOMENTS", DUAL_MOMENTS }, { "MEDICAL", MEDICAL } };
 
 // Scalar output
 enum SCALAR_OUTPUT { ITER, MASS, RMS_FLUX, VTK_OUTPUT, CSV_OUTPUT };
 
 inline std::map<std::string, SCALAR_OUTPUT> ScalarOutput_Map{
     { "ITER", ITER }, { "MASS", MASS }, { "RMS_FLUX", RMS_FLUX }, { "VTK_OUTPUT", VTK_OUTPUT }, { "CSV_OUTPUT", CSV_OUTPUT } };
+
+// Spherical Basis Name
+enum SPHERICAL_BASIS_NAME { SPHERICAL_HARMONICS, SPHERICAL_MONOMIALS };
+
+inline std::map<std::string, SPHERICAL_BASIS_NAME> SphericalBasis_Map{ { "SPHERICAL_HARMONICS", SPHERICAL_HARMONICS },
+                                                                       { "SPHERICAL_MONOMIALS", SPHERICAL_MONOMIALS } };
 
 #endif    // GLOBAL_CONSTANTS_H

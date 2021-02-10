@@ -4,7 +4,7 @@
 #include "solverbase.h"
 
 class EntropyBase;
-class SphericalHarmonics;
+class SphericalBase;
 class OptimizerBase;
 
 class MNSolver : public Solver
@@ -17,16 +17,16 @@ class MNSolver : public Solver
     MNSolver( Config* settings );
 
     /*! @brief MNSolver destructor */
-    ~MNSolver();
+    virtual ~MNSolver();
 
   private:
     // --- Private member variables ---
     unsigned _nTotalEntries;    /*! @brief: Total number of equations in the system */
-    unsigned short _LMaxDegree; /*! @brief: Max Order of Moments */
+    unsigned short _LMaxDegree; /*! @brief: Max Order of Spherical Harmonics  */
 
     // Moment basis
-    SphericalHarmonics* _basis; /*! @brief: Class to compute and store current spherical harmonics basis */
-    VectorVector _moments;      /*! @brief: Moment Vector pre-computed at each quadrature point: dim= _nq x _nTotalEntries */
+    SphericalBase* _basis; /*! @brief: Class to compute and store current spherical harmonics basis */
+    VectorVector _moments; /*! @brief: Moment Vector pre-computed at each quadrature point: dim= _nq x _nTotalEntries */
 
     // Scattering
     Vector _scatterMatDiag; /*! @brief: Diagonal of the scattering matrix (its a diagonal matrix by construction) */
@@ -42,19 +42,19 @@ class MNSolver : public Solver
                                            Layout: _nCells x _nTotalEntries*/
     OptimizerBase* _optimizer; /*! @brief: Class to solve minimal entropy problem */
 
+    VectorVector _solDx; /*! @brief:  temporary storage of x-derivatives of alpha */
+    VectorVector _solDy; /*! @brief:  temporary storage of y-derivatives of alpha */
+
     // ---- Private Member functions ---
 
     // IO
-    /*! @brief Function that writes NN Training Data in a .csv file */
-    void WriteNNTrainingData( unsigned idx_pseudoTime );
-
     void PrepareVolumeOutput() override;
     void WriteVolumeOutput( unsigned idx_pseudoTime ) override;
 
     // Solver
     void FVMUpdate( unsigned idx_energy ) override;
     void FluxUpdate() override;
-    void IterPreprocessing() override;
+    void IterPreprocessing( unsigned idx_pseudotime ) override;
     void IterPostprocessing();
     /*! @brief : Construct flux by computing the Moment of the  sum of FVM discretization at the interface of cell
      *  @param : idx_cell = current cell id
@@ -71,12 +71,7 @@ class MNSolver : public Solver
     void ComputeScatterMatrix();
 
     // Helper
+    /*! @brief:  Computes the radiative flux from the solution vector of the moment system */
     void ComputeRadFlux();
-    /*! @brief : computes the global index of the moment corresponding to basis function (l,k)
-     *  @param : degree l, it must hold: 0 <= l <=_nq
-     *  @param : order k, it must hold: -l <=k <= l
-     *  @returns : global index
-     */
-    int GlobalIndex( int l, int k ) const;
 };
 #endif    // MNSOLVER_H

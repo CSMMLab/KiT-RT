@@ -20,8 +20,6 @@ class QGaussLegendreTensorized : public QuadratureBase
     void SetNq() override;
     void SetPointsAndWeights() override;
     void SetConnectivity() override;
-
-    inline VectorVector GetPointsSphere() const override { return _pointsSphere; }
 };
 
 #endif    // QGAUSSLEGENDRETENSORIZED_H

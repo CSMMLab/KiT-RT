@@ -1,7 +1,7 @@
 #ifndef PNSOLVER_H
 #define PNSOLVER_H
 
-#include "solverbase.h"
+#include "solvers/solverbase.h"
 
 class PNSolver : public Solver
 {
@@ -12,7 +12,7 @@ class PNSolver : public Solver
     PNSolver( Config* settings );
 
     /*! @brief PNSolver destructor */
-    ~PNSolver();
+    virtual ~PNSolver() {}
 
   private:
     unsigned _nTotalEntries; /*! @brief: total number of equations in the system */
@@ -38,6 +38,9 @@ class PNSolver : public Solver
     Vector _scatterMatDiag; /*! @brief: diagonal of the scattering matrix (its a diagonal matrix by construction). Contains eigenvalues of the
                                scattering kernel.  */
 
+    VectorVector _solDx; /*! @brief:  temporary storage of x-derivatives of solution */
+    VectorVector _solDy; /*! @brief:  temporary storage of y-derivatives of solution */
+
     // ---- Member functions ----
 
     // IO
@@ -50,7 +53,7 @@ class PNSolver : public Solver
     // Solver
     void FVMUpdate( unsigned idx_energy ) override;
     void FluxUpdate() override;
-    void IterPreprocessing() override;
+    void IterPreprocessing( unsigned idx_pseudotime ) override;
     void IterPostprocessing();
 
     // Helper
