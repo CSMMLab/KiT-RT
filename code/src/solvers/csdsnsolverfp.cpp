@@ -4,6 +4,7 @@
 #include "common/mesh.h"
 #include "fluxes/numericalflux.h"
 #include "kernels/scatteringkernelbase.h"
+#include "problems/icru.h"
 #include "problems/problembase.h"
 #include "quadratures/quadraturebase.h"
 
@@ -24,7 +25,7 @@ CSDSNSolverFP::CSDSNSolverFP( Config* settings ) : SNSolver( settings ) {
 
     _dE        = ComputeTimeStep( settings->GetCFL() );
     _nEnergies = unsigned( ( _energyMax - _energyMin ) / _dE );
-    std::cout << "nEnergies = " << _nEnergies << std::endl;
+    // std::cout << "nEnergies = " << _nEnergies << std::endl;
     _energies.resize( _nEnergies );
     for( unsigned n = 0; n < _nEnergies; ++n ) {
         _energies[n] = _energyMin + ( _energyMax - _energyMin ) / ( _nEnergies - 1 ) * n;
@@ -32,7 +33,7 @@ CSDSNSolverFP::CSDSNSolverFP( Config* settings ) : SNSolver( settings ) {
 
     // create 1D quadrature
     unsigned nq            = _settings->GetNQuadPoints();
-    QuadratureBase* quad1D = QuadratureBase::CreateQuadrature( QUAD_GaussLegendre1D, nq );
+    QuadratureBase* quad1D = QuadratureBase::Create( QUAD_GaussLegendre1D, nq );
     Vector w               = quad1D->GetWeights();
     VectorVector muVec     = quad1D->GetPoints();
     Vector mu( nq );
@@ -58,9 +59,6 @@ CSDSNSolverFP::CSDSNSolverFP( Config* settings ) : SNSolver( settings ) {
         }
     }
 
-    // Heney-Greenstein parameter
-    double g = 0.8;
-
     // determine momente of Heney-Greenstein
     _xi = Matrix( 3, _nEnergies );
 
@@ -70,7 +68,7 @@ CSDSNSolverFP::CSDSNSolverFP( Config* settings ) : SNSolver( settings ) {
 
     // read in medical data if radiation therapy option selected
     if( _RT ) {
-        ICRU database( abs( mu ), _energies );
+        ICRU database( abs( mu ), _energies, _settings );
         database.GetTransportCoefficients( _xi );
         database.GetStoppingPower( _s );
     }
@@ -88,7 +86,7 @@ CSDSNSolverFP::CSDSNSolverFP( Config* settings ) : SNSolver( settings ) {
 }
 
 void CSDSNSolverFP::Solve() {
-    std::cout << "Solve Fokker-Planck with Heney-Greenstein kernel using " << _nEnergies << " energies " << std::endl;
+    // std::cout << "Solve Fokker-Planck with Heney-Greenstein kernel using " << _nEnergies << " energies " << std::endl;
 
     auto log      = spdlog::get( "event" );
     auto cellMids = _mesh->GetCellMidPoints();

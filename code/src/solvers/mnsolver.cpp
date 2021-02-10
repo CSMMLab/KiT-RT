@@ -7,8 +7,8 @@
 #include "optimizers/optimizerbase.h"
 #include "problems/problembase.h"
 #include "quadratures/quadraturebase.h"
-#include "solvers/sphericalharmonics.h"
 #include "toolboxes/errormessages.h"
+#include "toolboxes/sphericalbase.h"
 #include "toolboxes/textprocessingtoolbox.h"
 
 // externals
@@ -16,20 +16,23 @@
 #include <mpi.h>
 
 #include <fstream>
-//#include <chrono>
 
 MNSolver::MNSolver( Config* settings ) : Solver( settings ) {
 
-    // Is this good (fast) code using a constructor list?
     _LMaxDegree    = settings->GetMaxMomentDegree();
-    _nTotalEntries = GlobalIndex( _LMaxDegree, int( _LMaxDegree ) ) + 1;
+    _basis         = SphericalBase::Create( _settings );
+    _nTotalEntries = _basis->GetBasisSize();
 
     // build quadrature object and store quadrature points and weights
-    _quadPoints       = _quadrature->GetPoints();
-    _weights          = _quadrature->GetWeights();
-    _nq               = _quadrature->GetNq();
+    _quadPoints = _quadrature->GetPoints();
+    _weights    = _quadrature->GetWeights();
+    //_nq               = _quadrature->GetNq();
     _quadPointsSphere = _quadrature->GetPointsSphere();
-    _settings->SetNQuadPoints( _nq );
+    //_settings->SetNQuadPoints( _nq );
+
+    // Initialize temporary storages of alpha derivatives
+    _solDx = VectorVector( _nCells, Vector( _nTotalEntries, 0.0 ) );
+    _solDy = VectorVector( _nCells, Vector( _nTotalEntries, 0.0 ) );
 
     // Initialize Scatter Matrix --
     _scatterMatDiag = Vector( _nTotalEntries, 0.0 );
@@ -45,13 +48,9 @@ MNSolver::MNSolver( Config* settings ) : Solver( settings ) {
     _alpha = VectorVector( _nCells, Vector( _nTotalEntries, 0.0 ) );
 
     // Initialize and Pre-Compute Moments at quadrature points
-    _basis = new SphericalHarmonics( _LMaxDegree );
-
     _moments = VectorVector( _nq, Vector( _nTotalEntries, 0.0 ) );
-    ComputeMoments();
 
-    // Solver output
-    PrepareVolumeOutput();
+    ComputeMoments();
 }
 
 MNSolver::~MNSolver() {
@@ -69,12 +68,6 @@ void MNSolver::ComputeScatterMatrix() {
     }
 }
 
-int MNSolver::GlobalIndex( int l, int k ) const {
-    int numIndicesPrevLevel  = l * l;    // number of previous indices untill level l-1
-    int prevIndicesThisLevel = k + l;    // number of previous indices in current level
-    return numIndicesPrevLevel + prevIndicesThisLevel;
-}
-
 void MNSolver::ComputeMoments() {
     double my, phi;
 
@@ -88,29 +81,51 @@ void MNSolver::ComputeMoments() {
 
 Vector MNSolver::ConstructFlux( unsigned idx_cell ) {
 
-    // ---- Integration of Moment of flux ----
+    //--- Integration of moments of flux ---
     double entropyL, entropyR, entropyFlux;
 
     Vector flux( _nTotalEntries, 0.0 );
 
+    //--- Temporary storages of reconstructed alpha ---
+    Vector alphaL( _nTotalEntries, 0.0 );
+    Vector alphaR( _nTotalEntries, 0.0 );
+
     for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
-
-        entropyFlux = 0.0;    // Reset temorary flux
-
-        entropyL = _entropy->EntropyPrimeDual( blaze::dot( _alpha[idx_cell], _moments[idx_quad] ) );
+        entropyFlux = 0.0;    // reset temorary flux
 
         for( unsigned idx_neigh = 0; idx_neigh < _neighbors[idx_cell].size(); idx_neigh++ ) {
-            // Store fluxes in psiNew, to save memory
+            // Left side reconstruction
+            if( _reconsOrder > 1 ) {
+                alphaL = _alpha[idx_cell] + _solDx[idx_cell] * ( _interfaceMidPoints[idx_cell][idx_neigh][0] - _cellMidPoints[idx_cell][0] ) +
+                         _solDy[idx_cell] * ( _interfaceMidPoints[idx_cell][idx_neigh][1] - _cellMidPoints[idx_cell][1] );
+            }
+            else {
+                alphaL = _alpha[idx_cell];
+            }
+            entropyL = _entropy->EntropyPrimeDual( blaze::dot( alphaL, _moments[idx_quad] ) );
+
+            // Right side reconstruction
             if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::NEUMANN && _neighbors[idx_cell][idx_neigh] == _nCells )
                 entropyR = entropyL;
             else {
-                entropyR = _entropy->EntropyPrimeDual( blaze::dot( _alpha[_neighbors[idx_cell][idx_neigh]], _moments[idx_quad] ) );
+                if( _reconsOrder > 1 ) {
+                    alphaR = _alpha[_neighbors[idx_cell][idx_neigh]] +
+                             _solDx[_neighbors[idx_cell][idx_neigh]] *
+                                 ( _interfaceMidPoints[idx_cell][idx_neigh][0] - _cellMidPoints[_neighbors[idx_cell][idx_neigh]][0] ) +
+                             _solDy[_neighbors[idx_cell][idx_neigh]] *
+                                 ( _interfaceMidPoints[idx_cell][idx_neigh][1] - _cellMidPoints[_neighbors[idx_cell][idx_neigh]][1] );
+                }
+                else {
+                    alphaR = _alpha[_neighbors[idx_cell][idx_neigh]];
+                }
+                entropyR = _entropy->EntropyPrimeDual( blaze::dot( alphaR, _moments[idx_quad] ) );
             }
+
+            // Entropy flux
             entropyFlux += _g->Flux( _quadPoints[idx_quad], entropyL, entropyR, _normals[idx_cell][idx_neigh] );
         }
+        // Solution flux
         flux += _moments[idx_quad] * ( _weights[idx_quad] * entropyFlux );
-
-        // ------- Relizablity Reconstruction Step ----
     }
     return flux;
 }
@@ -125,13 +140,13 @@ void MNSolver::ComputeRealizableSolution( unsigned idx_cell ) {
     }
 }
 
-void MNSolver::IterPreprocessing() {
+void MNSolver::IterPreprocessing( unsigned idx_pseudotime ) {
 
     // ------- Reconstruction Step ----------------
 
     _optimizer->SolveMultiCell( _alpha, _sol, _moments );
 
-    // ------- Relizablity Reconstruction Step ----
+    // ------- Relizablity Preservation Step ----
     for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
         ComputeRealizableSolution( idx_cell );
     }
@@ -153,6 +168,10 @@ void MNSolver::ComputeRadFlux() {
 }
 
 void MNSolver::FluxUpdate() {
+    if( _reconsOrder > 1 ) {
+        _mesh->ReconstructSlopesU( _nTotalEntries, _solDx, _solDy, _alpha );    // unstructured reconstruction
+    }
+
     // Loop over the grid cells
     for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
         // Dirichlet Boundaries stay
@@ -206,12 +225,23 @@ void MNSolver::PrepareVolumeOutput() {
                 _outputFields[idx_group].resize( _nTotalEntries );
                 _outputFieldNames[idx_group].resize( _nTotalEntries );
 
-                for( int idx_l = 0; idx_l <= (int)_LMaxDegree; idx_l++ ) {
-                    for( int idx_k = -idx_l; idx_k <= idx_l; idx_k++ ) {
-                        _outputFields[idx_group][GlobalIndex( idx_l, idx_k )].resize( _nCells );
-
-                        _outputFieldNames[idx_group][GlobalIndex( idx_l, idx_k )] =
-                            std::string( "u_" + std::to_string( idx_l ) + "^" + std::to_string( idx_k ) );
+                if( _settings->GetSphericalBasisName() == SPHERICAL_HARMONICS ) {
+                    for( int idx_l = 0; idx_l <= (int)_LMaxDegree; idx_l++ ) {
+                        for( int idx_k = -idx_l; idx_k <= idx_l; idx_k++ ) {
+                            _outputFields[idx_group][_basis->GetGlobalIndexBasis( idx_l, idx_k )].resize( _nCells );
+                            _outputFieldNames[idx_group][_basis->GetGlobalIndexBasis( idx_l, idx_k )] =
+                                std::string( "u_" + std::to_string( idx_l ) + "^" + std::to_string( idx_k ) );
+                        }
+                    }
+                }
+                else {
+                    for( unsigned idx_l = 0; idx_l <= _LMaxDegree; idx_l++ ) {
+                        unsigned maxOrder_k = _basis->GetCurrDegreeSize( idx_l );
+                        for( unsigned idx_k = 0; idx_k < maxOrder_k; idx_k++ ) {
+                            _outputFields[idx_group][_basis->GetGlobalIndexBasis( idx_l, idx_k )].resize( _nCells );
+                            _outputFieldNames[idx_group][_basis->GetGlobalIndexBasis( idx_l, idx_k )] =
+                                std::string( "u_" + std::to_string( idx_l ) + "^" + std::to_string( idx_k ) );
+                        }
                     }
                 }
                 break;
@@ -221,12 +251,23 @@ void MNSolver::PrepareVolumeOutput() {
                 _outputFields[idx_group].resize( _nTotalEntries );
                 _outputFieldNames[idx_group].resize( _nTotalEntries );
 
-                for( int idx_l = 0; idx_l <= (int)_LMaxDegree; idx_l++ ) {
-                    for( int idx_k = -idx_l; idx_k <= idx_l; idx_k++ ) {
-                        _outputFields[idx_group][GlobalIndex( idx_l, idx_k )].resize( _nCells );
-
-                        _outputFieldNames[idx_group][GlobalIndex( idx_l, idx_k )] =
-                            std::string( "alpha_" + std::to_string( idx_l ) + "^" + std::to_string( idx_k ) );
+                if( _settings->GetSphericalBasisName() == SPHERICAL_HARMONICS ) {
+                    for( int idx_l = 0; idx_l <= (int)_LMaxDegree; idx_l++ ) {
+                        for( int idx_k = -idx_l; idx_k <= idx_l; idx_k++ ) {
+                            _outputFields[idx_group][_basis->GetGlobalIndexBasis( idx_l, idx_k )].resize( _nCells );
+                            _outputFieldNames[idx_group][_basis->GetGlobalIndexBasis( idx_l, idx_k )] =
+                                std::string( "alpha_" + std::to_string( idx_l ) + "^" + std::to_string( idx_k ) );
+                        }
+                    }
+                }
+                else {
+                    for( int idx_l = 0; idx_l <= (int)_LMaxDegree; idx_l++ ) {
+                        unsigned maxOrder_k = _basis->GetCurrDegreeSize( idx_l );
+                        for( unsigned idx_k = 0; idx_k < maxOrder_k; idx_k++ ) {
+                            _outputFields[idx_group][_basis->GetGlobalIndexBasis( idx_l, idx_k )].resize( _nCells );
+                            _outputFieldNames[idx_group][_basis->GetGlobalIndexBasis( idx_l, idx_k )] =
+                                std::string( "alpha_" + std::to_string( idx_l ) + "^" + std::to_string( idx_k ) );
+                        }
                     }
                 }
                 break;
@@ -287,23 +328,4 @@ void MNSolver::WriteVolumeOutput( unsigned idx_pseudoTime ) {
             }
         }
     }
-}
-
-void MNSolver::WriteNNTrainingData( unsigned idx_pseudoTime ) {
-    std::string filename = "trainNN.csv";
-    std::ofstream myfile;
-    myfile.open( filename, std::ofstream::app );
-
-    for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
-        myfile << 0 << ", " << _nTotalEntries << "," << idx_pseudoTime;
-        for( unsigned idx_sys = 0; idx_sys < _nTotalEntries; idx_sys++ ) {
-            myfile << "," << _sol[idx_cell][idx_sys];
-        }
-        myfile << " \n" << 1 << ", " << _nTotalEntries << "," << idx_pseudoTime;
-        for( unsigned idx_sys = 0; idx_sys < _nTotalEntries; idx_sys++ ) {
-            myfile << "," << _alpha[idx_cell][idx_sys];
-        }
-        myfile << "\n";
-    }
-    myfile.close();
 }

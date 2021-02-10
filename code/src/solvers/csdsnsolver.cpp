@@ -3,6 +3,7 @@
 #include "common/io.h"
 #include "fluxes/numericalflux.h"
 #include "kernels/scatteringkernelbase.h"
+#include "problems/icru.h"
 #include "problems/problembase.h"
 
 // externals
@@ -10,7 +11,7 @@
 #include <mpi.h>
 
 CSDSNSolver::CSDSNSolver( Config* settings ) : SNSolver( settings ) {
-    std::cout << "Start CSDN Constructor\n";
+    // std::cout << "Start CSDN Constructor\n";
     _dose = std::vector<double>( _settings->GetNCells(), 0.0 );
 
     // --- Set angle and energies
@@ -59,9 +60,9 @@ CSDSNSolver::CSDSNSolver( Config* settings ) : SNSolver( settings ) {
         }
     }
 
-    std::cout << "Here 3\n";
+    // std::cout << "Here 3\n";
 
-    ICRU database( angleVec, _energies );
+    ICRU database( angleVec, _energies, _settings );
     Matrix total;
     database.GetAngularScatteringXS( total, _sigmaTE );
 
@@ -132,11 +133,11 @@ CSDSNSolver::CSDSNSolver( Config* settings ) : SNSolver( settings ) {
     // Solver output
     PrepareVolumeOutput();
 
-    std::cout << "End CSDN Constructor\n";
+    // std::cout << "End CSDN Constructor\n";
 }
 
 void CSDSNSolver::Solve() {
-    std::cout << "Solve" << std::endl;
+    // std::cout << "Solve" << std::endl;
     auto log = spdlog::get( "event" );
 
     // save original energy field for boundary conditions
@@ -293,7 +294,7 @@ void CSDSNSolver::PrepareVolumeOutput() {
                 _outputFieldNames[idx_group][0] = "radiation flux density";
                 break;
 
-            case DOSE:
+            case MEDICAL:
                 // one entry per cell
                 _outputFields[idx_group].resize( 1 );
                 _outputFieldNames[idx_group].resize( 1 );
@@ -328,7 +329,7 @@ void CSDSNSolver::WriteVolumeOutput( unsigned idx_pseudoTime ) {
                     }
                     break;
 
-                case DOSE:
+                case MEDICAL:
                     for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
                         _outputFields[idx_group][0][idx_cell] = _dose[idx_cell];    // Remove DOSE
                     }

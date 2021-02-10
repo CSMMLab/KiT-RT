@@ -3,6 +3,7 @@
 #include "problems/aircavity1d.h"
 #include "problems/checkerboard.h"
 #include "problems/electronrt.h"
+#include "problems/isotropicsource2d.h"
 #include "problems/linesource.h"
 #include "problems/musclebonelung.h"
 #include "problems/phantom2d.h"
@@ -18,7 +19,7 @@ ProblemBase::~ProblemBase() {}
 
 ProblemBase* ProblemBase::Create( Config* settings, Mesh* mesh ) {
     auto name = settings->GetProblemName();
-    
+
     // Choose problem type
     switch( name ) {
         case PROBLEM_LineSource: {
@@ -40,6 +41,7 @@ ProblemBase* ProblemBase::Create( Config* settings, Mesh* mesh ) {
         case PROBLEM_Phantom2D: return new Phantom2D( settings, mesh );
         case PROBLEM_LineSource_Pseudo_1D: return new LineSource_SN_Pseudo1D( settings, mesh );
         case PROBLEM_LineSource_Pseudo_1D_Physics: return new LineSource_SN_Pseudo1D_Physics( settings, mesh );
+        case PROBLEM_IsotropicSource_2D: return new IsotropicSource2D( settings, mesh );
         default: return new ElectronRT( settings, mesh );    // Use RadioTherapy as dummy
     }
 }

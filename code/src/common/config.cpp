@@ -16,7 +16,6 @@
 #include "spdlog/sinks/basic_file_sink.h"
 #include "spdlog/sinks/stdout_sinks.h"
 #include "spdlog/spdlog.h"
-#include <cassert>
 #include <filesystem>
 #include <fstream>
 #include <mpi.h>
@@ -74,6 +73,12 @@ Config::Config( string case_filename ) {
 
 Config::~Config( void ) {
     // Delete all introduced arrays!
+
+    // delete _option map values proberly
+    for( auto const& x : _optionMap ) {
+        delete x.second;
+        _optionMap.erase( x.first );
+    }
 }
 
 // ---- Add Options ----
@@ -208,7 +213,7 @@ void Config::SetConfigOptions() {
     /*! @brief MESH_FILE \n DESCRIPTION: Name of mesh file \n DEFAULT "" \ingroup Config.*/
     AddStringOption( "MESH_FILE", _meshFile, string( "mesh.su2" ) );
     /*! @brief MESH_FILE \n DESCRIPTION: Name of mesh file \n DEFAULT "" \ingroup Config.*/
-    AddStringOption( "CT_FILE", _ctFile, string( "phantom.png" ) );
+    AddStringOption( "CT_FILE", _ctFile, string( "../tests/input/phantom.png" ) );
 
     // Quadrature relatated options
     /*! @brief QUAD_TYPE \n DESCRIPTION: Type of Quadrature rule \n Options: see @link QUAD_NAME \endlink \n DEFAULT: QUAD_MonteCarlo \ingroup
@@ -228,20 +233,27 @@ void Config::SetConfigOptions() {
     AddEnumOption( "PROBLEM", _problemName, Problem_Map, PROBLEM_ElectronRT );
     /*! @brief Solver \n DESCRIPTION: Solver used for problem \n DEFAULT SN_SOLVER @ingroup Config. */
     AddEnumOption( "SOLVER", _solverName, Solver_Map, SN_SOLVER );
-    /*! @brief RECONS_ORDER \n DESCRIPTION: Reconstruction order for solver \n DEFAULT 1 \ingroup Config.*/
+    /*! @brief RECONS_ORDER \n DESCRIPTION: Reconstruction order for solver (spatial flux) \n DEFAULT 1 \ingroup Config.*/
     AddUnsignedShortOption( "RECONS_ORDER", _reconsOrder, 1 );
     /*! @brief CleanFluxMatrices \n DESCRIPTION:  If true, very low entries (10^-10 or smaller) of the flux matrices will be set to zero,
      * to improve floating point accuracy \n DEFAULT false \ingroup Config */
     AddBoolOption( "CLEAN_FLUX_MATRICES", _cleanFluxMat, false );
     /*! @brief ContinuousSlowingDown \n DESCRIPTION: If true, the program uses the continuous slowing down approximation to treat energy dependent
      * problems. \n DEFAULT false \ingroup Config */
-    AddBoolOption( "CONTINUOUS_SLOWING_DOWN", _csd, false );
+    // AddBoolOption( "CONTINUOUS_SLOWING_DOWN", _csd, false );
+
+    // Problem Relateed Options
+    /*! @brief MaterialDir \n DESCRIPTION: Relative Path to the data directory (used in the ICRU database class), starting from the directory of the
+     * cfg file . \n DEFAULT "../data/material/" \ingroup Config */
+    AddStringOption( "DATA_DIR", _dataDir, string( "../data/" ) );
     /*! @brief HydogenFile \n DESCRIPTION: If the continuous slowing down approximation is used, this referes to the cross section file for hydrogen.
      * . \n DEFAULT "h.dat" \ingroup Config */
     AddStringOption( "HYDROGEN_FILE", _hydrogenFile, string( "ENDL_H.txt" ) );
     /*! @brief OxygenFile \n DESCRIPTION: If the continuous slowing down approximation is used, this referes to the cross section file for oxygen.
      * . \n DEFAULT "o.dat" \ingroup Config */
     AddStringOption( "OXYGEN_FILE", _oxygenFile, string( "ENDL_O.txt" ) );
+    /*! @brief StoppingPowerFile \n DESCRIPTION: Only temporary added. \ingroup Config */
+    AddStringOption( "STOPPING_POWER_FILE", _stoppingPowerFile, string( "stopping_power.txt" ) );
     /*! @brief SN_ALL_GAUSS_PTS \n DESCRIPTION: If true, the SN Solver uses all Gauss Quadrature Points for 2d. \n DEFAULT false \ingroup Config */
     AddBoolOption( "SN_ALL_GAUSS_PTS", _allGaussPts, false );
 
@@ -259,24 +271,32 @@ void Config::SetConfigOptions() {
     /*! @brief Newton Optimizer Epsilon \n DESCRIPTION:  Convergencce Epsilon for Newton Optimizer \n DEFAULT 1e-3 \ingroup Config */
     AddDoubleOption( "NEWTON_EPSILON", _optimizerEpsilon, 0.001 );
     /*! @brief Max Iter Newton Optmizers \n DESCRIPTION: Max number of newton iterations \n DEFAULT 10 \ingroup Config */
-    AddUnsignedShortOption( "NEWTON_ITER", _newtonIter, 100 );
+    AddUnsignedLongOption( "NEWTON_ITER", _newtonIter, 100 );
     /*! @brief Step Size Newton Optmizers \n DESCRIPTION: Step size for Newton optimizer \n DEFAULT 10 \ingroup Config */
     AddDoubleOption( "NEWTON_STEP_SIZE", _newtonStepSize, 0.1 );
     /*! @brief Max Iter for line search in Newton Optmizers \n DESCRIPTION: Max number of line search iter for newton optimizer \n DEFAULT 10 \ingroup
      * Config */
-    AddUnsignedShortOption( "NEWTON_LINE_SEARCH_ITER", _newtonLineSearchIter, 100 );
+    AddUnsignedLongOption( "NEWTON_LINE_SEARCH_ITER", _newtonLineSearchIter, 100 );
     /*! @brief Newton Fast mode \n DESCRIPTION:  If true, we skip the Newton optimizer for Quadratic entropy and set alpha = u \n DEFAULT false
      * \ingroup Config */
     AddBoolOption( "NEWTON_FAST_MODE", _newtonFastMode, false );
+
+    // Neural Entropy Closure options
+    AddUnsignedShortOption( "NEURAL_MODEL", _neuralModel, 4 );
 
     // Mesh related options
     // Boundary Markers
     /*!\brief BC_DIRICHLET\n DESCRIPTION: Dirichlet wall boundary marker(s) \ingroup Config*/
     AddStringListOption( "BC_DIRICHLET", _nMarkerDirichlet, _MarkerDirichlet );
     AddStringListOption( "BC_NEUMANN", _nMarkerNeumann, _MarkerNeumann );
+    AddUnsignedShortOption( "SPATIAL_DIM", _dim, 3 );
 
     /*! @brief Scattering kernel \n DESCRIPTION: Describes used scattering kernel \n DEFAULT KERNEL_Isotropic \ingroup Config */
     AddEnumOption( "KERNEL", _kernelName, Kernel_Map, KERNEL_Isotropic );
+
+    /*! @brief Spherical Basis \n DESCRIPTION: Describes the chosen set of basis functions for on the unit sphere (e.g. for Moment methods) \n DEFAULT
+     * SPHERICAL_HARMONICS \ingroup Config */
+    AddEnumOption( "SPHERICAL_BASIS", _sphericalBasisName, SphericalBasis_Map, SPHERICAL_HARMONICS );
 
     // Output related options
     /*! @brief Volume output \n DESCRIPTION: Describes output groups to write to vtk \ingroup Config */
@@ -291,6 +311,18 @@ void Config::SetConfigOptions() {
     AddEnumListOption( "HISTORY_OUTPUT", _nHistoryOutput, _historyOutput, ScalarOutput_Map );
     /*! @brief History output Frequency \n DESCRIPTION: Describes history output write frequency \n DEFAULT 1 \ingroup Config */
     AddUnsignedShortOption( "HISTORY_OUTPUT_FREQUENCY", _historyOutputFrequency, 1 );
+
+    // Data generator related options
+    /*! @brief Size of training data set \n DESCRIPTION: Size of training data set  \n DEFAULT 1 \ingroup Config */
+    AddUnsignedLongOption( "TRAINING_SET_SIZE", _tainingSetSize, 1 );
+    /*! @brief Size of training data set \n DESCRIPTION: Size of training data set  \n DEFAULT 10 \ingroup Config */
+    AddUnsignedLongOption( "MAX_VALUE_FIRST_MOMENT", _maxValFirstMoment, 10 );
+    /*! @brief Data generator mode \n DESCRIPTION: Check, if data generator mode is active. If yes, no solver is called, but instead the data
+     *         generator is executed \n DEFAULT false \ingroup Config */
+    AddBoolOption( "DATA_GENERATOR_MODE", _dataGeneratorMode, false );
+    /*! @brief Distance to the boundary of the realizable set \n DESCRIPTION: Distance to the boundary of the realizable set  \n DEFAULT 0.1 \ingroup
+     * Config */
+    AddDoubleOption( "BOUNDARY_DISTANCE_REALIZABLE_SET", _boundaryDistanceRealizableSet, 0.1 );
 }
 
 void Config::SetConfigParsing( string case_filename ) {
@@ -388,13 +420,15 @@ void Config::SetPostprocessing() {
     if( _inputDir[_inputDir.size() - 1] != '/' ) _inputDir.append( "/" );
 
     // setup relative paths
-    _logDir       = _inputDir + _logDir;
-    _outputDir    = _inputDir + _outputDir;
-    _meshFile     = _inputDir + _meshFile;
-    _outputFile   = _outputDir + _outputFile;
-    _ctFile       = _inputDir + _ctFile;
-    _hydrogenFile = _inputDir + _hydrogenFile;
-    _oxygenFile   = _inputDir + _oxygenFile;
+    _logDir            = std::filesystem::path( _inputDir ).append( _logDir ).lexically_normal();
+    _outputDir         = std::filesystem::path( _inputDir ).append( _outputDir ).lexically_normal();
+    _meshFile          = std::filesystem::path( _inputDir ).append( _meshFile ).lexically_normal();
+    _outputFile        = std::filesystem::path( _outputDir ).append( _outputFile ).lexically_normal();
+    _ctFile            = std::filesystem::path( _inputDir ).append( _ctFile ).lexically_normal();
+    _hydrogenFile      = std::filesystem::path( _inputDir ).append( _hydrogenFile ).lexically_normal();
+    _oxygenFile        = std::filesystem::path( _inputDir ).append( _oxygenFile ).lexically_normal();
+    _stoppingPowerFile = std::filesystem::path( _inputDir ).append( _stoppingPowerFile ).lexically_normal();
+    _dataDir           = std::filesystem::path( _inputDir ).append( _dataDir ).lexically_normal();
 
     // create directories if they dont exist
     if( !std::filesystem::exists( _outputDir ) ) std::filesystem::create_directory( _outputDir );
@@ -410,12 +444,21 @@ void Config::SetPostprocessing() {
         _boundaries.push_back( std::pair<std::string, BOUNDARY_TYPE>( _MarkerNeumann[i], NEUMANN ) );
     }
 
-    // Check, if mesh file exists
-    // if( !std::filesystem::exists( _meshFile ) ) {
-    //    ErrorMessages::Error( "Path to mesh file <" + _meshFile + "> does not exist. Please check your config file.", CURRENT_FUNCTION );
-    //}
+    // Set option ISCSD
+    switch( _solverName ) {
+        case CSD_SN_NOTRAFO_SOLVER:                     // Fallthrough
+        case CSD_SN_FOKKERPLANCK_SOLVER:                // Fallthrough
+        case CSD_SN_FOKKERPLANCK_TRAFO_SOLVER:          // Fallthrough
+        case CSD_SN_FOKKERPLANCK_TRAFO_SOLVER_2D:       // Fallthrough
+        case CSD_SN_FOKKERPLANCK_TRAFO_SH_SOLVER_2D:    // Fallthrough
+        case CSD_SN_SOLVER:                             // Fallthrough
+            _csd = true;
+            break;
+        default: _csd = false;
+    }
 
-    if( this->GetIsCSD() ) {
+    // Check, if mesh file exists
+    if( _solverName == CSD_SN_FOKKERPLANCK_TRAFO_SOLVER ) {    // Check if this is neccessary
         if( !std::filesystem::exists( this->GetHydrogenFile() ) ) {
             ErrorMessages::Error( "Path to mesh file <" + this->GetHydrogenFile() + "> does not exist. Please check your config file.",
                                   CURRENT_FUNCTION );
@@ -424,6 +467,16 @@ void Config::SetPostprocessing() {
             ErrorMessages::Error( "Path to mesh file <" + this->GetOxygenFile() + "> does not exist. Please check your config file.",
                                   CURRENT_FUNCTION );
         }
+    }
+
+    // --- Solver setup ---
+    if( GetSolverName() == PN_SOLVER && GetSphericalBasisName() != SPHERICAL_HARMONICS ) {
+        ErrorMessages::Error( "PN Solver only works with spherical harmonics basis.\nThis should be the default setting for option SPHERICAL_BASIS.",
+                              CURRENT_FUNCTION );
+    }
+
+    if( GetSolverName() == MN_SOLVER && GetSphericalBasisName() == SPHERICAL_MONOMIALS && GetMaxMomentDegree() > 1 ) {
+        ErrorMessages::Error( "MN Solver only with monomial basis only stable up to degree 1. This is a TODO.", CURRENT_FUNCTION );
     }
 
     // --- Output Postprocessing ---
@@ -493,11 +546,16 @@ void Config::SetPostprocessing() {
                                               CURRENT_FUNCTION );
                     }
                     break;
-                case CSD_SN_SOLVER:
-                    supportedGroups = { MINIMAL, DOSE };
+                case CSD_SN_NOTRAFO_SOLVER:                     // Fallthrough
+                case CSD_SN_FOKKERPLANCK_SOLVER:                // Fallthrough
+                case CSD_SN_FOKKERPLANCK_TRAFO_SOLVER:          // Fallthrough
+                case CSD_SN_FOKKERPLANCK_TRAFO_SOLVER_2D:       // Fallthrough
+                case CSD_SN_FOKKERPLANCK_TRAFO_SH_SOLVER_2D:    // Fallthrough
+                case CSD_SN_SOLVER:                             // Fallthrough
+                    supportedGroups = { MINIMAL, MEDICAL };
                     if( supportedGroups.end() == std::find( supportedGroups.begin(), supportedGroups.end(), _volumeOutput[idx_volOutput] ) ) {
 
-                        ErrorMessages::Error( "CSD_SN_SOLVER only supports volume output ANALYTIC and MINIMAL.\nPlease check your .cfg file.",
+                        ErrorMessages::Error( "CSD_SN_SOLVER types only supports volume output MEDICAL and MINIMAL.\nPlease check your .cfg file.",
                                               CURRENT_FUNCTION );
                     }
                     break;
@@ -586,6 +644,14 @@ void Config::SetPostprocessing() {
             _historyOutput.push_back( VTK_OUTPUT );
         }
     }
+
+    // Mesh postprocessing
+    {
+        if( _dim < (unsigned short)1 || _dim > (unsigned short)3 ) {
+            std::string msg = "Dimension " + std::to_string( _dim ) + "not supported.\n";
+            ErrorMessages::Error( msg, CURRENT_FUNCTION );
+        }
+    }
 }
 
 void Config::SetOutput() {
@@ -616,10 +682,9 @@ bool Config::TokenizeString( string& str, string& option_name, vector<string>& o
     string name_part, value_part;
     pos = str.find( "=" );
     if( pos == string::npos ) {
-        cerr << "Error in TokenizeString(): "
-             << "line in the configuration file with no \"=\" sign." << endl;
-        cout << "Look for: " << str << endl;
-        cout << "str.length() = " << str.length() << endl;
+        string errmsg = "Error in Config::TokenizeString(): line in the configuration file with no \"=\" sign.  ";
+        errmsg += "\nLook for: \n  str.length() = " + str.length();
+        spdlog::error( errmsg );
         throw( -1 );
     }
     name_part  = str.substr( 0, pos );
@@ -629,16 +694,18 @@ bool Config::TokenizeString( string& str, string& option_name, vector<string>& o
     last_pos = name_part.find_first_not_of( delimiters, 0 );
     pos      = name_part.find_first_of( delimiters, last_pos );
     if( ( name_part.length() == 0 ) || ( last_pos == string::npos ) ) {
-        cerr << "Error in CConfig::TokenizeString(): "
-             << "line in the configuration file with no name before the \"=\" sign." << endl;
+        string errmsg = "Error in Config::TokenizeString(): ";
+        errmsg += "line in the configuration file with no name before the \"=\" sign.\n";
+        spdlog::error( errmsg );
         throw( -1 );
     }
     if( pos == string::npos ) pos = name_part.length();
     option_name = name_part.substr( last_pos, pos - last_pos );
     last_pos    = name_part.find_first_not_of( delimiters, pos );
     if( last_pos != string::npos ) {
-        cerr << "Error in TokenizeString(): "
-             << "two or more options before an \"=\" sign in the configuration file." << endl;
+        string errmsg = "Error in  Config::TokenizeString(): ";
+        errmsg += "two or more options before an \"=\" sign in the configuration file.";
+        spdlog::error( errmsg );
         throw( -1 );
     }
     TextProcessingToolbox::StringToUpperCase( option_name );
@@ -656,8 +723,9 @@ bool Config::TokenizeString( string& str, string& option_name, vector<string>& o
         pos = value_part.find_first_of( delimiters, last_pos );
     }
     if( option_value.size() == 0 ) {
-        cerr << "Error in TokenizeString(): "
-             << "option " << option_name << " in configuration file with no value assigned." << endl;
+        string errmsg = "Error in  Config::TokenizeString(): ";
+        errmsg += "option " + option_name + " in configuration file with no value assigned.\n";
+        spdlog::error( errmsg );
         throw( -1 );
     }
 
@@ -768,10 +836,10 @@ void Config::InitLogger() {
 
                 // set filename
                 std::string filename;
-                if( _logFileName.compare( "use_date" ) == 0 )
-                    filename = buf;    // set filename to date and time
-                else
-                    filename = _logFileName;
+                if( _logFileName.compare( "use_date" ) == 0 ) {
+                    _logFileName = buf;    // set filename to date and time
+                }
+                filename = _logFileName;
 
                 // in case of existing files append '_#'
                 int ctr = 0;
@@ -843,7 +911,7 @@ void Config::InitLogger() {
             // create spdlog file sink
             auto fileSink = std::make_shared<spdlog::sinks::basic_file_sink_mt>( _logDir + cfilename );
             fileSink->set_level( fileLogLvl );
-            fileSink->set_pattern( "%Y-%m-%d %H:%M:%S.%f , %v" );
+            fileSink->set_pattern( "%Y-%m-%d %H:%M:%S.%f ,%v" );
             sinks.push_back( fileSink );
         }
 

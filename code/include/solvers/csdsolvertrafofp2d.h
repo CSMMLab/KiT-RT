@@ -1,7 +1,6 @@
 #ifndef CSDSOLVERTRAFOFP2D_H
 #define CSDSOLVERTRAFOFP2D_H
 
-#include "icru.h"
 #include "solvers/snsolver.h"
 
 class Physics;
@@ -44,6 +43,11 @@ class CSDSolverTrafoFP2D : public SNSolver
     double _energyMin;
     double _energyMax;
 
+    // Helper variables
+    Vector _energiesOrig; /*! @brief: original energy levels for CSD, lenght = _nEnergies */
+    Matrix _identity;     /*! @brif: identity matrix for FP scattering. Dim (_nq,_nq)*/
+    double _densityMin;   /*! @brief: Minimal density of _density vector */
+
     void GenerateEnergyGrid( bool refinement );
 
   public:
@@ -52,15 +56,24 @@ class CSDSolverTrafoFP2D : public SNSolver
      * @param settings stores all needed information
      */
     CSDSolverTrafoFP2D( Config* settings );
-    /**
-     * @brief Solve functions runs main time loop
-     */
-    virtual void Solve();
+
+    virtual ~CSDSolverTrafoFP2D() {}
+
     /**
      * @brief Output solution to VTK file
      */
-    virtual void Save() const;
-    virtual void Save( int currEnergy ) const;
+
+  private:
+    // IO
+    void PrepareVolumeOutput() override final;
+    void WriteVolumeOutput( unsigned idx_pseudoTime ) override final;
+
+    // Solver
+    void FVMUpdate( unsigned idx_energy ) override final;
+    void FluxUpdate() override final;
+    void IterPreprocessing( unsigned idx_pseudotime ) override final;
+    void virtual IterPostprocessing() override final;
+    void SolverPreprocessing() override final;
 };
 
 #endif    // CSDSOLVERTRAFOFP2D_H

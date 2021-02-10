@@ -7,13 +7,19 @@
 #include "problems/problembase.h"
 #include "quadratures/quadraturebase.h"
 #include "solvers/csdsnsolver.h"
+#include "solvers/csdsolvertrafofp.h"
+#include "solvers/csdsolvertrafofp2d.h"
+#include "solvers/csdsolvertrafofpsh2d.h"
+
 #include "solvers/mnsolver.h"
 #include "solvers/pnsolver.h"
 #include "solvers/snsolver.h"
 
 #include <mpi.h>
 
-Solver::Solver( Config* settings ) : _settings( settings ) {
+Solver::Solver( Config* settings ) {
+    _settings = settings;
+
     // @TODO save parameters from settings class
 
     // build mesh and store  and store frequently used params
@@ -25,9 +31,31 @@ Solver::Solver( Config* settings ) : _settings( settings ) {
     _settings->SetNCells( _nCells );
 
     // build quadrature object and store frequently used params
-    _quadrature = QuadratureBase::CreateQuadrature( settings );
+    _quadrature = QuadratureBase::Create( settings );
     _nq         = _quadrature->GetNq();
     _settings->SetNQuadPoints( _nq );
+
+    // build slope related params
+    _reconstructor = new Reconstructor( settings );
+    _reconsOrder   = _reconstructor->GetReconsOrder();
+
+    auto nodes = _mesh->GetNodes();
+    auto cells = _mesh->GetCells();
+    std::vector<std::vector<Vector>> interfaceMidPoints( _nCells, std::vector<Vector>( _mesh->GetNumNodesPerCell(), Vector( 2, 1e-10 ) ) );
+    for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
+        for( unsigned k = 0; k < _mesh->GetDim(); ++k ) {
+            for( unsigned j = 0; j < _neighbors[idx_cell].size() - 1; ++j ) {
+                interfaceMidPoints[idx_cell][j][k] = 0.5 * ( nodes[cells[idx_cell][j]][k] + nodes[cells[idx_cell][j + 1]][k] );
+            }
+            interfaceMidPoints[idx_cell][_neighbors[idx_cell].size() - 1][k] =
+                0.5 * ( nodes[cells[idx_cell][_neighbors[idx_cell].size() - 1]][k] + nodes[cells[idx_cell][0]][k] );
+        }
+    }
+    _interfaceMidPoints = interfaceMidPoints;
+    _cellMidPoints      = _mesh->GetCellMidPoints();
+
+    _psiDx = VectorVector( _nCells, Vector( _nq, 0.0 ) );
+    _psiDy = VectorVector( _nCells, Vector( _nq, 0.0 ) );
 
     // set time step
     _dE        = ComputeTimeStep( settings->GetCFL() );
@@ -59,6 +87,10 @@ Solver::Solver( Config* settings ) : _settings( settings ) {
     // initialize Helper Variables
     _fluxNew = Vector( _nCells, 0 );
     _flux    = Vector( _nCells, 0 );
+
+    // write density
+    _density = _problem->GetDensity( _mesh->GetCellMidPoints() );
+    //_density = std::vector( _mesh->GetCellMidPoints().size(), 0.0 );
 }
 
 Solver::~Solver() {
@@ -70,60 +102,39 @@ Solver::~Solver() {
 Solver* Solver::Create( Config* settings ) {
     switch( settings->GetSolverName() ) {
         case SN_SOLVER: return new SNSolver( settings );
-        case CSD_SN_SOLVER: return new CSDSNSolver( settings );
+
         case PN_SOLVER: return new PNSolver( settings );
         case MN_SOLVER: return new MNSolver( settings );
-        default: return new SNSolver( settings );
+        case CSD_SN_SOLVER: return new CSDSNSolver( settings );
+        case CSD_SN_FOKKERPLANCK_TRAFO_SOLVER: return new CSDSolverTrafoFP( settings );
+        case CSD_SN_FOKKERPLANCK_TRAFO_SOLVER_2D: return new CSDSolverTrafoFP2D( settings );
+        case CSD_SN_FOKKERPLANCK_TRAFO_SH_SOLVER_2D: return new CSDSolverTrafoFPSH2D( settings );
+        default: ErrorMessages::Error( "Creator for the chosen solver does not yet exist. This is is the fault of the coder!", CURRENT_FUNCTION );
     }
 }
 
 void Solver::Solve() {
-    int rank;
-    MPI_Comm_rank( MPI_COMM_WORLD, &rank );
 
-    auto log    = spdlog::get( "event" );
-    auto logCSV = spdlog::get( "tabular" );
+    // --- Preprocessing ---
 
-    std::string hLine = "--";
+    PrepareVolumeOutput();
 
-    if( rank == 0 ) {
-        unsigned strLen  = 10;    // max width of one column
-        char paddingChar = ' ';
+    DrawPreSolverOutput();
 
-        // Assemble Header for Screen Output
-        std::string lineToPrint = "| ";
-        std::string tmpLine     = "------------";
-        for( unsigned idxFields = 0; idxFields < _settings->GetNScreenOutput(); idxFields++ ) {
-            std::string tmp = _screenOutputFieldNames[idxFields];
-
-            if( strLen > tmp.size() )    // Padding
-                tmp.insert( 0, strLen - tmp.size(), paddingChar );
-            else if( strLen < tmp.size() )    // Cutting
-                tmp.resize( strLen );
-
-            lineToPrint += tmp + " |";
-            hLine += tmpLine;
-        }
-        log->info( "---------------------------- Solver Starts -----------------------------" );
-        log->info( "| The simulation will run for {} iterations.", _nEnergies );
-        log->info( hLine );
-        log->info( lineToPrint );
-        log->info( hLine );
-
-        std::string lineToPrintCSV = "";
-        for( int idxFields = 0; idxFields < _settings->GetNHistoryOutput() - 1; idxFields++ ) {
-            std::string tmp = _historyOutputFieldNames[idxFields];
-            lineToPrintCSV += tmp + ",";
-        }
-        lineToPrintCSV += _historyOutputFieldNames[_settings->GetNHistoryOutput() - 1];
-        logCSV->info( lineToPrintCSV );
+    // Adjust maxIter, depending if we have a normal run or a csd Run
+    _maxIter = _nEnergies;
+    if( _settings->GetIsCSD() ) {
+        _maxIter = _nEnergies - 1;    // Since CSD does not go the last energy step
     }
 
+    // Preprocessing before first pseudo time step
+    SolverPreprocessing();
+
     // Loop over energies (pseudo-time of continuous slowing down approach)
-    for( unsigned iter = 0; iter < _nEnergies; iter++ ) {
+    for( unsigned iter = 0; iter < _maxIter; iter++ ) {
 
         // --- Prepare Boundaries and temp variables
-        IterPreprocessing();
+        IterPreprocessing( iter );
 
         // --- Compute Fluxes ---
         FluxUpdate();
@@ -131,7 +142,7 @@ void Solver::Solve() {
         // --- Finite Volume Update ---
         FVMUpdate( iter );
 
-        // --- Postprocessing ---
+        // --- Iter Postprocessing ---
         IterPostprocessing();
 
         // --- Solver Output ---
@@ -141,11 +152,10 @@ void Solver::Solve() {
         PrintHistoryOutput( iter );
         PrintVolumeOutput( iter );
     }
-    if( rank == 0 ) {
-        log->info( hLine );
-        log->info( "| Postprocessing screen output goes here." );
-        log->info( "--------------------------- Solver Finished ----------------------------" );
-    }
+
+    // --- Postprocessing ---
+
+    DrawPostSolverOutput();
 }
 
 void Solver::PrintVolumeOutput() const { ExportVTK( _settings->GetOutputFile(), _outputFields, _outputFieldNames, _mesh ); }
@@ -154,7 +164,7 @@ void Solver::PrintVolumeOutput( int currEnergy ) const {
     if( _settings->GetVolumeOutputFrequency() != 0 && currEnergy % (unsigned)_settings->GetVolumeOutputFrequency() == 0 ) {
         ExportVTK( _settings->GetOutputFile() + "_" + std::to_string( currEnergy ), _outputFields, _outputFieldNames, _mesh );
     }
-    if( currEnergy == (int)_nEnergies - 1 ) {    // Last iteration write without suffix.
+    if( currEnergy == (int)_maxIter - 1 ) {    // Last iteration write without suffix.
         ExportVTK( _settings->GetOutputFile(), _outputFields, _outputFieldNames, _mesh );
     }
 }
@@ -226,7 +236,7 @@ void Solver::WriteScalarOutput( unsigned iteration ) {
             case VTK_OUTPUT:
                 _screenOutputFields[idx_field] = 0;
                 if( ( _settings->GetVolumeOutputFrequency() != 0 && iteration % (unsigned)_settings->GetVolumeOutputFrequency() == 0 ) ||
-                    ( iteration == _nEnergies - 1 ) /* need sol at last iteration */ ) {
+                    ( iteration == _maxIter - 1 ) /* need sol at last iteration */ ) {
                     _screenOutputFields[idx_field] = 1;
                 }
                 break;
@@ -234,7 +244,7 @@ void Solver::WriteScalarOutput( unsigned iteration ) {
             case CSV_OUTPUT:
                 _screenOutputFields[idx_field] = 0;
                 if( ( _settings->GetHistoryOutputFrequency() != 0 && iteration % (unsigned)_settings->GetHistoryOutputFrequency() == 0 ) ||
-                    ( iteration == _nEnergies - 1 ) /* need sol at last iteration */ ) {
+                    ( iteration == _maxIter - 1 ) /* need sol at last iteration */ ) {
                     _screenOutputFields[idx_field] = 1;
                 }
                 break;
@@ -283,7 +293,7 @@ void Solver::WriteScalarOutput( unsigned iteration ) {
             case VTK_OUTPUT:
                 _historyOutputFields[idx_field] = 0;
                 if( ( _settings->GetVolumeOutputFrequency() != 0 && iteration % (unsigned)_settings->GetVolumeOutputFrequency() == 0 ) ||
-                    ( iteration == _nEnergies - 1 ) /* need sol at last iteration */ ) {
+                    ( iteration == _maxIter - 1 ) /* need sol at last iteration */ ) {
                     _historyOutputFields[idx_field] = 1;
                 }
                 break;
@@ -291,7 +301,7 @@ void Solver::WriteScalarOutput( unsigned iteration ) {
             case CSV_OUTPUT:
                 _historyOutputFields[idx_field] = 0;
                 if( ( _settings->GetHistoryOutputFrequency() != 0 && iteration % (unsigned)_settings->GetHistoryOutputFrequency() == 0 ) ||
-                    ( iteration == _nEnergies - 1 ) /* need sol at last iteration */ ) {
+                    ( iteration == _maxIter - 1 ) /* need sol at last iteration */ ) {
                     _historyOutputFields[idx_field] = 1;
                 }
                 break;
@@ -347,7 +357,7 @@ void Solver::PrintScreenOutput( unsigned iteration ) {
         if( _settings->GetScreenOutputFrequency() != 0 && iteration % (unsigned)_settings->GetScreenOutputFrequency() == 0 ) {
             log->info( lineToPrint );
         }
-        else if( iteration == _nEnergies - 1 ) {    // Always print last iteration
+        else if( iteration == _maxIter - 1 ) {    // Always print last iteration
             log->info( lineToPrint );
         }
     }
@@ -404,3 +414,84 @@ void Solver::PrintHistoryOutput( unsigned iteration ) {
         }
     }
 }
+
+void Solver::DrawPreSolverOutput() {
+    // MPI
+    int rank;
+    MPI_Comm_rank( MPI_COMM_WORLD, &rank );
+
+    // Logger
+    auto log    = spdlog::get( "event" );
+    auto logCSV = spdlog::get( "tabular" );
+
+    std::string hLine = "--";
+
+    if( rank == 0 ) {
+        unsigned strLen  = 10;    // max width of one column
+        char paddingChar = ' ';
+
+        // Assemble Header for Screen Output
+        std::string lineToPrint = "| ";
+        std::string tmpLine     = "------------";
+        for( unsigned idxFields = 0; idxFields < _settings->GetNScreenOutput(); idxFields++ ) {
+            std::string tmp = _screenOutputFieldNames[idxFields];
+
+            if( strLen > tmp.size() )    // Padding
+                tmp.insert( 0, strLen - tmp.size(), paddingChar );
+            else if( strLen < tmp.size() )    // Cutting
+                tmp.resize( strLen );
+
+            lineToPrint += tmp + " |";
+            hLine += tmpLine;
+        }
+        log->info( "---------------------------- Solver Starts -----------------------------" );
+        log->info( "| The simulation will run for {} iterations.", _nEnergies );
+        log->info( hLine );
+        log->info( lineToPrint );
+        log->info( hLine );
+
+        std::string lineToPrintCSV = "";
+        for( int idxFields = 0; idxFields < _settings->GetNHistoryOutput() - 1; idxFields++ ) {
+            std::string tmp = _historyOutputFieldNames[idxFields];
+            lineToPrintCSV += tmp + ",";
+        }
+        lineToPrintCSV += _historyOutputFieldNames[_settings->GetNHistoryOutput() - 1];
+        logCSV->info( lineToPrintCSV );
+    }
+}
+
+void Solver::DrawPostSolverOutput() {
+    // MPI
+    int rank;
+    MPI_Comm_rank( MPI_COMM_WORLD, &rank );
+
+    // Logger
+    auto log = spdlog::get( "event" );
+
+    std::string hLine = "--";
+
+    if( rank == 0 ) {
+        unsigned strLen  = 10;    // max width of one column
+        char paddingChar = ' ';
+
+        // Assemble Header for Screen Output
+        std::string lineToPrint = "| ";
+        std::string tmpLine     = "------------";
+        for( unsigned idxFields = 0; idxFields < _settings->GetNScreenOutput(); idxFields++ ) {
+            std::string tmp = _screenOutputFieldNames[idxFields];
+
+            if( strLen > tmp.size() )    // Padding
+                tmp.insert( 0, strLen - tmp.size(), paddingChar );
+            else if( strLen < tmp.size() )    // Cutting
+                tmp.resize( strLen );
+
+            lineToPrint += tmp + " |";
+            hLine += tmpLine;
+        }
+        log->info( hLine );
+        log->info( "| Postprocessing screen output goes here." );
+        log->info( "--------------------------- Solver Finished ----------------------------" );
+    }
+}
+
+void Solver::SolverPreprocessing() {}

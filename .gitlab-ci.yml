@@ -7,17 +7,17 @@ unit_tests:
   stage: unit_tests
   script:
     - git submodule update --init --recursive
-    - cd code/build/release
-    - cmake -G Ninja -DCMAKE_BUILD_TYPE=Debug ../../
+    - cd code/build/debug
+    - cmake -G Ninja -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTS=ON ../../
     - ninja
     - OMP_NUM_THREADS=1 ./unit_tests -r junit > unit_tests_report.xml
     - gcovr -e ../../ext/ -e ../../tests/ -r ../../
   artifacts:
     when: always
     paths:
-      - code/build/release/unit_tests_report.xml
+      - code/build/debug/unit_tests_report.xml
     reports:
-      junit: code/build/release/unit_tests_report.xml
+      junit: code/build/debug/unit_tests_report.xml
   timeout: 4h
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event" || $CI_COMMIT_BRANCH == "master" || $CI_COMMIT_BRANCH == "develop"

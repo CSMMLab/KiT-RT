@@ -8,12 +8,11 @@
 #include "common/config.h"
 #include "common/io.h"
 #include "fluxes/numericalflux.h"
-#include "icru.h"
 #include "kernels/scatteringkernelbase.h"
 #include "problems/problembase.h"
 #include "quadratures/quadraturebase.h"
 #include "solvers/snsolver.h"
-#include "sphericalharmonics.h"
+#include "toolboxes/sphericalharmonics.h"
 
 class Physics;
 
@@ -59,7 +58,10 @@ class CSDSolverTrafoFPSH2D : public SNSolver
     double _energyMin;
     double _energyMax;
 
-    void GenerateEnergyGrid( bool refinement );
+    // Helper variables
+    Vector _energiesOrig; /*! @brief: original energy levels for CSD, lenght = _nEnergies */
+    Matrix _identity;     /*! @brif: identity matrix for FP scattering. Dim (_nq,_nq)*/
+    double _densityMin;   /*! @brief: Minimal density of _density vector */
 
   public:
     /**
@@ -67,15 +69,28 @@ class CSDSolverTrafoFPSH2D : public SNSolver
      * @param settings stores all needed information
      */
     CSDSolverTrafoFPSH2D( Config* settings );
+
+    virtual ~CSDSolverTrafoFPSH2D() {}
+
     /**
-     * @brief Solve functions runs main time loop
+     * @brief Output solution to VTK file (LEGACY. But not remove, to compare)
      */
-    virtual void Solve();
-    /**
-     * @brief Output solution to VTK file
-     */
-    virtual void Save() const;
-    virtual void Save( int currEnergy ) const;
+    // virtual void Save() const;
+    // virtual void Save( int currEnergy ) const;
+
+  private:
+    void GenerateEnergyGrid( bool refinement );
+
+    // IO
+    void PrepareVolumeOutput() override final;
+    void WriteVolumeOutput( unsigned idx_pseudoTime ) override final;
+
+    // Solver
+    void FVMUpdate( unsigned idx_energy ) override final;
+    void FluxUpdate() override final;
+    void IterPreprocessing( unsigned idx_pseudotime ) override final;
+    void virtual IterPostprocessing() override final;
+    void SolverPreprocessing() override final;
 };
 
 #endif    // CSDSOLVERTRAFOFPSH2D_H
