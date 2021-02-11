@@ -133,7 +133,7 @@ void nnDataGenerator::SampleSolutionU() {
     // Use necessary conditions from Monreal, Dissertation, Chapter 3.2.1, Page 26
 
     // --- Determine stepsizes etc ---
-    double du0 = _settings->GetMaxValFirstMoment() / (double)_setSize;
+    double du0 = _settings->GetMaxValFirstMoment() / (double)_gridSize;
 
     // different processes for different
     if( _LMaxDegree == 0 ) {
@@ -260,7 +260,10 @@ void nnDataGenerator::CheckRealizability() {
         for( unsigned idx_set = 0; idx_set < _setSize; idx_set++ ) {
             if( _uSol[idx_set][0] < epsilon ) {
                 if( std::abs( _uSol[idx_set][1] ) > 0 || std::abs( _uSol[idx_set][2] ) > 0 || std::abs( _uSol[idx_set][3] ) > 0 ) {
-                    ErrorMessages::Error( "Moment not realizable [code 0].", CURRENT_FUNCTION );
+                    ErrorMessages::Error( "Moment not realizable [code 0]. Values: (" + std::to_string( _uSol[idx_set][0] ) + "|" +
+                                              std::to_string( _uSol[idx_set][1] ) + "|" + std::to_string( _uSol[idx_set][2] ) + "|" +
+                                              std::to_string( _uSol[idx_set][3] ) + ")",
+                                          CURRENT_FUNCTION );
                 }
             }
             else {
