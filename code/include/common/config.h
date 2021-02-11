@@ -4,8 +4,6 @@
  *         DO NOT CREATE SETTERS FOR THIS CLASS! ALL OPTIONS ARE CONSTANT (after SetPostprocessing).
  *
  * @author S. Schotthöfer
- *
- * Disclaimer: This class structure was copied and (heavily) modifed with open source permission from SU2 v7.0.3 https://su2code.github.io/
  */
 
 #ifndef CONFIG_H

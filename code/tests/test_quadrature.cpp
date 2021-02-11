@@ -128,8 +128,6 @@ TEST_CASE( "Quadrature Tests", "[quadrature]" ) {
                 // Set quadOrder
                 config->SetQuadOrder( quadratureorder );
 
-                bool errorWithinBounds = true;
-
                 QuadratureBase* Q   = QuadratureBase::Create( config );
                 VectorVector points = Q->GetPoints();
                 for( unsigned i = 0; i < Q->GetNq(); i++ ) {

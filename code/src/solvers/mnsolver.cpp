@@ -126,7 +126,7 @@ Vector MNSolver::ConstructFlux( unsigned idx_cell ) {
         }
         // Solution flux
         flux += _moments[idx_quad] * ( _weights[idx_quad] * entropyFlux );
-    }
+  }
     return flux;
 }
 

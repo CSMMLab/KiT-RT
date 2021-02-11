@@ -24,6 +24,9 @@ class Reconstructor
      * @param settings
      */
     Reconstructor( Config* settings );
+    static Reconstructor* Create( Config* settings );
+
+    unsigned inline GetReconsOrder() { return _reconsOrder; }
 
     unsigned inline GetReconsOrder() { return _reconsOrder; }
 
