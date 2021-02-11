@@ -190,7 +190,6 @@ TEST_CASE( "MN_SOLVER", "[validation_tests]" ) {
     }
 }
 
-/*
 TEST_CASE( "CSD_SN_FP_SOLVER", "[validation_tests]" ) {
     std::string csd_sn_fileDir = "input/validation_tests/CSD_SN_FP_solver/";
     SECTION( "waterphantom 1D" ) {
@@ -260,7 +259,7 @@ TEST_CASE( "CSD_SN_FP_SH_2D_SOLVER", "[validation_tests]" ) {
         REQUIRE( errorWithinBounds );
     }
 }
-*/
+
 // --- Validation Tests Output ---
 void tokenize( std::string const& str, const char delim, std::vector<std::string>& out ) {
     size_t start;
