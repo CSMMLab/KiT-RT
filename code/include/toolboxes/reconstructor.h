@@ -28,8 +28,6 @@ class Reconstructor
 
     unsigned inline GetReconsOrder() { return _reconsOrder; }
 
-    unsigned inline GetReconsOrder() { return _reconsOrder; }
-
     /*! Method 1: structured developing
      * @brief Slope of angular flux psi inside a given cell
      * @param Omega fixed ordinate for flux computation
