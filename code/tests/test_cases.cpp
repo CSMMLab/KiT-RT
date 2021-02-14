@@ -359,6 +359,7 @@ TEST_CASE( "screen_output", "[output]" ) {
     REQUIRE( eqLen );    // Files must be of same length
 }
 
+/*
 TEST_CASE( "Test the Data Generator", "[dataGen]" ) {
     std::string out_fileDir = "input/validation_tests/dataGenerator/";
     spdlog::drop_all();    // Make sure to write in own logging file
@@ -419,3 +420,4 @@ TEST_CASE( "Test the Data Generator", "[dataGen]" ) {
     }
     REQUIRE( testPassed );
 }
+*/
