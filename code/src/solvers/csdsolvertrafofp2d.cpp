@@ -275,7 +275,7 @@ void CSDSolverTrafoFP2D::WriteVolumeOutput( unsigned idx_pseudoTime ) {
 }
 
 // Solver
-void CSDSolverTrafoFP2D::FVMUpdate( unsigned idx_energy ) {
+void CSDSolverTrafoFP2D::FVMUpdate( unsigned /*idx_energy*/ ) {
 // loop over all spatial cells
 #pragma omp parallel for
     for( unsigned j = 0; j < _nCells; ++j ) {
@@ -393,15 +393,6 @@ void CSDSolverTrafoFP2D::SolverPreprocessing() {
     _identity = Matrix( _nq, _nq, 0.0 );
 
     for( unsigned k = 0; k < _nq; ++k ) _identity( k, k ) = 1.0;
-
-    // angular flux at next time step
-    VectorVector psiNew( _nCells, Vector( _nq, 0.0 ) );
-    double dFlux = 1e10;
-    Vector fluxNew( _nCells, 0.0 );
-    Vector fluxOld( _nCells, 0.0 );
-    // for( unsigned j = 0; j < _nCells; ++j ) {
-    //    fluxOld[j] = dot( _sol[j], _weights );
-    //}
 
     int rank;
     MPI_Comm_rank( MPI_COMM_WORLD, &rank );

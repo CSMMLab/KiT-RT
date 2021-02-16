@@ -23,7 +23,7 @@ SNSolver::SNSolver( Config* settings ) : Solver( settings ) {
     delete k;
 }
 
-void SNSolver::IterPreprocessing( unsigned idx_pseudotime ) {
+void SNSolver::IterPreprocessing( unsigned /*idx_pseudotime*/ ) {
     // Nothing to do for SNSolver
 }
 

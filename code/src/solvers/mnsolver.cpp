@@ -15,7 +15,7 @@
 #include "spdlog/spdlog.h"
 #include <mpi.h>
 
-#include <fstream>
+#include <iostream>
 
 MNSolver::MNSolver( Config* settings ) : Solver( settings ) {
 
@@ -126,7 +126,7 @@ Vector MNSolver::ConstructFlux( unsigned idx_cell ) {
         }
         // Solution flux
         flux += _moments[idx_quad] * ( _weights[idx_quad] * entropyFlux );
-  }
+    }
     return flux;
 }
 
@@ -140,7 +140,7 @@ void MNSolver::ComputeRealizableSolution( unsigned idx_cell ) {
     }
 }
 
-void MNSolver::IterPreprocessing( unsigned idx_pseudotime ) {
+void MNSolver::IterPreprocessing( unsigned /*idx_pseudotime*/ ) {
 
     // ------- Reconstruction Step ----------------
 
@@ -148,7 +148,7 @@ void MNSolver::IterPreprocessing( unsigned idx_pseudotime ) {
 
     // ------- Relizablity Preservation Step ----
     for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
-        ComputeRealizableSolution( idx_cell );
+        ComputeRealizableSolution( idx_cell );    // already parallelized
     }
 }
 
@@ -162,6 +162,7 @@ void MNSolver::IterPostprocessing() {
 
 void MNSolver::ComputeRadFlux() {
     double firstMomentScaleFactor = sqrt( 4 * M_PI );
+#pragma omp parallel for
     for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
         _fluxNew[idx_cell] = _sol[idx_cell][0] * firstMomentScaleFactor;
     }
@@ -172,29 +173,32 @@ void MNSolver::FluxUpdate() {
         _mesh->ReconstructSlopesU( _nTotalEntries, _solDx, _solDy, _alpha );    // unstructured reconstruction
     }
 
-    // Loop over the grid cells
+// Loop over the grid cells
+#pragma omp parallel for
     for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
-        // Dirichlet Boundaries stay
+        // Dirichlet Boundaries stayd
         if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::DIRICHLET ) continue;
         _solNew[idx_cell] = ConstructFlux( idx_cell );
+        // if( norm( _solNew[idx_cell] ) > 0.001 ) {
+        //    std::cout << _solNew[idx_cell] << "\n";
+        //}
     }
 }
 
 void MNSolver::FVMUpdate( unsigned idx_energy ) {
     // Loop over the grid cells
+    //#pragma omp parallel for
     for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
         // Dirichlet Boundaries stay
         if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::DIRICHLET ) continue;
-
-        for( unsigned idx_system = 0; idx_system < _nTotalEntries; idx_system++ ) {
-
-            _solNew[idx_cell][idx_system] = _sol[idx_cell][idx_system] -
-                                            ( _dE / _areas[idx_cell] ) * _solNew[idx_cell][idx_system] /* cell averaged flux */
-                                            - _dE * _sol[idx_cell][idx_system] *
-                                                  ( _sigmaT[idx_energy][idx_cell]                                    /* absorbtion influence */
-                                                    + _sigmaS[idx_energy][idx_cell] * _scatterMatDiag[idx_system] ); /* scattering influence */
+        // Flux update
+        for( unsigned idx_sys = 0; idx_sys < _nTotalEntries; idx_sys++ ) {
+            _solNew[idx_cell][idx_sys] = _sol[idx_cell][idx_sys] - ( _dE / _areas[idx_cell] ) * _solNew[idx_cell][idx_sys] /* cell averaged flux */
+                                         - _dE * _sol[idx_cell][idx_sys] *
+                                               ( _sigmaT[idx_energy][idx_cell]                                 /* absorbtion influence */
+                                                 + _sigmaS[idx_energy][idx_cell] * _scatterMatDiag[idx_sys] ); /* scattering influence */
         }
-
+        // Source Term
         _solNew[idx_cell][0] += _dE * _Q[0][idx_cell][0];
     }
 }

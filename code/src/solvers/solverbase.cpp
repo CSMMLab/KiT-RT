@@ -111,6 +111,8 @@ Solver* Solver::Create( Config* settings ) {
         case CSD_SN_FOKKERPLANCK_TRAFO_SH_SOLVER_2D: return new CSDSolverTrafoFPSH2D( settings );
         default: ErrorMessages::Error( "Creator for the chosen solver does not yet exist. This is is the fault of the coder!", CURRENT_FUNCTION );
     }
+    ErrorMessages::Error( "Creator for the chosen solver does not yet exist. This is is the fault of the coder!", CURRENT_FUNCTION );
+    return nullptr;    // This code is never reached. Just to disable compiler warnings.
 }
 
 void Solver::Solve() {

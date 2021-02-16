@@ -119,9 +119,10 @@ class Config
     // Data Generator Settings
     /*!< @brief Check, if data generator mode is active. If yes, no solver is called, but instead the data generator is executed */
     bool _dataGeneratorMode;
-    unsigned long _tainingSetSize;         /*!< @brief Size of training data set for data generator */
-    unsigned long _maxValFirstMoment;      /*!< @brief Size of training data set for data generator */
-    double _boundaryDistanceRealizableSet; /*! @brief Distance of the sampled moments to the boundary of the realizable set */
+    unsigned long _tainingSetSize;    /*!< @brief Size of training data set for data generator */
+    unsigned long _maxValFirstMoment; /*!< @brief Size of training data set for data generator */
+    double _RealizableSetEpsilonU0;   /*! @brief Distance to 0 of the sampled moments to the boundary of the realizable set */
+    double _RealizableSetEpsilonU1;   /*!< @brief: norm(u_1)/u_0 !< _RealizableSetEpsilonU1 */
 
     // --- Parsing Functionality and Initializing of Options ---
     /*!
@@ -315,7 +316,8 @@ class Config
     bool inline GetDataGeneratorMode() { return _dataGeneratorMode; }
     unsigned long inline GetTrainingDataSetSize() { return _tainingSetSize; }
     unsigned long inline GetMaxValFirstMoment() { return _maxValFirstMoment; }
-    double GetBoundaryDistanceRealizableSet() { return _boundaryDistanceRealizableSet; }
+    double GetRealizableSetEpsilonU0() { return _RealizableSetEpsilonU0; }
+    double GetRealizableSetEpsilonU1() { return _RealizableSetEpsilonU1; }
 
     // ---- Setters for option structure
     // This section is dangerous

@@ -53,7 +53,7 @@ PNSolver::PNSolver( Config* settings ) : Solver( settings ) {
     // TODO
 }
 
-void PNSolver::IterPreprocessing( unsigned idx_pseudotime ) {
+void PNSolver::IterPreprocessing( unsigned /*idx_pseudotime*/ ) {
     // Nothing to preprocess for PNSolver
 }
 
@@ -150,6 +150,10 @@ void PNSolver::FluxUpdate() {
                 }
             }
         }
+        // std::cout << norm( _solNew[idx_cell] ) << "\n";
+        // if( norm( _solNew[idx_cell] ) > 0.001 ) {
+        //    std::cout << _solNew[idx_cell] << "\n";
+        //}
     }
 }
 

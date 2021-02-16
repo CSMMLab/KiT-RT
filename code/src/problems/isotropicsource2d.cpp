@@ -34,4 +34,6 @@ VectorVector IsotropicSource2D::SetupIC() {
     return psi;
 }
 
-std::vector<double> IsotropicSource2D::GetDensity( const VectorVector& cellMidPoints ) { return std::vector<double>( _settings->GetNCells(), 1.0 ); }
+std::vector<double> IsotropicSource2D::GetDensity( const VectorVector& /*cellMidPoints*/ ) {
+    return std::vector<double>( _settings->GetNCells(), 1.0 );
+}
