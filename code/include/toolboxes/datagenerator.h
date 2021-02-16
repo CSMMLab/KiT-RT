@@ -43,7 +43,10 @@ class nnDataGenerator
     VectorVector _alpha;           /*! @brief: vector with Lagrange multipliers. Size: (setSize,basisSize)*/
     std::vector<double> _hEntropy; /*! @brief: vector with entropy values. Size: (setSize) */
 
-    unsigned long _setSize;
+    unsigned long _setSize; /*! @brief: Size of the whole training Set */
+    unsigned long
+        _gridSize; /*! @brief: Size of the grid discretizing moment U0 for higher order sampling (has different uses for different samplers)*/
+
     unsigned short _LMaxDegree; /*! @brief: Max Order of Spherical Harmonics */
     unsigned _nTotalEntries;    /*! @brief: Total number of equations in the system */
 
@@ -68,8 +71,9 @@ class nnDataGenerator
     void PrintTrainingData(); /*! @brief : Print computed training data to csv file and screen */
     void PrintLoadScreen();   /*! @brief: Print screen IO*/
     // Helper functions
-    void ComputeMoments();        /*! @brief: Pre-Compute Moments at all quadrature points. */
-    void CheckRealizability();    // Debugging helper
+    void ComputeMoments();            /*! @brief: Pre-Compute Moments at all quadrature points. */
+    void CheckRealizability();        // Debugging helper
+    void ComputeRealizableSolution(); /*! @brief: make u the realizable moment to alpha, since Newton has roundoff errors. */
 
     inline VectorVector GetuSol() { return _uSol; }                /*! @brief: Get the computed solution vector uSol */
     inline VectorVector GetAlpha() { return _alpha; }              /*! @brief: Get the computed vector alpha */

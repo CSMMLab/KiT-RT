@@ -1,13 +1,7 @@
 #include "toolboxes/reconstructor.h"
 #include "common/config.h"
 
-Reconstructor::Reconstructor( Config* settings ) {
-    _reconsOrder = settings->GetReconsOrder();
-}
-
-Reconstructor* Reconstructor::Create( Config* settings ) {
-    return new Reconstructor( settings );
-}
+Reconstructor::Reconstructor( Config* settings ) { _reconsOrder = settings->GetReconsOrder(); }
 
 double FortSign( double a, double b ) {
     if( b > 0.0 ) return std::fabs( a );

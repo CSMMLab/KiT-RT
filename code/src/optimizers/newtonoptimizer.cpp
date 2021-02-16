@@ -13,14 +13,13 @@
 #include <omp.h>
 
 NewtonOptimizer::NewtonOptimizer( Config* settings ) : OptimizerBase( settings ) {
-    _quadrature       = QuadratureBase::Create( settings );
-    _nq               = _quadrature->GetNq();
-    _weights          = _quadrature->GetWeights();
-    _quadPointsSphere = _quadrature->GetPointsSphere();
-    _maxIterations    = settings->GetNewtonIter();
-    _alpha            = settings->GetNewtonStepSize();
-    _maxLineSearches  = settings->GetNewtonMaxLineSearches();
-    _epsilon          = settings->GetNewtonOptimizerEpsilon();
+    _quadrature      = QuadratureBase::Create( settings );
+    _nq              = _quadrature->GetNq();
+    _weights         = _quadrature->GetWeights();
+    _maxIterations   = settings->GetNewtonIter();
+    _alpha           = settings->GetNewtonStepSize();
+    _maxLineSearches = settings->GetNewtonMaxLineSearches();
+    _epsilon         = settings->GetNewtonOptimizerEpsilon();
 }
 
 NewtonOptimizer::~NewtonOptimizer() { delete _quadrature; }

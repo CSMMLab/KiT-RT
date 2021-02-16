@@ -53,7 +53,7 @@ PNSolver::PNSolver( Config* settings ) : Solver( settings ) {
     // TODO
 }
 
-void PNSolver::IterPreprocessing() {
+void PNSolver::IterPreprocessing( unsigned idx_pseudotime ) {
     // Nothing to preprocess for PNSolver
 }
 
@@ -131,6 +131,7 @@ void PNSolver::FluxUpdate() {
                         //    solL = _sol[idx_cell];
                         //    solR = _sol[_neighbors[idx_cell][idx_neighbor]];
                         //}
+
                         // flux evaluation
                         _solNew[idx_cell] +=
                             _g->Flux( _AxPlus, _AxMinus, _AyPlus, _AyMinus, _AzPlus, _AzMinus, solL, solR, _normals[idx_cell][idx_neighbor] );

@@ -130,4 +130,5 @@ void SphericalHarmonics::ComputeYBasis( const double phi ) {
             _YBasis[GetGlobalIndexBasis( l_idx, k_idx )]  = _assLegendreP[GlobalIdxAssLegendreP( l_idx, k_idx )] * c;
         }
     }
+
 }

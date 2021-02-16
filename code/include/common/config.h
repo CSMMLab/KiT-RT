@@ -4,8 +4,6 @@
  *         DO NOT CREATE SETTERS FOR THIS CLASS! ALL OPTIONS ARE CONSTANT (after SetPostprocessing).
  *
  * @author S. Schotthöfer
- *
- * Disclaimer: This class structure was copied and (heavily) modifed with open source permission from SU2 v7.0.3 https://su2code.github.io/
  */
 
 #ifndef CONFIG_H
@@ -50,7 +48,17 @@ class Config
     unsigned _nQuadPoints;
 
     // Mesh
-    unsigned _nCells;
+    unsigned _nCells;    /*!< @brief: Number of cells in the mesh */
+    unsigned short _dim; /*!< @brief: spatial dimensionality of the mesh/test case */
+
+    // Boundary Conditions
+    /*!< @brief List of all Pairs (marker, BOUNDARY_TYPE), e.g. (farfield,DIRICHLET).
+         Each Boundary Conditions must have an entry in enum BOUNDARY_TYPE*/
+    std::vector<std::pair<std::string, BOUNDARY_TYPE>> _boundaries;
+    unsigned short _nMarkerDirichlet;          /*!< @brief Number of Dirichlet BC markers. Enum entry: DIRICHLET */
+    unsigned short _nMarkerNeumann;            /*!< @brief Number of Neumann BC markers. Enum entry: Neumann */
+    std::vector<std::string> _MarkerDirichlet; /*!< @brief Dirichlet BC markers. */
+    std::vector<std::string> _MarkerNeumann;   /*!< @brief Neumann BC markers. */
 
     // Solver
     double _CFL;                     /*!< @brief CFL Number for Solver*/
@@ -61,26 +69,23 @@ class Config
     unsigned short _maxMomentDegree; /*!< @brief Maximal Order of Moments for PN and MN Solver */
     unsigned short _reconsOrder;     /*!< @brief Spatial Order of Accuracy for Solver */
 
-    // Linesource
-    double _sigmaS; /*!< @brief Scattering coeffient for Linesource test case */
-
     /*!< @brief If true, very low entries (10^-10 or smaller) of the flux matrices will be set to zero,
      * to improve floating point accuracy */
     bool _cleanFluxMat;
     bool _allGaussPts; /*!< @brief If true, the SN Solver uses all Gauss pts in the quadrature */
+    bool _csd;         /*!< @brief If true, continuous slowing down approximation will be used */
 
-    bool _csd;                 // LEGACY! /*!< @brief If true, continuous slowing down approximation will be used */
-    std::string _hydrogenFile; /*!< @brief Name of hydrogen cross section file */
-    std::string _oxygenFile;   /*!< @brief Name of oxygen cross section file */
+    // --- Problems ---
 
-    // Boundary Conditions
-    /*!< @brief List of all Pairs (marker, BOUNDARY_TYPE), e.g. (farfield,DIRICHLET).
-         Each Boundary Conditions must have an entry in enum BOUNDARY_TYPE*/
-    std::vector<std::pair<std::string, BOUNDARY_TYPE>> _boundaries;
-    unsigned short _nMarkerDirichlet;          /*!< @brief Number of Dirichlet BC markers. Enum entry: DIRICHLET */
-    unsigned short _nMarkerNeumann;            /*!< @brief Number of Neumann BC markers. Enum entry: Neumann */
-    std::vector<std::string> _MarkerDirichlet; /*!< @brief Dirichlet BC markers. */
-    std::vector<std::string> _MarkerNeumann;   /*!< @brief Neumann BC markers. */
+    // Linesource
+    double _sigmaS; /*!< @brief Scattering coeffient for Linesource test case */
+
+    // Database ICRU
+    std::string _dataDir; /*!< @brief material directory */
+    // ElectronRT
+    std::string _hydrogenFile;      /*!< @brief Name of hydrogen cross section file path*/
+    std::string _oxygenFile;        /*!< @brief Name of oxygen cross section file path */
+    std::string _stoppingPowerFile; /*!< @brief Name of stopping power file path */
 
     // Scattering Kernel
     KERNEL_NAME _kernelName; /*!< @brief Scattering Kernel Name*/
@@ -96,6 +101,8 @@ class Config
     unsigned long _newtonLineSearchIter;  /*!< @brief Maximal Number of line search iterations for newton optimizer */
     bool _newtonFastMode;                 /*!< @brief If true, we skip the NewtonOptimizer for quadratic entropy and assign alpha = u */
 
+    // NeuralModel
+    unsigned short _neuralModel; /*!< @brief:  Version number of the employed neural model */
     // Output Options
     unsigned short _nVolumeOutput;            /*!< @brief Number of volume outputs */
     std::vector<VOLUME_OUTPUT> _volumeOutput; /*!< @brief Output groups for volume output*/
@@ -235,13 +242,18 @@ class Config
      */
     // File structure
     std::string inline GetCTFile() const { return std::filesystem::path( _ctFile ).lexically_normal(); }
-    std::string inline GetHydrogenFile() const { return std::filesystem::path( _hydrogenFile ).lexically_normal(); }
+
     std::string inline GetLogDir() const { return std::filesystem::path( _logDir ).lexically_normal(); }
     std::string inline GetLogFile() const { return std::filesystem::path( _logFileName ).lexically_normal(); }
     std::string inline GetMeshFile() const { return std::filesystem::path( _meshFile ).lexically_normal(); }
     std::string inline GetOutputDir() const { return std::filesystem::path( _outputDir ).lexically_normal(); }
     std::string inline GetOutputFile() const { return std::filesystem::path( _outputFile ).lexically_normal(); }
+
+    // Problem Files
+    std::string inline GetHydrogenFile() const { return std::filesystem::path( _hydrogenFile ).lexically_normal(); }
     std::string inline GetOxygenFile() const { return std::filesystem::path( _oxygenFile ).lexically_normal(); }
+    std::string inline GetStoppingPowerFile() const { return std::filesystem::path( _stoppingPowerFile ).lexically_normal(); }
+    std::string inline GetDataDir() const { return std::filesystem::path( _dataDir ).lexically_normal(); }
 
     // Quadrature Structure
     unsigned GetNQuadPoints() { return _nQuadPoints; }
@@ -250,6 +262,7 @@ class Config
 
     // Mesh Structure
     unsigned GetNCells() { return _nCells; }
+    unsigned short GetDim() { return _dim; }
 
     // Solver Structure
     double inline GetCFL() const { return _CFL; }
@@ -273,6 +286,9 @@ class Config
     unsigned long inline GetNewtonMaxLineSearches() const { return _newtonLineSearchIter; }
     bool inline GetNewtonFastMode() const { return _newtonFastMode; }
     OPTIMIZER_NAME inline GetOptimizerName() const { return _entropyOptimizerName; }
+
+    // Neural Closure
+    unsigned short inline GetNeuralModel() { return _neuralModel; }
 
     // Boundary Conditions
     BOUNDARY_TYPE GetBoundaryType( std::string nameMarker ) const; /*! @brief Get Boundary Type of given marker */
@@ -308,6 +324,8 @@ class Config
     void SetQuadName( QUAD_NAME quadName ) { _quadName = quadName; }    /*! @brief Never change the quadName! This is only for the test framework. */
     void SetQuadOrder( unsigned quadOrder ) { _quadOrder = quadOrder; } /*! @brief Never change the quadOrder! This is only for the test framework. */
     void SetSNAllGaussPts( bool useall ) { _allGaussPts = useall; }     /*! @brief Never change the this! This is only for the test framework. */
+    // Mesh Structure
+    void SetNCells( unsigned nCells ) { _nCells = nCells; }
 };
 
 #endif    // CONFIG_H

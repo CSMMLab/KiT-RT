@@ -68,7 +68,7 @@ CSDSNSolverFP::CSDSNSolverFP( Config* settings ) : SNSolver( settings ) {
 
     // read in medical data if radiation therapy option selected
     if( _RT ) {
-        ICRU database( abs( mu ), _energies );
+        ICRU database( abs( mu ), _energies, _settings );
         database.GetTransportCoefficients( _xi );
         database.GetStoppingPower( _s );
     }

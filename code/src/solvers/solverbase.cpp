@@ -7,9 +7,14 @@
 #include "problems/problembase.h"
 #include "quadratures/quadraturebase.h"
 #include "solvers/csdsnsolver.h"
+#include "solvers/csdsolvertrafofp.h"
+#include "solvers/csdsolvertrafofp2d.h"
+#include "solvers/csdsolvertrafofpsh2d.h"
+
 #include "solvers/mnsolver.h"
 #include "solvers/pnsolver.h"
 #include "solvers/snsolver.h"
+
 #include <mpi.h>
 
 Solver::Solver( Config* settings ) {
@@ -23,6 +28,7 @@ Solver::Solver( Config* settings ) {
     _neighbors = _mesh->GetNeighbours();
     _normals   = _mesh->GetNormals();
     _nCells    = _mesh->GetNumCells();
+    _settings->SetNCells( _nCells );
 
     // build quadrature object and store frequently used params
     _quadrature = QuadratureBase::Create( settings );
@@ -30,7 +36,7 @@ Solver::Solver( Config* settings ) {
     _settings->SetNQuadPoints( _nq );
 
     // build slope related params
-    _reconstructor = Reconstructor::Create( settings );
+    _reconstructor = new Reconstructor( settings );
     _reconsOrder   = _reconstructor->GetReconsOrder();
 
     auto nodes = _mesh->GetNodes();
@@ -81,6 +87,10 @@ Solver::Solver( Config* settings ) {
     // initialize Helper Variables
     _fluxNew = Vector( _nCells, 0 );
     _flux    = Vector( _nCells, 0 );
+
+    // write density
+    _density = _problem->GetDensity( _mesh->GetCellMidPoints() );
+    //_density = std::vector( _mesh->GetCellMidPoints().size(), 0.0 );
 }
 
 Solver::~Solver() {
@@ -92,10 +102,14 @@ Solver::~Solver() {
 Solver* Solver::Create( Config* settings ) {
     switch( settings->GetSolverName() ) {
         case SN_SOLVER: return new SNSolver( settings );
-        case CSD_SN_SOLVER: return new CSDSNSolver( settings );
+
         case PN_SOLVER: return new PNSolver( settings );
         case MN_SOLVER: return new MNSolver( settings );
-        default: return new SNSolver( settings );
+        case CSD_SN_SOLVER: return new CSDSNSolver( settings );
+        case CSD_SN_FOKKERPLANCK_TRAFO_SOLVER: return new CSDSolverTrafoFP( settings );
+        case CSD_SN_FOKKERPLANCK_TRAFO_SOLVER_2D: return new CSDSolverTrafoFP2D( settings );
+        case CSD_SN_FOKKERPLANCK_TRAFO_SH_SOLVER_2D: return new CSDSolverTrafoFPSH2D( settings );
+        default: ErrorMessages::Error( "Creator for the chosen solver does not yet exist. This is is the fault of the coder!", CURRENT_FUNCTION );
     }
 }
 
@@ -107,11 +121,20 @@ void Solver::Solve() {
 
     DrawPreSolverOutput();
 
+    // Adjust maxIter, depending if we have a normal run or a csd Run
+    _maxIter = _nEnergies;
+    if( _settings->GetIsCSD() ) {
+        _maxIter = _nEnergies - 1;    // Since CSD does not go the last energy step
+    }
+
+    // Preprocessing before first pseudo time step
+    SolverPreprocessing();
+
     // Loop over energies (pseudo-time of continuous slowing down approach)
-    for( unsigned iter = 0; iter < _nEnergies; iter++ ) {
+    for( unsigned iter = 0; iter < _maxIter; iter++ ) {
 
         // --- Prepare Boundaries and temp variables
-        IterPreprocessing();
+        IterPreprocessing( iter );
 
         // --- Compute Fluxes ---
         FluxUpdate();
@@ -141,7 +164,7 @@ void Solver::PrintVolumeOutput( int currEnergy ) const {
     if( _settings->GetVolumeOutputFrequency() != 0 && currEnergy % (unsigned)_settings->GetVolumeOutputFrequency() == 0 ) {
         ExportVTK( _settings->GetOutputFile() + "_" + std::to_string( currEnergy ), _outputFields, _outputFieldNames, _mesh );
     }
-    if( currEnergy == (int)_nEnergies - 1 ) {    // Last iteration write without suffix.
+    if( currEnergy == (int)_maxIter - 1 ) {    // Last iteration write without suffix.
         ExportVTK( _settings->GetOutputFile(), _outputFields, _outputFieldNames, _mesh );
     }
 }
@@ -213,7 +236,7 @@ void Solver::WriteScalarOutput( unsigned iteration ) {
             case VTK_OUTPUT:
                 _screenOutputFields[idx_field] = 0;
                 if( ( _settings->GetVolumeOutputFrequency() != 0 && iteration % (unsigned)_settings->GetVolumeOutputFrequency() == 0 ) ||
-                    ( iteration == _nEnergies - 1 ) /* need sol at last iteration */ ) {
+                    ( iteration == _maxIter - 1 ) /* need sol at last iteration */ ) {
                     _screenOutputFields[idx_field] = 1;
                 }
                 break;
@@ -221,7 +244,7 @@ void Solver::WriteScalarOutput( unsigned iteration ) {
             case CSV_OUTPUT:
                 _screenOutputFields[idx_field] = 0;
                 if( ( _settings->GetHistoryOutputFrequency() != 0 && iteration % (unsigned)_settings->GetHistoryOutputFrequency() == 0 ) ||
-                    ( iteration == _nEnergies - 1 ) /* need sol at last iteration */ ) {
+                    ( iteration == _maxIter - 1 ) /* need sol at last iteration */ ) {
                     _screenOutputFields[idx_field] = 1;
                 }
                 break;
@@ -270,7 +293,7 @@ void Solver::WriteScalarOutput( unsigned iteration ) {
             case VTK_OUTPUT:
                 _historyOutputFields[idx_field] = 0;
                 if( ( _settings->GetVolumeOutputFrequency() != 0 && iteration % (unsigned)_settings->GetVolumeOutputFrequency() == 0 ) ||
-                    ( iteration == _nEnergies - 1 ) /* need sol at last iteration */ ) {
+                    ( iteration == _maxIter - 1 ) /* need sol at last iteration */ ) {
                     _historyOutputFields[idx_field] = 1;
                 }
                 break;
@@ -278,7 +301,7 @@ void Solver::WriteScalarOutput( unsigned iteration ) {
             case CSV_OUTPUT:
                 _historyOutputFields[idx_field] = 0;
                 if( ( _settings->GetHistoryOutputFrequency() != 0 && iteration % (unsigned)_settings->GetHistoryOutputFrequency() == 0 ) ||
-                    ( iteration == _nEnergies - 1 ) /* need sol at last iteration */ ) {
+                    ( iteration == _maxIter - 1 ) /* need sol at last iteration */ ) {
                     _historyOutputFields[idx_field] = 1;
                 }
                 break;
@@ -334,7 +357,7 @@ void Solver::PrintScreenOutput( unsigned iteration ) {
         if( _settings->GetScreenOutputFrequency() != 0 && iteration % (unsigned)_settings->GetScreenOutputFrequency() == 0 ) {
             log->info( lineToPrint );
         }
-        else if( iteration == _nEnergies - 1 ) {    // Always print last iteration
+        else if( iteration == _maxIter - 1 ) {    // Always print last iteration
             log->info( lineToPrint );
         }
     }
@@ -470,3 +493,5 @@ void Solver::DrawPostSolverOutput() {
         log->info( "--------------------------- Solver Finished ----------------------------" );
     }
 }
+
+void Solver::SolverPreprocessing() {}

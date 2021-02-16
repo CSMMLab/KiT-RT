@@ -369,6 +369,9 @@ void PrintLogHeader( std::string inputFile ) {
 Matrix createSU2MeshFromImage( std::string imageName, std::string SU2Filename ) {
     auto log = spdlog::get( "event" );
 
+    // std::cout << "imageName" << imageName << "\n";
+    // std::cout << "pyhtonPath" << KITRT_PYTHON_PATH;
+
     if( !std::filesystem::exists( imageName ) ) {
         ErrorMessages::Error( "Can not open image '" + imageName + "'!", CURRENT_FUNCTION );
     }

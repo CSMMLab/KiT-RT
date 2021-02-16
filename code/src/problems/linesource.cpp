@@ -1,8 +1,8 @@
 #include "problems/linesource.h"
 #include "common/config.h"
 #include "common/mesh.h"
+#include "problems/epics.h"
 #include "quadratures/quadraturebase.h"
-#include "toolboxes/physics.h"
 #include "toolboxes/sphericalbase.h"
 #include <complex>
 
@@ -152,7 +152,7 @@ VectorVector LineSource_SN_Pseudo1D::SetupIC() {
 // ---- LineSource_SN_Pseudo1D_Physics ----
 
 LineSource_SN_Pseudo1D_Physics::LineSource_SN_Pseudo1D_Physics( Config* settings, Mesh* mesh ) : LineSource_SN_Pseudo1D( settings, mesh ) {
-    _physics = new Physics( settings->GetHydrogenFile(), settings->GetOxygenFile(), "../input/stopping_power.txt" );
+    _physics = new EPICS( settings->GetHydrogenFile(), settings->GetOxygenFile(), "../input/stopping_power.txt" );
 }
 
 std::vector<Matrix> LineSource_SN_Pseudo1D_Physics::GetScatteringXSE( const Vector& energies, const Matrix& angles ) {
@@ -162,6 +162,7 @@ std::vector<Matrix> LineSource_SN_Pseudo1D_Physics::GetScatteringXSE( const Vect
 Vector LineSource_SN_Pseudo1D_Physics::GetTotalXSE( const Vector& energies ) { return _physics->GetTotalXSE( energies ); }
 
 // ---- LineSource_PN ----
+
 
 LineSource_PN::LineSource_PN( Config* settings, Mesh* mesh ) : LineSource( settings, mesh ) {}
 

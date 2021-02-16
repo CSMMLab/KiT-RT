@@ -1,5 +1,6 @@
 #include "quadratures/quadraturebase.h"
 #include "common/config.h"
+#include "quadratures/qgausschebyshev1D.h"
 #include "quadratures/qgausslegendre1D.h"
 #include "quadratures/qgausslegendretensorized.h"
 #include "quadratures/qldfesa.h"
@@ -23,11 +24,12 @@ QuadratureBase* QuadratureBase::Create( Config* settings ) {
         case QUAD_MonteCarlo: return new QMonteCarlo( settings );
         case QUAD_GaussLegendreTensorized: return new QGaussLegendreTensorized( settings );
         case QUAD_GaussLegendre1D: return new QGaussLegendre1D( settings );
+        case QUAD_GaussChebyshev1D: return new QGaussChebyshev1D( settings );
         case QUAD_LevelSymmetric: return new QLevelSymmetric( settings );
         case QUAD_LDFESA: return new QLDFESA( settings );
         case QUAD_Lebedev: return new QLebedev( settings );
         case QUAD_Product: return new QProduct( settings );
-        default: ErrorMessages::Error( "Creator for the chose quadrature does not yet exist. This is is the fault of the coder!", CURRENT_FUNCTION );
+        default: ErrorMessages::Error( "Creator for the chosen quadrature does not yet exist. This is the fault of the coder!", CURRENT_FUNCTION );
     }
     return nullptr;
 }
@@ -40,11 +42,12 @@ QuadratureBase* QuadratureBase::Create( QUAD_NAME name, unsigned quadOrder ) {
             ErrorMessages::Error( "This quadrature must be initialized with a settings constructor!", CURRENT_FUNCTION );
             break;
         case QUAD_GaussLegendre1D: return new QGaussLegendre1D( quadOrder );
+        case QUAD_GaussChebyshev1D: return new QGaussChebyshev1D( quadOrder );
         case QUAD_LevelSymmetric: return new QLevelSymmetric( quadOrder );
         case QUAD_LDFESA: return new QLDFESA( quadOrder );
         case QUAD_Lebedev: return new QLebedev( quadOrder );
         case QUAD_Product: return new QProduct( quadOrder );
-        default: ErrorMessages::Error( "Creator for the chose quadrature does not yet exist. This is is the fault of the coder!", CURRENT_FUNCTION );
+        default: ErrorMessages::Error( "Creator for the chosen quadrature does not yet exist. This is the fault of the coder!", CURRENT_FUNCTION );
     }
     return nullptr;
 }

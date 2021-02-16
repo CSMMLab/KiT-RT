@@ -11,6 +11,7 @@
 
 #include <cmath>
 #include <fstream>
+#include <iostream>
 #include <sstream>
 #include <vector>
 
@@ -20,10 +21,12 @@
 #include "toolboxes/interpolation.h"
 
 enum ParticleType { ELECTRON, POSITRON };
-
+class Config;
 class ICRU
 {
   private:
+    Config* _settings; /*! @brief: Pointer to settings file of the solver */
+
     const unsigned materialID   = 278;
     const ParticleType particle = ParticleType::ELECTRON;
     const double PI             = 3.1415926535897932e0;
@@ -101,56 +104,13 @@ class ICRU
     ICRU() = delete;
 
   public:
-    ICRU( const Vector& mu, const Vector& energy ) : _NE( 96 ), _NA( 606 ), _E( 1e6 * energy ), _QMU( mu ) {
-        std::vector<double> TH( _NA ), THR( _NA );
-        _XMU.resize( _NA );
-        for( unsigned i = 0; i < _NA; ++i ) {
-            if( i == 0 ) {
-                TH[i]   = 0.0e0;
-                THR[i]  = TH[i] * M_PI / 180.0e0;
-                _XMU[i] = ( 1.0e0 - std::cos( THR[i] ) ) / 2.0e0;
-            }
-            else if( i == 1 ) {
-                TH[i]   = 1.0e-4;
-                THR[i]  = TH[i] * M_PI / 180.0e0;
-                _XMU[i] = ( 1.0e0 - std::cos( THR[i] ) ) / 2.0e0;
-            }
-            else {
-                if( TH[i - 1] < 0.9999e-3 )
-                    TH[i] = TH[i - 1] + 2.5e-5;
-                else if( TH[i - 1] < 0.9999e-2 )
-                    TH[i] = TH[i - 1] + 2.5e-4;
-                else if( TH[i - 1] < 0.9999e-1 )
-                    TH[i] = TH[i - 1] + 2.5e-3;
-                else if( TH[i - 1] < 0.9999e+0 )
-                    TH[i] = TH[i - 1] + 2.5e-2;
-                else if( TH[i - 1] < 0.9999e+1 )
-                    TH[i] = TH[i - 1] + 1.0e-1;
-                else if( TH[i - 1] < 2.4999e+1 )
-                    TH[i] = TH[i - 1] + 2.5e-1;
-                else
-                    TH[i] = TH[i - 1] + 5.0e-1;
+    /*! @brief: Constructor of ICRU class
+     *  @arg: Vector& mu, = Vector of angles
+     *  @arg: Vector& energy, = Vector of energies
+     *  @arg: Config* settings = pointer to programm settings class
+     *  @returns: void */
+    ICRU( const Vector& mu, const Vector& energy, Config* settings );
 
-                THR[i]  = TH[i] * M_PI / 180.0e0;
-                _XMU[i] = std::max( ( 1.0e0 - std::cos( THR[i] ) ) / 2.0e0, 1.0e-35 );
-            }
-        }
-
-        _ET.resize( _NE );
-        _ETL.resize( _NE );
-        _XMUL.resize( _NA );
-        _ECS.resize( _NE );
-        _ETCS1.resize( _NE );
-        _ETCS2.resize( _NE );
-        _PCS.resize( _NE );
-        _PTCS1.resize( _NE );
-        _PTCS2.resize( _NE );
-        _DCSI.resize( _NA );
-        _DCSIL.resize( _NA );
-
-        _EDCS.resize( _NE, _NA );
-        _PDCS.resize( _NE, _NA );
-    }
     ~ICRU(){};
 
     /*! @brief: Computes the angular scattering cross sections and integrated XS by interpolating tabular data
