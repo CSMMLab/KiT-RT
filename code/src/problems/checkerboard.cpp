@@ -95,7 +95,7 @@ std::vector<VectorVector> Checkerboard_PN::GetExternalSource( const Vector& /*en
     VectorVector Q( _mesh->GetNumCells(), Vector( 1u, 0.0 ) );
     auto cellMids = _mesh->GetCellMidPoints();
     for( unsigned j = 0; j < cellMids.size(); ++j ) {
-        if( isSource( cellMids[j] ) ) Q[j] = 1.0 / std::sqrt( 4 * M_PI );    // isotropic source
+        if( isSource( cellMids[j] ) ) Q[j] = 10.0 / std::sqrt( 4 * M_PI );    // isotropic source
     }
     return std::vector<VectorVector>( 1u, Q );
 }

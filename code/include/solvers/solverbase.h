@@ -32,11 +32,11 @@ class Solver
     double _dE;                      /*! @brief energy/time step size */
     Vector _energies;                // energy groups used in the simulation [keV]
     std::vector<double> _density;    // patient density, dim(_density) = _nCells
-    Vector _s;                       // stopping power, dim(_s) = _nTimeSteps
+    Vector _s;                       // stopping power, dim(_s) = _nTimeSteps (only for csdsolver)
     std::vector<VectorVector> _Q;    /*!  @brief  external source term */
 
-    VectorVector _sigmaS; /*!  @brief scattering cross section for all energies */
-    VectorVector _sigmaT; /*!  @brief total cross section for all energies */
+    VectorVector _sigmaS; /*!  @brief scattering cross section for all energies. len: _nEnergies x numCells */
+    VectorVector _sigmaT; /*!  @brief total cross section for all energies.  len: _nEnergies x numCells*/
 
     // quadrature related numbers
     QuadratureBase* _quadrature; /*! @brief quadrature to create members below */

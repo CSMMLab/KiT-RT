@@ -10,6 +10,7 @@
 #include "solvers/csdsolvertrafofp.h"
 #include "solvers/csdsolvertrafofp2d.h"
 #include "solvers/csdsolvertrafofpsh2d.h"
+#include "toolboxes/textprocessingtoolbox.h"
 
 #include "solvers/mnsolver.h"
 #include "solvers/pnsolver.h"

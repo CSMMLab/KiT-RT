@@ -179,9 +179,6 @@ void MNSolver::FluxUpdate() {
         // Dirichlet Boundaries stayd
         if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::DIRICHLET ) continue;
         _solNew[idx_cell] = ConstructFlux( idx_cell );
-        // if( norm( _solNew[idx_cell] ) > 0.001 ) {
-        //    std::cout << _solNew[idx_cell] << "\n";
-        //}
     }
 }
 
@@ -193,10 +190,9 @@ void MNSolver::FVMUpdate( unsigned idx_energy ) {
         if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::DIRICHLET ) continue;
         // Flux update
         for( unsigned idx_sys = 0; idx_sys < _nTotalEntries; idx_sys++ ) {
-            _solNew[idx_cell][idx_sys] = _sol[idx_cell][idx_sys] - ( _dE / _areas[idx_cell] ) * _solNew[idx_cell][idx_sys] /* cell averaged flux */
-                                         - _dE * _sol[idx_cell][idx_sys] *
-                                               ( _sigmaT[idx_energy][idx_cell]                                 /* absorbtion influence */
-                                                 + _sigmaS[idx_energy][idx_cell] * _scatterMatDiag[idx_sys] ); /* scattering influence */
+            _solNew[idx_cell][idx_sys] = _sol[idx_cell][idx_sys] - ( _dE / _areas[idx_cell] ) * _solNew[idx_cell][idx_sys]; /* cell averaged flux */
+            -_dE* _sol[idx_cell][idx_sys] * ( _sigmaT[idx_energy][idx_cell]                                                 /* absorbtion influence */
+                                              + _sigmaS[idx_energy][idx_cell] * _scatterMatDiag[idx_sys] );                 /* scattering influence */
         }
         // Source Term
         _solNew[idx_cell][0] += _dE * _Q[0][idx_cell][0];
