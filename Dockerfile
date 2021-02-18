@@ -33,7 +33,8 @@ RUN apt-get update \
 RUN    pip3 install tensorflow==2.2.2\
        pygmsh==6.1.1 Pillow pydicom gcovr \
        matplotlib\
-       scipy
+       scipy\
+       pandas
 
 RUN cd /usr/local \
     && wget -nc --quiet  http://gmsh.info/bin/Linux/gmsh-4.7.0-Linux64-sdk.tgz \
