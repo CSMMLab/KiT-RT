@@ -7,7 +7,7 @@ CSDSolverTrafoFPSH2D::CSDSolverTrafoFPSH2D( Config* settings ) : SNSolver( setti
     // Set angle and energies
     _energies  = Vector( _nEnergies, 0.0 );    // equidistant
     _energyMin = 1e-4 * 0.511;
-    _energyMax = 0.1;    // 1.0;
+    _energyMax = _settings->GetMaxEnergyCSD();    // 0.1;
 
     // write equidistant energy grid (false) or refined grid (true)
     GenerateEnergyGrid( false );

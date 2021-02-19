@@ -261,6 +261,10 @@ void Config::SetConfigOptions() {
     /*! @brief SCATTER_COEFF \n DESCRIPTION: Sets the scattering coefficient for the Linesource test case. \n DEFAULT 0.0 \ingroup Config */
     AddDoubleOption( "SCATTER_COEFF", _sigmaS, 0.0 );
 
+    // CSD related options
+    /*! @brief: MAX_ENERGY_CSD \n DESCRIPTION: Sets maximum energy for the CSD simulation.\n DEFAULT \ingroup Config */
+    AddDoubleOption( "MAX_ENERGY_CSD", _maxEnergyCSD, 5.0 );
+
     // Entropy related options
     /*! @brief Entropy Functional \n DESCRIPTION: Entropy functional used for the MN_Solver \n DEFAULT QUADRTATIC @ingroup Config. */
     AddEnumOption( "ENTROPY_FUNCTIONAL", _entropyName, Entropy_Map, QUADRATIC );

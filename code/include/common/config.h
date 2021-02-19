@@ -87,6 +87,10 @@ class Config
     std::string _oxygenFile;        /*!< @brief Name of oxygen cross section file path */
     std::string _stoppingPowerFile; /*!< @brief Name of stopping power file path */
 
+    // CSD
+    double _maxEnergyCSD; /*!< @brief Maximum energy for CSD simulation */
+
+    // --- other variables ---
     // Scattering Kernel
     KERNEL_NAME _kernelName; /*!< @brief Scattering Kernel Name*/
 
@@ -280,6 +284,8 @@ class Config
     // Linesource
     double inline GetSigmaS() const { return _sigmaS; }
 
+    // CSD
+    double inline GetMaxEnergyCSD() const { return _maxEnergyCSD; }
     //  Optimizer
     double inline GetNewtonOptimizerEpsilon() const { return _optimizerEpsilon; }
     unsigned long inline GetNewtonIter() const { return _newtonIter; }

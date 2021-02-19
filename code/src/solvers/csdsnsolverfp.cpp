@@ -20,7 +20,8 @@ CSDSNSolverFP::CSDSNSolverFP( Config* settings ) : SNSolver( settings ) {
     _energies  = Vector( _nEnergies, 0.0 );                     // equidistant
     _energyMin = 1e-4;
     //_energyMax = 10.0;
-    _energyMax = 5.0;
+    _energyMax = _settings->GetMaxEnergyCSD();    // 5e0;
+
     // write equidistant energy grid
 
     _dE        = ComputeTimeStep( settings->GetCFL() );
