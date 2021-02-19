@@ -1,0 +1,5 @@
+SphericalHamonics
+==================
+
+.. doxygenclass:: SphericalHarmonics
+   :members:

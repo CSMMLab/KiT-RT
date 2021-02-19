@@ -1,0 +1,5 @@
+QLevelSymmetric
+===============
+
+.. doxygenclass:: QLevelSymmetric
+   :members:

@@ -1,0 +1,5 @@
+EntropyBase
+===========
+
+.. doxygenclass:: EntropyBase
+   :members:

@@ -1,0 +1,5 @@
+QuadraticEntropy
+================
+
+.. doxygenclass:: QuadraticEntropy
+   :members:

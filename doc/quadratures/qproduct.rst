@@ -1,0 +1,5 @@
+QProduct
+========
+
+.. doxygenclass:: QProduct
+   :members:

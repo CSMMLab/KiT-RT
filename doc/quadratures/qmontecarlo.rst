@@ -1,0 +1,5 @@
+QMonteCarlo
+===========
+
+.. doxygenclass:: QMonteCarlo
+   :members:

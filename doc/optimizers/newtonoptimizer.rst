@@ -1,0 +1,5 @@
+NewtonOptimizer
+===============
+
+.. doxygenclass:: NewtonOptimizer
+   :members:

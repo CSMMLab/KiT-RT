@@ -28,6 +28,7 @@ RUN apt-get update \
        libxinerama-dev \
        python3 \
        python3-pip \
+       doxygen \
     && apt-get clean \
     && apt-get autoremove --purge \
     && rm -rf /var/lib/apt/lists/* 
@@ -48,6 +49,6 @@ RUN wget -nc --no-check-certificate --quiet https://www.vtk.org/files/release/8.
     && cd - \
     && rm -rf VTK-*
 
-RUN pip3 install numpy pygmsh==6.1.1 Pillow pydicom gcovr
+RUN pip3 install numpy pygmsh==6.1.1 Pillow pydicom gcovr sphinx_rtd_theme breathe
 
 WORKDIR /home
