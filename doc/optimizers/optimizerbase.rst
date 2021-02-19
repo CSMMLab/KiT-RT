@@ -1,0 +1,5 @@
+OptimizerBase
+=============
+
+.. doxygenclass:: OptimizerBase
+   :members:

@@ -1,0 +1,5 @@
+QuadratureBase
+==============
+
+.. doxygenclass:: QuadratureBase
+   :members:

@@ -1,0 +1,5 @@
+Isotropic
+=========
+
+.. doxygenclass:: Isotropic
+   :members:

@@ -1,0 +1,5 @@
+SlabGeoHG
+=========
+
+.. doxygenclass:: SlabGeoHG
+   :members:

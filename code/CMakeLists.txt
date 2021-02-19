@@ -4,7 +4,9 @@ project( KiT-RT VERSION 0.1.0 LANGUAGES CXX )
 ### OPTIONS #####################################
 option( BUILD_TESTS "builds all available unit tests" OFF )
 option( BUILD_GUI "additionally builds a user interface" OFF )
+option( BUILD_DOC "builds Doxygen and Sphinx documentation" OFF )
 #################################################
+
 
 ### COMPILER ####################################
 set( CMAKE_CXX_STANDARD 17 )
@@ -97,6 +99,8 @@ if( BUILD_TESTS )
     set( CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/ext/Catch2/contrib ${CMAKE_MODULE_PATH} )
     include( Catch )
     set( CATCH_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/ext/Catch2/single_include/catch2 )
+    add_compile_definitions( BUILD_TESTING )
+    add_compile_definitions( TESTS_PATH="${CMAKE_SOURCE_DIR}/tests/" )
     add_library( Catch INTERFACE )
     target_include_directories( Catch INTERFACE ${CATCH_INCLUDE_DIR} )
     file( GLOB_RECURSE TEST_SRCS RELATIVE ${CMAKE_SOURCE_DIR} "tests/*.cpp" )
@@ -136,5 +140,42 @@ if( BUILD_GUI )
     target_compile_options( ${CMAKE_PROJECT_NAME}_gui PUBLIC "$<$<CONFIG:DEBUG>:${KITRT_DEBUG_OPTIONS}>" )
     target_compile_options( ${CMAKE_PROJECT_NAME}_gui PUBLIC "$<$<CONFIG:RELWITHDEBINFO>:${KITRT_RELWITHDEBINFO_OPTIONS}>" )
     target_compile_options( ${CMAKE_PROJECT_NAME}_gui PUBLIC "$<$<CONFIG:RELEASE>:${KITRT_RELEASE_OPTIONS}>" )
+endif()
+#################################################
+
+
+### BUILD DOCUMENTATION #########################
+if( BUILD_DOC )
+    find_package( Doxygen REQUIRED )
+    find_package( Sphinx REQUIRED )
+
+    file( GLOB_RECURSE DOC_HEADER RELATIVE ${CMAKE_SOURCE_DIR} "include/*.h" )
+
+    set( DOXYGEN_INPUT_DIR ${PROJECT_SOURCE_DIR} )
+    set( DOXYGEN_OUTPUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/docs/doxygen )
+    set( DOXYGEN_INDEX_FILE ${DOXYGEN_OUTPUT_DIR}/html/index.html )
+    set( DOXYFILE_IN ${CMAKE_CURRENT_SOURCE_DIR}/../doc/Doxyfile.in )
+    set( DOXYFILE_OUT ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile )
+    configure_file( ${DOXYFILE_IN} ${DOXYFILE_OUT} @ONLY )
+    file( MAKE_DIRECTORY ${DOXYGEN_OUTPUT_DIR} )
+    add_custom_command( OUTPUT ${DOXYGEN_INDEX_FILE}
+                        DEPENDS ${DOC_HEADER}
+                        COMMAND ${DOXYGEN_EXECUTABLE} ${DOXYFILE_OUT}
+                        MAIN_DEPENDENCY ${DOXYFILE_OUT} ${DOXYFILE_IN}
+                        COMMENT "Generating documentaion with Doxygen"
+                        VERBATIM )
+    add_custom_target( Doxygen ALL DEPENDS ${DOXYGEN_INDEX_FILE} )
+
+    set( SPHINX_SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/../doc )
+    set( SPHINX_BUILD ${CMAKE_CURRENT_BINARY_DIR}/docs/sphinx )
+    set( SPHINX_INDEX_FILE ${SPHINX_BUILD}/index.html )
+    add_custom_command( OUTPUT ${SPHINX_INDEX_FILE}
+                        COMMAND ${SPHINX_EXECUTABLE} ${SPHINX_SOURCE} ${SPHINX_BUILD}
+                        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+                        DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/../doc/index.rst ${DOXYGEN_INDEX_FILE}
+                        MAIN_DEPENDENCY ${SPHINX_SOURCE}/conf.py
+                        COMMENT "Converting documentation from Doxygen to Sphinx" )
+
+    add_custom_target( Sphinx ALL DEPENDS ${SPHINX_INDEX_FILE} )
 endif()
 #################################################

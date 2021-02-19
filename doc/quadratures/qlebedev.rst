@@ -1,0 +1,5 @@
+QLebedev
+========
+
+.. doxygenclass:: QLebedev
+   :members:

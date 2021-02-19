@@ -1,0 +1,5 @@
+QGaussLegendreTensorized
+========================
+
+.. doxygenclass:: QGaussLegendreTensorized
+   :members:

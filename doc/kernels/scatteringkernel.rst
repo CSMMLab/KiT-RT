@@ -1,0 +1,5 @@
+ScatteringKernel
+================
+
+.. doxygenclass:: ScatteringKernel
+   :members:
