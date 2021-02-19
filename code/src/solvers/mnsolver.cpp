@@ -189,10 +189,12 @@ void MNSolver::FVMUpdate( unsigned idx_energy ) {
         // Dirichlet Boundaries stay
         if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::DIRICHLET ) continue;
         // Flux update
-        for( unsigned idx_sys = 0; idx_sys < _nTotalEntries; idx_sys++ ) {
-            _solNew[idx_cell][idx_sys] = _sol[idx_cell][idx_sys] - ( _dE / _areas[idx_cell] ) * _solNew[idx_cell][idx_sys]; /* cell averaged flux */
-            -_dE* _sol[idx_cell][idx_sys] * ( _sigmaT[idx_energy][idx_cell]                                                 /* absorbtion influence */
-                                              + _sigmaS[idx_energy][idx_cell] * _scatterMatDiag[idx_sys] );                 /* scattering influence */
+        for( unsigned idx_system = 0; idx_system < _nTotalEntries; idx_system++ ) {
+            _solNew[idx_cell][idx_system] = _sol[idx_cell][idx_system] -
+                                            ( _dE / _areas[idx_cell] ) * _solNew[idx_cell][idx_system] /* cell averaged flux */
+                                            - _dE * _sol[idx_cell][idx_system] *
+                                                  ( _sigmaT[idx_energy][idx_cell]                                    /* absorbtion influence */
+                                                    + _sigmaS[idx_energy][idx_cell] * _scatterMatDiag[idx_system] ); /* scattering influence */
         }
         // Source Term
         _solNew[idx_cell][0] += _dE * _Q[0][idx_cell][0];

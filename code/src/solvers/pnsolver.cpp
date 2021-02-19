@@ -150,10 +150,6 @@ void PNSolver::FluxUpdate() {
                 }
             }
         }
-        // std::cout << norm( _solNew[idx_cell] ) << "\n";
-        // if( norm( _solNew[idx_cell] ) > 0.001 ) {
-        //    std::cout << _solNew[idx_cell] << "\n";
-        //}
     }
 }
 
