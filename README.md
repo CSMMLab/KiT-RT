@@ -1,4 +1,4 @@
-[![pipeline status](https://git.scc.kit.edu/rtsn/rtsn/badges/master/pipeline.svg)](https://git.scc.kit.edu/rtsn/rtsn/-/commits/master) [![coverage report](https://git.scc.kit.edu/rtsn/rtsn/badges/master/coverage.svg)](https://git.scc.kit.edu/rtsn/rtsn/-/commits/master)
+[![pipeline status](https://git.scc.kit.edu/rtsn/rtsn/badges/master/pipeline.svg)](https://git.scc.kit.edu/rtsn/rtsn/-/commits/master) [![coverage report](https://git.scc.kit.edu/rtsn/rtsn/badges/master/coverage.svg)](https://git.scc.kit.edu/rtsn/rtsn/-/commits/master) [![Documentation Status](https://readthedocs.org/projects/kit-rt/badge/?version=latest)](https://kit-rt.readthedocs.io/en/latest/?badge=latest)
 
 # KiT-RT - an HPC Radio Therapy $`S_n`$ framework
 TBD 
@@ -152,13 +152,13 @@ This last step requires a preceeding `docker login`. Ask Jannick for login crede
 ## Code structure
 **WARNING: is not created automatically - might be out of date!**
 Reverse engineered plantuml diagram of the current code structure: 
-![Can't load image](doc/KiT-RT.svg "UML diagram")
+![Can't load image](doc/images/uml.svg "UML diagram")
 <br/><br/>
 Was created using [hpp2plantuml](https://github.com/thibaultmarin/hpp2plantuml) and [plantuml](https://plantuml.com/), e.g.:
 ```bash
 cd doc 
-hpp2plantuml -i "../code/include/*.h" -i "../code/include/*/*.h" -o KiT-RT.puml
-plantuml KiT-RT.puml -tsvg
+hpp2plantuml -i "../code/include/*.h" -i "../code/include/*/*.h" -o uml.puml
+plantuml uml.puml -tsvg
 ```
 
 ---

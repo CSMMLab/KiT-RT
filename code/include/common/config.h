@@ -87,6 +87,10 @@ class Config
     std::string _oxygenFile;        /*!< @brief Name of oxygen cross section file path */
     std::string _stoppingPowerFile; /*!< @brief Name of stopping power file path */
 
+    // CSD
+    double _maxEnergyCSD; /*!< @brief Maximum energy for CSD simulation */
+
+    // --- other variables ---
     // Scattering Kernel
     KERNEL_NAME _kernelName; /*!< @brief Scattering Kernel Name*/
 
@@ -119,9 +123,10 @@ class Config
     // Data Generator Settings
     /*!< @brief Check, if data generator mode is active. If yes, no solver is called, but instead the data generator is executed */
     bool _dataGeneratorMode;
-    unsigned long _tainingSetSize;         /*!< @brief Size of training data set for data generator */
-    unsigned long _maxValFirstMoment;      /*!< @brief Size of training data set for data generator */
-    double _boundaryDistanceRealizableSet; /*! @brief Distance of the sampled moments to the boundary of the realizable set */
+    unsigned long _tainingSetSize;    /*!< @brief Size of training data set for data generator */
+    unsigned long _maxValFirstMoment; /*!< @brief Size of training data set for data generator */
+    double _RealizableSetEpsilonU0;   /*! @brief Distance to 0 of the sampled moments to the boundary of the realizable set */
+    double _RealizableSetEpsilonU1;   /*!< @brief: norm(u_1)/u_0 !< _RealizableSetEpsilonU1 */
 
     // --- Parsing Functionality and Initializing of Options ---
     /*!
@@ -279,6 +284,8 @@ class Config
     // Linesource
     double inline GetSigmaS() const { return _sigmaS; }
 
+    // CSD
+    double inline GetMaxEnergyCSD() const { return _maxEnergyCSD; }
     //  Optimizer
     double inline GetNewtonOptimizerEpsilon() const { return _optimizerEpsilon; }
     unsigned long inline GetNewtonIter() const { return _newtonIter; }
@@ -315,7 +322,8 @@ class Config
     bool inline GetDataGeneratorMode() { return _dataGeneratorMode; }
     unsigned long inline GetTrainingDataSetSize() { return _tainingSetSize; }
     unsigned long inline GetMaxValFirstMoment() { return _maxValFirstMoment; }
-    double GetBoundaryDistanceRealizableSet() { return _boundaryDistanceRealizableSet; }
+    double GetRealizableSetEpsilonU0() { return _RealizableSetEpsilonU0; }
+    double GetRealizableSetEpsilonU1() { return _RealizableSetEpsilonU1; }
 
     // ---- Setters for option structure
     // This section is dangerous

@@ -171,7 +171,7 @@ void CSDSolverTrafoFP::FluxUpdate() {
     }
 }
 
-void CSDSolverTrafoFP::FVMUpdate( unsigned idx_energy ) {
+void CSDSolverTrafoFP::FVMUpdate( unsigned /*idx_energy*/ ) {
 #pragma omp parallel for
     for( unsigned j = 0; j < _nCells; ++j ) {
         if( _boundaryCells[j] == BOUNDARY_TYPE::DIRICHLET ) continue;

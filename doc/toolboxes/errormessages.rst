@@ -1,0 +1,5 @@
+ErrorMessages
+=============
+
+.. doxygenclass:: ErrorMessages
+   :members:

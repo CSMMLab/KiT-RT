@@ -1,0 +1,5 @@
+LineSource
+==========
+
+.. doxygenclass:: LineSource
+   :members:

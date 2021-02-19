@@ -57,7 +57,7 @@ inline void PrintVectorVector( const VectorVector vectorIn ) {
             else
                 printf( "| %.2f ", vectorIn[idx_Outer][idx_Inner] );
         }
-        std::cout << " |\n";
+        printf( " |\n" );
     }
 }
 

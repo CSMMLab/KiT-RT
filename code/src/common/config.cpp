@@ -261,6 +261,10 @@ void Config::SetConfigOptions() {
     /*! @brief SCATTER_COEFF \n DESCRIPTION: Sets the scattering coefficient for the Linesource test case. \n DEFAULT 0.0 \ingroup Config */
     AddDoubleOption( "SCATTER_COEFF", _sigmaS, 0.0 );
 
+    // CSD related options
+    /*! @brief: MAX_ENERGY_CSD \n DESCRIPTION: Sets maximum energy for the CSD simulation.\n DEFAULT \ingroup Config */
+    AddDoubleOption( "MAX_ENERGY_CSD", _maxEnergyCSD, 5.0 );
+
     // Entropy related options
     /*! @brief Entropy Functional \n DESCRIPTION: Entropy functional used for the MN_Solver \n DEFAULT QUADRTATIC @ingroup Config. */
     AddEnumOption( "ENTROPY_FUNCTIONAL", _entropyName, Entropy_Map, QUADRATIC );
@@ -320,9 +324,12 @@ void Config::SetConfigOptions() {
     /*! @brief Data generator mode \n DESCRIPTION: Check, if data generator mode is active. If yes, no solver is called, but instead the data
      *         generator is executed \n DEFAULT false \ingroup Config */
     AddBoolOption( "DATA_GENERATOR_MODE", _dataGeneratorMode, false );
-    /*! @brief Distance to the boundary of the realizable set \n DESCRIPTION: Distance to the boundary of the realizable set  \n DEFAULT 0.1 \ingroup
-     * Config */
-    AddDoubleOption( "BOUNDARY_DISTANCE_REALIZABLE_SET", _boundaryDistanceRealizableSet, 0.1 );
+    /*! @brief Distance to 0 of the sampled moments to the boundary of the realizable set  \n DESCRIPTION: Distance to the boundary of the
+     * realizable set  \n DEFAULT 0.1 \ingroup Config */
+    AddDoubleOption( "REALIZABLE_SET_EPSILON_U0", _RealizableSetEpsilonU0, 0.1 );
+    /*! @brief norm(u_1)/u_0 is enforced to be smaller than _RealizableSetEpsilonU1 \n DESCRIPTION: Distance to the boundary of the realizable set  \n
+     * DEFAULT 0.1 \ingroup Config */
+    AddDoubleOption( "REALIZABLE_SET_EPSILON_U1", _RealizableSetEpsilonU1, 0.9 );
 }
 
 void Config::SetConfigParsing( string case_filename ) {

@@ -1,0 +1,5 @@
+WaterPhantom
+============
+
+.. doxygenclass:: WaterPhantom
+   :members:

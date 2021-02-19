@@ -1,0 +1,5 @@
+SNSolver
+========
+
+.. doxygenclass:: SNSolver
+   :members:

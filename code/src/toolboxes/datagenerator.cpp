@@ -66,12 +66,12 @@ nnDataGenerator::nnDataGenerator( Config* settings ) {
     else if( _LMaxDegree == 2 && _settings->GetSphericalBasisName() == SPHERICAL_MONOMIALS && _settings->GetDim() == 1 ) {
         // Carefull: This computes only normalized moments, i.e. sampling for u_0 = 1
         unsigned c = 1;
-        double N1  = -1.0 + _settings->GetBoundaryDistanceRealizableSet();
+        double N1  = -1.0 + _settings->GetRealizableSetEpsilonU0();
         double N2;
         double dN = 2.0 / (double)_gridSize;
-        while( N1 < 1.0 - _settings->GetBoundaryDistanceRealizableSet() ) {
-            N2 = N1 * N1 + _settings->GetBoundaryDistanceRealizableSet();
-            while( N2 < 1.0 - _settings->GetBoundaryDistanceRealizableSet() ) {
+        while( N1 < 1.0 - _settings->GetRealizableSetEpsilonU0() ) {
+            N2 = N1 * N1 + _settings->GetRealizableSetEpsilonU0();
+            while( N2 < 1.0 - _settings->GetRealizableSetEpsilonU0() ) {
                 c++;
                 N2 += dN;
             }
@@ -155,21 +155,33 @@ void nnDataGenerator::SampleSolutionU() {
 
 #pragma omp parallel for schedule( guided )
         for( unsigned long idx_set = 0; idx_set < _gridSize; idx_set++ ) {
-
             unsigned long outerIdx = ( idx_set - 1 ) * ( idx_set ) / 2;    // sum over all radii up to current
             outerIdx *= nq;                                                // in each radius step, use all quad points
 
             //  --- sample u in order 1 ---
             /* order 1 has 3 elements. (omega_x, omega_y,  omega_z) = omega, let u_1 = (u_x, u_y, u_z) = <omega*psi>
              * Condition u_0 >= norm(u_1)   */
-            double radiusU0 = du0 * ( idx_set + 1 ) * ( 1 + 2 * _settings->GetBoundaryDistanceRealizableSet() );
+            double radiusU0 = du0 * ( idx_set + 1 );
+            // Boundary correction
+            if( radiusU0 < _settings->GetRealizableSetEpsilonU0() ) {
+                radiusU0 = _settings->GetRealizableSetEpsilonU0();    // Boundary close to 0
+            }
 
             unsigned long localIdx = 0;
             double radius          = 0.0;
             unsigned long innerIdx = 0;
             // loop over all radii
             for( unsigned long idx_subset = 0; idx_subset < idx_set; idx_subset++ ) {
-                radius   = du0 * ( idx_subset + 1 );    // dont use radius 0 ==> shift by one
+                radius = du0 * ( idx_subset + 1 );    // dont use radius 0 ==> shift by one
+                // Boundary correction
+                if( radius < _settings->GetRealizableSetEpsilonU0() ) {
+                    radius = _settings->GetRealizableSetEpsilonU0();    // Boundary close to 0
+                }
+                if( radius / radiusU0 > 0.95 * _settings->GetRealizableSetEpsilonU1() ) {
+                    // small offset to take care of rounding errors in quadrature
+                    radius = radiusU0 * 0.95 * _settings->GetRealizableSetEpsilonU1();    // "outer" boundary
+                }
+
                 localIdx = outerIdx + idx_subset * nq;
 
                 for( unsigned long quad_idx = 0; quad_idx < nq; quad_idx++ ) {
@@ -187,12 +199,12 @@ void nnDataGenerator::SampleSolutionU() {
     else if( _LMaxDegree == 2 && _settings->GetSphericalBasisName() == SPHERICAL_MONOMIALS && _settings->GetDim() == 1 ) {
         // Carefull: This computes only normalized moments, i.e. sampling for u_0 = 1
         unsigned c = 0;
-        double N1  = -1.0 + _settings->GetBoundaryDistanceRealizableSet();
+        double N1  = -1.0 + _settings->GetRealizableSetEpsilonU0();
         double N2;
         double dN = 2.0 / (double)_gridSize;
-        while( N1 < 1.0 - _settings->GetBoundaryDistanceRealizableSet() ) {
-            N2 = N1 * N1 + _settings->GetBoundaryDistanceRealizableSet();
-            while( N2 < 1.0 - _settings->GetBoundaryDistanceRealizableSet() ) {
+        while( N1 < 1.0 - _settings->GetRealizableSetEpsilonU0() ) {
+            N2 = N1 * N1 + _settings->GetRealizableSetEpsilonU0();
+            while( N2 < 1.0 - _settings->GetRealizableSetEpsilonU0() ) {
                 _uSol[c][0] = 1;     // u0 (normalized i.e. N0) by Monreals notation
                 _uSol[c][1] = N1;    // u1 (normalized i.e. N1) by Monreals notation
                 _uSol[c][2] = N2;    // u2 (normalized i.e. N2) by Monreals notation
@@ -203,21 +215,21 @@ void nnDataGenerator::SampleSolutionU() {
         }
     }
     else {
-        ErrorMessages::Error( "Sampling for order higher than 1 is not yet supported", CURRENT_FUNCTION );
+        ErrorMessages::Error( "Sampling for this configuration is not yet supported", CURRENT_FUNCTION );
     }
 }
 
 void nnDataGenerator::ComputeEntropyH_dual() {
+#pragma omp parallel for schedule( guided )
     for( unsigned idx_set = 0; idx_set < _setSize; idx_set++ ) {
         _hEntropy[idx_set] = _optimizer->ComputeObjFunc( _alpha[idx_set], _uSol[idx_set], _moments );
     }
 }
 
 void nnDataGenerator::ComputeEntropyH_primal() {
-    double result = 0.0;
-
+#pragma omp parallel for schedule( guided )
     for( unsigned idx_set = 0; idx_set < _setSize; idx_set++ ) {
-        result = 0.0;
+        double result = 0.0;
         // Integrate (eta(eta'_*(alpha*m))
         for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
             result += _entropy->Entropy( _entropy->EntropyPrimeDual( dot( _alpha[idx_set], _moments[idx_quad] ) ) ) * _weights[idx_quad];
@@ -253,11 +265,12 @@ void nnDataGenerator::PrintTrainingData() {
 }
 
 void nnDataGenerator::CheckRealizability() {
-    double epsilon = _settings->GetBoundaryDistanceRealizableSet();
+    double epsilon = _settings->GetRealizableSetEpsilonU0();
     if( _LMaxDegree == 1 ) {
-        double normU1 = 0.0;
-        Vector u1( 3, 0.0 );
+#pragma omp parallel for schedule( guided )
         for( unsigned idx_set = 0; idx_set < _setSize; idx_set++ ) {
+            double normU1 = 0.0;
+            Vector u1( 3, 0.0 );
             if( _uSol[idx_set][0] < epsilon ) {
                 if( std::abs( _uSol[idx_set][1] ) > 0 || std::abs( _uSol[idx_set][2] ) > 0 || std::abs( _uSol[idx_set][3] ) > 0 ) {
                     ErrorMessages::Error( "Moment not realizable [code 0]. Values: (" + std::to_string( _uSol[idx_set][0] ) + "|" +
@@ -269,9 +282,9 @@ void nnDataGenerator::CheckRealizability() {
             else {
                 u1     = { _uSol[idx_set][1], _uSol[idx_set][2], _uSol[idx_set][3] };
                 normU1 = norm( u1 );
-                if( normU1 / _uSol[idx_set][0] > 1 - 0.99 * epsilon ) {
-                    // std::cout << "normU1 / _uSol[" << idx_set << "][0]: " << normU1 / _uSol[idx_set][0] << "\n";
-                    // std::cout << "normU1: " << normU1 << " | _uSol[idx_set][0] " << _uSol[idx_set][0] << "\n";
+                if( normU1 / _uSol[idx_set][0] > _settings->GetRealizableSetEpsilonU1() ) {    // Danger Hardcoded
+                    std::cout << "normU1 / _uSol[" << idx_set << "][0]: " << normU1 / _uSol[idx_set][0] << "\n";
+                    std::cout << "normU1: " << normU1 << " | _uSol[idx_set][0] " << _uSol[idx_set][0] << "\n";
                     ErrorMessages::Error( "Moment to close to boundary of realizable set [code 1].\nBoundary ratio: " +
                                               std::to_string( normU1 / _uSol[idx_set][0] ),
                                           CURRENT_FUNCTION );
@@ -290,6 +303,7 @@ void nnDataGenerator::CheckRealizability() {
 }
 
 void nnDataGenerator::ComputeRealizableSolution() {
+#pragma omp parallel for schedule( guided )
     for( unsigned idx_sol = 0; idx_sol < _setSize; idx_sol++ ) {
         double entropyReconstruction = 0.0;
         _uSol[idx_sol]               = 0;

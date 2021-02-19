@@ -53,7 +53,7 @@ PNSolver::PNSolver( Config* settings ) : Solver( settings ) {
     // TODO
 }
 
-void PNSolver::IterPreprocessing( unsigned idx_pseudotime ) {
+void PNSolver::IterPreprocessing( unsigned /*idx_pseudotime*/ ) {
     // Nothing to preprocess for PNSolver
 }
 

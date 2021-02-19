@@ -7,14 +7,14 @@ CSDSolverTrafoFPSH2D::CSDSolverTrafoFPSH2D( Config* settings ) : SNSolver( setti
     // Set angle and energies
     _energies  = Vector( _nEnergies, 0.0 );    // equidistant
     _energyMin = 1e-4 * 0.511;
-    _energyMax = 0.1;    // 1.0;
+    _energyMax = _settings->GetMaxEnergyCSD();    // 0.1;
 
     // write equidistant energy grid (false) or refined grid (true)
     GenerateEnergyGrid( false );
 
     // create quadrature
-    unsigned order    = _quadrature->GetOrder();
-    unsigned nq       = _settings->GetNQuadPoints();
+    unsigned order = _quadrature->GetOrder();
+    // unsigned nq       = _settings->GetNQuadPoints();
     _quadPoints       = _quadrature->GetPoints();
     _weights          = _quadrature->GetWeights();
     _quadPointsSphere = _quadrature->GetPointsSphere();
@@ -107,7 +107,7 @@ CSDSolverTrafoFPSH2D::CSDSolverTrafoFPSH2D( Config* settings ) : SNSolver( setti
 
     _S               = Matrix( nSph, nSph, 0.0 );
     unsigned counter = 0;
-    for( int l = 0; l <= orderSph; ++l ) {
+    for( int l = 0; l <= (int)orderSph; ++l ) {
         for( int m = -l; m <= l; ++m ) {
             _S( counter, counter ) = double( -l * ( l + 1 ) );
             counter++;
@@ -385,7 +385,7 @@ void CSDSolverTrafoFPSH2D::WriteVolumeOutput( unsigned idx_pseudoTime ) {
 }
 
 // Solver
-void CSDSolverTrafoFPSH2D::FVMUpdate( unsigned idx_energy ) {
+void CSDSolverTrafoFPSH2D::FVMUpdate( unsigned /*idx_energy*/ ) {
 // loop over all spatial cells
 #pragma omp parallel for
     for( unsigned j = 0; j < _nCells; ++j ) {
@@ -502,15 +502,6 @@ void CSDSolverTrafoFPSH2D::SolverPreprocessing() {
     _identity = Matrix( _nq, _nq, 0.0 );
     for( unsigned k = 0; k < _nq; ++k ) _identity( k, k ) = 1.0;
 
-    // angular flux at next time step
-    VectorVector psiNew( _nCells, Vector( _nq, 0.0 ) );
-    double dFlux = 1e10;
-    Vector fluxNew( _nCells, 0.0 );
-    Vector fluxOld( _nCells, 0.0 );
-    // for( unsigned j = 0; j < _nCells; ++j ) {
-    //    fluxOld[j] = dot( _sol[j], _weights );
-    //}
-
     int rank;
     MPI_Comm_rank( MPI_COMM_WORLD, &rank );
     if( rank == 0 ) log->info( "{:10}   {:10}", "E", "dFlux" );
@@ -546,5 +537,4 @@ void CSDSolverTrafoFPSH2D::SolverPreprocessing() {
 
     // std::cout << "nEnergies = " << _nEnergies << std::endl;
     // loop over energies (pseudo-time)
- 
 }

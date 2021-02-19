@@ -1,0 +1,5 @@
+QLookupQuadrature
+=================
+
+.. doxygenclass:: QLookupQuadrature 
+   :members:

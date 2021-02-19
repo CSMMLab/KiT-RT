@@ -17,7 +17,7 @@ CSDSNSolverNoTrafo::CSDSNSolverNoTrafo( Config* settings ) : SNSolver( settings 
     _angle           = Vector( _settings->GetNQuadPoints(), 0.0 );    // my
     _energies        = Vector( _nEnergies, 0.0 );                     // equidistant
     double energyMin = 1e-1;
-    double energyMax = 5e0;
+    double energyMax = _settings->GetMaxEnergyCSD();    // 5e0;
     // write equidistant energy grid
 
     _dE        = ComputeTimeStep( settings->GetCFL() );

@@ -1,0 +1,5 @@
+LaxFriedrichsFlux
+=================
+
+.. doxygenclass:: LaxFriedrichsFlux
+   :members:

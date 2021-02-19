@@ -260,7 +260,6 @@ TEST_CASE( "CSD_SN_FP_SH_2D_SOLVER", "[validation_tests]" ) {
     }
 }
 */
-
 // --- Validation Tests Output ---
 void tokenize( std::string const& str, const char delim, std::vector<std::string>& out ) {
     size_t start;
@@ -359,7 +358,6 @@ TEST_CASE( "screen_output", "[output]" ) {
     REQUIRE( eqLen );    // Files must be of same length
 }
 
-/*
 TEST_CASE( "Test the Data Generator", "[dataGen]" ) {
     std::string out_fileDir = "input/validation_tests/dataGenerator/";
     spdlog::drop_all();    // Make sure to write in own logging file
@@ -420,4 +418,3 @@ TEST_CASE( "Test the Data Generator", "[dataGen]" ) {
     }
     REQUIRE( testPassed );
 }
-*/
