@@ -21,6 +21,7 @@
 nnDataGenerator::nnDataGenerator( Config* settings ) {
     _settings = settings;
     _setSize  = settings->GetTrainingDataSetSize();
+    _gridSize = _setSize;
 
     _LMaxDegree = settings->GetMaxMomentDegree();
 
@@ -50,6 +51,38 @@ nnDataGenerator::nnDataGenerator( Config* settings ) {
     _entropy = EntropyBase::Create( _settings );
 
     // Initialize Training Data
+    if( _LMaxDegree == 0 ) {
+    }
+    else if( _LMaxDegree == 1 ) {
+        // Sample points on unit sphere.
+        QuadratureBase* quad = QuadratureBase::Create( _settings );
+        unsigned long nq     = (unsigned long)quad->GetNq();
+
+        // Allocate memory.
+        _setSize = nq * _gridSize * ( _gridSize - 1 ) / 2;
+
+        delete quad;
+    }
+    else if( _LMaxDegree == 2 && _settings->GetSphericalBasisName() == SPHERICAL_MONOMIALS && _settings->GetDim() == 1 ) {
+        // Carefull: This computes only normalized moments, i.e. sampling for u_0 = 1
+        unsigned c = 1;
+        double N1  = -1.0 + _settings->GetBoundaryDistanceRealizableSet();
+        double N2;
+        double dN = 2.0 / (double)_gridSize;
+        while( N1 < 1.0 - _settings->GetBoundaryDistanceRealizableSet() ) {
+            N2 = N1 * N1 + _settings->GetBoundaryDistanceRealizableSet();
+            while( N2 < 1.0 - _settings->GetBoundaryDistanceRealizableSet() ) {
+                c++;
+                N2 += dN;
+            }
+            N1 += dN;
+        }
+        _setSize = c;
+    }
+    else {
+        ErrorMessages::Error( "Sampling of training data of degree higher than 1 is not yet implemented.", CURRENT_FUNCTION );
+    }
+
     _uSol     = VectorVector( _setSize, Vector( _nTotalEntries, 0.0 ) );
     _alpha    = VectorVector( _setSize, Vector( _nTotalEntries, 0.0 ) );
     _hEntropy = std::vector<double>( _setSize, 0.0 );
@@ -75,6 +108,9 @@ void nnDataGenerator::computeTrainingData() {
     // --- compute alphas ---
     _optimizer->SolveMultiCell( _alpha, _uSol, _moments );
 
+    // --- Postprocessing
+    ComputeRealizableSolution();
+
     // --- compute entropy functional ---
     ComputeEntropyH_primal();
 
@@ -97,7 +133,7 @@ void nnDataGenerator::SampleSolutionU() {
     // Use necessary conditions from Monreal, Dissertation, Chapter 3.2.1, Page 26
 
     // --- Determine stepsizes etc ---
-    double du0 = _settings->GetMaxValFirstMoment() / (double)_setSize;
+    double du0 = _settings->GetMaxValFirstMoment() / (double)_gridSize;
 
     // different processes for different
     if( _LMaxDegree == 0 ) {
@@ -108,27 +144,17 @@ void nnDataGenerator::SampleSolutionU() {
             _uSol[idx_set][0] = du0 * idx_set;
         }
     }
-    if( _LMaxDegree == 1 ) {
+    else if( _LMaxDegree == 1 && _settings->GetSphericalBasisName() == SPHERICAL_MONOMIALS ) {
         // Sample points on unit sphere.
         QuadratureBase* quad = QuadratureBase::Create( _settings );
         VectorVector qpoints = quad->GetPoints();    // carthesian coordinates.
         unsigned long nq     = (unsigned long)quad->GetNq();
 
-        // Allocate memory.
-        unsigned long setSizeU0 = _setSize;
-        unsigned long setSizeU1 = nq * setSizeU0 * ( setSizeU0 - 1 ) / 2;
-        _setSize                = setSizeU1;
-
-        // REFACTOR THIS
-        _uSol     = VectorVector( _setSize, Vector( _nTotalEntries, 0.0 ) );
-        _alpha    = VectorVector( _setSize, Vector( _nTotalEntries, 0.0 ) );
-        _hEntropy = std::vector<double>( _setSize, 0.0 );
-
         // --- sample u in order 0 ---
         // u_0 = <1*psi>
 
 #pragma omp parallel for schedule( guided )
-        for( unsigned long idx_set = 0; idx_set < setSizeU0; idx_set++ ) {
+        for( unsigned long idx_set = 0; idx_set < _gridSize; idx_set++ ) {
 
             unsigned long outerIdx = ( idx_set - 1 ) * ( idx_set ) / 2;    // sum over all radii up to current
             outerIdx *= nq;                                                // in each radius step, use all quad points
@@ -158,7 +184,25 @@ void nnDataGenerator::SampleSolutionU() {
             }
         }
     }
-    if( _LMaxDegree > 1 ) {
+    else if( _LMaxDegree == 2 && _settings->GetSphericalBasisName() == SPHERICAL_MONOMIALS && _settings->GetDim() == 1 ) {
+        // Carefull: This computes only normalized moments, i.e. sampling for u_0 = 1
+        unsigned c = 0;
+        double N1  = -1.0 + _settings->GetBoundaryDistanceRealizableSet();
+        double N2;
+        double dN = 2.0 / (double)_gridSize;
+        while( N1 < 1.0 - _settings->GetBoundaryDistanceRealizableSet() ) {
+            N2 = N1 * N1 + _settings->GetBoundaryDistanceRealizableSet();
+            while( N2 < 1.0 - _settings->GetBoundaryDistanceRealizableSet() ) {
+                _uSol[c][0] = 1;     // u0 (normalized i.e. N0) by Monreals notation
+                _uSol[c][1] = N1;    // u1 (normalized i.e. N1) by Monreals notation
+                _uSol[c][2] = N2;    // u2 (normalized i.e. N2) by Monreals notation
+                N2 += dN;
+                c++;
+            }
+            N1 += dN;
+        }
+    }
+    else {
         ErrorMessages::Error( "Sampling for order higher than 1 is not yet supported", CURRENT_FUNCTION );
     }
 }
@@ -190,8 +234,8 @@ void nnDataGenerator::PrintTrainingData() {
     std::string uSolString  = "";
     std::string alphaString = "";
     for( unsigned idx_sys = 0; idx_sys < _nTotalEntries; idx_sys++ ) {
-        uSolString += "u_" + std::to_string( idx_sys ) + " , ";
-        alphaString += "alpha_" + std::to_string( idx_sys ) + " , ";
+        uSolString += "u_" + std::to_string( idx_sys ) + ",";
+        alphaString += "alpha_" + std::to_string( idx_sys ) + ",";
     }
     // log->info( uSolString + alphaString + "h" );
     logCSV->info( uSolString + alphaString + "h" );
@@ -200,8 +244,8 @@ void nnDataGenerator::PrintTrainingData() {
         std::string uSolString  = "";
         std::string alphaString = "";
         for( unsigned idx_sys = 0; idx_sys < _nTotalEntries; idx_sys++ ) {
-            uSolString += std::to_string( _uSol[idx_set][idx_sys] ) + " , ";
-            alphaString += std::to_string( _alpha[idx_set][idx_sys] ) + " , ";
+            uSolString += std::to_string( _uSol[idx_set][idx_sys] ) + ",";
+            alphaString += std::to_string( _alpha[idx_set][idx_sys] ) + ",";
         }
         // log->info( uSolString + alphaString + "{}", _hEntropy[idx_set] );
         logCSV->info( uSolString + alphaString + "{}", _hEntropy[idx_set] );
@@ -216,7 +260,10 @@ void nnDataGenerator::CheckRealizability() {
         for( unsigned idx_set = 0; idx_set < _setSize; idx_set++ ) {
             if( _uSol[idx_set][0] < epsilon ) {
                 if( std::abs( _uSol[idx_set][1] ) > 0 || std::abs( _uSol[idx_set][2] ) > 0 || std::abs( _uSol[idx_set][3] ) > 0 ) {
-                    ErrorMessages::Error( "Moment not realizable [code 0].", CURRENT_FUNCTION );
+                    ErrorMessages::Error( "Moment not realizable [code 0]. Values: (" + std::to_string( _uSol[idx_set][0] ) + "|" +
+                                              std::to_string( _uSol[idx_set][1] ) + "|" + std::to_string( _uSol[idx_set][2] ) + "|" +
+                                              std::to_string( _uSol[idx_set][3] ) + ")",
+                                          CURRENT_FUNCTION );
                 }
             }
             else {
@@ -242,6 +289,17 @@ void nnDataGenerator::CheckRealizability() {
     }
 }
 
+void nnDataGenerator::ComputeRealizableSolution() {
+    for( unsigned idx_sol = 0; idx_sol < _setSize; idx_sol++ ) {
+        double entropyReconstruction = 0.0;
+        _uSol[idx_sol]               = 0;
+        for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
+            // Make entropyReconstruction a member vector, s.t. it does not have to be re-evaluated in ConstructFlux
+            entropyReconstruction = _entropy->EntropyPrimeDual( blaze::dot( _alpha[idx_sol], _moments[idx_quad] ) );
+            _uSol[idx_sol] += _moments[idx_quad] * ( _weights[idx_quad] * entropyReconstruction );
+        }
+    }
+}
 void nnDataGenerator::PrintLoadScreen() {
     auto log = spdlog::get( "event" );
     log->info( "------------------------ Data Generation Starts --------------------------" );

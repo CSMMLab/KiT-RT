@@ -18,6 +18,7 @@
 #include <fstream>
 
 MNSolver::MNSolver( Config* settings ) : Solver( settings ) {
+
     _LMaxDegree    = settings->GetMaxMomentDegree();
     _basis         = SphericalBase::Create( _settings );
     _nTotalEntries = _basis->GetBasisSize();
@@ -82,6 +83,7 @@ Vector MNSolver::ConstructFlux( unsigned idx_cell ) {
 
     //--- Integration of moments of flux ---
     double entropyL, entropyR, entropyFlux;
+
     Vector flux( _nTotalEntries, 0.0 );
 
     //--- Temporary storages of reconstructed alpha ---
@@ -124,7 +126,7 @@ Vector MNSolver::ConstructFlux( unsigned idx_cell ) {
         }
         // Solution flux
         flux += _moments[idx_quad] * ( _weights[idx_quad] * entropyFlux );
-    }
+  }
     return flux;
 }
 
@@ -138,12 +140,13 @@ void MNSolver::ComputeRealizableSolution( unsigned idx_cell ) {
     }
 }
 
-void MNSolver::IterPreprocessing() {
+void MNSolver::IterPreprocessing( unsigned idx_pseudotime ) {
 
     // ------- Reconstruction Step ----------------
+
     _optimizer->SolveMultiCell( _alpha, _sol, _moments );
 
-    // ------- Relizablity Reconstruction Step ----
+    // ------- Relizablity Preservation Step ----
     for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
         ComputeRealizableSolution( idx_cell );
     }
@@ -182,13 +185,16 @@ void MNSolver::FVMUpdate( unsigned idx_energy ) {
     for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
         // Dirichlet Boundaries stay
         if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::DIRICHLET ) continue;
+
         for( unsigned idx_system = 0; idx_system < _nTotalEntries; idx_system++ ) {
+
             _solNew[idx_cell][idx_system] = _sol[idx_cell][idx_system] -
                                             ( _dE / _areas[idx_cell] ) * _solNew[idx_cell][idx_system] /* cell averaged flux */
                                             - _dE * _sol[idx_cell][idx_system] *
                                                   ( _sigmaT[idx_energy][idx_cell]                                    /* absorbtion influence */
                                                     + _sigmaS[idx_energy][idx_cell] * _scatterMatDiag[idx_system] ); /* scattering influence */
         }
+
         _solNew[idx_cell][0] += _dE * _Q[0][idx_cell][0];
     }
 }

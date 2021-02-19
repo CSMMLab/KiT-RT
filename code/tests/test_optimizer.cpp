@@ -31,6 +31,7 @@ TEST_CASE( "Test the Newton Optimizer", "[optimizers]" ) {
     Vector alpha( nTotalEntries, 27.0 );
 
     // Get Moments
+   
 
     VectorVector moments = VectorVector( quad->GetNq() );
     double my, phi;

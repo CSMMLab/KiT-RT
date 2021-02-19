@@ -1,5 +1,5 @@
-#ifndef PHYSICS_H
-#define PHYSICS_H
+#ifndef EPICS_H
+#define EPICS_H
 
 #include <fstream>
 #include <list>
@@ -7,10 +7,10 @@
 
 #include "common/globalconstants.h"
 #include "common/typedef.h"
-#include "interpolation.h"
 #include "toolboxes/errormessages.h"
+#include "toolboxes/interpolation.h"
 
-class Physics
+class EPICS
 {
   private:
     enum Element { H = 0, O = 1 };
@@ -18,13 +18,13 @@ class Physics
     std::vector<VectorVector> _xsTotalH2O;         // equal to scatteringXS integrated over angle
     VectorVector _stpowH2O;
 
-    std::tuple<std::vector<VectorVector>, std::vector<VectorVector>> ReadENDL( std::string filename );
+    std::tuple<std::vector<VectorVector>, std::vector<VectorVector>> ReadEPICS( std::string filename );
     VectorVector ReadStoppingPowers( std::string fileName );
     void LoadDatabase( std::string fileName_H, std::string fileName_O, std::string fileName_stppower );
     VectorVector ReorderTotalXS( const VectorVector& data ) const;
     VectorVector ReorderScatteringXS( const VectorVector& data ) const;
 
-    Physics() = delete;
+    EPICS() = delete;
 
   public:
     /** @brief GetScatteringXS gives back vector of vectors of scattering cross sections for materials defined by density and energies in vector
@@ -58,17 +58,15 @@ class Physics
      */
     Vector GetStoppingPower( Vector energies );
 
-    Vector ComputeStoppingPower( const Vector& energies ) const;
+    /**
+     * @brief EPICS constructor
+     */
+    EPICS( std::string fileName_H, std::string fileName_O, std::string fileName_stppower = "" );
 
     /**
-     * @brief Physics constructor
+     * @brief EPICS destructor
      */
-    Physics( std::string fileName_H, std::string fileName_O, std::string fileName_stppower = "" );
-
-    /**
-     * @brief Physics destructor
-     */
-    ~Physics();
+    ~EPICS();
 };
 
 #endif

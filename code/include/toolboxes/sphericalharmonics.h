@@ -60,6 +60,9 @@ class SphericalHarmonics : public SphericalBase
     unsigned GetGlobalIndexBasis( int l_degree, int k_order ) override;
 
   private:
+    /*! @brief: maximal degree of the spherical harmonics basis (this is "L" in the comments)*/
+    unsigned _LMaxDegree;
+
     /*! @brief: coefficients for the computations of the basis
      *         length of _aParam, _bParam : L + (L*(L+1))/2
      */

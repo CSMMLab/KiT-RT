@@ -79,6 +79,28 @@ class ErrorMessages
             spdlog::error( "------------------------------ Error Exit -------------------------------" );
             spdlog::error( "\n" );
         }
+        exit( EXIT_FAILURE );
+    }
+
+    inline static void FileNotFoundError( std::string FileName, std::string FunctionName ) {
+        auto log = spdlog::get( "event" );
+        // if (Rank == 0){ //For MPI implementation later
+        if( log ) {
+            log->error( "\n" );
+            log->error( "Error in \"{0}\": ", FunctionName );
+            log->error( "-------------------------------------------------------------------------" );
+            log->error( "File \"" + FileName + "\" not found." );
+            log->error( "------------------------------ Error Exit -------------------------------" );
+            log->error( "\n" );
+        }
+        else {
+            spdlog::error( "\n" );
+            spdlog::error( "Error in \"{0}\": ", FunctionName );
+            spdlog::error( "-------------------------------------------------------------------------" );
+            spdlog::error( "File  \"" + FileName + "\" not found." );
+            spdlog::error( "------------------------------ Error Exit -------------------------------" );
+            spdlog::error( "\n" );
+        }
         //}
         exit( EXIT_FAILURE );
     }

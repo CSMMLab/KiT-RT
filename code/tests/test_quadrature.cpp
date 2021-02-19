@@ -6,7 +6,7 @@
 #include <vector>
 
 std::vector<QUAD_NAME> quadraturenames = {
-    QUAD_MonteCarlo, QUAD_GaussLegendreTensorized, QUAD_GaussLegendre1D, QUAD_LevelSymmetric, QUAD_Lebedev, QUAD_LDFESA };
+    QUAD_MonteCarlo, QUAD_GaussLegendreTensorized, QUAD_GaussLegendre1D, QUAD_LevelSymmetric, QUAD_Lebedev, QUAD_LDFESA, QUAD_Product };
 
 std::vector<std::vector<int>> quadratureorders = {
     { 4, 5, 6, 7 },                            // Monte Carlo
@@ -15,7 +15,8 @@ std::vector<std::vector<int>> quadratureorders = {
     { 2, 4, 6, 8, 10, 12, 14, 16, 18, 20 },    // Available Orders for LevelSymmetric
     { 3,  5,  7,  9,  11, 13, 15, 17, 19, 21, 23,  25,  27,  29,  31,  35,
       41, 47, 53, 59, 65, 71, 77, 83, 89, 95, 101, 107, 113, 119, 125, 131 },    // Available orders for Lebedev
-    { 1, 2, 3 }                                                                  // Available Orders for LDFESA
+    { 1, 2, 3 },                                                                 // Available Orders for LDFESA
+    { 4, 6, 8, 10 }                                                              // Available Orders for Product
 };
 
 bool approxequal( double a, double b, bool lowAccuracy = false ) {
@@ -65,9 +66,15 @@ TEST_CASE( "Quadrature Tests", "[quadrature]" ) {
             // Set quadName
             config->SetQuadName( quadraturename );
 
+            lowAccuracyTesting = false;
+            if( quadraturename == QUAD_GaussLegendreTensorized || quadraturename == QUAD_GaussLegendre1D || quadraturename == QUAD_LevelSymmetric ||
+                quadraturename == QUAD_Lebedev || quadraturename == QUAD_LDFESA || quadraturename == QUAD_Product )
+                lowAccuracyTesting = true;
+
             for( auto quadratureorder : quadratureorders[quadraturename] ) {
                 // Set quadOrder
                 config->SetQuadOrder( quadratureorder );
+
                 QuadratureBase* Q = QuadratureBase::Create( config );
 
                 if( quadraturename == QUAD_GaussLegendre1D ) {
@@ -75,12 +82,14 @@ TEST_CASE( "Quadrature Tests", "[quadrature]" ) {
                         testPassed = false;
                         PrintErrorMsg( config, std::abs( Q->SumUpWeights() - 2 ), Q->SumUpWeights(), lowAccuracyTesting );
                     }
+
                 }
                 else {
                     if( !approxequal( Q->SumUpWeights(), 4 * M_PI, lowAccuracyTesting ) ) {
                         testPassed = false;
                         PrintErrorMsg( config, std::abs( Q->SumUpWeights() - 4 * M_PI ), Q->SumUpWeights(), lowAccuracyTesting );
                     }
+
                 }
                 // Special case for Gauss Legendre with half weights
                 if( quadraturename == QUAD_GaussLegendreTensorized ) {
@@ -91,6 +100,7 @@ TEST_CASE( "Quadrature Tests", "[quadrature]" ) {
                         PrintErrorMsg( config, std::abs( Q->SumUpWeights() - 4 * M_PI ), Q->SumUpWeights(), lowAccuracyTesting );
                         printf( "Reduced number of quadrature was points used. \n" );
                     }
+
                     config->SetSNAllGaussPts( true );
                 }
                 delete Q;
@@ -106,6 +116,11 @@ TEST_CASE( "Quadrature Tests", "[quadrature]" ) {
         for( auto quadraturename : quadraturenames ) {
             // Set quadName
             config->SetQuadName( quadraturename );
+
+            lowAccuracyTesting = false;
+            if( quadraturename == QUAD_GaussLegendreTensorized || quadraturename == QUAD_GaussLegendre1D || quadraturename == QUAD_LevelSymmetric ||
+                quadraturename == QUAD_Lebedev || quadraturename == QUAD_LDFESA )
+                lowAccuracyTesting = true;
 
             if( quadraturename == QUAD_GaussLegendre1D ) continue;    // 1D test case not meaningful here
 
@@ -137,6 +152,7 @@ TEST_CASE( "Quadrature Tests", "[quadrature]" ) {
                             printf( "Reduced number of quadrature was points used. \n" );
                         }
                     }
+
                     config->SetSNAllGaussPts( true );
                 }
                 delete Q;
@@ -146,6 +162,7 @@ TEST_CASE( "Quadrature Tests", "[quadrature]" ) {
     }
 
     SECTION( "Nq is actually equal to the number of weights.", "[quadrature]" ) {
+
         for( auto quadraturename : quadraturenames ) {
             // Set quadName
             config->SetQuadName( quadraturename );
@@ -216,6 +233,7 @@ TEST_CASE( "Quadrature Tests", "[quadrature]" ) {
                         testPassed = false;
                         PrintErrorMsg( config, std::abs( result - 0 ), result, lowAccuracyTesting );
                     }
+
                 }
                 else {
                     result = Q->Integrate( f );
@@ -223,6 +241,7 @@ TEST_CASE( "Quadrature Tests", "[quadrature]" ) {
                         testPassed = false;
                         PrintErrorMsg( config, std::abs( result - 4.0 * M_PI ), result, lowAccuracyTesting );
                     }
+
                 }
 
                 // Special case for Gauss Legendre with half weights
@@ -236,6 +255,8 @@ TEST_CASE( "Quadrature Tests", "[quadrature]" ) {
                         PrintErrorMsg( config, std::abs( result - 4.0 * M_PI ), result, lowAccuracyTesting );
                         printf( "Reduced number of quadrature was points used. \n" );
                     }
+
+
                     config->SetSNAllGaussPts( true );
                 }
             }

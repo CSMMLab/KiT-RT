@@ -19,16 +19,18 @@ class SNSolver : public Solver
      */
     SNSolver( Config* settings );
 
-  private:
+    virtual ~SNSolver() {}
+
+  protected:
     // IO
-    void PrepareVolumeOutput() override;
-    void WriteVolumeOutput( unsigned idx_pseudoTime ) override;
+    void virtual PrepareVolumeOutput() override;
+    void virtual WriteVolumeOutput( unsigned idx_pseudoTime ) override;
 
     // Solver
-    void FVMUpdate( unsigned idx_energy ) override;
-    void FluxUpdate() override;
-    void IterPreprocessing() override;
-    void IterPostprocessing() override;
+    void virtual FVMUpdate( unsigned idx_energy ) override;
+    void virtual FluxUpdate() override;
+    void virtual IterPreprocessing( unsigned idx_pseudotime ) override;
+    void virtual IterPostprocessing() override;
 
     // Helper
     void ComputeRadFlux();

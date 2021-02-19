@@ -2,8 +2,10 @@ cmake_minimum_required( VERSION 3.12.4 )
 project( KiT-RT VERSION 0.1.0 LANGUAGES CXX )
 
 ### OPTIONS #####################################
-option( build_tests "enables compiling of unit_tests" OFF )
-option( build_doc "builds Doxygen and Sphinx documentation" OFF )
+option( BUILD_DOC "builds Doxygen and Sphinx documentation" OFF )
+option( BUILD_TESTS "builds all available unit tests" OFF )
+option( BUILD_GUI "additionally builds a user interface" OFF )
+
 #################################################
 
 
@@ -29,7 +31,7 @@ include_directories( ${LAPACK_INCLUDE_DIR} )
 
 find_package( BLAS )
 
-find_package( VTK REQUIRED COMPONENTS vtkIOGeometry vtkFiltersCore )
+find_package( VTK COMPONENTS vtkIOGeometry vtkFiltersCore REQUIRED )
 
 find_package( Python3 COMPONENTS Interpreter Development NumPy REQUIRED )
 include_directories( ${Python3_INCLUDE_DIRS} ${Python3_NumPy_INCLUDE_DIRS} )
@@ -75,6 +77,13 @@ add_compile_definitions( GIT_HASH="${GIT_HASH}" )
 
 ### BUILD KIT-RT ################################
 file( GLOB_RECURSE SRCS RELATIVE ${CMAKE_SOURCE_DIR} "src/*.cpp" "include/*.h" )
+set( EXCLUDE_DIR "/gui/" )
+foreach( TMP_PATH ${SRCS} )
+    string( FIND ${TMP_PATH} ${EXCLUDE_DIR} EXCLUDE_DIR_FOUND )
+    if( NOT ${EXCLUDE_DIR_FOUND} EQUAL -1 )
+        list( REMOVE_ITEM SRCS ${TMP_PATH} )
+    endif()
+endforeach( TMP_PATH )
 include_directories( ${CMAKE_SOURCE_DIR}/include )
 add_executable( ${CMAKE_PROJECT_NAME} ${SRCS} ${EXT_SRCS} )
 target_link_libraries( ${CMAKE_PROJECT_NAME} ${CORE_LIBRARIES} )
@@ -86,18 +95,18 @@ target_compile_options( ${CMAKE_PROJECT_NAME} PUBLIC "$<$<CONFIG:RELEASE>:${KITR
 
 
 ### BUILD UNIT TESTS ############################
-if( build_tests )
+if( BUILD_TESTS )
     include( CTest )
     set( CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/ext/Catch2/contrib ${CMAKE_MODULE_PATH} )
     include( Catch )
     set( CATCH_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/ext/Catch2/single_include/catch2 )
-    add_compile_definitions( BUILD_TESTING )
-    add_compile_definitions( TESTS_PATH="${CMAKE_SOURCE_DIR}/tests/" )
     add_library( Catch INTERFACE )
     target_include_directories( Catch INTERFACE ${CATCH_INCLUDE_DIR} )
     file( GLOB_RECURSE TEST_SRCS RELATIVE ${CMAKE_SOURCE_DIR} "tests/*.cpp" )
     list( REMOVE_ITEM SRCS "src/main.cpp" )
     add_executable( unit_tests ${TEST_SRCS} ${SRCS} ${EXT_SRCS} )
+    target_compile_definitions( unit_tests PUBLIC BUILD_TESTING )
+    target_compile_definitions( unit_tests PUBLIC TESTS_PATH="${CMAKE_SOURCE_DIR}/tests/" )
     target_link_libraries( unit_tests Catch ${CORE_LIBRARIES} )
     target_compile_options( unit_tests PUBLIC "$<$<CONFIG:DEBUG>:${KITRT_DEBUG_OPTIONS}>" )
     if( CMAKE_COMPILER_IS_GNUCXX )
@@ -113,7 +122,7 @@ endif()
 
 
 ### BUILD DOCUMENTATION #########################
-if( build_doc )
+if( BUILD_DOC )
     find_package( Doxygen REQUIRED )
     find_package( Sphinx REQUIRED )
 
@@ -145,5 +154,26 @@ if( build_doc )
                         COMMENT "Converting documentation from Doxygen to Sphinx" )
 
     add_custom_target( Sphinx ALL DEPENDS ${SPHINX_INDEX_FILE} )
+endif()
+
+
+### BUILD GUI ###################################
+if( BUILD_GUI )
+    find_package( Qt5 COMPONENTS Core Widgets Gui OpenGL REQUIRED )
+    find_package( VTK COMPONENTS vtkGUISupportQt vtkInteractionStyle vtkInteractionWidgets vtkRenderingAnnotation vtkRenderingCore vtkRenderingFreeType vtkRenderingOpenGL2 REQUIRED )
+    include_directories( ${CMAKE_SOURCE_DIR}/include/gui )
+    file( GLOB_RECURSE GUI_SRCS RELATIVE ${CMAKE_SOURCE_DIR} "src/gui/*" )
+    file( GLOB_RECURSE GUI_INCL RELATIVE ${CMAKE_SOURCE_DIR} "include/gui/*" )
+    add_executable( ${CMAKE_PROJECT_NAME}_gui ${SRCS} ${EXT_SRCS} ${GUI_SRCS} ${GUI_INCL})
+    target_compile_definitions( ${CMAKE_PROJECT_NAME}_gui PUBLIC BUILD_GUI )
+    set_target_properties( ${CMAKE_PROJECT_NAME}_gui PROPERTIES AUTOMOC ON )
+    set_target_properties( ${CMAKE_PROJECT_NAME}_gui PROPERTIES AUTOUIC ON )
+    set_target_properties( ${CMAKE_PROJECT_NAME}_gui PROPERTIES AUTORCC ON )
+    set( GUI_LIBRARIES Qt5::Core Qt5::Widgets Qt5::Gui Qt5::OpenGL ${VTK_LIBRARIES} )
+    target_link_libraries( ${CMAKE_PROJECT_NAME}_gui ${CORE_LIBRARIES} ${GUI_LIBRARIES} )
+    set_target_properties( ${CMAKE_PROJECT_NAME}_gui PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin" )
+    target_compile_options( ${CMAKE_PROJECT_NAME}_gui PUBLIC "$<$<CONFIG:DEBUG>:${KITRT_DEBUG_OPTIONS}>" )
+    target_compile_options( ${CMAKE_PROJECT_NAME}_gui PUBLIC "$<$<CONFIG:RELWITHDEBINFO>:${KITRT_RELWITHDEBINFO_OPTIONS}>" )
+    target_compile_options( ${CMAKE_PROJECT_NAME}_gui PUBLIC "$<$<CONFIG:RELEASE>:${KITRT_RELEASE_OPTIONS}>" )
 endif()
 #################################################

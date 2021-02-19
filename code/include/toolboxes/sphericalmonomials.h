@@ -21,6 +21,14 @@ class SphericalMonomials : public SphericalBase
      * */
     SphericalMonomials( unsigned L_degree );
 
+    /*! @brief : Sets up class for monomial basis on sphere up to degree L.
+     *           The basis then consists of N = L.
+     *  @param : L_degree - maximum degree of spherical harmonics basis, 0 <= L <= 1000 (upper bound
+     *                      due to numerical stability)
+     *  @param : spatialDim - spatial dimensioniality of the simulation
+     * */
+    SphericalMonomials( unsigned L_degree, unsigned short spatialDim );
+
     /*! @brief  : Computes all N = L² +2L basis functions at point (my, phi)
      *  @param  : my = cos(theta) - spherical coordinate, -1 <= x <= 1
      *  @param  : phi - spherical coordinate, 0 <= phi <= 2*pi
@@ -80,5 +88,10 @@ class SphericalMonomials : public SphericalBase
 
     /*! @brief: Helper Function to compute basis^exponent. */
     double Power( double basis, unsigned exponent );
+
+    /*! @brief: Helper to compute the basis in 1D, 2D or 3D, depending on choice of _spatialDim */
+    Vector ComputeSphericalBasis1D( double my, double phi );
+    Vector ComputeSphericalBasis2D( double my, double phi );
+    Vector ComputeSphericalBasis3D( double my, double phi );
 };
 #endif    // SPHERICALMONOMIALS_H

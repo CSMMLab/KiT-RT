@@ -37,7 +37,6 @@ class NewtonOptimizer : public OptimizerBase
     QuadratureBase* _quadrature; /*! @brief: used quadrature */    // THis is memory doubling! Try to use a pointer.
     unsigned _nq;                                                  /*! @brief: number of quadrature points */
     Vector _weights;                                               /*!  @brief quadrature weights, dim(_weights) = (_nq) */
-    VectorVector _quadPointsSphere;                                /*!  @brief (my,phi), dim(_quadPoints) = (_nq,2) */
 
     double _epsilon;                 /*! @brief: Termination criterion for newton optimizer */
     unsigned short _maxIterations;   /*! @brief: Max iterations of the newton solver */

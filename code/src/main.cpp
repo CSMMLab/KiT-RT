@@ -14,7 +14,20 @@
 
 #include "toolboxes/datagenerator.h"
 
+#ifdef BUILD_GUI
+#include <QApplication>
+
+#include "mainwindow.h"
+#endif
+
 int main( int argc, char** argv ) {
+#ifdef BUILD_GUI
+    MPI_Init( &argc, &argv );
+    QApplication app( argc, argv );
+    MainWindow mw;
+    mw.show();
+    return app.exec();
+#else
     MPI_Init( &argc, &argv );
     wchar_t* program = Py_DecodeLocale( argv[0], NULL );
     Py_SetProgramName( program );
@@ -44,4 +57,5 @@ int main( int argc, char** argv ) {
 
     MPI_Finalize();
     return EXIT_SUCCESS;
+#endif
 }

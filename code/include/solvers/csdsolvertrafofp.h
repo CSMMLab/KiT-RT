@@ -38,21 +38,30 @@ class CSDSolverTrafoFP : public SNSolver
 
     void GenerateEnergyGrid( bool refinement );
 
+    // Helper variables
+    Vector _energiesOrig; /*! @brief: original energy levels for CSD, lenght = _nEnergies */
+    Matrix _identity;     /*! @brif: identity matrix for FP scattering. Dim (_nq,_nq)*/
+
   public:
     /**
      * @brief CSDSolverTrafoFP constructor
      * @param settings stores all needed information
      */
     CSDSolverTrafoFP( Config* settings );
-    /**
-     * @brief Solve functions runs main time loop
-     */
-    virtual void Solve();
-    /**
-     * @brief Output solution to VTK file
-     */
-    virtual void Save() const;
-    virtual void Save( int currEnergy ) const;
+
+    virtual ~CSDSolverTrafoFP() {}
+
+  private:
+    // IO
+    void PrepareVolumeOutput() override final;
+    void WriteVolumeOutput( unsigned idx_pseudoTime ) override final;
+
+    // Solver
+    void FVMUpdate( unsigned idx_energy ) override final;
+    void FluxUpdate() override final;
+    void IterPreprocessing( unsigned idx_pseudotime ) override final;
+    void virtual IterPostprocessing() override final;
+    void SolverPreprocessing() override final;
 };
 
 #endif    // CSDSOLVERTRAFOFP_H

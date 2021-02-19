@@ -26,12 +26,14 @@ class Solver
 
     // --------- Often used variables of member classes for faster access ----
 
-    unsigned _nEnergies;          /*! @brief number of energy/time steps, number of nodal energy values for CSD */
-    double _dE;                   /*! @brief energy/time step size */
-    Vector _energies;             /*! @brief energy groups used in the simulation [keV] */
-    std::vector<double> _density; /*! @brief patient density, dim(_density) = _nCells */
-    Vector _s;                    /*! @brief stopping power, dim(_s) = _nTimeSteps    */
-    std::vector<VectorVector> _Q; /*! @brief external source term */
+    unsigned _nEnergies; /*! @brief number of energysteps, number of nodal energy values for CSD */
+    unsigned _maxIter;   /*! @brief number of time steps, for non CSD, this equals _nEnergies, for _csd, _maxIter = _nEnergies-1*/
+
+    double _dE;                      /*! @brief energy/time step size */
+    Vector _energies;                // energy groups used in the simulation [keV]
+    std::vector<double> _density;    // patient density, dim(_density) = _nCells
+    Vector _s;                       // stopping power, dim(_s) = _nTimeSteps
+    std::vector<VectorVector> _Q;    /*!  @brief  external source term */
 
     VectorVector _sigmaS; /*!  @brief scattering cross section for all energies */
     VectorVector _sigmaT; /*!  @brief total cross section for all energies */
@@ -39,6 +41,9 @@ class Solver
     // quadrature related numbers
     QuadratureBase* _quadrature; /*! @brief quadrature to create members below */
     unsigned _nq;                /*! @brief number of quadrature points */
+
+    // VectorVector _quadPoints;    /*!  @brief quadrature points, dim(_quadPoints) = (_nSystem,spatialDim) */
+    // Vector _weights;             /*!  @brief quadrature weights, dim(_weights) = (_NCells) */
 
     // Mesh related members
     unsigned _nCells;                          /*! @brief number of spatial cells */
@@ -76,14 +81,16 @@ class Solver
 
     // Internal Members
     VectorVector _solNew; /*! @brief: VectorVector to store the new flux and later the new solution per iteration */    // REPLACES psiNEW
-    Vector _fluxNew; /*! @brief: Vector to store the new Flux */
-    Vector _flux;    /*! @brief: Vector to store the old Flux */
+    Vector _fluxNew; /*! @brief: Vector to store the new Flux. Dim _nCells */
+    Vector _flux;    /*! @brief: Vector to store the old Flux. Dim _nCells*/
 
     // ---- Member functions ----
 
     // Solver
+    /*! @brief Performs preprocessing steps before the pseudo time iteration is started */
+    virtual void SolverPreprocessing();
     /*! @brief Performs preprocessing for the current solver iteration */
-    virtual void IterPreprocessing() = 0;
+    virtual void IterPreprocessing( unsigned idx_pseudotime ) = 0;
     /*! @brief Performs postprocessing for the current solver iteration */
     virtual void IterPostprocessing() = 0;
     /*! @brief Constructs  the flux update for the current iteration and stores it in psiNew*/
@@ -127,7 +134,7 @@ class Solver
      *  @param settings stores all needed information */
     Solver( Config* settings );
 
-    ~Solver();
+    virtual ~Solver();
 
     /*! @brief Create constructor
      *  @param settings stores all needed information

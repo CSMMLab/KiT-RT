@@ -6,7 +6,7 @@
 // Forward Declaration
 
 class Config;
-class Physics;
+class EPICS;
 class Mesh;
 
 class ProblemBase
@@ -15,9 +15,9 @@ class ProblemBase
   protected:
     Config* _settings;
     Mesh* _mesh;
-    Physics* _physics;
+    EPICS* _physics;
 
-    std::vector<double> _density; /*! @brief: vector with patient densities */
+    std::vector<double> _density;       /*! @brief: vector with patient densities */
     std::vector<double> _stoppingPower; /*! @brief: vector with stopping powers*/
 
     ProblemBase() = delete;
@@ -38,7 +38,7 @@ class ProblemBase
      * @param density is vector with patient densities (at different spatial cells)
      */
     virtual VectorVector GetTotalXS( const Vector& energies ) = 0;
-    
+
     /**
      * @brief GetTotalXSE gives back vector of total cross sections for
      *        energies in vector energy
