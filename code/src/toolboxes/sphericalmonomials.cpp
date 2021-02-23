@@ -66,15 +66,14 @@ Vector SphericalMonomials::ComputeSphericalBasis2D( double my, double phi ) {
 
 Vector SphericalMonomials::ComputeSphericalBasis3D( double my, double phi ) {
     unsigned idx_vector = 0;
-    double omega_X, omega_Y, omega_Z;
     unsigned a, b, c;
 
+    double omega_X = Omega_x( my, phi );
+    double omega_Y = Omega_y( my, phi );
+    double omega_Z = Omega_z( my );
     // go over all degrees of polynomials
     for( unsigned idx_degree = 0; idx_degree <= _LMaxDegree; idx_degree++ ) {
         // elem = Omega_x^a+ Omega_y^b +Omega_z^c : a+b+c = idx_degree
-        omega_X = Omega_x( my, phi );
-        omega_Y = Omega_y( my, phi );
-        omega_Z = Omega_z( my );
         for( a = 0; a <= idx_degree; a++ ) {
             for( b = 0; b <= idx_degree - a; b++ ) {
                 c                   = idx_degree - a - b;    // c uniquely defined
