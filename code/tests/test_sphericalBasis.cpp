@@ -372,8 +372,8 @@ TEST_CASE( "test spherical monomial basis", "[spherical_monomials]" ) {
                 moment = testBase1D.ComputeSphericalBasis( my, phi );
 
                 if( std::fabs( moment[0] - SphericalMonomial_0( my, phi ) ) > 1e2 * std::numeric_limits<double>::epsilon() ) validMoment[0] = false;
-                if( std::fabs( moment[1] - SphericalMonomial_3( my, phi ) ) > 1e2 * std::numeric_limits<double>::epsilon() ) validMoment[1] = false;
-                if( std::fabs( moment[2] - SphericalMonomial_9( my, phi ) ) > 1e2 * std::numeric_limits<double>::epsilon() ) validMoment[2] = false;
+                if( std::fabs( moment[1] - SphericalMonomial_1( my, phi ) ) > 1e2 * std::numeric_limits<double>::epsilon() ) validMoment[1] = false;
+                if( std::fabs( moment[2] - SphericalMonomial_4( my, phi ) ) > 1e2 * std::numeric_limits<double>::epsilon() ) validMoment[2] = false;
             }
         }
 

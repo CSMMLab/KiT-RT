@@ -372,7 +372,7 @@ TEST_CASE( "Test the Data Generator", "[dataGen]" ) {
     // Build Data generator
     nnDataGenerator* datagen = new nnDataGenerator( config );
     // Generate Data and export
-    datagen->computeTrainingData();
+    datagen->ComputeTrainingData();
 
     // --- Force Logger to flush
     auto log    = spdlog::get( "event" );
