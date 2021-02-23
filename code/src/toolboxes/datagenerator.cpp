@@ -10,10 +10,9 @@
 #include "optimizers/newtonoptimizer.h"
 #include "quadratures/qlebedev.h"
 #include "quadratures/quadraturebase.h"
+#include "spdlog/spdlog.h"
 #include "toolboxes/errormessages.h"
 #include "toolboxes/sphericalbase.h"
-
-#include "spdlog/spdlog.h"
 
 #include <iostream>
 #include <omp.h>
@@ -25,6 +24,17 @@ nnDataGenerator::nnDataGenerator( Config* settings ) {
 
     _LMaxDegree = settings->GetMaxMomentDegree();
 
+    // Check consistency between dimension of quadrature and sample basis
+    if( _settings->GetDim() == 1 ) {
+        if( _settings->GetQuadName() != QUAD_GaussLegendre1D && _settings->GetQuadName() != QUAD_GaussChebyshev1D ) {
+            ErrorMessages::Error( "For 1D Sampling, please choose a 1D quadrature rule.", CURRENT_FUNCTION );
+        }
+    }
+    else {
+        if( _settings->GetQuadName() == QUAD_GaussLegendre1D || _settings->GetQuadName() == QUAD_GaussChebyshev1D ) {
+            ErrorMessages::Error( "For 3D Sampling, please choose a 3D quadrature rule.", CURRENT_FUNCTION );
+        }
+    }
     // Quadrature
     _quadrature       = QuadratureBase::Create( settings );
     _nq               = _quadrature->GetNq();
@@ -51,37 +61,7 @@ nnDataGenerator::nnDataGenerator( Config* settings ) {
     _entropy = EntropyBase::Create( _settings );
 
     // Initialize Training Data
-    if( _LMaxDegree == 0 ) {
-    }
-    else if( _LMaxDegree == 1 ) {
-        // Sample points on unit sphere.
-        QuadratureBase* quad = QuadratureBase::Create( _settings );
-        unsigned long nq     = (unsigned long)quad->GetNq();
-
-        // Allocate memory.
-        _setSize = nq * _gridSize * ( _gridSize - 1 ) / 2;
-
-        delete quad;
-    }
-    else if( _LMaxDegree == 2 && _settings->GetSphericalBasisName() == SPHERICAL_MONOMIALS && _settings->GetDim() == 1 ) {
-        // Carefull: This computes only normalized moments, i.e. sampling for u_0 = 1
-        unsigned c = 1;
-        double N1  = -1.0 + _settings->GetRealizableSetEpsilonU0();
-        double N2;
-        double dN = 2.0 / (double)_gridSize;
-        while( N1 < 1.0 - _settings->GetRealizableSetEpsilonU0() ) {
-            N2 = N1 * N1 + _settings->GetRealizableSetEpsilonU0();
-            while( N2 < 1.0 - _settings->GetRealizableSetEpsilonU0() ) {
-                c++;
-                N2 += dN;
-            }
-            N1 += dN;
-        }
-        _setSize = c;
-    }
-    else {
-        ErrorMessages::Error( "Sampling of training data of degree higher than 1 is not yet implemented.", CURRENT_FUNCTION );
-    }
+    ComputeSetSize();
 
     _uSol     = VectorVector( _setSize, Vector( _nTotalEntries, 0.0 ) );
     _alpha    = VectorVector( _setSize, Vector( _nTotalEntries, 0.0 ) );
@@ -93,7 +73,7 @@ nnDataGenerator::~nnDataGenerator() {
     delete _entropy;
 }
 
-void nnDataGenerator::computeTrainingData() {
+void nnDataGenerator::ComputeTrainingData() {
     // Prototype: Only for _LMaxDegree == 1
     // Prototype: u is sampled from [0,100]
 
@@ -104,7 +84,6 @@ void nnDataGenerator::computeTrainingData() {
 
     // ---- Check realizability ---
     CheckRealizability();
-
     // --- compute alphas ---
     _optimizer->SolveMultiCell( _alpha, _uSol, _moments );
 
@@ -122,9 +101,14 @@ void nnDataGenerator::ComputeMoments() {
     double my, phi;
 
     for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
-        my  = _quadPointsSphere[idx_quad][0];
-        phi = _quadPointsSphere[idx_quad][1];
-
+        if( _settings->GetDim() == 1 ) {
+            my  = _quadPointsSphere[idx_quad][0];
+            phi = 0;    // placeholder. will not be used
+        }
+        else {
+            my  = _quadPointsSphere[idx_quad][0];
+            phi = _quadPointsSphere[idx_quad][1];
+        }
         _moments[idx_quad] = _basis->ComputeSphericalBasis( my, phi );
     }
 }
@@ -196,7 +180,8 @@ void nnDataGenerator::SampleSolutionU() {
             }
         }
     }
-    else if( _LMaxDegree == 2 && _settings->GetSphericalBasisName() == SPHERICAL_MONOMIALS && _settings->GetDim() == 1 ) {
+    else if( _LMaxDegree == 2 && _settings->GetSphericalBasisName() == SPHERICAL_MONOMIALS && _settings->GetDim() == 1 &&
+             _settings->GetNormalizedSampling() ) {
         // Carefull: This computes only normalized moments, i.e. sampling for u_0 = 1
         unsigned c = 0;
         double N1  = -1.0 + _settings->GetRealizableSetEpsilonU0();
@@ -212,6 +197,69 @@ void nnDataGenerator::SampleSolutionU() {
                 c++;
             }
             N1 += dN;
+        }
+    }
+    else if( _LMaxDegree == 2 && _settings->GetSphericalBasisName() == SPHERICAL_MONOMIALS && _settings->GetDim() == 1 &&
+             !_settings->GetNormalizedSampling() ) {
+        unsigned c = 0;
+        double du  = _settings->GetMaxValFirstMoment() / (double)_gridSize;
+
+        double u0 = _settings->GetRealizableSetEpsilonU0();
+        double u1, u2;
+        double N1, N2;    // helper
+        while( u0 < _settings->GetMaxValFirstMoment() ) {
+            u1 = -u0 + u0 * _settings->GetRealizableSetEpsilonU0();
+            N1 = u1 / u0;
+            while( N1 < 1 - _settings->GetRealizableSetEpsilonU0() ) {
+                u2 = u1 * u1 / u0 + u0 * _settings->GetRealizableSetEpsilonU0();
+                N2 = u2 / u0;
+                while( N2 < 1 - _settings->GetRealizableSetEpsilonU0() ) {
+                    _uSol[c][0] = u0;    // u0 (normalized i.e. N0) by Monreals notation
+                    _uSol[c][1] = u1;    // u1 (normalized i.e. N1) by Monreals notation
+                    _uSol[c][2] = u2;    // u2 (normalized i.e. N2) by Monreals notation
+                    u2 += du;
+                    N2 = u2 / u0;
+                    c++;
+                }
+                u1 += du;
+                N1 = u1 / u0;
+            }
+            u0 += du;
+        }
+    }
+    else if( _LMaxDegree == 3 && _settings->GetSphericalBasisName() == SPHERICAL_MONOMIALS && _settings->GetDim() == 1 &&
+             !_settings->GetNormalizedSampling() ) {
+        // Carefull: This computes only normalized moments, i.e. sampling for u_0 = 1
+        unsigned c = 0;
+        double du  = _settings->GetMaxValFirstMoment() / (double)_gridSize;
+        double u0  = _settings->GetRealizableSetEpsilonU0();
+        double u1, u2, u3;
+        double N1, N2, N3;    // helper
+        while( u0 < _settings->GetMaxValFirstMoment() ) {
+            u1 = -u0 + u0 * _settings->GetRealizableSetEpsilonU0();
+            N1 = u1 / u0;
+            while( N1 < 1 - _settings->GetRealizableSetEpsilonU0() ) {
+                u2 = u1 * u1 / u0 + u0 * _settings->GetRealizableSetEpsilonU0();
+                N2 = u2 / u0;
+                while( u2 < u0 - _settings->GetRealizableSetEpsilonU0() ) {
+                    u3 = -u2 + u0 * ( N1 + N2 ) * ( N1 + N2 ) / ( 1 + N1 ) + u0 * _settings->GetRealizableSetEpsilonU0();
+                    N3 = u3 / u0;
+                    while( N3 < N2 - ( N1 - N2 ) * ( N1 - N2 ) / ( 1 - N1 ) - _settings->GetRealizableSetEpsilonU0() ) {
+                        _uSol[c][0] = u0;    // u0  by Monreals notation
+                        _uSol[c][1] = u1;    // u1  by Monreals notation
+                        _uSol[c][2] = u2;    // u2  by Monreals notation
+                        _uSol[c][2] = u3;    // u3  by Monreals notation
+                        u3 += du;
+                        N3 = u3 / u0;
+                        c++;
+                    }
+                    u2 += du;
+                    N2 = N3 / u0;
+                }
+                u1 += du;
+                N1 = u1 / u0;
+            }
+            u0 += du;
         }
     }
     else {
@@ -318,4 +366,100 @@ void nnDataGenerator::PrintLoadScreen() {
     auto log = spdlog::get( "event" );
     log->info( "------------------------ Data Generation Starts --------------------------" );
     log->info( "| Generating {} datapoints.", _setSize );
+}
+
+void nnDataGenerator::ComputeSetSize() {
+    if( _LMaxDegree == 0 ) {
+    }
+    else if( _LMaxDegree == 1 ) {
+        // Sample points on unit sphere.
+        QuadratureBase* quad = QuadratureBase::Create( _settings );
+        unsigned long nq     = (unsigned long)quad->GetNq();
+
+        // Allocate memory.
+        _setSize = nq * _gridSize * ( _gridSize - 1 ) / 2;
+
+        delete quad;
+    }
+    else if( _LMaxDegree == 2 && _settings->GetSphericalBasisName() == SPHERICAL_MONOMIALS && _settings->GetDim() == 1 &&
+             _settings->GetNormalizedSampling() ) {
+        // Carefull: This computes only normalized moments, i.e. sampling for u_0 = 1
+        unsigned c = 1;
+        double N1  = -1.0 + _settings->GetRealizableSetEpsilonU0();
+        double N2;
+        double dN = 2.0 / (double)_gridSize;
+        while( N1 < 1.0 - _settings->GetRealizableSetEpsilonU0() ) {
+            N2 = N1 * N1 + _settings->GetRealizableSetEpsilonU0();
+            while( N2 < 1.0 - _settings->GetRealizableSetEpsilonU0() ) {
+                c++;
+                N2 += dN;
+            }
+            N1 += dN;
+        }
+        _setSize = c;
+    }
+    else if( _LMaxDegree == 2 && _settings->GetSphericalBasisName() == SPHERICAL_MONOMIALS && _settings->GetDim() == 1 &&
+             !_settings->GetNormalizedSampling() ) {
+        unsigned c = 0;
+        double du  = _settings->GetMaxValFirstMoment() / (double)_gridSize;
+
+        double u0 = _settings->GetRealizableSetEpsilonU0();
+        double u1, u2;
+        double N1, N2;    // helper
+        while( u0 < _settings->GetMaxValFirstMoment() ) {
+            u1 = -u0 + u0 * _settings->GetRealizableSetEpsilonU0();
+            N1 = u1 / u0;
+            if( N1 < 1 - _settings->GetRealizableSetEpsilonU0() ) {
+                while( N1 < 1 - _settings->GetRealizableSetEpsilonU0() ) {
+                    u2 = u1 * u1 / u0 + u0 * _settings->GetRealizableSetEpsilonU0();
+                    N2 = u2 / u0;
+                    if( N2 < 1 - _settings->GetRealizableSetEpsilonU0() ) {
+                        while( N2 < 1 - _settings->GetRealizableSetEpsilonU0() ) {
+                            c++;
+                            u2 += du;
+                            N2 = u2 / u0;
+                        }
+                    }
+                    u1 += du;
+                    N1 = u1 / u0;
+                }
+            }
+            u0 += du;
+        }
+        _setSize = c;
+    }
+    else if( _LMaxDegree == 3 && _settings->GetSphericalBasisName() == SPHERICAL_MONOMIALS && _settings->GetDim() == 1 &&
+             !_settings->GetNormalizedSampling() ) {
+        // Carefull: This computes only normalized moments, i.e. sampling for u_0 = 1
+        unsigned c = 0;
+        double du  = _settings->GetMaxValFirstMoment() / (double)_gridSize;
+        double u0  = _settings->GetRealizableSetEpsilonU0();
+        double u1, u2, u3;
+        double N1, N2, N3;    // helper
+        while( u0 < _settings->GetMaxValFirstMoment() ) {
+            u1 = -u0 + u0 * _settings->GetRealizableSetEpsilonU0();
+            N1 = u1 / u0;
+            while( N1 < 1 - _settings->GetRealizableSetEpsilonU0() ) {
+                u2 = u1 * u1 / u0 + u0 * _settings->GetRealizableSetEpsilonU0();
+                N2 = u2 / u0;
+                while( u2 < u0 - _settings->GetRealizableSetEpsilonU0() ) {
+                    u3 = -u2 + u0 * ( N1 + N2 ) * ( N1 + N2 ) / ( 1 + N1 ) + u0 * _settings->GetRealizableSetEpsilonU0();
+                    N3 = u3 / u0;
+                    while( N3 < N2 - ( N1 - N2 ) * ( N1 - N2 ) / ( 1 - N1 ) - _settings->GetRealizableSetEpsilonU0() ) {
+                        u3 += du;
+                        c++;
+                    }
+                    u2 += du;
+                    N2 = u2 / u0;
+                }
+                u1 += du;
+                N1 = u1 / u0;
+            }
+            u0 += du;
+        }
+        _setSize = c;
+    }
+    else {
+        ErrorMessages::Error( "Sampling of training data of degree higher than 1 is not yet implemented.", CURRENT_FUNCTION );
+    }
 }

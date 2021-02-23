@@ -330,6 +330,9 @@ void Config::SetConfigOptions() {
     /*! @brief norm(u_1)/u_0 is enforced to be smaller than _RealizableSetEpsilonU1 \n DESCRIPTION: Distance to the boundary of the realizable set  \n
      * DEFAULT 0.1 \ingroup Config */
     AddDoubleOption( "REALIZABLE_SET_EPSILON_U1", _RealizableSetEpsilonU1, 0.9 );
+    /*! @brief Flag for sampling of normalized moments, i.e. u_0 =1  \n DESCRIPTION: Flag for sampling of normalized moments, i.e. u_0 =1  \n
+     * DEFAULT False \ingroup Config */
+    AddBoolOption( "NORMALIZED_SAMPLING", _normalizedSampling, false );
 }
 
 void Config::SetConfigParsing( string case_filename ) {

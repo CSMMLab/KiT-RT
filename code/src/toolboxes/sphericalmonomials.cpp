@@ -24,22 +24,22 @@ SphericalMonomials::SphericalMonomials( unsigned L_degree, unsigned short spatia
 Vector SphericalMonomials::ComputeSphericalBasis( double my, double phi ) {
 
     switch( _spatialDim ) {
-        case 1: return ComputeSphericalBasis1D( my, phi ); break;
+        case 1: return ComputeSphericalBasis1D( my ); break;
         case 2: return ComputeSphericalBasis2D( my, phi ); break;
         default: return ComputeSphericalBasis3D( my, phi ); break;
     }
 }
 
-Vector SphericalMonomials::ComputeSphericalBasis1D( double my, double phi ) {
+Vector SphericalMonomials::ComputeSphericalBasis1D( double my ) {
     unsigned idx_vector = 0;
     unsigned a;
-    double omega_X;
+    double omega_Z;
     // go over all degrees of polynomials
     for( unsigned idx_degree = 0; idx_degree <= _LMaxDegree; idx_degree++ ) {
         // elem = Omega_x^a : a = idx_degree
-        omega_X             = Omega_x( my, phi );
+        omega_Z             = Omega_z( my );
         a                   = idx_degree;    // a uniquely defined
-        _YBasis[idx_vector] = Power( omega_X, a );
+        _YBasis[idx_vector] = Power( omega_Z, a );
         idx_vector++;
     }
     return _YBasis;

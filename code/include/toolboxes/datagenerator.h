@@ -30,7 +30,7 @@ class nnDataGenerator
     /*! @brief: computes the training data set.
      *          Realizable set is sampled uniformly.
      *          Prototype: 1D, u\in[0,100] */
-    void computeTrainingData();
+    void ComputeTrainingData();
 
     /*!   @brief: Writes the training data to file
      *            Filename encryption: [TODO] */
@@ -74,6 +74,7 @@ class nnDataGenerator
     void ComputeMoments();            /*! @brief: Pre-Compute Moments at all quadrature points. */
     void CheckRealizability();        // Debugging helper
     void ComputeRealizableSolution(); /*! @brief: make u the realizable moment to alpha, since Newton has roundoff errors. */
+    void ComputeSetSize();            /*! @brief: Computes the size of the training set, depending on the chosen settings.*/
 
     inline VectorVector GetuSol() { return _uSol; }                /*! @brief: Get the computed solution vector uSol */
     inline VectorVector GetAlpha() { return _alpha; }              /*! @brief: Get the computed vector alpha */

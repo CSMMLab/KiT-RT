@@ -44,7 +44,7 @@ int main( int argc, char** argv ) {
         // Build Data generator
         nnDataGenerator* datagen = new nnDataGenerator( config );
         // Generate Data and export
-        datagen->computeTrainingData();
+        datagen->ComputeTrainingData();
     }
     else {
         // Build solver
