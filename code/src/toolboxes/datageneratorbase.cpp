@@ -15,6 +15,7 @@
 #include "toolboxes/errormessages.h"
 #include "toolboxes/sphericalbase.h"
 
+#include <math.h>
 #include <omp.h>
 
 DataGeneratorBase::DataGeneratorBase( Config* settings ) {
@@ -118,6 +119,25 @@ void DataGeneratorBase::ComputeEntropyH_primal() {
             result += _entropy->Entropy( _entropy->EntropyPrimeDual( dot( _alpha[idx_set], _moments[idx_quad] ) ) ) * _weights[idx_quad];
         }
         _hEntropy[idx_set] = result;
+    }
+
+    for( unsigned idx_set = 0; idx_set < _setSize; idx_set++ ) {
+        if( isnan( _hEntropy[idx_set] ) ) {
+            std::string msgU     = "(";
+            std::string msgAlpha = "(";
+            for( unsigned idx_basis = 0; idx_basis < _nTotalEntries - 1; idx_basis++ ) {
+                msgU += std::to_string( _uSol[idx_set][idx_basis] ) + "|";
+                msgAlpha += std::to_string( _alpha[idx_set][idx_basis] ) + "|";
+            }
+            msgU += std::to_string( _uSol[idx_set][_nTotalEntries - 1] ) + ")";
+            msgAlpha += std::to_string( _uSol[idx_set][_nTotalEntries - 1] ) + ")";
+
+            ErrorMessages::Error( "Value for h is NaN. This can happen near the boundary of the realizable set.\nu= " + msgU +
+                                      "\nalpha= " + msgAlpha +
+                                      "\nPlease adjust the Options "
+                                      "REALIZABLE_SET_EPSILON_U0 and REALIZABLE_SET_EPSILON_U1.",
+                                  CURRENT_FUNCTION );
+        }
     }
 }
 
