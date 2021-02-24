@@ -12,7 +12,7 @@
 #include "common/io.h"
 #include "solvers/solverbase.h"
 
-#include "toolboxes/datagenerator.h"
+#include "toolboxes/datageneratorbase.h"
 
 #ifdef BUILD_GUI
 #include <QApplication>
@@ -42,7 +42,7 @@ int main( int argc, char** argv ) {
 
     if( config->GetDataGeneratorMode() ) {
         // Build Data generator
-        nnDataGenerator* datagen = new nnDataGenerator( config );
+        DataGeneratorBase* datagen = DataGeneratorBase::Create( config );
         // Generate Data and export
         datagen->ComputeTrainingData();
     }
