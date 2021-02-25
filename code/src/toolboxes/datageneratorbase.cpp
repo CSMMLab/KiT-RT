@@ -14,6 +14,7 @@
 #include "toolboxes/datagenerator3D.h"
 #include "toolboxes/errormessages.h"
 #include "toolboxes/sphericalbase.h"
+#include "toolboxes/textprocessingtoolbox.h"
 
 #include <math.h>
 #include <omp.h>
@@ -76,28 +77,31 @@ DataGeneratorBase* DataGeneratorBase::Create( Config* settings ) {
 }
 
 void DataGeneratorBase::ComputeTrainingData() {
-    // Prototype: Only for _LMaxDegree == 1
-    // Prototype: u is sampled from [0,100]
+    PrintLoadScreen();
 
     // --- sample u ---
     SampleSolutionU();
-
-    PrintLoadScreen();
+    auto log = spdlog::get( "event" );
+    log->info( "| Moments sampled." );
+    log->info( "| Start solving the optimization problems. This may take some minutes." );
 
     // ---- Check realizability ---
     CheckRealizability();
-    // _uSol       = VectorVector( 2, Vector( _nTotalEntries, 0.0 ) );
-    // _alpha      = VectorVector( 2, Vector( _nTotalEntries, 0.0 ) );
-    // _uSol[0][0] = { 1, 1, 1 };
 
     // --- compute alphas ---
     _optimizer->SolveMultiCell( _alpha, _uSol, _moments );
 
+    log->info( "| Making moments realizable problems." );
+
     // --- Postprocessing
     ComputeRealizableSolution();
 
+    log->info( "| Compute entropies." );
+
     // --- compute entropy functional ---
     ComputeEntropyH_primal();
+
+    log->info( "| Print Solution." );
 
     // --- Print everything ----
     PrintTrainingData();
