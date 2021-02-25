@@ -65,9 +65,27 @@ Solver::Solver( Config* settings ) {
     for( unsigned i = 0; i < _nEnergies; ++i ) _energies[i] = ( i + 1 ) * _dE;
 
     // setup problem  and store frequently used params
-    _problem = ProblemBase::Create( _settings, _mesh );
-    _sol     = _problem->SetupIC();
-    _solNew  = _sol;    // setup temporary sol variable
+    _problem              = ProblemBase::Create( _settings, _mesh );
+    _sol                  = _problem->SetupIC();
+    auto cellMids         = _mesh->GetCellMidPoints();
+    double enterPositionX = 0.5;    // 0.0;
+    double enterPositionY = 0.5;
+    auto boundaryCells    = _mesh->GetBoundaryTypes();
+    // Case 1: Ingoing radiation in just one cell
+    // find cell that best matches enter position
+    double dist          = 1000.0;
+    unsigned indexSource = 0;
+    for( unsigned j = 0; j < cellMids.size(); ++j ) {
+        // if( boundaryCells[j] == BOUNDARY_TYPE::DIRICHLET ) {
+        double x = cellMids[j][0] - enterPositionX;
+        double y = cellMids[j][1] - enterPositionY;
+        if( sqrt( x * x + y * y ) < dist ) {
+            dist        = sqrt( x * x + y * y );
+            indexSource = j;
+        }
+        //}
+    }
+    _solNew = _sol;    // setup temporary sol variable
 
     _sigmaT = _problem->GetTotalXS( _energies );
     _sigmaS = _problem->GetScatteringXS( _energies );
@@ -77,7 +95,8 @@ Solver::Solver( Config* settings ) {
     _g = NumericalFlux::Create();
 
     // boundary type
-    _boundaryCells = _mesh->GetBoundaryTypes();
+    _boundaryCells              = _mesh->GetBoundaryTypes();
+    _boundaryCells[indexSource] = DIRICHLET;
 
     // Solver Output
     _solverOutput.resize( _nCells );    // LEGACY! Only used for CSD SN

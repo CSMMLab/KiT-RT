@@ -462,7 +462,7 @@ void CSDSolverTrafoFPSH2D::IterPreprocessing( unsigned idx_pseudotime ) {
 // add FP scattering term implicitly
 #pragma omp parallel for
     for( unsigned j = 0; j < _nCells; ++j ) {
-        if( _boundaryCells[j] == BOUNDARY_TYPE::DIRICHLET ) continue;
+        // if( _boundaryCells[j] == BOUNDARY_TYPE::DIRICHLET ) continue;
         //_sol[j] = blaze::solve( identity - _dE * _alpha2 * _L, psiNew[j] );
         _sol[j] = _IL * blaze::solve( _IL - _dE * _alpha * _L, _sol[j] );
     }
