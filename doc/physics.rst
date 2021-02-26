@@ -119,10 +119,11 @@ Then, we substitute
 .. math::
     \widehat{\psi}(E,x,\Omega):= S(E)\rho(x)\psi(E,x,\Omega)
 
-into \eqref{eq:CSD3}, which yields
+into :eq:`CSD3`, which yields
 
 .. math::
    :label: CSD4
+    
     -S(E)\partial_E\widehat{\psi}(E,x,\Omega)+\Omega\cdot\nabla_x \frac{\widehat{\psi}(E,x,\Omega)}{\rho}+\Sigma_t(E)\widehat{\psi}(E,x,\Omega) = \int_{\mathbb{S}^2}\Sigma_s(E,\Omega\cdot\Omega')\widehat{\psi}(E,x,\Omega')d\Omega'.    
 
 Now, to get rid of the stopping power in front of the energy derivative, we make use of the transformation
@@ -140,7 +141,7 @@ Now let us change to
 In this case, the energy derivative becomes
 
 .. math::
-    \partial_{\widetilde{E}}\widetilde{\widehat{\psi}}(\widetilde E,x,\Omega) = \partial_{E}\widetilde{\widehat{\psi}}( E,x,\Omega)\partial_{\widetlde E }E(\widetilde E(\widetilde E) = \partial_{ E}\widetilde{\widehat{\psi}}(\widetilde E,x,\Omega){S(E(\widetilde E))}.
+    \partial_{\widetilde{E}}\widetilde{\widehat{\psi}}(\widetilde E,x,\Omega) = \partial_{E}\widetilde{\widehat{\psi}}( E,x,\Omega)\partial_{\widetilde E }E(\widetilde E(\widetilde E) = \partial_{ E}\widetilde{\widehat{\psi}}(\widetilde E,x,\Omega){S(E(\widetilde E))}.
 
 And by rearranging the terms, we finally get
 
@@ -161,7 +162,7 @@ Here, we define :math:`\widetilde\Sigma_{t}(\widetilde E):=\Sigma_t(E(\widetilde
 .. math::
     \bar{E}(\widetilde{E}) = \widetilde{E}_{\text{max}}-\widetilde{E}.
 
-Then, with :math:`\bar{\psi}(\bar{E},x,\Omega):=\widetilde{\widehat{\psi}}(\widetilde{E}(\bar{E}),x,\Omega)`, :math:`\bar\Sigma_{t}(\bar E):=\widetilde{\Sigma}_t(\widetilde{E}(\bar{E}))` as well as :math:`\bar\Sigma_{s}(\bar E,\Omega\cdot\Omega'):=\widetilde{\Sigma}_s(\widetilde{E}(\bar{E}),\Omega\cdot\Omega')` equation \eqref{eq:CSD4} becomes
+Then, with :math:`\bar{\psi}(\bar{E},x,\Omega):=\widetilde{\widehat{\psi}}(\widetilde{E}(\bar{E}),x,\Omega)`, :math:`\bar\Sigma_{t}(\bar E):=\widetilde{\Sigma}_t(\widetilde{E}(\bar{E}))` as well as :math:`\bar\Sigma_{s}(\bar E,\Omega\cdot\Omega'):=\widetilde{\Sigma}_s(\widetilde{E}(\bar{E}),\Omega\cdot\Omega')` equation :eq:`CSD4` becomes
 
 .. math::
    :label: CSD6
