@@ -1,5 +1,5 @@
 ===========================================================
-KiT-RT: a kinetic transport solver for radiation therapy
+KiT-RT: A kinetic transport solver for radiation therapy
 ===========================================================
 
 The KiT-RT framework is an open source project for radiation transport written in C++ programming language.
@@ -8,10 +8,12 @@ Based on the finite volume method (FVM), it provides an efficient tool to solve 
 Special attention has been paid to the application of radiation therapy and treatment planning.
 The framework provides rich deterministic solver types for different domain-specific problems.
 A list of current supported models and equations is as follows.
+
 - linear Boltzmann (:math:`S_N`) equation
 - spherical harmonics (:math:`P_N`) equations
 - entropy-closure moment (:math:`M_N`) equations
 - continuous slowing down equation
+
 
 Design philosophy
 ------------------------
@@ -25,18 +27,20 @@ What is new?
 ------------------------
 Finite volume method is a proven approach for simulating conservation laws. 
 Compared with the existing open-source softwares, e.g. OpenFOAM, SU2 and Clawpack, Kit-RT holds the novelty through the following points:
+
 - Comprehensive support for kinetic theory and phase-space equations
-- radiation therapy
+- Special focus on radiation therapy
 - Lightweight design to ensure the flexibility for secondary development
+
 
 How to get help?
 ------------------------
 The software is being developed by members of the group `CSMM <https://www.scc.kit.edu/en/aboutus/rg-csmm.php>`_ at the Karlsruhe Institute of Technology (KIT).
-If you are interested in using KiT-RT or are trying to figure out how to use it, please feel free to get in touch with `us <authors>`_.
+If you are interested in using KiT-RT or are trying to figure out how to use it, please feel free to get in touch with `us <authors.html>`_.
 Do open an issue or pull request if you have questions, suggestions or solutions.
 
 --------
-Contents
+Table of contents
 --------
 
 .. toctree::

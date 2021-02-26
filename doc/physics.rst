@@ -35,6 +35,7 @@ At the mean free path and collision time scale of particles. Such dynamics can b
 The Boltzmann equation can be formulated via an operator splitting approach.
 
 .. math::
+
    \partial_{t} f(v)+v \cdot \nabla_{x} f(v)=\int_{\mathcal R^3} \int_{\mathcal S^2} k\left(v, v^{\prime}\right) \left(f\left(v^{\prime}\right)f\left(v_*^{\prime}\right)-f(v)f(v_*)\right) d\Omega d v_*
 
 where the left and right hand sides model particle transports and collisions correspondingly. 
@@ -46,16 +47,14 @@ In the KiT-RT solver, we are interested in the linear Boltzmann equation, where 
 Therefore, the Boltzmann can be simplified as the linear equation with respect to :math:`f`.
 
 .. math::
-    :label: linbz
-    
+
     \partial_{t} f(v)+v \cdot \nabla_{x} f(v)=\int k\left(v, v^{\prime}\right)\left(f\left(v^{\prime}\right)-f(v)\right) d v^{\prime}-\tau f(v)
 
 For convenience, it is often reformulated with polar coordinates :math:`\{r, \phi, \theta \}`.
 
 .. math::
-    :label: porbz
-   
-    &\left[\frac{1}{v(E)} \frac{\partial}{\partial t}+\Omega \cdot \nabla+\Sigma_t (r, E, t)\right] \psi(r, \Omega, E, t) \\
+
+    &\left[\frac{1}{v(E)} \partial_{t} +\Omega \cdot \nabla+\Sigma_t (r, E, t)\right] \psi(r, \Omega, E, t) \\
     &=\int_{0}^{\infty} d E^{\prime} \int_{\mathcal R^2} d \Omega^{\prime} \Sigma_{s}\left(r, \Omega^{\prime} \bullet \Omega, E^{\prime} \rightarrow E\right) \psi\left(r, \Omega^{\prime}, E^{\prime}, t\right) + Q(r, \Omega, E, t)
 
 The particle distribution :math:`\psi(r, \Omega, E, t)` here is often named as angular flux, :math:`\{\Sigma_s, \Sigma_t \}` are the scattering and total cross sections correspondingly, and :math:`Q` denotes a source term.
@@ -154,7 +153,8 @@ Therefore, substituting :math:`\widetilde E` in :ref:`CSD4` gives
 .. math::
    :label: CSD5
 
-    -\partial_{\widetilde E}\widetilde{\widehat{\psi}}(\widetilde E,x,\Omega)+\Omega\cdot\nabla_x \frac{\widetilde{\widehat{\psi}}(\widetilde E,x,\Omega)}{\rho}+\widetilde\Sigma_t(\widetilde E)\widetilde{\widehat{\psi}}(\widetilde E,x,\Omega) = \int_{\mathbb{S}^2}\widetilde\Sigma_s(\widetilde E,\Omega\cdot\Omega')\widetilde{\widehat{\psi}}(\widetilde E,x,\Omega')d\Omega'.
+    &-\partial_{\widetilde E}\widetilde{\widehat{\psi}}(\widetilde E,x,\Omega)+\Omega\cdot\nabla_x \frac{\widetilde{\widehat{\psi}}(\widetilde E,x,\Omega)}{\rho}+\widetilde\Sigma_t(\widetilde E)\widetilde{\widehat{\psi}}(\widetilde E,x,\Omega) 
+    &= \int_{\mathbb{S}^2}\widetilde\Sigma_s(\widetilde E,\Omega\cdot\Omega')\widetilde{\widehat{\psi}}(\widetilde E,x,\Omega')d\Omega'.
 
 Here, we define :math:`\widetilde\Sigma_{t}(\widetilde E):=\Sigma_t(E(\widetilde E))` and :math:`\widetilde\Sigma_{s}(\widetilde E,\Omega\cdot\Omega'):=\Sigma_s(E(\widetilde E),\Omega\cdot\Omega')`. Finally, to obtain a positive sign in front of the energy derivative, we transform to
 
