@@ -125,7 +125,7 @@ class Config
     bool _dataGeneratorMode;
     unsigned long _tainingSetSize;    /*!< @brief Size of training data set for data generator */
     unsigned long _maxValFirstMoment; /*!< @brief Size of training data set for data generator */
-    double _RealizableSetEpsilonU0;   /*! @brief Distance to 0 of the sampled moments to the boundary of the realizable set */
+    double _RealizableSetEpsilonU0;   /*!< @brief Distance to 0 of the sampled moments to the boundary of the realizable set */
     double _RealizableSetEpsilonU1;   /*!< @brief: norm(u_1)/u_0 !< _RealizableSetEpsilonU1 */
     bool _normalizedSampling;         /*!< @brief: Flag for sampling of normalized moments, i.e. u_0 =1 */
 
@@ -330,10 +330,12 @@ class Config
     // ---- Setters for option structure
     // This section is dangerous
     // Quadrature Structure
-    void SetNQuadPoints( unsigned nq ) { _nQuadPoints = nq; }           /*! @brief Never change the nq! This is only for the test framework. */
-    void SetQuadName( QUAD_NAME quadName ) { _quadName = quadName; }    /*! @brief Never change the quadName! This is only for the test framework. */
-    void SetQuadOrder( unsigned quadOrder ) { _quadOrder = quadOrder; } /*! @brief Never change the quadOrder! This is only for the test framework. */
-    void SetSNAllGaussPts( bool useall ) { _allGaussPts = useall; }     /*! @brief Never change the this! This is only for the test framework. */
+    void SetNQuadPoints( unsigned nq ) { _nQuadPoints = nq; }        /*!< @brief Never change the nq! This is only for the test framework. */
+    void SetQuadName( QUAD_NAME quadName ) { _quadName = quadName; } /*!< @brief Never change the quadName! This is only for the test framework. */
+    void SetQuadOrder( unsigned quadOrder ) {
+        _quadOrder = quadOrder;
+    }                                                               /*!< @brief Never change the quadOrder! This is only for the test framework. */
+    void SetSNAllGaussPts( bool useall ) { _allGaussPts = useall; } /*!< @brief Never change the this! This is only for the test framework. */
     // Mesh Structure
     void SetNCells( unsigned nCells ) { _nCells = nCells; }
 };
