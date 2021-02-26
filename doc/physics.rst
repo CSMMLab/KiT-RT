@@ -2,83 +2,60 @@
 Theory
 ================
 
-The kinetic theory is dedicated to describe the dynamical behavior of a many-particle system through ensemble averaging.
-Particles, e.g. molecules, photons, neutrons, electrons and plasmas, travel along the trajectories and undergo occasional collisions that change their directions and energies.
-Such dynamics can be formulated via operator splitting approach in the Boltzmann equation, i.e.
+A physical system exhibit different behaviors at characteristic different scales.
+We are interested in the transport phenomena of many particle systems.
+Down to the finest scale of a many-particle system, the Newton’s second law depicts particle motions via
+
+.. math::
+
+   \mathbf{F} = m \mathbf{a}
+
+which leads
+
+.. math::
+
+   \frac{d \mathbf x}{dt} = \mathbf v, \ \frac{d \mathbf v}{dt} = \frac{\mathbf F}{m}
+
+An intuitive numerical solution algorithm is to get the numerous particles on board and track the trajectories of them. 
+A typical example is the molecular dynamics (MD) method.
+This is not going to be efficient since there are more than :math:`2\times 10^25` molecules per cubic meter in normal atmosphere, 
+and things get extremely complicated if the N-body interactions are counted all the time. 
+Some methods have been proposed to simplify the computation. 
+As an example, the Monte Carlo method employs certain particle models and conduct the interactions in a stochastic manner. 
+It significantly reduces the computational cost, while the trade-off is the artificial fluctuations.
+Many realizations must be simulated successively to average the solutions and reduce the errors.
+
+An alternative strategy can be made from ensemble averaging, where the
+coarse-grained modeling is used to provide a bottom-up view. 
+At the mean free path and collision time scale of particles. Such dynamics can be described with kinetic theory.
+The Boltzmann equation can be formulated via an operator splitting approach.
+
+.. math::
+   \partial_{t} f(v)+v \cdot \nabla_{x} f(v)=\int_{\mathcal R^3} \int_{\mathcal S^2} k\left(v, v^{\prime}\right) \left(f\left(v^{\prime}\right)f\left(v_*^{\prime}\right)-f(v)f(v_*)\right) d\Omega d v_*
+
+where the left and right hand sides model particle transports and collisions correspondingly. 
+The distribution function :math:`f` is the probability of finding a particle with certain location, and :math:`{v, v_*}` denotes the velocities of two classes of colliding particles. 
+The collision kernel :math:`k` models the strength of collisions at different velocities.
+Different collision models can be inserted into this framework.
+In the KiT-RT solver, we are interested in the linear Boltzmann equation, where the particles don't interact with one another but scatter with the background material.
+Therefore, the Boltzmann can be simplified as the linear equation with respect to :math:`f`.
+
+.. math::
+    :label: linbz
+    \partial_{t} f(v)+v \cdot \nabla_{x} f(v)=\sigma \int k\left(v, v^{\prime}\right)\left(f\left(v^{\prime}\right)-f(v)\right) d v^{\prime}-\tau f(v)
+
+It is often reformulated with polar coordinates
+
+
+where the particles don't interact with one another but scatter with the background material.
+For convenience, we reformulate the particle velocity into polar coordinates.
 
 .. math::
     :label: boltzmann
 
     \frac{\partial \psi}{\partial t}+v \cdot \nabla_x \psi = Q(\psi)
 
-where :math:`\psi` is the one-particle probability distribution function, :math:`v` is velocity and :math:`Q(\psi)` is the scattering term.
-In the Kit-RT solver, we consider the liner Boltzmann equation
-
-.. math::
-    :label: linearbz
-
-    \partial_{t} f(v)+v \cdot \nabla_{x} f(v)=\sigma \int k\left(v, v^{\prime}\right)\left(f\left(v^{\prime}\right)-f(v)\right) d v^{\prime}-\tau f(v)
-
-where the particles don't interact with one another but scatter with the background material.
-For convenience, we reformulate the particle velocity into polar coordinates.
-
-The physical world shows a diverse set of behaviors on different
-characteristic scales. Consider the molecular motion of gases as an
-example. Down to the finest scale of a many-particle system, the
-Newton’s second law depicts particle motions via
-
-.. math::
-
-   \mathbf{F} = m \mathbf{a}
-
-As a first order system it reads
-
-.. math::
-
-   \frac{d \mathbf x}{dt} = \mathbf v, \ \frac{d \mathbf v}{dt} = \frac{\mathbf F}{m}
-
-An intuitive numerical algorithm is to get the numerous particles on
-board and track the trajectories of them. A typical example is the
-`Molecular Dynamics`_. This is not going to be efficient since there are
-more than ``2e25`` molecules per cubic meter in normal atmosphere, and
-things get even more complicated when you count on the N-body
-interactions all the time. Some methods have been proposed to simplify
-the computation. As an example, the `Direct simulation Monte Carlo`_
-employs certain molecular models and conduct the intermolecular
-collisions in a stochastic manner. It significantly reduces the
-computational cost, while the trade-off is the artificial fluctuations.
-Many realizations must be simulated successively to average the
-solutions and reduce the errors.
-
-An alternative strategy is made from ensemble averaging, where the
-coarse-grained modeling is used to provide a bottom-up view. At the mean
-free path and collision time scale of molecules, particles travel freely
-during most of time with mild intermolecular collisions. Such dynamics
-can be described with an operator splitting approach, i.e. the kinetic
-transport equation
-
-.. math::
-
-   \frac{\partial f}{\partial t}+ \mathbf v \cdot \nabla_\mathbf x f + \mathbf a \cdot \nabla_\mathbf v f = Q(f)
-
-where the left and right hand sides model particle transports and
-collisions correspondingly. Different collision models can be inserted
-into such equation. If the particles only collide with a background
-material one obtains linear Boltzmann collision operator
-
-.. math::
-
-   Q(f)=\int_{\mathbb R^3} \mathcal B(\mathbf v_*, \mathbf v) \left[ f(\mathbf v_*)-f(\mathbf v)\right] d\mathbf v_*
-
-where the collision kernel ``\mathcal B`` models the strength of
-collisions at different velocities. If the interactions among particles
-are considered, the collision operator becomes nonlinear. For example,
-the two-body collision results in nonlinear Boltzmann equation
-
-.. math::
-
-   Q(f)=\int_{\mathbb R^3} \int_{\mathcal S^2} \mathcal B(\cos \beta, |\mathbf{v}-\mathbf{v_*}|) \left[ f(\mathbf v')f(\mathbf v_*')-f(\mathbf v)f(\mathbf v_*)\right] d\mathbf \Omega d\mathbf v_*
-
+The particle distribution :math:`\psi` is often called angular flux.
 
 
 The continuous slowing down approximation
@@ -124,6 +101,7 @@ Now, we bring this system in a form which resembles the standard Boltzmann equat
 
 .. math::
    :label: CSD3
+
    \begin{align}
       -S(E)\partial_E\left(S(E)\rho(x)\psi(E,x,\Omega)\right)+&\Omega\cdot\nabla_x S(E)\psi(E,x,\Omega)+\Sigma_t(E)S(E)\rho(x)\psi(E,x,\Omega)\\ 
       &= \int_{\mathbb{S}^2}\Sigma_s(E,\Omega\cdot\Omega')S(E)\rho(x)\psi(E,x,\Omega')d\Omega'.    
