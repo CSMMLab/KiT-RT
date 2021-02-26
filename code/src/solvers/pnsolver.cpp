@@ -11,30 +11,30 @@
 #include <mpi.h>
 
 PNSolver::PNSolver( Config* settings ) : SolverBase( settings ) {
-    _LMaxDegree    = settings->GetMaxMomentDegree();
-    _nTotalEntries = GlobalIndex( int( _LMaxDegree ), int( _LMaxDegree ) ) + 1;
+    _polyDegreeBasis = settings->GetMaxMomentDegree();
+    _nSystem         = GlobalIndex( int( _polyDegreeBasis ), int( _polyDegreeBasis ) ) + 1;
 
     // Initialize System Matrices
-    _Ax = SymMatrix( _nTotalEntries );
-    _Ay = SymMatrix( _nTotalEntries );
-    _Az = SymMatrix( _nTotalEntries );
+    _Ax = SymMatrix( _nSystem );
+    _Ay = SymMatrix( _nSystem );
+    _Az = SymMatrix( _nSystem );
 
-    _AxPlus  = Matrix( _nTotalEntries, _nTotalEntries, 0 );
-    _AxMinus = Matrix( _nTotalEntries, _nTotalEntries, 0 );
-    _AxAbs   = Matrix( _nTotalEntries, _nTotalEntries, 0 );
-    _AyPlus  = Matrix( _nTotalEntries, _nTotalEntries, 0 );
-    _AyMinus = Matrix( _nTotalEntries, _nTotalEntries, 0 );
-    _AyAbs   = Matrix( _nTotalEntries, _nTotalEntries, 0 );
-    _AzPlus  = Matrix( _nTotalEntries, _nTotalEntries, 0 );
-    _AzMinus = Matrix( _nTotalEntries, _nTotalEntries, 0 );
-    _AzAbs   = Matrix( _nTotalEntries, _nTotalEntries, 0 );
+    _AxPlus  = Matrix( _nSystem, _nSystem, 0 );
+    _AxMinus = Matrix( _nSystem, _nSystem, 0 );
+    _AxAbs   = Matrix( _nSystem, _nSystem, 0 );
+    _AyPlus  = Matrix( _nSystem, _nSystem, 0 );
+    _AyMinus = Matrix( _nSystem, _nSystem, 0 );
+    _AyAbs   = Matrix( _nSystem, _nSystem, 0 );
+    _AzPlus  = Matrix( _nSystem, _nSystem, 0 );
+    _AzMinus = Matrix( _nSystem, _nSystem, 0 );
+    _AzAbs   = Matrix( _nSystem, _nSystem, 0 );
 
     // Initialize Scatter Matrix
-    _scatterMatDiag = Vector( _nTotalEntries, 0 );
+    _scatterMatDiag = Vector( _nSystem, 0 );
 
     // Initialize temporary storages of solution derivatives
-    _solDx = VectorVector( _nCells, Vector( _nTotalEntries, 0.0 ) );
-    _solDy = VectorVector( _nCells, Vector( _nTotalEntries, 0.0 ) );
+    _solDx = VectorVector( _nCells, Vector( _nSystem, 0.0 ) );
+    _solDy = VectorVector( _nCells, Vector( _nSystem, 0.0 ) );
 
     // Fill System Matrices
     ComputeSystemMatrices();
@@ -53,11 +53,11 @@ PNSolver::PNSolver( Config* settings ) : SolverBase( settings ) {
     // TODO
 }
 
-void PNSolver::IterPreprocessing( unsigned /*idx_pseudotime*/ ) {
+void PNSolver::IterPreprocessing( unsigned /*idx_iter*/ ) {
     // Nothing to preprocess for PNSolver
 }
 
-void PNSolver::IterPostprocessing( unsigned idx_pseudotime ) {
+void PNSolver::IterPostprocessing( unsigned /*idx_iter*/ ) {
     // --- Update Solution ---
     _sol = _solNew;
 
@@ -74,7 +74,7 @@ void PNSolver::ComputeRadFlux() {
 
 void PNSolver::FluxUpdate() {
     if( _reconsOrder > 1 ) {
-        _mesh->ReconstructSlopesU( _nTotalEntries, _solDx, _solDy, _sol );    // unstructured reconstruction
+        _mesh->ReconstructSlopesU( _nSystem, _solDx, _solDy, _sol );    // unstructured reconstruction
         //_mesh->ComputeSlopes( _nTotalEntries, _solDx, _solDy, _sol );    // unstructured reconstruction
     }
     // Vector solL( _nTotalEntries );
@@ -89,7 +89,7 @@ void PNSolver::FluxUpdate() {
         if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::DIRICHLET ) continue;
 
         // Reset temporary variable psiNew
-        for( unsigned idx_sys = 0; idx_sys < _nTotalEntries; idx_sys++ ) {
+        for( unsigned idx_sys = 0; idx_sys < _nSystem; idx_sys++ ) {
             _solNew[idx_cell][idx_sys] = 0.0;
         }
 
@@ -159,7 +159,7 @@ void PNSolver::FVMUpdate( unsigned idx_energy ) {
         // Dirichlet cells stay at IC, farfield assumption
         if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::DIRICHLET ) continue;
         // Flux update
-        for( unsigned idx_sys = 0; idx_sys < _nTotalEntries; idx_sys++ ) {
+        for( unsigned idx_sys = 0; idx_sys < _nSystem; idx_sys++ ) {
             _solNew[idx_cell][idx_sys] = _sol[idx_cell][idx_sys] - ( _dE / _areas[idx_cell] ) * _solNew[idx_cell][idx_sys] /* cell averaged flux */
                                          - _dE * _sol[idx_cell][idx_sys] *
                                                ( _sigmaT[idx_energy][idx_cell]                                 /* absorbtion influence */
@@ -175,7 +175,7 @@ void PNSolver::ComputeSystemMatrices() {
     unsigned idx_row = 0;
 
     // loop over columns of A
-    for( int idx_lOrder = 0; idx_lOrder <= int( _LMaxDegree ); idx_lOrder++ ) {          // index of legendre polynom
+    for( int idx_lOrder = 0; idx_lOrder <= int( _polyDegreeBasis ); idx_lOrder++ ) {     // index of legendre polynom
         for( int idx_kOrder = -idx_lOrder; idx_kOrder <= idx_lOrder; idx_kOrder++ ) {    // second index of legendre function
             idx_row = unsigned( GlobalIndex( idx_lOrder, idx_kOrder ) );
 
@@ -247,17 +247,17 @@ void PNSolver::ComputeSystemMatrices() {
 }
 
 void PNSolver::ComputeFluxComponents() {
-    Vector eigenValues( _nTotalEntries, 0 );
-    Vector eigenValuesX( _nTotalEntries, 0 );
-    Vector eigenValuesY( _nTotalEntries, 0 );
+    Vector eigenValues( _nSystem, 0 );
+    Vector eigenValuesX( _nSystem, 0 );
+    Vector eigenValuesY( _nSystem, 0 );
 
-    MatrixCol eigenVectors( _nTotalEntries, _nTotalEntries, 0 );    // ColumnMatrix for _AxPlus * eigenVectors Multiplication via SIMD
+    MatrixCol eigenVectors( _nSystem, _nSystem, 0 );    // ColumnMatrix for _AxPlus * eigenVectors Multiplication via SIMD
     // --- For x Direction ---
     {
         blaze::eigen( _Ax, eigenValues, eigenVectors );    // Compute Eigenvalues and Eigenvectors
 
         // Compute Flux Matrices A+ and A-
-        for( unsigned idx_ij = 0; idx_ij < _nTotalEntries; idx_ij++ ) {
+        for( unsigned idx_ij = 0; idx_ij < _nSystem; idx_ij++ ) {
             if( eigenValues[idx_ij] >= 0 ) {
                 _AxPlus( idx_ij, idx_ij ) = eigenValues[idx_ij];    // positive part of Diagonal Matrix stored in _AxPlus
                 _AxAbs( idx_ij, idx_ij )  = eigenValues[idx_ij];
@@ -283,7 +283,7 @@ void PNSolver::ComputeFluxComponents() {
         blaze::eigen( _Ay, eigenValues, eigenVectors );    // Compute Eigenvalues and Eigenvectors
 
         // Compute Flux Matrices A+ and A-
-        for( unsigned idx_ij = 0; idx_ij < _nTotalEntries; idx_ij++ ) {
+        for( unsigned idx_ij = 0; idx_ij < _nSystem; idx_ij++ ) {
             if( eigenValues[idx_ij] >= 0 ) {
                 _AyPlus( idx_ij, idx_ij ) = eigenValues[idx_ij];    // positive part of Diagonal Matrix stored in _AxPlus
                 _AyAbs( idx_ij, idx_ij )  = eigenValues[idx_ij];
@@ -309,7 +309,7 @@ void PNSolver::ComputeFluxComponents() {
         blaze::eigen( _Az, eigenValues, eigenVectors );    // Compute Eigenvalues and Eigenvectors
 
         // Compute Flux Matrices A+ and A-
-        for( unsigned idx_ij = 0; idx_ij < _nTotalEntries; idx_ij++ ) {
+        for( unsigned idx_ij = 0; idx_ij < _nSystem; idx_ij++ ) {
             if( eigenValues[idx_ij] >= 0 ) {
                 _AzPlus( idx_ij, idx_ij ) = eigenValues[idx_ij];    // positive part of Diagonal Matrix stored in _AxPlus
                 _AzAbs( idx_ij, idx_ij )  = eigenValues[idx_ij];
@@ -346,7 +346,7 @@ void PNSolver::ComputeScatterMatrix() {
 
     // --- Isotropic ---
     _scatterMatDiag[0] = -1.0;
-    for( unsigned idx_diag = 1; idx_diag < _nTotalEntries; idx_diag++ ) {
+    for( unsigned idx_diag = 1; idx_diag < _nSystem; idx_diag++ ) {
         _scatterMatDiag[idx_diag] = 0.0;
     }
 }
@@ -393,10 +393,10 @@ void PNSolver::PrepareVolumeOutput() {
 
             case MOMENTS:
                 // As many entries as there are moments in the system
-                _outputFields[idx_group].resize( _nTotalEntries );
-                _outputFieldNames[idx_group].resize( _nTotalEntries );
+                _outputFields[idx_group].resize( _nSystem );
+                _outputFieldNames[idx_group].resize( _nSystem );
 
-                for( int idx_l = 0; idx_l <= (int)_LMaxDegree; idx_l++ ) {
+                for( int idx_l = 0; idx_l <= (int)_polyDegreeBasis; idx_l++ ) {
                     for( int idx_k = -idx_l; idx_k <= idx_l; idx_k++ ) {
                         _outputFields[idx_group][GlobalIndex( idx_l, idx_k )].resize( _nCells );
 
@@ -423,7 +423,7 @@ void PNSolver::WriteVolumeOutput( unsigned idx_pseudoTime ) {
                     }
                     break;
                 case MOMENTS:
-                    for( unsigned idx_sys = 0; idx_sys < _nTotalEntries; idx_sys++ ) {
+                    for( unsigned idx_sys = 0; idx_sys < _nSystem; idx_sys++ ) {
                         for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
                             _outputFields[idx_group][idx_sys][idx_cell] = _sol[idx_cell][idx_sys];
                         }
@@ -436,8 +436,8 @@ void PNSolver::WriteVolumeOutput( unsigned idx_pseudoTime ) {
 }
 
 void PNSolver::CleanFluxMatrices() {
-    for( unsigned idx_row = 0; idx_row < _nTotalEntries; idx_row++ ) {
-        for( unsigned idx_col = 0; idx_col < _nTotalEntries; idx_col++ ) {
+    for( unsigned idx_row = 0; idx_row < _nSystem; idx_row++ ) {
+        for( unsigned idx_col = 0; idx_col < _nSystem; idx_col++ ) {
             if( std::abs( _AxAbs( idx_row, idx_col ) ) < 0.00000000001 ) _AxAbs( idx_row, idx_col ) = 0.0;
             if( std::abs( _AxPlus( idx_row, idx_col ) ) < 0.00000000001 ) _AxPlus( idx_row, idx_col ) = 0.0;
             if( std::abs( _AxMinus( idx_row, idx_col ) ) < 0.00000000001 ) _AxMinus( idx_row, idx_col ) = 0.0;
@@ -514,7 +514,7 @@ int PNSolver::GlobalIndex( int l, int k ) const {
 }
 
 bool PNSolver::CheckIndex( int l, int k ) const {
-    if( l >= 0 && l <= int( _LMaxDegree ) ) {
+    if( l >= 0 && l <= int( _polyDegreeBasis ) ) {
         if( k >= -l && k <= l ) return true;
     }
     return false;
