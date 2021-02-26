@@ -49,17 +49,10 @@ endif()
 include( blaze-cache-config )
 include_directories( ${CMAKE_SOURCE_DIR}/ext/blaze )
 
-add_compile_definitions( METIS_EXPORT= )
-set( DISABLE_PARMETIS_PROGRAMS ON )
-set( ParMETIS_PATH ${CMAKE_CURRENT_SOURCE_DIR}/ext/parmetis )
-include_directories( ${ParMETIS_PATH}/include )
-include_directories( ${ParMETIS_PATH}/metis/include )
-add_subdirectory( ${ParMETIS_PATH} )
-
 include_directories( ${CMAKE_SOURCE_DIR}/ext/cpptoml/include )
 include_directories( ${CMAKE_SOURCE_DIR}/ext/spdlog/include )
 
-set( CORE_LIBRARIES ${Python3_LIBRARIES} ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} ${MPI_LIBRARIES} ${VTK_LIBRARIES} OpenMP::OpenMP_CXX parmetis -lstdc++fs )
+set( CORE_LIBRARIES ${Python3_LIBRARIES} ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} ${MPI_LIBRARIES} ${VTK_LIBRARIES} OpenMP::OpenMP_CXX -lstdc++fs )
 #################################################
 
 

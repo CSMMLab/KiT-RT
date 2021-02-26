@@ -10,8 +10,6 @@
 #include <omp.h>
 #include <vector>
 
-#include "metis.h"
-#include "parmetis.h"
 #include "toolboxes/errormessages.h"
 #include "toolboxes/reconstructor.h"
 
@@ -42,13 +40,11 @@ class Mesh
     std::vector<std::vector<Vector>> _cellNormals;
     /*! @brief Tags each cell with its boundary type. None means no boundary. dimension: numCells */
     std::vector<BOUNDARY_TYPE> _cellBoundaryTypes;
-    std::vector<unsigned> _colors;                /*!< @brief Color of each cell (for MPI mesh partitioning). dimension: numCells */
     blaze::CompressedMatrix<bool> _nodeNeighbors; /*!< @brief neighborshood relationship of nodes for (par-)metis */
 
     void ComputeCellAreas();     /*!< @brief Computes only the areas of the mesh cells. Write to _cellAreas. */
     void ComputeCellMidpoints(); /*!< @brief Compute only the midpoints of the cells. Write to _cellMidPoints*/
     void ComputeConnectivity();  /*!< @brief Computes _cellNeighbors and _nodeNeighbors, i.e. neighborship relation in mesh*/
-    void ComputePartitioning();  /*!< @brief Computes local partitioning for openMP */
 
     /*! @brief Computes outward facing normal of two neighboring nodes nodeA and nodeB with common cellCellcenter.
      *          Normals are scaled with their respective edge length
@@ -89,10 +85,6 @@ class Mesh
     /*! @brief Returns the cell area of each cell
      *  @return dimension: numCells */
     const std::vector<double>& GetCellAreas() const;
-
-    /*! @brief Return the color/ID of the mesh partition
-     *  @return dimension: numCells */
-    const std::vector<unsigned>& GetPartitionIDs() const;
 
     /*! @brief Returns the neighbor cell IDs for every cell
      *  @return dimension: numCells x numNodes */
