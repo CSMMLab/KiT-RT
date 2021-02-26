@@ -42,56 +42,56 @@ class SphericalMonomials : public SphericalBase
      */
     Vector ComputeSphericalBasis( double x, double y, double z ) override;
 
-    /*! @brief: Computes the length of the basis vector for a given max degree and
+    /*! @brief Computes the length of the basis vector for a given max degree and
      *          spatial dimension dim. len of a single oder: (degree + _spatialDim -1) over (degree)
-     *  @return: lenght of whole basis */
+     *  @return lenght of whole basis */
     unsigned GetBasisSize() override;
 
-    /*! @brief: Computes the amount of lin. independent monomials of degree currDegreeL and
+    /*! @brief Computes the amount of lin. independent monomials of degree currDegreeL and
      *          spatial dimension dim. len of a single oder: (currDegreeL + _spatialDim -1) over (currDegreeL)
-     *  @param: currDegreeL = degree of polynomials that are counted
-     *  @return: lenght of a single dimension */
+     *  @param currDegreeL = degree of polynomials that are counted
+     *  @return lenght of a single dimension */
     unsigned GetCurrDegreeSize( unsigned currDegreeL ) override;
 
-    /*! @brief: Computes global index of basis vector depending on order k and degree l
-     *  @param: l = degree of polynomials l = 0,1,2,3,...
-     *  @param: k = order of element of degree l. 0 <=k <=GetCurrDegreeSize(l) */
+    /*! @brief Computes global index of basis vector depending on order k and degree l
+     *  @param l = degree of polynomials l = 0,1,2,3,...
+     *  @param k = order of element of degree l. 0 <=k <=GetCurrDegreeSize(l) */
     unsigned GetGlobalIndexBasis( int l_degree, int k_order ) override;
 
   private:
-    /*! @brief: Spatial dimension of the unit sphere (1,2,3) */
+    /*! @brief Spatial dimension of the unit sphere (1,2,3) */
     unsigned _spatialDim;
 
-    /*! @brief: spherical monomial basis function vector of
+    /*! @brief spherical monomial basis function vector of
      *         degree  0 <= l <= L
      *         length : COmputed with ComputeBasisSize
      */
     Vector _YBasis;
 
-    /*! @brief: Function to compute factorial of n (n!) in recursive manner */
+    /*! @brief Function to compute factorial of n (n!) in recursive manner */
     unsigned Factorial( unsigned n );
 
-    /*! @brief: Function to compute first component of spherical unit vector
+    /*! @brief Function to compute first component of spherical unit vector
      *          Omega_x = sqrt(1-my*my)*cos(phi)
-     *  @return: first component of spherical unit vector */
+     *  @return first component of spherical unit vector */
     double Omega_x( double my, double phi );
 
-    /*! @brief: Function to compute first component of spherical unit vector
+    /*! @brief Function to compute first component of spherical unit vector
      *          Omega_x = sqrt(1-my*my)*sin(phi)
-     *  @return: first component of spherical unit vector */
+     *  @return first component of spherical unit vector */
     double Omega_y( double my, double phi );
 
-    /*! @brief: Function to compute first component of spherical unit vector
+    /*! @brief Function to compute first component of spherical unit vector
      *          Omega_z = my
-     *  @return: first component of spherical unit vector */
+     *  @return first component of spherical unit vector */
     double Omega_z( double my );
 
-    /*! @brief: Helper Function to compute basis^exponent. */
+    /*! @brief Helper Function to compute basis^exponent. */
     double Power( double basis, unsigned exponent );
 
-    /*! @brief: Helper to compute the basis in 1D, 2D or 3D, depending on choice of _spatialDim */
-    Vector ComputeSphericalBasis1D( double my );             /*! @brief: Only Z achsis of the 3D case */
-    Vector ComputeSphericalBasis2D( double my, double phi ); /*! @brief: Only X and Y achsis of the 3D case */
+    /*! @brief Helper to compute the basis in 1D, 2D or 3D, depending on choice of _spatialDim */
+    Vector ComputeSphericalBasis1D( double my ); /*!< @brief Only Z achsis of the 3D case */
+    Vector ComputeSphericalBasis2D( double my, double phi ); /*!< @brief Only X and Y achsis of the 3D case */
     Vector ComputeSphericalBasis3D( double my, double phi );
 };
 #endif    // SPHERICALMONOMIALS_H

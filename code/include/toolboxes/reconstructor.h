@@ -1,6 +1,6 @@
 /*!
  * @file: reconstructor.h
- * @brief: Class to create second order (in space) schemes for the advection solver.
+ * @brief Class to create second order (in space) schemes for the advection solver.
  *         This class is currently unused. But in the future, the second order capabilities of the code
  *         may be stored here.
  * @author: T. Xiao

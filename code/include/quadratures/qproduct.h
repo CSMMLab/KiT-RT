@@ -1,5 +1,5 @@
 /*! @file: qproduct.h
- *  @brief: Product quadrature implementation. Implementation is done accordingly to Kendall Atkinson 1981, Australian Matematical Society.
+ *  @brief Product quadrature implementation. Implementation is done accordingly to Kendall Atkinson 1981, Australian Matematical Society.
  *  @author: J. Kusch
  */
 

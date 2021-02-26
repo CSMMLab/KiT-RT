@@ -1,6 +1,6 @@
 /*!
  * @file config.h
- * @brief: Class to handle all options and their pre and postprocessing.
+ * @brief Class to handle all options and their pre and postprocessing.
  *         DO NOT CREATE SETTERS FOR THIS CLASS! ALL OPTIONS ARE CONSTANT (after SetPostprocessing).
  *
  * @author S. Schotthöfer
@@ -48,8 +48,8 @@ class Config
     unsigned _nQuadPoints;
 
     // Mesh
-    unsigned _nCells;    /*!< @brief: Number of cells in the mesh */
-    unsigned short _dim; /*!< @brief: spatial dimensionality of the mesh/test case */
+    unsigned _nCells;    /*!< @brief Number of cells in the mesh */
+    unsigned short _dim; /*!< @brief spatial dimensionality of the mesh/test case */
 
     // Boundary Conditions
     /*!< @brief List of all Pairs (marker, BOUNDARY_TYPE), e.g. (farfield,DIRICHLET).
@@ -95,7 +95,7 @@ class Config
     KERNEL_NAME _kernelName; /*!< @brief Scattering Kernel Name*/
 
     // Spherical Basis
-    SPHERICAL_BASIS_NAME _sphericalBasisName; /*!< @brief: Name of the basis on the unit sphere */
+    SPHERICAL_BASIS_NAME _sphericalBasisName; /*!< @brief Name of the basis on the unit sphere */
 
     // Optimizer
     OPTIMIZER_NAME _entropyOptimizerName; /*!< @brief Choice of optimizer */
@@ -106,7 +106,7 @@ class Config
     bool _newtonFastMode;                 /*!< @brief If true, we skip the NewtonOptimizer for quadratic entropy and assign alpha = u */
 
     // NeuralModel
-    unsigned short _neuralModel; /*!< @brief:  Version number of the employed neural model */
+    unsigned short _neuralModel; /*!< @brief  Version number of the employed neural model */
     // Output Options
     unsigned short _nVolumeOutput;            /*!< @brief Number of volume outputs */
     std::vector<VOLUME_OUTPUT> _volumeOutput; /*!< @brief Output groups for volume output*/
@@ -126,8 +126,8 @@ class Config
     unsigned long _tainingSetSize;    /*!< @brief Size of training data set for data generator */
     unsigned long _maxValFirstMoment; /*!< @brief Size of training data set for data generator */
     double _RealizableSetEpsilonU0;   /*!< @brief Distance to 0 of the sampled moments to the boundary of the realizable set */
-    double _RealizableSetEpsilonU1;   /*!< @brief: norm(u_1)/u_0 !< _RealizableSetEpsilonU1 */
-    bool _normalizedSampling;         /*!< @brief: Flag for sampling of normalized moments, i.e. u_0 =1 */
+    double _RealizableSetEpsilonU1;   /*!< @brief norm(u_1)/u_0 !< _RealizableSetEpsilonU1 */
+    bool _normalizedSampling;         /*!< @brief Flag for sampling of normalized moments, i.e. u_0 =1 */
 
     // --- Parsing Functionality and Initializing of Options ---
     /*!
@@ -299,7 +299,7 @@ class Config
     unsigned short inline GetNeuralModel() { return _neuralModel; }
 
     // Boundary Conditions
-    BOUNDARY_TYPE GetBoundaryType( std::string nameMarker ) const; /*! @brief Get Boundary Type of given marker */
+    BOUNDARY_TYPE GetBoundaryType( std::string nameMarker ) const; /*!< @brief Get Boundary Type of given marker */
 
     // Scattering Kernel
     KERNEL_NAME inline GetKernelName() const { return _kernelName; }

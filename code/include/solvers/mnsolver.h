@@ -12,7 +12,7 @@ class MNSolver : public SolverBase
   public:
     /**
      * @brief MNSolver constructor
-     * @param settings : Config class that stores all needed information
+     * @param settings Config class that stores all needed information
      */
     MNSolver( Config* settings );
 
@@ -21,29 +21,29 @@ class MNSolver : public SolverBase
 
   private:
     // --- Private member variables ---
-    unsigned _nSystem;               /*! @brief Total number of equations in the system */
-    unsigned short _polyDegreeBasis; /*! @brief Max polynomial degree of the basis */
+    unsigned _nSystem;               /*!< @brief Total number of equations in the system */
+    unsigned short _polyDegreeBasis; /*!< @brief Max polynomial degree of the basis */
 
     // Moment basis
-    SphericalBase* _basis; /*! @brief Class to compute and store current spherical harmonics basis */
-    VectorVector _moments; /*! @brief Moment Vector pre-computed at each quadrature point: dim= _nq x _nTotalEntries */
+    SphericalBase* _basis; /*!< @brief Class to compute and store current spherical harmonics basis */
+    VectorVector _moments; /*!< @brief Moment Vector pre-computed at each quadrature point: dim= _nq x _nTotalEntries */
 
     // Scattering
-    Vector _scatterMatDiag; /*! @brief Diagonal of the scattering matrix (its a diagonal matrix by construction) */
+    Vector _scatterMatDiag; /*!< @brief Diagonal of the scattering matrix (its a diagonal matrix by construction) */
 
     // Quadrature related members
-    VectorVector _quadPoints;       /*!  @brief quadrature points, dim(_quadPoints) = (_nq,spatialDim) */
-    Vector _weights;                /*!  @brief quadrature weights, dim(_weights) = (_nq) */
-    VectorVector _quadPointsSphere; /*!  @brief (my,phi), dim(_quadPoints) = (_nq,2) */
+    VectorVector _quadPoints;       /*!<  @brief quadrature points, dim(_quadPoints) = (_nq,spatialDim) */
+    Vector _weights;                /*!<  @brief quadrature weights, dim(_weights) = (_nq) */
+    VectorVector _quadPointsSphere; /*!<  @brief (my,phi), dim(_quadPoints) = (_nq,2) */
 
     // Entropy Optimization related members
-    EntropyBase* _entropy;     /*! @brief Class to handle entropy functionals */
-    VectorVector _alpha;       /*! @brief Lagrange Multipliers for Minimal Entropy problem for each gridCell
-                                          Layout: _nCells x _nTotalEntries*/
-    OptimizerBase* _optimizer; /*! @brief Class to solve minimal entropy problem */
+    EntropyBase* _entropy;     /*!< @brief Class to handle entropy functionals */
+    VectorVector _alpha;       /*!< @brief Lagrange Multipliers for Minimal Entropy problem for each gridCell
+                                                Layout: _nCells x _nTotalEntries*/
+    OptimizerBase* _optimizer; /*!< @brief Class to solve minimal entropy problem */
 
-    VectorVector _solDx; /*! @brief  temporary storage of x-derivatives of alpha */
-    VectorVector _solDy; /*! @brief  temporary storage of y-derivatives of alpha */
+    VectorVector _solDx; /*!< @brief  temporary storage of x-derivatives of alpha */
+    VectorVector _solDy; /*!< @brief  temporary storage of y-derivatives of alpha */
 
     // ---- Private Member functions ---
 

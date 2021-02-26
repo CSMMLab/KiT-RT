@@ -9,28 +9,28 @@ class LineSource : public ProblemBase
     LineSource() = delete;
 
   protected:
-    double _sigmaS; /*!< @brief: Scattering coefficient */
+    double _sigmaS; /*!< @brief Scattering coefficient */
 
   public:
     LineSource( Config* settings, Mesh* mesh );
 
     ~LineSource();
 
-    /*!< @brief: Exact analytical solution for the Line Source Test Case at
-         @param: x: x coordinate of exact solution
+    /*!< @brief Exact analytical solution for the Line Source Test Case at
+         @param x: x coordinate of exact solution
                  y: y coordinate of exact solution
                  t: time of the exact solution
                  sigma_s: scattering cross section of the exact solution
-         @return: exact solution at x,y,t,scatteringXS
+         @return exact solution at x,y,t,scatteringXS
     */
     double GetAnalyticalSolution( double x, double y, double t, double sigma_s ) override;
 
   private:
-    /*!< @brief: Helper Functions to compute the analytic solution for sigma != 0
+    /*!< @brief Helper Functions to compute the analytic solution for sigma != 0
      * (See publication: Garret,Hauck; Momentum Closures for Linear Kinetic Transport Equations)
-         @param: R = distance to origin
-         @param: t = time
-         @param: sigma = R/t
+         @param R = distance to origin
+         @param t = time
+         @param sigma = R/t
      */
     double HelperIntRho_ptc( double R, double t );
     double HelperRho_ptc( double R, double t );

@@ -109,8 +109,8 @@ class PNSolver : public SolverBase
      */
     double FTilde( int l, int k ) const;
 
-    /*! @brief: mathematical + index functions. Helper functions for setting up system matrix.
-     *  @param: k: arbitrary integer
+    /*! @brief mathematical + index functions. Helper functions for setting up system matrix.
+     *  @param k: arbitrary integer
      */
     int Sgn( int k ) const;
     /*! @brief mathematical + index functions. Helper functions for setting up system matrix.
@@ -143,7 +143,7 @@ class PNSolver : public SolverBase
     /*! @brief  Computes Legedre polinomial of oder l at point x */
     double LegendrePoly( double x, int l );
 
-    /*! @brief: Sets Entries of FluxMatrices to zero, if they are below double precision,
+    /*! @brief Sets Entries of FluxMatrices to zero, if they are below double precision,
      *          to prevent floating point inaccuracies later in the solver
      */
     void CleanFluxMatrices();

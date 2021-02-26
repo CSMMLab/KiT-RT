@@ -1,5 +1,5 @@
 /*! @file: main.cpp
- *  @brief: Main method to call the KiT-RT solver suite
+ *  @brief Main method to call the KiT-RT solver suite
  *  @author: J. Kusch, S. Schotthöfer, P. Stammer, J. Wolters, T. Xiao
  *  @version: 0.1
  */

@@ -27,7 +27,7 @@ void SNSolver::IterPreprocessing( unsigned /*idx_iter*/ ) {
     // Nothing to do for SNSolver
 }
 
-void SNSolver::IterPostprocessing( unsigned idx_pseudotime ) {
+void SNSolver::IterPostprocessing( unsigned /*idx_iter*/ ) {
     // --- Update Solution ---
     _sol = _solNew;
 

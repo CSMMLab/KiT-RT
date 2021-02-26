@@ -101,7 +101,7 @@ class SolverBase
     /*! @brief ComputeTimeStep calculates the maximal stable time step using the cfl number
         @param cfl Courant-Friedrichs-Levy condition number */
     double ComputeTimeStep( double cfl ) const;
-    /*! @brief: Computes the flux of the solution to check conservation properties */
+    /*! @brief Computes the flux of the solution to check conservation properties */
     virtual void ComputeRadFlux() = 0;
 
     // IO
@@ -114,7 +114,7 @@ class SolverBase
                option VOLUME_OUTPUT_FREQUENCY. Always prints last iteration without iteration affix.
         @param idx_iter  current (pseudo) time iteration */
     void PrintVolumeOutput( int idx_iter ) const;
-    /*! @brief: Initialized the output fields and their Names for the screenoutput */
+    /*! @brief Initialized the output fields and their Names for the screenoutput */
     void PrepareScreenOutput();
 
     /*! @brief Function that writes screen and history output fields

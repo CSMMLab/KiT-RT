@@ -17,8 +17,8 @@ class ProblemBase
     Mesh* _mesh;
     EPICS* _physics;
 
-    std::vector<double> _density;       /*! @brief: vector with patient densities */
-    std::vector<double> _stoppingPower; /*! @brief: vector with stopping powers*/
+    std::vector<double> _density; /*!< @brief vector with patient densities */
+    std::vector<double> _stoppingPower; /*!< @brief vector with stopping powers*/
 
     ProblemBase() = delete;
 
@@ -87,12 +87,12 @@ class ProblemBase
      */
     virtual VectorVector SetupIC() = 0;
 
-    /*! @brief: Exact analytical solution for the Line Source Test Case at
-        @param: x: x coordinate of exact solution
+    /*! @brief Exact analytical solution for the Line Source Test Case at
+        @param x: x coordinate of exact solution
                 y: y coordinate of exact solution
                 t: time of the exact solution
                 scatteringXS: scattering cross section of the exact solution
-         @return: exact solution at x,y,t,scatteringXS
+         @return exact solution at x,y,t,scatteringXS
     */ // Default is set to 0. ~> if no analytical solution is available.
     double virtual GetAnalyticalSolution( double /*x*/, double /*y*/, double /*t*/, double /*scatteringXS*/ ) { return 0.0; }
 

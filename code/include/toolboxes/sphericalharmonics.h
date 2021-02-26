@@ -46,11 +46,11 @@ class SphericalHarmonics : public SphericalBase
      */
     std::vector<double> GetAssLegendrePoly( const double my );
 
-    /*! @brief: Returns length of the basis, i.e. number of elements of the basis */
+    /*! @brief Returns length of the basis, i.e. number of elements of the basis */
     unsigned GetBasisSize() override;
 
-    /*! @brief: Return number of basis functions with degree equals to currDegree
-     *  @param: currDegreeL = degree of polynomials that are counted   */
+    /*! @brief Return number of basis functions with degree equals to currDegree
+     *  @param currDegreeL = degree of polynomials that are counted   */
     unsigned GetCurrDegreeSize( unsigned currDegree ) override;
 
     /*! @brief : helper function to get the global index for given k and l of
@@ -60,10 +60,10 @@ class SphericalHarmonics : public SphericalBase
     unsigned GetGlobalIndexBasis( int l_degree, int k_order ) override;
 
   private:
-    /*! @brief: maximal degree of the spherical harmonics basis (this is "L" in the comments)*/
+    /*! @brief maximal degree of the spherical harmonics basis (this is "L" in the comments)*/
     unsigned _LMaxDegree;
 
-    /*! @brief: coefficients for the computations of the basis
+    /*! @brief coefficients for the computations of the basis
      *         length of _aParam, _bParam : L + (L*(L+1))/2
      */
     std::vector<double> _aParam;
@@ -75,7 +75,7 @@ class SphericalHarmonics : public SphericalBase
      */
     std::vector<double> _assLegendreP;
 
-    /*! @brief: spherical harmonic basis functions of
+    /*! @brief spherical harmonic basis functions of
      *         degree  0 <= l <= L and order -l <= k <= l
      *         length : N = L² +2L
      */
@@ -98,9 +98,9 @@ class SphericalHarmonics : public SphericalBase
      */
     void ComputeAssLegendrePoly( const double my );
 
-    /*! @brief: Computes the spherical harmonics basis function up to degree _LmaxDegree at
+    /*! @brief Computes the spherical harmonics basis function up to degree _LmaxDegree at
      *          polar coordinates (theta, psi) and stores the result in _YBasis;
-     *  @param: spherical coordinate phi
+     *  @param spherical coordinate phi
      */
     void ComputeYBasis( const double phi );
 };

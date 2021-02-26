@@ -262,7 +262,7 @@ void Config::SetConfigOptions() {
     AddDoubleOption( "SCATTER_COEFF", _sigmaS, 0.0 );
 
     // CSD related options
-    /*! @brief: MAX_ENERGY_CSD \n DESCRIPTION: Sets maximum energy for the CSD simulation.\n DEFAULT \ingroup Config */
+    /*! @brief MAX_ENERGY_CSD \n DESCRIPTION: Sets maximum energy for the CSD simulation.\n DEFAULT \ingroup Config */
     AddDoubleOption( "MAX_ENERGY_CSD", _maxEnergyCSD, 5.0 );
 
     // Entropy related options

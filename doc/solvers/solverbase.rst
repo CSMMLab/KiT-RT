@@ -1,7 +1,7 @@
-Config
-======
+SolverBase
+==========
 
-.. doxygenclass:: Config
+.. doxygenclass:: SolverBase
    :members:
    :protected-members:
    :private-members:
