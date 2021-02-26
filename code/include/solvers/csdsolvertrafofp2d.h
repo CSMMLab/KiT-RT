@@ -72,7 +72,7 @@ class CSDSolverTrafoFP2D : public SNSolver
     void FVMUpdate( unsigned idx_energy ) override final;
     void FluxUpdate() override final;
     void IterPreprocessing( unsigned idx_pseudotime ) override final;
-    void virtual IterPostprocessing() override final;
+    void virtual IterPostprocessing( unsigned idx_pseudotime ) override final;
     void SolverPreprocessing() override final;
 };
 
