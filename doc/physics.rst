@@ -56,11 +56,12 @@ where the particles don't interact with one another but scatter with the backgro
 For convenience, we reformulate the particle velocity into polar coordinates :math:`\{r, \phi, \theta \}`
 
 .. math::
-    :label: boltzmann
+    :label: porbz
+   
+   &\left[\frac{1}{\mathrm{~V}} \frac{\partial}{\partial t}+\Omega \cdot \nabla+\Sigma(r, E, t)\right] \psi(r, \Omega, E, t) \\
+   &=\int_{0}^{\infty} d E^{\prime} \int_{\mathcal R^2} d \Omega^{\prime} \Sigma_{s}\left(r, \Omega^{\prime} \bullet \Omega, E^{\prime} \rightarrow E\right) \psi\left(r, \Omega^{\prime}, E^{\prime}, t\right)
 
-    \frac{\partial \psi}{\partial t}+\Omega \cdot \nabla_x \psi = Q(\psi)
-
-The particle distribution :math:`\psi(t, x, \Omega, E)` is often called angular flux.
+The particle distribution :math:`\psi(t, r, \Omega, E)` here is often named as angular flux.
 
 
 The continuous slowing down approximation
