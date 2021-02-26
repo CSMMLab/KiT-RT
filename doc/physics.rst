@@ -75,6 +75,7 @@ Let us consider the radiative transfer equation in one-dimensional physical spac
 where :math:`\mu` is the projected angular variable on :math:`z` axis.
 
 To obtain the :math:`P_N` equations, we express the angular dependence of the distribution function in terms of a Fourier series,
+
 .. math::
 
    \psi(t, z, \mu)=\sum_{\ell=0}^{\infty} \psi_{\ell}(t, z) \frac{2 \ell+1}{2} P_{\ell}(\mu),
@@ -83,6 +84,7 @@ where :math:`P_{\ell}` are the Legendre polynomials.
 These form an orthogonal basis of the space
 of polynomials with respect to the standard scalar product on :math:`[−1, 1]`.
 We can then obtain
+
 .. math::
 
    \partial_{t} \psi_{\ell}+\partial_{z} \int_{=1}^{1} \mu P_{\ell} \psi \mathrm{d} \mu+\Sigma_{t \ell} \psi_{\ell}=q_{\ell},
@@ -122,8 +124,68 @@ where :math:`\ell \leq 0` and :math:`\ell \leq m \leq -\ell`.
 The entropy closure moment equations
 ---------
 
+Another method of moments comes from the minimal principle of a convex entropy to close the moment system.
+Derivation of such moment system begins with the choice of a vector-valued function
+:math:`m: \mathbb{S}^{2} \rightarrow \mathbb{R}^{n}, \Omega \mapsto\left[m_{0}(\Omega), \ldots, m_{n-1}(\Omega)\right]^{T}`,
+whose n components are linearly independent functions of :math:`\Omega`.
+Evolution equations for the moments u(x, t) :=
+hmψ(x, ·, t)i are found by multiplying the transport equation by m and integrating
+over all angles to give
 
+.. math::
 
+   \frac{1}{v} \partial_{t} u+\nabla_{x} \cdot\langle\Omega m \psi\rangle=\langle m \mathcal{C}(\psi)\rangle.
+
+The system above is not closed; a recipe, or closure, must be prescribed to express
+unknown quantities in terms of the given moments. Often this is done via an
+approximation for :math:`\psi` that depends on :math:`u`,
+
+.. math::
+
+   \psi(x, \Omega, t) \simeq \mathcal{E}(u(x, t))(\Omega).
+
+A general strategy for prescribing a closure is to
+use the solution of a constrained optimization problem
+
+.. math::
+   :label: closure
+
+   \min_{g \in \operatorname{Dom}(\mathcal{H})} & \mathcal{H}(g) \\
+   \quad \text { s.t. } & \langle\mathbf{m} g\rangle=\langle\mathbf{m} \psi\rangle=u,
+
+where :math:`\mathcal H(g)=\langle \eta(g) \rangle` and $\eta: \mathbb R \rightarrow \mathbb R$
+is a convex function that is related to
+the entropy of the system. For photons, the physically relevant entropy comes from
+Bose-Einstein statistics
+
+.. math::
+
+   \eta(g)=\frac{2 k \nu^{2}}{v^{3}}\left[n_{g} \log \left(n_{g}\right)-\left(n_{g}+1\right) \log \left(n_{g}+1\right)\right],
+
+where :math:`n_g` is the occupation number associated with g,
+
+.. math::
+
+   n_{g}:=\frac{v^{2}}{2 h \nu^{3}} g.
+
+The solution of :eq:`closure` is expressed in terms of the Legendre dual
+
+.. math::
+
+   \eta_{*}(f)=-\frac{2 k \nu^{2}}{v^{3}} \log \left(1-\exp \left(-\frac{h \nu c}{k} f\right)\right).
+
+Let
+
+.. math::
+
+   \mathcal{B}(\boldsymbol{\alpha}):=\eta_{*}^{\prime}\left(\boldsymbol{\alpha}^{T} \mathbf{m}\right)=\frac{2 h \nu^{3}}{v^{2}} \frac{1}{\exp \left(-\frac{h \nu c}{k} \boldsymbol{\alpha}^{T} \mathbf{m}\right)-1},
+
+then the solution of :eq:`closure` is given by :math:`\mathcal B(\hat \alpha)`, where :math:`\hat \alpha= \hat \alpha(u)` solves the
+dual problem
+
+.. math::
+
+   \min _{\boldsymbol{\alpha} \in \mathbb{R}^{n}}\left\{\left\langle\eta_{*}\left(\boldsymbol{\alpha}^{T} \mathbf{m}\right)\right\rangle-\boldsymbol{\alpha}^{T} \mathbf{u}\right\}.
 
 
 The continuous slowing down approximation

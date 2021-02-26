@@ -10,8 +10,8 @@ The framework provides rich deterministic solver types for different domain-spec
 A list of current supported models and equations is as follows.
 
 - linear Boltzmann (:math:`S_N`) equation
-- spherical harmonics (:math:`P_N`) equations
-- entropy-closure moment (:math:`M_N`) equations
+- spherical harmonics (:math:`P_N`) moment equations
+- entropy-closure (:math:`M_N`) moment equations
 - continuous slowing down equation
 
 
