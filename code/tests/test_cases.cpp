@@ -7,7 +7,7 @@
 
 #include "common/config.h"
 #include "solvers/solverbase.h"
-#include "toolboxes/datagenerator.h"
+#include "toolboxes/datageneratorbase.h"
 
 using vtkUnstructuredGridReaderSP = vtkSmartPointer<vtkUnstructuredGridReader>;
 
@@ -370,9 +370,9 @@ TEST_CASE( "Test the Data Generator", "[dataGen]" ) {
     // Load Settings from File
     Config* config = new Config( config_file_name );
     // Build Data generator
-    nnDataGenerator* datagen = new nnDataGenerator( config );
+    DataGeneratorBase* datagen = DataGeneratorBase::Create( config );
     // Generate Data and export
-    datagen->computeTrainingData();
+    datagen->ComputeTrainingData();
 
     // --- Force Logger to flush
     auto log    = spdlog::get( "event" );
@@ -417,4 +417,6 @@ TEST_CASE( "Test the Data Generator", "[dataGen]" ) {
         count++;
     }
     REQUIRE( testPassed );
+
+    delete datagen;
 }

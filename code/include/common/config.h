@@ -127,6 +127,7 @@ class Config
     unsigned long _maxValFirstMoment; /*!< @brief Size of training data set for data generator */
     double _RealizableSetEpsilonU0;   /*! @brief Distance to 0 of the sampled moments to the boundary of the realizable set */
     double _RealizableSetEpsilonU1;   /*!< @brief: norm(u_1)/u_0 !< _RealizableSetEpsilonU1 */
+    bool _normalizedSampling;         /*!< @brief: Flag for sampling of normalized moments, i.e. u_0 =1 */
 
     // --- Parsing Functionality and Initializing of Options ---
     /*!
@@ -324,6 +325,7 @@ class Config
     unsigned long inline GetMaxValFirstMoment() { return _maxValFirstMoment; }
     double GetRealizableSetEpsilonU0() { return _RealizableSetEpsilonU0; }
     double GetRealizableSetEpsilonU1() { return _RealizableSetEpsilonU1; }
+    bool inline GetNormalizedSampling() { return _normalizedSampling; }
 
     // ---- Setters for option structure
     // This section is dangerous

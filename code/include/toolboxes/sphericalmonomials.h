@@ -90,8 +90,8 @@ class SphericalMonomials : public SphericalBase
     double Power( double basis, unsigned exponent );
 
     /*! @brief: Helper to compute the basis in 1D, 2D or 3D, depending on choice of _spatialDim */
-    Vector ComputeSphericalBasis1D( double my, double phi );
-    Vector ComputeSphericalBasis2D( double my, double phi );
+    Vector ComputeSphericalBasis1D( double my );             /*! @brief: Only Z achsis of the 3D case */
+    Vector ComputeSphericalBasis2D( double my, double phi ); /*! @brief: Only X and Y achsis of the 3D case */
     Vector ComputeSphericalBasis3D( double my, double phi );
 };
 #endif    // SPHERICALMONOMIALS_H

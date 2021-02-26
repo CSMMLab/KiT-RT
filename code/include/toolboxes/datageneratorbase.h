@@ -16,7 +16,7 @@ class Config;
 class NewtonOptimizer;
 class EntropyBase;
 
-class nnDataGenerator
+class DataGeneratorBase
 {
   public:
     /*! @brief: Class constructor. Generates training data for neural network approaches using
@@ -24,19 +24,24 @@ class nnDataGenerator
      *          the options file.
      *   @param: setSize: number of elements in training set
      *           basisSize: length of spherical harmonics basis (maybe redundant)*/
-    nnDataGenerator( Config* settings );
-    ~nnDataGenerator();
+    DataGeneratorBase( Config* settings );
+    ~DataGeneratorBase();
+
+    /*! @brief: Create a datagenerator (1D or 3D)
+     *  @param: Pointer to the config file
+     *  @returns: Pointer to the createt basis class */
+    static DataGeneratorBase* Create( Config* settings );
 
     /*! @brief: computes the training data set.
      *          Realizable set is sampled uniformly.
      *          Prototype: 1D, u\in[0,100] */
-    void computeTrainingData();
+    void ComputeTrainingData();
 
-    /*!   @brief: Writes the training data to file
-     *            Filename encryption: [TODO] */
-    void writeTrainingDataToCSV();
+    inline VectorVector GetuSol() { return _uSol; }                /*! @brief: Get the computed solution vector uSol */
+    inline VectorVector GetAlpha() { return _alpha; }              /*! @brief: Get the computed vector alpha */
+    inline std::vector<double> GethEntropy() { return _hEntropy; } /*! @brief: Get the computed entropy value h */
 
-  private:
+  protected:
     Config* _settings; /*! @brief config class for global information */
 
     VectorVector _uSol;            /*! @brief: vector with moments. Size: (setSize,basisSize)*/
@@ -63,20 +68,18 @@ class nnDataGenerator
     EntropyBase* _entropy;       /*! @brief: Class to handle entropy functional evaluations */
 
     // Main methods
-    void SampleSolutionU();        /*! @brief: Samples solution vectors u */
-    void ComputeEntropyH_dual();   /*! @brief: Compute the entropy functional at (u,alpha) in dual formulation */
-    void ComputeEntropyH_primal(); /*! @brief:  Compute the entropy functional at (u,alpha) in primal formulation */
+    virtual void SampleSolutionU() = 0; /*! @brief: Samples solution vectors u */
+    void ComputeEntropyH_dual();        /*! @brief: Compute the entropy functional at (u,alpha) in dual formulation */
+    void ComputeEntropyH_primal();      /*! @brief:  Compute the entropy functional at (u,alpha) in primal formulation */
+    void ComputeRealizableSolution();   /*! @brief: make u the realizable moment to alpha, since Newton has roundoff errors. */
 
     // IO routines
     void PrintTrainingData(); /*! @brief : Print computed training data to csv file and screen */
     void PrintLoadScreen();   /*! @brief: Print screen IO*/
-    // Helper functions
-    void ComputeMoments();            /*! @brief: Pre-Compute Moments at all quadrature points. */
-    void CheckRealizability();        // Debugging helper
-    void ComputeRealizableSolution(); /*! @brief: make u the realizable moment to alpha, since Newton has roundoff errors. */
 
-    inline VectorVector GetuSol() { return _uSol; }                /*! @brief: Get the computed solution vector uSol */
-    inline VectorVector GetAlpha() { return _alpha; }              /*! @brief: Get the computed vector alpha */
-    inline std::vector<double> GethEntropy() { return _hEntropy; } /*! @brief: Get the computed entropy value h */
+    // Helper functions
+    virtual void ComputeMoments()     = 0;    /*! @brief: Pre-Compute Moments at all quadrature points. */
+    virtual void CheckRealizability() = 0;    // Debugging helper
+    virtual void ComputeSetSize()     = 0;    /*! @brief: Computes the size of the training set, depending on the chosen settings.*/
 };
 #endif    // DATAGENERATOR_H

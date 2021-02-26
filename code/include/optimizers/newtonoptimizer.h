@@ -18,8 +18,8 @@ class NewtonOptimizer : public OptimizerBase
 
     ~NewtonOptimizer();
 
-    void Solve( Vector& lambda, Vector& sol, const VectorVector& moments, unsigned idx_cell = 0 ) override;
-    void SolveMultiCell( VectorVector& lambda, VectorVector& sol, const VectorVector& moments ) override;
+    void Solve( Vector& alpha, Vector& sol, const VectorVector& moments, unsigned idx_cell = 0 ) override;
+    void SolveMultiCell( VectorVector& alpha, VectorVector& sol, const VectorVector& moments ) override;
 
     /*! @brief: Computes the objective function
                 grad = <eta(alpha*m)> - alpha*sol */

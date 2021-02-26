@@ -68,25 +68,28 @@ void NewtonOptimizer::ComputeHessian( Vector& alpha, const VectorVector& moments
     }
 }
 
-void NewtonOptimizer::SolveMultiCell( VectorVector& lambda, VectorVector& sol, const VectorVector& moments ) {
+void NewtonOptimizer::SolveMultiCell( VectorVector& alpha, VectorVector& sol, const VectorVector& moments ) {
 
-    unsigned nCells = lambda.size();
+    unsigned nCells = alpha.size();
 
     // if we  have quadratic entropy, then alpha = u;
     if( _settings->GetEntropyName() == QUADRATIC && _settings->GetNewtonFastMode() ) {
         for( unsigned idx_cell = 0; idx_cell < nCells; idx_cell++ ) {
-            lambda[idx_cell] = sol[idx_cell];
+            alpha[idx_cell] = sol[idx_cell];
         }
         return;
     }
 
 #pragma omp parallel for schedule( guided )
     for( unsigned idx_cell = 0; idx_cell < nCells; idx_cell++ ) {
-        Solve( lambda[idx_cell], sol[idx_cell], moments, idx_cell );
+        Solve( alpha[idx_cell], sol[idx_cell], moments, idx_cell );
+        // if( idx_cell % 10000 == 0 ) {
+        //    printf( "%d\n", idx_cell );
+        //}
     }
 }
 
-void NewtonOptimizer::Solve( Vector& lambda, Vector& sol, const VectorVector& moments, unsigned idx_cell ) {
+void NewtonOptimizer::Solve( Vector& alpha, Vector& sol, const VectorVector& moments, unsigned idx_cell ) {
 
     /* solve the problem argmin ( <eta_*(alpha*m)>-alpha*u))
      * where alpha = Lagrange multiplier
@@ -96,18 +99,18 @@ void NewtonOptimizer::Solve( Vector& lambda, Vector& sol, const VectorVector& mo
 
     // if we  have quadratic entropy, then alpha = u;
     if( _settings->GetEntropyName() == QUADRATIC && _settings->GetNewtonFastMode() ) {
-        lambda = sol;
+        alpha = sol;
         return;
     }
 
     // Start Newton Algorithm
 
-    unsigned nSize = lambda.size();
+    unsigned nSize = alpha.size();
 
     Vector grad( nSize, 0.0 );
 
     // check if initial guess is good enough
-    ComputeGradient( lambda, sol, moments, grad );
+    ComputeGradient( alpha, sol, moments, grad );
 
     if( norm( grad ) < _epsilon ) {
         return;
@@ -117,60 +120,60 @@ void NewtonOptimizer::Solve( Vector& lambda, Vector& sol, const VectorVector& mo
     Matrix H( nSize, nSize, 0.0 );
 
     // calculate initial Hessian and gradient
-    Vector dlambda = -grad;
-    ComputeHessian( lambda, moments, H );
+    Vector dalpha = -grad;
+    ComputeHessian( alpha, moments, H );
 
     // invert Hessian
     invert( H );
 
     if( _maxIterations == 1 ) {
-        lambda = lambda - _alpha * H * grad;
+        alpha = alpha - _alpha * H * grad;
         return;
     }
 
-    Vector lambdaNew( nSize, 0.0 );    //  New newton step
-    Vector dlambdaNew( nSize );        //  Gradient at New newton step
+    Vector alphaNew( nSize, 0.0 );    //  New newton step
+    Vector dalphaNew( nSize );        //  Gradient at New newton step
 
-    lambdaNew = lambda - _alpha * H * grad;
+    alphaNew = alpha - _alpha * H * grad;
 
     // Compute Gradient of new point;
-    ComputeGradient( lambdaNew, sol, moments, dlambdaNew );
+    ComputeGradient( alphaNew, sol, moments, dalphaNew );
 
     // perform Newton iterations
     for( unsigned l = 0; l < _maxIterations; ++l ) {
         double stepSize = 1.0;
         if( l != 0 ) {
-            ComputeGradient( lambda, sol, moments, grad );
+            ComputeGradient( alpha, sol, moments, grad );
 
-            dlambda = -grad;
-            ComputeHessian( lambda, moments, H );
+            dalpha = -grad;
+            ComputeHessian( alpha, moments, H );
             invert( H );
-            lambdaNew = lambda - _alpha * H * grad;
-            ComputeGradient( lambdaNew, sol, moments, dlambdaNew );
+            alphaNew = alpha - _alpha * H * grad;
+            ComputeGradient( alphaNew, sol, moments, dalphaNew );
         }
 
         // Line Search
 
         int lineSearchCounter = 0;
 
-        while( norm( dlambda ) < norm( dlambdaNew ) || !std::isfinite( norm( dlambdaNew ) ) ) {
+        while( norm( dalpha ) < norm( dalphaNew ) || !std::isfinite( norm( dalphaNew ) ) ) {
             stepSize *= 0.5;
 
-            lambdaNew = lambda - stepSize * _alpha * H * grad;
-            ComputeGradient( lambdaNew, sol, moments, dlambdaNew );
+            alphaNew = alpha - stepSize * _alpha * H * grad;
+            ComputeGradient( alphaNew, sol, moments, dalphaNew );
 
             // Check if FONC is fullfilled
-            if( norm( dlambdaNew ) < _epsilon ) {
-                lambda = lambdaNew;
+            if( norm( dalphaNew ) < _epsilon ) {
+                alpha = alphaNew;
                 return;
             }
             else if( ++lineSearchCounter > _maxLineSearches ) {
                 ErrorMessages::Error( "Newton needed too many refinement steps!  at cell " + std::to_string( idx_cell ), CURRENT_FUNCTION );
             }
         }
-        lambda = lambdaNew;
-        if( norm( dlambdaNew ) < _epsilon ) {
-            lambda = lambdaNew;
+        alpha = alphaNew;
+        if( norm( dalphaNew ) < _epsilon ) {
+            alpha = alphaNew;
             return;
         }
     }
@@ -180,10 +183,14 @@ void NewtonOptimizer::Solve( Vector& lambda, Vector& sol, const VectorVector& mo
     }
     uSolString += ").";
 
-    Vector u1     = { sol[1], sol[2], sol[3] };
-    double normU1 = norm( u1 );
-    ErrorMessages::Error( "Newton did not converge at cell " + std::to_string( idx_cell ) + "\n" + uSolString +
-                              "\nNorm of gradient: " + std::to_string( norm( dlambdaNew ) ) + "\nObjective function value: " +
-                              std::to_string( ComputeObjFunc( lambda, sol, moments ) ) + "\nBoundary Ratio: " + std::to_string( normU1 / sol[0] ),
-                          CURRENT_FUNCTION );
+    if( _settings->GetDim() != 1 ) {
+        Vector u1     = { sol[1], sol[2], sol[3] };
+        double normU1 = norm( u1 );
+        ErrorMessages::Error( "Newton did not converge at cell " + std::to_string( idx_cell ) + "\n" + uSolString +
+                                  "\nNorm of gradient: " + std::to_string( norm( dalphaNew ) ) + "\nObjective function value: " +
+                                  std::to_string( ComputeObjFunc( alpha, sol, moments ) ) + "\nBoundary Ratio: " + std::to_string( normU1 / sol[0] ),
+                              CURRENT_FUNCTION );
+    }
+    if( _settings->GetDim() == 1 ) {
+    }
 }
