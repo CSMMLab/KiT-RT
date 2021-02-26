@@ -2,6 +2,9 @@
 Theory
 ================
 
+The Boltzmann equation
+---------
+
 A physical system exhibit different behaviors at characteristic different scales.
 We are interested in the transport phenomena of many particle systems.
 Down to the finest scale of a many-particle system, the Newton’s second law depicts particle motions via
@@ -18,9 +21,9 @@ which leads
 
 An intuitive numerical solution algorithm is to get the numerous particles on board and track the trajectories of them. 
 A typical example is the molecular dynamics (MD) method.
-This is not going to be efficient since there are more than :math:`2\times 10^25` molecules per cubic meter in normal atmosphere, 
+This is not going to be efficient since there are more than :math:`2\times 10^{25}` molecules per cubic meter in normal atmosphere, 
 and things get extremely complicated if the N-body interactions are counted all the time. 
-Some methods have been proposed to simplify the computation. 
+Simplifications can be conducted to accelerate the numerical computation.
 As an example, the Monte Carlo method employs certain particle models and conduct the interactions in a stochastic manner. 
 It significantly reduces the computational cost, while the trade-off is the artificial fluctuations.
 Many realizations must be simulated successively to average the solutions and reduce the errors.
@@ -34,14 +37,16 @@ The Boltzmann equation can be formulated via an operator splitting approach.
    \partial_{t} f(v)+v \cdot \nabla_{x} f(v)=\int_{\mathcal R^3} \int_{\mathcal S^2} k\left(v, v^{\prime}\right) \left(f\left(v^{\prime}\right)f\left(v_*^{\prime}\right)-f(v)f(v_*)\right) d\Omega d v_*
 
 where the left and right hand sides model particle transports and collisions correspondingly. 
-The distribution function :math:`f` is the probability of finding a particle with certain location, and :math:`{v, v_*}` denotes the velocities of two classes of colliding particles. 
+The distribution function :math:`f` is the probability of finding a particle with certain location, and :math:`\{v, v_*\}` denotes the velocities of two classes of colliding particles. 
 The collision kernel :math:`k` models the strength of collisions at different velocities.
-Different collision models can be inserted into this framework.
+
+Different collision models can be inserted into the Boltzmann equation.
 In the KiT-RT solver, we are interested in the linear Boltzmann equation, where the particles don't interact with one another but scatter with the background material.
 Therefore, the Boltzmann can be simplified as the linear equation with respect to :math:`f`.
 
 .. math::
     :label: linbz
+    
     \partial_{t} f(v)+v \cdot \nabla_{x} f(v)=\sigma \int k\left(v, v^{\prime}\right)\left(f\left(v^{\prime}\right)-f(v)\right) d v^{\prime}-\tau f(v)
 
 It is often reformulated with polar coordinates
@@ -53,9 +58,9 @@ For convenience, we reformulate the particle velocity into polar coordinates.
 .. math::
     :label: boltzmann
 
-    \frac{\partial \psi}{\partial t}+v \cdot \nabla_x \psi = Q(\psi)
+    \frac{\partial \psi}{\partial t}+\Omega \cdot \nabla_x \psi = Q(\psi)
 
-The particle distribution :math:`\psi` is often called angular flux.
+The particle distribution :math:`\psi(t, x, \Omega, E)` is often called angular flux.
 
 
 The continuous slowing down approximation
