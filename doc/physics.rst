@@ -5,8 +5,8 @@ Theory
 The Boltzmann equation
 ---------
 
-A physical system exhibit different behaviors at characteristic different scales.
-We are interested in the transport phenomena of many particle systems.
+The particle transport phenomena enjoy rich academic research value and application prospects.
+A many-particle system can exhibit different behaviors at characteristic different scales.
 Down to the finest scale of a many-particle system, the Newton’s second law depicts particle motions via
 
 .. math::
@@ -23,6 +23,7 @@ An intuitive numerical solution algorithm is to get the numerous particles on bo
 A typical example is the molecular dynamics (MD) method.
 This is not going to be efficient since there are more than :math:`2\times 10^{25}` molecules per cubic meter in normal atmosphere, 
 and things get extremely complicated if the N-body interactions are counted all the time. 
+
 Simplifications can be conducted to accelerate the numerical computation.
 As an example, the Monte Carlo method employs certain particle models and conduct the interactions in a stochastic manner. 
 It significantly reduces the computational cost, while the trade-off is the artificial fluctuations.
@@ -53,15 +54,15 @@ It is often reformulated with polar coordinates
 
 
 where the particles don't interact with one another but scatter with the background material.
-For convenience, we reformulate the particle velocity into polar coordinates :math:`\{r, \phi, \theta \}`
+For convenience, we reformulate the particle velocity into polar coordinates :math:`\{r, \phi, \theta \}`.
 
 .. math::
     :label: porbz
    
-   &\left[\frac{1}{\mathrm{~V}} \frac{\partial}{\partial t}+\Omega \cdot \nabla+\Sigma(r, E, t)\right] \psi(r, \Omega, E, t) \\
-   &=\int_{0}^{\infty} d E^{\prime} \int_{\mathcal R^2} d \Omega^{\prime} \Sigma_{s}\left(r, \Omega^{\prime} \bullet \Omega, E^{\prime} \rightarrow E\right) \psi\left(r, \Omega^{\prime}, E^{\prime}, t\right)
+    &\left[\frac{1}{\mathrm{~V}} \frac{\partial}{\partial t}+\Omega \cdot \nabla+\Sigma(r, E, t)\right] \psi(r, \Omega, E, t) \\
+    &=\int_{0}^{\infty} d E^{\prime} \int_{\mathcal R^2} d \Omega^{\prime} \Sigma_{s}\left(r, \Omega^{\prime} \bullet \Omega, E^{\prime} \rightarrow E\right) \psi\left(r, \Omega^{\prime}, E^{\prime}, t\right)
 
-The particle distribution :math:`\psi(t, r, \Omega, E)` here is often named as angular flux.
+The particle distribution :math:`\psi(r, \Omega, E, t)` here is often named as angular flux.
 
 
 The continuous slowing down approximation
@@ -199,10 +200,3 @@ which gives
 .. math::
     D(x) =& -\int_{\infty}^{0} \int_{\mathbb{S}^2} \frac{1}{\rho(x)}\bar \psi(\bar E,x,\Omega)\frac{1}{S(E(\bar E))}\,d\Omega d\bar E\\
     =& \int_{0}^{\infty} \frac{1}{\rho(x)S(E(\bar E))}\int_{\mathbb{S}^2} \bar \psi(\bar E,x,\Omega)\,d\Omega d\bar E.
-
-.. math::
-    &\widehat{\psi}(E,x,\Omega) := \widetilde{\widehat{\psi}}(\widetilde E,x,\Omega)  :=\bar{\psi}(\bar{E},x,\Omega),\\
-    &dE = -S(E) d\bar E(E), \\
-    &D(x) = -\int_{\infty}^{0} \int_{\mathbb{S}^2} \frac{1}{\rho(x)}\bar \psi(\bar E,x,\Omega)S(E(\bar E))d\Omega d\bar E
-    = \int_{0}^{\infty} \frac{S(E(\bar E))}{\rho(x)}\int_{\mathbb{S}^2} \bar \psi(\bar E,x,\Omega)\,d\Omega d\bar E.
-
