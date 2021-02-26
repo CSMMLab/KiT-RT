@@ -79,3 +79,7 @@ the two-body collision results in nonlinear Boltzmann equation
 
    Q(f)=\int_{\mathbb R^3} \int_{\mathcal S^2} \mathcal B(\cos \beta, |\mathbf{v}-\mathbf{v_*}|) \left[ f(\mathbf v')f(\mathbf v_*')-f(\mathbf v)f(\mathbf v_*)\right] d\mathbf \Omega d\mathbf v_*
 
+
+
+The continuous slowing down approximation
+---------
