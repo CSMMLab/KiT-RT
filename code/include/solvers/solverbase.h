@@ -90,7 +90,7 @@ class SolverBase
         @param idx_iter : current (peudo) time iteration */
     virtual void IterPreprocessing( unsigned idx_iter ) = 0;
     /*! @brief Performs postprocessing for the current solver iteration */
-    virtual void IterPostprocessing() = 0;
+    virtual void IterPostprocessing( unsigned idx_pseudotime ) = 0;
     /*! @brief Constructs  the flux update for the current iteration and stores it in psiNew*/
     virtual void FluxUpdate() = 0;
     /*! @brief Computes the finite Volume update step for the current iteration
