@@ -1,5 +1,9 @@
 .. _implementation:
 
+================
+Implementation
+================
+
 Finite volume method
 ------------------------
 
