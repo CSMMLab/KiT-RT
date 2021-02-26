@@ -54,10 +54,76 @@ For convenience, it is often reformulated with polar coordinates :math:`\{r, \ph
 
 .. math::
 
-    &\left[\frac{1}{v(E)} \partial_{t} +\Omega \cdot \nabla+\Sigma_t (r, E, t)\right] \psi(r, \Omega, E, t) \\
-    &=\int_{0}^{\infty} d E^{\prime} \int_{\mathcal R^2} d \Omega^{\prime} \Sigma_{s}\left(r, \Omega^{\prime} \bullet \Omega, E^{\prime} \rightarrow E\right) \psi\left(r, \Omega^{\prime}, E^{\prime}, t\right) + Q(r, \Omega, E, t).
+    &\left[\frac{1}{v(E)} \partial_{t} +\Omega \cdot \nabla+\Sigma_t (t, r, E)\right] \psi(t, r, \Omega, E) \\
+    &=\int_{0}^{\infty} d E^{\prime} \int_{\mathcal R^2} d \Omega^{\prime} \Sigma_{s}\left(r, \Omega^{\prime} \bullet \Omega, E^{\prime} \rightarrow E\right) \psi\left(t, r, \Omega^{\prime}, E^{\prime}\right) + Q(t, r, \Omega, E).
 
 The particle distribution :math:`\psi(r, \Omega, E, t)` here is often named as angular flux, :math:`\{\Sigma_s, \Sigma_t \}` are the scattering and total cross sections correspondingly, and :math:`Q` denotes a source term.
+
+
+The spherical harmonics moment equations
+---------
+
+The spherical harmonics (:math:`P_N`) method (cf. Brunner and Holloway [2005]) is one of several ways to solve the equation of radiative transfer. 
+It serves as an approximate method, i.e. the method of moments, to reduce the high dimensionality when the original kinetic equation of radiative transfer, which is formulated on a seven-dimensional domain.
+Let us consider the radiative transfer equation in one-dimensional physical space with only one energy group, i.e.
+
+.. math::
+
+   \partial_{t} \psi(t, z, \mu) &+\mu \nabla_{z} \psi(t, z, \mu)+\Sigma_{t}(t, z) \psi(t, z, \mu) \\
+   &=\int_{\mathcal S^{2}} \Sigma_{s}\left(t, z, \mu \cdot \Omega^{\prime}\right) \psi\left(t, z, \mu^{\prime}\right) d \mu^{\prime}+q(t, z, \mu),
+
+where :math:`\mu` is the projected angular variable on :math:`z` axis.
+
+To obtain the :math:`P_N` equations, we express the angular dependence of the distribution function in terms of a Fourier series,
+.. math::
+
+   \psi(t, z, \mu)=\sum_{\ell=0}^{\infty} \psi_{\ell}(t, z) \frac{2 \ell+1}{2} P_{\ell}(\mu),
+
+where :math:`P_{\ell}` are the Legendre polynomials.
+These form an orthogonal basis of the space
+of polynomials with respect to the standard scalar product on :math:`[−1, 1]`.
+We can then obtain
+.. math::
+
+   \partial_{t} \psi_{\ell}+\partial_{z} \int_{=1}^{1} \mu P_{\ell} \psi \mathrm{d} \mu+\Sigma_{t \ell} \psi_{\ell}=q_{\ell},
+
+where 
+
+.. math::
+
+   \Sigma_{t \ell}=\Sigma_{t}-\Sigma_{s \ell}=\Sigma_{a}+\Sigma_{s 0}-\Sigma_{s \ell},  \quad \Sigma_{s \ell}=2 \pi \int_{-1}^{1} P_{\ell}(\mu) \Sigma_{s}(\mu) \mathrm{d} \mu.
+
+Two properties of the spherical harmonics are crucial for our method. These appear here as properties of the Legendre polynomials. First, we observe that, by this
+procedure, we have diagonalized the scattering operator on the right-hand side (the
+Legendre polynomials are the eigenfunctions of scattering operator). 
+Second, a general property of orthogonal polynomials is that they satisfy a recursion relation. In
+particular, the Legendre polynomials satisfy
+
+.. math::
+
+   \mu P_{\ell}(\mu)=\frac{\ell}{2 \ell+1} P_{\ell-1}(\mu)+\frac{\ell+1}{2 \ell+1} P_{\ell+1}(\mu).
+
+Using this fact and truncating the expansion at :math:`\ell = N`, we arrive at the slab-geometry
+:math:`P_N` equations,
+
+.. math::
+
+   \partial_{t} \psi_{\ell}+\partial_{z}\left(\frac{\ell+1}{2 \ell+1} \psi_{\ell+1}+\frac{\ell}{2 \ell+1} \psi_{\ell-1}\right)+\Sigma_{t \ell} \psi_{\ell}=q_{\ell}.
+
+The above method can be extended to multi-dimensional case with the help of spherical harmonics, which are defined as
+
+.. math::
+
+   Y_{\ell}^{m}(\mu, \phi)=(-1)^{m} \sqrt{\frac{2 \ell+1}{4 \pi} \frac{(\ell-m) !}{(\ell+m) !}} e^{i m \phi} P_{\ell}^{m}(\mu),
+
+where :math:`\ell \leq 0` and :math:`\ell \leq m \leq -\ell`.
+
+
+The entropy closure moment equations
+---------
+
+
+
 
 
 The continuous slowing down approximation
