@@ -35,13 +35,13 @@ class Checkerboard_PN : public ProblemBase
     bool isAbsorption( const Vector& pos ) const; /*!< @return True if pos is in absorption region, False otherwise */
     bool isSource( const Vector& pos ) const;     /*!< @return True if pos is in source region, False otherwise */
 
-    /**
+    /*!
      * @brief Gets the global index for given order l of Legendre polynomials and given
      *        order k of Legendre functions.
      *        Note: This is code doubling from PNSolver::GlobalIndex
-     * @param l : order of Legendre polynomial
-     * @param k : order of Legendre function
-     * @returns global index
+     * @param l  order of Legendre polynomial
+     * @param k  order of Legendre function
+     * @returns globalIndex
      */
     int GlobalIndex( int l, int k ) const;
 
