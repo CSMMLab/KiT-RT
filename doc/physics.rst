@@ -50,19 +50,15 @@ Therefore, the Boltzmann can be simplified as the linear equation with respect t
     
     \partial_{t} f(v)+v \cdot \nabla_{x} f(v)=\int k\left(v, v^{\prime}\right)\left(f\left(v^{\prime}\right)-f(v)\right) d v^{\prime}-\tau f(v)
 
-It is often reformulated with polar coordinates
-
-
-where the particles don't interact with one another but scatter with the background material.
-For convenience, we reformulate the particle velocity into polar coordinates :math:`\{r, \phi, \theta \}`.
+For convenience, it is often reformulated with polar coordinates :math:`\{r, \phi, \theta \}`.
 
 .. math::
     :label: porbz
    
-    &\left[\frac{1}{\mathrm{~V}} \frac{\partial}{\partial t}+\Omega \cdot \nabla+\Sigma(r, E, t)\right] \psi(r, \Omega, E, t) \\
-    &=\int_{0}^{\infty} d E^{\prime} \int_{\mathcal R^2} d \Omega^{\prime} \Sigma_{s}\left(r, \Omega^{\prime} \bullet \Omega, E^{\prime} \rightarrow E\right) \psi\left(r, \Omega^{\prime}, E^{\prime}, t\right)
+    &\left[\frac{1}{v(E)} \frac{\partial}{\partial t}+\Omega \cdot \nabla+\Sigma_t (r, E, t)\right] \psi(r, \Omega, E, t) \\
+    &=\int_{0}^{\infty} d E^{\prime} \int_{\mathcal R^2} d \Omega^{\prime} \Sigma_{s}\left(r, \Omega^{\prime} \bullet \Omega, E^{\prime} \rightarrow E\right) \psi\left(r, \Omega^{\prime}, E^{\prime}, t\right) + Q(r, \Omega, E, t)
 
-The particle distribution :math:`\psi(r, \Omega, E, t)` here is often named as angular flux.
+The particle distribution :math:`\psi(r, \Omega, E, t)` here is often named as angular flux, :math:`\{\Sigma_s, \Sigma_t \}` are the scattering and total cross sections correspondingly, and :math:`Q` denotes a source term.
 
 
 The continuous slowing down approximation
@@ -74,7 +70,8 @@ For the radiation therapy, the main goal is to compute the radiation dose accura
 
     D(x)=\frac{1}{\rho(x)}\int_0^{\infty}\int_{\mathbb{S}^2}S(E,x)\psi(E,x,\Omega)\,d\Omega dE.
 
-The angular flux $\psi$ can be approximated by a further approximation equation, i.e. the continuous slowing down (CSD) equation which reads
+where :math:`\rho(x)` is the background material density.
+The angular flux :math:`\psi` can be approximated by a further approximation equation, i.e. the continuous slowing down (CSD) equation which reads
 
 .. math::
     &-\partial_E\left(S(E,x)\psi(E,x,\Omega)\right)+\Omega\cdot\nabla_x\psi(E,x,\Omega)+\Sigma_t(E,x)\psi(E,x,\Omega) \\
@@ -86,27 +83,29 @@ The stopping power :math:`S` is given by
 .. math::
     S(E,x) = \int_0^{\infty} E'\int_{-1}^1\Sigma(E,E',x,\mu)d\mu dE'.
 
-Since there are no absorption effects, the total cross section is given by
+Let us assume there are no absorption effects, and thus the total cross section is given by
 
 .. math::
 
     \Sigma_t(E,x) = \Sigma_{s,0}(E,x)=2\pi \int_{-1}^1\Sigma_s(E,x,\mu)d\mu.
 
-With a given background material density :math:`\rho(x)` now make the following assumptions
+With a given :math:`\rho(x)`, we now make the following assumptions
 
 .. math::
-    S(E,x) = S^{H_2O}(E)\rho(x), \\
-    \Sigma_t(E,x) = \Sigma_t^{H_2O}(E)\rho(x), \\
-    \Sigma_s(E,x,\Omega\cdot\Omega') = \Sigma_s(E,\Omega\cdot\Omega')\rho(x).
+    &S(E,x) = S^{H_2O}(E)\rho(x), \\
+    &\Sigma_t(E,x) = \Sigma_t^{H_2O}(E)\rho(x), \\
+    &\Sigma_s(E,x,\Omega\cdot\Omega') = \Sigma_s(E,\Omega\cdot\Omega')\rho(x).
 
-Leaving out the superscript :math:`H_2O`, the CSD equation simplifies to
+Leaving out the superscript :math:`H_2O`, the CSD equation can be simplified as
 
 .. math::
    :label: CSD2
 
-    -\partial_E\left(\rho(x)S(E)\psi(E,x,\Omega)\right)+\Omega\cdot\nabla_x\psi(E,x,\Omega)+\rho(x)\Sigma_t(E)\psi(E,x,\Omega) = \int_{\mathbb{S}^2}\rho(x)\Sigma_s(E,\Omega\cdot\Omega')\psi(E,x,\Omega')d\Omega'.    
+    &-\partial_E\left(\rho(x)S(E)\psi(E,x,\Omega)\right)+\Omega\cdot\nabla_x\psi(E,x,\Omega)+\rho(x)\Sigma_t(E)\psi(E,x,\Omega) \\
+    &= \int_{\mathbb{S}^2}\rho(x)\Sigma_s(E,\Omega\cdot\Omega')\psi(E,x,\Omega')d\Omega'.    
 
-Now, we bring this system in a form which resembles the standard Boltzmann equation. Multiplying \eqref{eq:CSD2} with :math:`S(E)` gives
+Now, we bring this system in a form which resembles the standard Boltzmann equation. 
+Multiplying :ref:`CSD2` with :math:`S(E)` gives
 
 .. math::
    :label: CSD3
@@ -150,7 +149,7 @@ And by rearranging the terms, we finally get
     \partial_{ E}\widetilde{\widehat{\psi}}(\widetilde E,x,\Omega) = \partial_{\widetilde{E}}\widetilde{\widehat{\psi}}(\widetilde E,x,\Omega)\frac{1}{S(E(\widetilde E))},
 
 since :math:`S(E(\widetilde E))` is nonzero.
-Therefore, substituting :math:`\widetilde E` in \eqref{eq:CSD4} gives
+Therefore, substituting :math:`\widetilde E` in :ref:`CSD4` gives
 
 .. math::
    :label: CSD5
