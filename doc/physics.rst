@@ -3,7 +3,7 @@ Theory
 ================
 
 The Boltzmann equation
----------
+----------------------
 
 The particle transport phenomena enjoy rich academic research value and application prospects.
 A many-particle system can exhibit different behaviors at characteristic different scales.
@@ -61,7 +61,7 @@ The particle distribution :math:`\psi(r, \Omega, E, t)` here is often named as a
 
 
 The spherical harmonics moment equations
----------
+----------------------------------------
 
 The spherical harmonics (:math:`P_N`) method (cf. Brunner and Holloway [2005]) is one of several ways to solve the equation of radiative transfer. 
 It serves as an approximate method, i.e. the method of moments, to reduce the high dimensionality when the original kinetic equation of radiative transfer, which is formulated on a seven-dimensional domain.
@@ -122,7 +122,7 @@ where :math:`\ell \leq 0` and :math:`\ell \leq m \leq -\ell`.
 
 
 The entropy closure moment equations
----------
+------------------------------------
 
 Another method of moments comes from the minimal principle of a convex entropy to close the moment system.
 Derivation of such moment system begins with the choice of a vector-valued function
@@ -189,7 +189,7 @@ dual problem
 
 
 The continuous slowing down approximation
----------
+-----------------------------------------
 
 For the radiation therapy, the main goal is to compute the radiation dose accurately, which is defined as
 
