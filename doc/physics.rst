@@ -134,7 +134,7 @@ over all angles to give
 
 .. math::
 
-   \frac{1}{v} \partial_{t} u+\nabla_{x} \cdot\langle\Omega m \psi\rangle=\langle m \mathcal{C}(\psi)\rangle
+   \frac{1}{v} \partial_{t} u+\nabla_{x} \cdot\langle\Omega m \psi\rangle=\langle m \mathcal{C}(\psi)\rangle.
 
 The system above is not closed; a recipe, or closure, must be prescribed to express
 unknown quantities in terms of the given moments. Often this is done via an
@@ -142,7 +142,7 @@ approximation for :math:`\psi` that depends on :math:`u`,
 
 .. math::
 
-   \psi(x, \Omega, t) \simeq \mathcal{E}(u(x, t))(\Omega)
+   \psi(x, \Omega, t) \simeq \mathcal{E}(u(x, t))(\Omega).
 
 A general strategy for prescribing a closure is to
 use the solution of a constrained optimization problem
@@ -151,8 +151,7 @@ use the solution of a constrained optimization problem
    :label: closure
 
    \min_{g \in \operatorname{Dom}(\mathcal{H})} & \mathcal{H}(g) \\
-   \quad \text { s.t. } & \langle\mathbf{m} g\rangle=\langle\mathbf{m} \psi\rangle=u
-   \end{array}
+   \quad \text { s.t. } & \langle\mathbf{m} g\rangle=\langle\mathbf{m} \psi\rangle=u,
 
 where :math:`\mathcal H(g)=\langle \eta(g) \rangle` and $\eta: \mathbb R \rightarrow \mathbb R$
 is a convex function that is related to
@@ -161,21 +160,27 @@ Bose-Einstein statistics
 
 .. math::
 
-   \eta(g)=\frac{2 k \nu^{2}}{c^{3}}\left[n_{g} \log \left(n_{g}\right)-\left(n_{g}+1\right) \log \left(n_{g}+1\right)\right]
+   \eta(g)=\frac{2 k \nu^{2}}{v^{3}}\left[n_{g} \log \left(n_{g}\right)-\left(n_{g}+1\right) \log \left(n_{g}+1\right)\right],
+
+where :math:`n_g` is the occupation number associated with g,
+
+.. math::
+
+   n_{g}:=\frac{v^{2}}{2 h \nu^{3}} g.
 
 The solution of :eq:`closure` is expressed in terms of the Legendre dual
 
 .. math::
 
-   \eta_{*}(f)=-\frac{2 k \nu^{2}}{c^{3}} \log \left(1-\exp \left(-\frac{h \nu c}{k} f\right)\right)
+   \eta_{*}(f)=-\frac{2 k \nu^{2}}{v^{3}} \log \left(1-\exp \left(-\frac{h \nu c}{k} f\right)\right).
 
 Let
 
 .. math::
 
-   \mathcal{B}(\boldsymbol{\alpha}):=\eta_{*}^{\prime}\left(\boldsymbol{\alpha}^{T} \mathbf{m}\right)=\frac{2 h \nu^{3}}{c^{2}} \frac{1}{\exp \left(-\frac{h \nu c}{k} \boldsymbol{\alpha}^{T} \mathbf{m}\right)-1}
+   \mathcal{B}(\boldsymbol{\alpha}):=\eta_{*}^{\prime}\left(\boldsymbol{\alpha}^{T} \mathbf{m}\right)=\frac{2 h \nu^{3}}{v^{2}} \frac{1}{\exp \left(-\frac{h \nu c}{k} \boldsymbol{\alpha}^{T} \mathbf{m}\right)-1},
 
-The solution of :eq:`closure` is given by :math:`\mathcal B(\hat \alpha)`, where :math:`\hat \alpha= \hat \alpha(u)` solves the
+then the solution of :eq:`closure` is given by :math:`\mathcal B(\hat \alpha)`, where :math:`\hat \alpha= \hat \alpha(u)` solves the
 dual problem
 
 .. math::
