@@ -165,7 +165,7 @@ void Solver::Solve() {
         FVMUpdate( iter );
 
         // --- Iter Postprocessing ---
-        IterPostprocessing();
+        IterPostprocessing( iter );
 
         // --- Solver Output ---
         WriteVolumeOutput( iter );

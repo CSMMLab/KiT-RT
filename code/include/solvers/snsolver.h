@@ -30,7 +30,7 @@ class SNSolver : public Solver
     void virtual FVMUpdate( unsigned idx_energy ) override;
     void virtual FluxUpdate() override;
     void virtual IterPreprocessing( unsigned idx_pseudotime ) override;
-    void virtual IterPostprocessing() override;
+    void virtual IterPostprocessing( unsigned idx_energy ) override;
 
     // Helper
     void ComputeRadFlux();

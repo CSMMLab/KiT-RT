@@ -358,7 +358,7 @@ void CSDSolverTrafoFP2D::IterPreprocessing( unsigned idx_pseudotime ) {
     }
 }
 
-void CSDSolverTrafoFP2D::IterPostprocessing() {
+void CSDSolverTrafoFP2D::IterPostprocessing( unsigned idx_energy ) {
     // --- Update Solution ---
     for( unsigned j = 0; j < _nCells; ++j ) {
         if( _boundaryCells[j] == BOUNDARY_TYPE::DIRICHLET ) continue;

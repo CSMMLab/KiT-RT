@@ -152,7 +152,7 @@ void MNSolver::IterPreprocessing( unsigned /*idx_pseudotime*/ ) {
     }
 }
 
-void MNSolver::IterPostprocessing() {
+void MNSolver::IterPostprocessing( unsigned idx_energy ) {
     // --- Update Solution ---
     _sol = _solNew;
 

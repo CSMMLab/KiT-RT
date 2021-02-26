@@ -183,7 +183,7 @@ void CSDSolverTrafoFP::FVMUpdate( unsigned /*idx_energy*/ ) {
     }
 }
 
-void CSDSolverTrafoFP::IterPostprocessing() {
+void CSDSolverTrafoFP::IterPostprocessing( unsigned idx_energy ) {
     // --- Update Solution ---
     _sol = _solNew;
 

@@ -57,7 +57,7 @@ void PNSolver::IterPreprocessing( unsigned /*idx_pseudotime*/ ) {
     // Nothing to preprocess for PNSolver
 }
 
-void PNSolver::IterPostprocessing() {
+void PNSolver::IterPostprocessing( unsigned idx_energy ) {
     // --- Update Solution ---
     _sol = _solNew;
 
