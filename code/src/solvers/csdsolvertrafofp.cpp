@@ -17,7 +17,7 @@ CSDSolverTrafoFP::CSDSolverTrafoFP( Config* settings ) : SNSolver( settings ) {
     // Set angle and energies
     _energies  = Vector( _nEnergies, 0.0 );    // equidistant
     _energyMin = 1e-4 * 0.511;
-    _energyMax = 10e0;
+    _energyMax = _settings->GetMaxEnergyCSD();
 
     // write equidistant energy grid (false) or refined grid (true)
     GenerateEnergyGrid( false );
@@ -354,7 +354,7 @@ void CSDSolverTrafoFP::WriteVolumeOutput( unsigned idx_pseudoTime ) {
                 case MEDICAL:
                     // Compute Dose
                     for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
-                        _outputFields[idx_group][0][idx_cell] += _dose[idx_cell];
+                        _outputFields[idx_group][0][idx_cell] = _dose[idx_cell];
                     }
                     // Compute normalized dose
                     _outputFields[idx_group][1] = _outputFields[idx_group][0];
