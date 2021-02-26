@@ -36,8 +36,8 @@ TEST_CASE( "SN_SOLVER", "[validation_tests]" ) {
     SECTION( "checkerboard" ) {
         std::string config_file_name = std::string( TESTS_PATH ) + sn_fileDir + "checkerboard_SN.cfg";
 
-        Config* config = new Config( config_file_name );
-        Solver* solver = Solver::Create( config );
+        Config* config     = new Config( config_file_name );
+        SolverBase* solver = SolverBase::Create( config );
 
         solver->Solve();
         solver->PrintVolumeOutput();
@@ -57,8 +57,8 @@ TEST_CASE( "SN_SOLVER", "[validation_tests]" ) {
     SECTION( "linesource" ) {
         std::string config_file_name = std::string( TESTS_PATH ) + sn_fileDir + "linesource_SN.cfg";
 
-        Config* config = new Config( config_file_name );
-        Solver* solver = Solver::Create( config );
+        Config* config     = new Config( config_file_name );
+        SolverBase* solver = SolverBase::Create( config );
         solver->Solve();
         solver->PrintVolumeOutput();
 
@@ -80,8 +80,8 @@ TEST_CASE( "PN_SOLVER", "[validation_tests]" ) {
     SECTION( "checkerboard" ) {
         std::string config_file_name = std::string( TESTS_PATH ) + pn_fileDir + "checkerboard_PN.cfg";
 
-        Config* config = new Config( config_file_name );
-        Solver* solver = Solver::Create( config );
+        Config* config     = new Config( config_file_name );
+        SolverBase* solver = SolverBase::Create( config );
         solver->Solve();
         solver->PrintVolumeOutput();
 
@@ -100,8 +100,8 @@ TEST_CASE( "PN_SOLVER", "[validation_tests]" ) {
     SECTION( "linesource" ) {
         std::string config_file_name = std::string( TESTS_PATH ) + pn_fileDir + "linesource_PN.cfg";
 
-        Config* config = new Config( config_file_name );
-        Solver* solver = Solver::Create( config );
+        Config* config     = new Config( config_file_name );
+        SolverBase* solver = SolverBase::Create( config );
         solver->Solve();
         solver->PrintVolumeOutput();
 
@@ -125,8 +125,8 @@ TEST_CASE( "MN_SOLVER", "[validation_tests]" ) {
     SECTION( "checkerboard" ) {
         std::string config_file_name = std::string( TESTS_PATH ) + mn_fileDir + "checkerboard_MN.cfg";
 
-        Config* config = new Config( config_file_name );
-        Solver* solver = Solver::Create( config );
+        Config* config     = new Config( config_file_name );
+        SolverBase* solver = SolverBase::Create( config );
         solver->Solve();
         solver->PrintVolumeOutput();
 
@@ -149,8 +149,8 @@ TEST_CASE( "MN_SOLVER", "[validation_tests]" ) {
         {
             std::string config_file_name = std::string( TESTS_PATH ) + mn_fileDir + "linesource_MN_Quad.cfg";
 
-            Config* config = new Config( config_file_name );
-            Solver* solver = Solver::Create( config );
+            Config* config     = new Config( config_file_name );
+            SolverBase* solver = SolverBase::Create( config );
             solver->Solve();
             solver->PrintVolumeOutput();
 
@@ -170,8 +170,8 @@ TEST_CASE( "MN_SOLVER", "[validation_tests]" ) {
         {    // ---  Maxwell Boltzmann Entropy ---
             std::string config_file_name = std::string( TESTS_PATH ) + mn_fileDir + "linesource_MN_MB.cfg";
 
-            Config* config = new Config( config_file_name );
-            Solver* solver = Solver::Create( config );
+            Config* config     = new Config( config_file_name );
+            SolverBase* solver = SolverBase::Create( config );
             solver->Solve();
             solver->PrintVolumeOutput();
 
@@ -197,7 +197,7 @@ TEST_CASE( "CSD_SN_FP_SOLVER", "[validation_tests]" ) {
         std::string config_file_name = std::string( TESTS_PATH ) + csd_sn_fileDir + "waterphantom_1D.cfg";
 
         Config* config = new Config( config_file_name );
-        Solver* solver = Solver::Create( config );
+        SolverBase* solver = SolverBase::Create( config );
         solver->Solve();
         solver->PrintVolumeOutput();
         auto test      = readVTKFile( std::string( TESTS_PATH ) + "result/rtsn_test_waterphantom_1D_CSD_FP.vtk" );
@@ -220,7 +220,7 @@ TEST_CASE( "CSD_SN_FP_2D_SOLVER", "[validation_tests]" ) {
         std::string config_file_name = std::string( TESTS_PATH ) + csd_sn_fileDir + "waterphantom_2D.cfg";
 
         Config* config = new Config( config_file_name );
-        Solver* solver = Solver::Create( config );
+        SolverBase* solver = SolverBase::Create( config );
         solver->Solve();
         solver->PrintVolumeOutput();
         auto test      = readVTKFile( std::string( TESTS_PATH ) + "result/rtsn_test_waterphantom_2D_CSD_FP.vtk" );
@@ -243,7 +243,7 @@ TEST_CASE( "CSD_SN_FP_SH_2D_SOLVER", "[validation_tests]" ) {
         std::string config_file_name = std::string( TESTS_PATH ) + csd_sn_fileDir + "waterphantom_2D_sh.cfg";
 
         Config* config = new Config( config_file_name );
-        Solver* solver = Solver::Create( config );
+        SolverBase* solver = SolverBase::Create( config );
         solver->Solve();
         solver->PrintVolumeOutput();
         // solver->Save();
@@ -281,8 +281,8 @@ TEST_CASE( "screen_output", "[output]" ) {
     std::string historyLoggerReference = std::string( TESTS_PATH ) + out_fileDir + "validate_logger_csv_reference";
     std::string historyLogger          = std::string( TESTS_PATH ) + "result/logs/validate_logger_output_csv";
 
-    Config* config = new Config( config_file_name );
-    Solver* solver = Solver::Create( config );
+    Config* config     = new Config( config_file_name );
+    SolverBase* solver = SolverBase::Create( config );
     solver->Solve();
 
     // Force Logger to flush

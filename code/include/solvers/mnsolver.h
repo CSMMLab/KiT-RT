@@ -7,7 +7,7 @@ class EntropyBase;
 class SphericalBase;
 class OptimizerBase;
 
-class MNSolver : public Solver
+class MNSolver : public SolverBase
 {
   public:
     /**

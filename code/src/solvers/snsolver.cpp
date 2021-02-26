@@ -13,7 +13,7 @@
 #include <iostream>
 #include <mpi.h>
 
-SNSolver::SNSolver( Config* settings ) : Solver( settings ) {
+SNSolver::SNSolver( Config* settings ) : SolverBase( settings ) {
 
     _quadPoints = _quadrature->GetPoints();
     _weights    = _quadrature->GetWeights();

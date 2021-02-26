@@ -3,7 +3,7 @@
 
 #include "solvers/solverbase.h"
 
-class PNSolver : public Solver
+class PNSolver : public SolverBase
 {
   public:
     /*! @brief PNSolver constructor

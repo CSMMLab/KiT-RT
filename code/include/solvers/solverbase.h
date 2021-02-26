@@ -16,90 +16,90 @@ class ProblemBase;
 class QuadratureBase;
 class Reconstructor;
 
-class Solver
+/*! @brief Base class for all solvers. */
+class SolverBase
 {
   protected:
-    Mesh* _mesh;           /*! @brief mesh object for writing out information */
-    NumericalFlux* _g;     /*! @brief class for numerical flux */
-    Config* _settings;     /*! @brief config class for global information */
-    ProblemBase* _problem; /*! @brief problem class for initial conditions */
+    NumericalFlux* _g;     /*!< @brief class for numerical flux */
+    Config* _settings;     /*!< @brief config class for global information */
+    ProblemBase* _problem; /*!< @brief problem class for initial conditions */
 
     // --------- Often used variables of member classes for faster access ----
 
-    unsigned _nEnergies; /*! @brief number of energysteps, number of nodal energy values for CSD */
-    unsigned _maxIter;   /*! @brief number of time steps, for non CSD, this equals _nEnergies, for _csd, _maxIter = _nEnergies-1*/
-
-    double _dE;                      /*! @brief energy/time step size */
-    Vector _energies;                // energy groups used in the simulation [keV]
-    std::vector<double> _density;    // patient density, dim(_density) = _nCells
-    Vector _s;                       // stopping power, dim(_s) = _nTimeSteps (only for csdsolver)
-    std::vector<VectorVector> _Q;    /*!  @brief  external source term */
-
-    VectorVector _sigmaS; /*!  @brief scattering cross section for all energies. len: _nEnergies x numCells */
-    VectorVector _sigmaT; /*!  @brief total cross section for all energies.  len: _nEnergies x numCells*/
-
-    // quadrature related numbers
-    QuadratureBase* _quadrature; /*! @brief quadrature to create members below */
-    unsigned _nq;                /*! @brief number of quadrature points */
-
-    // VectorVector _quadPoints;    /*!  @brief quadrature points, dim(_quadPoints) = (_nSystem,spatialDim) */
-    // Vector _weights;             /*!  @brief quadrature weights, dim(_weights) = (_NCells) */
+    // Time or Energystepping
+    unsigned _maxIter;   /*!< @brief number of time steps, for non CSD, this equals _nEnergies, for _csd, _maxIter = _nEnergies-1*/
+    unsigned _nEnergies; /*!< @brief number of energysteps, number of nodal energy values for CSD */
+    double _dE;          /*!< @brief energy/time step size */
+    Vector _energies;    /*!< @brief energy groups used in the simulation [keV] */
 
     // Mesh related members
-    unsigned _nCells;                          /*! @brief number of spatial cells */
-    std::vector<BOUNDARY_TYPE> _boundaryCells; /*! boundary type for all cells, dim(_boundary) = (_NCells) */
-    std::vector<double> _areas;                /*! @brief surface area of all spatial cells, dim(_areas) = _NCells */
-    /*! @brief edge normals multiplied by edge length, dim(_normals) = (_NCells,nEdgesPerCell,spatialDim) */
-    std::vector<std::vector<Vector>> _normals;
-    /*! @brief edge neighbor cell ids, dim(_neighbors) = (_NCells,nEdgesPerCell) */
-    std::vector<std::vector<unsigned>> _neighbors;
+    Mesh* _mesh;                               /*!< @brief mesh object for writing out information */
+    unsigned _nCells;                          /*!< @brief number of spatial cells */
+    std::vector<BOUNDARY_TYPE> _boundaryCells; /*!< @brief boundary type for all cells, dim(_boundary) = (_NCells) */
+    std::vector<double> _areas;                /*!< @brief surface area of all spatial cells, dim(_areas) = _NCells */
+    std::vector<std::vector<Vector>>
+        _normals; /*!< @brief edge normals multiplied by edge length, dim(_normals) = (_NCells,nEdgesPerCell,spatialDim) */
+    std::vector<std::vector<unsigned>> _neighbors; /*!< @brief edge neighbor cell ids, dim(_neighbors) = (_NCells,nEdgesPerCell) */
 
     // slope related params
-    Reconstructor* _reconstructor;                        /*! @brief reconstructor object for high-order scheme */
-    unsigned _reconsOrder;                                /*! @brief reconstruction order (current: 1 & 2) */
-    VectorVector _psiDx;                                  /*! @brief slope of solutions in X direction */
-    VectorVector _psiDy;                                  /*! @brief slope of solutions in Y direction */
-    VectorVector _cellMidPoints;                          /*! @brief middle point locations of elements */
-    std::vector<std::vector<Vector>> _interfaceMidPoints; /*! @brief middle point locations of edges */
+    Reconstructor* _reconstructor;                        /*!< @brief reconstructor object for high-order scheme */
+    unsigned _reconsOrder;                                /*!< @brief reconstruction order (current: 1 & 2) */
+    VectorVector _psiDx;                                  /*!< @brief slope of solutions in X direction */
+    VectorVector _psiDy;                                  /*!< @brief slope of solutions in Y direction */
+    VectorVector _cellMidPoints;                          /*!< @brief middle point locations of elements */
+    std::vector<std::vector<Vector>> _interfaceMidPoints; /*!< @brief middle point locations of edges */
+
+    std::vector<double> _density; /*!< @brief patient density, dim(_density) = _nCells (only for csdsolver) */
+    Vector _s;                    /*!< @brief stopping power, dim(_s) = _maxIter (only for csdsolver) */
+
+    std::vector<VectorVector> _Q; /*!< @brief external source term. Dim(_Q) = _maxIter x (_nCells x _nSystem) */
+    VectorVector _sigmaS;         /*!< @brief scattering cross section for all energies. len: _nEnergies x _nCells */
+    VectorVector _sigmaT;         /*!< @brief total cross section for all energies.  len: _nEnergies x _nCells*/
+
+    // quadrature related numbers
+    QuadratureBase* _quadrature; /*!< @brief pointer to quadrature class */
+    unsigned _nq;                /*!< @brief number of quadrature points */
 
     // Solution related members
-    VectorVector _sol;                 /*! @brief solution of the PDE, e.g. angular flux or moments */
-    std::vector<double> _solverOutput; /*! @brief LEGACY: Outputfield for solver ==> Will be replaced by _outputFields in the near future */
+    VectorVector _sol;    /*!< @brief solution of the PDE, e.g. angular flux or moments */
+    VectorVector _solNew; /*!< @brief VectorVector to store the new flux and later the new solution per iteration */
+    Vector _fluxNew;      /*!< @brief Vector to store the new Flux. Dim _nCells */
+    Vector _flux;         /*!< @brief Vector to store the old Flux. Dim _nCells*/
+
+    std::vector<double> _solverOutput; /*!< @brief LEGACY: Outputfield for solver ==> Will be replaced by _outputFields in the near future */
 
     // Output related members
-    std::vector<std::vector<std::vector<double>>> _outputFields; /*! @brief: Solver Output: dimensions (GroupID,FieldID,CellID).*/
-    std::vector<std::vector<std::string>> _outputFieldNames;     /*! @brief: Names of the outputFields: dimensions (GroupID,FieldID) */
+    std::vector<std::vector<std::vector<double>>> _outputFields; /*!< @brief: Solver Output: dimensions (GroupID,FieldID,CellID).*/
+    std::vector<std::vector<std::string>> _outputFieldNames;     /*!< @brief: Names of the outputFields: dimensions (GroupID,FieldID) */
     // we will have to add a further dimension for quadPoints and weights once we start with multilevel SN
 
     // Output related members
-    std::vector<double> _screenOutputFields;          /*! @brief: Solver Output: dimensions (FieldID). */
-    std::vector<std::string> _screenOutputFieldNames; /*! @brief: Names of the outputFields: dimensions (FieldID) */
+    std::vector<double> _screenOutputFields;          /*!< @brief: Solver Output: dimensions (FieldID). */
+    std::vector<std::string> _screenOutputFieldNames; /*!< @brief: Names of the outputFields: dimensions (FieldID) */
 
     // Output related members
-    std::vector<double> _historyOutputFields;          /*! @brief: Solver Output: dimensions (FieldID). */
-    std::vector<std::string> _historyOutputFieldNames; /*! @brief: Names of the outputFields: dimensions (FieldID) */
-
-    // Internal Members
-    VectorVector _solNew; /*! @brief: VectorVector to store the new flux and later the new solution per iteration */    // REPLACES psiNEW
-    Vector _fluxNew; /*! @brief: Vector to store the new Flux. Dim _nCells */
-    Vector _flux;    /*! @brief: Vector to store the old Flux. Dim _nCells*/
+    std::vector<double> _historyOutputFields;          /*!< @brief: Solver Output: dimensions (FieldID). */
+    std::vector<std::string> _historyOutputFieldNames; /*!< @brief: Names of the outputFields: dimensions (FieldID) */
 
     // ---- Member functions ----
 
     // Solver
-    /*! @brief Performs preprocessing steps before the pseudo time iteration is started */
+    /*! @brief Performs preprocessing steps before the pseudo time iteration is started*/
     virtual void SolverPreprocessing();
-    /*! @brief Performs preprocessing for the current solver iteration */
-    virtual void IterPreprocessing( unsigned idx_pseudotime ) = 0;
+    /*! @brief Performs preprocessing for the current solver iteration
+        @param idx_iter : current (peudo) time iteration */
+    virtual void IterPreprocessing( unsigned idx_iter ) = 0;
     /*! @brief Performs postprocessing for the current solver iteration */
     virtual void IterPostprocessing( unsigned idx_pseudotime ) = 0;
     /*! @brief Constructs  the flux update for the current iteration and stores it in psiNew*/
     virtual void FluxUpdate() = 0;
-    /*! @brief Computes the finite Volume update step for the current iteration */
-    virtual void FVMUpdate( unsigned idx_energy ) = 0;
+    /*! @brief Computes the finite Volume update step for the current iteration
+         @param idx_iter : current (peudo) time iteration */
+    virtual void FVMUpdate( unsigned idx_iter ) = 0;
 
     // Helper
-    /*! @brief ComputeTimeStep calculates the maximal stable time step */
+    /*! @brief ComputeTimeStep calculates the maximal stable time step using the cfl number
+        @param used cfl number */
     double ComputeTimeStep( double cfl ) const;
     /*! @brief: Computes the flux of the solution to check conservation properties */
     virtual void ComputeRadFlux() = 0;
@@ -107,23 +107,29 @@ class Solver
     // IO
     /*! @brief Initializes the output groups and fields of this solver and names the fields */
     virtual void PrepareVolumeOutput() = 0;
-    /*! @brief Function that prepares VTK export and csv export of the current solver iteration  */
-    virtual void WriteVolumeOutput( unsigned iteration ) = 0;
+    /*! @brief Function that prepares VTK export and csv export of the current solver iteration
+        @param idx_iter : current (pseudo) time iteration */
+    virtual void WriteVolumeOutput( unsigned idx_iter ) = 0;
     /*! @brief Save Output solution at given energy (pseudo time) to VTK file. Write frequency is given by
-               option VOLUME_OUTPUT_FREQUENCY. Always prints last iteration without iteration affix.*/
-    void PrintVolumeOutput( int currEnergy ) const;
+               option VOLUME_OUTPUT_FREQUENCY. Always prints last iteration without iteration affix.
+        @param idx_iter : current (pseudo) time iteration */
+    void PrintVolumeOutput( int idx_iter ) const;
     /*! @brief: Initialized the output fields and their Names for the screenoutput */
     void PrepareScreenOutput();
-    /*! @brief Function that writes screen and history output fields */
-    void WriteScalarOutput( unsigned iteration );
+
+    /*! @brief Function that writes screen and history output fields
+        @param idx_iter : current (pseudo) time iteration */
+    void WriteScalarOutput( unsigned idx_iter );
     /*! @brief Prints ScreenOutputFields to Screen and to logger. Write frequency is given by
-               option SCREEN_OUTPUT_FREQUENCY. Always prints last iteration. */
-    void PrintScreenOutput( unsigned iteration );
+               option SCREEN_OUTPUT_FREQUENCY. Always prints last iteration.
+        @param idx_iter : current (pseudo) time iteration */
+    void PrintScreenOutput( unsigned idx_iter );
     /*! @brief: Initialized the historyOutputFields and their Names for history output. Write frequency is given by
                option HISTORY_OUTPUT_FREQUENCY. Always prints last iteration. */
     void PrepareHistoryOutput();
-    /*! @brief Prints HistoryOutputFields to logger */
-    void PrintHistoryOutput( unsigned iteration );
+    /*! @brief Prints HistoryOutputFields to logger
+        @param idx_iter : current (pseudo) time iteration */
+    void PrintHistoryOutput( unsigned idx_iter );
     /*! @brief Pre Solver Screen and Logger Output */
     void DrawPreSolverOutput();
     /*! @brief Post Solver Screen and Logger Output */
@@ -131,17 +137,17 @@ class Solver
 
   public:
     /*! @brief Solver constructor
-     *  @param settings stores all needed information */
-    Solver( Config* settings );
+     *  @param settings :config class that stores all needed config information */
+    SolverBase( Config* settings );
 
-    virtual ~Solver();
+    virtual ~SolverBase();
 
     /*! @brief Create constructor
-     *  @param settings stores all needed information
-     *  @return pointer to Solver */
-    static Solver* Create( Config* settings );
+     *  @param settings :config class that stores all needed config information
+     *  @return pointer to SolverBase */
+    static SolverBase* Create( Config* settings );
 
-    /*! @brief Solve functions runs main time loop */
+    /*! @brief Solve functions runs main iteration loop. Components of the solve loop are pure virtual and subclassed by the child solvers.  */
     virtual void Solve();
 
     /*! @brief Save Output solution to VTK file */
