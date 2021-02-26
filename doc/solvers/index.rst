@@ -4,7 +4,7 @@ Solvers
 .. toctree::
    :maxdepth: 1
 
-   solver
+   solverbase
    csdsnsolver
    csdsnsolverfp
    csdsnsolvernotrafo

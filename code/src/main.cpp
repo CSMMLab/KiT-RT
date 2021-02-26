@@ -48,7 +48,7 @@ int main( int argc, char** argv ) {
     }
     else {
         // Build solver
-        Solver* solver = Solver::Create( config );
+        SolverBase* solver = SolverBase::Create( config );
 
         // Run solver and export
         solver->Solve();

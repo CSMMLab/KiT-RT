@@ -10,7 +10,7 @@
 #include "spdlog/spdlog.h"
 #include <mpi.h>
 
-PNSolver::PNSolver( Config* settings ) : Solver( settings ) {
+PNSolver::PNSolver( Config* settings ) : SolverBase( settings ) {
     _LMaxDegree    = settings->GetMaxMomentDegree();
     _nTotalEntries = GlobalIndex( int( _LMaxDegree ), int( _LMaxDegree ) ) + 1;
 

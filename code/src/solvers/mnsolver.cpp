@@ -17,7 +17,7 @@
 
 #include <iostream>
 
-MNSolver::MNSolver( Config* settings ) : Solver( settings ) {
+MNSolver::MNSolver( Config* settings ) : SolverBase( settings ) {
 
     _LMaxDegree    = settings->GetMaxMomentDegree();
     _basis         = SphericalBase::Create( _settings );
