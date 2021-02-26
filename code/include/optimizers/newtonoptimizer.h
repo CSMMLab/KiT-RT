@@ -35,12 +35,12 @@ class NewtonOptimizer : public OptimizerBase
     void ComputeHessian( Vector& alpha, const VectorVector& moments, Matrix& hessian );
 
     QuadratureBase* _quadrature; /*!< @brief used quadrature */    // THis is memory doubling! Try to use a pointer.
-    unsigned _nq; /*!< @brief number of quadrature points */
-    Vector _weights; /*!<  @brief quadrature weights, dim(_weights) = (_nq) */
+    unsigned _nq;                                                  /*!< @brief number of quadrature points */
+    Vector _weights;                                               /*!<  @brief quadrature weights, dim(_weights) = (_nq) */
 
-    double _epsilon; /*!< @brief Termination criterion for newton optimizer */
-    unsigned short _maxIterations; /*!< @brief Max iterations of the newton solver */
-    double _alpha; /*!< @brief Newton Step Size */
+    double _epsilon;                 /*!< @brief Termination criterion for newton optimizer */
+    unsigned short _maxIterations;   /*!< @brief Max iterations of the newton solver */
+    double _alpha;                   /*!< @brief Newton Step Size */
     unsigned short _maxLineSearches; /*!< @brief Max amount of line searches for Newton Algo */
 };
 

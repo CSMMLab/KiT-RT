@@ -1,8 +1,6 @@
 /*!
- * \file TextProcessingToolbox.h
+ * \file textprocessingtoolbox.h
  * \brief File with helper functions for text processing
- *
- *
  */
 
 #ifndef TEXTPROCESSINGTOOLBOX_H

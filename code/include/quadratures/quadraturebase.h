@@ -24,8 +24,8 @@ class QuadratureBase
     virtual ~QuadratureBase() {}
 
     // Aux functions
-    void PrintWeights(); /*!< @brief prints: Weight vector */
-    void PrintPoints(); /*!< @brief prints: Point vectorVector */
+    void PrintWeights();          /*!< @brief prints: Weight vector */
+    void PrintPoints();           /*!< @brief prints: Point vectorVector */
     void PrintPointsAndWeights(); /*!< @brief prints: Point vectorVector with corresponding weight vector */
 
     /*! @brief sums up all entries of the weight vector.
@@ -76,9 +76,9 @@ class QuadratureBase
   protected:
     // Setter
     inline void SetOrder( unsigned order ) { _order = order; } /*! @brief sets: order of the quadrature */
-    virtual void SetName()         = 0; /*!< @brief Sets: name of the quadrature */
-    virtual void SetNq()           = 0; /*!< @brief sets: number of gridpoints of the quadrature */
-    virtual void SetConnectivity() = 0; /*!< @brief sets: Connectivity Adjacency Matrix as VektorVektor*/
+    virtual void SetName()         = 0;                        /*!< @brief Sets: name of the quadrature */
+    virtual void SetNq()           = 0;                        /*!< @brief sets: number of gridpoints of the quadrature */
+    virtual void SetConnectivity() = 0;                        /*!< @brief sets: Connectivity Adjacency Matrix as VektorVektor*/
 
     /*! @brief Computes the a vector (length: nq) of (coordinates of) gridpoints used for the quadrature rule.
      *         Computes the a vector (length: nq) of weights for the gridpoints. The indices match the gridpoints VectorVector.
@@ -86,13 +86,13 @@ class QuadratureBase
     virtual void SetPointsAndWeights() = 0;
 
     // Member variables
-    Config* _settings; /*!< @brief pointer to settings class that manages the solver */
-    std::string _name; /*!< @brief name of the quadrature */
-    unsigned _order; /*!< @brief order of the quadrature */
-    unsigned _nq; /*!< @brief number of gridpoints of the quadrature */
-    VectorVector _points; /*!< @brief gridpoints of the quadrature */
-    VectorVector _pointsSphere; /*!< @brief (my,phi)gridpoints of the quadrature in spherical cordinates */
-    Vector _weights; /*!< @brief weights of the gridpoints of the quadrature */
+    Config* _settings;           /*!< @brief pointer to settings class that manages the solver */
+    std::string _name;           /*!< @brief name of the quadrature */
+    unsigned _order;             /*!< @brief order of the quadrature */
+    unsigned _nq;                /*!< @brief number of gridpoints of the quadrature */
+    VectorVector _points;        /*!< @brief gridpoints of the quadrature */
+    VectorVector _pointsSphere;  /*!< @brief (my,phi)gridpoints of the quadrature in spherical cordinates */
+    Vector _weights;             /*!< @brief weights of the gridpoints of the quadrature */
     VectorVectorU _connectivity; /*!< @brief connectivity of the gripoints of the quadrature */
 };
 

@@ -1,5 +1,5 @@
 /*!
- * \file Config.cpp
+ * \file config.cpp
  * \brief Class for different Options in rtsn
  * \author S. Schotthoefer
  *
@@ -198,7 +198,7 @@ void Config::SetConfigOptions() {
 
     /* BEGIN_CONFIG_OPTIONS */
 
-    /*! @par CONFIG_CATEGORY: Problem Definition @ingroup Config */
+    /*! @par CONFIG_CATEGORY: Problem Definition \ingroup Config */
     /*--- Options related to problem definition and partitioning ---*/
 
     // File Structure related options

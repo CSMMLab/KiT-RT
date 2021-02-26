@@ -15,8 +15,7 @@ class DataGenerator1D : public DataGeneratorBase
     /*! @brief Class constructor. Generates training data for neural network approaches using
      *          spherical harmonics and an entropy functional and the quadrature specified by
      *          the options file.
-     *   @param setSize: number of elements in training set
-     *           basisSize: length of spherical harmonics basis (maybe redundant)*/
+     *   @param settings config class with global information*/
     DataGenerator1D( Config* settings );
     ~DataGenerator1D();
 
@@ -25,8 +24,8 @@ class DataGenerator1D : public DataGeneratorBase
     void SampleSolutionU() override; /*!< @brief Samples solution vectors u */
 
     // Helper functions
-    void ComputeMoments() override; /*!< @brief Pre-Compute Moments at all quadrature points. */
-    void ComputeSetSize() override; /*!< @brief Computes the size of the training set, depending on the chosen settings.*/
+    void ComputeMoments() override;        /*!< @brief Pre-Compute Moments at all quadrature points. */
+    void ComputeSetSize() override;        /*!< @brief Computes the size of the training set, depending on the chosen settings.*/
     void CheckRealizability() override;    // Debugging helper
 };
 #endif    // DATAGENERATOR1D_H

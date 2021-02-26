@@ -11,7 +11,7 @@ class SNSolver : public SolverBase
     // quadrature related numbers
 
     VectorVector _quadPoints; /*!<  @brief quadrature points, dim(_quadPoints) = (_nq,spatialDim) */
-    Vector _weights; /*!<  @brief quadrature weights, dim(_weights) = (_nq) */
+    Vector _weights;          /*!<  @brief quadrature weights, dim(_weights) = (_nq) */
 
   public:
     /*! @brief SNSolver constructor

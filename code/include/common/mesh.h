@@ -18,23 +18,23 @@
 class Mesh
 {
   protected:
-    const unsigned _dim; /*!< @brief spatial dimension of the mesh, i.e. 1D,2D,3D */
-    const unsigned _numCells; /*!< @brief number of cells in the mesh */
-    const unsigned _numNodes; /*!< @brief number of nodes in the mesh (for node centered view)*/
+    const unsigned _dim;             /*!< @brief spatial dimension of the mesh, i.e. 1D,2D,3D */
+    const unsigned _numCells;        /*!< @brief number of cells in the mesh */
+    const unsigned _numNodes;        /*!< @brief number of nodes in the mesh (for node centered view)*/
     const unsigned _numNodesPerCell; /*!< @brief number of nodes per cell */
-    const unsigned _numBoundaries; /*!< @brief number of boundary cells in the mesh */
+    const unsigned _numBoundaries;   /*!< @brief number of boundary cells in the mesh */
     const unsigned _ghostCellID; /*!< @brief Id of the ghost cell. (we use only one ghost cell). equal to _numCells and therefore has the ID of the
                                     last cell + 1 */
     unsigned _numNodesPerBoundary;
     std::vector<std::pair<double, double>> _bounds;    // ???
 
-    std::vector<Vector> _nodes; /*!< @brief nodes in the mesh. dimension:_numNodes<_dim> */
+    std::vector<Vector> _nodes;                /*!< @brief nodes in the mesh. dimension:_numNodes<_dim> */
     std::vector<std::vector<unsigned>> _cells; /*!< @brief cells in the mesh. dimension:_numCells<_numNodesPerCell>  */
 
     /*! @brief boundary cells in the mesh. Pair defines boundary type of the boundary nodes of the cell. numBoundaries<(1,numBoundaryNodes)>*/
     std::vector<std::pair<BOUNDARY_TYPE, std::vector<unsigned>>> _boundaries;
-    std::vector<double> _cellAreas; /*!< @brief cell areas of the mesh. dimension: numCells*/
-    std::vector<Vector> _cellMidPoints; /*!< @brief cell midpoints of the mesh. dimension: numCells<dim>*/
+    std::vector<double> _cellAreas;                    /*!< @brief cell areas of the mesh. dimension: numCells*/
+    std::vector<Vector> _cellMidPoints;                /*!< @brief cell midpoints of the mesh. dimension: numCells<dim>*/
     std::vector<std::vector<unsigned>> _cellNeighbors; /*!< @brief neighbors of each cell. dimension: numCells<numNodesPerCell>*/
 
     /*! @brief outward facing normals of each side of each cell. dimension: numCells<numNodesPerCell<dim>>, all
@@ -42,13 +42,13 @@ class Mesh
     std::vector<std::vector<Vector>> _cellNormals;
     /*! @brief Tags each cell with its boundary type. None means no boundary. dimension: numCells */
     std::vector<BOUNDARY_TYPE> _cellBoundaryTypes;
-    std::vector<unsigned> _colors; /*!< @brief Color of each cell (for MPI mesh partitioning). dimension: numCells */
+    std::vector<unsigned> _colors;                /*!< @brief Color of each cell (for MPI mesh partitioning). dimension: numCells */
     blaze::CompressedMatrix<bool> _nodeNeighbors; /*!< @brief neighborshood relationship of nodes for (par-)metis */
 
-    void ComputeCellAreas(); /*!< @brief Computes only the areas of the mesh cells. Write to _cellAreas. */
+    void ComputeCellAreas();     /*!< @brief Computes only the areas of the mesh cells. Write to _cellAreas. */
     void ComputeCellMidpoints(); /*!< @brief Compute only the midpoints of the cells. Write to _cellMidPoints*/
-    void ComputeConnectivity(); /*!< @brief Computes _cellNeighbors and _nodeNeighbors, i.e. neighborship relation in mesh*/
-    void ComputePartitioning(); /*!< @brief Computes local partitioning for openMP */
+    void ComputeConnectivity();  /*!< @brief Computes _cellNeighbors and _nodeNeighbors, i.e. neighborship relation in mesh*/
+    void ComputePartitioning();  /*!< @brief Computes local partitioning for openMP */
 
     /*! @brief Computes outward facing normal of two neighboring nodes nodeA and nodeB with common cellCellcenter.
      *          Normals are scaled with their respective edge length

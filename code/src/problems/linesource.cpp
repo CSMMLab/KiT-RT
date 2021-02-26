@@ -163,7 +163,6 @@ Vector LineSource_SN_Pseudo1D_Physics::GetTotalXSE( const Vector& energies ) { r
 
 // ---- LineSource_PN ----
 
-
 LineSource_PN::LineSource_PN( Config* settings, Mesh* mesh ) : LineSource( settings, mesh ) {}
 
 LineSource_PN::~LineSource_PN() {}

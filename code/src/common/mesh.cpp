@@ -403,8 +403,8 @@ void Mesh::ReconstructSlopesS( unsigned nq, VectorVector& psiDerX, VectorVector&
 void Mesh::ReconstructSlopesU( unsigned nq, VectorVector& psiDerX, VectorVector& psiDerY, const VectorVector& psi ) const {
 
     double phi;
-    //VectorVector dPsiMax = std::vector( _numCells, Vector( nq, 0.0 ) );
-    //VectorVector dPsiMin = std::vector( _numCells, Vector( nq, 0.0 ) );
+    // VectorVector dPsiMax = std::vector( _numCells, Vector( nq, 0.0 ) );
+    // VectorVector dPsiMin = std::vector( _numCells, Vector( nq, 0.0 ) );
     VectorVector dPsiMax( _numCells, Vector( nq, 0.0 ) );
     VectorVector dPsiMin( _numCells, Vector( nq, 0.0 ) );
 
@@ -434,7 +434,7 @@ void Mesh::ReconstructSlopesU( unsigned nq, VectorVector& psiDerX, VectorVector&
             for( unsigned l = 0; l < _cellNeighbors[j].size(); ++l ) {
                 // step 2: choose sample points
                 // psiSample[j][k][l] = 0.5 * ( psi[j][k] + psi[_cellNeighbors[j][l]][k] ); // interface central points
-                psiSample[j][k][l] = psi[j][k] + 
+                psiSample[j][k][l] = psi[j][k] +
                                      psiDerX[j][k] * ( _nodes[_cells[j][l]][0] - _cellMidPoints[j][0] ) +
                                      psiDerY[j][k] * ( _nodes[_cells[j][l]][1] - _cellMidPoints[j][1] );    // vertex points
 
@@ -457,7 +457,7 @@ void Mesh::ReconstructSlopesU( unsigned nq, VectorVector& psiDerX, VectorVector&
             psiDerX[j][k] *= phi;
             psiDerY[j][k] *= phi;
             */
-            
+
             double eps = 1e-6;
             // version 2: Venkatakrishnan limiter
             // step 1: calculate psi difference around neighbors and theoretical derivatives by Gauss theorem
@@ -471,19 +471,20 @@ void Mesh::ReconstructSlopesU( unsigned nq, VectorVector& psiDerX, VectorVector&
 
             for( unsigned l = 0; l < _cellNeighbors[j].size(); ++l ) {
                 // step 2: choose sample points
-                psiSample[j][k][l] = 10.0 * psiDerX[j][k] * (_cellMidPoints[_cellNeighbors[j][l]][0] - _cellMidPoints[j][0]) +
-                                     10.0 * psiDerY[j][k] * (_cellMidPoints[_cellNeighbors[j][l]][1] - _cellMidPoints[j][1]);
+                psiSample[j][k][l] = 10.0 * psiDerX[j][k] * ( _cellMidPoints[_cellNeighbors[j][l]][0] - _cellMidPoints[j][0] ) +
+                                     10.0 * psiDerY[j][k] * ( _cellMidPoints[_cellNeighbors[j][l]][1] - _cellMidPoints[j][1] );
 
                 // step 3: calculate Phi_ij at sample points
                 if( psiSample[j][k][l] > 0.0 ) {
-                    phiSample[j][k][l] = 
-                    (dPsiMax[j][k]*dPsiMax[j][k] + 2.0 * dPsiMax[j][k] * psiSample[j][k][l] + eps)/
-                    (dPsiMax[j][k]*dPsiMax[j][k] + dPsiMax[j][k] * psiSample[j][k][l] + 2.0 * psiSample[j][k][l] * psiSample[j][k][l] + eps);
+                    phiSample[j][k][l] =
+                        ( dPsiMax[j][k] * dPsiMax[j][k] + 2.0 * dPsiMax[j][k] * psiSample[j][k][l] + eps ) /
+                        ( dPsiMax[j][k] * dPsiMax[j][k] + dPsiMax[j][k] * psiSample[j][k][l] + 2.0 * psiSample[j][k][l] * psiSample[j][k][l] + eps );
                 }
                 else if( psiSample[j][k][l] < 0.0 ) {
-                    phiSample[j][k][l] = 
-                    (dPsiMin[j][k]*dPsiMin[j][k] + 2.0 * dPsiMin[j][k] * psiSample[j][k][l] + eps)/
-                    (dPsiMin[j][k]*dPsiMin[j][k] + dPsiMin[j][k] * psiSample[j][k][l] + 2.0 * psiSample[j][k][l] * psiSample[j][k][l] + eps);;
+                    phiSample[j][k][l] =
+                        ( dPsiMin[j][k] * dPsiMin[j][k] + 2.0 * dPsiMin[j][k] * psiSample[j][k][l] + eps ) /
+                        ( dPsiMin[j][k] * dPsiMin[j][k] + dPsiMin[j][k] * psiSample[j][k][l] + 2.0 * psiSample[j][k][l] * psiSample[j][k][l] + eps );
+                    ;
                 }
                 else {
                     phiSample[j][k][l] = 1.0;
@@ -492,15 +493,13 @@ void Mesh::ReconstructSlopesU( unsigned nq, VectorVector& psiDerX, VectorVector&
 
             // step 4: find minimum limiter function phi
             phi = min( phiSample[j][k] );
-            //phi = fmin( 0.5, abs(phi) );
+            // phi = fmin( 0.5, abs(phi) );
 
             // step 5: limit the slope reconstructed from Gauss theorem
             psiDerX[j][k] *= phi;
             psiDerY[j][k] *= phi;
-
         }
     }
-
 }
 
 void Mesh::ComputeBounds() {

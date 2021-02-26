@@ -27,7 +27,7 @@ class OptionBase;
 class Config
 {
   private:
-    std::string _fileName; /*!< @rief Name of the current file without extension */
+    std::string _fileName; /*!< @brief Name of the current file without extension */
     bool _baseConfig;
 
     // int _commRank, _commSize; /*!< @brief MPI rank and size.*/    // Not yet used!!

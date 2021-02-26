@@ -1,9 +1,6 @@
 /*!
- * \file OptionStructure.h
- * \brief Classes for different Options in rtsn
- * \author S. Schotthoefer
- *
- * Disclaimer: This class structure was copied and modifed with open source permission from SU2 v7.0.3 https://su2code.github.io/
+ * \file optionstructure.h
+ * \brief Classes for different Options in KiT-RT
  */
 
 #ifndef OPTION_STRUCTURE_H
@@ -38,8 +35,8 @@ class OptionBase
 
 class OptionDouble : public OptionBase
 {
-    double& _field; /*!< @brief Reference to the double field value */
-    double _def; /*!< @brief Default value */
+    double& _field;    /*!< @brief Reference to the double field value */
+    double _def;       /*!< @brief Default value */
     std::string _name; /*!< @brief String identifier for the option */
 
   public:
@@ -55,8 +52,8 @@ class OptionDouble : public OptionBase
 class OptionString : public OptionBase
 {
     std::string& _field; /*!< @brief Reference to the string field value */
-    std::string _def; /*!< @brief Default value */
-    std::string _name; /*!< @brief string identifier for the option */
+    std::string _def;    /*!< @brief Default value */
+    std::string _name;   /*!< @brief string identifier for the option */
 
   public:
     OptionString( std::string option_field_name, std::string& option_field, std::string default_value );
@@ -70,8 +67,8 @@ class OptionString : public OptionBase
 
 class OptionInt : public OptionBase
 {
-    int& _field; /*!< @brief Reference to the int field value */
-    int _def; /*!< @brief Default value */
+    int& _field;       /*!< @brief Reference to the int field value */
+    int _def;          /*!< @brief Default value */
     std::string _name; /*!< @brief string identifier for the option */
 
   public:
@@ -87,8 +84,8 @@ class OptionInt : public OptionBase
 class OptionULong : public OptionBase
 {
     unsigned long& _field; /*!< @brief Reference to the unsigned long field value */
-    unsigned long _def; /*!< @brief Default value */
-    std::string _name; /*!< @brief string identifier for the option */
+    unsigned long _def;    /*!< @brief Default value */
+    std::string _name;     /*!< @brief string identifier for the option */
 
   public:
     OptionULong( std::string option_field_name, unsigned long& option_field, unsigned long default_value );
@@ -103,8 +100,8 @@ class OptionULong : public OptionBase
 class OptionUShort : public OptionBase
 {
     unsigned short& _field; /*!< @brief Reference to the unsigned short field value */
-    unsigned short _def; /*!< @brief Default value */
-    std::string _name; /*!< @brief string identifier for the option */
+    unsigned short _def;    /*!< @brief Default value */
+    std::string _name;      /*!< @brief string identifier for the option */
 
   public:
     OptionUShort( std::string option_field_name, unsigned short& option_field, unsigned short default_value );
@@ -118,8 +115,8 @@ class OptionUShort : public OptionBase
 
 class OptionLong : public OptionBase
 {
-    long& _field; /*!< @brief Reference to the long field value */
-    long _def; /*!< @brief Default value */
+    long& _field;      /*!< @brief Reference to the long field value */
+    long _def;         /*!< @brief Default value */
     std::string _name; /*!< @brief string identifier for the option */
 
   public:
@@ -134,8 +131,8 @@ class OptionLong : public OptionBase
 
 class OptionBool : public OptionBase
 {
-    bool& _field; /*!< @brief Reference to the bool field value */
-    bool _def; /*!< @brief Default value */
+    bool& _field;      /*!< @brief Reference to the bool field value */
+    bool _def;         /*!< @brief Default value */
     std::string _name; /*!< @brief string identifier for the option */
 
   public:
@@ -151,8 +148,8 @@ class OptionBool : public OptionBase
 class OptionStringList : public OptionBase
 {
     std::vector<std::string>& _field; /*!< @brief Reference to the string list field value. no default value */
-    std::string _name; /*!< @brief string identifier for the option */
-    unsigned short& _size; /*!< @brief Size of string list */
+    std::string _name;                /*!< @brief string identifier for the option */
+    unsigned short& _size;            /*!< @brief Size of string list */
 
   public:
     OptionStringList( std::string option_field_name, unsigned short& list_size, std::vector<std::string>& option_field );
@@ -170,9 +167,9 @@ template <class Tenum> class OptionEnum : public OptionBase
 {
 
     std::map<std::string, Tenum> _map; /*!< @brief Map <String name of the option in cfg file, enum field name of cpp framework> */
-    Tenum& _field; /*!< @brief Reference to the enum fieldname */
-    Tenum _def; /*!< @brief Default value */
-    std::string _name; /*!< @brief string identifier for the option */
+    Tenum& _field;                     /*!< @brief Reference to the enum fieldname */
+    Tenum _def;                        /*!< @brief Default value */
+    std::string _name;                 /*!< @brief string identifier for the option */
 
   public:
     OptionEnum( std::string option_field_name, const std::map<std::string, Tenum> m, Tenum& option_field, Tenum default_value )
@@ -213,9 +210,9 @@ template <class Tenum> class OptionEnumList : public OptionBase
 {
 
     std::map<std::string, Tenum> _map; /*!< @brief Map <String name of the option in cfg file, enum field name of cpp framework> */
-    std::vector<Tenum>& _field; /*!< @brief Reference to the enum list fieldname. No default value */
-    std::string _name; /*!< @brief string identifier for the option */
-    unsigned short& _size; /*!< @brief Size of enum list */
+    std::vector<Tenum>& _field;        /*!< @brief Reference to the enum list fieldname. No default value */
+    std::string _name;                 /*!< @brief string identifier for the option */
+    unsigned short& _size;             /*!< @brief Size of enum list */
 
   public:
     OptionEnumList( std::string option_field_name, const std::map<std::string, Tenum> m, std::vector<Tenum>& option_field, unsigned short& list_size )

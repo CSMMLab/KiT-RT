@@ -23,12 +23,12 @@ class CSDSolverTrafoFPSH2D : public SNSolver
 
     // Physics acess
     Vector _energies; /*!< @brief energy levels for CSD, lenght = _nEnergies */
-    Vector _angle; /*!< @brief angles for SN */
+    Vector _angle;    /*!< @brief angles for SN */
 
     std::vector<Matrix> _sigmaSE; /*!<  @brief scattering cross section for all energies*/
-    Vector _sigmaTE; /*!<  @brief total cross section for all energies*/
+    Vector _sigmaTE;              /*!<  @brief total cross section for all energies*/
 
-    Matrix _L; /*!<  @brief Laplace Beltrami Matrix */
+    Matrix _L;  /*!<  @brief Laplace Beltrami Matrix */
     Matrix _IL; /*!<  @brief Laplace Beltrami Matrix */
 
     Matrix _O;
@@ -60,8 +60,8 @@ class CSDSolverTrafoFPSH2D : public SNSolver
 
     // Helper variables
     Vector _energiesOrig; /*!< @brief original energy levels for CSD, lenght = _nEnergies */
-    Matrix _identity; /*!< @brif: identity matrix for FP scattering. Dim (_nq,_nq)*/
-    double _densityMin; /*!< @brief Minimal density of _density vector */
+    Matrix _identity;     /*!< @brief: identity matrix for FP scattering. Dim (_nq,_nq)*/
+    double _densityMin;   /*!< @brief Minimal density of _density vector */
 
   public:
     /**

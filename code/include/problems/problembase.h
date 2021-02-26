@@ -17,7 +17,7 @@ class ProblemBase
     Mesh* _mesh;
     EPICS* _physics;
 
-    std::vector<double> _density; /*!< @brief vector with patient densities */
+    std::vector<double> _density;       /*!< @brief vector with patient densities */
     std::vector<double> _stoppingPower; /*!< @brief vector with stopping powers*/
 
     ProblemBase() = delete;

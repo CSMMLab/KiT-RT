@@ -1,5 +1,5 @@
 ﻿/*!
- * \file GlobalConstants.h
+ * \file globalconstants.h
  * \brief All global defined (physical) constants, enums etc
  * \author <blank>
  * \version 0.0

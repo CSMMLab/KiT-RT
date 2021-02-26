@@ -1,5 +1,5 @@
 /*!
- * \file datagenerator.cpp
+ * \file datageneratorbase.cpp
  * \brief Class to generate data for the neural entropy closure
  * \author S. Schotthoefer
  */
