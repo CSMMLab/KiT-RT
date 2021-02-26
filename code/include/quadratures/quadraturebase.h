@@ -50,7 +50,7 @@ class QuadratureBase
 
     // Quadrature Hub
     /*! @brief Creates a quadrature rule with a given name and a given order.
-     *  @param Config* settings: Settings to handle quadrature options
+     *  @param  settings  Settings to handle quadrature options
      *  @returns Quadrature* quadrature: returns pointer to instance of the given derived quadrature class */
     static QuadratureBase* Create( Config* settings );
 

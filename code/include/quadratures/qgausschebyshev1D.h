@@ -28,7 +28,7 @@ class QGaussChebyshev1D : public QuadratureBase
     void SetConnectivity() override;
 
     /*! @brief Integrates f(x,y,z) with the quadrature.
-     *  @param double(f)( double x0, double x1, double x2 ) : density function that depends on a three spatial dimensions.
+     *  @param double (f)( double x0, double x1, double x2 ) : density function that depends on a three spatial dimensions.
      *  @returns double result: result of the quadrature rule */
     double Integrate( double( f )( double x0, double x1, double x2 ) ) override;
 

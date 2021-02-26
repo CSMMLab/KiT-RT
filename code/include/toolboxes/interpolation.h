@@ -14,9 +14,10 @@ class Interpolation
 
   private:
     unsigned _dim;
-    Vector _x, _y;
-    Matrix _data;
-    TYPE _type;
+    Vector _x;    /*!< @brief x input data */
+    Vector _y;    /*!< @brief y input data */
+    Matrix _data; /*!< @brief data matrix w.r.t. x and y grid */
+    TYPE _type;   /*!< @brief type of interpolation (linear, loglinear, cubic) */
 
     Interpolation() = delete;
 
@@ -53,9 +54,10 @@ class Interpolation
 
     /*!
      * @brief constructor cubic interpolation
-     * @param[in] x - table values for x
-     * @param[in] y - table values for y
-     * @param[in] type - linear or cubic interpolation
+     * @param[in] x table values for x
+     * @param[in] y table values for y
+     * @param[in] data matrix w.r.t x y grid
+     * @param[in] type of interpolation  (linear, loglinear, cubic)
      */
     Interpolation( const Vector& x, const Vector& y, const Matrix& data, TYPE type = cubic );
 
@@ -63,21 +65,21 @@ class Interpolation
     /*!
      * @brief defines one dimensional interpolation at x
      * @param[in] x - value at which to interpolate
-     * @param[out] y - corresponding interpolated y value
+     * @returns y - corresponding interpolated y value
      */
     double operator()( double x ) const;
 
     /*!
      * @brief defines interpolation for a Vector of values
      * @param[in] v - values at which to interpolate
-     * @param[out] y - corresponding interpolated values
+     * @returns y - corresponding interpolated values
      */
     Vector operator()( Vector v ) const;
 
     /*!
      * @brief defines interpolation for a std::vector of values
      * @param[in] v - values at which to interpolate
-     * @param[out] y - corresponding interpolated values
+     * @returns y - corresponding interpolated values
      */
     std::vector<double> operator()( std::vector<double> v ) const;
 
@@ -85,7 +87,7 @@ class Interpolation
      * @brief defines 2D interpolation at x and y
      * @param[in] x - value at which to interpolate
      * @param[in] y - value at which to interpolate
-     * @param[out] data - corresponding interpolated value
+     * @returns data - corresponding interpolated value
      */
     double operator()( double x, double y ) const;
 };

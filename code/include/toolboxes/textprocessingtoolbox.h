@@ -42,7 +42,7 @@ inline std::vector<std::string> Split( const std::string& s, char delimiter ) {
 
 /*!
  * \brief utility function for printing a VectorVector
- * \param [in] VectorVector we want to print
+ * \param vectorIn VectorVector we want to print
  */
 inline void PrintVectorVector( const VectorVector vectorIn ) {
     unsigned dimOuter = vectorIn.size();
@@ -61,14 +61,14 @@ inline void PrintVectorVector( const VectorVector vectorIn ) {
 
 /*!
  * \brief utility function for returning the last number in a string
- * \param [in] string to be checked
+ * \param str string to be checked
  */
 inline int GetTrailingNumber( std::string const& str ) { return std::stoi( str.substr( str.find_first_of( "0123456789" ), str.length() - 1 ) ); }
 
 /*!
  * \brief utility function for checking if a string has a certain ending
- * \param [in] string to be checked
- * \param [in] ending to be checked for
+ * \param value string to be checked
+ * \param ending string to be checked for
  */
 inline bool StringEndsWith( std::string const& value, std::string const& ending ) {
     if( ending.size() > value.size() ) return false;

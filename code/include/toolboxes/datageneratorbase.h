@@ -27,8 +27,8 @@ class DataGeneratorBase
     ~DataGeneratorBase();
 
     /*! @brief Create a datagenerator (1D or 3D)
-     *  @param Pointer to the config file
-     *  @returns: Pointer to the createt basis class */
+     *  @param settings Pointer to the config file
+     *  @returns Pointer to the createt basis class */
     static DataGeneratorBase* Create( Config* settings );
 
     /*! @brief computes the training data set.

@@ -21,24 +21,26 @@ class SphericalMonomials : public SphericalBase
      * */
     SphericalMonomials( unsigned L_degree );
 
-    /*! @brief : Sets up class for monomial basis on sphere up to degree L.
-     *           The basis then consists of N = L.
-     *  @param : L_degree - maximum degree of spherical harmonics basis, 0 <= L <= 1000 (upper bound
-     *                      due to numerical stability)
-     *  @param : spatialDim - spatial dimensioniality of the simulation
+    /*! @brief Sets up class for monomial basis on sphere up to degree L.
+     *         The basis then consists of N = L.
+     *  @param L_degree - maximum degree of spherical harmonics basis, 0 <= L <= 1000 (upper bound
+     *                    due to numerical stability)
+     *  @param spatialDim - spatial dimensioniality of the simulation
      * */
     SphericalMonomials( unsigned L_degree, unsigned short spatialDim );
 
-    /*! @brief  : Computes all N = L² +2L basis functions at point (my, phi)
-     *  @param  : my = cos(theta) - spherical coordinate, -1 <= x <= 1
-     *  @param  : phi - spherical coordinate, 0 <= phi <= 2*pi
-     *  @return : vector of basis functions at point (my, phi) with size N = L² +2L
+    /*! @brief  Computes all N = L² +2L basis functions at point (my, phi)
+     *  @param  my = cos(theta) - spherical coordinate, -1 <= x <= 1
+     *  @param  phi - spherical coordinate, 0 <= phi <= 2*pi
+     *  @return vector of basis functions at point (my, phi) with size N = L² +2L
      */
     Vector ComputeSphericalBasis( double my, double phi ) override;
 
-    /*! @brief  : Computes all N = L² +2L basis functions at point (x, y, z) on the unit sphere
-     *  @param  : x,y,z = coordinates on unit sphere
-     *  @return : vector of basis functions at point (x,y,z) with size N = L² +2L
+    /*! @brief Computes all N = L² +2L basis functions at point (x, y, z) on the unit sphere
+     *  @param x = coordinates on unit sphere
+     *  @param y = coordinates on unit sphere
+     *  @param z = coordinates on unit sphere
+     *  @return vector of basis functions at point (x,y,z) with size N = L² +2L
      */
     Vector ComputeSphericalBasis( double x, double y, double z ) override;
 

@@ -13,18 +13,18 @@ double UpwindFlux::Flux( const Vector& Omega, double psiL, double psiR, const Ve
 }
 
 /**
- * @brief Flux      : Computes <Linear> upwinding scheme for given flux jacobians of the PN Solver at a given edge and stores it in
+ * @brief Flux        Computes <Linear> upwinding scheme for given flux jacobians of the PN Solver at a given edge and stores it in
  *                    resultFlux
- * @param AxPlus    : Positive part of the flux jacobian in x direction
- * @param AxMinus   : Negative part of the flux jacobian in x direction
- * @param AyPlus    : Positive part of the flux jacobian in y direction
- * @param AyMinus   : Negative part of the flux jacobian in y direction
- * @param AzPlus    : Positive part of the flux jacobian in z direction
- * @param AzMinus   : Negative part of the flux jacobian in z direction
- * @param psiL      : Solution state of left hand side control volume
- * @param psiR      : Solution state of right hand side control volume
- * @param n         : Normal vector at the edge between left and right control volume
- * @return resultFlux: Vector with resulting flux.
+ * @param AxPlus      Positive part of the flux jacobian in x direction
+ * @param AxMinus     Negative part of the flux jacobian in x direction
+ * @param AyPlus      Positive part of the flux jacobian in y direction
+ * @param AyMinus     Negative part of the flux jacobian in y direction
+ * @param AzPlus      Positive part of the flux jacobian in z direction
+ * @param AzMinus     Negative part of the flux jacobian in z direction
+ * @param psiL        Solution state of left hand side control volume
+ * @param psiR        Solution state of right hand side control volume
+ * @param n           Normal vector at the edge between left and right control volume
+ * @return resultFlux Vector with resulting flux.
  */
 
 Vector UpwindFlux::Flux( const Matrix AxPlus,
@@ -58,19 +58,19 @@ Vector UpwindFlux::Flux( const Matrix AxPlus,
 }
 
 /**
- * @brief Flux      : Computes <VanLeer> upwinding scheme for given flux jacobians of the PN Solver at a given edge and stores it in
- *                    resultFlux
- * @param AxPlus    : Positive part of the flux jacobian in x direction
- * @param AxMinus   : Negative part of the flux jacobian in x direction
- * @param AyPlus    : Positive part of the flux jacobian in y direction
- * @param AyMinus   : Negative part of the flux jacobian in y direction
- * @param AzPlus    : Positive part of the flux jacobian in z direction
- * @param AzMinus   : Negative part of the flux jacobian in z direction
- * @param psiL      : Solution state of left hand side control volume
- * @param psiR      : Solution state of right hand side control volume
- * @param n         : Normal vector at the edge between left and right control volume
- * @param resultFlux: Vector with resulting flux.
- * @return          : void
+ * @brief Flux       Computes <VanLeer> upwinding scheme for given flux jacobians of the PN Solver at a given edge and stores it in
+ *                   resultFlux
+ * @param AxPlus     Positive part of the flux jacobian in x direction
+ * @param AxMinus    Negative part of the flux jacobian in x direction
+ * @param AyPlus     Positive part of the flux jacobian in y direction
+ * @param AyMinus    Negative part of the flux jacobian in y direction
+ * @param AzPlus     Positive part of the flux jacobian in z direction
+ * @param AzMinus    Negative part of the flux jacobian in z direction
+ * @param psiL       Solution state of left hand side control volume
+ * @param psiR       Solution state of right hand side control volume
+ * @param n          Normal vector at the edge between left and right control volume
+ * @param resultFlux Vector with resulting flux.
+ * @return           void
  */
 void UpwindFlux::FluxVanLeer( const Matrix& Ax,
                               const Matrix& AxAbs,

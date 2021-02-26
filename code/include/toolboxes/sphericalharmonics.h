@@ -18,31 +18,33 @@
 class SphericalHarmonics : public SphericalBase
 {
   public:
-    /*! @brief : Sets up class for spherical harmonics basis based on legendre
-     *           polynoms and associated legendre polynoms up to degree L.
-     *           The basis then consists of N = L² +2L basis functions.
-     *  @param : L_degree - maximum degree of spherical harmonics basis, 0 <= L <= 1000 (upper bound
+    /*! @brief Sets up class for spherical harmonics basis based on legendre
+     *         polynoms and associated legendre polynoms up to degree L.
+     *         The basis then consists of N = L² +2L basis functions.
+     *  @param L_degree - maximum degree of spherical harmonics basis, 0 <= L <= 1000 (upper bound
      *                      due to numerical stability)
      * */
     SphericalHarmonics( unsigned L_degree );
 
-    /*! @brief  : Computes all N = L² +2L basis functions at point (my, phi)
-     *  @param  : my = cos(theta) - spherical coordinate, -1 <= x <= 1
-     *  @param  : phi - spherical coordinate, 0 <= phi <= 2*pi
-     *  @return : vector of basis functions at point (my, phi) with size N = L² +2L
+    /*! @brief  Computes all N = L² +2L basis functions at point (my, phi)
+     *  @param  my = cos(theta) - spherical coordinate, -1 <= x <= 1
+     *  @param  phi - spherical coordinate, 0 <= phi <= 2*pi
+     *  @return vector of basis functions at point (my, phi) with size N = L² +2L
      */
     Vector ComputeSphericalBasis( double my, double phi ) override;
 
-    /*! @brief  : Computes all N = L² +2L basis functions at point (x, y, z) on the unit sphere
-     *  @param  : x,y,z = coordinates on unit sphere
-     *  @return : vector of basis functions at point (x,y,z) with size N = L² +2L
+    /*! @brief   Computes all N = L² +2L basis functions at point (x, y, z) on the unit sphere
+     *  @param   x coordinates on unit sphere
+     *  @param   y coordinates on unit sphere
+     *  @param   z coordinates on unit sphere
+     *  @return  vector of basis functions at point (x,y,z) with size N = L² +2L
      */
     Vector ComputeSphericalBasis( double x, double y, double z ) override;
 
-    /*! @brief : Computes an entire set of (komplex congjugate) P_l^k and stores
-     *           it in the vector _assLegendreP
-     *  @param : my = cos(theta)  - spherical coordinate, -1 <=  my <= 1
-     *  @return : Associated Legendre Polynomial at my for all l and k
+    /*! @brief  Computes an entire set of (komplex congjugate) P_l^k and stores
+     *          it in the vector _assLegendreP
+     *  @param  my = cos(theta)  - spherical coordinate, -1 <=  my <= 1
+     *  @return  Associated Legendre Polynomial at my for all l and k
      */
     std::vector<double> GetAssLegendrePoly( const double my );
 
@@ -53,10 +55,10 @@ class SphericalHarmonics : public SphericalBase
      *  @param currDegreeL = degree of polynomials that are counted   */
     unsigned GetCurrDegreeSize( unsigned currDegree ) override;
 
-    /*! @brief : helper function to get the global index for given k and l of
-     *           the basis function Y_k^l.
-     *  @param : l_degree - current degree of basis function, 0 <= l <= L
-     *  @param : k_order  - current order of basis function,  -l <= k <= l      */
+    /*! @brief  helper function to get the global index for given k and l of
+     *          the basis function Y_k^l.
+     *  @param  l_degree - current degree of basis function, 0 <= l <= L
+     *  @param  k_order  - current order of basis function,  -l <= k <= l      */
     unsigned GetGlobalIndexBasis( int l_degree, int k_order ) override;
 
   private:
@@ -81,20 +83,20 @@ class SphericalHarmonics : public SphericalBase
      */
     Vector _YBasis;
 
-    /*! @brief : helper function to get the global index for given k and l of
-     *           the associated legendre polynomial P_k^l.
-     *  @param : l_degree - current degree of basis function, 0 <= l <= L
-     *  @param : k_order  - current order of basis function,  0 <= k <= l
+    /*! @brief  helper function to get the global index for given k and l of
+     *          the associated legendre polynomial P_k^l.
+     *  @param  l_degree - current degree of basis function, 0 <= l <= L
+     *  @param  k_order  - current order of basis function,  0 <= k <= l
      */
     unsigned inline GlobalIdxAssLegendreP( unsigned l_degree, unsigned k_order ) { return k_order + ( l_degree * ( l_degree + 1 ) ) / 2; }
 
-    /*! @brief : computes values of a_param and b_param
+    /*! @brief  computes values of a_param and b_param
      */
     void ComputeCoefficients();
 
-    /*! @brief : Computes an entire set of (komplex congjugate) P_l^k and stores
-     *           it in the vector _assLegendreP
-     *  @param : my = cos(theta)  - spherical coordinate, -1 <=  my <= 1
+    /*! @brief  Computes an entire set of (komplex congjugate) P_l^k and stores
+     *          it in the vector _assLegendreP
+     *  @param  my  equals cos(theta)  - spherical coordinate, -1 <=  my <= 1
      */
     void ComputeAssLegendrePoly( const double my );
 

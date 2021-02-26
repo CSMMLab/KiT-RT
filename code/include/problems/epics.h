@@ -53,8 +53,6 @@ class EPICS
     /**
      * @brief GetStoppingPower gives back vector of vectors of stopping powers for materials defined by density and energies in vector energy
      * @param energies is vector with energies
-     * @param density is vector with patient densities (at different spatial cells)
-     * @param sH2O is vector of stopping powers in water
      */
     Vector GetStoppingPower( Vector energies );
 

@@ -66,7 +66,7 @@ class ICRU
     double _R1;
 
     Vector _E, /*! @brief User queried Energy  */
-        _QMU;  /*!< @briefUser queried mu */
+        _QMU;  /*!< @brief User queried mu */
 
     std::vector<double> _ET, _ETL;
     std::vector<double> _XMU, /* angular variable mu of dataset */

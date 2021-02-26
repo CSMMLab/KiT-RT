@@ -31,8 +31,7 @@ class NumericalFlux
      * @param psiL       Solution state of left hand side control volume
      * @param psiR       Solution state of right hand side control volume
      * @param n          Normal vector at the edge between left and right control volume
-     * @param resultFlux Vector with resulting flux.
-     * @return           void
+     * @return           Vector with resulting flux.
      */
     virtual Vector Flux( const Matrix AxPlus,
                          const Matrix AxMinus,
@@ -40,8 +39,8 @@ class NumericalFlux
                          const Matrix AyMinus,
                          const Matrix AzPlus,
                          const Matrix AzMinus,
-                         const Vector,
-                         const Vector,
+                         const Vector psiL,
+                         const Vector psiR,
                          const Vector n ) const = 0;
 
     virtual void FluxVanLeer( const Matrix& Ax,
