@@ -39,9 +39,9 @@ The software is being developed by members of the group `CSMM <https://www.scc.k
 If you are interested in using KiT-RT or are trying to figure out how to use it, please feel free to get in touch with `us <authors.html>`_.
 Do open an issue or pull request if you have questions, suggestions or solutions.
 
---------
+
 Table of contents
---------
+------------------------
 
 .. toctree::
    :maxdepth: 1

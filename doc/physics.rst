@@ -11,13 +11,13 @@ Down to the finest scale of a many-particle system, the Newton’s second law de
 
 .. math::
 
-   F = m a
+   F = m a,
 
 which leads
 
 .. math::
 
-   \frac{d x}{dt} = v, \ \frac{d v}{dt} = \frac{F}{m}
+   \frac{d x}{dt} = v, \ \frac{d v}{dt} = \frac{F}{m}.
 
 An intuitive numerical solution algorithm is to get the numerous particles on board and track the trajectories of them. 
 A typical example is the molecular dynamics (MD) method.
@@ -32,11 +32,11 @@ Many realizations must be simulated successively to average the solutions and re
 An alternative strategy can be made from ensemble averaging, where the
 coarse-grained modeling is used to provide a bottom-up view. 
 At the mean free path and collision time scale of particles. Such dynamics can be described with kinetic theory.
-The Boltzmann equation can be formulated via an operator splitting approach.
+The Boltzmann equation can be formulated via an operator splitting approach, i.e.
 
 .. math::
 
-   \partial_{t} f(v)+v \cdot \nabla_{x} f(v)=\int_{\mathcal R^3} \int_{\mathcal S^2} k\left(v, v^{\prime}\right) \left(f\left(v^{\prime}\right)f\left(v_*^{\prime}\right)-f(v)f(v_*)\right) d\Omega d v_*
+   \partial_{t} f(v)+v \cdot \nabla_{x} f(v)=\int_{\mathcal R^3} \int_{\mathcal S^2} k\left(v, v^{\prime}\right) \left(f\left(v^{\prime}\right)f\left(v_*^{\prime}\right)-f(v)f(v_*)\right) d\Omega d v_*,
 
 where the left and right hand sides model particle transports and collisions correspondingly. 
 The distribution function :math:`f` is the probability of finding a particle with certain location, and :math:`\{v, v_*\}` denotes the velocities of two classes of colliding particles. 
@@ -44,18 +44,18 @@ The collision kernel :math:`k` models the strength of collisions at different ve
 
 Different collision models can be inserted into the Boltzmann equation.
 In the KiT-RT solver, we are interested in the linear Boltzmann equation, where the particles don't interact with one another but scatter with the background material.
-Therefore, the Boltzmann can be simplified as the linear equation with respect to :math:`f`.
+Therefore, the Boltzmann can be simplified as the linear equation with respect to :math:`f`
 
 .. math::
 
-    \partial_{t} f(v)+v \cdot \nabla_{x} f(v)=\int k\left(v, v^{\prime}\right)\left(f\left(v^{\prime}\right)-f(v)\right) d v^{\prime}-\tau f(v)
+    \partial_{t} f(v)+v \cdot \nabla_{x} f(v)=\int k\left(v, v^{\prime}\right)\left(f\left(v^{\prime}\right)-f(v)\right) d v^{\prime}-\tau f(v).
 
-For convenience, it is often reformulated with polar coordinates :math:`\{r, \phi, \theta \}`.
+For convenience, it is often reformulated with polar coordinates :math:`\{r, \phi, \theta \}`,
 
 .. math::
 
     &\left[\frac{1}{v(E)} \partial_{t} +\Omega \cdot \nabla+\Sigma_t (r, E, t)\right] \psi(r, \Omega, E, t) \\
-    &=\int_{0}^{\infty} d E^{\prime} \int_{\mathcal R^2} d \Omega^{\prime} \Sigma_{s}\left(r, \Omega^{\prime} \bullet \Omega, E^{\prime} \rightarrow E\right) \psi\left(r, \Omega^{\prime}, E^{\prime}, t\right) + Q(r, \Omega, E, t)
+    &=\int_{0}^{\infty} d E^{\prime} \int_{\mathcal R^2} d \Omega^{\prime} \Sigma_{s}\left(r, \Omega^{\prime} \bullet \Omega, E^{\prime} \rightarrow E\right) \psi\left(r, \Omega^{\prime}, E^{\prime}, t\right) + Q(r, \Omega, E, t).
 
 The particle distribution :math:`\psi(r, \Omega, E, t)` here is often named as angular flux, :math:`\{\Sigma_s, \Sigma_t \}` are the scattering and total cross sections correspondingly, and :math:`Q` denotes a source term.
 
@@ -104,7 +104,7 @@ Leaving out the superscript :math:`H_2O`, the CSD equation can be simplified as
     &= \int_{\mathbb{S}^2}\rho(x)\Sigma_s(E,\Omega\cdot\Omega')\psi(E,x,\Omega')d\Omega'.    
 
 Now, we bring this system in a form which resembles the standard Boltzmann equation. 
-Multiplying :ref:`CSD2` with :math:`S(E)` gives
+Multiplying :eq:`CSD2` with :math:`S(E)` gives
 
 .. math::
    :label: CSD3
@@ -148,20 +148,20 @@ And by rearranging the terms, we finally get
     \partial_{ E}\widetilde{\widehat{\psi}}(\widetilde E,x,\Omega) = \partial_{\widetilde{E}}\widetilde{\widehat{\psi}}(\widetilde E,x,\Omega)\frac{1}{S(E(\widetilde E))},
 
 since :math:`S(E(\widetilde E))` is nonzero.
-Therefore, substituting :math:`\widetilde E` in :ref:`CSD4` gives
+Therefore, substituting :math:`\widetilde E` in :eq:`CSD4` gives
 
 .. math::
    :label: CSD5
 
-    &-\partial_{\widetilde E}\widetilde{\widehat{\psi}}(\widetilde E,x,\Omega)+\Omega\cdot\nabla_x \frac{\widetilde{\widehat{\psi}}(\widetilde E,x,\Omega)}{\rho}+\widetilde\Sigma_t(\widetilde E)\widetilde{\widehat{\psi}}(\widetilde E,x,\Omega) 
-    &= \int_{\mathbb{S}^2}\widetilde\Sigma_s(\widetilde E,\Omega\cdot\Omega')\widetilde{\widehat{\psi}}(\widetilde E,x,\Omega')d\Omega'.
+    & -\partial_{\widetilde E}\widetilde{\widehat{\psi}}(\widetilde E,x,\Omega)+\Omega\cdot\nabla_x \frac{\widetilde{\widehat{\psi}}(\widetilde E,x,\Omega)}{\rho}+\widetilde\Sigma_t(\widetilde E)\widetilde{\widehat{\psi}}(\widetilde E,x,\Omega) \\
+    & = \int_{\mathbb{S}^2}\widetilde\Sigma_s(\widetilde E,\Omega\cdot\Omega')\widetilde{\widehat{\psi}}(\widetilde E,x,\Omega')d\Omega'.
 
 Here, we define :math:`\widetilde\Sigma_{t}(\widetilde E):=\Sigma_t(E(\widetilde E))` and :math:`\widetilde\Sigma_{s}(\widetilde E,\Omega\cdot\Omega'):=\Sigma_s(E(\widetilde E),\Omega\cdot\Omega')`. Finally, to obtain a positive sign in front of the energy derivative, we transform to
 
 .. math::
     \bar{E}(\widetilde{E}) = \widetilde{E}_{\text{max}}-\widetilde{E}.
 
-Then, with $\bar{\psi}(\bar{E},x,\Omega):=\widetilde{\widehat{\psi}}(\widetilde{E}(\bar{E}),x,\Omega)$ and $\bar\Sigma_{t}(\bar E):=\widetilde{\Sigma}_t(\widetilde{E}(\bar{E}))$ as well as $\bar\Sigma_{s}(\bar E,\Omega\cdot\Omega'):=\widetilde{\Sigma}_s(\widetilde{E}(\bar{E}),\Omega\cdot\Omega')$ equation \eqref{eq:CSD4} becomes
+Then, with :math:`\bar{\psi}(\bar{E},x,\Omega):=\widetilde{\widehat{\psi}}(\widetilde{E}(\bar{E}),x,\Omega)`, :math:`\bar\Sigma_{t}(\bar E):=\widetilde{\Sigma}_t(\widetilde{E}(\bar{E}))` as well as :math:`\bar\Sigma_{s}(\bar E,\Omega\cdot\Omega'):=\widetilde{\Sigma}_s(\widetilde{E}(\bar{E}),\Omega\cdot\Omega')` equation \eqref{eq:CSD4} becomes
 
 .. math::
    :label: CSD6
@@ -176,7 +176,7 @@ Dropping the bar notation and treating :math:`\bar E` as a pseudo-time :math:`t`
     \partial_{t}\psi(t,x,\Omega)+&\Omega\cdot\nabla_x \frac{\psi(t,x,\Omega)}{\rho}+\Sigma_t(t)\psi(t,x,\Omega) = \int_{\mathbb{S}^2}\Sigma_s(t,\Omega\cdot\Omega')\psi(t,x,\Omega')d\Omega'\\
     &\psi(t=0,x,\Omega) = S(E_{\text{max}})\rho(x)\psi(E_{\text{max}},x,\Omega).
 
-We are interested in computing the dose, which (when again using the original energy $E$ and angular flux $\psi$) reads
+We are interested in computing the dose, which (when again using the original energy :math:`E` and angular flux :math:`\psi`) reads
 
 .. math::
     D(x) = \int_0^{\infty} \int_{\mathbb{S}^2} S(E)\psi(E,x,\Omega)\,d\Omega dE = \int_0^{\infty} \int_{\mathbb{S}^2} \frac{1}{\rho(x)}\widehat\psi(E,x,\Omega)\,d\Omega dE.
@@ -184,7 +184,6 @@ We are interested in computing the dose, which (when again using the original en
 So let us check how we can compute the dose from our solution :math:`\bar \psi(\bar E,x,\Omega)`. For this, let us substitute
 
 .. math::
-   :label: BarE
 
     \bar E(E) = \tilde{E}(E_{max}) - \int_0^E \frac{1}{S(E')}dE'.
 
