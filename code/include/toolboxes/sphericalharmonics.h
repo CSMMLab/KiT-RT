@@ -52,7 +52,7 @@ class SphericalHarmonics : public SphericalBase
     unsigned GetBasisSize() override;
 
     /*! @brief Return number of basis functions with degree equals to currDegree
-     *  @param currDegreeL = degree of polynomials that are counted   */
+     *  @param currDegree degree of polynomials that are counted   */
     unsigned GetCurrDegreeSize( unsigned currDegree ) override;
 
     /*! @brief  helper function to get the global index for given k and l of
@@ -102,7 +102,7 @@ class SphericalHarmonics : public SphericalBase
 
     /*! @brief Computes the spherical harmonics basis function up to degree _LmaxDegree at
      *          polar coordinates (theta, psi) and stores the result in _YBasis;
-     *  @param spherical coordinate phi
+     *  @param phi spherical coordinate
      */
     void ComputeYBasis( const double phi );
 };

@@ -14,24 +14,24 @@
 class SphericalMonomials : public SphericalBase
 {
   public:
-    /*! @brief : Sets up class for monomial basis on sphere up to degree L.
+    /*! @brief Sets up class for monomial basis on sphere up to degree L.
      *           The basis then consists of N = L.
-     *  @param : L_degree - maximum degree of spherical harmonics basis, 0 <= L <= 1000 (upper bound
+     *  @param L_degree maximum degree of spherical harmonics basis, 0 <= L <= 1000 (upper bound
      *                      due to numerical stability)
      * */
     SphericalMonomials( unsigned L_degree );
 
     /*! @brief Sets up class for monomial basis on sphere up to degree L.
      *         The basis then consists of N = L.
-     *  @param L_degree - maximum degree of spherical harmonics basis, 0 <= L <= 1000 (upper bound
+     *  @param L_degree maximum degree of spherical harmonics basis, 0 <= L <= 1000 (upper bound
      *                    due to numerical stability)
-     *  @param spatialDim - spatial dimensioniality of the simulation
+     *  @param spatialDim spatial dimensioniality of the simulation
      * */
     SphericalMonomials( unsigned L_degree, unsigned short spatialDim );
 
     /*! @brief  Computes all N = L² +2L basis functions at point (my, phi)
-     *  @param  my = cos(theta) - spherical coordinate, -1 <= x <= 1
-     *  @param  phi - spherical coordinate, 0 <= phi <= 2*pi
+     *  @param  my cos(theta) - spherical coordinate, -1 <= x <= 1
+     *  @param  phi spherical coordinate, 0 <= phi <= 2*pi
      *  @return vector of basis functions at point (my, phi) with size N = L² +2L
      */
     Vector ComputeSphericalBasis( double my, double phi ) override;
@@ -56,8 +56,8 @@ class SphericalMonomials : public SphericalBase
     unsigned GetCurrDegreeSize( unsigned currDegreeL ) override;
 
     /*! @brief Computes global index of basis vector depending on order k and degree l
-     *  @param l = degree of polynomials l = 0,1,2,3,...
-     *  @param k = order of element of degree l. 0 <=k <=GetCurrDegreeSize(l) */
+     *  @param l_degree degree of polynomials l = 0,1,2,3,...
+     *  @param k_order order of element of degree l. 0 <=k <=GetCurrDegreeSize(l) */
     unsigned GetGlobalIndexBasis( int l_degree, int k_order ) override;
 
   private:

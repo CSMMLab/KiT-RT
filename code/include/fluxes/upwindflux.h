@@ -34,8 +34,7 @@ class UpwindFlux : public NumericalFlux
      * @param psiL       Solution state of left hand side control volume
      * @param psiR       Solution state of right hand side control volume
      * @param n          Normal vector at the edge between left and right control volume
-     * @param resultFlux Vector with resulting flux.
-     * @return           void
+     * @return           Vector with resulting flux
      */
     Vector Flux( const Matrix AxPlus,
                  const Matrix AxMinus,
@@ -50,12 +49,12 @@ class UpwindFlux : public NumericalFlux
     /**
      * @brief Flux       Computes "VanLeer" upwinding scheme for given flux jacobians of the PN Solver at a given edge and stores it in
      *                   resultFlux
-     * @param AxPlus     Positive part of the flux jacobian in x direction
-     * @param AxMinus    Negative part of the flux jacobian in x direction
-     * @param AyPlus     Positive part of the flux jacobian in y direction
-     * @param AyMinus    Negative part of the flux jacobian in y direction
-     * @param AzPlus     Positive part of the flux jacobian in z direction
-     * @param AzMinus    Negative part of the flux jacobian in z direction
+     * @param Ax         Flux jacobian in x direction
+     * @param AxAbs      Absolute value of the flux jacobian in x direction
+     * @param Ay         Flux jacobian in y direction
+     * @param AyAbs      Absolute value of the flux jacobian in y direction
+     * @param Az         Flux jacobian in z direction
+     * @param AzAbs      Absolute value of the flux jacobian in z direction
      * @param psiL       Solution state of left hand side control volume
      * @param psiR       Solution state of right hand side control volume
      * @param n          Normal vector at the edge between left and right control volume

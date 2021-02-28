@@ -144,7 +144,7 @@ bool QGaussLegendre1D::CheckOrder() {
     return true;    // All orders viable
 }
 
-double QGaussLegendre1D::Integrate( double( f )( double x0, double x1, double x2 ) ) {    // Not Safe!
+double QGaussLegendre1D::Integrate( double ( *f )( double, double, double ) ) {    // Not Safe!
     double result = 0.0;
     double x      = 0.0;
     double y      = 0.0;
@@ -158,12 +158,12 @@ double QGaussLegendre1D::Integrate( double( f )( double x0, double x1, double x2
     return result;
 }
 
-double QGaussLegendre1D::IntegrateSpherical( double( f )( double my, double phi ) ) {
+double QGaussLegendre1D::IntegrateSpherical( double ( *f )( double, double ) ) {
     ErrorMessages::Error( "This method is not applicable for 1D quadratures.\n", CURRENT_FUNCTION );
     return f( 0, 0 );
 }
 
-std::vector<double> QGaussLegendre1D::Integrate( std::vector<double>( f )( double x0, double x1, double x2 ), unsigned /* len */ ) {
+std::vector<double> QGaussLegendre1D::Integrate( std::vector<double> ( *f )( double, double, double ), unsigned /* len */ ) {
     ErrorMessages::Error( "This method is not applicable for 1D quadratures.\n", CURRENT_FUNCTION );
     return { f( 0, 0, 0 ) };
 }

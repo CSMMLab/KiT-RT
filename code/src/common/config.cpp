@@ -216,8 +216,9 @@ void Config::SetConfigOptions() {
     AddStringOption( "CT_FILE", _ctFile, string( "../tests/input/phantom.png" ) );
 
     // Quadrature relatated options
-    /*! @brief QUAD_TYPE \n DESCRIPTION: Type of Quadrature rule \n Options: see @link QUAD_NAME \endlink \n DEFAULT: QUAD_MonteCarlo \ingroup
-     * Config*/
+    /*! @brief QUAD_TYPE \n DESCRIPTION: Type of Quadrature rule \n Options: see @link QUAD_NAME \endlink \n DEFAULT: QUAD_MonteCarlo
+     * \ingroup Config
+     */
     AddEnumOption( "QUAD_TYPE", _quadName, Quadrature_Map, QUAD_MonteCarlo );
     /*!\brief QUAD_ORDER \n DESCRIPTION: Order of Quadrature rule \n DEFAULT 2 \ingroup Config.*/
     AddUnsignedShortOption( "QUAD_ORDER", _quadOrder, 1 );
@@ -278,8 +279,8 @@ void Config::SetConfigOptions() {
     AddUnsignedLongOption( "NEWTON_ITER", _newtonIter, 100 );
     /*! @brief Step Size Newton Optmizers \n DESCRIPTION: Step size for Newton optimizer \n DEFAULT 10 \ingroup Config */
     AddDoubleOption( "NEWTON_STEP_SIZE", _newtonStepSize, 0.1 );
-    /*! @brief Max Iter for line search in Newton Optmizers \n DESCRIPTION: Max number of line search iter for newton optimizer \n DEFAULT 10 \ingroup
-     * Config */
+    /*! @brief Max Iter for line search in Newton Optmizers \n DESCRIPTION: Max number of line search iter for newton optimizer \n DEFAULT 10
+     * \ingroup Config */
     AddUnsignedLongOption( "NEWTON_LINE_SEARCH_ITER", _newtonLineSearchIter, 100 );
     /*! @brief Newton Fast mode \n DESCRIPTION:  If true, we skip the Newton optimizer for Quadratic entropy and set alpha = u \n DEFAULT false
      * \ingroup Config */

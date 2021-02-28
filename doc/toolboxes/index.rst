@@ -6,6 +6,5 @@ Toolboxes
 
    errormessages
    interpolation
-   physics
    reconstructor
    sphericalharmonics

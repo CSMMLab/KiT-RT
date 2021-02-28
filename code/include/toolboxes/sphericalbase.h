@@ -18,24 +18,25 @@ class SphericalBase
     virtual ~SphericalBase() {}
 
     /*! @brief Create a set of basis functions on the unit sphere defined in settings
-     *  @param Pointer to the config file
-     *  @returns: Pointer to the createt basis class */
+     *  @param settings pointer to the config object
+     *  @returns Pointer to the createt basis class
+     */
     static SphericalBase* Create( Config* settings );
 
-    /*! @brief  : Computes all N basis functions at point (my, phi)
-     *  @param  : my = cos(theta) - spherical coordinate, -1 <= x <= 1
-     *  @param  : phi - spherical coordinate, 0 <= phi <= 2*pi
-     *  @return : vector of basis functions at point (my, phi) with size N
+    /*! @brief  Computes all N basis functions at point (my, phi)
+     *  @param  my cos(theta) - spherical coordinate, -1 <= x <= 1
+     *  @param  phi spherical coordinate, 0 <= phi <= 2*pi
+     *  @return vector of basis functions at point (my, phi) with size N
      */
     virtual Vector ComputeSphericalBasis( double my, double phi ) = 0;
 
-    /*! @brief  : Computes all basis functions at point (x, y, z) on the unit sphere
-     *  @param  : x,y,z = coordinates on unit sphere
-     *  @return : vector of basis functions at point (x,y,z) with size N
+    /*! @brief  Computes all basis functions at point (x, y, z) on the unit sphere
+     *  @param  x,y,z coordinates on unit sphere
+     *  @return vector of basis functions at point (x,y,z) with size N
      */
     virtual Vector ComputeSphericalBasis( double x, double y, double z ) = 0;
 
-    /*! @brief : Return size of complete Basisvector */
+    /*! @brief Return size of complete Basisvector */
     virtual unsigned GetBasisSize() = 0;
 
     /*! @brief Return number of basis functions with degree equals to currDegree
