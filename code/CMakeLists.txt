@@ -146,7 +146,7 @@ if( BUILD_DOC )
 
     set( DOXYGEN_INPUT_DIR ${PROJECT_SOURCE_DIR} )
     set( DOXYGEN_OUTPUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/docs/doxygen )
-    set( DOXYGEN_INDEX_FILE ${DOXYGEN_OUTPUT_DIR}/html/index.html )
+    set( DOXYGEN_INDEX_FILE ${DOXYGEN_OUTPUT_DIR}/xml/index.xml )
     set( DOXYFILE_IN ${CMAKE_CURRENT_SOURCE_DIR}/../doc/Doxyfile.in )
     set( DOXYFILE_OUT ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile )
     configure_file( ${DOXYFILE_IN} ${DOXYFILE_OUT} @ONLY )
