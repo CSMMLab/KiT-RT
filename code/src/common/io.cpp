@@ -197,7 +197,8 @@ Mesh* LoadSU2MeshFromFile( const Config* settings ) {
                         getline( ifs, line );
                         if( line.find( "MARKER_TAG", 0 ) != std::string::npos ) {
                             markerTag    = line.substr( line.find( "=" ) + 1 );
-                            auto end_pos = std::remove_if( markerTag.begin(), markerTag.end(), isspace );
+                            auto end_pos = std::remove_if(
+                                markerTag.begin(), markerTag.end(), []( char c ) { return std::isspace( static_cast<unsigned char>( c ) ); } );
                             markerTag.erase( end_pos, markerTag.end() );
                             btype = settings->GetBoundaryType( markerTag );
                             if( btype == BOUNDARY_TYPE::INVALID ) {
