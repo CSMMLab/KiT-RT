@@ -7,7 +7,10 @@
 #ifndef ISOTROPIC_H
 #define ISOTROPIC_H
 
+#include "common/typedef.h"    // for Matrix
 #include "scatteringkernelbase.h"
+
+class QuadratureBase;
 
 class Isotropic : public ScatteringKernel
 {

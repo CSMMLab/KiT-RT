@@ -1,6 +1,9 @@
 #include "problems/electronrt.h"
+#include "blaze/math/smp/default/DenseVector.h"    // for smpAssign
 #include "common/config.h"
 #include "common/mesh.h"
+#include "problems/epics.h"          // for EPICS
+#include "problems/problembase.h"    // for ProblemBase
 
 // Constructor: Legacy code, physics class is no longer used
 ElectronRT::ElectronRT( Config* settings, Mesh* mesh ) : ProblemBase( settings, mesh ) {

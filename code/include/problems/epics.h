@@ -1,14 +1,11 @@
 #ifndef EPICS_H
 #define EPICS_H
 
-#include <fstream>
-#include <list>
-#include <map>
+#include <string>    // for string, allocator
+#include <tuple>     // for tuple
+#include <vector>    // for vector
 
-#include "common/globalconstants.h"
 #include "common/typedef.h"
-#include "toolboxes/errormessages.h"
-#include "toolboxes/interpolation.h"
 
 class EPICS
 {

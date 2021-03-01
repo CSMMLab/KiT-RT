@@ -9,11 +9,13 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
-#include <filesystem>
-#include <map>
-#include <vector>
+#include <filesystem>    // for path
+#include <map>           // for map
+#include <string>        // for string
+#include <utility>       // for pair
+#include <vector>        // for vector
 
-#include "globalconstants.h"
+#include "globalconstants.h"    // for SCALAR_OUTPUT, VOLUME_OUTPUT, QUAD_NAME
 
 // Forward declaration
 class OptionBase;

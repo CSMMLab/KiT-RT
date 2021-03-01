@@ -1,7 +1,13 @@
 #ifndef MUSCLEBONELUNG
 #define MUSCLEBONELUNG
 
+#include <vector>    // for vector
+
+#include "common/typedef.h"    // for VectorVector, Vector
 #include "electronrt.h"
+
+class Config;
+class Mesh;
 
 class MuscleBoneLung : public ElectronRT
 {

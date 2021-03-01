@@ -1,7 +1,13 @@
 #ifndef WATERPHANTOM_H
 #define WATERPHANTOM_H
 
+#include <vector>    // for vector
+
+#include "common/typedef.h"    // for VectorVector, Vector
 #include "electronrt.h"
+
+class Config;
+class Mesh;
 
 class WaterPhantom : public ElectronRT
 {

@@ -5,12 +5,43 @@
  */
 
 #include "optimizers/newtonoptimizer.h"
+#include "blaze/math/Vector.h"                            // for dot, outer
+#include "blaze/math/dense/DenseIterator.h"               // for operator+
+#include "blaze/math/dense/DenseMatrix.h"                 // for operator/=
+#include "blaze/math/dense/Inversion.h"                   // for invert
+#include "blaze/math/expressions/DMatDVecMultExpr.h"      // for DVecScalarMul...
+#include "blaze/math/expressions/DMatScalarDivExpr.h"     // for operator/
+#include "blaze/math/expressions/DMatScalarMultExpr.h"    // for operator*
+#include "blaze/math/expressions/DVecDVecInnerExpr.h"     // for operator*
+#include "blaze/math/expressions/DVecDVecOuterExpr.h"     // for operator+
+#include "blaze/math/expressions/DVecDVecSubExpr.h"       // for DVecDVecSubExpr
+#include "blaze/math/expressions/DVecNormExpr.h"          // for norm
+#include "blaze/math/expressions/DVecScalarMultExpr.h"    // for operator*
+#include "blaze/math/expressions/DVecTransExpr.h"         // for trans
+#include "blaze/math/expressions/DenseMatrix.h"           // for DenseMatrix
+#include "blaze/math/expressions/DenseVector.h"           // for DenseVector
+#include "blaze/math/expressions/MatScalarMultExpr.h"     // for operator*
+#include "blaze/math/expressions/Matrix.h"                // for derestrict
+#include "blaze/math/expressions/VecScalarMultExpr.h"     // for operator-
+#include "blaze/math/simd/Add.h"                          // for operator+
+#include "blaze/math/simd/BasicTypes.h"                   // for operator+=
+#include "blaze/math/simd/Mult.h"                         // for operator*
+#include "blaze/math/simd/Set.h"                          // for set
+#include "blaze/math/simd/Sub.h"                          // for operator-
+#include "blaze/math/simd/Sum.h"                          // for sum
+#include "blaze/math/smp/default/DenseMatrix.h"           // for smpAssign
+#include "blaze/math/smp/default/DenseVector.h"           // for smpAssign
 #include "common/config.h"
+#include "common/globalconstants.h"    // for QUADRATIC
 #include "entropies/entropybase.h"
+#include "optimizers/optimizerbase.h"    // for OptimizerBase
 #include "quadratures/quadraturebase.h"
 #include "toolboxes/errormessages.h"
-
-#include <omp.h>
+#include <cmath>                 // for sqrt, isfinite
+#include <complex>               // for real
+#include <emmintrin.h>           // for _mm_mul_pd
+#include <ext/alloc_traits.h>    // for __alloc_trait...
+#include <string>                // for allocator
 
 NewtonOptimizer::NewtonOptimizer( Config* settings ) : OptimizerBase( settings ) {
     _quadrature      = QuadratureBase::Create( settings );

@@ -1,14 +1,39 @@
 #include "solvers/pnsolver.h"
+#include "blaze/math/adaptors/symmetricmatrix/DenseScalar.h"    // for Symmetr...
+#include "blaze/math/dense/DynamicVector.h"                     // for Dynamic...
+#include "blaze/math/dense/Eigen.h"                             // for eigen
+#include "blaze/math/expressions/DMatInvExpr.h"                 // for inv
+#include "blaze/math/expressions/DMatMapExpr.h"                 // for ctrans
+#include "blaze/math/expressions/DMatSerialExpr.h"              // for serial
+#include "blaze/math/expressions/DMatTDMatMultExpr.h"           // for operator*
+#include "blaze/math/expressions/DMatTransExpr.h"               // for trans
+#include "blaze/math/expressions/DVecDVecAddExpr.h"             // for DVecDVe...
+#include "blaze/math/expressions/DVecScalarMultExpr.h"          // for DVecSca...
+#include "blaze/math/expressions/DenseMatrix.h"                 // for DenseMa...
+#include "blaze/math/expressions/DenseVector.h"                 // for DenseVe...
+#include "blaze/math/expressions/Matrix.h"                      // for transpose
+#include "blaze/math/expressions/TDMatDMatMultExpr.h"           // for operator*
+#include "blaze/math/expressions/Vector.h"                      // for resize
+#include "blaze/math/simd/Add.h"                                // for operator+
+#include "blaze/math/simd/BasicTypes.h"                         // for operator+=
+#include "blaze/math/simd/Mult.h"                               // for operator*
+#include "blaze/math/simd/Set.h"                                // for set
+#include "blaze/math/simd/Sum.h"                                // for sum
+#include "blaze/math/smp/default/DenseMatrix.h"                 // for smpAssign
+#include "blaze/math/smp/default/DenseVector.h"                 // for smpAssign
 #include "common/config.h"
-#include "common/io.h"
+#include "common/globalconstants.h"    // for BOUNDAR...
 #include "common/mesh.h"
 #include "fluxes/numericalflux.h"
 #include "toolboxes/errormessages.h"
-#include "toolboxes/textprocessingtoolbox.h"
-
-// externals
-#include "spdlog/spdlog.h"
-#include <mpi.h>
+#include <algorithm>             // for max
+#include <emmintrin.h>           // for _mm_mul_pd
+#include <ext/alloc_traits.h>    // for __alloc...
+#include <math.h>                // for sqrt, M_PI
+#include <memory>                // for allocator
+#include <stdlib.h>              // for abs
+#include <string>                // for string
+#include <vector>                // for vector
 
 PNSolver::PNSolver( Config* settings ) : SolverBase( settings ) {
     _polyDegreeBasis = settings->GetMaxMomentDegree();

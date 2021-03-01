@@ -1,7 +1,13 @@
 #ifndef SLABGEOHG_H
 #define SLABGEOHG_H
 
+#include <vector>    // for vector
+
+#include "common/typedef.h"    // for VectorVector, Vector
 #include "problembase.h"
+
+class Config;
+class Mesh;
 
 class SlabGeoHG : public ProblemBase
 {

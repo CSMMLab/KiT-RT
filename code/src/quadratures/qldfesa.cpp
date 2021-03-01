@@ -1,6 +1,11 @@
 #include "quadratures/qldfesa.h"
+#include "common/typedef.h"    // for VectorVectorU
 #include "quadratures/lookuptable_ldfesa.h"
+#include "quadratures/qlookupquadrature.h"    // for QLookupQuadrature
 #include "toolboxes/errormessages.h"
+#include <vector>    // for vector
+
+class Config;
 
 QLDFESA::QLDFESA( Config* settings ) : QLookupQuadrature( settings ) {
     SetAvailOrders();

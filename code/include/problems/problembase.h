@@ -1,7 +1,9 @@
 #ifndef PROBLEMBASE_H
 #define PROBLEMBASE_H
 
+#include "blaze/math/smp/default/DenseMatrix.h"    // for smpAssign
 #include "common/typedef.h"
+#include <vector>    // for vector
 
 // Forward Declaration
 

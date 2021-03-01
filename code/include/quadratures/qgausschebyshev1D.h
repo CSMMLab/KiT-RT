@@ -10,7 +10,10 @@
 #define QGAUSSCHEBYSHEV_H
 
 #include "quadraturebase.h"
-#include <iostream>
+#include <string>    // for string
+#include <vector>    // for vector
+
+class Config;
 
 class QGaussChebyshev1D : public QuadratureBase
 {

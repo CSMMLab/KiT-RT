@@ -14,6 +14,8 @@
 
 #include "quadraturebase.h"
 
+class Config;
+
 class QDummy : public QuadratureBase
 {
   public:

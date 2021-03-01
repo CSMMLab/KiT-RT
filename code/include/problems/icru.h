@@ -9,19 +9,14 @@
 #ifndef ICRU_H
 #define ICRU_H
 
-#include <cmath>
-#include <fstream>
-#include <iostream>
-#include <sstream>
 #include <vector>
 
-#include "common/globalconstants.h"
 #include "common/typedef.h"
-#include "toolboxes/errormessages.h"
-#include "toolboxes/interpolation.h"
 
 enum ParticleType { ELECTRON, POSITRON };
+
 class Config;
+
 class ICRU
 {
   private:

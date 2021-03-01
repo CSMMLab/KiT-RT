@@ -1,6 +1,5 @@
 #include "kernels/scatteringkernelbase.h"
 #include "kernels/isotropic.h"
-#include "kernels/isotropic1D.h"
 
 ScatteringKernel::ScatteringKernel( QuadratureBase* quad ) : _quad( quad ) {}
 

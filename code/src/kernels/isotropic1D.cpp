@@ -1,4 +1,7 @@
 #include "kernels/isotropic1D.h"
+
+#include "blaze/math/dense/DynamicVector.h"    // for DynamicVector
+#include "kernels/scatteringkernelbase.h"      // for ScatteringKernel
 #include "quadratures/quadraturebase.h"
 
 Isotropic1D::Isotropic1D( QuadratureBase* quad ) : ScatteringKernel( quad ) {}

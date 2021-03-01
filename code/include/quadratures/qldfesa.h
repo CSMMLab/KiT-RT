@@ -3,6 +3,10 @@
 
 #include "qlookupquadrature.h"
 
+#include <string>    // for string
+
+class Config;
+
 class QLDFESA : public QLookupQuadrature
 {
   public:

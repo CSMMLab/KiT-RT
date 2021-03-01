@@ -7,7 +7,10 @@
 #ifndef NEWTONOPTIMIZER_H
 #define NEWTONOPTIMIZER_H
 
+#include "common/typedef.h"    // for Vector, VectorVector, Matrix
 #include "optimizerbase.h"
+
+class Config;
 
 class QuadratureBase;
 

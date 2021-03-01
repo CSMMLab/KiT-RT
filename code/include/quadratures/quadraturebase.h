@@ -9,6 +9,9 @@
 #include "common/globalconstants.h"
 #include "common/typedef.h"
 
+#include <string>    // for string
+#include <vector>    // for vector
+
 class Config;
 
 class QuadratureBase

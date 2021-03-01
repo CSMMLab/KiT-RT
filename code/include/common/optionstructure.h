@@ -7,7 +7,7 @@
 #define OPTION_STRUCTURE_H
 
 #include <map>
-#include <sstream>
+#include <memory>    // for allocator_traits<>::value_type
 #include <string>
 #include <vector>
 

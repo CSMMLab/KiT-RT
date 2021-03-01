@@ -1,6 +1,7 @@
 #ifndef LAXFRIEDRICHSFLUX_H
 #define LAXFRIEDRICHSFLUX_H
 
+#include "common/typedef.h"    // for Vector
 #include "numericalflux.h"
 
 class LaxFriedrichsFlux : public NumericalFlux

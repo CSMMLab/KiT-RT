@@ -1,7 +1,12 @@
 #ifndef CSDSNSOLVER_H
 #define CSDSNSOLVER_H
 
+#include "common/typedef.h"    // for Matrix, Vector
 #include "solvers/snsolver.h"
+
+#include <vector>    // for vector
+
+class Config;
 
 class CSDSNSolver : public SNSolver
 {

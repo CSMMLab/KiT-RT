@@ -9,6 +9,8 @@
 
 #include "toolboxes/datageneratorbase.h"
 
+class Config;
+
 class DataGenerator1D : public DataGeneratorBase
 {
   public:

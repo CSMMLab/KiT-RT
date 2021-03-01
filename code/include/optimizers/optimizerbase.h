@@ -7,6 +7,7 @@
 #ifndef OPTIMIZERBASE_H
 #define OPTIMIZERBASE_H
 
+#include "common/globalconstants.h"    // for ML, NEWTON
 #include "common/typedef.h"
 
 // Foward declaration

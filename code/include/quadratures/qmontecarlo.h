@@ -3,6 +3,10 @@
 
 #include "quadraturebase.h"
 
+#include <string>    // for string
+
+class Config;
+
 class QMonteCarlo : public QuadratureBase
 {
   public:

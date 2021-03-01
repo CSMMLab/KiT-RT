@@ -1,8 +1,10 @@
 #ifndef MNSOLVER_H
 #define MNSOLVER_H
 
+#include "common/typedef.h"    // for VectorVector, Vector
 #include "solverbase.h"
 
+class Config;
 class EntropyBase;
 class SphericalBase;
 class OptimizerBase;

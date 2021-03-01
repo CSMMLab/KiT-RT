@@ -1,6 +1,14 @@
 #include "toolboxes/interpolation.h"
+#include "blaze/math/dense/DenseIterator.h"        // for operator-, DenseIter...
+#include "blaze/math/dense/DynamicVector.h"        // for DynamicVector<>::Con...
+#include "blaze/math/expressions/DVecMapExpr.h"    // for DVecMapExpr
+#include "blaze/math/expressions/Vector.h"         // for begin, end
+#include "blaze/math/smp/default/DenseVector.h"    // for smpAssign
 #include "toolboxes/errormessages.h"
-#include <blaze/math/lapack/posv.h>
+#include <algorithm>    // for lower_bound, max
+#include <iterator>     // for distance
+#include <math.h>       // for log, exp
+#include <stdlib.h>     // for abs
 
 // Change Vector type to blaze for std input
 Interpolation::Interpolation( const std::vector<double>& x, const std::vector<double>& y, TYPE type ) : _dim( 1u ), _type( type ) {

@@ -2,19 +2,13 @@
 #define CSDSOLVERTRAFOFPSH2D_H
 
 // externals
-#include "spdlog/spdlog.h"
-#include <mpi.h>
 
-#include "common/config.h"
-#include "common/io.h"
-#include "fluxes/numericalflux.h"
-#include "kernels/scatteringkernelbase.h"
-#include "problems/problembase.h"
-#include "quadratures/quadraturebase.h"
+#include <vector>    // for vector
+
+#include "common/typedef.h"    // for Matrix, Vector, VectorVector
 #include "solvers/snsolver.h"
-#include "toolboxes/sphericalharmonics.h"
 
-class Physics;
+class Config;
 
 class CSDSolverTrafoFPSH2D : public SNSolver
 {

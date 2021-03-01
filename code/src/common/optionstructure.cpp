@@ -8,6 +8,9 @@
 
 #include "common/optionstructure.h"
 
+#include <ext/alloc_traits.h>    // for __alloc_traits<>::value_type
+#include <sstream>               // for basic_istream, basic_istream<>::__istr...
+
 // --- Members of OptionBase ----
 
 OptionBase::~OptionBase() {}

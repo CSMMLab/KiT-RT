@@ -1,15 +1,36 @@
 #include "solvers/csdsolvertrafofp.h"
+#include "blaze/math/Vector.h"                            // for dot
+#include "blaze/math/dense/LSE.h"                         // for solve
+#include "blaze/math/expressions/DMatDMatSubExpr.h"       // for DMatDMatSubExpr
+#include "blaze/math/expressions/DMatDVecMultExpr.h"      // for DMatDVecMultExpr
+#include "blaze/math/expressions/DMatDVecSolveExpr.h"     // for DMatDVecSolve...
+#include "blaze/math/expressions/DMatInvExpr.h"           // for inv
+#include "blaze/math/expressions/DMatMapExpr.h"           // for ctrans
+#include "blaze/math/expressions/DMatScalarMultExpr.h"    // for DMatScalarMul...
+#include "blaze/math/expressions/DMatTransExpr.h"         // for trans
+#include "blaze/math/expressions/DVecDVecInnerExpr.h"     // for operator*
+#include "blaze/math/expressions/DVecTransExpr.h"         // for trans
+#include "blaze/math/expressions/DenseMatrix.h"           // for DenseMatrix
+#include "blaze/math/simd/Add.h"                          // for operator+
+#include "blaze/math/simd/BasicTypes.h"                   // for operator+=
+#include "blaze/math/simd/Mult.h"                         // for operator*
+#include "blaze/math/simd/Set.h"                          // for set
+#include "blaze/math/simd/Sub.h"                          // for operator-
+#include "blaze/math/simd/Sum.h"                          // for sum
+#include "blaze/math/smp/default/DenseMatrix.h"           // for smpAssign
+#include "blaze/math/smp/default/DenseVector.h"           // for smpAssign
 #include "common/config.h"
-#include "common/io.h"
+#include "common/globalconstants.h"    // for BOUNDARY_TYPE
 #include "fluxes/numericalflux.h"
-#include "kernels/scatteringkernelbase.h"
 #include "problems/icru.h"
-#include "problems/problembase.h"
 #include "quadratures/quadraturebase.h"
-
-// externals
-#include "spdlog/spdlog.h"
-#include <mpi.h>
+#include "toolboxes/errormessages.h"    // for CURRENT_FUNCTION
+#include <algorithm>                    // for max, max_element
+#include <emmintrin.h>                  // for _mm_mul_pd
+#include <ext/alloc_traits.h>           // for __alloc_trait...
+#include <math.h>                       // for exp, pow, fabs
+#include <memory>                       // for allocator_tra...
+#include <string>                       // for string, basic...
 
 CSDSolverTrafoFP::CSDSolverTrafoFP( Config* settings ) : SNSolver( settings ) {
     _dose = std::vector<double>( _settings->GetNCells(), 0.0 );

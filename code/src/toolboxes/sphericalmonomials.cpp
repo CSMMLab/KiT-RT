@@ -5,7 +5,9 @@
  */
 
 #include "toolboxes/sphericalmonomials.h"
+#include "common/globalconstants.h"    // for SPHERICAL_BASIS_NAME, SPHE...
 #include "toolboxes/errormessages.h"
+#include <memory>    // for allocator
 
 SphericalMonomials::SphericalMonomials( unsigned L_degree ) {
     _LMaxDegree = L_degree;

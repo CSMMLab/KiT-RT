@@ -1,7 +1,11 @@
 #ifndef CHECKERBOARD_H
 #define CHECKERBOARD_H
 
+#include "common/typedef.h"    // for Vector, VectorVector
 #include "problembase.h"
+#include <vector>    // for vector
+class Config;
+class Mesh;
 
 class Checkerboard_SN : public ProblemBase
 {

@@ -1,7 +1,13 @@
 #ifndef LINESOURCE_H
 #define LINESOURCE_H
 
+#include <vector>    // for vector
+
+#include "common/typedef.h"    // for Vector, VectorVector, Matrix
 #include "problembase.h"
+
+class Config;
+class Mesh;
 
 class LineSource : public ProblemBase
 {

@@ -1,7 +1,8 @@
 #include "problems/slabgeohg.h"
+#include "blaze/math/smp/default/DenseVector.h"    // for smpAssign
 #include "common/config.h"
 #include "common/mesh.h"
-#include "problems/epics.h"
+#include "problems/problembase.h"    // for ProblemBase
 
 // ---- SlabGeoHG ----
 

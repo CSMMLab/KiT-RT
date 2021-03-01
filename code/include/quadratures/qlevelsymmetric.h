@@ -2,6 +2,9 @@
 #define QLEVELSYMMETRIC_H
 
 #include "qlookupquadrature.h"
+#include <string>    // for string
+
+class Config;
 
 class QLevelSymmetric : public QLookupQuadrature
 {

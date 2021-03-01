@@ -12,13 +12,23 @@
 #include "toolboxes/errormessages.h"
 #include "toolboxes/textprocessingtoolbox.h"
 
+#include <algorithm>                 // for find
+#include <assert.h>                  // for assert
+#include <bits/types/struct_tm.h>    // for tm
+#include <chrono>                    // for seconds
+#include <filesystem>
+#include <fstream>
+#include <iostream>    // for ifstream, basic_istream
+#include <iterator>    // for begin, end
+#include <memory>      // for make_shared, shared_ptr
+#include <mpi.h>
+#include <string.h>    // for strncpy
+#include <time.h>      // for localtime, strftime, time
+
 // externals
 #include "spdlog/sinks/basic_file_sink.h"
 #include "spdlog/sinks/stdout_sinks.h"
 #include "spdlog/spdlog.h"
-#include <filesystem>
-#include <fstream>
-#include <mpi.h>
 
 using namespace std;
 
@@ -694,7 +704,7 @@ bool Config::TokenizeString( string& str, string& option_name, vector<string>& o
     pos = str.find( "=" );
     if( pos == string::npos ) {
         string errmsg = "Error in Config::TokenizeString(): line in the configuration file with no \"=\" sign.  ";
-        errmsg += "\nLook for: \n  str.length() = " + std::to_string(str.length());
+        errmsg += "\nLook for: \n  str.length() = " + std::to_string( str.length() );
         spdlog::error( errmsg );
         throw( -1 );
     }

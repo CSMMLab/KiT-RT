@@ -1,8 +1,14 @@
 #ifndef ELECTRONRT_H
 #define ELECTRONRT_H
 
-#include "epics.h"
+#include <string>    // for string
+#include <vector>    // for vector
+
+#include "common/typedef.h"    // for Vector, VectorVector, Matrix
 #include "problembase.h"
+
+class Config;
+class Mesh;
 
 class ElectronRT : public ProblemBase
 {

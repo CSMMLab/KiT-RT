@@ -1,4 +1,8 @@
 #include "quadratures/quadraturebase.h"
+#include "blaze/math/expressions/DVecReduceExpr.h"    // for sum
+#include "blaze/math/simd/Add.h"                      // for operator+
+#include "blaze/math/simd/BasicTypes.h"               // for operator+=
+#include "blaze/math/simd/Sum.h"                      // for sum
 #include "common/config.h"
 #include "quadratures/qgausschebyshev1D.h"
 #include "quadratures/qgausslegendre1D.h"
@@ -8,7 +12,14 @@
 #include "quadratures/qlevelsymmetric.h"
 #include "quadratures/qmontecarlo.h"
 #include "quadratures/qproduct.h"
+#include "spdlog/logger.h"    // for logger
+#include "spdlog/spdlog.h"    // for get
 #include "toolboxes/errormessages.h"
+#include <bits/exception.h>      // for exception
+#include <ext/alloc_traits.h>    // for __alloc_traits<>:...
+#include <memory>                // for allocator, __shar...
+#include <spdlog/fmt/fmt.h>      // for format_to
+#include <utility>               // for move
 
 QuadratureBase::QuadratureBase( Config* settings ) {
     _settings = settings;

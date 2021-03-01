@@ -1,7 +1,12 @@
 #ifndef QGAUSSLEGENDRETENSORIZED_H
 #define QGAUSSLEGENDRETENSORIZED_H
 
+#include "common/typedef.h"    // for Matrix, Vector
 #include "quadraturebase.h"
+#include <string>     // for string
+#include <utility>    // for pair
+
+class Config;
 
 class QGaussLegendreTensorized : public QuadratureBase
 {

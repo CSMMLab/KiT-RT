@@ -1,6 +1,12 @@
 #include "problems/isotropicsource2d.h"
+#include "blaze/math/smp/default/DenseVector.h"    // for smpAssign
 #include "common/config.h"
+#include "common/globalconstants.h"    // for BOUNDARY_TYPE, DIRIC...
 #include "common/mesh.h"
+#include "problems/electronrt.h"    // for ElectronRT
+#include "problems/epics.h"         // for EPICS
+#include <ext/alloc_traits.h>       // for __alloc_traits<>::va...
+#include <math.h>                   // for sqrt
 
 IsotropicSource2D::IsotropicSource2D( Config* settings, Mesh* mesh ) : ElectronRT( settings, mesh ) {}
 

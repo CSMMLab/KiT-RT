@@ -1,6 +1,11 @@
 #include "quadratures/qlevelsymmetric.h"
+#include "common/typedef.h"    // for VectorVectorU
 #include "quadratures/lookuptable_levelsymmetric.h"
+#include "quadratures/qlookupquadrature.h"    // for QLookupQuadrature
 #include "toolboxes/errormessages.h"
+#include <vector>    // for vector
+
+class Config;
 
 QLevelSymmetric::QLevelSymmetric( Config* settings ) : QLookupQuadrature( settings ) {
     SetAvailOrders();

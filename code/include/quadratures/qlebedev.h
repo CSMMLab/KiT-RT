@@ -2,6 +2,9 @@
 #define QLEBEDEV_H
 
 #include "qlookupquadrature.h"
+#include <string>    // for string
+
+class Config;
 
 class QLebedev : public QLookupQuadrature
 {

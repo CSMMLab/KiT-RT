@@ -1,6 +1,10 @@
 #include "problems/checkerboard.h"
+#include "blaze/math/smp/default/DenseVector.h"    // for smpAssign
 #include "common/config.h"
 #include "common/mesh.h"
+#include "problems/problembase.h"    // for ProblemBase
+#include <ext/alloc_traits.h>        // for __alloc_traits<>::va...
+#include <math.h>                    // for sqrt, M_PI
 
 // ---- Checkerboard Sn ----
 // Constructor for Ckeckerboard case with Sn

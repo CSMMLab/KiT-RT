@@ -1,14 +1,12 @@
 #ifndef MESH_H
 #define MESH_H
 
-#include "blaze/math/CompressedMatrix.h"
-#include "common/globalconstants.h"
-#include "common/typedef.h"
+#include <utility>    // for pair
+#include <vector>     // for vector
 
-#include <algorithm>
-#include <mpi.h>
-#include <omp.h>
-#include <vector>
+#include "blaze/math/sparse/CompressedMatrix.h"    // for CompressedMatrix
+#include "common/globalconstants.h"                // for BOUNDARY_TYPE
+#include "common/typedef.h"                        // for Vector, VectorVector
 
 #include "toolboxes/errormessages.h"
 #include "toolboxes/reconstructor.h"

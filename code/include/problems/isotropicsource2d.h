@@ -2,13 +2,12 @@
 #define ISOTROPICSOURCE2D_H
 
 #include "electronrt.h"
-#include <fstream>
-#include <numeric>
+#include <vector>    // for vector
 
-#include "common/config.h"
-#include "common/io.h"
-#include "common/mesh.h"
-#include "toolboxes/interpolation.h"
+#include "common/typedef.h"    // for VectorVector, Vector
+
+class Config;
+class Mesh;
 
 class IsotropicSource2D : public ElectronRT
 {

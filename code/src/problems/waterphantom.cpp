@@ -1,6 +1,8 @@
 #include "problems/waterphantom.h"
+#include "blaze/math/smp/default/DenseVector.h"    // for smpAssign
 #include "common/config.h"
 #include "common/mesh.h"
+#include "problems/electronrt.h"    // for ElectronRT
 
 WaterPhantom::WaterPhantom( Config* settings, Mesh* mesh ) : ElectronRT( settings, mesh ) {}
 

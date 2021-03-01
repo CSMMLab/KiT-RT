@@ -6,7 +6,14 @@
 #ifndef PRODUCTQUADRATURE_H
 #define PRODUCTQUADRATURE_H
 
+#include "common/typedef.h"    // for Matrix, Vector
 #include "quadraturebase.h"
+
+#include <math.h>     // for pow
+#include <string>     // for string
+#include <utility>    // for pair
+
+class Config;
 
 class QProduct : public QuadratureBase
 {

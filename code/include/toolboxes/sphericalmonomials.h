@@ -9,7 +9,6 @@
 
 #include "common/typedef.h"
 #include "toolboxes/sphericalbase.h"
-#include <vector>
 
 class SphericalMonomials : public SphericalBase
 {

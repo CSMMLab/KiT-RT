@@ -1,9 +1,12 @@
 #ifndef CSDSOLVERTRAFOFP_H
 #define CSDSOLVERTRAFOFP_H
 
+#include <vector>    // for vector
+
+#include "common/typedef.h"    // for Matrix, Vector
 #include "solvers/snsolver.h"
 
-class Physics;
+class Config;
 
 class CSDSolverTrafoFP : public SNSolver
 {

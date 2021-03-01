@@ -1,7 +1,13 @@
 #ifndef AIRCAVITY
 #define AIRCAVITY
 
+#include <vector>    // for vector
+
+#include "common/typedef.h"    // for VectorVector, Vector
 #include "electronrt.h"
+
+class Config;
+class Mesh;
 
 class AirCavity1D : public ElectronRT
 {

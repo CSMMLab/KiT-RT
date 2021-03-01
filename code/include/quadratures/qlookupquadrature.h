@@ -3,6 +3,11 @@
 
 #include "quadraturebase.h"
 
+#include <string>    // for string
+#include <vector>    // for vector
+
+class Config;
+
 class QLookupQuadrature : public QuadratureBase
 {
   public:

@@ -12,22 +12,37 @@
 #include "toolboxes/errormessages.h"
 #include "toolboxes/textprocessingtoolbox.h"
 
+#include <algorithm>             // for max, copy, equal
+#include <bits/exception.h>      // for exception
+#include <ctype.h>               // for isspace
+#include <ext/alloc_traits.h>    // for __alloc_traits<>::va...
+#include <filesystem>            // for exists, path
 #include <iostream>
+#include <memory>              // for __shared_ptr_access
+#include <spdlog/fmt/fmt.h>    // for format_to
+#include <stdlib.h>            // for exit, size_t, EXIT_F...
+#include <utility>             // for pair, make_pair
 
 #include <mpi.h>
 #include <omp.h>
-
 #include <vtkCellArray.h>
 #include <vtkCellData.h>
 #include <vtkCellDataToPointData.h>
+#include <vtkCellType.h>    // for VTK_QUAD, VTK_TRIANGLE
+#include <vtkDataSet.h>     // for vtkDataSet
 #include <vtkDoubleArray.h>
-#include <vtkPointData.h>
-//#include <vtkPointDataToCellData.h>
+#include <vtkGenericDataArray.txx>    // for vtkGenericDataArray:...
+#include <vtkIOStream.h>              // for ifstream, ios, cout
+#include <vtkIdList.h>                // for vtkIdList
+#include <vtkPoints.h>                // for vtkPoints
 #include <vtkQuad.h>
 #include <vtkSmartPointer.h>
 #include <vtkTriangle.h>
 #include <vtkUnstructuredGrid.h>
 #include <vtkUnstructuredGridWriter.h>
+
+#include "spdlog/logger.h"    // for logger
+#include "spdlog/spdlog.h"    // for get
 
 #include <Python.h>
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
@@ -41,7 +56,6 @@ using vtkCellArraySP              = vtkSmartPointer<vtkCellArray>;
 using vtkDoubleArraySP            = vtkSmartPointer<vtkDoubleArray>;
 using vtkUnstructuredGridWriterSP = vtkSmartPointer<vtkUnstructuredGridWriter>;
 using vtkCellDataToPointDataSP    = vtkSmartPointer<vtkCellDataToPointData>;
-// using vtkPointDataToCellDataSP    = vtkSmartPointer<vtkPointDataToCellData>;
 
 void ExportVTK( const std::string fileName,
                 const std::vector<std::vector<std::vector<double>>>& outputFields,

@@ -1,16 +1,46 @@
 #include "solvers/csdsnsolverfp.h"
+#include "blaze/math/dense/LSE.h"                         // for solve
+#include "blaze/math/expressions/DMatDMatSubExpr.h"       // for DMatDMatSubExpr
+#include "blaze/math/expressions/DMatDVecMultExpr.h"      // for DVecScalarMul...
+#include "blaze/math/expressions/DMatDVecSolveExpr.h"     // for DMatDVecSolve...
+#include "blaze/math/expressions/DMatInvExpr.h"           // for inv
+#include "blaze/math/expressions/DMatMapExpr.h"           // for ctrans
+#include "blaze/math/expressions/DMatScalarMultExpr.h"    // for DMatScalarMul...
+#include "blaze/math/expressions/DMatTransExpr.h"         // for trans
+#include "blaze/math/expressions/DVecDVecSubExpr.h"       // for DVecDVecSubExpr
+#include "blaze/math/expressions/DVecMapExpr.h"           // for DVecMapExpr
+#include "blaze/math/expressions/DVecNormExpr.h"          // for l2Norm
+#include "blaze/math/expressions/DVecScalarMultExpr.h"    // for operator*
+#include "blaze/math/expressions/DenseMatrix.h"           // for DenseMatrix
+#include "blaze/math/expressions/DenseVector.h"           // for DenseVector
+#include "blaze/math/expressions/MatScalarMultExpr.h"     // for operator*
+#include "blaze/math/simd/Add.h"                          // for operator+
+#include "blaze/math/simd/BasicTypes.h"                   // for operator+=
+#include "blaze/math/simd/Mult.h"                         // for operator*
+#include "blaze/math/simd/Set.h"                          // for set
+#include "blaze/math/simd/Sub.h"                          // for operator-
+#include "blaze/math/simd/Sum.h"                          // for sum
+#include "blaze/math/smp/default/DenseMatrix.h"           // for smpAssign
+#include "blaze/math/smp/default/DenseVector.h"           // for smpAssign
 #include "common/config.h"
+#include "common/globalconstants.h"    // for BOUNDARY_TYPE
 #include "common/io.h"
 #include "common/mesh.h"
 #include "fluxes/numericalflux.h"
-#include "kernels/scatteringkernelbase.h"
 #include "problems/icru.h"
 #include "problems/problembase.h"
 #include "quadratures/quadraturebase.h"
-
-// externals
-#include "spdlog/spdlog.h"
+#include "spdlog/logger.h"       // for logger
+#include "spdlog/spdlog.h"       // for get
+#include <algorithm>             // for max_element
+#include <bits/exception.h>      // for exception
+#include <cmath>                 // for exp, pow, fabs
+#include <emmintrin.h>           // for _mm_mul_pd
+#include <ext/alloc_traits.h>    // for __alloc_trait...
+#include <memory>                // for allocator
 #include <mpi.h>
+#include <spdlog/fmt/fmt.h>    // for format_to
+#include <string>              // for string, basic...
 
 CSDSNSolverFP::CSDSNSolverFP( Config* settings ) : SNSolver( settings ) {
     _dose = std::vector<double>( _settings->GetNCells(), 0.0 );

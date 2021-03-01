@@ -1,6 +1,16 @@
 #include "problems/phantom2d.h"
+#include "blaze/math/smp/default/DenseVector.h"    // for smpAssign
 #include "common/config.h"
+#include "common/io.h"    // for createSU2MeshFromImage
 #include "common/mesh.h"
+#include "problems/electronrt.h"        // for ElectronRT
+#include "problems/epics.h"             // for EPICS
+#include "toolboxes/interpolation.h"    // for Interpolation
+#include <algorithm>                    // for clamp
+#include <ext/alloc_traits.h>           // for __alloc_traits<>::va...
+#include <math.h>                       // for exp, sqrt, M_PI
+#include <memory>                       // for allocator_traits<>::...
+#include <string>                       // for string
 
 Phantom2D::Phantom2D( Config* settings, Mesh* mesh ) : ElectronRT( settings, mesh ) {}
 

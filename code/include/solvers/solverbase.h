@@ -1,12 +1,12 @@
 #ifndef SOLVER_H
 #define SOLVER_H
 
+#include <string>    // for string
+#include <vector>    // for vector
+
 // include Matrix, Vector definitions
 #include "common/globalconstants.h"
 #include "common/typedef.h"
-
-// externals
-#include "spdlog/spdlog.h"
 
 // Forward Declarations
 class NumericalFlux;

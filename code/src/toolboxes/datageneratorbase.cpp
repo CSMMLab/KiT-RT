@@ -5,19 +5,34 @@
  */
 
 #include "toolboxes/datageneratorbase.h"
+#include "blaze/math/Vector.h"                            // for dot
+#include "blaze/math/expressions/DVecDVecInnerExpr.h"     // for operator*
+#include "blaze/math/expressions/DVecScalarMultExpr.h"    // for DVecScalarMul...
+#include "blaze/math/expressions/DVecTransExpr.h"         // for trans
+#include "blaze/math/expressions/DenseVector.h"           // for DenseVector
+#include "blaze/math/simd/Add.h"                          // for operator+
+#include "blaze/math/simd/Mult.h"                         // for operator*
+#include "blaze/math/simd/Set.h"                          // for set
+#include "blaze/math/simd/Sum.h"                          // for sum
+#include "blaze/math/smp/default/DenseVector.h"           // for smpAddAssign
 #include "common/config.h"
+#include "common/globalconstants.h"    // for QUAD_GaussChe...
 #include "entropies/entropybase.h"
 #include "optimizers/newtonoptimizer.h"
 #include "quadratures/quadraturebase.h"
-#include "spdlog/spdlog.h"
+#include "spdlog/logger.h"    // for logger
+#include "spdlog/spdlog.h"    // for get
 #include "toolboxes/datagenerator1D.h"
 #include "toolboxes/datagenerator3D.h"
 #include "toolboxes/errormessages.h"
 #include "toolboxes/sphericalbase.h"
-#include "toolboxes/textprocessingtoolbox.h"
-
-#include <math.h>
-#include <omp.h>
+#include <bits/exception.h>      // for exception
+#include <cmath>                 // for isnan
+#include <emmintrin.h>           // for _mm_mul_pd
+#include <ext/alloc_traits.h>    // for __alloc_trait...
+#include <memory>                // for __shared_ptr_...
+#include <spdlog/fmt/fmt.h>      // for format_to
+#include <string>                // for operator+
 
 DataGeneratorBase::DataGeneratorBase( Config* settings ) {
     _settings = settings;
@@ -126,7 +141,7 @@ void DataGeneratorBase::ComputeEntropyH_primal() {
     }
 
     for( unsigned idx_set = 0; idx_set < _setSize; idx_set++ ) {
-        if( isnan( _hEntropy[idx_set] ) ) {
+        if( std::isnan( _hEntropy[idx_set] ) ) {
             std::string msgU     = "(";
             std::string msgAlpha = "(";
             for( unsigned idx_basis = 0; idx_basis < _nTotalEntries - 1; idx_basis++ ) {

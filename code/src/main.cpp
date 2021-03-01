@@ -6,6 +6,7 @@
 
 #include <Python.h>
 #include <mpi.h>
+#include <stdlib.h>    // for EXIT_SUCCESS, NULL
 #include <string>
 
 #include "common/config.h"

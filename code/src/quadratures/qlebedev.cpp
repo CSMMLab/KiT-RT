@@ -1,6 +1,11 @@
 #include "quadratures/qlebedev.h"
+#include "common/typedef.h"    // for VectorVectorU
 #include "quadratures/lookuptable_lebedev.h"
+#include "quadratures/qlookupquadrature.h"    // for QLookupQuadrature
 #include "toolboxes/errormessages.h"
+#include <vector>    // for vector
+
+class Config;
 
 QLebedev::QLebedev( Config* settings ) : QLookupQuadrature( settings ) {
     SetAvailOrders();
