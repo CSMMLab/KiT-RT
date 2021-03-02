@@ -1,7 +1,7 @@
 #ifndef PNSOLVER_H
 #define PNSOLVER_H
 
-#include "common/typedef.h"    // for Matrix, SymMatrix, VectorVector, Vector
+#include "common/pch.h"
 #include "solvers/solverbase.h"
 
 class Config;

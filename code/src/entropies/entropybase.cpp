@@ -1,6 +1,4 @@
-#include "entropies/entropybase.h"
-#include "common/config.h"                        // for Config
-#include "common/globalconstants.h"               // for MAXWELL_BOLTZMANN
+#include "common/pch.h"
 #include "entropies/maxwellboltzmannentropy.h"    // for MaxwellBoltzmannEntropy
 #include "entropies/quadraticentropy.h"           // for QuadraticEntropy
 

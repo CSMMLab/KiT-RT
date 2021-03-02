@@ -1,17 +1,4 @@
 #include "quadratures/qproduct.h"
-#include "blaze/math/dense/DynamicMatrix.h"        // for DynamicMatrix
-#include "blaze/math/dense/DynamicVector.h"        // for DynamicVector
-#include "blaze/math/smp/default/DenseMatrix.h"    // for smpAssign
-#include "blaze/math/smp/default/DenseVector.h"    // for smpAssign
-#include "quadratures/quadraturebase.h"            // for QuadratureBase
-#include "toolboxes/errormessages.h"
-#include <algorithm>             // for transform, sort
-#include <ext/alloc_traits.h>    // for __alloc_traits<>::va...
-#include <limits>                // for numeric_limits
-#include <numeric>               // for iota
-#include <vector>                // for vector
-
-class Config;
 
 QProduct::QProduct( unsigned order ) : QuadratureBase( order ) {
     SetName();

@@ -12,7 +12,7 @@
 #ifndef QDUMMY_H
 #define QDUMMY_H
 
-#include "quadraturebase.h"
+#include "common/pch.h"
 
 class Config;
 

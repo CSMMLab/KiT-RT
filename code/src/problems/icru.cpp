@@ -1,31 +1,5 @@
 #include "problems/icru.h"
-#include "blaze/math/dense/DenseMatrix.h"                 // for operator*=
-#include "blaze/math/dense/DenseVector.h"                 // for operator*=
-#include "blaze/math/expressions/DMatScalarMultExpr.h"    // for operator*
-#include "blaze/math/expressions/DVecScalarMultExpr.h"    // for operator*
-#include "blaze/math/expressions/DenseMatrix.h"           // for DenseMatrix
-#include "blaze/math/expressions/DenseVector.h"           // for DenseVector
-#include "blaze/math/expressions/Matrix.h"                // for derestrict
-#include "blaze/math/expressions/Vector.h"                // for derestrict
-#include "blaze/math/simd/Mult.h"                         // for operator*
-#include "blaze/math/simd/Set.h"                          // for set
-#include "blaze/math/smp/default/DenseMatrix.h"           // for smpAssign
-#include "blaze/math/smp/default/DenseVector.h"           // for smpAssign
-#include "blaze/math/views/Column.h"                      // for derestrict
-#include "blaze/math/views/column/Dense.h"                // for Column
-#include "common/config.h"
-#include "common/globalconstants.h"     // for H2OMolecularD...
-#include "toolboxes/errormessages.h"    // for CURRENT_FUNCTION
 #include "toolboxes/interpolation.h"    // for Interpolation
-#include <algorithm>                    // for max
-#include <cmath>                        // for log, exp, fabs
-#include <emmintrin.h>                  // for _mm_mul_pd
-#include <ext/alloc_traits.h>           // for __alloc_trait...
-#include <fstream>                      // for ifstream, cha...
-#include <iomanip>                      // for operator<<
-#include <memory>                       // for allocator_tra...
-#include <stdlib.h>                     // for exit, EXIT_FA...
-#include <string>                       // for operator+
 
 ICRU::ICRU( const Vector& mu, const Vector& energy, Config* settings ) : _NE( 96 ), _NA( 606 ), _E( 1e6 * energy ), _QMU( mu ) {
     _settings = settings;

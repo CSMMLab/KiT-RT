@@ -1,9 +1,7 @@
 #ifndef MUSCLEBONELUNG
 #define MUSCLEBONELUNG
 
-#include <vector>    // for vector
-
-#include "common/typedef.h"    // for VectorVector, Vector
+#include "common/pch.h"
 #include "electronrt.h"
 
 class Config;

@@ -1,7 +1,7 @@
 #ifndef SNSOLVER_H
 #define SNSOLVER_H
 
-#include "common/typedef.h"    // for Matrix, Vector, VectorVector
+#include "common/pch.h"
 #include "solvers/solverbase.h"
 
 class Config;

@@ -1,13 +1,4 @@
 #include "quadratures/qgausschebyshev1D.h"
-#include "common/typedef.h"                // for VectorVector, Vector, Vector...
-#include "quadratures/quadraturebase.h"    // for QuadratureBase
-#include "toolboxes/errormessages.h"
-#include <ext/alloc_traits.h>    // for __alloc_traits<>::value_type
-#include <iostream>              // for operator<<, basic_ostream<>:...
-#include <math.h>                // for cos, sqrt, M_PI
-#include <memory>                // for allocator, allocator_traits<...
-
-class Config;
 
 QGaussChebyshev1D::QGaussChebyshev1D( Config* settings ) : QuadratureBase( settings ) {
     SetName();

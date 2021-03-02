@@ -7,7 +7,7 @@
 #ifndef ERRORMESSAGES_H
 #define ERRORMESSAGES_H
 
-#include "spdlog/spdlog.h"
+#include "common/pch.h"
 
 class ErrorMessages
 {

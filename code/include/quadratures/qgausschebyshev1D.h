@@ -9,9 +9,7 @@
 #ifndef QGAUSSCHEBYSHEV_H
 #define QGAUSSCHEBYSHEV_H
 
-#include "quadraturebase.h"
-#include <string>    // for string
-#include <vector>    // for vector
+#include "common/pch.h"
 
 class Config;
 

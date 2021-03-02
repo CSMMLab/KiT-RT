@@ -1,33 +1,5 @@
 #include "solvers/mnsolver.h"
-#include "blaze/math/Vector.h"                            // for dot
-#include "blaze/math/expressions/DVecDVecAddExpr.h"       // for DVecDVecAddExpr
-#include "blaze/math/expressions/DVecDVecInnerExpr.h"     // for operator*
-#include "blaze/math/expressions/DVecScalarMultExpr.h"    // for DVecScalarMul...
-#include "blaze/math/expressions/DVecTransExpr.h"         // for trans
-#include "blaze/math/expressions/DenseVector.h"           // for DenseVector
-#include "blaze/math/simd/Add.h"                          // for operator+
-#include "blaze/math/simd/Mult.h"                         // for operator*
-#include "blaze/math/simd/Set.h"                          // for set
-#include "blaze/math/simd/Sum.h"                          // for sum
-#include "blaze/math/smp/default/DenseVector.h"           // for smpAssign
-#include "common/config.h"
-#include "common/globalconstants.h"    // for BOUNDARY_TYPE
-#include "common/mesh.h"
-#include "entropies/entropybase.h"
-#include "fluxes/numericalflux.h"
-#include "optimizers/optimizerbase.h"
-#include "problems/problembase.h"
-#include "quadratures/quadraturebase.h"
-#include "solvers/solverbase.h"    // for SolverBase
-#include "toolboxes/errormessages.h"
-#include "toolboxes/sphericalbase.h"
-#include <algorithm>             // for max
-#include <emmintrin.h>           // for _mm_mul_pd
-#include <ext/alloc_traits.h>    // for __alloc_trait...
-#include <math.h>                // for sqrt, M_PI
-#include <memory>                // for allocator
-#include <string>                // for operator+
-#include <vector>                // for vector
+#include "toolboxes/sphericalharmonics.h"
 
 MNSolver::MNSolver( Config* settings ) : SolverBase( settings ) {
 

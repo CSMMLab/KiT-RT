@@ -11,9 +11,8 @@
 #ifndef SPHERICALHARMONICS_H
 #define SPHERICALHARMONICS_H
 
-#include "common/typedef.h"
+#include "common/pch.h"
 #include "toolboxes/sphericalbase.h"
-#include <vector>
 
 class SphericalHarmonics : public SphericalBase
 {

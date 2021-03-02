@@ -6,33 +6,10 @@
  * Disclaimer: This class structure was copied and modifed with open source permission from SU2 v7.0.3 https://su2code.github.io/
  */
 
-#include "common/config.h"
-#include "common/globalconstants.h"
-#include "common/optionstructure.h"
-#include "toolboxes/errormessages.h"
+#include "common/pch.h"
 #include "toolboxes/textprocessingtoolbox.h"
 
-#include <algorithm>                 // for find
-#include <assert.h>                  // for assert
-#include <bits/types/struct_tm.h>    // for tm
-#include <chrono>                    // for seconds
-#include <filesystem>
-#include <fstream>
-#include <iostream>    // for ifstream, basic_istream
-#include <iterator>    // for begin, end
-#include <memory>      // for make_shared, shared_ptr
-#include <mpi.h>
-#include <string.h>    // for strncpy
-#include <time.h>      // for localtime, strftime, time
-
-// externals
-#include "spdlog/sinks/basic_file_sink.h"
-#include "spdlog/sinks/stdout_sinks.h"
-#include "spdlog/spdlog.h"
-
-using namespace std;
-
-Config::Config( string case_filename ) {
+Config::Config( std::string case_filename ) {
 
     /*--- Set the case name to the base config file name without extension ---*/
 
@@ -94,13 +71,13 @@ Config::~Config( void ) {
 // ---- Add Options ----
 
 // Simple Options
-void Config::AddBoolOption( const string name, bool& option_field, bool default_value ) {
+void Config::AddBoolOption( const std::string name, bool& option_field, bool default_value ) {
     // Check if the key is already in the map. If this fails, it is coder error
     // and not user error, so throw.
     assert( _optionMap.find( name ) == _optionMap.end() );
 
     // Add this option to the list of all the options
-    _allOptions.insert( pair<string, bool>( name, true ) );
+    _allOptions.insert( std::pair<std::string, bool>( name, true ) );
 
     // Create the parser for a bool option with a reference to the option_field and the desired
     // default value. This will take the string in the config file, convert it to a bool, and
@@ -110,79 +87,80 @@ void Config::AddBoolOption( const string name, bool& option_field, bool default_
     // Create an association between the option name ("CFL") and the parser generated above.
     // During configuration, the parsing script will get the option name, and use this map
     // to find how to parse that option.
-    _optionMap.insert( pair<string, OptionBase*>( name, val ) );
+    _optionMap.insert( std::pair<std::string, OptionBase*>( name, val ) );
 }
 
-void Config::AddDoubleOption( const string name, double& option_field, double default_value ) {
+void Config::AddDoubleOption( const std::string name, double& option_field, double default_value ) {
     assert( _optionMap.find( name ) == _optionMap.end() );
-    _allOptions.insert( pair<string, bool>( name, true ) );
+    _allOptions.insert( std::pair<std::string, bool>( name, true ) );
     OptionBase* val = new OptionDouble( name, option_field, default_value );
-    _optionMap.insert( pair<string, OptionBase*>( name, val ) );
+    _optionMap.insert( std::pair<std::string, OptionBase*>( name, val ) );
 }
 
-void Config::AddIntegerOption( const string name, int& option_field, int default_value ) {
+void Config::AddIntegerOption( const std::string name, int& option_field, int default_value ) {
     assert( _optionMap.find( name ) == _optionMap.end() );
-    _allOptions.insert( pair<string, bool>( name, true ) );
+    _allOptions.insert( std::pair<std::string, bool>( name, true ) );
     OptionBase* val = new OptionInt( name, option_field, default_value );
-    _optionMap.insert( pair<string, OptionBase*>( name, val ) );
+    _optionMap.insert( std::pair<std::string, OptionBase*>( name, val ) );
 }
 
-void Config::AddLongOption( const string name, long& option_field, long default_value ) {
+void Config::AddLongOption( const std::string name, long& option_field, long default_value ) {
     assert( _optionMap.find( name ) == _optionMap.end() );
-    _allOptions.insert( pair<string, bool>( name, true ) );
+    _allOptions.insert( std::pair<std::string, bool>( name, true ) );
     OptionBase* val = new OptionLong( name, option_field, default_value );
-    _optionMap.insert( pair<string, OptionBase*>( name, val ) );
+    _optionMap.insert( std::pair<std::string, OptionBase*>( name, val ) );
 }
 
-void Config::AddStringOption( const string name, string& option_field, string default_value ) {
+void Config::AddStringOption( const std::string name, std::string& option_field, std::string default_value ) {
     assert( _optionMap.find( name ) == _optionMap.end() );
-    _allOptions.insert( pair<string, bool>( name, true ) );
+    _allOptions.insert( std::pair<std::string, bool>( name, true ) );
     OptionBase* val = new OptionString( name, option_field, default_value );
-    _optionMap.insert( pair<string, OptionBase*>( name, val ) );
+    _optionMap.insert( std::pair<std::string, OptionBase*>( name, val ) );
 }
 
-void Config::AddUnsignedLongOption( const string name, unsigned long& option_field, unsigned long default_value ) {
+void Config::AddUnsignedLongOption( const std::string name, unsigned long& option_field, unsigned long default_value ) {
     assert( _optionMap.find( name ) == _optionMap.end() );
-    _allOptions.insert( pair<string, bool>( name, true ) );
+    _allOptions.insert( std::pair<std::string, bool>( name, true ) );
     OptionBase* val = new OptionULong( name, option_field, default_value );
-    _optionMap.insert( pair<string, OptionBase*>( name, val ) );
+    _optionMap.insert( std::pair<std::string, OptionBase*>( name, val ) );
 }
 
-void Config::AddUnsignedShortOption( const string name, unsigned short& option_field, unsigned short default_value ) {
+void Config::AddUnsignedShortOption( const std::string name, unsigned short& option_field, unsigned short default_value ) {
     assert( _optionMap.find( name ) == _optionMap.end() );
-    _allOptions.insert( pair<string, bool>( name, true ) );
+    _allOptions.insert( std::pair<std::string, bool>( name, true ) );
     OptionBase* val = new OptionUShort( name, option_field, default_value );
-    _optionMap.insert( pair<string, OptionBase*>( name, val ) );
+    _optionMap.insert( std::pair<std::string, OptionBase*>( name, val ) );
 }
 
 // enum types work differently than all of the others because there are a small number of valid
 // string entries for the type. One must also provide a list of all the valid strings of that type.
-template <class Tenum> void Config::AddEnumOption( const string name, Tenum& option_field, const map<string, Tenum>& enum_map, Tenum default_value ) {
+template <class Tenum>
+void Config::AddEnumOption( const std::string name, Tenum& option_field, const std::map<std::string, Tenum>& enum_map, Tenum default_value ) {
     assert( _optionMap.find( name ) == _optionMap.end() );
-    _allOptions.insert( pair<string, bool>( name, true ) );
+    _allOptions.insert( std::pair<std::string, bool>( name, true ) );
     OptionBase* val = new OptionEnum<Tenum>( name, enum_map, option_field, default_value );
-    _optionMap.insert( pair<string, OptionBase*>( name, val ) );
+    _optionMap.insert( std::pair<std::string, OptionBase*>( name, val ) );
     return;
 }
 
 // List Options
-void Config::AddStringListOption( const string name, unsigned short& num_marker, std::vector<std::string>& option_field ) {
+void Config::AddStringListOption( const std::string name, unsigned short& num_marker, std::vector<std::string>& option_field ) {
     assert( _optionMap.find( name ) == _optionMap.end() );
-    _allOptions.insert( pair<string, bool>( name, true ) );
+    _allOptions.insert( std::pair<std::string, bool>( name, true ) );
     OptionBase* val = new OptionStringList( name, num_marker, option_field );
-    _optionMap.insert( pair<string, OptionBase*>( name, val ) );
+    _optionMap.insert( std::pair<std::string, OptionBase*>( name, val ) );
 }
 
 template <class Tenum>
 void Config::AddEnumListOption( const std::string name,
                                 unsigned short& input_size,
                                 std::vector<Tenum>& option_field,
-                                const map<std::string, Tenum>& enum_map ) {
+                                const std::map<std::string, Tenum>& enum_map ) {
     input_size = 0;
     assert( _optionMap.find( name ) == _optionMap.end() );
-    _allOptions.insert( pair<string, bool>( name, true ) );
+    _allOptions.insert( std::pair<std::string, bool>( name, true ) );
     OptionBase* val = new OptionEnumList<Tenum>( name, enum_map, option_field, input_size );
-    _optionMap.insert( pair<string, OptionBase*>( name, val ) );
+    _optionMap.insert( std::pair<std::string, OptionBase*>( name, val ) );
 }
 
 // ---- Getter Functions ----
@@ -199,7 +177,7 @@ BOUNDARY_TYPE Config::GetBoundaryType( std::string name ) const {
 void Config::SetDefault() {
     /*--- Set the default values for all of the options that weren't set ---*/
 
-    for( map<string, bool>::iterator iter = _allOptions.begin(); iter != _allOptions.end(); ++iter ) {
+    for( std::map<std::string, bool>::iterator iter = _allOptions.begin(); iter != _allOptions.end(); ++iter ) {
         if( _optionMap[iter->first]->GetValue().size() == 0 ) _optionMap[iter->first]->SetDefault();
     }
 }
@@ -213,17 +191,17 @@ void Config::SetConfigOptions() {
 
     // File Structure related options
     /*! @brief OUTPUT_DIR \n DESCRIPTION: Relative Directory of output files \n DEFAULT "/out" @ingroup Config.*/
-    AddStringOption( "OUTPUT_DIR", _outputDir, string( "/out" ) );
+    AddStringOption( "OUTPUT_DIR", _outputDir, std::string( "/out" ) );
     /*! @brief OUTPUT_FILE \n DESCRIPTION: Name of output file \n DEFAULT "output" @ingroup Config.*/
-    AddStringOption( "OUTPUT_FILE", _outputFile, string( "output" ) );
+    AddStringOption( "OUTPUT_FILE", _outputFile, std::string( "output" ) );
     /*! @brief LOG_DIR \n DESCRIPTION: Relative Directory of log files \n DEFAULT "/out" @ingroup Config.*/
-    AddStringOption( "LOG_DIR", _logDir, string( "/out/logs" ) );
+    AddStringOption( "LOG_DIR", _logDir, std::string( "/out/logs" ) );
     /*! @brief LOG_DIR \n DESCRIPTION: Name of log files \n DEFAULT "/out" @ingroup Config.*/
-    AddStringOption( "LOG_FILE", _logFileName, string( "use_date" ) );
+    AddStringOption( "LOG_FILE", _logFileName, std::string( "use_date" ) );
     /*! @brief MESH_FILE \n DESCRIPTION: Name of mesh file \n DEFAULT "" \ingroup Config.*/
-    AddStringOption( "MESH_FILE", _meshFile, string( "mesh.su2" ) );
+    AddStringOption( "MESH_FILE", _meshFile, std::string( "mesh.su2" ) );
     /*! @brief MESH_FILE \n DESCRIPTION: Name of mesh file \n DEFAULT "" \ingroup Config.*/
-    AddStringOption( "CT_FILE", _ctFile, string( "../tests/input/phantom.png" ) );
+    AddStringOption( "CT_FILE", _ctFile, std::string( "../tests/input/phantom.png" ) );
 
     // Quadrature relatated options
     /*! @brief QUAD_TYPE \n DESCRIPTION: Type of Quadrature rule \n Options: see @link QUAD_NAME \endlink \n DEFAULT: QUAD_MonteCarlo
@@ -256,15 +234,15 @@ void Config::SetConfigOptions() {
     // Problem Relateed Options
     /*! @brief MaterialDir \n DESCRIPTION: Relative Path to the data directory (used in the ICRU database class), starting from the directory of the
      * cfg file . \n DEFAULT "../data/material/" \ingroup Config */
-    AddStringOption( "DATA_DIR", _dataDir, string( "../data/" ) );
+    AddStringOption( "DATA_DIR", _dataDir, std::string( "../data/" ) );
     /*! @brief HydogenFile \n DESCRIPTION: If the continuous slowing down approximation is used, this referes to the cross section file for hydrogen.
      * . \n DEFAULT "h.dat" \ingroup Config */
-    AddStringOption( "HYDROGEN_FILE", _hydrogenFile, string( "ENDL_H.txt" ) );
+    AddStringOption( "HYDROGEN_FILE", _hydrogenFile, std::string( "ENDL_H.txt" ) );
     /*! @brief OxygenFile \n DESCRIPTION: If the continuous slowing down approximation is used, this referes to the cross section file for oxygen.
      * . \n DEFAULT "o.dat" \ingroup Config */
-    AddStringOption( "OXYGEN_FILE", _oxygenFile, string( "ENDL_O.txt" ) );
+    AddStringOption( "OXYGEN_FILE", _oxygenFile, std::string( "ENDL_O.txt" ) );
     /*! @brief StoppingPowerFile \n DESCRIPTION: Only temporary added. \ingroup Config */
-    AddStringOption( "STOPPING_POWER_FILE", _stoppingPowerFile, string( "stopping_power.txt" ) );
+    AddStringOption( "STOPPING_POWER_FILE", _stoppingPowerFile, std::string( "stopping_power.txt" ) );
     /*! @brief SN_ALL_GAUSS_PTS \n DESCRIPTION: If true, the SN Solver uses all Gauss Quadrature Points for 2d. \n DEFAULT false \ingroup Config */
     AddBoolOption( "SN_ALL_GAUSS_PTS", _allGaussPts, false );
 
@@ -346,25 +324,25 @@ void Config::SetConfigOptions() {
     AddBoolOption( "NORMALIZED_SAMPLING", _normalizedSampling, false );
 }
 
-void Config::SetConfigParsing( string case_filename ) {
-    string text_line, option_name;
-    ifstream case_file;
-    vector<string> option_value;
+void Config::SetConfigParsing( std::string case_filename ) {
+    std::string text_line, option_name;
+    std::ifstream case_file;
+    std::vector<std::string> option_value;
 
     /*--- Read the configuration file ---*/
 
-    case_file.open( case_filename, ios::in );
+    case_file.open( case_filename, std::ios::in );
 
     if( case_file.fail() ) {
         ErrorMessages::Error( "The configuration file (.cfg) is missing!!", CURRENT_FUNCTION );
     }
 
-    string errorString;
+    std::string errorString;
 
     int err_count     = 0;     // How many errors have we found in the config file
     int max_err_count = 30;    // Maximum number of errors to print before stopping
 
-    map<string, bool> included_options;
+    std::map<std::string, bool> included_options;
 
     /*--- Parse the configuration file and set the options ---*/
 
@@ -373,7 +351,7 @@ void Config::SetConfigParsing( string case_filename ) {
         if( err_count >= max_err_count ) {
             errorString.append( "too many errors. Stopping parse" );
 
-            cout << errorString << endl;
+            std::cout << errorString << std::endl;
             throw( 1 );
         }
 
@@ -382,7 +360,7 @@ void Config::SetConfigParsing( string case_filename ) {
             /*--- See if it's a python option ---*/
 
             if( _optionMap.find( option_name ) == _optionMap.end() ) {
-                string newString;
+                std::string newString;
                 newString.append( option_name );
                 newString.append( ": invalid option name" );
                 newString.append( ". Check current RTSN options in config_template.cfg." );
@@ -395,7 +373,7 @@ void Config::SetConfigParsing( string case_filename ) {
             /*--- Option exists, check if the option has already been in the config file ---*/
 
             if( included_options.find( option_name ) != included_options.end() ) {
-                string newString;
+                std::string newString;
                 newString.append( option_name );
                 newString.append( ": option appears twice" );
                 newString.append( "\n" );
@@ -406,12 +384,12 @@ void Config::SetConfigParsing( string case_filename ) {
 
             /*--- New found option. Add it to the map, and delete from all options ---*/
 
-            included_options.insert( pair<string, bool>( option_name, true ) );
+            included_options.insert( std::pair<std::string, bool>( option_name, true ) );
             _allOptions.erase( option_name );
 
             /*--- Set the value and check error ---*/
 
-            string out = _optionMap[option_name]->SetValue( option_value );
+            std::string out = _optionMap[option_name]->SetValue( option_value );
             if( out.compare( "" ) != 0 ) {
                 errorString.append( out );
                 errorString.append( "\n" );
@@ -679,52 +657,52 @@ void Config::SetOutput() {
     // Set Output for settings, i.e. feedback on what has been chosen
 }
 
-bool Config::TokenizeString( string& str, string& option_name, vector<string>& option_value ) {
-    const string delimiters( " (){}:,\t\n\v\f\r" );
+bool Config::TokenizeString( std::string& str, std::string& option_name, std::vector<std::string>& option_value ) {
+    const std::string delimiters( " (){}:,\t\n\v\f\r" );
     // check for comments or empty string
-    string::size_type pos, last_pos;
+    std::string::size_type pos, last_pos;
     pos = str.find_first_of( "%" );
     if( ( str.length() == 0 ) || ( pos == 0 ) ) {
         // str is empty or a comment line, so no option here
         return false;
     }
-    if( pos != string::npos ) {
+    if( pos != std::string::npos ) {
         // remove comment at end if necessary
         str.erase( pos );
     }
 
     // look for line composed on only delimiters (usually whitespace)
     pos = str.find_first_not_of( delimiters );
-    if( pos == string::npos ) {
+    if( pos == std::string::npos ) {
         return false;
     }
 
     // find the equals sign and split string
-    string name_part, value_part;
+    std::string name_part, value_part;
     pos = str.find( "=" );
-    if( pos == string::npos ) {
-        string errmsg = "Error in Config::TokenizeString(): line in the configuration file with no \"=\" sign.  ";
+    if( pos == std::string::npos ) {
+        std::string errmsg = "Error in Config::TokenizeString(): line in the configuration file with no \"=\" sign.  ";
         errmsg += "\nLook for: \n  str.length() = " + std::to_string( str.length() );
         spdlog::error( errmsg );
         throw( -1 );
     }
     name_part  = str.substr( 0, pos );
-    value_part = str.substr( pos + 1, string::npos );
+    value_part = str.substr( pos + 1, std::string::npos );
 
     // the first_part should consist of one string with no interior delimiters
     last_pos = name_part.find_first_not_of( delimiters, 0 );
     pos      = name_part.find_first_of( delimiters, last_pos );
-    if( ( name_part.length() == 0 ) || ( last_pos == string::npos ) ) {
-        string errmsg = "Error in Config::TokenizeString(): ";
+    if( ( name_part.length() == 0 ) || ( last_pos == std::string::npos ) ) {
+        std::string errmsg = "Error in Config::TokenizeString(): ";
         errmsg += "line in the configuration file with no name before the \"=\" sign.\n";
         spdlog::error( errmsg );
         throw( -1 );
     }
-    if( pos == string::npos ) pos = name_part.length();
+    if( pos == std::string::npos ) pos = name_part.length();
     option_name = name_part.substr( last_pos, pos - last_pos );
     last_pos    = name_part.find_first_not_of( delimiters, pos );
-    if( last_pos != string::npos ) {
-        string errmsg = "Error in  Config::TokenizeString(): ";
+    if( last_pos != std::string::npos ) {
+        std::string errmsg = "Error in  Config::TokenizeString(): ";
         errmsg += "two or more options before an \"=\" sign in the configuration file.";
         spdlog::error( errmsg );
         throw( -1 );
@@ -735,7 +713,7 @@ bool Config::TokenizeString( string& str, string& option_name, vector<string>& o
     option_value.clear();
     last_pos = value_part.find_first_not_of( delimiters, 0 );
     pos      = value_part.find_first_of( delimiters, last_pos );
-    while( string::npos != pos || string::npos != last_pos ) {
+    while( std::string::npos != pos || std::string::npos != last_pos ) {
         // add token to the vector<string>
         option_value.push_back( value_part.substr( last_pos, pos - last_pos ) );
         // skip delimiters
@@ -744,14 +722,14 @@ bool Config::TokenizeString( string& str, string& option_name, vector<string>& o
         pos = value_part.find_first_of( delimiters, last_pos );
     }
     if( option_value.size() == 0 ) {
-        string errmsg = "Error in  Config::TokenizeString(): ";
+        std::string errmsg = "Error in  Config::TokenizeString(): ";
         errmsg += "option " + option_name + " in configuration file with no value assigned.\n";
         spdlog::error( errmsg );
         throw( -1 );
     }
 
     // look for ';' DV delimiters attached to values
-    vector<string>::iterator it;
+    std::vector<std::string>::iterator it;
     it = option_value.begin();
     while( it != option_value.end() ) {
         if( it->compare( ";" ) == 0 ) {
@@ -760,9 +738,9 @@ bool Config::TokenizeString( string& str, string& option_name, vector<string>& o
         }
 
         pos = it->find( ';' );
-        if( pos != string::npos ) {
-            string before_semi = it->substr( 0, pos );
-            string after_semi  = it->substr( pos + 1, string::npos );
+        if( pos != std::string::npos ) {
+            std::string before_semi = it->substr( 0, pos );
+            std::string after_semi  = it->substr( pos + 1, std::string::npos );
             if( before_semi.empty() ) {
                 *it = ";";
                 it++;
@@ -771,7 +749,7 @@ bool Config::TokenizeString( string& str, string& option_name, vector<string>& o
             else {
                 *it = before_semi;
                 it++;
-                vector<string> to_insert;
+                std::vector<std::string> to_insert;
                 to_insert.push_back( ";" );
                 if( !after_semi.empty() ) to_insert.push_back( after_semi );
                 option_value.insert( it, to_insert.begin(), to_insert.end() );

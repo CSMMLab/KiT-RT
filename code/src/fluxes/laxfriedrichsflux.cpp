@@ -1,5 +1,4 @@
 #include "fluxes/laxfriedrichsflux.h"
-#include "fluxes/numericalflux.h"    // for NumericalFlux
 
 LaxFriedrichsFlux::LaxFriedrichsFlux() : NumericalFlux() {}
 

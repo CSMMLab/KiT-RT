@@ -1,37 +1,5 @@
 #include "solvers/csdsnsolvernotrafo.h"
-#include "blaze/math/expressions/DMatDMatMultExpr.h"      // for operator*
-#include "blaze/math/expressions/DMatDVecMultExpr.h"      // for DVecScalarMul...
-#include "blaze/math/expressions/DVecDVecSubExpr.h"       // for DVecDVecSubExpr
-#include "blaze/math/expressions/DVecNormExpr.h"          // for l2Norm
-#include "blaze/math/expressions/DVecScalarMultExpr.h"    // for operator*
-#include "blaze/math/expressions/DenseMatrix.h"           // for DenseMatrix
-#include "blaze/math/expressions/DenseVector.h"           // for DenseVector
-#include "blaze/math/expressions/MatMatMultExpr.h"        // for operator*
-#include "blaze/math/expressions/VecScalarMultExpr.h"     // for operator/
-#include "blaze/math/simd/Add.h"                          // for operator+
-#include "blaze/math/simd/BasicTypes.h"                   // for operator+=
-#include "blaze/math/simd/Mult.h"                         // for operator*
-#include "blaze/math/simd/Sub.h"                          // for operator-
-#include "blaze/math/simd/Sum.h"                          // for sum
-#include "blaze/math/smp/default/DenseMatrix.h"           // for smpAssign
-#include "blaze/math/smp/default/DenseVector.h"           // for smpAddAssign
-#include "common/config.h"
-#include "common/globalconstants.h"    // for BOUNDARY_TYPE
-#include "common/io.h"
-#include "fluxes/numericalflux.h"
 #include "problems/icru.h"
-#include "problems/problembase.h"
-#include "spdlog/logger.h"       // for logger
-#include "spdlog/spdlog.h"       // for get
-#include <algorithm>             // for max_element
-#include <bits/exception.h>      // for exception
-#include <cmath>                 // for fabs, isinf
-#include <emmintrin.h>           // for _mm_mul_pd
-#include <ext/alloc_traits.h>    // for __alloc_trait...
-#include <memory>                // for allocator
-#include <mpi.h>
-#include <spdlog/fmt/fmt.h>    // for format_to
-#include <string>              // for string, basic...
 
 CSDSNSolverNoTrafo::CSDSNSolverNoTrafo( Config* settings ) : SNSolver( settings ) {
     _dose = std::vector<double>( _settings->GetNCells(), 0.0 );

@@ -6,10 +6,7 @@
 #ifndef TEXTPROCESSINGTOOLBOX_H
 #define TEXTPROCESSINGTOOLBOX_H
 
-#include "common/typedef.h"
-#include <iostream>
-#include <string>
-#include <vector>
+#include "common/pch.h"
 
 namespace TextProcessingToolbox {
 
@@ -45,7 +42,7 @@ inline void PrintVectorVector( const VectorVector vectorIn ) {
     for( unsigned idx_Outer = 0; idx_Outer < dimOuter; idx_Outer++ ) {
         for( unsigned idx_Inner = 0; idx_Inner < dimInner; idx_Inner++ ) {
             if( vectorIn[idx_Outer][idx_Inner] > 0 )
-                printf( "|  %.2f ", vectorIn[idx_Outer][idx_Inner] );
+                printf( "| %.2f ", vectorIn[idx_Outer][idx_Inner] );
             else
                 printf( "| %.2f ", vectorIn[idx_Outer][idx_Inner] );
         }

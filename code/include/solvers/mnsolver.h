@@ -1,7 +1,7 @@
 #ifndef MNSOLVER_H
 #define MNSOLVER_H
 
-#include "common/typedef.h"    // for VectorVector, Vector
+#include "common/pch.h"
 #include "solverbase.h"
 
 class Config;

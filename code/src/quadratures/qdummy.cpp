@@ -9,12 +9,6 @@
  *
  */
 
-#include "common/typedef.h"                // for Vector, VectorVector, Vector...
-#include "quadratures/quadraturebase.h"    // for QuadratureBase
-#include <math.h>                          // for M_PI
-#include <string>                          // for string
-class Config;
-
 #include "quadratures/qdummy.h"
 
 QDummy::QDummy( Config* settings ) : QuadratureBase( settings ) {

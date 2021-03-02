@@ -5,13 +5,7 @@
  */
 
 #include "toolboxes/datagenerator1D.h"
-#include "common/config.h"
-#include "common/globalconstants.h"    // for SPHERICAL_MONOMIALS
-#include "common/typedef.h"            // for VectorVector, Vector
-#include "toolboxes/errormessages.h"
 #include "toolboxes/sphericalbase.h"
-#include <ext/alloc_traits.h>    // for __alloc_traits<>::value_type
-#include <vector>                // for allocator, vector
 
 DataGenerator1D::DataGenerator1D( Config* settings ) : DataGeneratorBase( settings ) {
     ComputeMoments();

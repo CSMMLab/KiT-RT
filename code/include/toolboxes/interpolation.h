@@ -5,9 +5,7 @@
 #ifndef INTERPOLATION_H
 #define INTERPOLATION_H
 
-#include <vector>    // for vector
-
-#include "common/typedef.h"
+#include "common/pch.h"
 
 class Interpolation
 {

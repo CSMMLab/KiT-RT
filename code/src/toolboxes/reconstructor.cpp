@@ -1,7 +1,4 @@
 #include "toolboxes/reconstructor.h"
-#include "common/config.h"
-#include "common/globalconstants.h"    // for SPHERICAL_BASIS_NAME, SPHE...
-#include <memory>                      // for allocator
 
 Reconstructor::Reconstructor( Config* settings ) { _reconsOrder = settings->GetReconsOrder(); }
 

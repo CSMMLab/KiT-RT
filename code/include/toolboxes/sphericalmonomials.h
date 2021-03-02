@@ -7,7 +7,7 @@
 #ifndef SPHERICALMONOMIALS_H
 #define SPHERICALMONOMIALS_H
 
-#include "common/typedef.h"
+#include "common/pch.h"
 #include "toolboxes/sphericalbase.h"
 
 class SphericalMonomials : public SphericalBase

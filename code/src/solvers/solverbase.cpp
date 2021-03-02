@@ -1,19 +1,4 @@
-#include "solvers/solverbase.h"
-#include "blaze/math/expressions/DVecDVecSubExpr.h"    // for DVecDVecSubExpr
-#include "blaze/math/expressions/DVecNormExpr.h"       // for l2Norm, norm
-#include "blaze/math/expressions/DenseVector.h"        // for DenseVector
-#include "blaze/math/simd/Add.h"                       // for operator+
-#include "blaze/math/simd/BasicTypes.h"                // for operator+=
-#include "blaze/math/simd/Sub.h"                       // for operator-
-#include "blaze/math/simd/Sum.h"                       // for sum
-#include "blaze/math/smp/default/DenseVector.h"        // for smpAssign
-#include "common/config.h"
-#include "common/globalconstants.h"
-#include "common/io.h"
-#include "common/mesh.h"
-#include "fluxes/numericalflux.h"
-#include "problems/problembase.h"
-#include "quadratures/quadraturebase.h"
+#include "common/pch.h"
 #include "solvers/csdsnsolver.h"
 #include "solvers/csdsolvertrafofp.h"
 #include "solvers/csdsolvertrafofp2d.h"
@@ -21,19 +6,7 @@
 #include "solvers/mnsolver.h"
 #include "solvers/pnsolver.h"
 #include "solvers/snsolver.h"
-#include "spdlog/logger.h"              // for logger
-#include "spdlog/spdlog.h"              // for get
-#include "toolboxes/errormessages.h"    // for CURRENT_FUNCTION
-#include "toolboxes/reconstructor.h"    // for Reconstructor
-#include <algorithm>                    // for find, max, remove
-#include <bits/exception.h>             // for exception
-#include <emmintrin.h>                  // for _mm_mul_pd
-#include <ext/alloc_traits.h>           // for __alloc_traits<>...
-#include <math.h>                       // for sqrt
-#include <memory>                       // for allocator, __sha...
-#include <mpi.h>
-#include <ostream>             // for stringstream
-#include <spdlog/fmt/fmt.h>    // for format_to
+#include "toolboxes/reconstructor.h"
 
 SolverBase::SolverBase( Config* settings ) {
     _settings = settings;

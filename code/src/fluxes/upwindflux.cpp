@@ -1,24 +1,5 @@
 #include "fluxes/upwindflux.h"
 
-#include "blaze/math/expressions/DMatDVecMultExpr.h"      // for DVecScalarMul...
-#include "blaze/math/expressions/DMatScalarMultExpr.h"    // for operator*
-#include "blaze/math/expressions/DVecDVecAddExpr.h"       // for DVecDVecAddExpr
-#include "blaze/math/expressions/DVecDVecSubExpr.h"       // for DVecDVecSubExpr
-#include "blaze/math/expressions/DVecScalarMultExpr.h"    // for operator*
-#include "blaze/math/expressions/DenseMatrix.h"           // for DenseMatrix
-#include "blaze/math/expressions/DenseVector.h"           // for DenseVector
-#include "blaze/math/expressions/MatScalarMultExpr.h"     // for operator*
-#include "blaze/math/expressions/Vector.h"                // for isSame
-#include "blaze/math/simd/Add.h"                          // for operator+
-#include "blaze/math/simd/BasicTypes.h"                   // for operator+=
-#include "blaze/math/simd/Mult.h"                         // for operator*
-#include "blaze/math/simd/Set.h"                          // for set
-#include "blaze/math/simd/Sub.h"                          // for operator-
-#include "blaze/math/simd/Sum.h"                          // for sum
-#include "blaze/math/smp/default/DenseVector.h"           // for smpAddAssign
-#include "fluxes/numericalflux.h"                         // for NumericalFlux
-#include <emmintrin.h>                                    // for _mm_mul_pd
-
 UpwindFlux::UpwindFlux() : NumericalFlux() {}
 
 double UpwindFlux::Flux( const Vector& Omega, double psiL, double psiR, const Vector& n ) const {

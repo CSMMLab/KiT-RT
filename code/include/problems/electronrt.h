@@ -1,11 +1,7 @@
 #ifndef ELECTRONRT_H
 #define ELECTRONRT_H
 
-#include <string>    // for string
-#include <vector>    // for vector
-
-#include "common/typedef.h"    // for Vector, VectorVector, Matrix
-#include "problembase.h"
+#include "common/pch.h"
 
 class Config;
 class Mesh;

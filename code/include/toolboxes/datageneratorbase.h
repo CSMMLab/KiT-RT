@@ -7,8 +7,7 @@
 #ifndef DATAGENERATOR_H
 #define DATAGENERATOR_H
 
-#include "common/typedef.h"
-#include <vector>
+#include "common/pch.h"
 
 class SphericalBase;
 class QuadratureBase;

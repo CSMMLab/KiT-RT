@@ -1,8 +1,7 @@
 #ifndef QUADRATICENTROPY_H
 #define QUADRATICENTROPY_H
 
-#include "entropybase.h"
-#include <cmath>
+#include "common/pch.h"
 
 class QuadraticEntropy : public EntropyBase
 {

@@ -1,9 +1,7 @@
 #ifndef CSDSOLVERTRAFOFP_H
 #define CSDSOLVERTRAFOFP_H
 
-#include <vector>    // for vector
-
-#include "common/typedef.h"    // for Matrix, Vector
+#include "common/pch.h"
 #include "solvers/snsolver.h"
 
 class Config;

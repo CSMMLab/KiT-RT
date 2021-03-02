@@ -1,8 +1,7 @@
 #ifndef MAXWELLBOLTZMANNENTROPY_H
 #define MAXWELLBOLTZMANNENTROPY_H
 
-#include "entropybase.h"
-#include <cmath>
+#include "common/pch.h"
 
 class MaxwellBoltzmannEntropy : public EntropyBase
 {

@@ -6,10 +6,7 @@
  * Disclaimer: This class structure was copied and modifed with open source permission from SU2 v7.0.3 https://su2code.github.io/
  */
 
-#include "common/optionstructure.h"
-
-#include <ext/alloc_traits.h>    // for __alloc_traits<>::value_type
-#include <sstream>               // for basic_istream, basic_istream<>::__istr...
+#include "common/pch.h"
 
 // --- Members of OptionBase ----
 

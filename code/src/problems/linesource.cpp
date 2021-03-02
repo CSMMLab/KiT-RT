@@ -1,23 +1,6 @@
 #include "problems/linesource.h"
-#include "blaze/math/expressions/DVecScalarMultExpr.h"    // for DVecScalarMul...
-#include "blaze/math/expressions/DenseVector.h"           // for DenseVector
-#include "blaze/math/expressions/VecScalarMultExpr.h"     // for operator/
-#include "blaze/math/simd/Add.h"                          // for operator+
-#include "blaze/math/simd/Mult.h"                         // for operator*
-#include "blaze/math/simd/Set.h"                          // for set
-#include "blaze/math/smp/default/DenseVector.h"           // for smpAssign
-#include "common/config.h"
-#include "common/globalconstants.h"    // for SPHERICAL_MON...
-#include "common/mesh.h"
 #include "problems/epics.h"
-#include "problems/problembase.h"    // for ProblemBase
-#include "quadratures/quadraturebase.h"
 #include "toolboxes/sphericalbase.h"
-#include <complex>
-#include <emmintrin.h>           // for _mm_mul_pd
-#include <ext/alloc_traits.h>    // for __alloc_trait...
-#include <math.h>                // for exp, sqrt, M_PI
-#include <string>                // for allocator
 
 // ---- Linesource ----
 

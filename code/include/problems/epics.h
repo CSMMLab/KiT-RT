@@ -1,11 +1,7 @@
 #ifndef EPICS_H
 #define EPICS_H
 
-#include <string>    // for string, allocator
-#include <tuple>     // for tuple
-#include <vector>    // for vector
-
-#include "common/typedef.h"
+#include "common/pch.h"
 
 class EPICS
 {

@@ -1,9 +1,7 @@
 #ifndef QMONTECARLO_H
 #define QMONTECARLO_H
 
-#include "quadraturebase.h"
-
-#include <string>    // for string
+#include "common/pch.h"
 
 class Config;
 

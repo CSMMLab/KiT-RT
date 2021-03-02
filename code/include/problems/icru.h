@@ -9,9 +9,7 @@
 #ifndef ICRU_H
 #define ICRU_H
 
-#include <vector>
-
-#include "common/typedef.h"
+#include "common/pch.h"
 
 enum ParticleType { ELECTRON, POSITRON };
 

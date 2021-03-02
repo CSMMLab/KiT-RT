@@ -1,8 +1,7 @@
 #ifndef UPWINDFLUX_H
 #define UPWINDFLUX_H
 
-#include "common/typedef.h"    // for Matrix, Vector
-#include "numericalflux.h"
+#include "common/pch.h"
 
 class UpwindFlux : public NumericalFlux
 {

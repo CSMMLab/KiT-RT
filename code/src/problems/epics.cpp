@@ -1,18 +1,6 @@
 #include "problems/epics.h"
-#include "blaze/math/dense/DynamicVector.h"               // for DynamicVector
-#include "blaze/math/expressions/DVecScalarMultExpr.h"    // for DVecScalarMul...
-#include "blaze/math/expressions/DenseVector.h"           // for DenseVector
-#include "blaze/math/smp/default/DenseMatrix.h"           // for smpAssign
-#include "blaze/math/smp/default/DenseVector.h"           // for smpAssign
-#include "common/globalconstants.h"                       // for H2OMassFractions
-#include "toolboxes/errormessages.h"                      // for CURRENT_FUNCTION
-#include "toolboxes/interpolation.h"                      // for Interpolation
-#include <algorithm>                                      // for max, reverse
-#include <ext/alloc_traits.h>                             // for __alloc_trait...
-#include <fstream>                                        // for ifstream, bas...
-#include <list>                                           // for list
-#include <map>                                            // for allocator, map
-#include <memory>                                         // for allocator_tra...
+#include "toolboxes/interpolation.h"    // for Interpolation
+#include <list>
 
 EPICS::EPICS( std::string fileName_H, std::string fileName_O, std::string fileName_stppower ) {
     _xsScatteringH2O.resize( 2 );

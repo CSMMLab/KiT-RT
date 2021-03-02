@@ -1,11 +1,6 @@
 #include "problems/aircavity1d.h"
-#include "blaze/math/smp/default/DenseVector.h"    // for smpAssign
-#include "common/config.h"
-#include "common/mesh.h"
 #include "problems/electronrt.h"    // for ElectronRT
 #include "problems/epics.h"         // for EPICS
-#include <ext/alloc_traits.h>       // for __alloc_traits<>::va...
-#include <math.h>                   // for exp, sqrt, M_PI
 
 AirCavity1D::AirCavity1D( Config* settings, Mesh* mesh ) : ElectronRT( settings, mesh ) {}
 

@@ -4,13 +4,7 @@
 #define PY_ARRAY_UNIQUE_SYMBOL KITRT_MLOPT_ARRAY_API
 #include <numpy/arrayobject.h>
 
-#include "common/config.h"
 #include "optimizers/mloptimizer.h"
-#include "optimizers/optimizerbase.h"    // for OptimizerBase#include "optimizers/optimizerbase.h"  // for OptimizerBase
-#include "toolboxes/errormessages.h"
-#include <ext/alloc_traits.h>    // for __alloc_traits<>::value_type
-#include <memory>                // for allocator, allocator_traits<>:...
-#include <string>                // for char_traits, operator+, string
 
 MLOptimizer::MLOptimizer( Config* settings ) : OptimizerBase( settings ) {
 

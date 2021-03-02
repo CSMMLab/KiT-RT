@@ -1,37 +1,4 @@
 #include "solvers/snsolver.h"
-#include "blaze/math/Vector.h"                            // for dot
-#include "blaze/math/dense/DenseVector.h"                 // for operator+=
-#include "blaze/math/expressions/DMatDVecMultExpr.h"      // for DVecScalarMul...
-#include "blaze/math/expressions/DMatScalarMultExpr.h"    // for operator*
-#include "blaze/math/expressions/DVecDVecInnerExpr.h"     // for operator*
-#include "blaze/math/expressions/DVecMapExpr.h"           // for operator+
-#include "blaze/math/expressions/DVecScalarMultExpr.h"    // for operator*
-#include "blaze/math/expressions/DVecTransExpr.h"         // for trans
-#include "blaze/math/expressions/DenseMatrix.h"           // for DenseMatrix
-#include "blaze/math/expressions/DenseVector.h"           // for DenseVector
-#include "blaze/math/expressions/MatScalarMultExpr.h"     // for operator*
-#include "blaze/math/expressions/Vector.h"                // for derestrict
-#include "blaze/math/simd/Add.h"                          // for operator+
-#include "blaze/math/simd/BasicTypes.h"                   // for operator+=
-#include "blaze/math/simd/Mult.h"                         // for operator*
-#include "blaze/math/simd/Set.h"                          // for set
-#include "blaze/math/simd/Sum.h"                          // for sum
-#include "blaze/math/smp/default/DenseVector.h"           // for smpAddAssign
-#include "common/config.h"
-#include "common/globalconstants.h"    // for BOUNDARY_TYPE
-#include "common/mesh.h"
-#include "fluxes/numericalflux.h"
-#include "kernels/scatteringkernelbase.h"
-#include "problems/problembase.h"
-#include "quadratures/quadraturebase.h"
-#include "toolboxes/errormessages.h"
-#include <algorithm>             // for max
-#include <emmintrin.h>           // for _mm_mul_pd
-#include <ext/alloc_traits.h>    // for __alloc_trait...
-#include <iostream>
-#include <memory>    // for allocator_tra...
-#include <string>    // for string, basic...
-#include <vector>    // for vector
 
 SNSolver::SNSolver( Config* settings ) : SolverBase( settings ) {
 

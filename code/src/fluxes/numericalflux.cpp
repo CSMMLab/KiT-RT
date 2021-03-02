@@ -1,4 +1,3 @@
-#include "fluxes/numericalflux.h"
 #include "fluxes/upwindflux.h"
 
 NumericalFlux::NumericalFlux() {}

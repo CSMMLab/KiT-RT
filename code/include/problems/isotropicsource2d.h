@@ -1,10 +1,8 @@
 #ifndef ISOTROPICSOURCE2D_H
 #define ISOTROPICSOURCE2D_H
 
+#include "common/pch.h"
 #include "electronrt.h"
-#include <vector>    // for vector
-
-#include "common/typedef.h"    // for VectorVector, Vector
 
 class Config;
 class Mesh;

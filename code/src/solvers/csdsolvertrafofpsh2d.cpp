@@ -1,47 +1,6 @@
 #include "solvers/csdsolvertrafofpsh2d.h"
-#include "blaze/math/Vector.h"                            // for dot
-#include "blaze/math/dense/LSE.h"                         // for solve
-#include "blaze/math/expressions/DMatDMatMultExpr.h"      // for DMatDMatMultExpr
-#include "blaze/math/expressions/DMatDMatSubExpr.h"       // for DMatDMatSubExpr
-#include "blaze/math/expressions/DMatDVecMultExpr.h"      // for DMatDVecMultExpr
-#include "blaze/math/expressions/DMatDVecSolveExpr.h"     // for DMatDVecSolve...
-#include "blaze/math/expressions/DMatInvExpr.h"           // for inv
-#include "blaze/math/expressions/DMatMapExpr.h"           // for ctrans
-#include "blaze/math/expressions/DMatScalarMultExpr.h"    // for DMatScalarMul...
-#include "blaze/math/expressions/DMatTransExpr.h"         // for trans, DMatTr...
-#include "blaze/math/expressions/DVecDVecInnerExpr.h"     // for operator*
-#include "blaze/math/expressions/DVecTransExpr.h"         // for trans
-#include "blaze/math/expressions/DenseMatrix.h"           // for DenseMatrix
-#include "blaze/math/expressions/Matrix.h"                // for tryAssign
-#include "blaze/math/simd/Add.h"                          // for operator+
-#include "blaze/math/simd/BasicTypes.h"                   // for operator+=
-#include "blaze/math/simd/Mult.h"                         // for operator*
-#include "blaze/math/simd/Set.h"                          // for set
-#include "blaze/math/simd/Sub.h"                          // for operator-
-#include "blaze/math/simd/Sum.h"                          // for sum
-#include "blaze/math/smp/default/DenseMatrix.h"           // for smpAssign
-#include "blaze/math/smp/default/DenseVector.h"           // for smpAssign
-#include "blaze/math/sparse/ZeroMatrix.h"                 // for ZeroMatrix, zero
-#include "blaze/math/views/Column.h"                      // for derestrict
-#include "blaze/math/views/column/Dense.h"                // for Column
-#include "common/config.h"                                // for Config
-#include "common/globalconstants.h"                       // for BOUNDARY_TYPE
-#include "fluxes/numericalflux.h"                         // for NumericalFlux
 #include "problems/icru.h"
-#include "quadratures/quadraturebase.h"      // for QuadratureBase
-#include "spdlog/logger.h"                   // for logger
-#include "spdlog/spdlog.h"                   // for get
-#include "toolboxes/errormessages.h"         // for CURRENT_FUNCTION
-#include "toolboxes/sphericalharmonics.h"    // for SphericalHarm...
-#include <algorithm>                         // for max_element
-#include <bits/exception.h>                  // for exception
-#include <emmintrin.h>                       // for _mm_mul_pd
-#include <ext/alloc_traits.h>                // for __alloc_trait...
-#include <math.h>                            // for sqrt, M_PI, cos
-#include <memory>                            // for allocator_tra...
-#include <mpi.h>                             // for MPI_Comm_rank
-#include <spdlog/fmt/fmt.h>                  // for format_to
-#include <string>                            // for string, basic...
+#include "toolboxes/sphericalharmonics.h"
 
 CSDSolverTrafoFPSH2D::CSDSolverTrafoFPSH2D( Config* settings ) : SNSolver( settings ) {
     _dose = std::vector<double>( _settings->GetNCells(), 0.0 );

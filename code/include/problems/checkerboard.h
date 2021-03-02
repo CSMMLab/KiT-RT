@@ -1,9 +1,8 @@
 #ifndef CHECKERBOARD_H
 #define CHECKERBOARD_H
 
-#include "common/typedef.h"    // for Vector, VectorVector
-#include "problembase.h"
-#include <vector>    // for vector
+#include "common/pch.h"
+
 class Config;
 class Mesh;
 

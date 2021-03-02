@@ -1,39 +1,5 @@
-#include "common/mesh.h"
-
-#include "blaze/math/Vector.h"                            // for dot
-#include "blaze/math/dense/DenseVector.h"                 // for operator*=
-#include "blaze/math/expressions/DVecDVecAddExpr.h"       // for DVecDVecAddExpr
-#include "blaze/math/expressions/DVecDVecInnerExpr.h"     // for operator*
-#include "blaze/math/expressions/DVecDVecSubExpr.h"       // for DVecDVecSubExpr
-#include "blaze/math/expressions/DVecReduceExpr.h"        // for min
-#include "blaze/math/expressions/DVecScalarDivExpr.h"     // for operator/
-#include "blaze/math/expressions/DVecScalarMultExpr.h"    // for DVecScalarMul...
-#include "blaze/math/expressions/DVecTransExpr.h"         // for trans
-#include "blaze/math/expressions/DenseVector.h"           // for DenseVector
-#include "blaze/math/expressions/SVecSVecInnerExpr.h"     // for operator*
-#include "blaze/math/expressions/SVecTransExpr.h"         // for trans
-#include "blaze/math/expressions/Vector.h"                // for derestrict
-#include "blaze/math/simd/Add.h"                          // for operator+
-#include "blaze/math/simd/Mult.h"                         // for operator*
-#include "blaze/math/simd/Reduce.h"                       // for reduce
-#include "blaze/math/simd/Set.h"                          // for set
-#include "blaze/math/simd/Sub.h"                          // for operator-
-#include "blaze/math/simd/Sum.h"                          // for sum
-#include "blaze/math/smp/default/DenseVector.h"           // for smpAssign
-#include "blaze/math/views/Row.h"                         // for row
-#include "blaze/math/views/row/Sparse.h"                  // for Row
-#include "toolboxes/errormessages.h"                      // for CURRENT_FUNCTION
-#include "toolboxes/reconstructor.h"                      // for LMinMod
-#include <algorithm>                                      // for max, find
-#include <emmintrin.h>                                    // for _mm_mul_pd
-#include <ext/alloc_traits.h>                             // for __alloc_trait...
-#include <iterator>                                       // for back_insert_i...
-#include <limits>                                         // for numeric_limits
-#include <math.h>                                         // for sqrt, acos, cos
-#include <memory>                                         // for allocator_tra...
-#include <mpi.h>                                          // for MPI_Allgather
-#include <stdlib.h>                                       // for abs
-#include <string>                                         // for operator+
+#include "common/pch.h"
+#include "toolboxes/reconstructor.h"
 
 Mesh::Mesh( std::vector<Vector> nodes,
             std::vector<std::vector<unsigned>> cells,

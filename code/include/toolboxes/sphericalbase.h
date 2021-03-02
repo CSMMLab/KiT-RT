@@ -8,7 +8,8 @@
 #ifndef SPHERICALBASE_H
 #define SPHERICALBASE_H
 
-#include "common/typedef.h"
+#include "common/pch.h"
+
 class Config;
 
 class SphericalBase

@@ -1,18 +1,4 @@
 #include "quadratures/qgausslegendre1D.h"
-#include "blaze/math/dense/DynamicMatrix.h"        // for DynamicMatrix
-#include "blaze/math/dense/DynamicVector.h"        // for DynamicVector
-#include "blaze/math/smp/default/DenseMatrix.h"    // for smpAssign
-#include "blaze/math/smp/default/DenseVector.h"    // for smpAssign
-#include "quadratures/quadraturebase.h"            // for QuadratureBase
-#include "toolboxes/errormessages.h"
-#include <algorithm>             // for transform, sort
-#include <ext/alloc_traits.h>    // for __alloc_traits<>::va...
-#include <limits>                // for numeric_limits
-#include <math.h>                // for fabs, sqrt, copysign
-#include <memory>                // for allocator, allocator...
-#include <numeric>               // for iota
-
-class Config;
 
 QGaussLegendre1D::QGaussLegendre1D( Config* settings ) : QuadratureBase( settings ) {
     SetName();

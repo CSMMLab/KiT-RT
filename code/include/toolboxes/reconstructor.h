@@ -9,8 +9,7 @@
 #ifndef RECONSTRUCTOR_H
 #define RECONSTRUCTOR_H
 
-#include <math.h>    // for fabs, fmin, fmax
-#include <string>
+#include "common/pch.h"
 
 class Config;
 

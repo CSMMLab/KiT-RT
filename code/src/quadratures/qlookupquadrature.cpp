@@ -1,18 +1,4 @@
 #include "quadratures/qlookupquadrature.h"
-#include "common/typedef.h"                // for VectorVector, Vector
-#include "quadratures/quadraturebase.h"    // for QuadratureBase
-#include "spdlog/logger.h"                 // for logger
-#include "spdlog/spdlog.h"                 // for get
-#include "toolboxes/errormessages.h"
-#include <algorithm>             // for find
-#include <bits/exception.h>      // for exception
-#include <ext/alloc_traits.h>    // for __alloc_traits<>::value_type
-#include <fstream>
-#include <iterator>    // for distance
-#include <math.h>
-#include <memory>              // for allocator, allocator_traits<...
-#include <spdlog/fmt/fmt.h>    // for format_to
-class Config;
 
 QLookupQuadrature::QLookupQuadrature( Config* settings ) : QuadratureBase( settings ) {}
 

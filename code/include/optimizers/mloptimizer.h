@@ -5,8 +5,7 @@
 #include <Python.h>
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 
-#include "common/typedef.h"    // for VectorVector, Vector
-#include "optimizerbase.h"
+#include "common/pch.h"
 
 // Forward declaration
 class Config;

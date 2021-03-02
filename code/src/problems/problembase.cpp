@@ -1,6 +1,4 @@
-#include "common/config.h"
-
-#include "common/globalconstants.h"    // for MN_SOLVER, PN_SOLVER, PROBLE...
+#include "common/pch.h"
 #include "problems/aircavity1d.h"
 #include "problems/checkerboard.h"
 #include "problems/electronrt.h"
@@ -9,9 +7,7 @@
 #include "problems/linesource.h"
 #include "problems/musclebonelung.h"
 #include "problems/phantom2d.h"
-#include "problems/problembase.h"
 #include "problems/waterphantom.h"
-#include "toolboxes/errormessages.h"    // for CURRENT_FUNCTION, ErrorMessages
 
 ProblemBase::ProblemBase( Config* settings, Mesh* mesh ) {
     _settings = settings;

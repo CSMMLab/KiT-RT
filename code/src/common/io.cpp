@@ -4,27 +4,9 @@
  * \author  J. Kusch, S. Schotthoefer, P. Stammer,  J. Wolters, T. Xiao
  */
 
-#include "common/io.h"
-#include "common/config.h"
-#include "common/mesh.h"
-#include "common/typedef.h"
-
-#include "toolboxes/errormessages.h"
+#include "common/pch.h"
 #include "toolboxes/textprocessingtoolbox.h"
 
-#include <algorithm>             // for max, copy, equal
-#include <bits/exception.h>      // for exception
-#include <ctype.h>               // for isspace
-#include <ext/alloc_traits.h>    // for __alloc_traits<>::va...
-#include <filesystem>            // for exists, path
-#include <iostream>
-#include <memory>              // for __shared_ptr_access
-#include <spdlog/fmt/fmt.h>    // for format_to
-#include <stdlib.h>            // for exit, size_t, EXIT_F...
-#include <utility>             // for pair, make_pair
-
-#include <mpi.h>
-#include <omp.h>
 #include <vtkCellArray.h>
 #include <vtkCellData.h>
 #include <vtkCellDataToPointData.h>
@@ -40,9 +22,6 @@
 #include <vtkTriangle.h>
 #include <vtkUnstructuredGrid.h>
 #include <vtkUnstructuredGridWriter.h>
-
-#include "spdlog/logger.h"    // for logger
-#include "spdlog/spdlog.h"    // for get
 
 #include <Python.h>
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION

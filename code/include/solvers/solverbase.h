@@ -4,7 +4,6 @@
 #include <string>    // for string
 #include <vector>    // for vector
 
-// include Matrix, Vector definitions
 #include "common/globalconstants.h"
 #include "common/typedef.h"
 

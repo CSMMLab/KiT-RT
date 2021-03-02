@@ -1,11 +1,7 @@
 #ifndef CSDSOLVERTRAFOFPSH2D_H
 #define CSDSOLVERTRAFOFPSH2D_H
 
-// externals
-
-#include <vector>    // for vector
-
-#include "common/typedef.h"    // for Matrix, Vector, VectorVector
+#include "common/pch.h"
 #include "solvers/snsolver.h"
 
 class Config;

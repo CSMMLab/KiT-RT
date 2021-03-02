@@ -1,10 +1,5 @@
 #include "kernels/isotropic.h"
 
-#include "blaze/math/dense/DynamicVector.h"    // for DynamicVector
-#include "kernels/scatteringkernelbase.h"      // for ScatteringKernel
-#include "quadratures/quadraturebase.h"
-#include <math.h>    // for M_PI
-
 Isotropic::Isotropic( QuadratureBase* quad ) : ScatteringKernel( quad ) {}
 
 Isotropic::~Isotropic() {}

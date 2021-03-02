@@ -7,8 +7,7 @@
 #ifndef ISOTROPIC_H
 #define ISOTROPIC_H
 
-#include "common/typedef.h"    // for Matrix
-#include "scatteringkernelbase.h"
+#include "common/pch.h"
 
 class QuadratureBase;
 

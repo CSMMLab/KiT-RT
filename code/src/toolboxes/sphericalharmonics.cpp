@@ -1,6 +1,4 @@
 #include "toolboxes/sphericalharmonics.h"
-#include "toolboxes/errormessages.h"
-#include <math.h>
 
 SphericalHarmonics::SphericalHarmonics( unsigned L_degree ) {
     _LMaxDegree = L_degree;

@@ -5,23 +5,7 @@
  */
 
 #include "toolboxes/datagenerator3D.h"
-#include "blaze/math/expressions/DVecNormExpr.h"    // for norm
-#include "blaze/math/simd/Add.h"                    // for operator+
-#include "blaze/math/simd/BasicTypes.h"             // for operator+=
-#include "blaze/math/simd/Sum.h"                    // for sum
-#include "common/config.h"
-#include "common/globalconstants.h"    // for SPHERICAL_MONOMIALS
-#include "common/typedef.h"            // for VectorVector, Vector
-#include "quadratures/quadraturebase.h"
-#include "toolboxes/errormessages.h"
 #include "toolboxes/sphericalbase.h"
-#include <emmintrin.h>           // for _mm_mul_pd
-#include <ext/alloc_traits.h>    // for __alloc_traits<>::v...
-#include <iostream>
-#include <math.h>      // for sqrt
-#include <stdlib.h>    // for abs
-#include <string>      // for allocator, operator+
-#include <vector>      // for vector
 
 DataGenerator3D::DataGenerator3D( Config* settings ) : DataGeneratorBase( settings ) {
     ComputeMoments();

@@ -1,12 +1,4 @@
 #include "quadratures/qmontecarlo.h"
-#include "common/typedef.h"                // for VectorVector, Vector, Vector...
-#include "quadratures/quadraturebase.h"    // for QuadratureBase
-#include <ext/alloc_traits.h>              // for __alloc_traits<>::value_type
-#include <math.h>
-#include <memory>    // for allocator_traits<>::value_type
-#include <random>    // for default_random_engine, norma...
-
-class Config;
 
 QMonteCarlo::QMonteCarlo( Config* settings ) : QuadratureBase( settings ) {
     SetName();

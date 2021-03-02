@@ -1,10 +1,8 @@
 #ifndef PHANTOM2D
 #define PHANTOM2D
 
+#include "common/pch.h"
 #include "electronrt.h"
-#include <vector>    // for vector
-
-#include "common/typedef.h"    // for VectorVector, Vector
 
 class Config;
 class Mesh;

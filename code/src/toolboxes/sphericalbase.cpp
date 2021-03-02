@@ -5,8 +5,6 @@
  */
 
 #include "toolboxes/sphericalbase.h"
-#include "common/config.h"
-#include "toolboxes/errormessages.h"
 #include "toolboxes/sphericalharmonics.h"
 #include "toolboxes/sphericalmonomials.h"
 

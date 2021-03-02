@@ -9,11 +9,7 @@
 #ifndef QGAUSSLEGENDRE1D_H
 #define QGAUSSLEGENDRE1D_H
 
-#include "common/typedef.h"    // for Matrix, Vector
-#include "quadraturebase.h"
-#include <string>     // for string
-#include <utility>    // for pair
-#include <vector>     // for vector
+#include "common/pch.h"
 
 class Config;
 
