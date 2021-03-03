@@ -18,7 +18,7 @@ set( KITRT_RELWITHDEBINFO_OPTIONS -march=native -pg -no-pie )
 set( KITRT_DEBUG_OPTIONS -Wall -Wextra -Wpedantic )
 if( BUILD_UNITY AND NOT CODE_COV )
     set( CMAKE_UNITY_BUILD ON )
-    set( CMAKE_UNITY_BUILD_BATCH_SIZE 10 )
+    set( CMAKE_UNITY_BUILD_BATCH_SIZE 0 )
 endif()
 #################################################
 
