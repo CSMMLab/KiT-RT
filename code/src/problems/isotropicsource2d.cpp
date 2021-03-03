@@ -12,25 +12,24 @@ std::vector<VectorVector> IsotropicSource2D::GetExternalSource( const Vector& en
 
 VectorVector IsotropicSource2D::SetupIC() {
     VectorVector psi( _mesh->GetNumCells(), Vector( _settings->GetNQuadPoints(), 1e-10 ) );
-    auto cellMids         = _mesh->GetCellMidPoints();
-    double enterPositionX = 0.5;    // 0.0;
-    double enterPositionY = 0.5;
-    auto boundaryCells    = _mesh->GetBoundaryTypes();
+    auto cellMids = _mesh->GetCellMidPoints();
+    // double enterPositionX = 0.5;    // 0.0;
+    // double enterPositionY = 0.5;
+    // auto boundaryCells    = _mesh->GetBoundaryTypes();
     // Case 1: Ingoing radiation in just one cell
     // find cell that best matches enter position
-    double dist          = 1000.0;
-    unsigned indexSource = 0;
+    // double dist = 1000.0;
+    // unsigned indexSource = 0;
     for( unsigned j = 0; j < cellMids.size(); ++j ) {
         // if( boundaryCells[j] == BOUNDARY_TYPE::DIRICHLET ) {
-        double x = cellMids[j][0] - enterPositionX;
-        double y = cellMids[j][1] - enterPositionY;
-        if( sqrt( x * x + y * y ) < dist ) {
-            dist        = sqrt( x * x + y * y );
-            indexSource = j;
+        double x = cellMids[j][0];
+        double y = cellMids[j][1];
+        if( x >= 0.49 && x <= 0.5 && y >= 0.49 && y <= 0.5 ) {
+            psi[j] = Vector( _settings->GetNQuadPoints(), 1.0 );
         }
         //}
     }
-    psi[indexSource] = Vector( _settings->GetNQuadPoints(), 1.0 );
+    // psi[indexSource] = Vector( _settings->GetNQuadPoints(), 1.0 );
     /*
         // Case 2: Ingoing radiation as Gauss curve
         double t = 1e-5;    // pseudo time for gaussian smoothing

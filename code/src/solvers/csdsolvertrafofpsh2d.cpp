@@ -10,7 +10,7 @@ CSDSolverTrafoFPSH2D::CSDSolverTrafoFPSH2D( Config* settings ) : SNSolver( setti
     _energyMax = _settings->GetMaxEnergyCSD();    // 0.1;
 
     // write equidistant energy grid (false) or refined grid (true)
-    GenerateEnergyGrid( true );
+    GenerateEnergyGrid( false );
 
     // create quadrature
     unsigned order = _quadrature->GetOrder();

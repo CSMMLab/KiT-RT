@@ -65,23 +65,23 @@ Solver::Solver( Config* settings ) {
     for( unsigned i = 0; i < _nEnergies; ++i ) _energies[i] = ( i + 1 ) * _dE;
 
     // setup problem  and store frequently used params
-    _problem              = ProblemBase::Create( _settings, _mesh );
-    _sol                  = _problem->SetupIC();
-    auto cellMids         = _mesh->GetCellMidPoints();
-    double enterPositionX = 0.5;    // 0.0;
-    double enterPositionY = 0.5;
-    auto boundaryCells    = _mesh->GetBoundaryTypes();
+    _problem      = ProblemBase::Create( _settings, _mesh );
+    _sol          = _problem->SetupIC();
+    auto cellMids = _mesh->GetCellMidPoints();
+    // double enterPositionX = 0.5;    // 0.0;
+    // double enterPositionY = 0.5;
+    // auto boundaryCells    = _mesh->GetBoundaryTypes();
     // Case 1: Ingoing radiation in just one cell
     // find cell that best matches enter position
-    double dist          = 1000.0;
-    unsigned indexSource = 0;
+    // double dist    = 1000.0;
+    _boundaryCells = _mesh->GetBoundaryTypes();
+    // unsigned indexSource = 0;
     for( unsigned j = 0; j < cellMids.size(); ++j ) {
         // if( boundaryCells[j] == BOUNDARY_TYPE::DIRICHLET ) {
-        double x = cellMids[j][0] - enterPositionX;
-        double y = cellMids[j][1] - enterPositionY;
-        if( sqrt( x * x + y * y ) < dist ) {
-            dist        = sqrt( x * x + y * y );
-            indexSource = j;
+        double x = cellMids[j][0];
+        double y = cellMids[j][1];
+        if( x >= 0.49 && x <= 0.5 && y >= 0.49 && y <= 0.5 ) {
+            _boundaryCells[j] = DIRICHLET;
         }
         //}
     }
@@ -95,8 +95,8 @@ Solver::Solver( Config* settings ) {
     _g = NumericalFlux::Create();
 
     // boundary type
-    _boundaryCells              = _mesh->GetBoundaryTypes();
-    _boundaryCells[indexSource] = DIRICHLET;
+    //_boundaryCells              = _mesh->GetBoundaryTypes();
+    //_boundaryCells[indexSource] = DIRICHLET;
 
     // Solver Output
     _solverOutput.resize( _nCells );    // LEGACY! Only used for CSD SN
