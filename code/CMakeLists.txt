@@ -2,9 +2,11 @@ cmake_minimum_required( VERSION 3.12.4 )
 project( KiT-RT VERSION 0.1.0 LANGUAGES CXX )
 
 ### OPTIONS #####################################
-option( BUILD_TESTS "builds all available unit tests" OFF )
+option( BUILD_TESTING "builds all available unit tests" OFF )
 option( BUILD_GUI "additionally builds a user interface" OFF )
 option( BUILD_DOC "builds Doxygen and Sphinx documentation" OFF )
+option( BUILD_UNITY "enables unity build for faster compile times" ON )
+option( BUILD_CODE_COV "enables compiler option required for code coverage analysis" OFF )
 #################################################
 
 
@@ -14,6 +16,10 @@ set( CMAKE_CXX_STANDARD_REQUIRED ON )
 set( KITRT_RELEASE_OPTIONS -march=native -w )
 set( KITRT_RELWITHDEBINFO_OPTIONS -march=native -pg -no-pie )
 set( KITRT_DEBUG_OPTIONS -Wall -Wextra -Wpedantic )
+if( BUILD_UNITY AND NOT CODE_COV )
+    set( CMAKE_UNITY_BUILD ON )
+    set( CMAKE_UNITY_BUILD_BATCH_SIZE 10 )
+endif()
 #################################################
 
 
@@ -87,7 +93,7 @@ target_compile_options( ${CMAKE_PROJECT_NAME} PUBLIC "$<$<CONFIG:RELEASE>:${KITR
 
 
 ### BUILD UNIT TESTS ############################
-if( BUILD_TESTS )
+if( BUILD_TESTING )
     include( CTest )
     set( CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/ext/Catch2/contrib ${CMAKE_MODULE_PATH} )
     include( Catch )
@@ -103,10 +109,14 @@ if( BUILD_TESTS )
     target_compile_definitions( unit_tests PUBLIC TESTS_PATH="${CMAKE_SOURCE_DIR}/tests/" )
     target_link_libraries( unit_tests Catch ${CORE_LIBRARIES} )
     target_compile_options( unit_tests PUBLIC "$<$<CONFIG:DEBUG>:${KITRT_DEBUG_OPTIONS}>" )
-    if( CMAKE_COMPILER_IS_GNUCXX )
-        set( CODE_COVERAGE_OPTIONS --coverage -g -O0 -w )
-        target_compile_options( unit_tests PUBLIC "$<$<CONFIG:DEBUG>:${CODE_COVERAGE_OPTIONS}>" )
-        target_link_libraries( unit_tests Catch gcov )
+    if( BUILD_CODE_COV )
+        if( CMAKE_COMPILER_IS_GNUCXX )
+            set( CODE_COVERAGE_OPTIONS --coverage -g -O0 -w )
+            target_compile_options( unit_tests PUBLIC "$<$<CONFIG:DEBUG>:${CODE_COVERAGE_OPTIONS}>" )
+            target_link_libraries( unit_tests Catch gcov )
+        else()
+            message( FATAL_ERROR "Code coverage is currently only supported for gcc!" )
+        endif()
     endif()
     target_compile_options( unit_tests PUBLIC "$<$<CONFIG:RELWITHDEBINFO>:${KITRT_RELWITHDEBINFO_OPTIONS}>" )
     target_compile_options( unit_tests PUBLIC "$<$<CONFIG:RELEASE>:${KITRT_RELEASE_OPTIONS}>" )

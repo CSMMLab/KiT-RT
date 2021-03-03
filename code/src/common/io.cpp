@@ -22,7 +22,6 @@
 #include <vtkCellDataToPointData.h>
 #include <vtkDoubleArray.h>
 #include <vtkPointData.h>
-//#include <vtkPointDataToCellData.h>
 #include <vtkQuad.h>
 #include <vtkSmartPointer.h>
 #include <vtkTriangle.h>
@@ -31,7 +30,6 @@
 
 #include <Python.h>
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
-#define PY_ARRAY_UNIQUE_SYMBOL KITRT_IO_ARRAY_API
 #include <numpy/arrayobject.h>
 
 using vtkPointsSP                 = vtkSmartPointer<vtkPoints>;
@@ -41,7 +39,6 @@ using vtkCellArraySP              = vtkSmartPointer<vtkCellArray>;
 using vtkDoubleArraySP            = vtkSmartPointer<vtkDoubleArray>;
 using vtkUnstructuredGridWriterSP = vtkSmartPointer<vtkUnstructuredGridWriter>;
 using vtkCellDataToPointDataSP    = vtkSmartPointer<vtkCellDataToPointData>;
-// using vtkPointDataToCellDataSP    = vtkSmartPointer<vtkPointDataToCellData>;
 
 void ExportVTK( const std::string fileName,
                 const std::vector<std::vector<std::vector<double>>>& outputFields,
