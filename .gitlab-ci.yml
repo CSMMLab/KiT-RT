@@ -8,7 +8,7 @@ unit_tests:
   script:
     - git submodule update --init --recursive
     - cd code/build/debug
-    - cmake -G Ninja -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=ON -DCODE_COV=ON ../../
+    - cmake -G Ninja -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=ON -DBUILD_CODE_COV=ON ../../
     - ninja
     - OMP_NUM_THREADS=1 ./unit_tests -r junit > unit_tests_report.xml
     - gcovr -e ../../ext/ -e ../../tests/ -r ../../
