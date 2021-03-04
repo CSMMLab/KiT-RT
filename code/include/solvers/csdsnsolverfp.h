@@ -48,6 +48,8 @@ class CSDSNSolverFP : public SNSolver
      */
     virtual void Save() const;
     virtual void Save( int currEnergy ) const;
+
+    virtual std::vector<double> GetDosis();
 };
 
 #endif    // CSDSNSOLVERFP_H

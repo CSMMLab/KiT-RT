@@ -152,5 +152,13 @@ class SolverBase
 
     /*! @brief Save Output solution to VTK file */
     void PrintVolumeOutput() const;    // Only for debugging purposes.
+
+    /*! @brief Set density */
+    virtual void SetDensity( double density );
+    /*! @brief Get dosis */
+    virtual std::vector<double> GetDosis();
+    /*! @brief Get spatial mesh */
+    virtual Mesh* GetMesh();
+    virtual unsigned GetNCells() const { return _nCells; }
 };
 #endif    // SOLVER_H

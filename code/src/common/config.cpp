@@ -694,7 +694,7 @@ bool Config::TokenizeString( string& str, string& option_name, vector<string>& o
     pos = str.find( "=" );
     if( pos == string::npos ) {
         string errmsg = "Error in Config::TokenizeString(): line in the configuration file with no \"=\" sign.  ";
-        errmsg += "\nLook for: \n  str.length() = " + std::to_string(str.length());
+        errmsg += "\nLook for: \n  str.length() = " + std::to_string( str.length() );
         spdlog::error( errmsg );
         throw( -1 );
     }

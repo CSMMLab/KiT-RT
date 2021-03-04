@@ -230,3 +230,5 @@ void CSDSNSolverFP::Save( int currEnergy ) const {
     std::vector<std::vector<std::vector<double>>> results{ scalarField };
     ExportVTK( _settings->GetOutputFile() + "_" + std::to_string( currEnergy ), results, fieldNamesWrapper, _mesh );
 }
+
+std::vector<double> CSDSNSolverFP::GetDosis() { return _dose; }

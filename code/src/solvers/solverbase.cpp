@@ -497,3 +497,12 @@ void SolverBase::DrawPostSolverOutput() {
 }
 
 void SolverBase::SolverPreprocessing() {}
+
+void SolverBase::SetDensity( double density ) {
+    for( unsigned j = 0; j < _settings->GetNCells(); ++j ) {
+        _density[j] = density;
+    }
+}
+
+std::vector<double> SolverBase::GetDosis() { return std::vector<double>( 1, 0.0 ); }
+Mesh* SolverBase::GetMesh() { return _mesh; }

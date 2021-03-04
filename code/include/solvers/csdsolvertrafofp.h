@@ -62,6 +62,8 @@ class CSDSolverTrafoFP : public SNSolver
     void IterPreprocessing( unsigned idx_pseudotime ) override final;
     void virtual IterPostprocessing( unsigned idx_pseudotime ) override final;
     void SolverPreprocessing() override final;
+
+    virtual std::vector<double> GetDosis();
 };
 
 #endif    // CSDSOLVERTRAFOFP_H
