@@ -44,5 +44,17 @@ VectorVector IsotropicSource2D::SetupIC() {
 }
 
 std::vector<double> IsotropicSource2D::GetDensity( const VectorVector& /*cellMidPoints*/ ) {
-    return std::vector<double>( _settings->GetNCells(), 1.0 );
+    double rhoL = 1.0;
+    double rhoR = 5.0;
+    std::vector<double> rho( _settings->GetNCells(), rhoL );
+
+    // use values rhoR on right third of domain
+    auto cellMids = _mesh->GetCellMidPoints();
+    for( unsigned j = 0; j < cellMids.size(); ++j ) {
+        double x = cellMids[j][0];
+        if( x >= 2.0 / 3.0 ) {
+            rho[j] = rhoR;
+        }
+    }
+    return rho;
 }
