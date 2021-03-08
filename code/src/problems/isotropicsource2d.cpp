@@ -52,7 +52,7 @@ std::vector<double> IsotropicSource2D::GetDensity( const VectorVector& /*cellMid
     auto cellMids = _mesh->GetCellMidPoints();
     for( unsigned j = 0; j < cellMids.size(); ++j ) {
         double x = cellMids[j][0];
-        if( x >= 2.0 / 3.0 ) {
+        if( x >= 0.56 ) {
             rho[j] = rhoR;
         }
     }
