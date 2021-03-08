@@ -1,10 +1,12 @@
-cmake_minimum_required( VERSION 3.12.4 )
+cmake_minimum_required( VERSION 3.16 )
 project( KiT-RT VERSION 0.1.0 LANGUAGES CXX )
 
 ### OPTIONS #####################################
-option( BUILD_TESTS "builds all available unit tests" OFF )
+option( BUILD_TESTING "builds all available unit tests" OFF )
 option( BUILD_GUI "additionally builds a user interface" OFF )
 option( BUILD_DOC "builds Doxygen and Sphinx documentation" OFF )
+option( BUILD_UNITY "enables unity build for faster compile times" ON )
+option( BUILD_CODE_COV "enables compiler option required for code coverage analysis" OFF )
 #################################################
 
 
@@ -14,6 +16,11 @@ set( CMAKE_CXX_STANDARD_REQUIRED ON )
 set( KITRT_RELEASE_OPTIONS -march=native -w )
 set( KITRT_RELWITHDEBINFO_OPTIONS -march=native -pg -no-pie )
 set( KITRT_DEBUG_OPTIONS -Wall -Wextra -Wpedantic )
+if( BUILD_UNITY AND NOT BUILD_CODE_COV )
+    message( STATUS "Unity build enabled" )
+    set( CMAKE_UNITY_BUILD ON )
+    set( CMAKE_UNITY_BUILD_BATCH_SIZE 0 )
+endif()
 #################################################
 
 
@@ -87,7 +94,7 @@ target_compile_options( ${CMAKE_PROJECT_NAME} PUBLIC "$<$<CONFIG:RELEASE>:${KITR
 
 
 ### BUILD UNIT TESTS ############################
-if( BUILD_TESTS )
+if( BUILD_TESTING )
     include( CTest )
     set( CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/ext/Catch2/contrib ${CMAKE_MODULE_PATH} )
     include( Catch )
@@ -103,10 +110,16 @@ if( BUILD_TESTS )
     target_compile_definitions( unit_tests PUBLIC TESTS_PATH="${CMAKE_SOURCE_DIR}/tests/" )
     target_link_libraries( unit_tests Catch ${CORE_LIBRARIES} )
     target_compile_options( unit_tests PUBLIC "$<$<CONFIG:DEBUG>:${KITRT_DEBUG_OPTIONS}>" )
-    if( CMAKE_COMPILER_IS_GNUCXX )
-        set( CODE_COVERAGE_OPTIONS --coverage -g -O0 -w )
-        target_compile_options( unit_tests PUBLIC "$<$<CONFIG:DEBUG>:${CODE_COVERAGE_OPTIONS}>" )
-        target_link_libraries( unit_tests Catch gcov )
+    if( BUILD_CODE_COV )
+        if( CMAKE_COMPILER_IS_GNUCXX )
+            set( CODE_COVERAGE_OPTIONS --coverage -g -O0 -w )
+            target_compile_options( unit_tests PUBLIC "$<$<CONFIG:DEBUG>:${CODE_COVERAGE_OPTIONS}>" )
+            target_link_libraries( unit_tests Catch gcov )
+        else()
+            message( FATAL_ERROR "Code coverage is currently only supported for gcc!" )
+        endif()
+    else()
+        target_link_libraries( unit_tests Catch )
     endif()
     target_compile_options( unit_tests PUBLIC "$<$<CONFIG:RELWITHDEBINFO>:${KITRT_RELWITHDEBINFO_OPTIONS}>" )
     target_compile_options( unit_tests PUBLIC "$<$<CONFIG:RELEASE>:${KITRT_RELEASE_OPTIONS}>" )
@@ -146,7 +159,7 @@ if( BUILD_DOC )
 
     set( DOXYGEN_INPUT_DIR ${PROJECT_SOURCE_DIR} )
     set( DOXYGEN_OUTPUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/docs/doxygen )
-    set( DOXYGEN_INDEX_FILE ${DOXYGEN_OUTPUT_DIR}/html/index.html )
+    set( DOXYGEN_INDEX_FILE ${DOXYGEN_OUTPUT_DIR}/xml/index.xml )
     set( DOXYFILE_IN ${CMAKE_CURRENT_SOURCE_DIR}/../doc/Doxyfile.in )
     set( DOXYFILE_OUT ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile )
     configure_file( ${DOXYFILE_IN} ${DOXYFILE_OUT} @ONLY )

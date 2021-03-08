@@ -1,7 +1,6 @@
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
-#define PY_ARRAY_UNIQUE_SYMBOL KITRT_MLOPT_ARRAY_API
 #include <numpy/arrayobject.h>
 
 #include "common/config.h"

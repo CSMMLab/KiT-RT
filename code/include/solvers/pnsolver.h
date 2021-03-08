@@ -54,7 +54,7 @@ class PNSolver : public SolverBase
     void IterPostprocessing( unsigned idx_pseudotime ) override;
 
     // Helper
-    void ComputeRadFlux();
+    void ComputeRadFlux() override;
 
     // Initialization of the Solver
     /*! @brief parameter functions for setting up system matrix

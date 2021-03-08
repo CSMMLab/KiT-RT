@@ -5,6 +5,7 @@
  */
 
 #include <Python.h>
+#define PY_ARRAY_UNIQUE_SYMBOL KITRT_ARRAY_API
 #include <mpi.h>
 #include <string>
 

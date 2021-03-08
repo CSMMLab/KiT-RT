@@ -33,7 +33,7 @@ class SNSolver : public SolverBase
     void virtual IterPostprocessing( unsigned idx_pseudotime ) override;
 
     // Helper
-    void ComputeRadFlux();
+    void ComputeRadFlux() override;
 
     // --- Member variables ---
 };

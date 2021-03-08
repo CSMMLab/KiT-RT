@@ -163,9 +163,9 @@ class Config
 
     /*!
      * @brief breaks an input line from the config file into a set of tokens
-     * @param[in] str - the input line string
-     * @param[out] option_name - the name of the option found at the beginning of the line
-     * @param[out] option_value - the tokens found after the "=" sign on the line
+     * @param str the input line string
+     * @param option_name the name of the option found at the beginning of the line
+     * @param option_value the tokens found after the "=" sign on the line
      * @return false if the line is empty or a commment, true otherwise
      */
     bool TokenizeString( std::string& str, std::string& option_name, std::vector<std::string>& option_value );

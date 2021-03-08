@@ -72,6 +72,6 @@ class MNSolver : public SolverBase
 
     // Helper
     /*! @brief Computes the radiative flux from the solution vector of the moment system */
-    void ComputeRadFlux();
+    void ComputeRadFlux() override;
 };
 #endif    // MNSOLVER_H

@@ -14,4 +14,3 @@ Solvers
    mnsolver
    pnsolver
    snsolver
-   snsolvermpi

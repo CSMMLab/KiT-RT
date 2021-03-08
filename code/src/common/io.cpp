@@ -22,7 +22,6 @@
 #include <vtkCellDataToPointData.h>
 #include <vtkDoubleArray.h>
 #include <vtkPointData.h>
-//#include <vtkPointDataToCellData.h>
 #include <vtkQuad.h>
 #include <vtkSmartPointer.h>
 #include <vtkTriangle.h>
@@ -31,7 +30,6 @@
 
 #include <Python.h>
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
-#define PY_ARRAY_UNIQUE_SYMBOL KITRT_IO_ARRAY_API
 #include <numpy/arrayobject.h>
 
 using vtkPointsSP                 = vtkSmartPointer<vtkPoints>;
@@ -41,7 +39,6 @@ using vtkCellArraySP              = vtkSmartPointer<vtkCellArray>;
 using vtkDoubleArraySP            = vtkSmartPointer<vtkDoubleArray>;
 using vtkUnstructuredGridWriterSP = vtkSmartPointer<vtkUnstructuredGridWriter>;
 using vtkCellDataToPointDataSP    = vtkSmartPointer<vtkCellDataToPointData>;
-// using vtkPointDataToCellDataSP    = vtkSmartPointer<vtkPointDataToCellData>;
 
 void ExportVTK( const std::string fileName,
                 const std::vector<std::vector<std::vector<double>>>& outputFields,
@@ -197,7 +194,8 @@ Mesh* LoadSU2MeshFromFile( const Config* settings ) {
                         getline( ifs, line );
                         if( line.find( "MARKER_TAG", 0 ) != std::string::npos ) {
                             markerTag    = line.substr( line.find( "=" ) + 1 );
-                            auto end_pos = std::remove_if( markerTag.begin(), markerTag.end(), isspace );
+                            auto end_pos = std::remove_if(
+                                markerTag.begin(), markerTag.end(), []( char c ) { return std::isspace( static_cast<unsigned char>( c ) ); } );
                             markerTag.erase( end_pos, markerTag.end() );
                             btype = settings->GetBoundaryType( markerTag );
                             if( btype == BOUNDARY_TYPE::INVALID ) {

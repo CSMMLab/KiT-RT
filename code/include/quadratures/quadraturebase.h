@@ -15,7 +15,7 @@ class QuadratureBase
 {
   public:
     /*! @brief Constructor using settings class. This is the recommended constructor.
-     *  @param Config* settings: Settings class storing all important options.
+     *  @param settings Settings class storing all important options.
      */
     QuadratureBase( Config* settings );
     /*! @brief Constructor using directly the order of the quadrature. Not applicable for GaussLegendre, that need additional options.
@@ -33,20 +33,20 @@ class QuadratureBase
     double SumUpWeights();
 
     /*! @brief Integrates f(x,y,z) with the quadrature.
-     *  @param double(f)( double x0, double x1, double x2 ) : density function that depends on a three spatial dimensions.
-     *  @returns double result: result of the quadrature rule */
-    virtual double Integrate( double( f )( double x0, double x1, double x2 ) );
+     *  @param f density function that depends on a three spatial dimensions.
+     *  @returns result of the quadrature rule */
+    virtual double Integrate( double ( *f )( double, double, double ) );
 
     /*! @brief Integrates f(x,y,z) with the quadrature.
-     *  @param double(f)( double my, double phi ) : density function that depends on a spherical coordinates.
-     *  @returns double result: result of the quadrature rule */
-    virtual double IntegrateSpherical( double( f )( double my, double phi ) );
+     *  @param f density function that depends on a spherical coordinates.
+     *  @returns result of the quadrature rule */
+    virtual double IntegrateSpherical( double ( *f )( double, double ) );
 
     /*! @brief Integrates vector valued f(x,y,z) with the quadrature. Each dimension is integrated by itself.
-     *  @param : double(f)( double x0, double x1, double x2 ) : density function that depends on a three spatial dimensions.
-     *  @param :  len : lenght of vector
-     *  @returns double result: result of the quadrature rule (vector valued) */
-    virtual std::vector<double> Integrate( std::vector<double>( f )( double x0, double x1, double x2 ), unsigned len );
+     *  @param f density function that depends on a three spatial dimensions.
+     *  @param len lenght of vector
+     *  @returns result of the quadrature rule (vector valued) */
+    virtual std::vector<double> Integrate( std::vector<double> ( *f )( double, double, double ), unsigned len );
 
     // Quadrature Hub
     /*! @brief Creates a quadrature rule with a given name and a given order.
@@ -55,9 +55,9 @@ class QuadratureBase
     static QuadratureBase* Create( Config* settings );
 
     /*! @brief Creates a quadrature rule with a given name and a given order.
-     *  @param name: name of quadrature as enum
-     *  @param quadOrder: order of quadrature
-     *  @returns Quadrature* quadrature: returns pointer to instance of the given derived quadrature class */
+     *  @param name name of quadrature as enum
+     *  @param quadOrder order of quadrature
+     *  @returns pointer to instance of the given derived quadrature class */
     static QuadratureBase* Create( QUAD_NAME name, unsigned quadOrder );
 
     // Getter

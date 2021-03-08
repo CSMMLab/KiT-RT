@@ -24,7 +24,7 @@ class DataGeneratorBase
      *          the options file.
      *   @param settings config class with global information*/
     DataGeneratorBase( Config* settings );
-    ~DataGeneratorBase();
+    virtual ~DataGeneratorBase();
 
     /*! @brief Create a datagenerator (1D or 3D)
      *  @param settings Pointer to the config file
