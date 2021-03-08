@@ -95,7 +95,7 @@ CSDSolverTrafoFPSH2D::CSDSolverTrafoFPSH2D( Config* settings ) : SNSolver( setti
         blaze::column( Y, q ) = sph.ComputeSphericalBasis( _quadPointsSphere[q][0], _quadPointsSphere[q][1] );
     }
 
-    _O = Y;
+    //_O = Y;
     _O = blaze::trans( Y );
     _M = _O;    // transposed to simplify weight multiplication. We will transpose _M later again
 

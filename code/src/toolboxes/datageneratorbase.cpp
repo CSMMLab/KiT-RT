@@ -11,6 +11,7 @@
 #include "quadratures/quadraturebase.h"
 #include "spdlog/spdlog.h"
 #include "toolboxes/datagenerator1D.h"
+#include "toolboxes/datagenerator2D.h"
 #include "toolboxes/datagenerator3D.h"
 #include "toolboxes/errormessages.h"
 #include "toolboxes/sphericalbase.h"
@@ -69,7 +70,7 @@ DataGeneratorBase::~DataGeneratorBase() {
 DataGeneratorBase* DataGeneratorBase::Create( Config* settings ) {
     switch( settings->GetDim() ) {
         case 1: return new DataGenerator1D( settings );
-        case 2: ErrorMessages::Error( "2D Sampling is not yet supported.", CURRENT_FUNCTION );
+        case 2: return new DataGenerator2D( settings );
         case 3: return new DataGenerator3D( settings );
         default: ErrorMessages::Error( "Sampling for more than 3 dimensions is not yet supported.", CURRENT_FUNCTION );
     }

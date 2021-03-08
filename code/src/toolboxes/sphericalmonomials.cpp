@@ -130,9 +130,9 @@ double SphericalMonomials::Omega_y( double my, double phi ) { return sqrt( 1 - m
 double SphericalMonomials::Omega_z( double my ) { return my; }
 
 double SphericalMonomials::Power( double basis, unsigned exponent ) {
-    if( exponent == 0 ) return 1.0;
-    double result = basis;
-    for( unsigned i = 1; i < exponent; i++ ) {
+    if( exponent == 0 ) return 1.0;               // basis^0
+    double result = basis;                        // basis^1
+    for( unsigned i = 1; i < exponent; i++ ) {    // exp> 1
         result = result * basis;
     }
     return result;

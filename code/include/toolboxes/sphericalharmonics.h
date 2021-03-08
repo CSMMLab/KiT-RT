@@ -49,17 +49,17 @@ class SphericalHarmonics : public SphericalBase
     std::vector<double> GetAssLegendrePoly( const double my );
 
     /*! @brief Returns length of the basis, i.e. number of elements of the basis */
-    unsigned GetBasisSize() override;
+    unsigned GetBasisSize() override final;
 
     /*! @brief Return number of basis functions with degree equals to currDegree
      *  @param currDegreeL = degree of polynomials that are counted   */
-    unsigned GetCurrDegreeSize( unsigned currDegree ) override;
+    unsigned GetCurrDegreeSize( unsigned currDegree ) override final;
 
     /*! @brief  helper function to get the global index for given k and l of
      *          the basis function Y_k^l.
      *  @param  l_degree - current degree of basis function, 0 <= l <= L
      *  @param  k_order  - current order of basis function,  -l <= k <= l      */
-    unsigned GetGlobalIndexBasis( int l_degree, int k_order ) override;
+    unsigned GetGlobalIndexBasis( int l_degree, int k_order ) override final;
 
   private:
     /*! @brief maximal degree of the spherical harmonics basis (this is "L" in the comments)*/
