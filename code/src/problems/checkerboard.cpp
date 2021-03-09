@@ -1,6 +1,7 @@
 #include "problems/checkerboard.h"
 #include "common/config.h"
 #include "common/mesh.h"
+#include "toolboxes/sphericalbase.h"
 
 // ---- Checkerboard Sn ----
 // Constructor for Ckeckerboard case with Sn
@@ -66,9 +67,12 @@ bool Checkerboard_SN::isSource( const Vector& pos ) const {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// ---- Checkerboard Pn ----
+// ---- Checkerboard Moments ----
+
 // Constructor for checkerboard case with Pn
-Checkerboard_PN::Checkerboard_PN( Config* settings, Mesh* mesh ) : ProblemBase( settings, mesh ) {
+Checkerboard_Moment::Checkerboard_Moment( Config* settings, Mesh* mesh ) : ProblemBase( settings, mesh ) {
+
+    _basis = SphericalBase::Create(_settings);
     _physics = nullptr;
 
     // Initialise crosssections = 1 (scattering)
@@ -85,13 +89,15 @@ Checkerboard_PN::Checkerboard_PN( Config* settings, Mesh* mesh ) : ProblemBase( 
     }
 }
 
-Checkerboard_PN::~Checkerboard_PN() {}
+Checkerboard_Moment::~Checkerboard_Moment() {
+    delete _basis;
+}
 
-VectorVector Checkerboard_PN::GetScatteringXS( const Vector& energies ) { return VectorVector( energies.size(), _scatteringXS ); }
+VectorVector Checkerboard_Moment::GetScatteringXS( const Vector& energies ) { return VectorVector( energies.size(), _scatteringXS ); }
 
-VectorVector Checkerboard_PN::GetTotalXS( const Vector& energies ) { return VectorVector( energies.size(), _totalXS ); }
+VectorVector Checkerboard_Moment::GetTotalXS( const Vector& energies ) { return VectorVector( energies.size(), _totalXS ); }
 
-std::vector<VectorVector> Checkerboard_PN::GetExternalSource( const Vector& /*energies*/ ) {
+std::vector<VectorVector> Checkerboard_Moment::GetExternalSource( const Vector& /*energies*/ ) {
     VectorVector Q( _mesh->GetNumCells(), Vector( 1u, 0.0 ) );
     auto cellMids = _mesh->GetCellMidPoints();
     for( unsigned j = 0; j < cellMids.size(); ++j ) {
@@ -100,13 +106,13 @@ std::vector<VectorVector> Checkerboard_PN::GetExternalSource( const Vector& /*en
     return std::vector<VectorVector>( 1u, Q );
 }
 
-VectorVector Checkerboard_PN::SetupIC() {
-    int ntotalEquations = GlobalIndex( _settings->GetMaxMomentDegree(), _settings->GetMaxMomentDegree() ) + 1;
+VectorVector Checkerboard_Moment::SetupIC() {
+    int ntotalEquations = _basis->GetBasisSize();
     VectorVector psi( _mesh->GetNumCells(), Vector( ntotalEquations, 1e-10 ) );
     return psi;
 }
 
-bool Checkerboard_PN::isAbsorption( const Vector& pos ) const {
+bool Checkerboard_Moment::isAbsorption( const Vector& pos ) const {
     // Check whether pos is in absorption region
     std::vector<double> lbounds{ 1, 2, 3, 4, 5 };
     std::vector<double> ubounds{ 2, 3, 4, 5, 6 };
@@ -121,16 +127,10 @@ bool Checkerboard_PN::isAbsorption( const Vector& pos ) const {
     return false;
 }
 
-bool Checkerboard_PN::isSource( const Vector& pos ) const {
+bool Checkerboard_Moment::isSource( const Vector& pos ) const {
     // Check whether pos is in source region
     if( pos[0] >= 3 && pos[0] <= 4 && pos[1] >= 3 && pos[1] <= 4 )
         return true;
     else
         return false;
-}
-
-int Checkerboard_PN::GlobalIndex( int l, int k ) const {
-    int numIndicesPrevLevel  = l * l;    // number of previous indices untill level l-1
-    int prevIndicesThisLevel = k + l;    // number of previous indices in current level
-    return numIndicesPrevLevel + prevIndicesThisLevel;
 }

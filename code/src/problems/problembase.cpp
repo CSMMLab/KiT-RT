@@ -30,7 +30,7 @@ ProblemBase* ProblemBase::Create( Config* settings, Mesh* mesh ) {
         }
         case PROBLEM_Checkerboard: {
             if( settings->GetSolverName() == PN_SOLVER || settings->GetSolverName() == MN_SOLVER )
-                return new Checkerboard_PN( settings, mesh );
+                return new Checkerboard_Moment( settings, mesh );
             else
                 return new Checkerboard_SN( settings, mesh );    // default
         }

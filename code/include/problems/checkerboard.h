@@ -3,6 +3,8 @@
 
 #include "problembase.h"
 
+class SphericalBase;
+
 class Checkerboard_SN : public ProblemBase
 {
   private:
@@ -24,13 +26,14 @@ class Checkerboard_SN : public ProblemBase
     virtual VectorVector SetupIC() override;
 };
 
-class Checkerboard_PN : public ProblemBase
+class Checkerboard_Moment : public ProblemBase
 {
   private:
     Vector _scatteringXS; /*!< @brief Vector of scattering crosssections len: numCells  */
     Vector _totalXS;      /*!< @brief Vector of total crosssections. len: numCells*/
+    SphericalBase* _basis; /*!< @brief Class to compute and store current spherical harmonics basis */
 
-    Checkerboard_PN() = delete;
+    Checkerboard_Moment() = delete;
 
     bool isAbsorption( const Vector& pos ) const; /*!< @return True if pos is in absorption region, False otherwise */
     bool isSource( const Vector& pos ) const;     /*!< @return True if pos is in source region, False otherwise */
@@ -46,8 +49,8 @@ class Checkerboard_PN : public ProblemBase
     int GlobalIndex( int l, int k ) const;
 
   public:
-    Checkerboard_PN( Config* settings, Mesh* mesh );
-    virtual ~Checkerboard_PN();
+    Checkerboard_Moment( Config* settings, Mesh* mesh );
+    virtual ~Checkerboard_Moment();
 
     virtual VectorVector GetScatteringXS( const Vector& energies ) override;
     virtual VectorVector GetTotalXS( const Vector& energies ) override;
