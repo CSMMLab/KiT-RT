@@ -17,8 +17,10 @@
 #include "toolboxes/sphericalbase.h"
 #include "toolboxes/textprocessingtoolbox.h"
 
+#include <iomanip>
 #include <math.h>
 #include <omp.h>
+#include <sstream>
 
 DataGeneratorBase::DataGeneratorBase( Config* settings ) {
     _settings = settings;
@@ -161,14 +163,21 @@ void DataGeneratorBase::PrintTrainingData() {
     logCSV->info( uSolString + alphaString + "h" );
 
     for( unsigned idx_set = 0; idx_set < _setSize; idx_set++ ) {
-        std::string uSolString  = "";
-        std::string alphaString = "";
+
+        std::stringstream streamU, streamAlpha, streamH;
+
         for( unsigned idx_sys = 0; idx_sys < _nTotalEntries; idx_sys++ ) {
-            uSolString += std::to_string( _uSol[idx_set][idx_sys] ) + ",";
-            alphaString += std::to_string( _alpha[idx_set][idx_sys] ) + ",";
+            streamU << std::fixed << std::setprecision( 12 ) << _uSol[idx_set][idx_sys] << ",";
+            streamAlpha << std::fixed << std::setprecision( 12 ) << _alpha[idx_set][idx_sys] << ",";
         }
-        // log->info( uSolString + alphaString + "{}", _hEntropy[idx_set] );
-        logCSV->info( uSolString + alphaString + "{}", _hEntropy[idx_set] );
+        streamH << std::fixed << std::setprecision( 12 ) << _hEntropy[idx_set];
+
+        std::string uSolString  = streamU.str();
+        std::string alphaString = streamAlpha.str();
+        std::string hString     = streamH.str();
+
+        // log->info(  uSolString + alphaString + hString  );
+        logCSV->info( uSolString + alphaString + hString );
     }
 }
 

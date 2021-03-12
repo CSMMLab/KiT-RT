@@ -283,7 +283,7 @@ void DataGenerator1D::ComputeSetSize() {
             }
             _setSize = c;
         }
-        if( _LMaxDegree == 3 ) {
+        else if( _LMaxDegree == 3 ) {
             // Carefull: This computes only normalized moments, i.e. sampling for u_0 = 1, N1=0
             unsigned c = 1;
             double N1  = 0 + _settings->GetRealizableSetEpsilonU0();
