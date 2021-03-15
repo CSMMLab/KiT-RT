@@ -134,6 +134,18 @@ void DataGenerator1D::SampleSolutionU() {
         }
     }
     else if( _settings->GetSphericalBasisName() == SPHERICAL_MONOMIALS && _settings->GetNormalizedSampling() ) {
+        if( _LMaxDegree == 1 ) {
+            // Carefull: This computes only normalized moments, i.e. sampling for u_0 = 1
+            unsigned c = 0;
+            double dN  = 2.0 / (double)_gridSize;
+            double N1  = -1.0 + _settings->GetRealizableSetEpsilonU0();
+            while( N1 < 1.0 - _settings->GetRealizableSetEpsilonU0() ) {
+                _uSol[c][0] = 1;     // u0 (normalized i.e. N0) by Monreals notation
+                _uSol[c][1] = N1;    // u1 (normalized i.e. N1) by Monreals notation
+                N1 += dN;
+                c++;
+            }
+        }
         if( _LMaxDegree == 2 ) {
             // Carefull: This computes only normalized moments, i.e. sampling for u_0 = 1
             unsigned c = 0;
@@ -234,8 +246,7 @@ void DataGenerator1D::ComputeSetSize() {
             }
             _setSize = c;
         }
-        else if( _LMaxDegree == 3 && _settings->GetSphericalBasisName() == SPHERICAL_MONOMIALS && !_settings->GetNormalizedSampling() ) {
-            // Carefull: This computes only normalized moments, i.e. sampling for u_0 = 1
+        else if( _LMaxDegree == 3 ) {
             unsigned c = 0;
             double du  = _settings->GetMaxValFirstMoment() / (double)_gridSize;
             double u0  = _settings->GetRealizableSetEpsilonU0();
@@ -267,7 +278,18 @@ void DataGenerator1D::ComputeSetSize() {
         }
     }
     else if( _settings->GetSphericalBasisName() == SPHERICAL_MONOMIALS && _settings->GetNormalizedSampling() ) {
-        if( _LMaxDegree == 2 ) {
+        if( _LMaxDegree == 1 ) {
+            // Carefull: This computes only normalized moments, i.e. sampling for u_0 = 1
+            unsigned c = 0;
+            double dN  = 2.0 / (double)_gridSize;
+            double N1  = -1.0 + _settings->GetRealizableSetEpsilonU0();
+            while( N1 < 1.0 - _settings->GetRealizableSetEpsilonU0() ) {
+                N1 += dN;
+                c++;
+            }
+            _setSize = c;
+        }
+        else if( _LMaxDegree == 2 ) {
             // Carefull: This computes only normalized moments, i.e. sampling for u_0 = 1
             unsigned c = 1;
             double N1  = -1.0 + _settings->GetRealizableSetEpsilonU0();
