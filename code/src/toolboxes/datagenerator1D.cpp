@@ -41,7 +41,7 @@ void DataGenerator1D::SampleSolutionU() {
 
     // --- Determine stepsizes etc ---
 
-    if( _LMaxDegree == 0 ) {
+    if( _maxPolyDegree == 0 ) {
         // --- sample u in order 0 ---
         // u_0 = <1*psi>
         double du = _settings->GetMaxValFirstMoment() / (double)_gridSize;
@@ -51,7 +51,7 @@ void DataGenerator1D::SampleSolutionU() {
         }
     }
     else if( _settings->GetSphericalBasisName() == SPHERICAL_MONOMIALS && !_settings->GetNormalizedSampling() ) {
-        if( _LMaxDegree == 1 ) {
+        if( _maxPolyDegree == 1 ) {
             unsigned c = 0;
             double du  = _settings->GetMaxValFirstMoment() / (double)_gridSize;
 
@@ -72,7 +72,7 @@ void DataGenerator1D::SampleSolutionU() {
                 u0 += du;
             }
         }
-        else if( _LMaxDegree == 2 ) {
+        else if( _maxPolyDegree == 2 ) {
             unsigned c = 0;
             double du  = _settings->GetMaxValFirstMoment() / (double)_gridSize;
 
@@ -99,7 +99,7 @@ void DataGenerator1D::SampleSolutionU() {
                 u0 += du;
             }
         }
-        else if( _LMaxDegree == 3 ) {
+        else if( _maxPolyDegree == 3 ) {
             unsigned c = 0;
             double du  = _settings->GetMaxValFirstMoment() / (double)_gridSize;
             double u0  = _settings->GetRealizableSetEpsilonU0();
@@ -134,7 +134,7 @@ void DataGenerator1D::SampleSolutionU() {
         }
     }
     else if( _settings->GetSphericalBasisName() == SPHERICAL_MONOMIALS && _settings->GetNormalizedSampling() ) {
-        if( _LMaxDegree == 1 ) {
+        if( _maxPolyDegree == 1 ) {
             // Carefull: This computes only normalized moments, i.e. sampling for u_0 = 1
             unsigned c = 0;
             double dN  = 2.0 / (double)_gridSize;
@@ -146,7 +146,7 @@ void DataGenerator1D::SampleSolutionU() {
                 c++;
             }
         }
-        if( _LMaxDegree == 2 ) {
+        if( _maxPolyDegree == 2 ) {
             // Carefull: This computes only normalized moments, i.e. sampling for u_0 = 1
             unsigned c = 0;
             double N1  = -1.0 + _settings->GetRealizableSetEpsilonU0();
@@ -164,7 +164,7 @@ void DataGenerator1D::SampleSolutionU() {
                 N1 += dN;
             }
         }
-        if( _LMaxDegree == 3 ) {
+        if( _maxPolyDegree == 3 ) {
             // Carefull: This computes only normalized moments, i.e. sampling for u_0 = 1, N1=0
             unsigned c = 0;
             double N1  = 0 + _settings->GetRealizableSetEpsilonU0();
@@ -195,10 +195,10 @@ void DataGenerator1D::CheckRealizability() {
 }
 
 void DataGenerator1D::ComputeSetSize() {
-    if( _LMaxDegree == 0 ) {
+    if( _maxPolyDegree == 0 ) {
     }
     else if( _settings->GetSphericalBasisName() == SPHERICAL_MONOMIALS && !_settings->GetNormalizedSampling() ) {
-        if( _LMaxDegree == 1 ) {
+        if( _maxPolyDegree == 1 ) {
             unsigned c = 0;
             double du  = _settings->GetMaxValFirstMoment() / (double)_gridSize;
 
@@ -217,7 +217,7 @@ void DataGenerator1D::ComputeSetSize() {
             }
             _setSize = c;
         }
-        else if( _LMaxDegree == 2 ) {
+        else if( _maxPolyDegree == 2 ) {
             unsigned c = 0;
             double du  = _settings->GetMaxValFirstMoment() / (double)_gridSize;
 
@@ -246,7 +246,7 @@ void DataGenerator1D::ComputeSetSize() {
             }
             _setSize = c;
         }
-        else if( _LMaxDegree == 3 ) {
+        else if( _maxPolyDegree == 3 ) {
             unsigned c = 0;
             double du  = _settings->GetMaxValFirstMoment() / (double)_gridSize;
             double u0  = _settings->GetRealizableSetEpsilonU0();
@@ -276,9 +276,12 @@ void DataGenerator1D::ComputeSetSize() {
             }
             _setSize = c;
         }
+        else {
+            ErrorMessages::Error( "Sampling of training data of degree higher than 3 is not yet implemented.", CURRENT_FUNCTION );
+        }
     }
     else if( _settings->GetSphericalBasisName() == SPHERICAL_MONOMIALS && _settings->GetNormalizedSampling() ) {
-        if( _LMaxDegree == 1 ) {
+        if( _maxPolyDegree == 1 ) {
             // Carefull: This computes only normalized moments, i.e. sampling for u_0 = 1
             unsigned c = 0;
             double dN  = 2.0 / (double)_gridSize;
@@ -289,7 +292,7 @@ void DataGenerator1D::ComputeSetSize() {
             }
             _setSize = c;
         }
-        else if( _LMaxDegree == 2 ) {
+        else if( _maxPolyDegree == 2 ) {
             // Carefull: This computes only normalized moments, i.e. sampling for u_0 = 1
             unsigned c = 1;
             double N1  = -1.0 + _settings->GetRealizableSetEpsilonU0();
@@ -305,7 +308,7 @@ void DataGenerator1D::ComputeSetSize() {
             }
             _setSize = c;
         }
-        else if( _LMaxDegree == 3 ) {
+        else if( _maxPolyDegree == 3 ) {
             // Carefull: This computes only normalized moments, i.e. sampling for u_0 = 1, N1=0
             unsigned c = 1;
             double N1  = 0 + _settings->GetRealizableSetEpsilonU0();

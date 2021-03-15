@@ -24,6 +24,8 @@ QuadratureBase* QuadratureBase::Create( Config* settings ) {
         case QUAD_MonteCarlo: return new QMonteCarlo( settings );
         case QUAD_GaussLegendreTensorized: return new QGaussLegendreTensorized( settings );
         case QUAD_GaussLegendre1D: return new QGaussLegendre1D( settings );
+        case QUAD_GaussLegendreTensorized2D: return new QGaussLegendreTensorized2D( settings );
+
         case QUAD_GaussChebyshev1D: return new QGaussChebyshev1D( settings );
         case QUAD_LevelSymmetric: return new QLevelSymmetric( settings );
         case QUAD_LDFESA: return new QLDFESA( settings );

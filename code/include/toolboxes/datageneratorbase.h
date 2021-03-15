@@ -51,7 +51,7 @@ class DataGeneratorBase
     unsigned long
         _gridSize; /*!< @brief Size of the grid discretizing moment U0 for higher order sampling (has different uses for different samplers)*/
 
-    unsigned short _LMaxDegree; /*!< @brief Max Order of Spherical Harmonics */
+    unsigned short _maxPolyDegree; /*!< @brief Max Order of Spherical Harmonics */
     unsigned _nTotalEntries;    /*!< @brief Total number of equations in the system */
 
     QuadratureBase* _quadrature;    /*!< @brief quadrature to create members below */

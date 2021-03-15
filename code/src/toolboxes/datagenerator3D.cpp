@@ -43,7 +43,7 @@ void DataGenerator3D::SampleSolutionU() {
     double du0 = _settings->GetMaxValFirstMoment() / (double)_gridSize;
 
     // different processes for different
-    if( _LMaxDegree == 0 ) {
+    if( _maxPolyDegree == 0 ) {
         // --- sample u in order 0 ---
         // u_0 = <1*psi>
 
@@ -51,7 +51,7 @@ void DataGenerator3D::SampleSolutionU() {
             _uSol[idx_set][0] = du0 * idx_set;
         }
     }
-    else if( _LMaxDegree == 1 && _settings->GetSphericalBasisName() == SPHERICAL_MONOMIALS ) {
+    else if( _maxPolyDegree == 1 && _settings->GetSphericalBasisName() == SPHERICAL_MONOMIALS ) {
         // Sample points on unit sphere.
         QuadratureBase* quad = QuadratureBase::Create( _settings );
         VectorVector qpoints = quad->GetPoints();    // carthesian coordinates.
@@ -110,7 +110,7 @@ void DataGenerator3D::SampleSolutionU() {
 
 void DataGenerator3D::CheckRealizability() {
     double epsilon = _settings->GetRealizableSetEpsilonU0();
-    if( _LMaxDegree == 1 ) {
+    if( _maxPolyDegree == 1 ) {
 #pragma omp parallel for schedule( guided )
         for( unsigned idx_set = 0; idx_set < _setSize; idx_set++ ) {
             double normU1 = 0.0;
@@ -147,9 +147,9 @@ void DataGenerator3D::CheckRealizability() {
 }
 
 void DataGenerator3D::ComputeSetSize() {
-    if( _LMaxDegree == 0 ) {
+    if( _maxPolyDegree == 0 ) {
     }
-    else if( _LMaxDegree == 1 && _settings->GetSphericalBasisName() == SPHERICAL_MONOMIALS ) {
+    else if( _maxPolyDegree == 1 && _settings->GetSphericalBasisName() == SPHERICAL_MONOMIALS ) {
         // Sample points on unit sphere.
         QuadratureBase* quad = QuadratureBase::Create( _settings );
         unsigned long nq     = (unsigned long)quad->GetNq();

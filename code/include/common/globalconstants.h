@@ -58,6 +58,7 @@ enum QUAD_NAME {
     QUAD_MonteCarlo,
     QUAD_GaussLegendreTensorized,
     QUAD_GaussLegendre1D,
+    QUAD_GaussLegendreTensorized2D,
     QUAD_LevelSymmetric,
     QUAD_Lebedev,
     QUAD_LDFESA,

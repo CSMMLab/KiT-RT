@@ -27,7 +27,7 @@ DataGeneratorBase::DataGeneratorBase( Config* settings ) {
     _setSize  = settings->GetTrainingDataSetSize();
     _gridSize = _setSize;
 
-    _LMaxDegree = settings->GetMaxMomentDegree();
+    _maxPolyDegree = settings->GetMaxMomentDegree();
 
     // Check consistency between dimension of quadrature and sample basis
     if( _settings->GetDim() == 1 ) {
@@ -48,7 +48,7 @@ DataGeneratorBase::DataGeneratorBase( Config* settings ) {
     _quadPointsSphere = _quadrature->GetPointsSphere();
 
     // Spherical Harmonics
-    if( _settings->GetSphericalBasisName() == SPHERICAL_HARMONICS && _LMaxDegree > 0 ) {
+    if( _settings->GetSphericalBasisName() == SPHERICAL_HARMONICS && _maxPolyDegree > 0 ) {
         ErrorMessages::Error( "No sampling algorithm for spherical harmonics basis with degree higher than 0 implemented", CURRENT_FUNCTION );
     }
     _basis = SphericalBase::Create( _settings );
