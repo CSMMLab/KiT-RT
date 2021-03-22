@@ -30,6 +30,10 @@ class CSDPNSolver : public PNSolver
     void Solve() override;
 
   private:
+    void IterPreprocessing( unsigned /*idx_iter*/ ) override;
+    void ComputeRadFlux() override;
+    void FluxUpdate() override;
+    void FVMUpdate( unsigned idx_energy ) override;
     void PrepareVolumeOutput() override;
     void WriteVolumeOutput( unsigned idx_pseudoTime ) override;
 };
