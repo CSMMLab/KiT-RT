@@ -119,7 +119,6 @@ SolverBase* SolverBase::Create( Config* settings ) {
 void SolverBase::Solve() {
 
     // --- Preprocessing ---
-
     PrepareVolumeOutput();
 
     DrawPreSolverOutput();

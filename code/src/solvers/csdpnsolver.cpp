@@ -71,14 +71,14 @@ void CSDPNSolver::IterPreprocessing( unsigned /*idx_iter*/ ) {
     // TODO
 }
 
-void CSDPNSolver::IterPostprocessing( unsigned /*idx_iter*/ ) {
+void CSDPNSolver::IterPostprocessing( unsigned idx_iter ) {
     // --- Update Solution ---
     _sol = _solNew;
 
     // --- Compute Flux for solution and Screen Output ---
     ComputeRadFlux();
 
-    unsigned n = idx_pseudotime;
+    unsigned n = idx_iter;
     // -- Compute Dose
     for( unsigned j = 0; j < _nCells; ++j ) {
         if( n > 0 ) {
