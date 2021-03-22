@@ -34,10 +34,13 @@ CSDPNSolver::CSDPNSolver( Config* settings ) : PNSolver( settings ) {
     _dose = std::vector<double>( _settings->GetNCells(), 0.0 );
 
     // only dummies for compilation
-    _energies = Vector( _nEnergies, 0.0 );
-    _angle    = _energies;
-    _sigmaSE  = { Matrix( _nEnergies, 0.0 ) };
-    _sigmaTE  = Vector( _nEnergies, 0.0 );
+    //
+    //_energies = Vector( _nEnergies, 0.0 );
+    //_angle    = _energies;
+    //
+    //_sigmaSE  = { Matrix( _nEnergies, 0.0 ) };
+    //_sigmaTE  = Vector( _nEnergies, 0.0 );
+    //
 
     Vector pos_beam = Vector{ 0.5, 0.5 };
     Vector f( _nCells );
@@ -58,6 +61,10 @@ CSDPNSolver::CSDPNSolver( Config* settings ) : PNSolver( settings ) {
 
     Interpolation interpS( E_ref, S_tab );
     Vector S = interpS( _energies );
+}
+
+void CSDPNSolver::SolverPreprocessing() {
+    // TODO
 }
 
 void CSDPNSolver::IterPreprocessing( unsigned /*idx_iter*/ ) {
@@ -105,8 +112,8 @@ void CSDPNSolver::FluxUpdate() {
                                                _AyMinus,
                                                _AzPlus,
                                                _AzMinus,
-                                               _sol[idx_cell],
-                                               _sol[_neighbors[idx_cell][idx_neighbor]],
+                                               _sol[idx_cell] / _density[idx_cell],
+                                               _sol[_neighbors[idx_cell][idx_neighbor]] / _density[_neighbors[idx_cell][idx_neighbor]],
                                                _normals[idx_cell][idx_neighbor] );
             }
         }
@@ -116,13 +123,18 @@ void CSDPNSolver::FluxUpdate() {
 void CSDPNSolver::FVMUpdate( unsigned idx_energy ) {
 // loop over all spatial cells
 #pragma omp parallel for
-    for( unsigned j = 0; j < _nCells; ++j ) {
-        if( _boundaryCells[j] == BOUNDARY_TYPE::DIRICHLET ) continue;
-        // loop over all ordinates
-        for( unsigned i = 0; i < _nq; ++i ) {
-            // time update angular flux with numerical flux and total scattering cross section
-            _solNew[j][i] = _sol[j][i] - _dE * _solNew[j][i];
+    for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
+        // Dirichlet cells stay at IC, farfield assumption
+        if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::DIRICHLET ) continue;
+        // Flux update
+        for( unsigned idx_sys = 0; idx_sys < _nSystem; idx_sys++ ) {
+            _solNew[idx_cell][idx_sys] = _sol[idx_cell][idx_sys] - ( _dE / _areas[idx_cell] / ) * _solNew[idx_cell][idx_sys] /* cell averaged flux */
+                                         - _dE * _sol[idx_cell][idx_sys] *
+                                               ( _sigmaT[idx_energy][idx_cell]                                 /* absorbtion influence */
+                                                 + _sigmaS[idx_energy][idx_cell] * _scatterMatDiag[idx_sys] ); /* scattering influence */
         }
+        // Source Term
+        _solNew[idx_cell][0] += _dE * _Q[0][idx_cell][0];
     }
 }
 
