@@ -1,4 +1,4 @@
-#include "solvers/CSDPNSolver.h"
+#include "solvers/csdpnsolver.h"
 #include "common/config.h"
 #include "common/io.h"
 #include "fluxes/numericalflux.h"
@@ -10,11 +10,109 @@
 #include "spdlog/spdlog.h"
 #include <mpi.h>
 
-CSDPNSolver::CSDPNSolver( Config* settings ) : PNSolver( settings ) {
+CSDPNSolver::CSDPNSolver( Config* settings ) : PNSolver( settings ) {}
+
+void CSDPNSolver::IterPreprocessing( unsigned /*idx_iter*/ ) {
+    // Nothing to preprocess for PNSolver
 }
 
-void CSDPNSolver::Solve() {
+void CSDPNSolver::IterPostprocessing( unsigned /*idx_iter*/ ) {
+    // --- Update Solution ---
+    _sol = _solNew;
+
+    // --- Compute Flux for solution and Screen Output ---
+    ComputeRadFlux();
 }
+
+void CSDPNSolver::ComputeRadFlux() {
+    double firstMomentScaleFactor = sqrt( 4 * M_PI );
+    for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
+        _fluxNew[idx_cell] = _sol[idx_cell][0] * firstMomentScaleFactor;
+    }
+}
+
+void CSDPNSolver::FluxUpdate() {
+    if( _reconsOrder > 1 ) {
+        _mesh->ReconstructSlopesU( _nSystem, _solDx, _solDy, _sol );    // unstructured reconstruction
+        //_mesh->ComputeSlopes( _nTotalEntries, _solDx, _solDy, _sol );    // unstructured reconstruction
+    }
+    // Vector solL( _nTotalEntries );
+    // Vector solR( _nTotalEntries );
+    auto solL = _sol[2];
+    auto solR = _sol[2];
+
+    // Loop over all spatial cells
+    for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
+
+        // Dirichlet cells stay at IC, farfield assumption
+        if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::DIRICHLET ) continue;
+
+        // Reset temporary variable psiNew
+        for( unsigned idx_sys = 0; idx_sys < _nSystem; idx_sys++ ) {
+            _solNew[idx_cell][idx_sys] = 0.0;
+        }
+
+        // Loop over all neighbor cells (edges) of cell j and compute numerical fluxes
+        for( unsigned idx_neighbor = 0; idx_neighbor < _neighbors[idx_cell].size(); idx_neighbor++ ) {
+
+            // Compute flux contribution and store in psiNew to save memory
+            if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::NEUMANN && _neighbors[idx_cell][idx_neighbor] == _nCells )
+                _solNew[idx_cell] += _g->Flux(
+                    _AxPlus, _AxMinus, _AyPlus, _AyMinus, _AzPlus, _AzMinus, _sol[idx_cell], _sol[idx_cell], _normals[idx_cell][idx_neighbor] );
+            else {
+                switch( _reconsOrder ) {
+                    // first order solver
+                    case 1:
+                        _solNew[idx_cell] += _g->Flux( _AxPlus,
+                                                       _AxMinus,
+                                                       _AyPlus,
+                                                       _AyMinus,
+                                                       _AzPlus,
+                                                       _AzMinus,
+                                                       _sol[idx_cell],
+                                                       _sol[_neighbors[idx_cell][idx_neighbor]],
+                                                       _normals[idx_cell][idx_neighbor] );
+                        break;
+                    // second order solver
+                    case 2:
+                        // left status of interface
+                        solL = _sol[idx_cell] + _solDx[idx_cell] * ( _interfaceMidPoints[idx_cell][idx_neighbor][0] - _cellMidPoints[idx_cell][0] ) +
+                               _solDy[idx_cell] * ( _interfaceMidPoints[idx_cell][idx_neighbor][1] - _cellMidPoints[idx_cell][1] );
+                        // right status of interface
+                        solR = _sol[_neighbors[idx_cell][idx_neighbor]] +
+                               _solDx[_neighbors[idx_cell][idx_neighbor]] *
+                                   ( _interfaceMidPoints[idx_cell][idx_neighbor][0] - _cellMidPoints[_neighbors[idx_cell][idx_neighbor]][0] ) +
+                               _solDy[_neighbors[idx_cell][idx_neighbor]] *
+                                   ( _interfaceMidPoints[idx_cell][idx_neighbor][1] - _cellMidPoints[_neighbors[idx_cell][idx_neighbor]][1] );
+                        // positivity checker (if not satisfied, deduce to first order)
+                        // I manually turned it off here since Pn produces negative solutions essentially
+                        // if( min(solL) < 0.0 || min(solR) < 0.0 ) {
+                        //    solL = _sol[idx_cell];
+                        //    solR = _sol[_neighbors[idx_cell][idx_neighbor]];
+                        //}
+
+                        // flux evaluation
+                        _solNew[idx_cell] +=
+                            _g->Flux( _AxPlus, _AxMinus, _AyPlus, _AyMinus, _AzPlus, _AzMinus, solL, solR, _normals[idx_cell][idx_neighbor] );
+                        break;
+                    // default: first order solver
+                    default:
+                        _solNew[idx_cell] += _g->Flux( _AxPlus,
+                                                       _AxMinus,
+                                                       _AyPlus,
+                                                       _AyMinus,
+                                                       _AzPlus,
+                                                       _AzMinus,
+                                                       _sol[idx_cell],
+                                                       _sol[_neighbors[idx_cell][idx_neighbor]],
+                                                       _normals[idx_cell][idx_neighbor] );
+                }
+            }
+        }
+    }
+}
+
+void CSDPNSolver::FVMUpdate( unsigned idx_energy ) {}
 
 void CSDPNSolver::PrepareVolumeOutput() {
     unsigned nGroups = (unsigned)_settings->GetNVolumeOutput();
@@ -56,7 +154,7 @@ void CSDPNSolver::WriteVolumeOutput( unsigned idx_pseudoTime ) {
     // Compute total "mass" of the system ==> to check conservation properties
     std::vector<double> flux( _nCells, 0.0 );
     for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
-        flux[idx_cell] = dot( _sol[idx_cell], _weights );
+        // flux[idx_cell] = dot( _sol[idx_cell], _weights );
         mass += flux[idx_cell] * _areas[idx_cell];
     }
 

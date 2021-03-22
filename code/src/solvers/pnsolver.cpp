@@ -72,7 +72,7 @@ void PNSolver::ComputeRadFlux() {
     }
 }
 
-void PNSolver::FluxUpdate() {
+void PNSolver::FluxUpdate() override {
     if( _reconsOrder > 1 ) {
         _mesh->ReconstructSlopesU( _nSystem, _solDx, _solDy, _sol );    // unstructured reconstruction
         //_mesh->ComputeSlopes( _nTotalEntries, _solDx, _solDy, _sol );    // unstructured reconstruction
@@ -153,7 +153,7 @@ void PNSolver::FluxUpdate() {
     }
 }
 
-void PNSolver::FVMUpdate( unsigned idx_energy ) {
+void PNSolver::FVMUpdate( unsigned idx_energy ) override {
     // Loop over all spatial cells
     for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
         // Dirichlet cells stay at IC, farfield assumption
@@ -370,7 +370,7 @@ double PNSolver::LegendrePoly( double x, int l ) {    // Legacy. TO BE DELETED
     }
 }
 
-void PNSolver::PrepareVolumeOutput() {
+void PNSolver::PrepareVolumeOutput() override {
     unsigned nGroups = (unsigned)_settings->GetNVolumeOutput();
 
     _outputFieldNames.resize( nGroups );
@@ -410,7 +410,7 @@ void PNSolver::PrepareVolumeOutput() {
     }
 }
 
-void PNSolver::WriteVolumeOutput( unsigned idx_pseudoTime ) {
+void PNSolver::WriteVolumeOutput( unsigned idx_pseudoTime ) override {
     unsigned nGroups = (unsigned)_settings->GetNVolumeOutput();
 
     if( ( _settings->GetVolumeOutputFrequency() != 0 && idx_pseudoTime % (unsigned)_settings->GetVolumeOutputFrequency() == 0 ) ||

@@ -34,4 +34,4 @@ class CSDPNSolver : public PNSolver
     void WriteVolumeOutput( unsigned idx_pseudoTime ) override;
 };
 
-#endif // CSDPNSOLVER_H
+#endif    // CSDPNSOLVER_H
