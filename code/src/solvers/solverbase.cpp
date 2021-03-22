@@ -230,10 +230,7 @@ void SolverBase::WriteScalarOutput( unsigned iteration ) {
 
             case ITER: _screenOutputFields[idx_field] = iteration; break;
 
-            case RMS_FLUX:
-                _screenOutputFields[idx_field] = blaze::l2Norm( _fluxNew - _flux );
-                _flux                          = _fluxNew;
-                break;
+            case RMS_FLUX: _screenOutputFields[idx_field] = blaze::l2Norm( _fluxNew - _flux ); break;
 
             case VTK_OUTPUT:
                 _screenOutputFields[idx_field] = 0;
@@ -284,7 +281,6 @@ void SolverBase::WriteScalarOutput( unsigned iteration ) {
             case RMS_FLUX:
                 if( screenOutputFields.end() == itScreenOutput ) {
                     _screenOutputFields[idx_field] = blaze::l2Norm( _fluxNew - _flux );
-                    _flux                          = _fluxNew;
                 }
                 else {
                     _historyOutputFields[idx_field] = *itScreenOutput;
@@ -310,6 +306,7 @@ void SolverBase::WriteScalarOutput( unsigned iteration ) {
             default: ErrorMessages::Error( "History output group not defined!", CURRENT_FUNCTION ); break;
         }
     }
+    _flux = _fluxNew;
 }
 
 void SolverBase::PrintScreenOutput( unsigned iteration ) {
