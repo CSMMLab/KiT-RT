@@ -188,6 +188,7 @@ void CSDSolverTrafoFP::IterPostprocessing( unsigned idx_pseudotime ) {
     _sol = _solNew;
 
     unsigned n = idx_pseudotime;
+    // Compute Dose
     for( unsigned j = 0; j < _nCells; ++j ) {
         _fluxNew[j] = dot( _sol[j], _weights );
         if( n > 0 ) {

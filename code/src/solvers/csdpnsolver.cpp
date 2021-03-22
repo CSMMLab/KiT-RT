@@ -60,7 +60,7 @@ CSDPNSolver::CSDPNSolver( Config* settings ) : PNSolver( settings ) {
     }
 
     Interpolation interpS( E_ref, S_tab );
-    Vector S = interpS( _energies );
+    _s = interpS( _energies );
 }
 
 void CSDPNSolver::SolverPreprocessing() {
@@ -77,9 +77,21 @@ void CSDPNSolver::IterPostprocessing( unsigned /*idx_iter*/ ) {
 
     // --- Compute Flux for solution and Screen Output ---
     ComputeRadFlux();
-}
 
-void CSDPNSolver::ComputeRadFlux() {}
+    unsigned n = idx_pseudotime;
+    // -- Compute Dose
+    for( unsigned j = 0; j < _nCells; ++j ) {
+        if( n > 0 ) {
+            _dose[j] += 0.5 * _dE * ( _fluxNew[j] * _s[_nEnergies - n - 1] + _flux[j] * _s[_nEnergies - n] ) /
+                        _density[j];    // update dose with trapezoidal rule
+        }
+        else {
+            _dose[j] += _dE * _fluxNew[j] * _s[_nEnergies - n - 1] / _density[j];
+        }
+        _solverOutput[j] = _fluxNew[j];    // Carefull here
+        _flux[j]         = _fluxNew[j];    // Carefull here
+    }
+}
 
 void CSDPNSolver::FluxUpdate() {
     // _mesh->ReconstructSlopesU( _nSystem, _solDx, _solDy, _sol );
