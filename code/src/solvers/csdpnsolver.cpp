@@ -128,7 +128,7 @@ void CSDPNSolver::FVMUpdate( unsigned idx_energy ) {
         if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::DIRICHLET ) continue;
         // Flux update
         for( unsigned idx_sys = 0; idx_sys < _nSystem; idx_sys++ ) {
-            _solNew[idx_cell][idx_sys] = _sol[idx_cell][idx_sys] - ( _dE / _areas[idx_cell] / ) * _solNew[idx_cell][idx_sys] /* cell averaged flux */
+            _solNew[idx_cell][idx_sys] = _sol[idx_cell][idx_sys] - ( _dE / _areas[idx_cell] ) * _solNew[idx_cell][idx_sys] /* cell averaged flux */
                                          - _dE * _sol[idx_cell][idx_sys] *
                                                ( _sigmaT[idx_energy][idx_cell]                                 /* absorbtion influence */
                                                  + _sigmaS[idx_energy][idx_cell] * _scatterMatDiag[idx_sys] ); /* scattering influence */
