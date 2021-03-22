@@ -24,6 +24,8 @@ class CSDPNSolver : public PNSolver
 
     virtual ~CSDPNSolver() {}
 
+    // virtual Solve() override;
+
   private:
     void IterPreprocessing( unsigned /*idx_iter*/ ) override;
     void IterPostprocessing( unsigned /*idx_iter*/ ) override;
