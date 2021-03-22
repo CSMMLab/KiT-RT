@@ -31,6 +31,8 @@ class CSDPNSolver : public PNSolver
 
   private:
     void IterPreprocessing( unsigned /*idx_iter*/ ) override;
+    void IterPostprocessing( unsigned /*idx_iter*/ ) override;
+
     void ComputeRadFlux() override;
     void FluxUpdate() override;
     void FVMUpdate( unsigned idx_energy ) override;
