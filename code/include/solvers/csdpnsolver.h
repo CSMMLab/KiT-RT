@@ -24,11 +24,6 @@ class CSDPNSolver : public PNSolver
 
     virtual ~CSDPNSolver() {}
 
-    /**
-     * @brief Solve functions runs main time loop
-     */
-    void Solve() override;
-
   private:
     void IterPreprocessing( unsigned /*idx_iter*/ ) override;
     void IterPostprocessing( unsigned /*idx_iter*/ ) override;
@@ -36,6 +31,7 @@ class CSDPNSolver : public PNSolver
     void ComputeRadFlux() override;
     void FluxUpdate() override;
     void FVMUpdate( unsigned idx_energy ) override;
+
     void PrepareVolumeOutput() override;
     void WriteVolumeOutput( unsigned idx_pseudoTime ) override;
 };
