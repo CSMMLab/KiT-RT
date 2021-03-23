@@ -59,19 +59,16 @@ CSDPNSolver::CSDPNSolver( Config* settings ) : PNSolver( settings ) {
     // std::cout << sigma_ref.rows() << std::endl;
     // std::cout << _energies.size() << std::endl;
 
-    Matrix sigma_t( _energies.size(), sigma_ref.rows() );
+    _sigmaT = VectorVector( _polyDegreeBasis, Vector( _energies.size() ) );
     for( unsigned idx_degree = 0; idx_degree < _polyDegreeBasis; ++idx_degree ) {
         Vector xs_m = blaze::column( sigma_ref, idx_degree );    // Scattering cross section Moments
         Interpolation interp( E_ref, xs_m );
-        blaze::column( sigma_t, idx_degree ) = interp( _energies );
-        Vector temp                          = interp( _energies );
-        std::cout << temp << std::endl;
+        _sigmaT[idx_degree] = interp( _energies );
     }
 
     // std::cout << "here\n";
     // std::cout << size( sigma_t ) << std::endl;
-    //_sigmaT = sigma_t;
-    //_sigmaS = sigma_t;
+    _sigmaT = sigma_t;
 
     TextProcessingToolbox::PrintMatrix( sigma_t );
 
