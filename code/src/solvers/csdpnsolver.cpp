@@ -56,7 +56,7 @@ CSDPNSolver::CSDPNSolver( Config* settings ) : PNSolver( settings ) {
 
     Matrix sigma_t( _energies.size(), sigma_ref.rows() );
     for( unsigned idx_degree = 0; idx_degree < _polyDegreeBasis; ++idx_degree ) {
-        Vector xs_m = blaze::column( sigma_ref, idx_degree );
+        Vector xs_m = blaze::column( sigma_ref, idx_degree );    // Scattering cross section Moments
         Interpolation interp( E_ref, xs_m );
         // blaze::column( sigma_t, i ) = interp( _energies );
     }
