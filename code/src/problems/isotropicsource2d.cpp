@@ -45,7 +45,7 @@ VectorVector IsotropicSource2D::SetupIC() {
 
 std::vector<double> IsotropicSource2D::GetDensity( const VectorVector& /*cellMidPoints*/ ) {
     double rhoL = 1.0;
-    double rhoR = 5.0;
+    double rhoR = 1.0;
     std::vector<double> rho( _settings->GetNCells(), rhoL );
 
     // use values rhoR on right third of domain

@@ -68,8 +68,8 @@ CSDSolverTrafoFPSH2D::CSDSolverTrafoFPSH2D( Config* settings ) : SNSolver( setti
     _xi2 = Vector( _nEnergies, 4.0 / 3.0 - 2.0 * g + 2.0 / 3.0 * g * g );
     _xi  = Matrix( 4, _nEnergies );
     for( unsigned n = 0; n < _nEnergies; ++n ) {
-        _xi( 1, n ) = 1.0 - g;
-        _xi( 2, n ) = 4.0 / 3.0 - 2.0 * g + 2.0 / 3.0 * g * g;
+        _xi( 1, n ) = (1.0 - g);
+        _xi( 2, n ) = (4.0 / 3.0 - 2.0 * g + 2.0 / 3.0 * g * g);
     }
 
     // initialize stopping power vector

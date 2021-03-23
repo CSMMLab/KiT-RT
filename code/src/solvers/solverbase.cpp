@@ -81,7 +81,7 @@ Solver::Solver( Config* settings ) {
         double x = cellMids[j][0];
         double y = cellMids[j][1];
         if( x >= 0.49 && x <= 0.5 && y >= 0.49 && y <= 0.5 ) {
-            _boundaryCells[j] = DIRICHLET;
+            //_boundaryCells[j] = DIRICHLET;
         }
         //}
     }
