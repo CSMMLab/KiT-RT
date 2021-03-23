@@ -59,11 +59,21 @@ CSDPNSolver::CSDPNSolver( Config* settings ) : PNSolver( settings ) {
     // std::cout << sigma_ref.rows() << std::endl;
     // std::cout << _energies.size() << std::endl;
 
-    _sigmaT = VectorVector( _polyDegreeBasis, Vector( _energies.size() ) );
+    _sigmaS = VectorVector( _nEnergies, Vector( _polyDegreeBasis ) );
     for( unsigned idx_degree = 0; idx_degree < _polyDegreeBasis; ++idx_degree ) {
         Vector xs_m = blaze::column( sigma_ref, idx_degree );    // Scattering cross section Moments
         Interpolation interp( E_ref, xs_m );
-        _sigmaT[idx_degree] = interp( _energies );
+        auto tmp = interp( _energies );
+        for( unsigned idx_energy = 0; idx_energy < _nEnergies; ++idx_energy ) {
+            _sigmaS[idx_energy][idx_degree] = tmp[idx_energy];
+        }
+    }
+
+    _sigmaT = VectorVector( _nEnergies, Vector( _polyDegreeBasis ) );
+    for( unsigned idx_energy = 0; idx_energy < _nEnergies; ++idx_energy ) {
+        for( unsigned idx_degree = 0; idx_degree < _polyDegreeBasis; ++idx_degree ) {
+            _sigmaT[idx_energy][idx_degree] = _sigmaS[idx_energy][0] - _sigmaS[idx_energy][idx_degree];
+        }
     }
 
     Interpolation interpS( E_tab, S_tab );
@@ -103,7 +113,7 @@ void CSDPNSolver::IterPostprocessing( unsigned idx_iter ) {
 void CSDPNSolver::FluxUpdate() {
     // _mesh->ReconstructSlopesU( _nSystem, _solDx, _solDy, _sol );
 
-#pragma omp parallel for
+    //#pragma omp parallel for
     // Loop over all spatial cells
     for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
 
