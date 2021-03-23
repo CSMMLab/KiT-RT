@@ -41,7 +41,6 @@ CSDPNSolver::CSDPNSolver( Config* settings ) : PNSolver( settings ) {
     //_sigmaTE  = Vector( _nEnergies, 0.0 );
     //
 
-    // COmpute INitial Conditions
     Vector pos_beam = Vector{ 0.5, 0.5 };
     VectorVector IC( _nCells, Vector( _nSystem ) );
     for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
@@ -53,9 +52,6 @@ CSDPNSolver::CSDPNSolver( Config* settings ) : PNSolver( settings ) {
             IC[idx_cell][idx_sys] = f * StarMAPmoments[idx_sys];    // must be VectorVector
         }
     }
-    // Get Initial Condition, initialize _sol ( Later move to problem)
-    _sol    = IC;
-    _solNew = _sol;
 
     // printf( "%d", sigma_ref.rows() );
 
@@ -63,28 +59,25 @@ CSDPNSolver::CSDPNSolver( Config* settings ) : PNSolver( settings ) {
     // std::cout << sigma_ref.rows() << std::endl;
     // std::cout << _energies.size() << std::endl;
 
-    // Implement Cross Sections
-    _sigmaT = VectorVector( _polyDegreeBasis, Vector( _energies.size() ) );
+    _sigmaS = VectorVector( _nEnergies, Vector( _polyDegreeBasis ) );
     for( unsigned idx_degree = 0; idx_degree < _polyDegreeBasis; ++idx_degree ) {
         Vector xs_m = blaze::column( sigma_ref, idx_degree );    // Scattering cross section Moments
         Interpolation interp( E_ref, xs_m );
-        _sigmaT[idx_degree] = interp( _energies );
+        auto tmp = interp( _energies );
+        for( unsigned idx_energy = 0; idx_energy < _nEnergies; ++idx_energy ) {
+            _sigmaS[idx_energy][idx_degree] = tmp[idx_energy];
+        }
     }
-    _sigmaS = _sigmaT;    // Careful! Hardcoded dims: polydegree x nEnergies.
 
-    // Implement ??? (Stopping Powers?)
+    _sigmaT = VectorVector( _nEnergies, Vector( _polyDegreeBasis ) );
+    for( unsigned idx_energy = 0; idx_energy < _nEnergies; ++idx_energy ) {
+        for( unsigned idx_degree = 0; idx_degree < _polyDegreeBasis; ++idx_degree ) {
+            _sigmaT[idx_energy][idx_degree] = _sigmaS[idx_energy][0] - _sigmaS[idx_energy][idx_degree];
+        }
+    }
+
     Interpolation interpS( E_tab, S_tab );
     _s = interpS( _energies );
-
-    // Sanity Check
-    // TextProcessingToolbox::PrintMatrix( _Ax );
-    // TextProcessingToolbox::PrintMatrix( _Ay );
-    // TextProcessingToolbox::PrintMatrix( _Az );
-    //
-    // TextProcessingToolbox::PrintMatrix( _AxPlus );
-    // TextProcessingToolbox::PrintMatrix( _AyPlus );
-    // TextProcessingToolbox::PrintMatrix( _AxMinus );
-    // TextProcessingToolbox::PrintMatrix( _AyMinus );
 }
 
 void CSDPNSolver::SolverPreprocessing() {
