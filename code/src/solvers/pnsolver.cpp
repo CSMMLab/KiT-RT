@@ -339,7 +339,7 @@ void PNSolver::ComputeFluxComponents() {
     // std::cout << "Spectral Radius Y " << blaze::max( blaze::abs( eigenValuesY ) ) << "\n";
     // std::cout << "Spectral Radius Z " << blaze::max( blaze::abs( eigenValues ) ) << "\n";
 
-    // _combinedSpectralRadius = blaze::max( blaze::abs( eigenValues + eigenValuesX + eigenValuesY ) );
+    //_combinedSpectralRadius = blaze::max( blaze::abs( eigenValues + eigenValuesX + eigenValuesY ) );
     // std::cout << "Spectral Radius combined " << _combinedSpectralRadius << "\n";
 }
 
