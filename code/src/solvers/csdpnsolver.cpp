@@ -33,8 +33,11 @@ CSDPNSolver::CSDPNSolver( Config* settings ) : PNSolver( settings ) {
 
     // only dummies for compilation
     //
-    _nEnergies = 1000u;
-    _energies  = blaze::linspace( _nEnergies, 1.0, 5e-5 );
+    double minE = 5e-5;
+    double maxE = 1.0;
+    _dE         = ComputeTimeStep( _settings->GetCFL() );
+    _nEnergies  = std::ceil( ( maxE - minE ) / _dE );
+    _energies   = blaze::linspace( _nEnergies, maxE, minE );
     //_angle    = _energies;
     //
     //_sigmaSE  = { Matrix( _nEnergies, 0.0 ) };
