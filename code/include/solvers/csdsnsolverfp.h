@@ -13,9 +13,6 @@ class CSDSNSolverFP : public SNSolver
     // Physics acess
     Vector _angle; /*!< @brief angles for SN */
 
-    std::vector<Matrix> _sigmaSE; /*!<  @brief scattering cross section for all energies*/
-    Vector _sigmaTE;              /*!<  @brief total cross section for all energies*/
-
     Matrix _L;  /*!<  @brief Laplace Beltrami Matrix */
     Matrix _IL; /*!<  @brief Laplace Beltrami Matrix */
 

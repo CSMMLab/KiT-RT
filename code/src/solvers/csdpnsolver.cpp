@@ -76,6 +76,12 @@ CSDPNSolver::CSDPNSolver( Config* settings ) : PNSolver( settings ) {
         }
     }
 
+    // std::cout << "here\n";
+    // std::cout << size( sigma_t ) << std::endl;
+    _sigmaT = sigma_t;
+
+    TextProcessingToolbox::PrintMatrix( sigma_t );
+
     Interpolation interpS( E_tab, S_tab );
     _s = interpS( _energies );
 }
