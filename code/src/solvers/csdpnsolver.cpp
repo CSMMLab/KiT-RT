@@ -11,6 +11,7 @@
 #include "toolboxes/textprocessingtoolbox.h"
 // externals
 #include "spdlog/spdlog.h"
+#include <iostream>
 #include <mpi.h>
 
 double normpdf( double x, double mu, double sigma ) {
@@ -104,11 +105,10 @@ void CSDPNSolver::IterPostprocessing( unsigned idx_iter ) {
         else {
             _dose[j] += _dE * _fluxNew[j] * _s[_nEnergies - n - 1] / _density[j];
         }
-        _solverOutput[j] = _fluxNew[j];    // Carefull here
     }
 }
 
-void CSDPNSolver::FluxUpdate() {
+/*void CSDPNSolver::FluxUpdate() {
     // _mesh->ReconstructSlopesU( _nSystem, _solDx, _solDy, _sol );
 
 #pragma omp parallel for
@@ -146,7 +146,7 @@ void CSDPNSolver::FluxUpdate() {
         }
     }
 }
-
+*/
 void CSDPNSolver::FVMUpdate( unsigned idx_energy ) {
 // loop over all spatial cells
 #pragma omp parallel for

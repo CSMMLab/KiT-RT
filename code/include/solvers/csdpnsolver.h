@@ -32,7 +32,7 @@ class CSDPNSolver : public PNSolver
     void IterPreprocessing( unsigned /*idx_iter*/ ) override;
     void IterPostprocessing( unsigned /*idx_iter*/ ) override;
 
-    void FluxUpdate() override;
+    // void FluxUpdate() override;
     void FVMUpdate( unsigned idx_energy ) override;
 
     void PrepareVolumeOutput() override;
