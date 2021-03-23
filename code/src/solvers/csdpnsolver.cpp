@@ -165,12 +165,12 @@ void CSDPNSolver::FVMUpdate( unsigned idx_energy ) {
                 _solNew[idx_cell][idx_sys] = _sol[idx_cell][idx_sys] -
                                              ( _dE / _areas[idx_cell] ) * _solNew[idx_cell][idx_sys] /* cell averaged flux */
                                              - _dE * _sol[idx_cell][idx_sys] *
-                                                   ( _sigmaT[idx_energy][idx_l]      /* absorbtion influence */
-                                                     - _sigmaS[idx_energy][idx_l] ); /* scattering influence */
+                                                   ( _sigmaT[idx_energy][idx_l] /* absorbtion influence */
+                                                   );                           /* scattering influence */
             }
         }
         // Source Term
-        _solNew[idx_cell][0] += _dE * _Q[0][idx_cell][0];
+        // _solNew[idx_cell][0] += _dE * _Q[0][idx_cell][0];
     }
 }
 
