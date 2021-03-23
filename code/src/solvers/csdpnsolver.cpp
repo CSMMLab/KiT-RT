@@ -42,19 +42,21 @@ CSDPNSolver::CSDPNSolver( Config* settings ) : PNSolver( settings ) {
 
     Vector pos_beam = Vector{ 0.5, 0.5 };
     VectorVector IC( _nCells, Vector( _nSystem ) );
-    for( unsigned i = 0; i < _nCells; ++i ) {
-        double x            = _cellMidPoints[i][0];
-        double y            = _cellMidPoints[i][1];
+    for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
+        double x            = _cellMidPoints[idx_cell][0];
+        double y            = _cellMidPoints[idx_cell][1];
         const double stddev = .005;
         double f            = normpdf( x, pos_beam[0], stddev ) * normpdf( y, pos_beam[1], stddev );
-        for( unsigned j = 0; j < _nSystem; j++ ) {
-            IC[i][j] = f * StarMAPmoments[j];    // must be VectorVector
+        for( unsigned idx_sys = 0; idx_sys < _nSystem; idx_sys++ ) {
+            IC[idx_cell][idx_sys] = f * StarMAPmoments[idx_sys];    // must be VectorVector
         }
     }
 
+    printf( "%d", sigma_ref.rows() );
+
     Matrix sigma_t( _energies.size(), sigma_ref.rows() );
-    for( unsigned i = 0; i < _nSystem; ++i ) {
-        Vector xs_m = blaze::column( sigma_ref, i );
+    for( unsigned idx_degree = 0; idx_degree < _polyDegreeBasis; ++idx_degree ) {
+        Vector xs_m = blaze::column( sigma_ref, idx_degree );
         Interpolation interp( E_ref, xs_m );
         // blaze::column( sigma_t, i ) = interp( _energies );
     }
