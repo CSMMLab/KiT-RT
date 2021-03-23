@@ -38,25 +38,20 @@ CSDPNSolver::CSDPNSolver( Config* settings ) : PNSolver( settings ) {
     _dE         = ComputeTimeStep( _settings->GetCFL() );
     _nEnergies  = std::ceil( ( maxE - minE ) / _dE );
     _energies   = blaze::linspace( _nEnergies, maxE, minE );
-    //_angle    = _energies;
-    //
-    //_sigmaSE  = { Matrix( _nEnergies, 0.0 ) };
-    //_sigmaTE  = Vector( _nEnergies, 0.0 );
-    //
 
     Vector pos_beam = Vector{ 0.5, 0.5 };
-    VectorVector IC( _nCells, Vector( _nSystem ) );
+    _sol            = VectorVector( _nCells, Vector( _nSystem, 0.0 ) );
     for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
         double x            = _cellMidPoints[idx_cell][0];
         double y            = _cellMidPoints[idx_cell][1];
         const double stddev = .005;
         double f            = normpdf( x, pos_beam[0], stddev ) * normpdf( y, pos_beam[1], stddev );
         for( unsigned idx_sys = 0; idx_sys < _nSystem; idx_sys++ ) {
-            IC[idx_cell][idx_sys] = f * StarMAPmoments[idx_sys];    // must be VectorVector
+            _sol[idx_cell][idx_sys] = f * StarMAPmoments[idx_sys];    // must be VectorVector
+                                                                      //_sol[idx_cell][idx_sys] = 0;
         }
     }
-    _sol    = IC;
-    _solNew = IC;
+    _solNew = _sol;
 
     _sigmaS = VectorVector( _nEnergies, Vector( _polyDegreeBasis ) );
     for( unsigned idx_degree = 0; idx_degree < _polyDegreeBasis; ++idx_degree ) {
@@ -144,8 +139,8 @@ void CSDPNSolver::FluxUpdate() {
                                                _AyMinus,
                                                _AzPlus,
                                                _AzMinus,
-                                               _sol[idx_cell] / _density[idx_cell],
-                                               _sol[_neighbors[idx_cell][idx_neighbor]] / _density[_neighbors[idx_cell][idx_neighbor]],
+                                               _sol[idx_cell],
+                                               _sol[_neighbors[idx_cell][idx_neighbor]],
                                                _normals[idx_cell][idx_neighbor] );
             }
         }
