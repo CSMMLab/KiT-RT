@@ -162,8 +162,9 @@ void PNSolver::FVMUpdate( unsigned idx_energy ) {
         for( unsigned idx_sys = 0; idx_sys < _nSystem; idx_sys++ ) {
             _solNew[idx_cell][idx_sys] = _sol[idx_cell][idx_sys] - ( _dE / _areas[idx_cell] ) * _solNew[idx_cell][idx_sys] /* cell averaged flux */
                                          - _dE * _sol[idx_cell][idx_sys] *
-                                               ( _sigmaT[idx_energy][idx_cell]                                 /* absorbtion influence */
-                                                 + _sigmaS[idx_energy][idx_cell] * _scatterMatDiag[idx_sys] ); /* scattering influence */
+                                               ( _sigmaS[idx_energy][idx_cell] * _scatterMatDiag[idx_sys] /* scattering influence */
+                                                 + _sigmaT[idx_energy][idx_cell] );
+            /* total xs influence  */    // Vorzeichenfehler!
         }
         // Source Term
         _solNew[idx_cell][0] += _dE * _Q[0][idx_cell][0];
@@ -345,7 +346,7 @@ void PNSolver::ComputeFluxComponents() {
 void PNSolver::ComputeScatterMatrix() {
 
     // --- Isotropic ---
-    _scatterMatDiag[0] = -1.0;
+    _scatterMatDiag[0] = -1;
     for( unsigned idx_diag = 1; idx_diag < _nSystem; idx_diag++ ) {
         _scatterMatDiag[idx_diag] = 0.0;
     }

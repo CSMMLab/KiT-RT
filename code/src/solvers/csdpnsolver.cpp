@@ -8,7 +8,7 @@
 #include "problems/icru.h"
 #include "problems/problembase.h"
 #include "solvers/csdpn_starmap_constants.h"
-
+#include "toolboxes/textprocessingtoolbox.h"
 // externals
 #include "spdlog/spdlog.h"
 #include <mpi.h>
@@ -52,7 +52,11 @@ CSDPNSolver::CSDPNSolver( Config* settings ) : PNSolver( settings ) {
         }
     }
 
-    printf( "%d", sigma_ref.rows() );
+    // printf( "%d", sigma_ref.rows() );
+
+    // std::cout << size( sigma_ref ) << std::endl;
+    // std::cout << sigma_ref.rows() << std::endl;
+    // std::cout << _energies.size() << std::endl;
 
     Matrix sigma_t( _energies.size(), sigma_ref.rows() );
     for( unsigned idx_degree = 0; idx_degree < _polyDegreeBasis; ++idx_degree ) {
@@ -60,6 +64,12 @@ CSDPNSolver::CSDPNSolver( Config* settings ) : PNSolver( settings ) {
         Interpolation interp( E_ref, xs_m );
         blaze::column( sigma_t, idx_degree ) = interp( _energies );
     }
+
+    // std::cout << "here\n";
+    // std::cout << size( sigma_t ) << std::endl;
+    _sigmaT = sigma_t;
+
+    TextProcessingToolbox::PrintMatrix( sigma_t );
 
     Interpolation interpS( E_tab, S_tab );
     _s = interpS( _energies );
@@ -145,7 +155,7 @@ void CSDPNSolver::FVMUpdate( unsigned idx_energy ) {
             _solNew[idx_cell][idx_sys] = _sol[idx_cell][idx_sys] - ( _dE / _areas[idx_cell] ) * _solNew[idx_cell][idx_sys] /* cell averaged flux */
                                          - _dE * _sol[idx_cell][idx_sys] *
                                                ( _sigmaT[idx_energy][idx_cell]                                 /* absorbtion influence */
-                                                 + _sigmaS[idx_energy][idx_cell] * _scatterMatDiag[idx_sys] ); /* scattering influence */
+                                                 - _sigmaS[idx_energy][idx_cell] * _scatterMatDiag[idx_sys] ); /* scattering influence */
         }
         // Source Term
         _solNew[idx_cell][0] += _dE * _Q[0][idx_cell][0];

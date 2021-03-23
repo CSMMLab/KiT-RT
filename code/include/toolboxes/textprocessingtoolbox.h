@@ -53,6 +53,8 @@ inline void PrintVectorVector( const VectorVector vectorIn ) {
     }
 }
 
+inline void PrintMatrix( const Matrix mat ) { std::cout << mat << std::endl; }
+
 /*!
  * @brief utility function for returning the last number in a string
  * @param str string to be checked
