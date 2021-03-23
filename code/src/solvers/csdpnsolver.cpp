@@ -108,45 +108,6 @@ void CSDPNSolver::IterPostprocessing( unsigned idx_iter ) {
     }
 }
 
-/*void CSDPNSolver::FluxUpdate() {
-    // _mesh->ReconstructSlopesU( _nSystem, _solDx, _solDy, _sol );
-
-#pragma omp parallel for
-    // Loop over all spatial cells
-    for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
-
-        // Dirichlet cells stay at IC, farfield assumption
-        if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::DIRICHLET ) continue;
-
-        // Reset temporary variable psiNew
-        for( unsigned idx_sys = 0; idx_sys < _nSystem; idx_sys++ ) {
-            _solNew[idx_cell][idx_sys] = 0.0;
-        }
-
-        // Loop over all neighbor cells (edges) of cell j and compute numerical fluxes
-        for( unsigned idx_neighbor = 0; idx_neighbor < _neighbors[idx_cell].size(); idx_neighbor++ ) {
-
-            // Compute flux contribution and store in psiNew to save memory
-            if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::NEUMANN && _neighbors[idx_cell][idx_neighbor] == _nCells )
-                _solNew[idx_cell] += _g->Flux(
-                    _AxPlus, _AxMinus, _AyPlus, _AyMinus, _AzPlus, _AzMinus, _sol[idx_cell], _sol[idx_cell], _normals[idx_cell][idx_neighbor] );
-            else {
-
-                // first order solver
-                _solNew[idx_cell] += _g->Flux( _AxPlus,
-                                               _AxMinus,
-                                               _AyPlus,
-                                               _AyMinus,
-                                               _AzPlus,
-                                               _AzMinus,
-                                               _sol[idx_cell],
-                                               _sol[_neighbors[idx_cell][idx_neighbor]],
-                                               _normals[idx_cell][idx_neighbor] );
-            }
-        }
-    }
-}
-*/
 void CSDPNSolver::FVMUpdate( unsigned idx_energy ) {
 // loop over all spatial cells
 #pragma omp parallel for
