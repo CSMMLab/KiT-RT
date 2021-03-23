@@ -52,12 +52,8 @@ CSDPNSolver::CSDPNSolver( Config* settings ) : PNSolver( settings ) {
             IC[idx_cell][idx_sys] = f * StarMAPmoments[idx_sys];    // must be VectorVector
         }
     }
-
-    // printf( "%d", sigma_ref.rows() );
-
-    // std::cout << size( sigma_ref ) << std::endl;
-    // std::cout << sigma_ref.rows() << std::endl;
-    // std::cout << _energies.size() << std::endl;
+    _sol    = IC;
+    _solNew = IC;
 
     _sigmaS = VectorVector( _nEnergies, Vector( _polyDegreeBasis ) );
     for( unsigned idx_degree = 0; idx_degree < _polyDegreeBasis; ++idx_degree ) {
@@ -78,6 +74,11 @@ CSDPNSolver::CSDPNSolver( Config* settings ) : PNSolver( settings ) {
 
     Interpolation interpS( E_tab, S_tab );
     _s = interpS( _energies );
+
+    // SanityChecks
+    for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
+        _density[idx_cell] = 1.0;
+    }
 }
 
 void CSDPNSolver::SolverPreprocessing() {
