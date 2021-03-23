@@ -33,7 +33,8 @@ CSDPNSolver::CSDPNSolver( Config* settings ) : PNSolver( settings ) {
 
     // only dummies for compilation
     //
-    //_energies = Vector( _nEnergies, 0.0 );
+    _nEnergies = 1000u;
+    _energies  = blaze::linspace( _nEnergies, 1.0, 5e-5 );
     //_angle    = _energies;
     //
     //_sigmaSE  = { Matrix( _nEnergies, 0.0 ) };
