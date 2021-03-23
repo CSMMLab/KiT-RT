@@ -63,7 +63,16 @@ double Interpolation::operator()( double x ) const {
     Vector::ConstIterator it = std::lower_bound( _x.begin(), _x.end(), x );
 
     // index of the lower bound to x in _x
-    unsigned idx = static_cast<unsigned>( std::max( int( it - _x.begin() ) - 1, 0 ) );
+    unsigned idx = 0;
+    if( x >= _x[0] && x <= _x[_x.size() - 1u] ) {
+        idx = static_cast<unsigned>( std::max( int( it - _x.begin() ) - 1, 0 ) );
+    }
+    else if( x < _x[0] ) {
+        idx = 0;
+    }
+    else if( x > _x[_x.size() - 1u] ) {
+        idx = _x.size() - 1u;
+    }
 
     // linear interpolation
     if( _type == linear || _type == loglinear ) {
