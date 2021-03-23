@@ -47,11 +47,15 @@ CSDPNSolver::CSDPNSolver( Config* settings ) : PNSolver( settings ) {
         double y            = _cellMidPoints[idx_cell][1];
         const double stddev = .005;
         double f            = normpdf( x, pos_beam[0], stddev ) * normpdf( y, pos_beam[1], stddev );
-        for( unsigned idx_sys = 0; idx_sys < _nSystem; idx_sys++ ) {
-            _sol[idx_cell][idx_sys] = f * StarMAPmoments[idx_sys];    // must be VectorVector
-                                                                      //_sol[idx_cell][idx_sys] = 0;
+
+        _sol[idx_cell][0] = f * StarMAPmoments[0];
+        for( unsigned idx_sys = 1; idx_sys < _nSystem; idx_sys++ ) {
+
+            _sol[idx_cell][idx_sys] = f * 0;    // must be VectorVector
+                                                //_sol[idx_cell][idx_sys] = 0;
         }
     }
+
     _solNew = _sol;
 
     _sigmaS = VectorVector( _nEnergies, Vector( _polyDegreeBasis ) );
