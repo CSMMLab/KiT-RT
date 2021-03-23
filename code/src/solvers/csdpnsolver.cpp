@@ -107,7 +107,6 @@ void CSDPNSolver::IterPostprocessing( unsigned idx_iter ) {
             _dose[j] += _dE * _fluxNew[j] * _s[_nEnergies - n - 1] / _density[j];
         }
         _solverOutput[j] = _fluxNew[j];    // Carefull here
-        _flux[j]         = _fluxNew[j];    // Carefull here
     }
 }
 
