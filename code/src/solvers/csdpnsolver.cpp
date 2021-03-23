@@ -63,8 +63,8 @@ CSDPNSolver::CSDPNSolver( Config* settings ) : PNSolver( settings ) {
     for( unsigned idx_degree = 0; idx_degree < _polyDegreeBasis; ++idx_degree ) {
         Vector xs_m = blaze::column( sigma_ref, idx_degree );    // Scattering cross section Moments
         Interpolation interp( E_ref, xs_m );
-        // blaze::column( sigma_t, idx_degree ) = interp( _energies );
-        Vector temp = interp( _energies );
+        blaze::column( sigma_t, idx_degree ) = interp( _energies );
+        Vector temp                          = interp( _energies );
         std::cout << temp << std::endl;
     }
 
