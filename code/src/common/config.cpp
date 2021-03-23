@@ -563,6 +563,7 @@ void Config::SetPostprocessing() {
                 case CSD_SN_FOKKERPLANCK_TRAFO_SOLVER_2D:       // Fallthrough
                 case CSD_SN_FOKKERPLANCK_TRAFO_SH_SOLVER_2D:    // Fallthrough
                 case CSD_SN_SOLVER:                             // Fallthrough
+                case CSD_PN_SOLVER:                             // Fallthrough
                     supportedGroups = { MINIMAL, MEDICAL };
                     if( supportedGroups.end() == std::find( supportedGroups.begin(), supportedGroups.end(), _volumeOutput[idx_volOutput] ) ) {
 
@@ -694,7 +695,7 @@ bool Config::TokenizeString( string& str, string& option_name, vector<string>& o
     pos = str.find( "=" );
     if( pos == string::npos ) {
         string errmsg = "Error in Config::TokenizeString(): line in the configuration file with no \"=\" sign.  ";
-        errmsg += "\nLook for: \n  str.length() = " + std::to_string(str.length());
+        errmsg += "\nLook for: \n  str.length() = " + std::to_string( str.length() );
         spdlog::error( errmsg );
         throw( -1 );
     }

@@ -49,8 +49,12 @@ CSDPNSolver::CSDPNSolver( Config* settings ) : PNSolver( settings ) {
         double y            = _cellMidPoints[i][1];
         const double stddev = .005;
         f[i]                = normpdf( x, pos_beam[0], stddev ) * normpdf( y, pos_beam[1], stddev );
+        for( unsigned j = 0; j < _nSystem; j++ ) {
+            //  Vector IC        = f * SMMoments;    // must be VectorVector
+        }
     }
-    Vector IC = f * StarMAPmoments;
+    Vector SMMoments = StarMAPmoments;
+    Vector IC        = f * SMMoments;    // must be VectorVector
 
     Matrix sigma_t( _energies.size(), sigma_t.rows() );
     for( unsigned i = 0; i < _nSystem; ++i ) {
