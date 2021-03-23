@@ -5,7 +5,7 @@ CSDSolverTrafoFPSH2D::CSDSolverTrafoFPSH2D( Config* settings ) : SNSolver( setti
     _dose = std::vector<double>( _settings->GetNCells(), 0.0 );
 
     // Set angle and energies
-    _energies  = Vector( _nEnergies, 0.0 );       // equidistant
+    //_energies  = Vector( _nEnergies, 0.0 );       // equidistant
     _energyMin = 1e-5 * 5.0;                      // 1e-4 * 0.511;
     _energyMax = _settings->GetMaxEnergyCSD();    // 0.1;
 
