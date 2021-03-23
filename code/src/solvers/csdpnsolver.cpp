@@ -29,8 +29,6 @@ Vector Energy2Time( const Vector& E, const double E_CutOff ) {
 }
 
 CSDPNSolver::CSDPNSolver( Config* settings ) : PNSolver( settings ) {
-    blaze::transpose( sigma_ref );
-
     _dose = std::vector<double>( _settings->GetNCells(), 0.0 );
 
     // only dummies for compilation
@@ -61,7 +59,7 @@ CSDPNSolver::CSDPNSolver( Config* settings ) : PNSolver( settings ) {
         // blaze::column( sigma_t, i ) = interp( _energies );
     }
 
-    Interpolation interpS( E_ref, S_tab );
+    Interpolation interpS( E_tab, S_tab );
     _s = interpS( _energies );
 }
 
