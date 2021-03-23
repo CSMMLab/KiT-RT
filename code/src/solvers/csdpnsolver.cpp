@@ -43,20 +43,18 @@ CSDPNSolver::CSDPNSolver( Config* settings ) : PNSolver( settings ) {
     //
 
     Vector pos_beam = Vector{ 0.5, 0.5 };
-    Vector f( _nCells );
+    VectorVector IC( _nCells, Vector( _nSystem ) );
     for( unsigned i = 0; i < _nCells; ++i ) {
         double x            = _cellMidPoints[i][0];
         double y            = _cellMidPoints[i][1];
         const double stddev = .005;
-        f[i]                = normpdf( x, pos_beam[0], stddev ) * normpdf( y, pos_beam[1], stddev );
+        double f            = normpdf( x, pos_beam[0], stddev ) * normpdf( y, pos_beam[1], stddev );
         for( unsigned j = 0; j < _nSystem; j++ ) {
-            //  Vector IC        = f * SMMoments;    // must be VectorVector
+            IC[i][j] = f * StarMAPmoments[j];    // must be VectorVector
         }
     }
-    Vector SMMoments = StarMAPmoments;
-    Vector IC        = f * SMMoments;    // must be VectorVector
 
-    Matrix sigma_t( _energies.size(), sigma_t.rows() );
+    Matrix sigma_t( _energies.size(), sigma_ref.rows() );
     for( unsigned i = 0; i < _nSystem; ++i ) {
         Vector xs_m = blaze::column( sigma_ref, i );
         Interpolation interp( E_ref, xs_m );
