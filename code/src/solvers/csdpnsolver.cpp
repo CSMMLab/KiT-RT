@@ -208,8 +208,21 @@ void CSDPNSolver::PrepareVolumeOutput() {
                 _outputFields[idx_group][1].resize( _nCells );
                 _outputFieldNames[idx_group][1] = "normalized dose";
                 break;
+            case MOMENTS:
+                // As many entries as there are moments in the system
+                _outputFields[idx_group].resize( _nSystem );
+                _outputFieldNames[idx_group].resize( _nSystem );
 
-            default: ErrorMessages::Error( "Volume Output Group not defined for CSD_SN_FP_TRAFO Solver!", CURRENT_FUNCTION ); break;
+                for( int idx_l = 0; idx_l <= (int)_polyDegreeBasis; idx_l++ ) {
+                    for( int idx_k = -idx_l; idx_k <= idx_l; idx_k++ ) {
+                        _outputFields[idx_group][GlobalIndex( idx_l, idx_k )].resize( _nCells );
+
+                        _outputFieldNames[idx_group][GlobalIndex( idx_l, idx_k )] =
+                            std::string( "u_" + std::to_string( idx_l ) + "^" + std::to_string( idx_k ) );
+                    }
+                }
+                break;
+            default: ErrorMessages::Error( "Volume Output Group not defined for PN Solver!", CURRENT_FUNCTION ); break;
         }
     }
 }
@@ -242,8 +255,15 @@ void CSDPNSolver::WriteVolumeOutput( unsigned idx_pseudoTime ) {
                         _outputFields[idx_group][1][idx_cell] /= maxDose;
                     }
                     break;
+                case MOMENTS:
+                    for( unsigned idx_sys = 0; idx_sys < _nSystem; idx_sys++ ) {
+                        for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
+                            _outputFields[idx_group][idx_sys][idx_cell] = _sol[idx_cell][idx_sys];
+                        }
+                    }
+                    break;
 
-                default: ErrorMessages::Error( "Volume Output Group not defined for CSD_SN_FP_TRAFO Solver!", CURRENT_FUNCTION ); break;
+                default: ErrorMessages::Error( "Volume Output Group not defined for CSD_PN_TRAFO Solver!", CURRENT_FUNCTION ); break;
             }
         }
     }

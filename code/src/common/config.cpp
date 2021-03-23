@@ -563,7 +563,6 @@ void Config::SetPostprocessing() {
                 case CSD_SN_FOKKERPLANCK_TRAFO_SOLVER_2D:       // Fallthrough
                 case CSD_SN_FOKKERPLANCK_TRAFO_SH_SOLVER_2D:    // Fallthrough
                 case CSD_SN_SOLVER:                             // Fallthrough
-                case CSD_PN_SOLVER:                             // Fallthrough
                     supportedGroups = { MINIMAL, MEDICAL };
                     if( supportedGroups.end() == std::find( supportedGroups.begin(), supportedGroups.end(), _volumeOutput[idx_volOutput] ) ) {
 
@@ -571,6 +570,17 @@ void Config::SetPostprocessing() {
                                               CURRENT_FUNCTION );
                     }
                     break;
+                case CSD_PN_SOLVER:
+                    supportedGroups = { MINIMAL, MEDICAL, MOMENTS };
+                    if( supportedGroups.end() == std::find( supportedGroups.begin(), supportedGroups.end(), _volumeOutput[idx_volOutput] ) ) {
+
+                        ErrorMessages::Error(
+                            "CSD_PN_SOLVER types only supports volume output MEDICAL, MOMENTS and MINIMAL.\nPlease check your .cfg file.",
+                            CURRENT_FUNCTION );
+                    }
+                    break;
+                default:
+                    ErrorMessages::Error( "Solver output check not implemented for this Solver.\nThis is the fault of the coder.", CURRENT_FUNCTION );
             }
         }
 
