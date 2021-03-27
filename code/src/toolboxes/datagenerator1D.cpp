@@ -16,6 +16,8 @@
 DataGenerator1D::DataGenerator1D( Config* settings ) : DataGeneratorBase( settings ) {
     ComputeMoments();
 
+    AdaptBasisSize();
+
     // Initialize Training Data
     ComputeSetSize();
 
@@ -140,8 +142,8 @@ void DataGenerator1D::SampleSolutionU() {
             double dN  = 2.0 / (double)_gridSize;
             double N1  = -1.0 + _settings->GetRealizableSetEpsilonU0();
             while( N1 < 1.0 - _settings->GetRealizableSetEpsilonU0() ) {
-                _uSol[c][0] = 1;     // u0 (normalized i.e. N0) by Monreals notation
-                _uSol[c][1] = N1;    // u1 (normalized i.e. N1) by Monreals notation
+
+                _uSol[c][0] = N1;    // u1 (normalized i.e. N1) by Monreals notation
                 N1 += dN;
                 c++;
             }
@@ -155,9 +157,8 @@ void DataGenerator1D::SampleSolutionU() {
             while( N1 < 1.0 - _settings->GetRealizableSetEpsilonU0() ) {
                 N2 = N1 * N1 + _settings->GetRealizableSetEpsilonU0();
                 while( N2 < 1.0 - _settings->GetRealizableSetEpsilonU0() ) {
-                    _uSol[c][0] = 1;     // u0 (normalized i.e. N0) by Monreals notation
-                    _uSol[c][1] = N1;    // u1 (normalized i.e. N1) by Monreals notation
-                    _uSol[c][2] = N2;    // u2 (normalized i.e. N2) by Monreals notation
+                    _uSol[c][0] = N1;    // u1 (normalized i.e. N1) by Monreals notation
+                    _uSol[c][1] = N2;    // u2 (normalized i.e. N2) by Monreals notation
                     N2 += dN;
                     c++;
                 }
@@ -174,10 +175,9 @@ void DataGenerator1D::SampleSolutionU() {
             while( N2 < 1.0 - _settings->GetRealizableSetEpsilonU0() ) {
                 N3 = -N2 + ( N1 + N2 ) * ( N1 + N2 ) / ( 1 + N1 ) + _settings->GetRealizableSetEpsilonU1();
                 while( N3 < N2 - ( N1 - N2 ) * ( N1 - N2 ) / ( 1 - N1 ) - _settings->GetRealizableSetEpsilonU1() ) {
-                    _uSol[c][0] = 1;     // u0  by Monreals notation
-                    _uSol[c][1] = N1;    // u1  by Monreals notation
-                    _uSol[c][2] = N2;    // u2  by Monreals notation
-                    _uSol[c][3] = N3;    // u3  by Monreals notation
+                    _uSol[c][0] = N1;    // u1  by Monreals notation
+                    _uSol[c][1] = N2;    // u2  by Monreals notation
+                    _uSol[c][2] = N3;    // u3  by Monreals notation
                     c++;
                     N3 += dN;
                 }
@@ -294,7 +294,7 @@ void DataGenerator1D::ComputeSetSize() {
         }
         else if( _maxPolyDegree == 2 ) {
             // Carefull: This computes only normalized moments, i.e. sampling for u_0 = 1
-            unsigned c = 1;
+            unsigned c = 0;
             double N1  = -1.0 + _settings->GetRealizableSetEpsilonU0();
             double N2;
             double dN = 2.0 / (double)_gridSize;
@@ -310,7 +310,7 @@ void DataGenerator1D::ComputeSetSize() {
         }
         else if( _maxPolyDegree == 3 ) {
             // Carefull: This computes only normalized moments, i.e. sampling for u_0 = 1, N1=0
-            unsigned c = 1;
+            unsigned c = 0;
             double N1  = 0 + _settings->GetRealizableSetEpsilonU0();
             double N2, N3;
             double dN = 1.0 / (double)_gridSize;

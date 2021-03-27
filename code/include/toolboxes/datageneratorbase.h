@@ -52,7 +52,7 @@ class DataGeneratorBase
         _gridSize; /*!< @brief Size of the grid discretizing moment U0 for higher order sampling (has different uses for different samplers)*/
 
     unsigned short _maxPolyDegree; /*!< @brief Max Order of Spherical Harmonics */
-    unsigned _nTotalEntries;    /*!< @brief Total number of equations in the system */
+    unsigned _nTotalEntries;       /*!< @brief Total number of equations in the system */
 
     QuadratureBase* _quadrature;    /*!< @brief quadrature to create members below */
     unsigned _nq;                   /*!< @brief number of quadrature points */
@@ -80,5 +80,6 @@ class DataGeneratorBase
     virtual void ComputeMoments()     = 0; /*!< @brief Pre-Compute Moments at all quadrature points. */
     virtual void CheckRealizability() = 0; /*!< @brief Debugging helper. Will be removed */
     virtual void ComputeSetSize()     = 0; /*!< @brief Computes the size of the training set, depending on the chosen settings.*/
+    void AdaptBasisSize();                 /*!< @brief In case of normal sampling, deletes zero order basis for dimension reduction. */
 };
 #endif    // DATAGENERATOR_H

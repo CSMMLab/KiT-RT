@@ -9,6 +9,7 @@
 #include "entropies/entropybase.h"
 #include "quadratures/quadraturebase.h"
 #include "toolboxes/errormessages.h"
+#include "toolboxes/textprocessingtoolbox.h"
 
 #include <omp.h>
 
@@ -82,6 +83,9 @@ void NewtonOptimizer::SolveMultiCell( VectorVector& alpha, VectorVector& sol, co
 
 #pragma omp parallel for schedule( guided )
     for( unsigned idx_cell = 0; idx_cell < nCells; idx_cell++ ) {
+        // std::cout << "Sol Vector"
+        //          << "|" << sol[idx_cell] << "\n";
+
         Solve( alpha[idx_cell], sol[idx_cell], moments, idx_cell );
         // if( idx_cell % 10000 == 0 ) {
         //    printf( "%d\n", idx_cell );
