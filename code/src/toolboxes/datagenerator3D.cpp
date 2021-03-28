@@ -16,6 +16,8 @@
 DataGenerator3D::DataGenerator3D( Config* settings ) : DataGeneratorBase( settings ) {
     ComputeMoments();
 
+    AdaptBasisSize();
+
     // Initialize Training Data
     ComputeSetSize();
 

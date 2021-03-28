@@ -92,6 +92,7 @@ void DataGeneratorBase::ComputeTrainingData() {
     CheckRealizability();
 
     // --- compute alphas ---
+
     _optimizer->SolveMultiCell( _alpha, _uSol, _moments );
 
     log->info( "| Making moments realizable problems." );
@@ -198,4 +199,20 @@ void DataGeneratorBase::PrintLoadScreen() {
     auto log = spdlog::get( "event" );
     log->info( "------------------------ Data Generation Starts --------------------------" );
     log->info( "| Generating {} datapoints.", _setSize );
+}
+
+void DataGeneratorBase::AdaptBasisSize() {
+    // Remove zero order Moment for dimension reduction
+
+    if( _settings->GetNormalizedSampling() ) {
+        VectorVector momentTemp = _moments;
+        _nTotalEntries          = _nTotalEntries - 1;
+        _moments                = VectorVector( _nq, Vector( _nTotalEntries, 0.0 ) );
+
+        for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
+            for( unsigned idx_sys = 0; idx_sys < _nTotalEntries; idx_sys++ ) {
+                _moments[idx_quad][idx_sys] = momentTemp[idx_quad][idx_sys + 1];
+            }
+        }
+    }
 }

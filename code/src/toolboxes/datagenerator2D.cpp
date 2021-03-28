@@ -16,6 +16,8 @@
 DataGenerator2D::DataGenerator2D( Config* settings ) : DataGeneratorBase( settings ) {
     ComputeMoments();
 
+    AdaptBasisSize();
+
     // Initialize Training Data
     ComputeSetSize();
 
@@ -71,9 +73,8 @@ void DataGenerator2D::SampleSolutionU() {
                     continue;
                 }
                 else {
-                    _uSol[idx_set][0] = 1.0;
-                    _uSol[idx_set][1] = std::sqrt( 1 - mu * mu ) * std::cos( phi );
-                    _uSol[idx_set][2] = std::sqrt( 1 - mu * mu ) * std::sin( phi );
+                    _uSol[idx_set][0] = std::sqrt( 1 - mu * mu ) * std::cos( phi );
+                    _uSol[idx_set][1] = std::sqrt( 1 - mu * mu ) * std::sin( phi );
                 }
             }
         }
