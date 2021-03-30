@@ -47,7 +47,7 @@ class CSDSolverTrafoFP : public SNSolver
      * @brief CSDSolverTrafoFP constructor
      * @param settings stores all needed information
      */
-    CSDSolverTrafoFP( Config* settings );
+    CSDSolverTrafoFP( Config* settings); 
 
     virtual ~CSDSolverTrafoFP() {}
 
@@ -64,6 +64,7 @@ class CSDSolverTrafoFP : public SNSolver
     void SolverPreprocessing() override final;
 
     virtual std::vector<double> GetDosis();
+    void SetNewQN(unsigned newnq);
 };
 
 #endif    // CSDSOLVERTRAFOFP_H

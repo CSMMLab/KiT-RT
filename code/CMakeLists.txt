@@ -37,7 +37,7 @@ include_directories( ${LAPACK_INCLUDE_DIR} )
 
 find_package( BLAS )
 
-find_package( VTK COMPONENTS vtkIOGeometry vtkFiltersCore REQUIRED )
+find_package( VTK COMPONENTS vtkIOGeometry vtkFiltersCore REQUIRED HINTS ~/VTK-install)
 
 find_package( Python3 COMPONENTS Interpreter Development NumPy REQUIRED )
 include_directories( ${Python3_INCLUDE_DIRS} ${Python3_NumPy_INCLUDE_DIRS} )

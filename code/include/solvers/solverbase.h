@@ -138,27 +138,34 @@ class SolverBase
   public:
     /*! @brief Solver constructor
      *  @param settings config class that stores all needed config information */
-    SolverBase( Config* settings );
+    SolverBase( Config* settings);
 
     virtual ~SolverBase();
 
     /*! @brief Create constructor
      *  @param settings config class that stores all needed config information
      *  @return pointer to SolverBase */
-    static SolverBase* Create( Config* settings );
+    static SolverBase* Create( Config* settings); 
 
     /*! @brief Solve functions runs main iteration loop. Components of the solve loop are pure virtual and subclassed by the child solvers.  */
     virtual void Solve();
-
+   /*! @brief Solve functions runs main iteration loop without printing or writing Output Files. Components of the solve loop are pure virtual and subclassed by the child solvers.  */  
+    virtual void SolveQuietly();  //Only for MLMC purposes.
+    
     /*! @brief Save Output solution to VTK file */
     void PrintVolumeOutput() const;    // Only for debugging purposes.
-
+    
+    /*! @brief Get Quadrature Order (number of Quadrature points) */
+    virtual unsigned GetNQ(); 
     /*! @brief Set density */
     virtual void SetDensity( double density );
     /*! @brief Get dosis */
     virtual std::vector<double> GetDosis();
     /*! @brief Get spatial mesh */
     virtual Mesh* GetMesh();
-    virtual unsigned GetNCells() const { return _nCells; }
+    virtual unsigned GetNCells() const { return _nCells; };
+    /*! @brief Set Quadrature Order (number of Quadrature points) */
+    virtual void SetNewQN(unsigned newnq);
+    virtual double GetDensity();
 };
 #endif    // SOLVER_H
