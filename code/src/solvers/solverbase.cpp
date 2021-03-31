@@ -18,7 +18,7 @@
 
 #include <mpi.h>
 
-SolverBase::SolverBase( Config* settings ) {
+SolverBase::SolverBase( Config* settings) {
     _settings = settings;
 
     // @TODO save parameters from settings class
@@ -34,7 +34,7 @@ SolverBase::SolverBase( Config* settings ) {
     // build quadrature object and store frequently used params
     _quadrature = QuadratureBase::Create( settings );
     _nq         = _quadrature->GetNq();
-    _settings->SetNQuadPoints( _nq );
+     _settings->SetNQuadPoints( _nq );
 
     // build slope related params
     _reconstructor = new Reconstructor( settings );
@@ -100,14 +100,14 @@ SolverBase::~SolverBase() {
     delete _problem;
 }
 
-SolverBase* SolverBase::Create( Config* settings ) {
+SolverBase* SolverBase::Create( Config* settings) {
     switch( settings->GetSolverName() ) {
         case SN_SOLVER: return new SNSolver( settings );
 
         case PN_SOLVER: return new PNSolver( settings );
         case MN_SOLVER: return new MNSolver( settings );
         case CSD_SN_SOLVER: return new CSDSNSolver( settings );
-        case CSD_SN_FOKKERPLANCK_TRAFO_SOLVER: return new CSDSolverTrafoFP( settings );
+        case CSD_SN_FOKKERPLANCK_TRAFO_SOLVER: return new CSDSolverTrafoFP( settings);
         case CSD_SN_FOKKERPLANCK_TRAFO_SOLVER_2D: return new CSDSolverTrafoFP2D( settings );
         case CSD_SN_FOKKERPLANCK_TRAFO_SH_SOLVER_2D: return new CSDSolverTrafoFPSH2D( settings );
         default: ErrorMessages::Error( "Creator for the chosen solver does not yet exist. This is is the fault of the coder!", CURRENT_FUNCTION );
@@ -159,6 +159,36 @@ void SolverBase::Solve() {
     // --- Postprocessing ---
 
     DrawPostSolverOutput();
+}
+
+void SolverBase::SolveQuietly(){
+
+    // --- Preprocessing ---    
+
+    // Adjust maxIter, depending if we have a normal run or a csd Run
+    _maxIter = _nEnergies;
+    if( _settings->GetIsCSD() ) {
+        _maxIter = _nEnergies - 1;    // Since CSD does not go the last energy step }
+    }
+    // Preprocessing before first pseudo time step
+    SolverPreprocessing();
+    
+    // Loop over energies (pseudo-time of continuous slowing down approach)
+    for( unsigned iter = 0; iter < _maxIter; iter++ ) {
+       
+        // --- Prepare Boundaries and temp variables
+        IterPreprocessing( iter );
+                
+        // --- Compute Fluxes ---
+        FluxUpdate();       
+
+        // --- Finite Volume Update ---
+        FVMUpdate( iter );        
+
+        // --- Iter Postprocessing ---
+        IterPostprocessing( iter );   
+    }
+    // --- Postprocessing ---
 }
 
 void SolverBase::PrintVolumeOutput() const { ExportVTK( _settings->GetOutputFile(), _outputFields, _outputFieldNames, _mesh ); }
@@ -504,5 +534,18 @@ void SolverBase::SetDensity( double density ) {
     }
 }
 
+double SolverBase::GetDensity( ) {
+    return _density[1];
+}
+
+
+unsigned SolverBase::GetNQ(){
+    return _nq;
+}
+
 std::vector<double> SolverBase::GetDosis() { return std::vector<double>( 1, 0.0 ); }
 Mesh* SolverBase::GetMesh() { return _mesh; }
+
+void SolverBase::SetNewQN(unsigned newnq){
+    std::cout<<"Not defined yet";
+}

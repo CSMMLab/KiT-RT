@@ -180,7 +180,7 @@ void CSDSNSolverNoTrafo::Solve() {
             _solverOutput[j] = fluxNew[j];
         }
 
-        // Save( n );
+        Save( n );
         dFlux   = blaze::l2Norm( fluxNew - fluxOld );
         fluxOld = fluxNew;
         if( rank == 0 ) log->info( "{:03.8f}  {:01.5e}  {:01.5e}", _energies[n], _dE / densityMin, dFlux );

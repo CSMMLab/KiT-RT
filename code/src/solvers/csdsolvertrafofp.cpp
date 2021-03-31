@@ -11,7 +11,8 @@
 #include "spdlog/spdlog.h"
 #include <mpi.h>
 
-CSDSolverTrafoFP::CSDSolverTrafoFP( Config* settings ) : SNSolver( settings ) {
+#include <iostream>
+CSDSolverTrafoFP::CSDSolverTrafoFP( Config* settings) : SNSolver( settings ) {
     _dose = std::vector<double>( _settings->GetNCells(), 0.0 );
 
     // Set angle and energies
@@ -23,7 +24,7 @@ CSDSolverTrafoFP::CSDSolverTrafoFP( Config* settings ) : SNSolver( settings ) {
     GenerateEnergyGrid( false );
 
     // create 1D quadrature
-    unsigned nq            = _settings->GetNQuadPoints();
+    unsigned nq            = _settings->GetNQuadPoints(); 
     QuadratureBase* quad1D = QuadratureBase::Create( QUAD_GaussLegendre1D, nq );
     Vector w               = quad1D->GetWeights();
     VectorVector muVec     = quad1D->GetPoints();
@@ -127,8 +128,9 @@ void CSDSolverTrafoFP::IterPreprocessing( unsigned idx_pseudotime ) {
         _alpha2 = xi1 / 2.0 - 9.0 / 8.0 * xi2 * xi2 / xi3 + 3.0 / 8.0 * xi2;
     }
 
+    
     _IL = _identity - _beta * _L;
-
+          
     // write BC for water phantom
     if( _RT ) {
         for( unsigned k = 0; k < _nq; ++k ) {
@@ -139,12 +141,13 @@ void CSDSolverTrafoFP::IterPreprocessing( unsigned idx_pseudotime ) {
             }
         }
     }
-
+    
     // add FP scattering term implicitly
     for( unsigned j = 0; j < _nCells; ++j ) {
         if( _boundaryCells[j] == BOUNDARY_TYPE::DIRICHLET ) continue;
         //_sol[j] = blaze::solve( identity - _dE * _alpha2 * _L, psiNew[j] );
         _sol[j] = _IL * blaze::solve( _IL - _dE * _alpha * _L, _sol[j] );
+    
     }
 }
 
@@ -185,7 +188,11 @@ void CSDSolverTrafoFP::FVMUpdate( unsigned /*idx_energy*/ ) {
 
 void CSDSolverTrafoFP::IterPostprocessing( unsigned idx_pseudotime ) {
     // --- Update Solution ---
+
+    
     _sol = _solNew;
+
+    
 
     unsigned n = idx_pseudotime;
     for( unsigned j = 0; j < _nCells; ++j ) {
@@ -201,8 +208,11 @@ void CSDSolverTrafoFP::IterPostprocessing( unsigned idx_pseudotime ) {
         _flux[j]         = _fluxNew[j];
     }
 
+    
+
     // --- Compute Flux for solution and Screen Output ---
     ComputeRadFlux();
+    
 }
 
 void CSDSolverTrafoFP::SolverPreprocessing() {
@@ -373,3 +383,123 @@ void CSDSolverTrafoFP::WriteVolumeOutput( unsigned idx_pseudoTime ) {
 }
 
 std::vector<double> CSDSolverTrafoFP::GetDosis() { return _dose; }
+
+
+//It needs to be cleaned up, eveything that it not related to _nq , nq, settings-GetQuadratureOrder() could be delated. 
+void CSDSolverTrafoFP::SetNewQN(unsigned newnq){
+
+    // create 1D quadrature
+    
+    unsigned nq            = newnq; 
+    _nq                    = newnq; 
+    QuadratureBase* quad1D = QuadratureBase::Create( QUAD_GaussLegendre1D, nq );
+    Vector w               = quad1D->GetWeights();
+    VectorVector muVec     = quad1D->GetPoints();
+    Vector mu( nq );
+    for( unsigned k = 0; k < nq; ++k ) {
+        mu[k] = muVec[k][0];
+    }
+
+    //std::cout<< _nq<< "\n";
+
+    // setup Laplace Beltrami matrix L in slab geometry
+    _L = Matrix( nq, nq, 0.0 );
+
+    _FPMethod = 2;
+
+    //from solverbase
+
+    // @TODO save parameters from settings class
+
+    // build mesh and store  and store frequently used params
+    _mesh      = LoadSU2MeshFromFile( _settings ); // it was settings
+    _areas     = _mesh->GetCellAreas();
+    _neighbors = _mesh->GetNeighbours();
+    _normals   = _mesh->GetNormals();
+    _nCells    = _mesh->GetNumCells();
+    _settings->SetNCells( _nCells );
+
+    // build quadrature object and store frequently used params
+    _quadrature = QuadratureBase::Create( QUAD_GaussLegendre1D, nq );
+
+    //Reshape require for Iterposprocessing
+
+    _quadPoints = _quadrature->GetPoints();
+    _weights    = _quadrature->GetWeights();
+    //_nq         = _quadrature->GetNq();
+     _settings->SetNQuadPoints( _nq );
+
+    // build slope related params
+    _reconstructor = new Reconstructor( _settings  );
+    _reconsOrder   = _reconstructor->GetReconsOrder();
+
+    auto nodes = _mesh->GetNodes();
+    auto cells = _mesh->GetCells();
+    std::vector<std::vector<Vector>> interfaceMidPoints( _nCells, std::vector<Vector>( _mesh->GetNumNodesPerCell(), Vector( 2, 1e-10 ) ) );
+    for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
+        for( unsigned k = 0; k < _mesh->GetDim(); ++k ) {
+            for( unsigned j = 0; j < _neighbors[idx_cell].size() - 1; ++j ) {
+                interfaceMidPoints[idx_cell][j][k] = 0.5 * ( nodes[cells[idx_cell][j]][k] + nodes[cells[idx_cell][j + 1]][k] );
+            }
+            interfaceMidPoints[idx_cell][_neighbors[idx_cell].size() - 1][k] =
+                0.5 * ( nodes[cells[idx_cell][_neighbors[idx_cell].size() - 1]][k] + nodes[cells[idx_cell][0]][k] );
+        }
+    }
+    _interfaceMidPoints = interfaceMidPoints;
+    _cellMidPoints      = _mesh->GetCellMidPoints();
+
+    _psiDx = VectorVector( _nCells, Vector( _nq, 0.0 ) );
+    _psiDy = VectorVector( _nCells, Vector( _nq, 0.0 ) );
+
+    // set time step
+    //_dE        = ComputeTimeStep( settings->GetCFL() );
+    //_nEnergies = unsigned( settings->GetTEnd() / _dE );
+    _energies.resize( _nEnergies );
+    for( unsigned i = 0; i < _nEnergies; ++i ) _energies[i] = ( i + 1 ) * _dE;
+
+    // setup problem  and store frequently used params
+    _problem = ProblemBase::Create( _settings, _mesh );
+    _sol     = _problem->SetupIC();
+    _solNew  = _sol;    // setup temporary sol variable
+    _quadPoints = _quadrature->GetPoints();
+    _weights    = _quadrature->GetWeights();
+
+    _sigmaT = _problem->GetTotalXS( _energies );
+    _sigmaS = _problem->GetScatteringXS( _energies );
+    _Q      = _problem->GetExternalSource( _energies );
+
+    // setup numerical flux
+    _g = NumericalFlux::Create();
+
+    // boundary type
+    _boundaryCells = _mesh->GetBoundaryTypes();
+
+    double DMinus = 0.0;
+    double DPlus  = 0.0;
+    for( unsigned k = 0; k < nq; ++k ) {
+        DMinus = DPlus;
+        DPlus  = DMinus - 2 * mu[k] * w[k];
+        if( k > 0 ) {
+            _L( k, k - 1 ) = DMinus / ( mu[k] - mu[k - 1] ) / w[k];
+            _L( k, k )     = -DMinus / ( mu[k] - mu[k - 1] ) / w[k];
+        }
+        if( k < nq - 1 ) {
+            _L( k, k + 1 ) = DPlus / ( mu[k + 1] - mu[k] ) / w[k];
+            _L( k, k ) += -DPlus / ( mu[k + 1] - mu[k] ) / w[k];
+        }
+    }
+    _s = Vector( _nEnergies, 1.0 );
+
+    _RT = true;
+
+    if( _RT ) {        
+
+        ICRU database( mu, _energies, _settings );
+        database.GetTransportCoefficients( _xi );
+        database.GetStoppingPower( _s );
+
+    }
+        
+
+
+}
