@@ -7,6 +7,3 @@
 [submodule "code/ext/blaze"]
 	path = code/ext/blaze
 	url = https://bitbucket.org/blaze-lib/blaze.git
-[submodule "code/ext/neuralEntropy"]
-	path = code/ext/neuralEntropy
-	url = https://github.com/ScSteffen/neuralEntropy.git
