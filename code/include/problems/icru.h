@@ -25,7 +25,7 @@ class Config;
 class ICRU
 {
   private:
-    Config* _settings; /*! @brief: Pointer to settings file of the solver */
+    Config* _settings; /*!< @brief Pointer to settings file of the solver */
 
     const unsigned materialID   = 278;
     const ParticleType particle = ParticleType::ELECTRON;
@@ -65,8 +65,8 @@ class ICRU
     double _BETA2;
     double _R1;
 
-    Vector _E, /*! @brief: User queried Energy  */
-        _QMU;  /*! @brief:User queried mu */
+    Vector _E, /*! @brief User queried Energy  */
+        _QMU;  /*!< @brief User queried mu */
 
     std::vector<double> _ET, _ETL;
     std::vector<double> _XMU, /* angular variable mu of dataset */
@@ -104,7 +104,7 @@ class ICRU
     ICRU() = delete;
 
   public:
-    /*! @brief: Constructor of ICRU class
+    /*! @brief Constructor of ICRU class
      *  @arg: Vector& mu, = Vector of angles
      *  @arg: Vector& energy, = Vector of energies
      *  @arg: Config* settings = pointer to programm settings class
@@ -113,18 +113,18 @@ class ICRU
 
     ~ICRU(){};
 
-    /*! @brief: Computes the angular scattering cross sections and integrated XS by interpolating tabular data
+    /*! @brief Computes the angular scattering cross sections and integrated XS by interpolating tabular data
      *  @arg: Matrix& angularXS = Matrix where the angular XS will be saved
      *  @arg: Vector& integratedXS = Vector, where the integratedXS will be saved
      *  @returns: void */
     void GetAngularScatteringXS( Matrix& angularXS, Vector& integratedXS );
 
-    /*! @brief: Computes the stopping power by interpolating tabular data
+    /*! @brief Computes the stopping power by interpolating tabular data
      *  @arg: Vector& stoppingPower = Vector, where the stopping power will be saved
      *  @returns: void */
     void GetStoppingPower( Vector& stoppingPower );
 
-    /*! @brief: Computes the transport coefficients by interpolating tabular data
+    /*! @brief Computes the transport coefficients by interpolating tabular data
      *  @arg: Matrix& xi = Vector, where the stopping power will be saved
      *  @returns: void */
     void GetTransportCoefficients( Matrix& xi );

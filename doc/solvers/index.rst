@@ -4,7 +4,7 @@ Solvers
 .. toctree::
    :maxdepth: 1
 
-   solver
+   solverbase
    csdsnsolver
    csdsnsolverfp
    csdsnsolvernotrafo
@@ -14,4 +14,3 @@ Solvers
    mnsolver
    pnsolver
    snsolver
-   snsolvermpi

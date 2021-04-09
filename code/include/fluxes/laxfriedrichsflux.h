@@ -5,7 +5,7 @@
 
 class LaxFriedrichsFlux : public NumericalFlux
 {
-    double _dt;
+    // double _dt;
 
   public:
     /**

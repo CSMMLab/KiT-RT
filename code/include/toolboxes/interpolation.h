@@ -14,9 +14,10 @@ class Interpolation
 
   private:
     unsigned _dim;
-    Vector _x, _y;
-    Matrix _data;
-    TYPE _type;
+    Vector _x;    /*!< @brief x input data */
+    Vector _y;    /*!< @brief y input data */
+    Matrix _data; /*!< @brief data matrix w.r.t. x and y grid */
+    TYPE _type;   /*!< @brief type of interpolation (linear, loglinear, cubic) */
 
     Interpolation() = delete;
 
@@ -37,55 +38,56 @@ class Interpolation
     // In constructor tabulated values are initialised
     /*!
      * @brief constructor linear interpolation for std::vector input
-     * @param[in] x - table values for x
-     * @param[in] y - table values for y
-     * @param[in] type - linear or cubic interpolation
+     * @param x table values for x
+     * @param y table values for y
+     * @param type linear or cubic interpolation
      */
     Interpolation( const std::vector<double>& x, const std::vector<double>& y, TYPE type = linear );
 
     /*!
      * @brief constructor linear interpolation for Vector input
-     * @param[in] x - table values for x
-     * @param[in] y - table values for y
-     * @param[in] type - linear or cubic interpolation
+     * @param x table values for x
+     * @param y table values for y
+     * @param type linear or cubic interpolation
      */
     Interpolation( const Vector& x, const Vector& y, TYPE type = linear );
 
     /*!
      * @brief constructor cubic interpolation
-     * @param[in] x - table values for x
-     * @param[in] y - table values for y
-     * @param[in] type - linear or cubic interpolation
+     * @param x table values for x
+     * @param y table values for y
+     * @param data matrix w.r.t x y grid
+     * @param type of interpolation  (linear, loglinear, cubic)
      */
     Interpolation( const Vector& x, const Vector& y, const Matrix& data, TYPE type = cubic );
 
     // Here the interpolation between the previously defined table values is performed
     /*!
      * @brief defines one dimensional interpolation at x
-     * @param[in] x - value at which to interpolate
-     * @param[out] y - corresponding interpolated y value
+     * @param x value at which to interpolate
+     * @returns corresponding interpolated y value
      */
     double operator()( double x ) const;
 
     /*!
      * @brief defines interpolation for a Vector of values
-     * @param[in] v - values at which to interpolate
-     * @param[out] y - corresponding interpolated values
+     * @param v values at which to interpolate
+     * @returns corresponding interpolated values
      */
     Vector operator()( Vector v ) const;
 
     /*!
      * @brief defines interpolation for a std::vector of values
-     * @param[in] v - values at which to interpolate
-     * @param[out] y - corresponding interpolated values
+     * @param v values at which to interpolate
+     * @returns corresponding interpolated values
      */
     std::vector<double> operator()( std::vector<double> v ) const;
 
     /*!
      * @brief defines 2D interpolation at x and y
-     * @param[in] x - value at which to interpolate
-     * @param[in] y - value at which to interpolate
-     * @param[out] data - corresponding interpolated value
+     * @param x value at which to interpolate
+     * @param y value at which to interpolate
+     * @returns corresponding interpolated value
      */
     double operator()( double x, double y ) const;
 };

@@ -1,5 +1,5 @@
 /*!
- * \file Config.cpp
+ * \file config.cpp
  * \brief Classes for different Optiontypes in rtsn
  * \author S. Schotthoefer
  *

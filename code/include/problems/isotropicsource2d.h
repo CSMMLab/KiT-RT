@@ -23,5 +23,4 @@ class IsotropicSource2D : public ElectronRT
     std::vector<double> GetDensity( const VectorVector& cellMidPoints );
 };
 
-
-#endif // ISOTROPICSOURCE2D_H
+#endif    // ISOTROPICSOURCE2D_H

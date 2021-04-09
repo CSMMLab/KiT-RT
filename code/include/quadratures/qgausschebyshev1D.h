@@ -28,20 +28,19 @@ class QGaussChebyshev1D : public QuadratureBase
     void SetConnectivity() override;
 
     /*! @brief Integrates f(x,y,z) with the quadrature.
-     *  @param double(f)( double x0, double x1, double x2 ) : density function that depends on a three spatial dimensions.
-     *  @returns double result: result of the quadrature rule */
-    double Integrate( double( f )( double x0, double x1, double x2 ) ) override;
+     *  @param f density function that depends on a three spatial dimensions.
+     *  @returns result of the quadrature rule */
+    double Integrate( double ( *f )( double, double, double ) ) override;
 
     /*! @brief Integrates f(x,y,z) with the quadrature.
-     *  @param double(f)( double my, double phi ) : density function that depends on a spherical coordinates.
-     *  @returns double result: result of the quadrature rule */
-    double IntegrateSpherical( double( f )( double my, double phi ) ) override;
+     *  @param f density function that depends on a spherical coordinates.
+     *  @returns result of the quadrature rule */
+    double IntegrateSpherical( double ( *f )( double, double ) ) override;
 
     /*! @brief Integrates vector valued f(x,y,z) with the quadrature. Each dimension is integrated by itself.
-     *  @param : double(f)( double x0, double x1, double x2 ) : density function that depends on a three spatial dimensions.
-     *  @param :  len : lenght of vector
-     *  @returns double result: result of the quadrature rule (vector valued) */
-    std::vector<double> Integrate( std::vector<double>( f )( double x0, double x1, double x2 ), unsigned /* len */ ) override;
+     *  @param f density function that depends on a three spatial dimensions.
+     *  @returns result of the quadrature rule (vector valued) */
+    std::vector<double> Integrate( std::vector<double> ( *f )( double, double, double ), unsigned /* len */ ) override;
 };
 
 #endif    // QGAUSSCHEBYSHEV_H

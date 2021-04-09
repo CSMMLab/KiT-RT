@@ -8,27 +8,27 @@ class Physics;
 class CSDSNSolverFP : public SNSolver
 {
   private:
-    std::vector<double> _dose; /*! @brief: TODO */
+    std::vector<double> _dose; /*!< @brief TODO */
 
     // Physics acess
-    Vector _energies; /*! @brief: energy levels for CSD, length = _nEnergies */
-    Vector _angle;    /*! @brief: angles for SN */
+    Vector _energies; /*!< @brief energy levels for CSD, length = _nEnergies */
+    Vector _angle;    /*!< @brief angles for SN */
 
-    std::vector<Matrix> _sigmaSE; /*!  @brief scattering cross section for all energies*/
-    Vector _sigmaTE;              /*!  @brief total cross section for all energies*/
+    std::vector<Matrix> _sigmaSE; /*!<  @brief scattering cross section for all energies*/
+    Vector _sigmaTE;              /*!<  @brief total cross section for all energies*/
 
-    Matrix _L;  /*!  @brief Laplace Beltrami Matrix */
-    Matrix _IL; /*!  @brief Laplace Beltrami Matrix */
+    Matrix _L;  /*!<  @brief Laplace Beltrami Matrix */
+    Matrix _IL; /*!<  @brief Laplace Beltrami Matrix */
 
-    double _alpha; /*!  @brief  Coefficient of GFP operators (see Olbrant 2010, eq. (8)*/
-    double _beta;  /*!  @brief  Coefficient of GFP operators (see Olbrant 2010, eq. (8)*/
+    double _alpha; /*!<  @brief  Coefficient of GFP operators (see Olbrant 2010, eq. (8)*/
+    double _beta;  /*!<  @brief  Coefficient of GFP operators (see Olbrant 2010, eq. (8)*/
 
-    Matrix _xi; /*!  @brief matrix of transport coefficients */
+    Matrix _xi; /*!<  @brief matrix of transport coefficients */
 
-    bool _RT; /*!  @brief radiotherapy application (on/off), if true use crosssections + stopping powers from database  */
+    bool _RT; /*!<  @brief radiotherapy application (on/off), if true use crosssections + stopping powers from database  */
 
-    double _energyMin; /*!  @brief minimal energy in energy grid*/
-    double _energyMax; /*!  @brief maximal energy in energy grid*/
+    double _energyMin; /*!<  @brief minimal energy in energy grid*/
+    double _energyMax; /*!<  @brief maximal energy in energy grid*/
 
   public:
     /**

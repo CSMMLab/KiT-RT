@@ -17,7 +17,6 @@ Mesh::Mesh( std::vector<Vector> nodes,
     ComputeCellAreas();
     ComputeCellMidpoints();
     ComputeConnectivity();
-    // ComputePartitioning();
     ComputeBounds();
 }
 
@@ -219,142 +218,6 @@ Vector Mesh::ComputeOutwardFacingNormal( const Vector& nodeA, const Vector& node
     return n;
 }
 
-void Mesh::ComputePartitioning() {
-    int comm_size, comm_rank;
-    MPI_Comm comm = MPI_COMM_WORLD;
-    MPI_Comm_size( comm, &comm_size );
-    MPI_Comm_rank( comm, &comm_rank );
-    unsigned ompNumThreads = omp_get_max_threads();
-
-    // only run coloring if multiple OpenMP threads are present
-    if( ompNumThreads > 1 ) {
-        // setup adjacency relationship of nodes
-        blaze::CompressedMatrix<bool> adjMatrix( _numNodes, _numNodes );
-        for( unsigned i = 0; i < _numNodes; ++i ) {
-            for( unsigned j = 0; j < _numCells; ++j ) {
-                for( unsigned k = 0; k < _numNodesPerCell; ++k ) {
-                    if( i == _cells[j][k] ) {
-                        if( k == 0 ) {
-                            adjMatrix.set( i, _cells[j][_numNodesPerCell - 1], true );
-                            adjMatrix.set( i, _cells[j][1], true );
-                        }
-                        else if( k == _numNodesPerCell - 1 ) {
-                            adjMatrix.set( i, _cells[j][_numNodesPerCell - 2], true );
-                            adjMatrix.set( i, _cells[j][0], true );
-                        }
-                        else {
-                            adjMatrix.set( i, _cells[j][k - 1], true );
-                            adjMatrix.set( i, _cells[j][k + 1], true );
-                        }
-                    }
-                }
-            }
-        }
-
-        // for xadj and adjncy structure see parmetis documentation
-        std::vector<int> xadj( _numNodes + 1 );
-        int ctr = 0;
-        std::vector<int> adjncy;
-        for( unsigned i = 0; i < _numNodes; ++i ) {
-            xadj[i] = ctr;
-            for( unsigned j = 0; j < _numNodes; ++j ) {
-                if( adjMatrix( i, j ) ) {
-                    adjncy.push_back( static_cast<int>( j ) );
-                    ctr++;
-                }
-            }
-        }
-        xadj[_numNodes] = ctr;
-
-        std::vector<int> partitions;
-        int edgecut  = 0;
-        int ncon     = 1;
-        int nparts   = ompNumThreads;
-        real_t ubvec = static_cast<real_t>( 1.05 );    // parameter taken from SU2
-
-        if( comm_size > 1 ) {    // if multiple MPI threads -> use parmetis
-            // split adjacency information for each MPI thread -> see 'local' variables
-            std::vector<int> local_xadj{ 0 };
-            unsigned xadjChunk = std::ceil( static_cast<float>( _numNodes ) / static_cast<float>( comm_size ) );
-            unsigned xadjStart = comm_rank * xadjChunk + 1;
-            unsigned adjncyStart;
-            for( unsigned i = 0; i < xadjChunk; ++i ) {
-                if( i == 0 ) adjncyStart = xadj[i + xadjStart - 1];
-                local_xadj.push_back( xadj[i + xadjStart] );
-            }
-            unsigned adjncyEnd = local_xadj.back();
-            for( unsigned i = 1; i < local_xadj.size(); ++i ) {
-                local_xadj[i] -= xadj[xadjStart - 1];
-            }
-            std::vector<int> local_adjncy( adjncy.begin() + adjncyStart, adjncy.begin() + adjncyEnd );
-
-            // vtxdist describes what nodes are on which processor - see parmetis doc
-            std::vector<int> vtxdist{ 0 };
-            for( unsigned i = 1; i <= static_cast<unsigned>( comm_size ); i++ ) {
-                vtxdist.push_back( std::min( i * xadjChunk, _numNodes ) );
-            }
-
-            // weights setup set as in SU2
-            real_t* tpwgts = new real_t[nparts];
-            for( unsigned i = 0; i < static_cast<unsigned>( nparts ); ++i ) {
-                tpwgts[i] = 1.0 / static_cast<real_t>( nparts );
-            }
-
-            // setup as in SU2
-            int wgtflag = 0;
-            int numflag = 0;
-            int options[1];
-            options[0] = 0;
-
-            unsigned chunkSize = local_xadj.size() - 1;
-            int* part          = new int[chunkSize];
-            ParMETIS_V3_PartKway( vtxdist.data(),
-                                  local_xadj.data(),
-                                  local_adjncy.data(),
-                                  nullptr,
-                                  nullptr,
-                                  &wgtflag,
-                                  &numflag,
-                                  &ncon,
-                                  &nparts,
-                                  tpwgts,
-                                  &ubvec,
-                                  options,
-                                  &edgecut,
-                                  part,
-                                  &comm );
-            partitions.resize( chunkSize * comm_size );
-            MPI_Allgather( part, chunkSize, MPI_INT, partitions.data(), chunkSize, MPI_INT, comm );    // gather all information in partitions
-            partitions.resize( _numNodes );
-
-            // free memory
-            delete[] tpwgts;
-        }
-        else {    // with a singular MPI thread -> use metis
-            int options[METIS_NOPTIONS];
-            METIS_SetDefaultOptions( options );
-            int nvtxs = _numNodes;
-            int vsize;
-            partitions.resize( _numNodes );
-            METIS_PartGraphKway(
-                &nvtxs, &ncon, xadj.data(), adjncy.data(), nullptr, &vsize, nullptr, &nparts, nullptr, &ubvec, options, &edgecut, partitions.data() );
-        }
-
-        // extract coloring information
-        _colors.resize( _numCells );
-        for( unsigned i = 0; i < _numCells; ++i ) {
-            std::map<unsigned, int> occurances;
-            for( unsigned j = 0; j < _numNodesPerCell; ++j ) {
-                ++occurances[partitions[_cells[i][j]]];
-            }
-            _colors[i] = occurances.rbegin()->first;
-        }
-    }
-    else {
-        _colors.resize( _numCells, 0u );
-    }
-}
-
 void Mesh::ComputeSlopes( unsigned nq, VectorVector& psiDerX, VectorVector& psiDerY, const VectorVector& psi ) const {
     for( unsigned k = 0; k < nq; ++k ) {
         for( unsigned j = 0; j < _numCells; ++j ) {
@@ -403,8 +266,8 @@ void Mesh::ReconstructSlopesS( unsigned nq, VectorVector& psiDerX, VectorVector&
 void Mesh::ReconstructSlopesU( unsigned nq, VectorVector& psiDerX, VectorVector& psiDerY, const VectorVector& psi ) const {
 
     double phi;
-    //VectorVector dPsiMax = std::vector( _numCells, Vector( nq, 0.0 ) );
-    //VectorVector dPsiMin = std::vector( _numCells, Vector( nq, 0.0 ) );
+    // VectorVector dPsiMax = std::vector( _numCells, Vector( nq, 0.0 ) );
+    // VectorVector dPsiMin = std::vector( _numCells, Vector( nq, 0.0 ) );
     VectorVector dPsiMax( _numCells, Vector( nq, 0.0 ) );
     VectorVector dPsiMin( _numCells, Vector( nq, 0.0 ) );
 
@@ -434,7 +297,7 @@ void Mesh::ReconstructSlopesU( unsigned nq, VectorVector& psiDerX, VectorVector&
             for( unsigned l = 0; l < _cellNeighbors[j].size(); ++l ) {
                 // step 2: choose sample points
                 // psiSample[j][k][l] = 0.5 * ( psi[j][k] + psi[_cellNeighbors[j][l]][k] ); // interface central points
-                psiSample[j][k][l] = psi[j][k] + 
+                psiSample[j][k][l] = psi[j][k] +
                                      psiDerX[j][k] * ( _nodes[_cells[j][l]][0] - _cellMidPoints[j][0] ) +
                                      psiDerY[j][k] * ( _nodes[_cells[j][l]][1] - _cellMidPoints[j][1] );    // vertex points
 
@@ -457,7 +320,7 @@ void Mesh::ReconstructSlopesU( unsigned nq, VectorVector& psiDerX, VectorVector&
             psiDerX[j][k] *= phi;
             psiDerY[j][k] *= phi;
             */
-            
+
             double eps = 1e-6;
             // version 2: Venkatakrishnan limiter
             // step 1: calculate psi difference around neighbors and theoretical derivatives by Gauss theorem
@@ -471,19 +334,20 @@ void Mesh::ReconstructSlopesU( unsigned nq, VectorVector& psiDerX, VectorVector&
 
             for( unsigned l = 0; l < _cellNeighbors[j].size(); ++l ) {
                 // step 2: choose sample points
-                psiSample[j][k][l] = 10.0 * psiDerX[j][k] * (_cellMidPoints[_cellNeighbors[j][l]][0] - _cellMidPoints[j][0]) +
-                                     10.0 * psiDerY[j][k] * (_cellMidPoints[_cellNeighbors[j][l]][1] - _cellMidPoints[j][1]);
+                psiSample[j][k][l] = 10.0 * psiDerX[j][k] * ( _cellMidPoints[_cellNeighbors[j][l]][0] - _cellMidPoints[j][0] ) +
+                                     10.0 * psiDerY[j][k] * ( _cellMidPoints[_cellNeighbors[j][l]][1] - _cellMidPoints[j][1] );
 
                 // step 3: calculate Phi_ij at sample points
                 if( psiSample[j][k][l] > 0.0 ) {
-                    phiSample[j][k][l] = 
-                    (dPsiMax[j][k]*dPsiMax[j][k] + 2.0 * dPsiMax[j][k] * psiSample[j][k][l] + eps)/
-                    (dPsiMax[j][k]*dPsiMax[j][k] + dPsiMax[j][k] * psiSample[j][k][l] + 2.0 * psiSample[j][k][l] * psiSample[j][k][l] + eps);
+                    phiSample[j][k][l] =
+                        ( dPsiMax[j][k] * dPsiMax[j][k] + 2.0 * dPsiMax[j][k] * psiSample[j][k][l] + eps ) /
+                        ( dPsiMax[j][k] * dPsiMax[j][k] + dPsiMax[j][k] * psiSample[j][k][l] + 2.0 * psiSample[j][k][l] * psiSample[j][k][l] + eps );
                 }
                 else if( psiSample[j][k][l] < 0.0 ) {
-                    phiSample[j][k][l] = 
-                    (dPsiMin[j][k]*dPsiMin[j][k] + 2.0 * dPsiMin[j][k] * psiSample[j][k][l] + eps)/
-                    (dPsiMin[j][k]*dPsiMin[j][k] + dPsiMin[j][k] * psiSample[j][k][l] + 2.0 * psiSample[j][k][l] * psiSample[j][k][l] + eps);;
+                    phiSample[j][k][l] =
+                        ( dPsiMin[j][k] * dPsiMin[j][k] + 2.0 * dPsiMin[j][k] * psiSample[j][k][l] + eps ) /
+                        ( dPsiMin[j][k] * dPsiMin[j][k] + dPsiMin[j][k] * psiSample[j][k][l] + 2.0 * psiSample[j][k][l] * psiSample[j][k][l] + eps );
+                    ;
                 }
                 else {
                     phiSample[j][k][l] = 1.0;
@@ -492,15 +356,13 @@ void Mesh::ReconstructSlopesU( unsigned nq, VectorVector& psiDerX, VectorVector&
 
             // step 4: find minimum limiter function phi
             phi = min( phiSample[j][k] );
-            //phi = fmin( 0.5, abs(phi) );
+            // phi = fmin( 0.5, abs(phi) );
 
             // step 5: limit the slope reconstructed from Gauss theorem
             psiDerX[j][k] *= phi;
             psiDerY[j][k] *= phi;
-
         }
     }
-
 }
 
 void Mesh::ComputeBounds() {
@@ -517,7 +379,6 @@ const std::vector<Vector>& Mesh::GetNodes() const { return _nodes; }
 const std::vector<Vector>& Mesh::GetCellMidPoints() const { return _cellMidPoints; }
 const std::vector<std::vector<unsigned>>& Mesh::GetCells() const { return _cells; }
 const std::vector<double>& Mesh::GetCellAreas() const { return _cellAreas; }
-const std::vector<unsigned>& Mesh::GetPartitionIDs() const { return _colors; }
 const std::vector<std::vector<unsigned>>& Mesh::GetNeighbours() const { return _cellNeighbors; }
 const std::vector<std::vector<Vector>>& Mesh::GetNormals() const { return _cellNormals; }
 const std::vector<BOUNDARY_TYPE>& Mesh::GetBoundaryTypes() const { return _cellBoundaryTypes; }

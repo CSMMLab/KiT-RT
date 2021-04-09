@@ -3,15 +3,15 @@
 
 #include "solvers/solverbase.h"
 
-class SNSolver : public Solver
+class SNSolver : public SolverBase
 {
   protected:
-    Matrix _scatteringKernel; /*!  @brief scattering kernel for the quadrature */
+    Matrix _scatteringKernel; /*!<  @brief scattering kernel for the quadrature */
 
     // quadrature related numbers
 
-    VectorVector _quadPoints; /*!  @brief quadrature points, dim(_quadPoints) = (_nq,spatialDim) */
-    Vector _weights;          /*!  @brief quadrature weights, dim(_weights) = (_nq) */
+    VectorVector _quadPoints; /*!<  @brief quadrature points, dim(_quadPoints) = (_nq,spatialDim) */
+    Vector _weights;          /*!<  @brief quadrature weights, dim(_weights) = (_nq) */
 
   public:
     /*! @brief SNSolver constructor
@@ -30,10 +30,10 @@ class SNSolver : public Solver
     void virtual FVMUpdate( unsigned idx_energy ) override;
     void virtual FluxUpdate() override;
     void virtual IterPreprocessing( unsigned idx_pseudotime ) override;
-    void virtual IterPostprocessing() override;
+    void virtual IterPostprocessing( unsigned idx_pseudotime ) override;
 
     // Helper
-    void ComputeRadFlux();
+    void ComputeRadFlux() override;
 
     // --- Member variables ---
 };

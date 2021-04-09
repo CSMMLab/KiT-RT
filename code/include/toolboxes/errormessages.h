@@ -1,11 +1,11 @@
 /*!
- * \file CRTSNError.h
+ * \file errormessages.h
  * \brief Class to handle Error Messages
  * \author S. Schotthoefer
  */
 
-#ifndef CRTSNERROR_H
-#define CRTSNERROR_H
+#ifndef ERRORMESSAGES_H
+#define ERRORMESSAGES_H
 
 #include "spdlog/spdlog.h"
 
@@ -106,7 +106,7 @@ class ErrorMessages
     }
 };
 
-#endif    // CRTSNERROR_H
+#endif    // ERRORMESSAGES_H
 
 /* Depending on the compiler, define the correct macro to get the current function name */
 

@@ -1,7 +1,6 @@
 ﻿/*!
- * \file GlobalConstants.h
+ * \file globalconstants.h
  * \brief All global defined (physical) constants, enums etc
- * \author <blank>
  * \version 0.0
  *
  */
@@ -59,6 +58,7 @@ enum QUAD_NAME {
     QUAD_MonteCarlo,
     QUAD_GaussLegendreTensorized,
     QUAD_GaussLegendre1D,
+    QUAD_GaussLegendreTensorized2D,
     QUAD_LevelSymmetric,
     QUAD_Lebedev,
     QUAD_LDFESA,

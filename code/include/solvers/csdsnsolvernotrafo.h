@@ -8,14 +8,14 @@ class Physics;
 class CSDSNSolverNoTrafo : public SNSolver
 {
   private:
-    std::vector<double> _dose; /*! @brief: TODO */
+    std::vector<double> _dose; /*!< @brief TODO */
 
     // Physics acess
-    Vector _energies; /*! @brief: energy levels for CSD, lenght = _nEnergies */
-    Vector _angle;    /*! @brief: angles for SN */
+    Vector _energies; /*!< @brief energy levels for CSD, lenght = _nEnergies */
+    Vector _angle;    /*!< @brief angles for SN */
 
-    std::vector<Matrix> _sigmaSE; /*!  @brief scattering cross section for all energies*/
-    Vector _sigmaTE;              /*!  @brief total cross section for all energies*/
+    std::vector<Matrix> _sigmaSE; /*!<  @brief scattering cross section for all energies*/
+    Vector _sigmaTE;              /*!<  @brief total cross section for all energies*/
 
   public:
     /**

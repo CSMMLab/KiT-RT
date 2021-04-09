@@ -1,6 +1,6 @@
 /*!
  * @file config.h
- * @brief: Class to handle all options and their pre and postprocessing.
+ * @brief Class to handle all options and their pre and postprocessing.
  *         DO NOT CREATE SETTERS FOR THIS CLASS! ALL OPTIONS ARE CONSTANT (after SetPostprocessing).
  *
  * @author S. Schotthöfer
@@ -27,7 +27,7 @@ class OptionBase;
 class Config
 {
   private:
-    std::string _fileName; /*!< @rief Name of the current file without extension */
+    std::string _fileName; /*!< @brief Name of the current file without extension */
     bool _baseConfig;
 
     // int _commRank, _commSize; /*!< @brief MPI rank and size.*/    // Not yet used!!
@@ -48,8 +48,8 @@ class Config
     unsigned _nQuadPoints;
 
     // Mesh
-    unsigned _nCells;    /*!< @brief: Number of cells in the mesh */
-    unsigned short _dim; /*!< @brief: spatial dimensionality of the mesh/test case */
+    unsigned _nCells;    /*!< @brief Number of cells in the mesh */
+    unsigned short _dim; /*!< @brief spatial dimensionality of the mesh/test case */
 
     // Boundary Conditions
     /*!< @brief List of all Pairs (marker, BOUNDARY_TYPE), e.g. (farfield,DIRICHLET).
@@ -95,7 +95,7 @@ class Config
     KERNEL_NAME _kernelName; /*!< @brief Scattering Kernel Name*/
 
     // Spherical Basis
-    SPHERICAL_BASIS_NAME _sphericalBasisName; /*!< @brief: Name of the basis on the unit sphere */
+    SPHERICAL_BASIS_NAME _sphericalBasisName; /*!< @brief Name of the basis on the unit sphere */
 
     // Optimizer
     OPTIMIZER_NAME _entropyOptimizerName; /*!< @brief Choice of optimizer */
@@ -106,7 +106,7 @@ class Config
     bool _newtonFastMode;                 /*!< @brief If true, we skip the NewtonOptimizer for quadratic entropy and assign alpha = u */
 
     // NeuralModel
-    unsigned short _neuralModel; /*!< @brief:  Version number of the employed neural model */
+    unsigned short _neuralModel; /*!< @brief  Version number of the employed neural model */
     // Output Options
     unsigned short _nVolumeOutput;            /*!< @brief Number of volume outputs */
     std::vector<VOLUME_OUTPUT> _volumeOutput; /*!< @brief Output groups for volume output*/
@@ -125,8 +125,9 @@ class Config
     bool _dataGeneratorMode;
     unsigned long _tainingSetSize;    /*!< @brief Size of training data set for data generator */
     unsigned long _maxValFirstMoment; /*!< @brief Size of training data set for data generator */
-    double _RealizableSetEpsilonU0;   /*! @brief Distance to 0 of the sampled moments to the boundary of the realizable set */
-    double _RealizableSetEpsilonU1;   /*!< @brief: norm(u_1)/u_0 !< _RealizableSetEpsilonU1 */
+    double _RealizableSetEpsilonU0;   /*!< @brief Distance to 0 of the sampled moments to the boundary of the realizable set */
+    double _RealizableSetEpsilonU1;   /*!< @brief norm(u_1)/u_0 !< _RealizableSetEpsilonU1 */
+    bool _normalizedSampling;         /*!< @brief Flag for sampling of normalized moments, i.e. u_0 =1 */
 
     // --- Parsing Functionality and Initializing of Options ---
     /*!
@@ -162,9 +163,9 @@ class Config
 
     /*!
      * @brief breaks an input line from the config file into a set of tokens
-     * @param[in] str - the input line string
-     * @param[out] option_name - the name of the option found at the beginning of the line
-     * @param[out] option_value - the tokens found after the "=" sign on the line
+     * @param str the input line string
+     * @param option_name the name of the option found at the beginning of the line
+     * @param option_value the tokens found after the "=" sign on the line
      * @return false if the line is empty or a commment, true otherwise
      */
     bool TokenizeString( std::string& str, std::string& option_name, std::vector<std::string>& option_value );
@@ -298,7 +299,7 @@ class Config
     unsigned short inline GetNeuralModel() { return _neuralModel; }
 
     // Boundary Conditions
-    BOUNDARY_TYPE GetBoundaryType( std::string nameMarker ) const; /*! @brief Get Boundary Type of given marker */
+    BOUNDARY_TYPE GetBoundaryType( std::string nameMarker ) const; /*!< @brief Get Boundary Type of given marker */
 
     // Scattering Kernel
     KERNEL_NAME inline GetKernelName() const { return _kernelName; }
@@ -324,14 +325,17 @@ class Config
     unsigned long inline GetMaxValFirstMoment() { return _maxValFirstMoment; }
     double GetRealizableSetEpsilonU0() { return _RealizableSetEpsilonU0; }
     double GetRealizableSetEpsilonU1() { return _RealizableSetEpsilonU1; }
+    bool inline GetNormalizedSampling() { return _normalizedSampling; }
 
     // ---- Setters for option structure
     // This section is dangerous
     // Quadrature Structure
-    void SetNQuadPoints( unsigned nq ) { _nQuadPoints = nq; }           /*! @brief Never change the nq! This is only for the test framework. */
-    void SetQuadName( QUAD_NAME quadName ) { _quadName = quadName; }    /*! @brief Never change the quadName! This is only for the test framework. */
-    void SetQuadOrder( unsigned quadOrder ) { _quadOrder = quadOrder; } /*! @brief Never change the quadOrder! This is only for the test framework. */
-    void SetSNAllGaussPts( bool useall ) { _allGaussPts = useall; }     /*! @brief Never change the this! This is only for the test framework. */
+    void SetNQuadPoints( unsigned nq ) { _nQuadPoints = nq; }        /*!< @brief Never change the nq! This is only for the test framework. */
+    void SetQuadName( QUAD_NAME quadName ) { _quadName = quadName; } /*!< @brief Never change the quadName! This is only for the test framework. */
+    void SetQuadOrder( unsigned quadOrder ) {
+        _quadOrder = quadOrder;
+    }                                                               /*!< @brief Never change the quadOrder! This is only for the test framework. */
+    void SetSNAllGaussPts( bool useall ) { _allGaussPts = useall; } /*!< @brief Never change the this! This is only for the test framework. */
     // Mesh Structure
     void SetNCells( unsigned nCells ) { _nCells = nCells; }
 };

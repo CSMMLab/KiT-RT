@@ -24,22 +24,22 @@ SphericalMonomials::SphericalMonomials( unsigned L_degree, unsigned short spatia
 Vector SphericalMonomials::ComputeSphericalBasis( double my, double phi ) {
 
     switch( _spatialDim ) {
-        case 1: return ComputeSphericalBasis1D( my, phi ); break;
+        case 1: return ComputeSphericalBasis1D( my ); break;
         case 2: return ComputeSphericalBasis2D( my, phi ); break;
         default: return ComputeSphericalBasis3D( my, phi ); break;
     }
 }
 
-Vector SphericalMonomials::ComputeSphericalBasis1D( double my, double phi ) {
+Vector SphericalMonomials::ComputeSphericalBasis1D( double my ) {
     unsigned idx_vector = 0;
     unsigned a;
-    double omega_X;
+    double omega_Z;
     // go over all degrees of polynomials
     for( unsigned idx_degree = 0; idx_degree <= _LMaxDegree; idx_degree++ ) {
         // elem = Omega_x^a : a = idx_degree
-        omega_X             = Omega_x( my, phi );
+        omega_Z             = Omega_z( my );
         a                   = idx_degree;    // a uniquely defined
-        _YBasis[idx_vector] = Power( omega_X, a );
+        _YBasis[idx_vector] = Power( omega_Z, a );
         idx_vector++;
     }
     return _YBasis;
@@ -66,15 +66,14 @@ Vector SphericalMonomials::ComputeSphericalBasis2D( double my, double phi ) {
 
 Vector SphericalMonomials::ComputeSphericalBasis3D( double my, double phi ) {
     unsigned idx_vector = 0;
-    double omega_X, omega_Y, omega_Z;
     unsigned a, b, c;
 
+    double omega_X = Omega_x( my, phi );
+    double omega_Y = Omega_y( my, phi );
+    double omega_Z = Omega_z( my );
     // go over all degrees of polynomials
     for( unsigned idx_degree = 0; idx_degree <= _LMaxDegree; idx_degree++ ) {
         // elem = Omega_x^a+ Omega_y^b +Omega_z^c : a+b+c = idx_degree
-        omega_X = Omega_x( my, phi );
-        omega_Y = Omega_y( my, phi );
-        omega_Z = Omega_z( my );
         for( a = 0; a <= idx_degree; a++ ) {
             for( b = 0; b <= idx_degree - a; b++ ) {
                 c                   = idx_degree - a - b;    // c uniquely defined
@@ -131,9 +130,9 @@ double SphericalMonomials::Omega_y( double my, double phi ) { return sqrt( 1 - m
 double SphericalMonomials::Omega_z( double my ) { return my; }
 
 double SphericalMonomials::Power( double basis, unsigned exponent ) {
-    if( exponent == 0 ) return 1.0;
-    double result = basis;
-    for( unsigned i = 1; i < exponent; i++ ) {
+    if( exponent == 0 ) return 1.0;               // basis^0
+    double result = basis;                        // basis^1
+    for( unsigned i = 1; i < exponent; i++ ) {    // exp> 1
         result = result * basis;
     }
     return result;

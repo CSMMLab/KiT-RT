@@ -404,8 +404,8 @@ void ICRU::SPLINE( const std::vector<double>& X,
     if( N < 4 ) {
         ErrorMessages::Error( "Too few points", CURRENT_FUNCTION );
     }
-    unsigned N1 = N - 2;
-    unsigned N2 = N - 3;
+    unsigned N1 = N - 1;
+    unsigned N2 = N - 2;
 
     A.resize( N );
     B.resize( N );
@@ -423,21 +423,21 @@ void ICRU::SPLINE( const std::vector<double>& X,
 
     for( unsigned I = 0; I < N2; ++I ) {
         B[I]       = 2.0e0 * ( A[I] + A[I + 1] );
-        unsigned K = N1 - I;
+        unsigned K = N1 - I - 1;
         D[K]       = 6.0e0 * ( D[K] - D[K - 1] );
     }
     D[1] -= A[0] * S1;
-    D[N1] = D[N1] - A[N1] * SN;
+    D[N1 - 1] -= A[N1 - 1] * SN;
 
-    for( unsigned I = 1; I < N2 + 1; ++I ) {
+    for( unsigned I = 1; I < N2; ++I ) {
         double R = A[I] / B[I - 1];
         B[I] -= R * A[I];
         D[I + 1] -= R * D[I];
     }
 
-    D[N1] = D[N1] / B[N2];
+    D[N1 - 1] /= B[N2 - 1];
     for( unsigned I = 1; I < N2; ++I ) {
-        unsigned K = N1 - I;
+        unsigned K = N1 - I - 1;
         D[K]       = ( D[K] - A[K] * D[K + 1] ) / B[K - 1];
     }
     D[N - 1] = SN;
@@ -473,7 +473,7 @@ void ICRU::FINDI( std::vector<double> X, double XC, unsigned N, unsigned& I ) {
         return;
     }
     I           = 0;
-    unsigned I1 = N;
+    unsigned I1 = N - 1;
     while( I1 - I > 1 ) {
         double IT = ( I + I1 ) / 2;
         if( XC > X[IT] )

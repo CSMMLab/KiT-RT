@@ -17,11 +17,11 @@
 
 #include <iostream>
 
-MNSolver::MNSolver( Config* settings ) : Solver( settings ) {
+MNSolver::MNSolver( Config* settings ) : SolverBase( settings ) {
 
-    _LMaxDegree    = settings->GetMaxMomentDegree();
-    _basis         = SphericalBase::Create( _settings );
-    _nTotalEntries = _basis->GetBasisSize();
+    _polyDegreeBasis = settings->GetMaxMomentDegree();
+    _basis           = SphericalBase::Create( _settings );
+    _nSystem         = _basis->GetBasisSize();
 
     // build quadrature object and store quadrature points and weights
     _quadPoints = _quadrature->GetPoints();
@@ -31,11 +31,11 @@ MNSolver::MNSolver( Config* settings ) : Solver( settings ) {
     //_settings->SetNQuadPoints( _nq );
 
     // Initialize temporary storages of alpha derivatives
-    _solDx = VectorVector( _nCells, Vector( _nTotalEntries, 0.0 ) );
-    _solDy = VectorVector( _nCells, Vector( _nTotalEntries, 0.0 ) );
+    _solDx = VectorVector( _nCells, Vector( _nSystem, 0.0 ) );
+    _solDy = VectorVector( _nCells, Vector( _nSystem, 0.0 ) );
 
     // Initialize Scatter Matrix --
-    _scatterMatDiag = Vector( _nTotalEntries, 0.0 );
+    _scatterMatDiag = Vector( _nSystem, 0.0 );
     ComputeScatterMatrix();
 
     // Initialize Entropy
@@ -45,10 +45,10 @@ MNSolver::MNSolver( Config* settings ) : Solver( settings ) {
     _optimizer = OptimizerBase::Create( _settings );
 
     // Initialize lagrange Multiplier
-    _alpha = VectorVector( _nCells, Vector( _nTotalEntries, 0.0 ) );
+    _alpha = VectorVector( _nCells, Vector( _nSystem, 0.0 ) );
 
     // Initialize and Pre-Compute Moments at quadrature points
-    _moments = VectorVector( _nq, Vector( _nTotalEntries, 0.0 ) );
+    _moments = VectorVector( _nq, Vector( _nSystem, 0.0 ) );
 
     ComputeMoments();
 }
@@ -63,7 +63,7 @@ void MNSolver::ComputeScatterMatrix() {
 
     // --- Isotropic ---
     _scatterMatDiag[0] = -1.0;
-    for( unsigned idx_diag = 1; idx_diag < _nTotalEntries; idx_diag++ ) {
+    for( unsigned idx_diag = 1; idx_diag < _nSystem; idx_diag++ ) {
         _scatterMatDiag[idx_diag] = 0.0;
     }
 }
@@ -84,11 +84,11 @@ Vector MNSolver::ConstructFlux( unsigned idx_cell ) {
     //--- Integration of moments of flux ---
     double entropyL, entropyR, entropyFlux;
 
-    Vector flux( _nTotalEntries, 0.0 );
+    Vector flux( _nSystem, 0.0 );
 
     //--- Temporary storages of reconstructed alpha ---
-    Vector alphaL( _nTotalEntries, 0.0 );
-    Vector alphaR( _nTotalEntries, 0.0 );
+    Vector alphaL( _nSystem, 0.0 );
+    Vector alphaR( _nSystem, 0.0 );
 
     for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
         entropyFlux = 0.0;    // reset temorary flux
@@ -152,7 +152,7 @@ void MNSolver::IterPreprocessing( unsigned /*idx_pseudotime*/ ) {
     }
 }
 
-void MNSolver::IterPostprocessing() {
+void MNSolver::IterPostprocessing( unsigned /*idx_iter*/ ) {
     // --- Update Solution ---
     _sol = _solNew;
 
@@ -170,7 +170,7 @@ void MNSolver::ComputeRadFlux() {
 
 void MNSolver::FluxUpdate() {
     if( _reconsOrder > 1 ) {
-        _mesh->ReconstructSlopesU( _nTotalEntries, _solDx, _solDy, _alpha );    // unstructured reconstruction
+        _mesh->ReconstructSlopesU( _nSystem, _solDx, _solDy, _alpha );    // unstructured reconstruction
     }
 
 // Loop over the grid cells
@@ -182,19 +182,19 @@ void MNSolver::FluxUpdate() {
     }
 }
 
-void MNSolver::FVMUpdate( unsigned idx_energy ) {
+void MNSolver::FVMUpdate( unsigned idx_iter ) {
     // Loop over the grid cells
     //#pragma omp parallel for
     for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
         // Dirichlet Boundaries stay
         if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::DIRICHLET ) continue;
         // Flux update
-        for( unsigned idx_system = 0; idx_system < _nTotalEntries; idx_system++ ) {
+        for( unsigned idx_system = 0; idx_system < _nSystem; idx_system++ ) {
             _solNew[idx_cell][idx_system] = _sol[idx_cell][idx_system] -
                                             ( _dE / _areas[idx_cell] ) * _solNew[idx_cell][idx_system] /* cell averaged flux */
                                             - _dE * _sol[idx_cell][idx_system] *
-                                                  ( _sigmaT[idx_energy][idx_cell]                                    /* absorbtion influence */
-                                                    + _sigmaS[idx_energy][idx_cell] * _scatterMatDiag[idx_system] ); /* scattering influence */
+                                                  ( _sigmaT[idx_iter][idx_cell]                                    /* absorbtion influence */
+                                                    + _sigmaS[idx_iter][idx_cell] * _scatterMatDiag[idx_system] ); /* scattering influence */
         }
         // Source Term
         _solNew[idx_cell][0] += _dE * _Q[0][idx_cell][0];
@@ -224,11 +224,11 @@ void MNSolver::PrepareVolumeOutput() {
 
             case MOMENTS:
                 // As many entries as there are moments in the system
-                _outputFields[idx_group].resize( _nTotalEntries );
-                _outputFieldNames[idx_group].resize( _nTotalEntries );
+                _outputFields[idx_group].resize( _nSystem );
+                _outputFieldNames[idx_group].resize( _nSystem );
 
                 if( _settings->GetSphericalBasisName() == SPHERICAL_HARMONICS ) {
-                    for( int idx_l = 0; idx_l <= (int)_LMaxDegree; idx_l++ ) {
+                    for( int idx_l = 0; idx_l <= (int)_polyDegreeBasis; idx_l++ ) {
                         for( int idx_k = -idx_l; idx_k <= idx_l; idx_k++ ) {
                             _outputFields[idx_group][_basis->GetGlobalIndexBasis( idx_l, idx_k )].resize( _nCells );
                             _outputFieldNames[idx_group][_basis->GetGlobalIndexBasis( idx_l, idx_k )] =
@@ -237,7 +237,7 @@ void MNSolver::PrepareVolumeOutput() {
                     }
                 }
                 else {
-                    for( unsigned idx_l = 0; idx_l <= _LMaxDegree; idx_l++ ) {
+                    for( unsigned idx_l = 0; idx_l <= _polyDegreeBasis; idx_l++ ) {
                         unsigned maxOrder_k = _basis->GetCurrDegreeSize( idx_l );
                         for( unsigned idx_k = 0; idx_k < maxOrder_k; idx_k++ ) {
                             _outputFields[idx_group][_basis->GetGlobalIndexBasis( idx_l, idx_k )].resize( _nCells );
@@ -250,11 +250,11 @@ void MNSolver::PrepareVolumeOutput() {
 
             case DUAL_MOMENTS:
                 // As many entries as there are moments in the system
-                _outputFields[idx_group].resize( _nTotalEntries );
-                _outputFieldNames[idx_group].resize( _nTotalEntries );
+                _outputFields[idx_group].resize( _nSystem );
+                _outputFieldNames[idx_group].resize( _nSystem );
 
                 if( _settings->GetSphericalBasisName() == SPHERICAL_HARMONICS ) {
-                    for( int idx_l = 0; idx_l <= (int)_LMaxDegree; idx_l++ ) {
+                    for( int idx_l = 0; idx_l <= (int)_polyDegreeBasis; idx_l++ ) {
                         for( int idx_k = -idx_l; idx_k <= idx_l; idx_k++ ) {
                             _outputFields[idx_group][_basis->GetGlobalIndexBasis( idx_l, idx_k )].resize( _nCells );
                             _outputFieldNames[idx_group][_basis->GetGlobalIndexBasis( idx_l, idx_k )] =
@@ -263,7 +263,7 @@ void MNSolver::PrepareVolumeOutput() {
                     }
                 }
                 else {
-                    for( int idx_l = 0; idx_l <= (int)_LMaxDegree; idx_l++ ) {
+                    for( int idx_l = 0; idx_l <= (int)_polyDegreeBasis; idx_l++ ) {
                         unsigned maxOrder_k = _basis->GetCurrDegreeSize( idx_l );
                         for( unsigned idx_k = 0; idx_k < maxOrder_k; idx_k++ ) {
                             _outputFields[idx_group][_basis->GetGlobalIndexBasis( idx_l, idx_k )].resize( _nCells );
@@ -287,12 +287,12 @@ void MNSolver::PrepareVolumeOutput() {
     }
 }
 
-void MNSolver::WriteVolumeOutput( unsigned idx_pseudoTime ) {
+void MNSolver::WriteVolumeOutput( unsigned idx_iter ) {
     unsigned nGroups = (unsigned)_settings->GetNVolumeOutput();
 
     // Check if volume output fields are written to file this iteration
-    if( ( _settings->GetVolumeOutputFrequency() != 0 && idx_pseudoTime % (unsigned)_settings->GetVolumeOutputFrequency() == 0 ) ||
-        ( idx_pseudoTime == _nEnergies - 1 ) /* need sol at last iteration */ ) {
+    if( ( _settings->GetVolumeOutputFrequency() != 0 && idx_iter % (unsigned)_settings->GetVolumeOutputFrequency() == 0 ) ||
+        ( idx_iter == _nEnergies - 1 ) /* need sol at last iteration */ ) {
 
         for( unsigned idx_group = 0; idx_group < nGroups; idx_group++ ) {
             switch( _settings->GetVolumeOutput()[idx_group] ) {
@@ -302,14 +302,14 @@ void MNSolver::WriteVolumeOutput( unsigned idx_pseudoTime ) {
                     }
                     break;
                 case MOMENTS:
-                    for( unsigned idx_sys = 0; idx_sys < _nTotalEntries; idx_sys++ ) {
+                    for( unsigned idx_sys = 0; idx_sys < _nSystem; idx_sys++ ) {
                         for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
                             _outputFields[idx_group][idx_sys][idx_cell] = _sol[idx_cell][idx_sys];
                         }
                     }
                     break;
                 case DUAL_MOMENTS:
-                    for( unsigned idx_sys = 0; idx_sys < _nTotalEntries; idx_sys++ ) {
+                    for( unsigned idx_sys = 0; idx_sys < _nSystem; idx_sys++ ) {
                         for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
                             _outputFields[idx_group][idx_sys][idx_cell] = _alpha[idx_cell][idx_sys];
                         }
@@ -319,10 +319,10 @@ void MNSolver::WriteVolumeOutput( unsigned idx_pseudoTime ) {
                     // Compute total "mass" of the system ==> to check conservation properties
                     for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
 
-                        double time = idx_pseudoTime * _dE;
+                        double time = idx_iter * _dE;
 
                         _outputFields[idx_group][0][idx_cell] = _problem->GetAnalyticalSolution(
-                            _mesh->GetCellMidPoints()[idx_cell][0], _mesh->GetCellMidPoints()[idx_cell][1], time, _sigmaS[idx_pseudoTime][idx_cell] );
+                            _mesh->GetCellMidPoints()[idx_cell][0], _mesh->GetCellMidPoints()[idx_cell][1], time, _sigmaS[idx_iter][idx_cell] );
                     }
                     break;
 

@@ -1,5 +1,5 @@
 /*!
- * \file Config.cpp
+ * \file config.cpp
  * \brief Class for different Options in rtsn
  * \author S. Schotthoefer
  *
@@ -198,7 +198,7 @@ void Config::SetConfigOptions() {
 
     /* BEGIN_CONFIG_OPTIONS */
 
-    /*! @par CONFIG_CATEGORY: Problem Definition @ingroup Config */
+    /*! @par CONFIG_CATEGORY: Problem Definition \ingroup Config */
     /*--- Options related to problem definition and partitioning ---*/
 
     // File Structure related options
@@ -216,8 +216,9 @@ void Config::SetConfigOptions() {
     AddStringOption( "CT_FILE", _ctFile, string( "../tests/input/phantom.png" ) );
 
     // Quadrature relatated options
-    /*! @brief QUAD_TYPE \n DESCRIPTION: Type of Quadrature rule \n Options: see @link QUAD_NAME \endlink \n DEFAULT: QUAD_MonteCarlo \ingroup
-     * Config*/
+    /*! @brief QUAD_TYPE \n DESCRIPTION: Type of Quadrature rule \n Options: see @link QUAD_NAME \endlink \n DEFAULT: QUAD_MonteCarlo
+     * \ingroup Config
+     */
     AddEnumOption( "QUAD_TYPE", _quadName, Quadrature_Map, QUAD_MonteCarlo );
     /*!\brief QUAD_ORDER \n DESCRIPTION: Order of Quadrature rule \n DEFAULT 2 \ingroup Config.*/
     AddUnsignedShortOption( "QUAD_ORDER", _quadOrder, 1 );
@@ -259,10 +260,10 @@ void Config::SetConfigOptions() {
 
     // Linesource Testcase Options
     /*! @brief SCATTER_COEFF \n DESCRIPTION: Sets the scattering coefficient for the Linesource test case. \n DEFAULT 0.0 \ingroup Config */
-    AddDoubleOption( "SCATTER_COEFF", _sigmaS, 0.0 );
+    AddDoubleOption( "SCATTER_COEFF", _sigmaS, 1.0 );
 
     // CSD related options
-    /*! @brief: MAX_ENERGY_CSD \n DESCRIPTION: Sets maximum energy for the CSD simulation.\n DEFAULT \ingroup Config */
+    /*! @brief MAX_ENERGY_CSD \n DESCRIPTION: Sets maximum energy for the CSD simulation.\n DEFAULT \ingroup Config */
     AddDoubleOption( "MAX_ENERGY_CSD", _maxEnergyCSD, 5.0 );
 
     // Entropy related options
@@ -278,8 +279,8 @@ void Config::SetConfigOptions() {
     AddUnsignedLongOption( "NEWTON_ITER", _newtonIter, 100 );
     /*! @brief Step Size Newton Optmizers \n DESCRIPTION: Step size for Newton optimizer \n DEFAULT 10 \ingroup Config */
     AddDoubleOption( "NEWTON_STEP_SIZE", _newtonStepSize, 0.1 );
-    /*! @brief Max Iter for line search in Newton Optmizers \n DESCRIPTION: Max number of line search iter for newton optimizer \n DEFAULT 10 \ingroup
-     * Config */
+    /*! @brief Max Iter for line search in Newton Optmizers \n DESCRIPTION: Max number of line search iter for newton optimizer \n DEFAULT 10
+     * \ingroup Config */
     AddUnsignedLongOption( "NEWTON_LINE_SEARCH_ITER", _newtonLineSearchIter, 100 );
     /*! @brief Newton Fast mode \n DESCRIPTION:  If true, we skip the Newton optimizer for Quadratic entropy and set alpha = u \n DEFAULT false
      * \ingroup Config */
@@ -330,6 +331,9 @@ void Config::SetConfigOptions() {
     /*! @brief norm(u_1)/u_0 is enforced to be smaller than _RealizableSetEpsilonU1 \n DESCRIPTION: Distance to the boundary of the realizable set  \n
      * DEFAULT 0.1 \ingroup Config */
     AddDoubleOption( "REALIZABLE_SET_EPSILON_U1", _RealizableSetEpsilonU1, 0.9 );
+    /*! @brief Flag for sampling of normalized moments, i.e. u_0 =1  \n DESCRIPTION: Flag for sampling of normalized moments, i.e. u_0 =1  \n
+     * DEFAULT False \ingroup Config */
+    AddBoolOption( "NORMALIZED_SAMPLING", _normalizedSampling, false );
 }
 
 void Config::SetConfigParsing( string case_filename ) {
@@ -690,7 +694,7 @@ bool Config::TokenizeString( string& str, string& option_name, vector<string>& o
     pos = str.find( "=" );
     if( pos == string::npos ) {
         string errmsg = "Error in Config::TokenizeString(): line in the configuration file with no \"=\" sign.  ";
-        errmsg += "\nLook for: \n  str.length() = " + str.length();
+        errmsg += "\nLook for: \n  str.length() = " + std::to_string(str.length());
         spdlog::error( errmsg );
         throw( -1 );
     }

@@ -3,7 +3,7 @@
 UpwindFlux::UpwindFlux() : NumericalFlux() {}
 
 double UpwindFlux::Flux( const Vector& Omega, double psiL, double psiR, const Vector& n ) const {
-    double inner = Omega[0] * n[0] + Omega[1] * n[1];
+    double inner = Omega[0] * n[0] + Omega[1] * n[1]; // Only use x and y axis in 2d case
     if( inner > 0 ) {
         return inner * psiL;
     }
@@ -11,21 +11,6 @@ double UpwindFlux::Flux( const Vector& Omega, double psiL, double psiR, const Ve
         return inner * psiR;
     }
 }
-
-/**
- * @brief Flux      : Computes <Linear> upwinding scheme for given flux jacobians of the PN Solver at a given edge and stores it in
- *                    resultFlux
- * @param AxPlus    : Positive part of the flux jacobian in x direction
- * @param AxMinus   : Negative part of the flux jacobian in x direction
- * @param AyPlus    : Positive part of the flux jacobian in y direction
- * @param AyMinus   : Negative part of the flux jacobian in y direction
- * @param AzPlus    : Positive part of the flux jacobian in z direction
- * @param AzMinus   : Negative part of the flux jacobian in z direction
- * @param psiL      : Solution state of left hand side control volume
- * @param psiR      : Solution state of right hand side control volume
- * @param n         : Normal vector at the edge between left and right control volume
- * @return resultFlux: Vector with resulting flux.
- */
 
 Vector UpwindFlux::Flux( const Matrix AxPlus,
                          const Matrix AxMinus,
@@ -57,21 +42,6 @@ Vector UpwindFlux::Flux( const Matrix AxPlus,
     return resultFlux;
 }
 
-/**
- * @brief Flux      : Computes <VanLeer> upwinding scheme for given flux jacobians of the PN Solver at a given edge and stores it in
- *                    resultFlux
- * @param AxPlus    : Positive part of the flux jacobian in x direction
- * @param AxMinus   : Negative part of the flux jacobian in x direction
- * @param AyPlus    : Positive part of the flux jacobian in y direction
- * @param AyMinus   : Negative part of the flux jacobian in y direction
- * @param AzPlus    : Positive part of the flux jacobian in z direction
- * @param AzMinus   : Negative part of the flux jacobian in z direction
- * @param psiL      : Solution state of left hand side control volume
- * @param psiR      : Solution state of right hand side control volume
- * @param n         : Normal vector at the edge between left and right control volume
- * @param resultFlux: Vector with resulting flux.
- * @return          : void
- */
 void UpwindFlux::FluxVanLeer( const Matrix& Ax,
                               const Matrix& AxAbs,
                               const Matrix& /*Ay*/,

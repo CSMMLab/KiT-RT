@@ -1,6 +1,6 @@
 /*!
  * @file: reconstructor.h
- * @brief: Class to create second order (in space) schemes for the advection solver.
+ * @brief Class to create second order (in space) schemes for the advection solver.
  *         This class is currently unused. But in the future, the second order capabilities of the code
  *         may be stored here.
  * @author: T. Xiao
@@ -30,22 +30,14 @@ class Reconstructor
 
     /*! Method 1: structured developing
      * @brief Slope of angular flux psi inside a given cell
-     * @param Omega fixed ordinate for flux computation
-     * @param psiL left solution state
-     * @param psiR right solution state
-     * @param n scaled normal vector of given edge
+     * @param uL left solution state
+     * @param uC center solution state
+     * @param uR right solution state
+     * @param dxL left slope
+     * @param dxR right slope
+     * @param limiter name of the applied limiter (invalid argument results in disabled limiter)
      * @return reconstructed slope
      */
-
-    /** Method 2: unstructured developing
-     * @brief Slope of angular flux psi inside a given cell
-     * @param Omega fixed ordinate for flux computation
-     * @param psiL left solution state
-     * @param psiR right solution state
-     * @param n scaled normal vector of given edge
-     * @return reconstructed slope
-     */
-
     virtual double ReconstructSlopeStruct( double uL, double uC, double uR, double dxL, double dxR, std::string limiter ) const;
 };
 

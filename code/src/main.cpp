@@ -1,10 +1,11 @@
 /*! @file: main.cpp
- *  @brief: Main method to call the KiT-RT solver suite
+ *  @brief Main method to call the KiT-RT solver suite
  *  @author: J. Kusch, S. Schotthöfer, P. Stammer, J. Wolters, T. Xiao
  *  @version: 0.1
  */
 
 #include <Python.h>
+#define PY_ARRAY_UNIQUE_SYMBOL KITRT_ARRAY_API
 #include <mpi.h>
 #include <string>
 
@@ -12,7 +13,7 @@
 #include "common/io.h"
 #include "solvers/solverbase.h"
 
-#include "toolboxes/datagenerator.h"
+#include "toolboxes/datageneratorbase.h"
 
 #ifdef BUILD_GUI
 #include <QApplication>
@@ -42,13 +43,13 @@ int main( int argc, char** argv ) {
 
     if( config->GetDataGeneratorMode() ) {
         // Build Data generator
-        nnDataGenerator* datagen = new nnDataGenerator( config );
+        DataGeneratorBase* datagen = DataGeneratorBase::Create( config );
         // Generate Data and export
-        datagen->computeTrainingData();
+        datagen->ComputeTrainingData();
     }
     else {
         // Build solver
-        Solver* solver = Solver::Create( config );
+        SolverBase* solver = SolverBase::Create( config );
 
         // Run solver and export
         solver->Solve();

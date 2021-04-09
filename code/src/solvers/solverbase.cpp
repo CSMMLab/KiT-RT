@@ -18,7 +18,7 @@
 
 #include <mpi.h>
 
-Solver::Solver( Config* settings ) {
+SolverBase::SolverBase( Config* settings ) {
     _settings = settings;
 
     // @TODO save parameters from settings class
@@ -94,13 +94,13 @@ Solver::Solver( Config* settings ) {
     //_density = std::vector( _mesh->GetCellMidPoints().size(), 0.0 );
 }
 
-Solver::~Solver() {
+SolverBase::~SolverBase() {
     delete _quadrature;
     delete _mesh;
     delete _problem;
 }
 
-Solver* Solver::Create( Config* settings ) {
+SolverBase* SolverBase::Create( Config* settings ) {
     switch( settings->GetSolverName() ) {
         case SN_SOLVER: return new SNSolver( settings );
 
@@ -116,7 +116,7 @@ Solver* Solver::Create( Config* settings ) {
     return nullptr;    // This code is never reached. Just to disable compiler warnings.
 }
 
-void Solver::Solve() {
+void SolverBase::Solve() {
 
     // --- Preprocessing ---
 
@@ -146,7 +146,7 @@ void Solver::Solve() {
         FVMUpdate( iter );
 
         // --- Iter Postprocessing ---
-        IterPostprocessing();
+        IterPostprocessing( iter );
 
         // --- Solver Output ---
         WriteVolumeOutput( iter );
@@ -161,9 +161,9 @@ void Solver::Solve() {
     DrawPostSolverOutput();
 }
 
-void Solver::PrintVolumeOutput() const { ExportVTK( _settings->GetOutputFile(), _outputFields, _outputFieldNames, _mesh ); }
+void SolverBase::PrintVolumeOutput() const { ExportVTK( _settings->GetOutputFile(), _outputFields, _outputFieldNames, _mesh ); }
 
-void Solver::PrintVolumeOutput( int currEnergy ) const {
+void SolverBase::PrintVolumeOutput( int currEnergy ) const {
     if( _settings->GetVolumeOutputFrequency() != 0 && currEnergy % (unsigned)_settings->GetVolumeOutputFrequency() == 0 ) {
         ExportVTK( _settings->GetOutputFile() + "_" + std::to_string( currEnergy ), _outputFields, _outputFieldNames, _mesh );
     }
@@ -173,7 +173,7 @@ void Solver::PrintVolumeOutput( int currEnergy ) const {
 }
 
 // --- Helper ---
-double Solver::ComputeTimeStep( double cfl ) const {
+double SolverBase::ComputeTimeStep( double cfl ) const {
     double maxEdge = -1.0;
     for( unsigned j = 0; j < _nCells; j++ ) {
         for( unsigned l = 0; l < _normals[j].size(); l++ ) {
@@ -185,7 +185,7 @@ double Solver::ComputeTimeStep( double cfl ) const {
 }
 
 // --- IO ----
-void Solver::PrepareScreenOutput() {
+void SolverBase::PrepareScreenOutput() {
     unsigned nFields = (unsigned)_settings->GetNScreenOutput();
 
     _screenOutputFieldNames.resize( nFields );
@@ -212,7 +212,7 @@ void Solver::PrepareScreenOutput() {
     }
 }
 
-void Solver::WriteScalarOutput( unsigned iteration ) {
+void SolverBase::WriteScalarOutput( unsigned iteration ) {
 
     unsigned nFields = (unsigned)_settings->GetNScreenOutput();
     double mass      = 0.0;
@@ -251,7 +251,6 @@ void Solver::WriteScalarOutput( unsigned iteration ) {
                     _screenOutputFields[idx_field] = 1;
                 }
                 break;
-
             default: ErrorMessages::Error( "Screen output group not defined!", CURRENT_FUNCTION ); break;
         }
     }
@@ -314,7 +313,7 @@ void Solver::WriteScalarOutput( unsigned iteration ) {
     }
 }
 
-void Solver::PrintScreenOutput( unsigned iteration ) {
+void SolverBase::PrintScreenOutput( unsigned iteration ) {
     int rank;
     MPI_Comm_rank( MPI_COMM_WORLD, &rank );
     auto log = spdlog::get( "event" );
@@ -366,7 +365,7 @@ void Solver::PrintScreenOutput( unsigned iteration ) {
     }
 }
 
-void Solver::PrepareHistoryOutput() {
+void SolverBase::PrepareHistoryOutput() {
     unsigned nFields = (unsigned)_settings->GetNHistoryOutput();
 
     _historyOutputFieldNames.resize( nFields );
@@ -393,7 +392,7 @@ void Solver::PrepareHistoryOutput() {
     }
 }
 
-void Solver::PrintHistoryOutput( unsigned iteration ) {
+void SolverBase::PrintHistoryOutput( unsigned iteration ) {
     int rank;
     MPI_Comm_rank( MPI_COMM_WORLD, &rank );
     auto log = spdlog::get( "tabular" );
@@ -418,7 +417,7 @@ void Solver::PrintHistoryOutput( unsigned iteration ) {
     }
 }
 
-void Solver::DrawPreSolverOutput() {
+void SolverBase::DrawPreSolverOutput() {
     // MPI
     int rank;
     MPI_Comm_rank( MPI_COMM_WORLD, &rank );
@@ -463,7 +462,7 @@ void Solver::DrawPreSolverOutput() {
     }
 }
 
-void Solver::DrawPostSolverOutput() {
+void SolverBase::DrawPostSolverOutput() {
     // MPI
     int rank;
     MPI_Comm_rank( MPI_COMM_WORLD, &rank );
@@ -497,4 +496,4 @@ void Solver::DrawPostSolverOutput() {
     }
 }
 
-void Solver::SolverPreprocessing() {}
+void SolverBase::SolverPreprocessing() {}

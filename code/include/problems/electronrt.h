@@ -20,13 +20,18 @@ class ElectronRT : public ProblemBase
     ElectronRT( Config* settings, Mesh* mesh );
     virtual ~ElectronRT();
 
-    virtual VectorVector GetScatteringXS( const Vector& energies );
-    virtual VectorVector GetTotalXS( const Vector& energies );
-    virtual std::vector<Matrix> GetScatteringXSE( const Vector& energies, const Matrix& angles );
-    virtual Vector GetTotalXSE( const Vector& energies );
-    virtual std::vector<VectorVector> GetExternalSource( const Vector& energies );
-    virtual VectorVector SetupIC();
-    std::vector<double> GetDensity( const VectorVector& cellMidPoints );
+    VectorVector GetScatteringXS( const Vector& energies ) override;
+    VectorVector GetTotalXS( const Vector& energies ) override;
+    std::vector<Matrix> GetScatteringXSE( const Vector& energies, const Matrix& angles ) override;
+    /**
+     * @brief GetTotalXSE gives back vector of total cross sections for
+     *        energies in vector energy
+     * @param energies is the energy the cross section is queried for
+     */
+    Vector GetTotalXSE( const Vector& energies ) override;
+    std::vector<VectorVector> GetExternalSource( const Vector& energies ) override;
+    VectorVector SetupIC() override;
+    std::vector<double> GetDensity( const VectorVector& cellMidPoints ) override;
 };
 
 #endif    // ELECTRONRT_H

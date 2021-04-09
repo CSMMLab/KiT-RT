@@ -24,6 +24,8 @@ QuadratureBase* QuadratureBase::Create( Config* settings ) {
         case QUAD_MonteCarlo: return new QMonteCarlo( settings );
         case QUAD_GaussLegendreTensorized: return new QGaussLegendreTensorized( settings );
         case QUAD_GaussLegendre1D: return new QGaussLegendre1D( settings );
+        case QUAD_GaussLegendreTensorized2D: return new QGaussLegendreTensorized2D( settings );
+
         case QUAD_GaussChebyshev1D: return new QGaussChebyshev1D( settings );
         case QUAD_LevelSymmetric: return new QLevelSymmetric( settings );
         case QUAD_LDFESA: return new QLDFESA( settings );
@@ -52,7 +54,7 @@ QuadratureBase* QuadratureBase::Create( QUAD_NAME name, unsigned quadOrder ) {
     return nullptr;
 }
 
-double QuadratureBase::Integrate( double( f )( double x0, double x1, double x2 ) ) {
+double QuadratureBase::Integrate( double ( *f )( double, double, double ) ) {
     double result = 0.0;
     for( unsigned i = 0; i < _nq; i++ ) {
         result += _weights[i] * f( _points[i][0], _points[i][1], _points[i][2] );
@@ -60,7 +62,7 @@ double QuadratureBase::Integrate( double( f )( double x0, double x1, double x2 )
     return result;
 }
 
-double QuadratureBase::IntegrateSpherical( double( f )( double my, double phi ) ) {
+double QuadratureBase::IntegrateSpherical( double ( *f )( double, double ) ) {
     double result = 0.0;
     for( unsigned i = 0; i < _nq; i++ ) {
         result += _weights[i] * f( _pointsSphere[i][0], _pointsSphere[i][1] );
@@ -68,7 +70,7 @@ double QuadratureBase::IntegrateSpherical( double( f )( double my, double phi ) 
     return result;
 }
 
-std::vector<double> QuadratureBase::Integrate( std::vector<double>( f )( double x0, double x1, double x2 ), unsigned len ) {
+std::vector<double> QuadratureBase::Integrate( std::vector<double> ( *f )( double, double, double ), unsigned len ) {
     std::vector<double> result( len, 0.0 );
     std::vector<double> funcEval( len, 0.0 );
 

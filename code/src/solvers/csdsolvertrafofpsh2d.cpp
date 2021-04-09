@@ -95,7 +95,7 @@ CSDSolverTrafoFPSH2D::CSDSolverTrafoFPSH2D( Config* settings ) : SNSolver( setti
         blaze::column( Y, q ) = sph.ComputeSphericalBasis( _quadPointsSphere[q][0], _quadPointsSphere[q][1] );
     }
 
-    _O = Y;
+    //_O = Y;
     _O = blaze::trans( Y );
     _M = _O;    // transposed to simplify weight multiplication. We will transpose _M later again
 
@@ -357,16 +357,7 @@ void CSDSolverTrafoFPSH2D::WriteVolumeOutput( unsigned idx_pseudoTime ) {
                 case MEDICAL:
                     // Compute Dose
                     for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
-                        if( idx_cell > 0 ) {
-                            _outputFields[idx_group][0][idx_cell] +=
-                                0.5 * _dE *
-                                ( _fluxNew[idx_cell] * _s[_nEnergies - idx_pseudoTime - 1] + _flux[idx_cell] * _s[_nEnergies - idx_pseudoTime] ) /
-                                _density[idx_cell];    // update dose with trapezoidal rule
-                        }
-                        else {
-                            _outputFields[idx_group][0][idx_cell] +=
-                                _dE * _fluxNew[idx_cell] * _s[_nEnergies - idx_pseudoTime - 1] / _density[idx_cell];
-                        }
+                        _outputFields[idx_group][0][idx_cell] += _dose[idx_cell];
                     }
                     // Compute normalized dose
                     _outputFields[idx_group][1] = _outputFields[idx_group][0];
@@ -468,7 +459,8 @@ void CSDSolverTrafoFPSH2D::IterPreprocessing( unsigned idx_pseudotime ) {
     }
 }
 
-void CSDSolverTrafoFPSH2D::IterPostprocessing() {
+void CSDSolverTrafoFPSH2D::IterPostprocessing( unsigned idx_pseudotime ) {
+    unsigned n = idx_pseudotime;
     for( unsigned j = 0; j < _nCells; ++j ) {
         if( _boundaryCells[j] == BOUNDARY_TYPE::DIRICHLET ) continue;
         _sol[j] = _solNew[j];
@@ -476,6 +468,19 @@ void CSDSolverTrafoFPSH2D::IterPostprocessing() {
 
     // --- Compute Flux for solution and Screen Output ---
     ComputeRadFlux();
+
+    for( unsigned j = 0; j < _nCells; ++j ) {
+        _fluxNew[j] = dot( _sol[j], _weights );
+        if( n > 0 ) {
+            _dose[j] += 0.5 * _dE * ( _fluxNew[j] * _s[_nEnergies - n - 1] + _flux[j] * _s[_nEnergies - n] ) /
+                        _density[j];    // update dose with trapezoidal rule
+        }
+        else {
+            _dose[j] += _dE * _fluxNew[j] * _s[_nEnergies - n - 1] / _density[j];
+        }
+        _solverOutput[j] = _fluxNew[j];
+        _flux[j]         = _fluxNew[j];
+    }
 }
 
 void CSDSolverTrafoFPSH2D::SolverPreprocessing() {
