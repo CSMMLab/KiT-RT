@@ -334,6 +334,12 @@ void Config::SetConfigOptions() {
     /*! @brief Flag for sampling of normalized moments, i.e. u_0 =1  \n DESCRIPTION: Flag for sampling of normalized moments, i.e. u_0 =1  \n
      * DEFAULT False \ingroup Config */
     AddBoolOption( "NORMALIZED_SAMPLING", _normalizedSampling, false );
+    /*! @brief Flag for sampling the space of Legendre multipliers instead of the moments  \n DESCRIPTION: Sample alpha instead of u \n DEFAULT False
+     * \ingroup Config */
+    AddBoolOption( "ALPHA_SAMPLING", _alphaSampling, false );
+    /*! @brief Flag for sampling the space of Legendre multipliers instead of the moments  \n DESCRIPTION: Sample alpha instead of u \n DEFAULT False
+     * \ingroup Config */
+    AddBoolOption( "REALIZABILITY_RECONS_U", _realizabilityRecons, true );
 }
 
 void Config::SetConfigParsing( string case_filename ) {
@@ -694,7 +700,7 @@ bool Config::TokenizeString( string& str, string& option_name, vector<string>& o
     pos = str.find( "=" );
     if( pos == string::npos ) {
         string errmsg = "Error in Config::TokenizeString(): line in the configuration file with no \"=\" sign.  ";
-        errmsg += "\nLook for: \n  str.length() = " + std::to_string(str.length());
+        errmsg += "\nLook for: \n  str.length() = " + std::to_string( str.length() );
         spdlog::error( errmsg );
         throw( -1 );
     }

@@ -128,6 +128,8 @@ class Config
     double _RealizableSetEpsilonU0;   /*!< @brief Distance to 0 of the sampled moments to the boundary of the realizable set */
     double _RealizableSetEpsilonU1;   /*!< @brief norm(u_1)/u_0 !< _RealizableSetEpsilonU1 */
     bool _normalizedSampling;         /*!< @brief Flag for sampling of normalized moments, i.e. u_0 =1 */
+    bool _alphaSampling;              /*!< @brief Flag for sampling alpha instead of u */
+    bool _realizabilityRecons;        /*!< @brief Turns realizability reconstruction on/off for u sampling */
 
     // --- Parsing Functionality and Initializing of Options ---
     /*!
@@ -326,6 +328,8 @@ class Config
     double GetRealizableSetEpsilonU0() { return _RealizableSetEpsilonU0; }
     double GetRealizableSetEpsilonU1() { return _RealizableSetEpsilonU1; }
     bool inline GetNormalizedSampling() { return _normalizedSampling; }
+    bool inline GetAlphaSampling() { return _alphaSampling; }
+    bool inline GetRelizabilityReconsU() { return _realizabilityRecons; }
 
     // ---- Setters for option structure
     // This section is dangerous

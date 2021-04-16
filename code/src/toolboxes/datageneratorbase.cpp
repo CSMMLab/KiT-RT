@@ -81,24 +81,38 @@ DataGeneratorBase* DataGeneratorBase::Create( Config* settings ) {
 
 void DataGeneratorBase::ComputeTrainingData() {
     PrintLoadScreen();
-
-    // --- sample u ---
-    SampleSolutionU();
     auto log = spdlog::get( "event" );
-    log->info( "| Moments sampled." );
-    log->info( "| Start solving the optimization problems. This may take some minutes." );
 
-    // ---- Check realizability ---
-    CheckRealizability();
+    if( _settings->GetAlphaSampling() ) {
+        // --- sample alpha ---
+        SampleMultiplierAlpha();
+        log->info( "| Multipliers sampled." );
 
-    // --- compute alphas ---
+        log->info( "| Making moments realizable problems." );
 
-    _optimizer->SolveMultiCell( _alpha, _uSol, _moments );
+        // --- Postprocessing
+        ComputeRealizableSolution();
+    }
+    else {
+        // --- sample u ---
+        SampleSolutionU();
+        log->info( "| Moments sampled." );
+        log->info( "| Start solving the optimization problems. This may take some minutes." );
 
-    log->info( "| Making moments realizable problems." );
+        // ---- Check realizability ---
+        CheckRealizability();
 
-    // --- Postprocessing
-    ComputeRealizableSolution();
+        // --- compute alphas ---
+
+        _optimizer->SolveMultiCell( _alpha, _uSol, _moments );
+
+        log->info( "| Making moments realizable problems." );
+
+        // --- Postprocessing
+        if( _settings->GetRelizabilityReconsU() ) {
+            ComputeRealizableSolution();
+        }
+    }
 
     log->info( "| Compute entropies." );
 
@@ -109,6 +123,58 @@ void DataGeneratorBase::ComputeTrainingData() {
 
     // --- Print everything ----
     PrintTrainingData();
+}
+
+void DataGeneratorBase::SampleMultiplierAlpha() {
+    double minAlphaValue = -50;
+    double maxAlphaValue = 50;
+
+    if( _settings->GetNormalizedSampling() ) {
+        // compute reduced version of alpha and m
+        if( _maxPolyDegree == 0 ) {
+            ErrorMessages::Error( "Normalized sampling not meaningful for M0 closure", CURRENT_FUNCTION );
+        }
+        VectorVector alphaRed   = VectorVector( _setSize, Vector( _nTotalEntries - 1, 0.0 ) );
+        VectorVector momentsRed = VectorVector( _nq, Vector( _nTotalEntries - 1, 0.0 ) );
+
+        for( unsigned idx_nq = 0; idx_nq < _nq; idx_nq++ ) {    // copy (reduced) moments
+            for( unsigned idx_sys = 1; idx_sys < _nTotalEntries; idx_sys++ ) {
+                momentsRed[idx_nq][idx_sys - 1] = _moments[idx_nq][idx_sys];
+            }
+        }
+        double dalpha = 0;
+        switch( _maxPolyDegree ) {
+            case 1:
+                // Sample alpha1 from [minAlphaValue, maxAlphaValue], then compute alpha_0 s.t. u_0 = 1
+                dalpha = ( maxAlphaValue - minAlphaValue ) / (double)_setSize;
+
+                for( unsigned idx_set = 0; idx_set < _setSize; idx_set++ ) {
+                    alphaRed[idx_set][0] = minAlphaValue + idx_set * dalpha;
+                }
+                break;
+            default: ErrorMessages::Error( "Not yet implemented!", CURRENT_FUNCTION );
+        }
+
+        // Compute alpha_0 = log(<exp(alpha m )>) // for maxwell boltzmann! only
+        for( unsigned idx_set = 0; idx_set < _setSize; idx_set++ ) {
+            double integral = 0.0;
+            // Integrate (eta(eta'_*(alpha*m))
+            for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
+                integral += _entropy->EntropyPrimeDual( dot( alphaRed[idx_set], momentsRed[idx_quad] ) ) * _weights[idx_quad];
+            }
+            _alpha[idx_set][0] = -log( integral );    // log trafo
+
+            // copy all other alphas to the member
+            for( unsigned idx_sys = 1; idx_sys < _nTotalEntries; idx_sys++ ) {
+                _alpha[idx_set][idx_sys] = alphaRed[idx_set][idx_sys - 1];
+            }
+        }
+    }
+    else {
+        // non normalized sampling
+        // TODO
+        ErrorMessages::Error( "Not yet implemented!", CURRENT_FUNCTION );
+    }
 }
 
 void DataGeneratorBase::ComputeEntropyH_dual() {

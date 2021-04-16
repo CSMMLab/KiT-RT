@@ -68,6 +68,7 @@ class DataGeneratorBase
 
     // Main methods
     virtual void SampleSolutionU() = 0; /*!< @brief Samples solution vectors u */
+    void SampleMultiplierAlpha();       /*!< @brief Sample Lagrange multipliers alpha */
     void ComputeEntropyH_dual();        /*!< @brief Compute the entropy functional at (u,alpha) in dual formulation */
     void ComputeEntropyH_primal();      /*!< @brief  Compute the entropy functional at (u,alpha) in primal formulation */
     void ComputeRealizableSolution();   /*!< @brief make u the realizable moment to alpha, since Newton has roundoff errors. */
