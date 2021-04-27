@@ -9,8 +9,7 @@ from skimage.measure import find_contours, approximate_polygon, \
 
 
 def contour_selc(img_file, num_points,sigma,thresh,max_val):
-	img = Image.open(img_file)
-	#img = Image.open('G:\\HiWi\\SLphantom.png')
+	img = Image.open(img_file) 
 	imgarray = img.convert('LA')
 	imgmat = np.array(imgarray.getdata(band=0))
 	imgmat.shape = (imgarray.size[1],imgarray.size[0])
@@ -23,15 +22,14 @@ def contour_selc(img_file, num_points,sigma,thresh,max_val):
 	    for j in range(n):
 	        if edges[i,j] == True:
 	            edges_num[i,j] = 1 
-	            edges_num[i-1,j] = 1
+	            edges_num[i-1,j] = 1 #We need to have some thickness to get contours
 
 
 	_, binary = cv.threshold(edges_num, thresh, max_val, cv.THRESH_BINARY_INV)
 	#plt.imshow(binary, cmap="gray")
-	binary = np.uint8(binary)
+	binary = np.uint8(binary) #numbers need to be in 8bit
 
 	image = cv.imread(img_file)
-	#image = cv.imread("G:\\HiWi\\SLphantom.jpg")
 
 	contours, hierarchy = cv.findContours(binary, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
 
