@@ -9,53 +9,85 @@ from skimage.measure import find_contours, approximate_polygon, \
 
 
 def contour_selc(img_file, num_points,sigma,thresh,max_val):
-	img = Image.open(img_file) 
-	imgarray = img.convert('LA')
-	imgmat = np.array(imgarray.getdata(band=0))
-	imgmat.shape = (imgarray.size[1],imgarray.size[0])
-	imgmat_norm = imgmat/255
+	if isinstance(img_file,np.ndarray) == True:
+			edges_num = img_file
 
-	edges = feature.canny(imgmat_norm,sigma = sigma)
-	m,n = np.shape(edges)
-	edges_num = np.zeros((m,n))
-	for i in range(m):
-	    for j in range(n):
-	        if edges[i,j] == True:
-	            edges_num[i,j] = 1 
-	            edges_num[i-1,j] = 1 #We need to have some thickness to get contours
+			_, binary = cv.threshold(edges_num, thresh, max_val, cv.THRESH_BINARY_INV)
+			#plt.imshow(binary, cmap="gray")
+			binary = np.uint8(binary)
+
+			#image = cv.imread("G:\\HiWi\\SLphantom.jpg")
+
+			contours, hierarchy = cv.findContours(binary, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
+
+			plt.figure(figsize=(10,10))
+
+			plt.imshow(binary)
+			#n = 2*input('Enter the number of points to select the contours to include',)
+			x = plt.ginput(num_points)
+
+			print(x)
+
+			contour_index = []
+			for k  in range(len(contours)):
+				c = contours[k][:,0,:]
+				nk = len(c)
+				for i in range(nk):
+					ckij = c[i]
+					for p in range(1,num_points):
+						if x[p-1][0] < ckij[0] and ckij[0] < x[p][0]:
+							if x[p-1][1] > ckij[1] and ckij[1] > x[p][1]:
+								contour_index.append(k)
+						else:
+							continue
+	else:
+		img = Image.open(img_file) 
+		imgarray = img.convert('LA')
+		imgmat = np.array(imgarray.getdata(band=0))
+		imgmat.shape = (imgarray.size[1],imgarray.size[0])
+		imgmat_norm = imgmat/255
+
+		edges = feature.canny(imgmat_norm,sigma = sigma)
+		m,n = np.shape(edges)
+		edges_num = np.zeros((m,n))
+		for i in range(m):
+			for j in range(n):
+				if edges[i,j] == True:
+					edges_num[i,j] = 1 
+					edges_num[i-1,j] = 1 #We need to have some thickness to get contours
 
 
-	_, binary = cv.threshold(edges_num, thresh, max_val, cv.THRESH_BINARY_INV)
-	#plt.imshow(binary, cmap="gray")
-	binary = np.uint8(binary) #numbers need to be in 8bit
+		_, binary = cv.threshold(edges_num, thresh, max_val, cv.THRESH_BINARY_INV)
+		#plt.imshow(binary, cmap="gray")
+		binary = np.uint8(binary) #numbers need to be in 8bit
 
-	image = cv.imread(img_file)
+		image = cv.imread(img_file)
 
-	contours, hierarchy = cv.findContours(binary, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
+		contours, hierarchy = cv.findContours(binary, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
 
-	plt.figure(figsize=(10,10))
-	image = cv.drawContours(image, contours, -1, (0,255, 0), 2)
+		plt.figure(figsize=(10,10))
+		image = cv.drawContours(image, contours, -1, (0,255, 0), 2)
 
-	plt.imshow(binary)
-	#n = 2*input('Enter the number of points to select the contours to include',)
-	x = plt.ginput(num_points)
+		plt.imshow(binary)
+		#n = 2*input('Enter the number of points to select the contours to include',)
+		x = plt.ginput(num_points)
 
 
-	print(x)
+		print(x)
 
-	contour_index = []
-	for k  in range(len(contours)):
-	    c = contours[k][:,0,:]
-	    nk = len(c)
-	    for i in range(nk):
-	        ckij = c[i]
-	        for p in range(1,num_points):
-		        if x[p-1][0] < ckij[0] and ckij[0] < x[p][0]:
-		            if x[p-1][1] > ckij[1] and ckij[1] > x[p][1]:
-		                contour_index.append(k)
-		        else:
-		            continue
-	return np.unique(contour_index),contours
+		contour_index = []
+		for k  in range(len(contours)):
+			c = contours[k][:,0,:]
+			nk = len(c)
+			for i in range(nk):
+				ckij = c[i]
+				for p in range(1,num_points):
+					if x[p-1][0] < ckij[0] and ckij[0] < x[p][0]:
+						if x[p-1][1] > ckij[1] and ckij[1] > x[p][1]:
+							contour_index.append(k)
+					else:
+						continue
+		return np.unique(contour_index),contours
 
 
 #'G:\\HiWi\\Liver_CT.png'
