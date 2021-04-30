@@ -1,16 +1,12 @@
 [![pipeline status](https://git.scc.kit.edu/rtsn/rtsn/badges/master/pipeline.svg)](https://git.scc.kit.edu/rtsn/rtsn/-/commits/master) [![coverage report](https://git.scc.kit.edu/rtsn/rtsn/badges/master/coverage.svg)](https://git.scc.kit.edu/rtsn/rtsn/-/commits/master) [![Documentation Status](https://readthedocs.org/projects/kit-rt/badge/?version=latest)](https://kit-rt.readthedocs.io/en/latest/?badge=latest)
 
-# KiT-RT - an HPC Radio Therapy $S_n$ framework
+# KiT-RT - an HPC Radio Therapy simulation framework
 The KiT-RT (Kinetic Transport Solver for Radiation Therapy) framework is a high-performance open source platform for radiation transport. Its main focus is on radiotherapy planning in cancer treatment. To enable problem-specific method selection, the framework provides different deterministic solver types. This not only facilitates treatment planning, but also provides tools to investigate various research questions in the field of radiative transfer. This goal is supported by an easily extendable code structure that allows for straightforward implementation of additional methods and techniques.
 
-The documentation can be found [here](https://kit-rt.readthedocs.io/en/develop/index.html) 
+The documentation can be found [here](https://kit-rt.readthedocs.io/en/develop/index.html). 
 ## What KiT-RT is capable of
 ### Theory
-TBD
-### Examples
-TBD
-
----
+A short description of kinetic theory can be found [here](https://kit-rt.readthedocs.io/en/develop/physics.html).
 
 ## Build
 ### Required dependencies
