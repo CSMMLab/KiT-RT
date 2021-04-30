@@ -21,7 +21,11 @@ A short description of kinetic theory can be found [here](https://kit-rt.readthe
  - gmsh
 
 ### Python dependencies
-- pygmsh version 6.1.1 'pip install pygmsh==6.1.1' (note that newer versions are not yet supported)
+- pygmsh version 6.1.1 
+```bash
+  pip install pygmsh==6.1.1
+ '''
+ (note that newer versions are not yet supported)
 
 
 ### Obtain submodules
