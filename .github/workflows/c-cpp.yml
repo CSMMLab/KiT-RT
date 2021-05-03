@@ -11,10 +11,12 @@ jobs:
   docker_loading:
     runs-on: ubuntu-latest
     name: Docker loading
-     steps:
+    steps:
+    - name: Get the output time
+        run: echo "Loadup successful"
       # To use this repository's private action,
       # you must check out the repository
-      - name: Docker loading step
+    - name: Docker loading step
         uses: ./ # Uses an action in the root directory
         id: hello
   
