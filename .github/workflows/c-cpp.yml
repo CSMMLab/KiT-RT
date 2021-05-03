@@ -12,21 +12,14 @@ jobs:
     runs-on: ubuntu-latest
     name: Docker loading
     steps:
-    - name: pre
-      run: echo "Start loadup"
       # To use this repository's private action,
       # you must check out the repository
     - name: Checkout
       uses: actions/checkout@v2
-    - name: Docker loading step
+    - name: Docker loading
       uses: ./ # Uses an action in the root directory
       id: hello
-  
-      
-    # Use the output from the `hello` step
-    - name: post
-      run: echo "Loadup successful"
-      
+
   unit_tests:
       name: unit_tests
       runs-on: ubuntu-latest
@@ -35,8 +28,8 @@ jobs:
       - name: Intro
         run: echo "Starting unit tests"
         
-      #- name: unit_testing_step
-      #  uses: actions/unit_testing_step@v1
+      - name: unit_testing
+        run: sh test_with_runner.sh
       
       - name: Outro
         run: echo "Unit testing successful"
