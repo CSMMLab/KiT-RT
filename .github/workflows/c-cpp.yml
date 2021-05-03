@@ -8,18 +8,17 @@ on:
 
 
 jobs:
-  hello_world_job:
+  docker_loading:
     runs-on: ubuntu-latest
-    name: A job to say hello
+    name: Docker loading
     steps:
-    - name: Hello world action step
-      id: hello
+    - name: Docker loadup
+      id: dock1
       uses: actions/hello-world-docker-action@v1
-      with:
-        who-to-greet: 'Mona the Octocat'
+      
     # Use the output from the `hello` step
     - name: Get the output time
-      run: echo "The time was ${{ steps.hello.outputs.time }}"
+      run: echo "Loadup successful"
       
   unit_tests:
       name: unit_tests
