@@ -16,6 +16,8 @@ jobs:
       run: echo "Start loadup"
       # To use this repository's private action,
       # you must check out the repository
+    - name: Checkout
+      uses: actions/checkout@v2
     - name: Docker loading step
       uses: ./ # Uses an action in the root directory
       id: hello
