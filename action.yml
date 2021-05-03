@@ -1,5 +1,5 @@
 # action.yml
-name: 'Docker initialization'
+name: 'Docker Initialization'
 description: 'Initialize the docker for later unit testing'
 runs:
   using: 'docker'

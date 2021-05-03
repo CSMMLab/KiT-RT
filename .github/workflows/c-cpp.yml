@@ -11,10 +11,13 @@ jobs:
   docker_loading:
     runs-on: ubuntu-latest
     name: Docker loading
-    steps:
-    - name: Docker loadup
-      id: dock1
-      uses: KiT-RT/dockerfile@v1
+     steps:
+      # To use this repository's private action,
+      # you must check out the repository
+      - name: Docker loading step
+        uses: ./ # Uses an action in the root directory
+        id: hello
+  
       
     # Use the output from the `hello` step
     - name: Get the output time
