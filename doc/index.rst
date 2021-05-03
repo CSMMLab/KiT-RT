@@ -53,6 +53,4 @@ Table of contents
    configFiles
    cpp_doc
    developer_guide
-   release
    authors
-   philosophy
