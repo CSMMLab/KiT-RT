@@ -14,6 +14,7 @@ A list of current supported models and equations is as follows.
 - entropy-closure (:math:`M_N`) moment equations
 - continuous slowing down equation
 
+The source code is publicly available on `Github <https://github.com/CSMMLab/KiT-RT>`_.
 
 Design philosophy
 ------------------------
