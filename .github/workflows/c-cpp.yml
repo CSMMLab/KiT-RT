@@ -17,7 +17,7 @@ jobs:
       steps:
       - uses: actions/checkout@v2
       
-      - name: Build code in debug mode
+      - name: Build code
         run: |
           git submodule update --init --recursive
           mkdir build && cd build
@@ -29,6 +29,6 @@ jobs:
           cd build
           OMP_NUM_THREADS=1 ./unit_tests -r junit > unit_tests_report.xml
 
-      - name: Determine code coverage        
+      - name: Code coverage        
         run: |          
-          cpp-coveralls -i src -i include -b build/CMakeFiles/KiT-RT.dir/src/ --gcov-options '\-lp'
+          cpp-coveralls -i src -i include -b build/CMakeFiles/KiT-RT.dir/src/
