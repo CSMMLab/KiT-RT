@@ -6,10 +6,6 @@ on:
   pull_request:
     branches: [ master, develop ]
 
-env:
-  COVERALLS_PARALLEL: true
-  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
 jobs:  
   unit_tests:
       runs-on: ubuntu-latest
@@ -17,7 +13,7 @@ jobs:
 
       steps:
       - uses: actions/checkout@v2
-
+      
       - name: Build code in debug mode
         run: |
           git submodule update --init --recursive
@@ -31,9 +27,10 @@ jobs:
           OMP_NUM_THREADS=1 ./unit_tests -r junit > unit_tests_report.xml
 
       - name: Determine code coverage
-        run: |
-          cd build
-          gcovr -e ../ext/ -e ../tests/ -r ../ --json cov.json
+        with: 
+          github-token: ${{ secrets.github_token }}
+        run: |          
+          cpp-coveralls -i src -i include -b build/CMakeFiles/KiT-RT.dir/src/ --dump cov.json
           coveralls --merge=cov.json --service=github
 
   finish:
@@ -44,4 +41,3 @@ jobs:
       uses: coverallsapp/github-action@master
       with:
         github-token: ${{ secrets.github_token }}
-        parallel-finished: true
