@@ -33,7 +33,7 @@ jobs:
       - name: Determine code coverage
         run: |
           cd build
-          cpp-coveralls -e ../ext/ -e ../tests/ -r ../ --dump cov.json
+          gcovr -e ../ext/ -e ../tests/ -r ../ --json cov.json
           coveralls --merge=cov.json --service=github
 
   finish:
