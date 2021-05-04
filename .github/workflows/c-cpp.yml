@@ -6,30 +6,23 @@ on:
   pull_request:
     branches: [ master, develop ]
 
-
-jobs:
-#  docker_loading:
-#    runs-on: ubuntu-latest
-#    name: Docker loading
-#    steps:
-#      # To use this repository's private action,
-#      # you must check out the repository
-#    - name: Checkout
-#      uses: actions/checkout@v2
-#    - name: Docker loading
-#      uses: ./ # Uses an action in the root directory
-#      id: hello
-
+jobs:  
   unit_tests:
-      name: unit_tests
-      runs-on: ubuntu-latest
+      container: rtsn/test:latest
 
       steps:
-      - name: Intro
-        run: echo "Starting unit tests"
-        
-      - name: unit_testing
-        run: sh test_with_runner.sh
-      
-      - name: Outro
-        run: echo "Unit testing successful"
+      - uses: actions/checkout@v2
+
+      - name: build
+        run: |
+          git submodule update --init --recursive          
+          mkdir -p code/build 
+          cd code/build
+          cmake -G Ninja -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTS=ON ../
+          ninja
+
+      - name: test
+        run: |
+          cd code/build
+          OMP_NUM_THREADS=1 ./unit_tests -r junit > unit_tests_report.xml
+          gcovr -e ../ext/ -e ../tests/ -r ../
