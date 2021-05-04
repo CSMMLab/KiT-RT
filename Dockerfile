@@ -2,7 +2,7 @@ FROM ubuntu:20.04
 
 ENV LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/lib" \
     PYTHONPATH=/usr/local/gmsh/lib:$PYTHONPATH \
-    PATH=/opt/conda/bin:/usr/local/gmsh/bin:$PATH 
+    PATH=/usr/local/gmsh/bin:$PATH 
 
 RUN apt-get update \
     && DEBIAN_FRONTEND=noninteractive apt-get install -qq \
@@ -25,16 +25,13 @@ RUN apt-get update \
        libxrender1 \
        libxcursor-dev \
        libxft-dev \
-       libxinerama-dev\
-       python3\
-       python3-pip\
-       vim
- 
-RUN    pip3 install tensorflow==2.2.2\
-       pygmsh==6.1.1 Pillow pydicom gcovr \
-       matplotlib\
-       scipy\
-       pandas
+       libxinerama-dev \
+       python3 \
+       python3-pip \
+       doxygen \
+    && apt-get clean \
+    && apt-get autoremove --purge \
+    && rm -rf /var/lib/apt/lists/* 
 
 RUN cd /usr/local \
     && wget -nc --quiet  http://gmsh.info/bin/Linux/gmsh-4.7.0-Linux64-sdk.tgz \
@@ -52,12 +49,7 @@ RUN wget -nc --no-check-certificate --quiet https://www.vtk.org/files/release/8.
     && cd - \
     && rm -rf VTK-*
 
-RUN apt-get clean \
-    && apt-get autoremove --purge \
-    && rm -rf /var/lib/apt/lists/* 
-    
+RUN pip3 install numpy pygmsh==6.1.1 Pillow pydicom gcovr sphinx_rtd_theme breathe
 
-
-        
-    
+RUN echo "Installation successful"
 WORKDIR /home

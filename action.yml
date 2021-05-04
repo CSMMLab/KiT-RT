@@ -1,0 +1,6 @@
+# action.yml
+name: 'Docker Initialization'
+description: 'Initialize the docker for later unit testing'
+runs:
+  using: 'docker'
+  image: 'Dockerfile'
