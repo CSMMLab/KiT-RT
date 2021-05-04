@@ -16,14 +16,13 @@ jobs:
 
       - name: build
         run: |
-          git submodule update --init --recursive          
-          mkdir -p code/build 
-          cd code/build
-          cmake -G Ninja -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTS=ON ../
+          git submodule update --init --recursive
+          mkdir build && cd build
+          cmake -G Ninja -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=ON -DBUILD_CODE_COV=ON ..
           ninja
 
       - name: test
         run: |
-          cd code/build
+          cd build
           OMP_NUM_THREADS=1 ./unit_tests -r junit > unit_tests_report.xml
           gcovr -e ../ext/ -e ../tests/ -r ../

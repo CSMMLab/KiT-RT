@@ -1,7 +1,7 @@
-[submodule "code/ext/spdlog"]
+[submodule "ext/spdlog"]
 	path = ext/spdlog
 	url = git://github.com/gabime/spdlog.git
-[submodule "code/ext/Catch2"]
+[submodule "ext/Catch2"]
 	path = ext/Catch2
 	url = git://github.com/catchorg/Catch2.git
 [submodule "code/ext/blaze"]
