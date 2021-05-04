@@ -31,10 +31,4 @@ jobs:
 
       - name: Determine code coverage        
         run: |          
-          cpp-coveralls -i src -i include -b build/CMakeFiles/KiT-RT.dir/src/ --dump cov.json
-          coveralls --merge=cov.json --service=github
-
-      - name: Upload to Coveralls
-        uses: coverallsapp/github-action@master
-        with:
-          github-token: ${{ secrets.github_token }}
+          cpp-coveralls -i src -i include -b build/CMakeFiles/KiT-RT.dir/src/ --gcov-options '\-lp'
