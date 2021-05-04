@@ -1,4 +1,4 @@
-name: C/C++ CI
+name: CI
 
 on:
   push:
@@ -34,11 +34,7 @@ jobs:
           cpp-coveralls -i src -i include -b build/CMakeFiles/KiT-RT.dir/src/ --dump cov.json
           coveralls --merge=cov.json --service=github
 
-  finish:
-    needs: unit_tests
-    runs-on: ubuntu-latest
-    steps:
-    - name: Upload to Coveralls
-      uses: coverallsapp/github-action@master
-      with:
-        github-token: ${{ secrets.github_token }}
+      - name: Upload to Coveralls
+        uses: coverallsapp/github-action@master
+        with:
+          github-token: ${{ secrets.github_token }}
