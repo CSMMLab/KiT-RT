@@ -6,23 +6,42 @@ on:
   pull_request:
     branches: [ master, develop ]
 
+env:
+  COVERALLS_PARALLEL: true
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
 jobs:  
   unit_tests:
       runs-on: ubuntu-latest
-      container: rtsn/test:latest
+      container: kitrt/test:latest
 
       steps:
       - uses: actions/checkout@v2
 
-      - name: build
+      - name: Build code in debug mode
         run: |
           git submodule update --init --recursive
           mkdir build && cd build
           cmake -G Ninja -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=ON -DBUILD_CODE_COV=ON ..
           ninja
 
-      - name: test
+      - name: Run unit tests
         run: |
           cd build
           OMP_NUM_THREADS=1 ./unit_tests -r junit > unit_tests_report.xml
-          gcovr -e ../ext/ -e ../tests/ -r ../
+
+      - name: Determine code coverage
+        run: |
+          cd build
+          cpp-coveralls -e ../ext/ -e ../tests/ -r ../ --dump cov.json
+          coveralls --merge=cov.json --service=github
+
+  finish:
+    needs: unit_tests
+    runs-on: ubuntu-latest
+    steps:
+    - name: Upload to Coveralls
+      uses: coverallsapp/github-action@master
+      with:
+        github-token: ${{ secrets.github_token }}
+        parallel-finished: true
