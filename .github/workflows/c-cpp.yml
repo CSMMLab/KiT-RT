@@ -5,14 +5,12 @@ on:
     branches: [ master, develop ]
   pull_request:
     branches: [ master, develop ]
-
-env:
-  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     
 jobs:  
   unit_tests:
       runs-on: ubuntu-latest
       container: kitrt/test:latest
+      environment: coverage
 
       steps:
       - uses: actions/checkout@v2
@@ -30,5 +28,8 @@ jobs:
           OMP_NUM_THREADS=1 ./unit_tests -r junit > unit_tests_report.xml
 
       - name: Code coverage        
+        with: 
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
         run: |          
           cpp-coveralls -i src -i include -b build/CMakeFiles/KiT-RT.dir/src/
