@@ -11,10 +11,13 @@ jobs:
       runs-on: ubuntu-latest
       container: kitrt/test:latest
       environment: coverage
-
+      
       steps:
       - uses: actions/checkout@v2
-      
+        with: 
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
+
       - name: Build code
         run: |
           git submodule update --init --recursive
@@ -27,9 +30,6 @@ jobs:
           cd build
           OMP_NUM_THREADS=1 ./unit_tests -r junit > unit_tests_report.xml
 
-      - name: Code coverage        
-        with: 
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
+      - name: Code coverage                
         run: |          
           cpp-coveralls -i src -i include -b build/CMakeFiles/KiT-RT.dir/src/
