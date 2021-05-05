@@ -32,4 +32,4 @@ jobs:
 
       - name: Code coverage                
         run: |
-          cpp-coveralls -r . -b "build/" -i "src/" -i "test/" --exclude "ext/" --exclude "examples/" --gcov-options "\-lp" 
+          cpp-coveralls -i src -i include -E "/usr/*" -E "./ext/*" --gcov-options "\-lp" 
