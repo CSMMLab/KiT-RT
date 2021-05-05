@@ -177,5 +177,5 @@ Please stick to the following coding style for easier code readability:
  - Abstract base classes for inheritance structures end with the suffix "Base" e.g. QuadratureBase, whith child classes 
    QGaussLegendre or QProduct
 
-Please also use the provided `code/.clang-format` style format to format your code before pushing your latest commits.
+Please also use the provided `.clang-format` style format to format your code before pushing your latest commits.
 Some editors offer to automatically apply the style format upon saving a file (e.g. `Qtcreator`).
