@@ -1,4 +1,7 @@
-[![pipeline status](https://git.scc.kit.edu/rtsn/rtsn/badges/master/pipeline.svg)](https://git.scc.kit.edu/rtsn/rtsn/-/commits/master) [![coverage report](https://git.scc.kit.edu/rtsn/rtsn/badges/master/coverage.svg)](https://git.scc.kit.edu/rtsn/rtsn/-/commits/master) [![Documentation Status](https://readthedocs.org/projects/kit-rt/badge/?version=latest)](https://kit-rt.readthedocs.io/en/latest/?badge=latest)
+[![CI](https://github.com/CSMMLab/KiT-RT/actions/workflows/c-cpp.yml/badge.svg)](https://github.com/CSMMLab/KiT-RT/actions/workflows/c-cpp.yml)
+[![Coverage Status](https://coveralls.io/repos/github/CSMMLab/KiT-RT/badge.svg?branch=master)](https://coveralls.io/github/CSMMLab/KiT-RT?branch=master)
+[![Documentation Status](https://readthedocs.org/projects/kit-rt/badge/?version=latest)](https://kit-rt.readthedocs.io/en/latest/?badge=latest)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 # KiT-RT - an HPC Radio Therapy simulation framework
 The KiT-RT (Kinetic Transport Solver for Radiation Therapy) framework is a high-performance open source platform for radiation transport. Its main focus is on radiotherapy planning in cancer treatment. To enable problem-specific method selection, the framework provides different deterministic solver types. This not only facilitates treatment planning, but also provides tools to investigate various research questions in the field of radiative transfer. This goal is supported by an easily extendable code structure that allows for straightforward implementation of additional methods and techniques.
@@ -174,5 +177,5 @@ Please stick to the following coding style for easier code readability:
  - Abstract base classes for inheritance structures end with the suffix "Base" e.g. QuadratureBase, whith child classes 
    QGaussLegendre or QProduct
 
-Please also use the provided `code/.clang-format` style format to format your code before pushing your latest commits.
+Please also use the provided `.clang-format` style format to format your code before pushing your latest commits.
 Some editors offer to automatically apply the style format upon saving a file (e.g. `Qtcreator`).
