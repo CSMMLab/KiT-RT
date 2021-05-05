@@ -5,18 +5,18 @@ on:
     branches: [ master, develop ]
   pull_request:
     branches: [ master, develop ]
-    
-jobs:  
+
+jobs:
   unit_tests:
       runs-on: ubuntu-latest
       container: kitrt/test:latest
       environment: coverage
-      env: 
+      env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
 
       steps:
-      - uses: actions/checkout@v2        
+      - uses: actions/checkout@v2
 
       - name: Build code
         run: |
@@ -30,6 +30,6 @@ jobs:
           cd build
           OMP_NUM_THREADS=1 ./unit_tests -r junit > unit_tests_report.xml
 
-      - name: Code coverage                
+      - name: Code coverage
         run: |
-          cpp-coveralls -i src -i include -E "/usr/*" -E "./ext/*" --gcov-options "\-lp" 
+          cpp-coveralls -r . -b "build/" -i "src/" -i "test/" --exclude "ext/" --exclude "examples/" --gcov-options "\-lp"
