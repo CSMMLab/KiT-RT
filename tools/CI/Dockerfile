@@ -49,6 +49,6 @@ RUN wget -nc --no-check-certificate --quiet https://www.vtk.org/files/release/8.
     && cd - \
     && rm -rf VTK-*
 
-RUN pip3 install numpy pygmsh==6.1.1 Pillow pydicom gcovr sphinx_rtd_theme breathe
+RUN pip3 install numpy pygmsh==6.1.1 Pillow pydicom gcovr sphinx_rtd_theme breathe cpp-coveralls coveralls
 
 WORKDIR /home

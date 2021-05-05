@@ -28,15 +28,15 @@ def setup(app):
     app.add_css_file('theme_overrides.css')
 
 breathe_projects = {
-    "KiT-RT": "../code/build/debug/docs/doxygen/xml",
+    "KiT-RT": "../build/docs/doxygen/xml",
 }
 
 breathe_default_project = "KiT-RT"
 
 read_the_docs_build = os.environ.get('READTHEDOCS', None) == 'True'
 if read_the_docs_build:
-    inputDir = '../code'
-    outputDir = '../code/build/debug/docs/doxygen'
+    inputDir = '../'
+    outputDir = '../build/docs/doxygen'
     if not os.path.exists(outputDir):
         os.makedirs(outputDir)
     with open("Doxyfile.in", "rt") as fin:

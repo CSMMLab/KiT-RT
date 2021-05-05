@@ -5,24 +5,31 @@ on:
     branches: [ master, develop ]
   pull_request:
     branches: [ master, develop ]
-
+    
 jobs:  
   unit_tests:
       runs-on: ubuntu-latest
-      container: rtsn/test:latest
+      container: kitrt/test:latest
+      environment: coverage
+      env: 
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
 
       steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v2        
 
-      - name: build
+      - name: Build code
         run: |
           git submodule update --init --recursive
           mkdir build && cd build
           cmake -G Ninja -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=ON -DBUILD_CODE_COV=ON ..
           ninja
 
-      - name: test
+      - name: Run unit tests
         run: |
           cd build
           OMP_NUM_THREADS=1 ./unit_tests -r junit > unit_tests_report.xml
-          gcovr -e ../ext/ -e ../tests/ -r ../
+
+      - name: Code coverage                
+        run: |
+          cpp-coveralls -i src -i include -E "/usr/*" -E "./ext/*" --gcov-options "\-lp" 
