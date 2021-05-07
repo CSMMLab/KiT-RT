@@ -55,13 +55,13 @@ make -j
 Execute the compiled binary by handing over a [valid config file](https://kit-rt.readthedocs.io/en/latest/configFiles.html), e.g.:
 
 ```bash
-./KiT-RT examples/linesource_SN.cfg
+./KiT-RT ../examples/linesource_SN.cfg
 ```
 
 In order to run the code in parallel execute:
 
 ```bash
-OMP_NUM_THREADS=N mpirun -np J ./KiT-RT ../input/example.cfg
+OMP_NUM_THREADS=N mpirun -np J ./KiT-RT ../examples/linesource_SN.cfg
 ```
 
 with `N` equal to the number of shared memory threads and `J` equal to the number of distrubuted memory threads.
