@@ -198,8 +198,7 @@ void CSDSolverTrafoFP::IterPostprocessing( unsigned idx_pseudotime ) {
         else {
             _dose[j] += _dE * _fluxNew[j] * _s[_nEnergies - n - 1] / _density[j];
         }
-        _solverOutput[j] = _fluxNew[j];
-        _flux[j]         = _fluxNew[j];
+        _flux[j] = _fluxNew[j];
     }
 
     // --- Compute Flux for solution and Screen Output ---

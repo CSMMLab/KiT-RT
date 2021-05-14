@@ -66,7 +66,7 @@ SolverBase::SolverBase( Config* settings ) {
         _nEnergies  = std::ceil( ( maxE - minE ) / _dE );
         _energies   = blaze::linspace( _nEnergies, maxE, minE );    // go backwards from biggest to smallest energy
     }
-    else {
+    else {    // Not CSD Solver
         _nEnergies = unsigned( settings->GetTEnd() / _dE );
         _energies  = blaze::linspace( _nEnergies, 0.0, settings->GetTEnd() );    // go upward from 0 to T_end
     }
@@ -98,7 +98,6 @@ SolverBase::SolverBase( Config* settings ) {
 
     // write density
     _density = _problem->GetDensity( _mesh->GetCellMidPoints() );
-    //_density = std::vector( _mesh->GetCellMidPoints().size(), 0.0 );
 }
 
 SolverBase::~SolverBase() {
