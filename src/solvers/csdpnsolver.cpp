@@ -32,14 +32,6 @@ Vector Energy2Time( const Vector& E, const double E_CutOff ) {
 CSDPNSolver::CSDPNSolver( Config* settings ) : PNSolver( settings ) {
     _dose = std::vector<double>( _settings->GetNCells(), 0.0 );
 
-    // only dummies for compilation
-    //
-    double minE = 5e-5;
-    double maxE = 1.0;
-    _dE         = ComputeTimeStep( _settings->GetCFL() );
-    _nEnergies  = std::ceil( ( maxE - minE ) / _dE );
-    _energies   = blaze::linspace( _nEnergies, maxE, minE );
-
     Vector pos_beam = Vector{ 0.5, 0.5 };
     _sol            = VectorVector( _nCells, Vector( _nSystem, 0.0 ) );
     for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {

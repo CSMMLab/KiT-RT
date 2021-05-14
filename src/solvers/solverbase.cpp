@@ -59,11 +59,20 @@ SolverBase::SolverBase( Config* settings ) {
     _psiDx = VectorVector( _nCells, Vector( _nq, 0.0 ) );
     _psiDy = VectorVector( _nCells, Vector( _nq, 0.0 ) );
 
-    // set time step
-    _dE        = ComputeTimeStep( settings->GetCFL() );
-    _nEnergies = unsigned( settings->GetTEnd() / _dE );
-    _energies.resize( _nEnergies );
-    for( unsigned i = 0; i < _nEnergies; ++i ) _energies[i] = ( i + 1 ) * _dE;
+    // set time step or energy step
+    _dE = ComputeTimeStep( _settings->GetCFL() );
+
+    if( _settings->GetIsCSD() ) {
+        // carefull: This gets overwritten by almost all subsolvers
+        double minE = 5e-5;
+        double maxE = _settings->GetMaxEnergyCSD();
+        _nEnergies  = std::ceil( ( maxE - minE ) / _dE );
+        _energies   = blaze::linspace( _nEnergies, maxE, minE );    // go backwards from biggest to smallest energy
+    }
+    else {
+        _nEnergies = unsigned( settings->GetTEnd() / _dE );
+        _energies  = blaze::linspace( _nEnergies, 0.0, settings->GetTEnd() );    // go upward from 0 to T_end
+    }
 
     // setup problem  and store frequently used params
     _problem = ProblemBase::Create( _settings, _mesh );

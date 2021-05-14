@@ -469,6 +469,7 @@ void Config::SetPostprocessing() {
         case CSD_SN_FOKKERPLANCK_TRAFO_SOLVER_2D:       // Fallthrough
         case CSD_SN_FOKKERPLANCK_TRAFO_SH_SOLVER_2D:    // Fallthrough
         case CSD_SN_SOLVER:                             // Fallthrough
+        case CSD_PN_SOLVER:                             // Fallthrough
             _csd = true;
             break;
         default: _csd = false;
