@@ -145,7 +145,8 @@ void DataGeneratorBase::SampleMultiplierAlpha() {
         }
 
         // Sample alphaRed as uniform grid from [minAlphaValue, maxAlphaValue], then compute alpha_0 s.t. u_0 = 1
-        double dalpha = ( maxAlphaValue - minAlphaValue ) / (double)_gridSize;
+        double dalpha  = ( maxAlphaValue - minAlphaValue ) / (double)_gridSize;
+        unsigned count = 0;
 
         switch( _nTotalEntries ) {
             case 1:
@@ -154,12 +155,28 @@ void DataGeneratorBase::SampleMultiplierAlpha() {
                 }
                 break;
             case 2:
-                for( unsigned i0 = 0; i0 < _setSize; i0++ ) {
-                    double alpha0 = minAlphaValue + i0 * dalpha;
-                    for( unsigned i1 = 0; i1 < _setSize; i1++ ) {
-                        unsigned idx     = i0 * _setSize + i1;
-                        alphaRed[idx][0] = alpha0;
-                        alphaRed[idx][1] = minAlphaValue + i1 * dalpha;
+                count = 0;
+                for( unsigned i1 = 0; i1 < _gridSize; i1++ ) {
+                    double alpha0 = minAlphaValue + i1 * dalpha;
+                    for( unsigned i2 = 0; i2 < _gridSize; i2++ ) {
+                        alphaRed[count][0] = alpha0;
+                        alphaRed[count][1] = minAlphaValue + i2 * dalpha;
+                        count++;
+                    }
+                }
+                break;
+            case 3:
+                count = 0;
+                for( unsigned i1 = 0; i1 < _gridSize; i1++ ) {
+                    double alpha0 = minAlphaValue + i1 * dalpha;
+                    for( unsigned i2 = 0; i2 < _gridSize; i2++ ) {
+                        double alpha1 = minAlphaValue + i2 * dalpha;
+                        for( unsigned i3 = 0; i3 < _gridSize; i3++ ) {
+                            alphaRed[count][0] = alpha0;
+                            alphaRed[count][1] = alpha1;
+                            alphaRed[count][2] = minAlphaValue + i3 * dalpha;
+                            count++;
+                        }
                     }
                 }
                 break;
