@@ -40,14 +40,15 @@ CSDPNSolver::CSDPNSolver( Config* settings ) : PNSolver( settings ) {
     for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
         double x            = _cellMidPoints[idx_cell][0];
         double y            = _cellMidPoints[idx_cell][1];
-        const double stddev = .005;
+        const double stddev = .01;
         double f            = normpdf( x, pos_beam[0], stddev ) * normpdf( y, pos_beam[1], stddev );
 
         _sol[idx_cell][0] = f * StarMAPmoments[0];
+
         for( unsigned idx_sys = 1; idx_sys < _nSystem; idx_sys++ ) {
 
-            _sol[idx_cell][idx_sys] = f * 0;    // must be VectorVector
-                                                //_sol[idx_cell][idx_sys] = 0;
+            //_sol[idx_cell][idx_sys] = f * StarMAPmoments[idx_sys];    // must be VectorVector
+            _sol[idx_cell][idx_sys] = 0;    // isotropic
         }
     }
 
@@ -215,6 +216,7 @@ void CSDPNSolver::FluxUpdate() {
 }
 
 void CSDPNSolver::FVMUpdate( unsigned idx_energy ) {
+    // transform energy difference
     _dE = fabs( _energies[idx_energy + 1] - _energies[idx_energy] );
 // loop over all spatial cells
 #pragma omp parallel for
