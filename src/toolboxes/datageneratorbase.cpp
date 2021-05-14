@@ -148,7 +148,7 @@ void DataGeneratorBase::SampleMultiplierAlpha() {
         double dalpha  = ( maxAlphaValue - minAlphaValue ) / (double)_gridSize;
         unsigned count = 0;
 
-        switch( _nTotalEntries ) {
+        switch( _nTotalEntries - 1 ) {
             case 1:
                 for( unsigned idx_set = 0; idx_set < _gridSize; idx_set++ ) {
                     alphaRed[idx_set][0] = minAlphaValue + idx_set * dalpha;
@@ -314,5 +314,7 @@ void DataGeneratorBase::AdaptBasisSize() {
 void DataGeneratorBase::ComputeSetSizeAlpha() {
     _setSize = _gridSize;
     //
-    for( unsigned i = 0; i < _nTotalEntries; i++ ) _setSize *= _gridSize;
+    for( unsigned i = 0; i < _nTotalEntries - 2; i++ ) {
+        _setSize *= _gridSize;
+    }
 }
