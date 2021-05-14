@@ -19,7 +19,10 @@ DataGenerator3D::DataGenerator3D( Config* settings ) : DataGeneratorBase( settin
     AdaptBasisSize();
 
     // Initialize Training Data
-    ComputeSetSize();
+    if( settings->GetAlphaSampling() )
+        ComputeSetSizeAlpha();
+    else
+        ComputeSetSizeU();
 
     _uSol     = VectorVector( _setSize, Vector( _nTotalEntries, 0.0 ) );
     _alpha    = VectorVector( _setSize, Vector( _nTotalEntries, 0.0 ) );
@@ -148,7 +151,7 @@ void DataGenerator3D::CheckRealizability() {
     }
 }
 
-void DataGenerator3D::ComputeSetSize() {
+void DataGenerator3D::ComputeSetSizeU() {
     if( _maxPolyDegree == 0 ) {
     }
     else if( _maxPolyDegree == 1 && _settings->GetSphericalBasisName() == SPHERICAL_MONOMIALS ) {

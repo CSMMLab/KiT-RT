@@ -80,7 +80,8 @@ class DataGeneratorBase
     // Helper functions
     virtual void ComputeMoments()     = 0; /*!< @brief Pre-Compute Moments at all quadrature points. */
     virtual void CheckRealizability() = 0; /*!< @brief Debugging helper. Will be removed */
-    virtual void ComputeSetSize()     = 0; /*!< @brief Computes the size of the training set, depending on the chosen settings.*/
+    virtual void ComputeSetSizeU()    = 0; /*!< @brief Computes the size of the training set, depending on the chosen settings.*/
+    void ComputeSetSizeAlpha();            /*!< @brief Computes the seSize for alphasampling */
     void AdaptBasisSize();                 /*!< @brief In case of normal sampling, deletes zero order basis for dimension reduction. */
 };
 #endif    // DATAGENERATOR_H

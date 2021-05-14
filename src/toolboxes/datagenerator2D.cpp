@@ -19,7 +19,10 @@ DataGenerator2D::DataGenerator2D( Config* settings ) : DataGeneratorBase( settin
     AdaptBasisSize();
 
     // Initialize Training Data
-    ComputeSetSize();
+    if( settings->GetAlphaSampling() )
+        ComputeSetSizeAlpha();
+    else
+        ComputeSetSizeU();
 
     _uSol     = VectorVector( _setSize, Vector( _nTotalEntries, 0.0 ) );
     _alpha    = VectorVector( _setSize, Vector( _nTotalEntries, 0.0 ) );
@@ -164,7 +167,7 @@ void DataGenerator2D::CheckRealizability() {
     }
 }
 
-void DataGenerator2D::ComputeSetSize() {
+void DataGenerator2D::ComputeSetSizeU() {
     if( _maxPolyDegree == 0 ) {
     }
     else if( _settings->GetNormalizedSampling() ) {

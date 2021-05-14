@@ -25,7 +25,7 @@
 DataGeneratorBase::DataGeneratorBase( Config* settings ) {
     _settings = settings;
     _setSize  = settings->GetTrainingDataSetSize();
-    _gridSize = _setSize;
+    _gridSize = _setSize;    // Number of Datapoints in first dimension
 
     _maxPolyDegree = settings->GetMaxMomentDegree();
 
@@ -134,6 +134,7 @@ void DataGeneratorBase::SampleMultiplierAlpha() {
         if( _maxPolyDegree == 0 ) {
             ErrorMessages::Error( "Normalized sampling not meaningful for M0 closure", CURRENT_FUNCTION );
         }
+
         VectorVector alphaRed   = VectorVector( _setSize, Vector( _nTotalEntries - 1, 0.0 ) );
         VectorVector momentsRed = VectorVector( _nq, Vector( _nTotalEntries - 1, 0.0 ) );
 
@@ -142,14 +143,24 @@ void DataGeneratorBase::SampleMultiplierAlpha() {
                 momentsRed[idx_nq][idx_sys - 1] = _moments[idx_nq][idx_sys];
             }
         }
-        double dalpha = 0;
-        switch( _maxPolyDegree ) {
-            case 1:
-                // Sample alpha1 from [minAlphaValue, maxAlphaValue], then compute alpha_0 s.t. u_0 = 1
-                dalpha = ( maxAlphaValue - minAlphaValue ) / (double)_setSize;
 
-                for( unsigned idx_set = 0; idx_set < _setSize; idx_set++ ) {
+        // Sample alphaRed as uniform grid from [minAlphaValue, maxAlphaValue], then compute alpha_0 s.t. u_0 = 1
+        double dalpha = ( maxAlphaValue - minAlphaValue ) / (double)_gridSize;
+
+        switch( _nTotalEntries ) {
+            case 1:
+                for( unsigned idx_set = 0; idx_set < _gridSize; idx_set++ ) {
                     alphaRed[idx_set][0] = minAlphaValue + idx_set * dalpha;
+                }
+                break;
+            case 2:
+                for( unsigned i0 = 0; i0 < _setSize; i0++ ) {
+                    double alpha0 = minAlphaValue + i0 * dalpha;
+                    for( unsigned i1 = 0; i1 < _setSize; i1++ ) {
+                        unsigned idx     = i0 * _setSize + i1;
+                        alphaRed[idx][0] = alpha0;
+                        alphaRed[idx][1] = minAlphaValue + i1 * dalpha;
+                    }
                 }
                 break;
             default: ErrorMessages::Error( "Not yet implemented!", CURRENT_FUNCTION );
@@ -281,4 +292,10 @@ void DataGeneratorBase::AdaptBasisSize() {
             }
         }
     }
+}
+
+void DataGeneratorBase::ComputeSetSizeAlpha() {
+    _setSize = _gridSize;
+    //
+    for( unsigned i = 0; i < _nTotalEntries; i++ ) _setSize *= _gridSize;
 }

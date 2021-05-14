@@ -25,7 +25,7 @@ class DataGenerator1D : public DataGeneratorBase
 
     // Helper functions
     void ComputeMoments() override;        /*!< @brief Pre-Compute Moments at all quadrature points. */
-    void ComputeSetSize() override;        /*!< @brief Computes the size of the training set, depending on the chosen settings.*/
+    void ComputeSetSizeU() override;       /*!< @brief Computes the size of the training set, depending on the chosen settings.*/
     void CheckRealizability() override;    // Debugging helper
 };
 #endif    // DATAGENERATOR1D_H
