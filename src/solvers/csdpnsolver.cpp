@@ -215,6 +215,7 @@ void CSDPNSolver::FluxUpdate() {
 }
 
 void CSDPNSolver::FVMUpdate( unsigned idx_energy ) {
+    _dE = fabs( _energies[idx_energy + 1] - _energies[idx_energy] );
 // loop over all spatial cells
 #pragma omp parallel for
     for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
