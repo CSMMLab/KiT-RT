@@ -11,6 +11,7 @@
 #include <mpi.h>
 
 CSDSNSolver::CSDSNSolver( Config* settings ) : SNSolver( settings ) {
+
     // std::cout << "Start CSDN Constructor\n";
     _dose = std::vector<double>( _settings->GetNCells(), 0.0 );
 

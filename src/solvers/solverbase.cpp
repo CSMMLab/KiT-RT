@@ -56,9 +56,6 @@ SolverBase::SolverBase( Config* settings ) {
     _interfaceMidPoints = interfaceMidPoints;
     _cellMidPoints      = _mesh->GetCellMidPoints();
 
-    _psiDx = VectorVector( _nCells, Vector( _nq, 0.0 ) );
-    _psiDy = VectorVector( _nCells, Vector( _nq, 0.0 ) );
-
     // set time step or energy step
     _dE = ComputeTimeStep( _settings->GetCFL() );
 
