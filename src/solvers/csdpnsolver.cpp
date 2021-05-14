@@ -33,7 +33,9 @@ CSDPNSolver::CSDPNSolver( Config* settings ) : PNSolver( settings ) {
     _dose = std::vector<double>( _settings->GetNCells(), 0.0 );
 
     Vector pos_beam = Vector{ 0.5, 0.5 };
-    _sol            = VectorVector( _nCells, Vector( _nSystem, 0.0 ) );
+    // Overwrite IC, for prototype
+    _sol = VectorVector( _nCells, Vector( _nSystem, 0.0 ) );
+
     for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
         double x            = _cellMidPoints[idx_cell][0];
         double y            = _cellMidPoints[idx_cell][1];
