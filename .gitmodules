@@ -1,12 +1,9 @@
-[submodule "code/ext/spdlog"]
-	path = code/ext/spdlog
+[submodule "ext/spdlog"]
+	path = ext/spdlog
 	url = git://github.com/gabime/spdlog.git
-[submodule "code/ext/Catch2"]
-	path = code/ext/Catch2
+[submodule "ext/Catch2"]
+	path = ext/Catch2
 	url = git://github.com/catchorg/Catch2.git
 [submodule "code/ext/blaze"]
-	path = code/ext/blaze
+	path = ext/blaze
 	url = https://bitbucket.org/blaze-lib/blaze.git
-[submodule "code/ext/neuralEntropy"]
-	path = code/ext/neuralEntropy
-	url = https://github.com/ScSteffen/neuralEntropy.git
