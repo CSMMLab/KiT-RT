@@ -3,17 +3,31 @@
 
 #include "solvers/pnsolver.h"
 
+class SphericalBase;
+
 class CSDPNSolver : public PNSolver
 {
   private:
     std::vector<double> _dose; /*!< @brief TODO */
 
     // Physics acess
-    Vector _energies; /*!< @brief energy levels for CSD, lenght = _nEnergies */
-    Vector _angle;    /*!< @brief angles */
+    Vector _angle; /*!< @brief angles */
 
     std::vector<Matrix> _sigmaSE; /*!<  @brief scattering cross section for all energies*/
     Vector _sigmaTE;              /*!<  @brief total cross section for all energies*/
+
+    VectorVector _basisAtQuad; /*!<  @brief spherical harmonics basis at quadrature points*/
+
+    // --- Private member variables ---
+    unsigned short _polyDegreeBasis; /*!< @brief Max polynomial degree of the basis */
+
+    // Moment basis
+    SphericalBase* _basis; /*!< @brief Class to compute and store current spherical harmonics basis */
+
+    // Quadrature related members
+    VectorVector _quadPoints;       /*!<  @brief quadrature points, dim(_quadPoints) = (_nq,spatialDim) */
+    Vector _weights;                /*!<  @brief quadrature weights, dim(_weights) = (_nq) */
+    VectorVector _quadPointsSphere; /*!<  @brief (my,phi), dim(_quadPoints) = (_nq,2) */
 
   public:
     /**
@@ -37,6 +51,8 @@ class CSDPNSolver : public PNSolver
 
     void PrepareVolumeOutput() override;
     void WriteVolumeOutput( unsigned idx_pseudoTime ) override;
+
+    Vector ConstructFlux( unsigned idx_cell );
 };
 
 #endif    // CSDPNSOLVER_H

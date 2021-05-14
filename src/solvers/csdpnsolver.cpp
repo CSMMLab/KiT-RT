@@ -14,6 +14,9 @@
 #include <iostream>
 #include <mpi.h>
 
+#include "quadratures/quadraturebase.h"
+#include "toolboxes/sphericalbase.h"
+
 double normpdf( double x, double mu, double sigma ) {
     return INV_SQRT_2PI / sigma * std::exp( -( ( x - mu ) * ( x - mu ) ) / ( 2.0 * sigma * sigma ) );
 }
@@ -30,10 +33,10 @@ Vector Energy2Time( const Vector& E, const double E_CutOff ) {
 }
 
 CSDPNSolver::CSDPNSolver( Config* settings ) : PNSolver( settings ) {
-    _dose = std::vector<double>( _settings->GetNCells(), 0.0 );
-
-    Vector pos_beam = Vector{ 0.5, 0.5 };
-    _sol            = VectorVector( _nCells, Vector( _nSystem, 0.0 ) );
+    _dose            = std::vector<double>( _settings->GetNCells(), 0.0 );
+    _polyDegreeBasis = settings->GetMaxMomentDegree();
+    Vector pos_beam  = Vector{ 0.5, 0.5 };
+    _sol             = VectorVector( _nCells, Vector( _nSystem, 0.0 ) );
     for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
         double x            = _cellMidPoints[idx_cell][0];
         double y            = _cellMidPoints[idx_cell][1];
@@ -74,10 +77,47 @@ CSDPNSolver::CSDPNSolver( Config* settings ) : PNSolver( settings ) {
     for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
         _density[idx_cell] = 1.0;
     }
+
+    _basis   = SphericalBase::Create( _settings );
+    _nSystem = _basis->GetBasisSize();
+
+    // build quadrature object and store quadrature points and weights
+    _quadPoints = _quadrature->GetPoints();
+    _weights    = _quadrature->GetWeights();
+    //_nq               = _quadrature->GetNq();
+    _quadPointsSphere = _quadrature->GetPointsSphere();
+
+    // Initialize and Pre-Compute basis functions at quadrature points
+    _basisAtQuad = VectorVector( _nq, Vector( _nSystem, 0.0 ) );
+
+    // ComputeMoments();
 }
 
 void CSDPNSolver::SolverPreprocessing() {
-    // TODO
+    /*
+        // do substitution from psi to psiTildeHat (cf. Dissertation Kerstion Kuepper, Eq. 1.23)
+        for( unsigned j = 0; j < _nCells; ++j ) {
+            for( unsigned k = 0; k < _nq; ++k ) {
+                _sol[j][k] = _sol[j][k] * _density[j] * _s[_nEnergies - 1];    // note that _s[_nEnergies - 1] is stopping power at highest energy
+            }
+        }
+        */
+
+    // store transformed energies ETilde instead of E in _energies vector (cf. Dissertation Kerstion Kuepper, Eq. 1.25)
+    double tmp   = 0.0;
+    _energies[0] = 0.0;
+
+    for( unsigned n = 1; n < _nEnergies; ++n ) {
+        tmp          = tmp + _dE * 0.5 * ( 1.0 / _s[n] + 1.0 / _s[n - 1] );
+        _energies[n] = tmp;
+    }
+
+    // store transformed energies ETildeTilde instead of ETilde in _energies vector (cf. Dissertation Kerstion Kuepper, Eq. 1.25)
+    for( unsigned n = 0; n < _nEnergies; ++n ) {
+        _energies[n] = _energies[_nEnergies - 1] - _energies[n];
+    }
+
+    // cross sections do not need to be transformed to ETilde energy grid since e.g. TildeSigmaT(ETilde) = SigmaT(E(ETilde))
 }
 
 void CSDPNSolver::IterPreprocessing( unsigned /*idx_iter*/ ) {
@@ -109,10 +149,6 @@ void CSDPNSolver::FluxUpdate() {
         _mesh->ReconstructSlopesU( _nSystem, _solDx, _solDy, _sol );    // unstructured reconstruction
         //_mesh->ComputeSlopes( _nTotalEntries, _solDx, _solDy, _sol );    // unstructured reconstruction
     }
-    // Vector solL( _nTotalEntries );
-    // Vector solR( _nTotalEntries );
-    auto solL = _sol[2];
-    auto solR = _sol[2];
 
     // Loop over all spatial cells
     for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
@@ -143,15 +179,16 @@ void CSDPNSolver::FluxUpdate() {
                 switch( _reconsOrder ) {
                     // first order solver
                     case 1:
-                        _solNew[idx_cell] += _g->Flux( _AxPlus,
-                                                       _AxMinus,
-                                                       _AyPlus,
-                                                       _AyMinus,
-                                                       _AzPlus,
-                                                       _AzMinus,
-                                                       _sol[idx_cell] / _density[idx_cell],
-                                                       _sol[_neighbors[idx_cell][idx_neighbor]] / _density[_neighbors[idx_cell][idx_neighbor]],
-                                                       _normals[idx_cell][idx_neighbor] );
+                        _solNew[idx_cell] +=
+                            _g->Flux( _AxPlus,
+                                      _AxMinus,
+                                      _AyPlus,
+                                      _AyMinus,
+                                      _AzPlus,
+                                      _AzMinus,
+                                      _sol[idx_cell] * ( 1.0 / _density[idx_cell] ),
+                                      _sol[_neighbors[idx_cell][idx_neighbor]] * ( 1.0 / _density[_neighbors[idx_cell][idx_neighbor]] ),
+                                      _normals[idx_cell][idx_neighbor] );
                         break;
                     // second order solver
                     case 2:
@@ -288,4 +325,11 @@ void CSDPNSolver::WriteVolumeOutput( unsigned idx_pseudoTime ) {
             }
         }
     }
+}
+
+Vector CSDPNSolver::ConstructFlux( unsigned idx_cell ) {
+    // for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
+    //    flux += _moments[idx_quad] * ( _weights[idx_quad] * entropyFlux );
+    //}
+    return Vector( 1, 0.0 );
 }
