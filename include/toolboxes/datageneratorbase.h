@@ -60,8 +60,8 @@ class DataGeneratorBase
     Vector _weights;                /*!<  @brief quadrature weights, dim(_weights) = (_nq) */
     VectorVector _quadPointsSphere; /*!<  @brief (my,phi), dim(_quadPoints) = (_nq,2) */
 
-    SphericalBase* _basis; /*!< @brief Class to compute and store current spherical harmonics basis */
-    VectorVector _moments; /*!< @brief Moment Vector pre-computed at each quadrature point: dim= _nq x _nTotalEntries */
+    SphericalBase* _basisGenerator; /*!< @brief Class to compute and store current spherical harmonics basis */
+    VectorVector _momentBasis; /*!< @brief Moment Vector pre-computed at each quadrature point: dim= _nq x _nTotalEntries */
 
     NewtonOptimizer* _optimizer; /*!< @brief Class to solve minimal entropy problem */
     EntropyBase* _entropy;       /*!< @brief Class to handle entropy functional evaluations */

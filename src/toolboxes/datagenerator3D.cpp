@@ -37,7 +37,7 @@ void DataGenerator3D::ComputeMoments() {
     for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
         my                 = _quadPointsSphere[idx_quad][0];
         phi                = _quadPointsSphere[idx_quad][1];
-        _moments[idx_quad] = _basis->ComputeSphericalBasis( my, phi );
+        _momentBasis[idx_quad] = _basisGenerator->ComputeSphericalBasis( my, phi );
     }
 }
 
