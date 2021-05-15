@@ -19,7 +19,7 @@ DataGenerator1D::DataGenerator1D( Config* settings ) : DataGeneratorBase( settin
     // AdaptBasisSize();
 
     // Initialize Training Data
-    if( settings->GetAlphaSampling() )
+    if( _settings->GetAlphaSampling() )
         ComputeSetSizeAlpha();
     else
         ComputeSetSizeU();
@@ -36,8 +36,8 @@ void DataGenerator1D::ComputeMoments() {
     phi = 0;    // placeholder. will not be used
 
     for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
-        my                 = _quadPointsSphere[idx_quad][0];
-        _moments[idx_quad] = _basis->ComputeSphericalBasis( my, phi );
+        my                     = _quadPointsSphere[idx_quad][0];
+        _momentBasis[idx_quad] = _basisGenerator->ComputeSphericalBasis( my, phi );
     }
 }
 

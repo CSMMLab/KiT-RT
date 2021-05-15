@@ -16,10 +16,10 @@
 DataGenerator2D::DataGenerator2D( Config* settings ) : DataGeneratorBase( settings ) {
     ComputeMoments();
 
-    AdaptBasisSize();
+    // AdaptBasisSize(); // Bugg
 
     // Initialize Training Data
-    if( settings->GetAlphaSampling() )
+    if( _settings->GetAlphaSampling() )
         ComputeSetSizeAlpha();
     else
         ComputeSetSizeU();
@@ -35,9 +35,9 @@ void DataGenerator2D::ComputeMoments() {
     double my, phi;
 
     for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
-        my                 = _quadPointsSphere[idx_quad][0];
-        phi                = _quadPointsSphere[idx_quad][1];
-        _moments[idx_quad] = _basis->ComputeSphericalBasis( my, phi );
+        my                     = _quadPointsSphere[idx_quad][0];
+        phi                    = _quadPointsSphere[idx_quad][1];
+        _momentBasis[idx_quad] = _basisGenerator->ComputeSphericalBasis( my, phi );
     }
 }
 
