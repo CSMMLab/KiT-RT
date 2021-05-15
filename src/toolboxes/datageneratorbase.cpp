@@ -126,8 +126,8 @@ void DataGeneratorBase::ComputeTrainingData() {
 }
 
 void DataGeneratorBase::SampleMultiplierAlpha() {
-    double minAlphaValue = -15;
-    double maxAlphaValue = 15;
+    double minAlphaValue = -20;
+    double maxAlphaValue = 20;
 
     if( _settings->GetNormalizedSampling() ) {
         // compute reduced version of alpha and m
