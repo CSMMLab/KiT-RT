@@ -104,6 +104,8 @@ SolverBase::~SolverBase() {
     delete _quadrature;
     delete _mesh;
     delete _problem;
+    delete _reconstructor;
+    delete _g;
 }
 
 SolverBase* SolverBase::Create( Config* settings ) {
@@ -154,6 +156,7 @@ void SolverBase::Solve() {
         PrintScreenOutput( iter );
         PrintHistoryOutput( iter );
         PrintVolumeOutput( iter );
+        break;
     }
 
     // --- Postprocessing ---

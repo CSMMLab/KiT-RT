@@ -94,6 +94,8 @@ CSDPNSolver::CSDPNSolver( Config* settings ) : PNSolver( settings ) {
     // ComputeMoments();
 }
 
+CSDPNSolver::~CSDPNSolver() { delete _basis; }
+
 void CSDPNSolver::SolverPreprocessing() {
     /*
         // do substitution from psi to psiTildeHat (cf. Dissertation Kerstion Kuepper, Eq. 1.23)
@@ -334,7 +336,7 @@ void CSDPNSolver::WriteVolumeOutput( unsigned idx_pseudoTime ) {
     }
 }
 
-Vector CSDPNSolver::ConstructFlux( unsigned idx_cell ) {
+Vector CSDPNSolver::ConstructFlux( unsigned ) {
     // for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
     //    flux += _moments[idx_quad] * ( _weights[idx_quad] * entropyFlux );
     //}

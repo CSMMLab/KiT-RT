@@ -4,10 +4,13 @@
 
 IsotropicSource2D::IsotropicSource2D( Config* settings, Mesh* mesh ) : ElectronRT( settings, mesh ) {}
 
-IsotropicSource2D::~IsotropicSource2D() { delete _physics; }
+IsotropicSource2D::~IsotropicSource2D() {}
 
 std::vector<VectorVector> IsotropicSource2D::GetExternalSource( const Vector& energies ) {
-    return std::vector<VectorVector>( energies.size(), std::vector<Vector>( _mesh->GetNumCells(), Vector( _settings->GetNQuadPoints(), 0.0 ) ) );
+    auto zeroVec = Vector( _settings->GetNQuadPoints(), 0.0 );
+    auto uniform = std::vector<Vector>( _mesh->GetNumCells(), zeroVec );
+    auto Q       = std::vector<VectorVector>( energies.size(), uniform );
+    return Q;
 }
 
 VectorVector IsotropicSource2D::SetupIC() {

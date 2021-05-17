@@ -77,7 +77,7 @@ Config::~Config( void ) {
     // delete _option map values proberly
     for( auto const& x : _optionMap ) {
         delete x.second;
-        _optionMap.erase( x.first );
+        //_optionMap.erase( x.first );
     }
 }
 
