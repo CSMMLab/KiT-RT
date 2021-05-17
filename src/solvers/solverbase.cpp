@@ -156,7 +156,6 @@ void SolverBase::Solve() {
         PrintScreenOutput( iter );
         PrintHistoryOutput( iter );
         PrintVolumeOutput( iter );
-        break;
     }
 
     // --- Postprocessing ---
