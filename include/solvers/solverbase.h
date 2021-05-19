@@ -150,7 +150,26 @@ class SolverBase
     /*! @brief Solve functions runs main iteration loop. Components of the solve loop are pure virtual and subclassed by the child solvers.  */
     virtual void Solve();
 
+    /*! @brief Solve functions runs main iteration loop without printing or writing Output Files. Components of the solve loop are pure virtual and subclassed by the child solvers. Only for MC purposes */  
+    virtual void SolveQuietly();  //Only for MLMC purposes.
+
     /*! @brief Save Output solution to VTK file */
     void PrintVolumeOutput() const;    // Only for debugging purposes.
+
+    /*! @brief Get Quadrature Order, for debugging purposes */
+    virtual unsigned GetNQ(); 
+
+    /*! @brief Set density, for MLMC purposes */
+    virtual void SetDensity( double density );
+    /*! @brief Get dosis*/
+    virtual std::vector<double> GetDosis();
+    /*! @brief Get Areas */
+    virtual std::vector<double> GetAreas();
+    /*! @brief Get spatial mesh */
+    virtual Mesh* GetMesh();
+    /*! @brief Get spatial mesh */
+    virtual unsigned GetNCells() const { return _nCells; };
+    /*! @brief Get density*/
+    virtual double GetDensity();
 };
 #endif    // SOLVER_H

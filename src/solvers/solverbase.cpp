@@ -161,6 +161,36 @@ void SolverBase::Solve() {
     DrawPostSolverOutput();
 }
 
+void SolverBase::SolveQuietly(){
+
+    // --- Preprocessing ---    
+
+    // Adjust maxIter, depending if we have a normal run or a csd Run
+    _maxIter = _nEnergies;
+    if( _settings->GetIsCSD() ) {
+        _maxIter = _nEnergies - 1;    // Since CSD does not go the last energy step }
+    }
+    // Preprocessing before first pseudo time step
+    SolverPreprocessing();
+    
+    // Loop over energies (pseudo-time of continuous slowing down approach)
+    for( unsigned iter = 0; iter < _maxIter; iter++ ) {
+       
+        // --- Prepare Boundaries and temp variables
+        IterPreprocessing( iter );
+                
+        // --- Compute Fluxes ---
+        FluxUpdate();       
+
+        // --- Finite Volume Update ---
+        FVMUpdate( iter );        
+
+        // --- Iter Postprocessing ---
+        IterPostprocessing( iter );   
+    }
+    // --- Postprocessing ---
+}
+
 void SolverBase::PrintVolumeOutput() const { ExportVTK( _settings->GetOutputFile(), _outputFields, _outputFieldNames, _mesh ); }
 
 void SolverBase::PrintVolumeOutput( int currEnergy ) const {
@@ -497,3 +527,25 @@ void SolverBase::DrawPostSolverOutput() {
 }
 
 void SolverBase::SolverPreprocessing() {}
+
+void SolverBase::SetDensity( double density ) {
+    for( unsigned j = 0; j < _settings->GetNCells(); ++j ) {
+        _density[j] = density;
+    }
+}
+
+double SolverBase::GetDensity( ) {
+    return _density[1];
+}
+
+
+unsigned SolverBase::GetNQ(){
+    return _nq;
+}
+
+std::vector<double> SolverBase::GetDosis() { return std::vector<double>( 1, 0.0 ); }
+
+std::vector<double> SolverBase::GetAreas() { return std::vector<double>( 1, 0.0 ); }
+
+
+Mesh* SolverBase::GetMesh() { return _mesh; }

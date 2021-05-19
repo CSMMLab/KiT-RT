@@ -338,10 +338,11 @@ class Config
     void SetQuadName( QUAD_NAME quadName ) { _quadName = quadName; } /*!< @brief Never change the quadName! This is only for the test framework. */
     void SetQuadOrder( unsigned quadOrder ) {
         _quadOrder = quadOrder;
-    }                                                               /*!< @brief Never change the quadOrder! This is only for the test framework. */
-    void SetSNAllGaussPts( bool useall ) { _allGaussPts = useall; } /*!< @brief Never change the this! This is only for the test framework. */
+    }      /*!< @brief Setter for Quadrature Order in the Config Class! This is only for the MLMC framework. */                                                       
+    void SetSNAllGaussPts( bool useall ) { _allGaussPts = useall; } /*!< @brief Never change this! This is only for the test framework. */
     // Mesh Structure
     void SetNCells( unsigned nCells ) { _nCells = nCells; }
+    void SetMeshFile( std::string MeshFile) { _meshFile = std::filesystem::path( _inputDir ).append( MeshFile ).lexically_normal(); } /*!< @brief Setter for MeshFile in the Config Class! This is only for the MLMC framework.   _inputDir is taken from the actual Config File loaded*/
 };
 
 #endif    // CONFIG_H

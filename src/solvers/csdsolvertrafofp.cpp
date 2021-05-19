@@ -371,3 +371,7 @@ void CSDSolverTrafoFP::WriteVolumeOutput( unsigned idx_pseudoTime ) {
         }
     }
 }
+
+std::vector<double> CSDSolverTrafoFP::GetDosis() { return _dose; }
+
+std::vector<double> CSDSolverTrafoFP::GetAreas() { return _areas; }
