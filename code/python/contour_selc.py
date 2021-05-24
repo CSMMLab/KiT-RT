@@ -52,7 +52,6 @@ def contour_selc(img_file,method, num_points,sigma,threshold,max_val):
 		#n = 2*input('Enter the number of points to select the contours to include',)
 		x = plt.ginput(num_points)
 
-		print(x)
 
 		contour_index = []
 		for k  in range(len(contours)):
@@ -98,8 +97,6 @@ def contour_selc(img_file,method, num_points,sigma,threshold,max_val):
 		#n = 2*input('Enter the number of points to select the contours to include',)
 		x = plt.ginput(num_points)
 
-
-		print(x)
 
 		contour_index = []
 		for k  in range(len(contours)):
