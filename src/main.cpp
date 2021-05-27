@@ -54,9 +54,13 @@ int main( int argc, char** argv ) {
         // Run solver and export
         solver->Solve();
         solver->PrintVolumeOutput();
+        delete solver;
     }
 
+    delete config;
+
     MPI_Finalize();
+
     return EXIT_SUCCESS;
 #endif
 }

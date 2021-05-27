@@ -36,7 +36,7 @@ class CSDPNSolver : public PNSolver
      */
     CSDPNSolver( Config* settings );
 
-    virtual ~CSDPNSolver() {}
+    virtual ~CSDPNSolver();
 
     // virtual Solve() override;
 

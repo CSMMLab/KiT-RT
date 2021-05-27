@@ -7,10 +7,14 @@ class UpwindFlux : public NumericalFlux
 {
   public:
     /**
-     * @brief UpwindFlux
-     * @param settings
+     * @brief UpwindFlux constructor
      */
     UpwindFlux();
+
+    /**
+     * @brief UpwindFlux destructor
+     */
+    virtual ~UpwindFlux() {}
 
     /**
      * @brief Flux computes flux on edge for fixed ordinate at a given edge

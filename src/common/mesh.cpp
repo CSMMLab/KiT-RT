@@ -59,12 +59,17 @@ void Mesh::ComputeConnectivity() {
 #pragma omp parallel for
     for( unsigned i = mpiCellStart; i < mpiCellEnd; ++i ) {
         std::vector<unsigned>* cellsI = &sortedCells[i];
+        unsigned ctr                  = 0;
         for( unsigned j = 0; j < _numCells; ++j ) {
-            if( i == j ) continue;
-            if( static_cast<unsigned>( blaze::dot( blaze::row( connMat, i ), blaze::row( connMat, j ) ) ) ==
-                _numNodesPerBoundary ) {    // in 2D cells are neighbors if they share two nodes std::vector<unsigned>* cellsJ = &sortedCells[j];
+            if( i == j )
+                continue;
+            else if( ctr == _numNodesPerCell )
+                break;
+            else if( static_cast<unsigned>( blaze::dot( blaze::row( connMat, i ), blaze::row( connMat, j ) ) ) ==
+                     _numNodesPerBoundary ) {    // in 2D cells are neighbors if they share two nodes std::vector<unsigned>* cellsJ = &sortedCells[j];
                 std::vector<unsigned>* cellsJ = &sortedCells[j];
                 std::vector<unsigned> commonElements;
+                commonElements.reserve( _numNodesPerBoundary );
                 std::set_intersection( cellsI->begin(),
                                        cellsI->end(),
                                        cellsJ->begin(),
@@ -77,13 +82,16 @@ void Mesh::ComputeConnectivity() {
                 neighborsFlatPart[pos] = j;
                 // compute normal vector
                 normalsFlatPart[pos] = ComputeOutwardFacingNormal( _nodes[commonElements[0]], _nodes[commonElements[1]], _cellMidPoints[i] );
+                ctr++;
             }
         }
+
         // boundaries are treated similarly to normal cells, but need a special treatment due to the absence of a neighboring cell
         for( unsigned k = 0; k < _boundaries.size(); ++k ) {
             std::vector<unsigned>* bNodes = &sortedBoundaries[k];
             for( unsigned j = 0; j < _boundaries[k].second.size(); ++j ) {
                 std::vector<unsigned> commonElements;
+                commonElements.reserve( _numNodesPerBoundary );
                 std::set_intersection( cellsI->begin(), cellsI->end(), bNodes->begin(), bNodes->end(), std::back_inserter( commonElements ) );
                 if( commonElements.size() == _dim ) {
                     unsigned pos0 = _numNodesPerCell * ( i - mpiCellStart );
