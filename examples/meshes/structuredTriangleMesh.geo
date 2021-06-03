@@ -1,4 +1,4 @@
-
+NCells = 10;
 //+
 Point(1) = {-1, 1, 0, 1.0};
 //+
@@ -20,11 +20,11 @@ Curve Loop(1) = {1, 2, 3, 4};
 //+
 Plane Surface(1) = {1};
 //+
-Physical Curve("outer", 5) = {1, 4, 2, 3};
+Physical Curve("void", 5) = {1, 4, 2, 3};
 
 //+
 Transfinite Surface {1} = {4, 3, 2, 1};
 //+
-Transfinite Curve {1, 3} = 100 Using Progression 1;
+Transfinite Curve {1, 3} = NCells Using Progression 1;
 //+
-Transfinite Curve {4, 2} = 100 Using Progression 1;
+Transfinite Curve {4, 2} = NCells Using Progression 1;
