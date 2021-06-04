@@ -50,6 +50,7 @@ void Mesh::ComputeConnectivity() {
         std::sort( sortedBoundaries[i].begin(), sortedBoundaries[i].end() );
     }
 
+    // save which cell has which nodes
     blaze::CompressedMatrix<bool> connMat( _numCells, _numNodes );
     for( unsigned i = mpiCellStart; i < mpiCellEnd; ++i ) {
         for( auto j : _cells[i] ) connMat.set( i, j, true );
@@ -67,8 +68,9 @@ void Mesh::ComputeConnectivity() {
                 break;
             else if( static_cast<unsigned>( blaze::dot( blaze::row( connMat, i ), blaze::row( connMat, j ) ) ) ==
                      _numNodesPerBoundary ) {    // in 2D cells are neighbors if they share two nodes std::vector<unsigned>* cellsJ = &sortedCells[j];
+                // which are the two common nodes and which edge belongs to them?
                 std::vector<unsigned>* cellsJ = &sortedCells[j];
-                std::vector<unsigned> commonElements;
+                std::vector<unsigned> commonElements;    // vector of nodes that are shared by cells i and j
                 commonElements.reserve( _numNodesPerBoundary );
                 std::set_intersection( cellsI->begin(),
                                        cellsI->end(),
@@ -78,7 +80,8 @@ void Mesh::ComputeConnectivity() {
                 // determine unused index
                 unsigned pos0 = _numNodesPerCell * ( i - mpiCellStart );
                 unsigned pos  = pos0;
-                while( neighborsFlatPart[pos] != -1 && pos < pos0 + _numNodesPerCell - 1 && pos < chunkSize * _numNodesPerCell - 1 ) pos++;
+                while( neighborsFlatPart[pos] != -1 && pos < pos0 + _numNodesPerCell - 1 && pos < chunkSize * _numNodesPerCell - 1 )
+                    pos++;    // neighbors should be at same edge position for cells i AND j
                 neighborsFlatPart[pos] = j;
                 // compute normal vector
                 normalsFlatPart[pos] = ComputeOutwardFacingNormal( _nodes[commonElements[0]], _nodes[commonElements[1]], _cellMidPoints[i] );
@@ -90,12 +93,19 @@ void Mesh::ComputeConnectivity() {
         for( unsigned k = 0; k < _boundaries.size(); ++k ) {
             std::vector<unsigned>* bNodes = &sortedBoundaries[k];
             for( unsigned j = 0; j < _boundaries[k].second.size(); ++j ) {
-                std::vector<unsigned> commonElements;
+                std::vector<unsigned> commonElements;    // vector of nodes that are shared by cells i and j
                 commonElements.reserve( _numNodesPerBoundary );
-                std::set_intersection( cellsI->begin(), cellsI->end(), bNodes->begin(), bNodes->end(), std::back_inserter( commonElements ) );
-                if( commonElements.size() == _dim ) {
+                std::set_intersection( cellsI->begin(),
+                                       cellsI->end(),
+                                       bNodes->begin(),
+                                       bNodes->end(),
+                                       std::back_inserter( commonElements ) );    // find common nodes of two cells
+                // _boundaries[k].second has all boundary nodes of boundary k. Therefore if all cell nodes lie on the boundary, the number of common
+                // nodes can be 3 for triangles, 4 for quadrangles etc
+                if( commonElements.size() >= _numNodesPerBoundary && commonElements.size() <= _numNodesPerCell ) {
                     unsigned pos0 = _numNodesPerCell * ( i - mpiCellStart );
                     unsigned pos  = pos0;
+                    // Question Jonas: Does this include the case when a cell has two neighoring ghost cells?
                     while( neighborsFlatPart[pos] != -1 && pos < pos0 + _numNodesPerCell - 1 && pos < chunkSize * _numNodesPerCell - 1 ) pos++;
                     neighborsFlatPart[pos] = _ghostCellID;
                     normalsFlatPart[pos]   = ComputeOutwardFacingNormal( _nodes[commonElements[0]], _nodes[commonElements[1]], _cellMidPoints[i] );
@@ -122,10 +132,9 @@ void Mesh::ComputeConnectivity() {
     }
 
     // check for any unassigned faces
-    if( std::any_of( neighborsFlat.begin(), neighborsFlat.end(), []( int i ) { return i == -1; } ) ) {
+    if( std::any_of( neighborsFlat.begin(), neighborsFlat.end(), []( int i ) { return i == -1; } ) ) {    // if any entry in neighborsFlat is -1
         for( unsigned idx = 0; idx < neighborsFlat.size(); ++idx ) {
-            if( neighborsFlat[idx] == -1 )
-                ErrorMessages::Error( "Detected unassigned faces at index " + std::to_string( idx ) + " !", CURRENT_FUNCTION );
+            ErrorMessages::Error( "Detected unassigned faces at index " + std::to_string( idx ) + " !", CURRENT_FUNCTION );
         }
     }
 
