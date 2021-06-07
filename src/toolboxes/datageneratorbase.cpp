@@ -17,6 +17,7 @@
 #include "toolboxes/sphericalbase.h"
 #include "toolboxes/textprocessingtoolbox.h"
 
+#include <chrono>
 #include <iomanip>
 #include <math.h>
 #include <omp.h>
@@ -101,15 +102,50 @@ void DataGeneratorBase::ComputeTrainingData() {
 
         // ---- Check realizability ---
         // CheckRealizability();
+        std::vector<double> timings( 100, 0.0 );
 
-        // --- compute alphas ---
+        for( unsigned j = 0; j < _setSize; j++ ) {
+            _uSol[j][0] = 1.0;
+            _uSol[j][1] = 0.99;
+            _uSol[j][2] = 0.99 * 0.99;
+        }
 
-        _optimizer->SolveMultiCell( _alpha, _uSol, _momentBasis );
+        for( unsigned i = 0; i < 100; i++ ) {
+            // Record start time
+            auto start = std::chrono::high_resolution_clock::now();
+            // --- compute alphas ---
+            _optimizer->SolveMultiCell( _alpha, _uSol, _momentBasis );
 
-        log->info( "| Making moments realizable problems." );
+            // Record end time
+            auto finish                           = std::chrono::high_resolution_clock::now();
+            std::chrono::duration<double> elapsed = finish - start;
+            timings[i]                            = elapsed.count();
+            log->info( "| Elapsed time for solving the entropy minimization problem: " + to_string( elapsed.count() ) + " seconds. Iteration" +
+                       to_string( i ) + "." );
+            // reset training solution
+            for( unsigned j = 0; j < _setSize; j++ ) {
+                for( unsigned k = 0; k < _nTotalEntries; k++ ) {
+                    _alpha[j][k] = 0.0;
+                }
+            }
+        }
+        // Compute statistics
+        double mean = 0;
+        for( unsigned i = 0; i < 100; i++ ) {
+            mean += timings[i];
+        }
+        mean /= 100;
+        double stdDev = 0;
+        for( unsigned i = 0; i < 100; i++ ) {
+            stdDev += ( timings[i] - mean ) * ( timings[i] - mean );
+        }
+        stdDev /= 100;
+        stdDev = sqrt( stdDev );
+        log->info( "| Mean timing: " + to_string( mean ) + " seconds. Standard deviation: " + to_string( stdDev ) + " seconds." );
 
         // --- Postprocessing
         if( _settings->GetRelizabilityReconsU() ) {
+            log->info( "| Making moments realizable." );
             ComputeRealizableSolution();
         }
     }
