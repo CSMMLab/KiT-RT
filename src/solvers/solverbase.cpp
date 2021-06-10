@@ -61,10 +61,11 @@ SolverBase::SolverBase( Config* settings ) {
 
     if( _settings->GetIsCSD() ) {
         // carefull: This gets overwritten by almost all subsolvers
-        double minE = 5e-5;
+        double minE = 5e-5;    // 2.231461e-01;    // 5e-5;
         double maxE = _settings->GetMaxEnergyCSD();
         _nEnergies  = std::ceil( ( maxE - minE ) / _dE );
-        _energies   = blaze::linspace( _nEnergies, maxE, minE );    // go backwards from biggest to smallest energy
+        _energies   = blaze::linspace( _nEnergies, minE, maxE );
+        //_energies = blaze::linspace( _nEnergies, maxE, minE );    // go backwards from biggest to smallest energy
     }
     else {    // Not CSD Solver
         _nEnergies = unsigned( settings->GetTEnd() / _dE );

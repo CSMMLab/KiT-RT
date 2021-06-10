@@ -27,6 +27,12 @@ Vector Time2Energy( const Vector& t, const double E_CutOff ) {
     return blaze::max( 0, interp( interp2( E_CutOff, 0 ) - t ) );
 }
 
+double Time2Energy( const double t, const double E_CutOff ) {
+    Interpolation interp( E_trans, E_tab );
+    Interpolation interp2( E_tab, E_trans );
+    return std::fmax( 0.0, interp( E_CutOff - t ) );
+}
+
 Vector Energy2Time( const Vector& E, const double E_CutOff ) {
     Interpolation interp( E_tab, E_trans );
     return blaze::max( 0, interp( E_CutOff - E ) );
@@ -37,6 +43,7 @@ CSDPNSolver::CSDPNSolver( Config* settings ) : PNSolver( settings ) {
     _polyDegreeBasis = settings->GetMaxMomentDegree();
     Vector pos_beam  = Vector{ 0.5, 0.5 };
     _sol             = VectorVector( _nCells, Vector( _nSystem, 0.0 ) );
+    double tmp       = 0.0;
     for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
         double x            = _cellMidPoints[idx_cell][0];
         double y            = _cellMidPoints[idx_cell][1];
@@ -44,6 +51,7 @@ CSDPNSolver::CSDPNSolver( Config* settings ) : PNSolver( settings ) {
         double f            = normpdf( x, pos_beam[0], stddev ) * normpdf( y, pos_beam[1], stddev );
 
         _sol[idx_cell][0] = f * StarMAPmoments[0];
+        if( _sol[idx_cell][0] > tmp ) tmp = _sol[idx_cell][0];
 
         for( unsigned idx_sys = 1; idx_sys < _nSystem; idx_sys++ ) {
 
@@ -51,6 +59,7 @@ CSDPNSolver::CSDPNSolver( Config* settings ) : PNSolver( settings ) {
             _sol[idx_cell][idx_sys] = 0;    // isotropic
         }
     }
+    std::cout << "max moment values is " << tmp << std::endl;
 
     _solNew = _sol;
 
@@ -63,38 +72,45 @@ CSDPNSolver::CSDPNSolver( Config* settings ) : PNSolver( settings ) {
             _sigmaS[idx_energy][idx_degree] = tmp[idx_energy];
         }
     }
+    std::cout << _energies[0] << " " << _sigmaS[0][0] << std::endl;
 
     _sigmaT = VectorVector( _nEnergies, Vector( _polyDegreeBasis ) );
     for( unsigned idx_energy = 0; idx_energy < _nEnergies; ++idx_energy ) {
         for( unsigned idx_degree = 0; idx_degree < _polyDegreeBasis; ++idx_degree ) {
-            _sigmaT[idx_energy][idx_degree] = _sigmaS[idx_energy][0] - _sigmaS[idx_energy][idx_degree];
+            _sigmaT[idx_energy][idx_degree] = ( _sigmaS[idx_energy][0] - _sigmaS[idx_energy][idx_degree] );
         }
     }
 
     Interpolation interpS( E_tab, S_tab );
+    Vector oneVec( 1, 1.0 );
     _s = interpS( _energies );
+    std::cout << "Energies is " << _energies << std::endl;
+    std::cout << "Stopping powers are " << _s << std::endl;
+    std::cout << "Stopping powerenergy one is " << interpS( oneVec ) << std::endl;
 
     // SanityChecks
     for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
         _density[idx_cell] = 1.0;
     }
-
-    _basis   = SphericalBase::Create( _settings );
-    _nSystem = _basis->GetBasisSize();
+    _basis = NULL;
+    //_basis   = SphericalBase::Create( _settings );
+    //_nSystem = _basis->GetBasisSize();
 
     // build quadrature object and store quadrature points and weights
-    _quadPoints = _quadrature->GetPoints();
-    _weights    = _quadrature->GetWeights();
+    //_quadPoints = _quadrature->GetPoints();
+    //_weights    = _quadrature->GetWeights();
     //_nq               = _quadrature->GetNq();
-    _quadPointsSphere = _quadrature->GetPointsSphere();
+    //_quadPointsSphere = _quadrature->GetPointsSphere();
 
     // Initialize and Pre-Compute basis functions at quadrature points
-    _basisAtQuad = VectorVector( _nq, Vector( _nSystem, 0.0 ) );
+    //_basisAtQuad = VectorVector( _nq, Vector( _nSystem, 0.0 ) );
 
     // ComputeMoments();
 }
 
-CSDPNSolver::~CSDPNSolver() { delete _basis; }
+CSDPNSolver::~CSDPNSolver() {
+    if( _basis ) delete _basis;
+}
 
 void CSDPNSolver::SolverPreprocessing() {
     /*
@@ -115,9 +131,11 @@ void CSDPNSolver::SolverPreprocessing() {
         _energies[n] = tmp;
     }
 
+    _E_cutoff = _energies[_nEnergies - 1];
+
     // store transformed energies ETildeTilde instead of ETilde in _energies vector (cf. Dissertation Kerstion Kuepper, Eq. 1.25)
     for( unsigned n = 0; n < _nEnergies; ++n ) {
-        _energies[n] = _energies[_nEnergies - 1] - _energies[n];
+        _energies[n] = _E_cutoff - _energies[n];
     }
 
     // cross sections do not need to be transformed to ETilde energy grid since e.g. TildeSigmaT(ETilde) = SigmaT(E(ETilde))
@@ -128,6 +146,7 @@ void CSDPNSolver::IterPreprocessing( unsigned /*idx_iter*/ ) {
 }
 
 void CSDPNSolver::IterPostprocessing( unsigned idx_iter ) {
+    // std::cout << "Iter Postprocessing...";
     // --- Update Solution ---
     _sol = _solNew;
 
@@ -138,16 +157,21 @@ void CSDPNSolver::IterPostprocessing( unsigned idx_iter ) {
     // -- Compute Dose
     for( unsigned j = 0; j < _nCells; ++j ) {
         if( n > 0 ) {
-            _dose[j] += 0.5 * _dE * ( _fluxNew[j] * _s[_nEnergies - n - 1] + _flux[j] * _s[_nEnergies - n] ) /
-                        _density[j];    // update dose with trapezoidal rule
+            //_dose[j] += 0.5 * _dE * ( _fluxNew[j] * _s[_nEnergies - n - 1] + _flux[j] * _s[_nEnergies - n] ) /
+            //            _density[j];    // update dose with trapezoidal rule // diss Kerstin
+            _dose[j] += _dE * ( _fluxNew[j] * _s[_nEnergies - n - 1] ) / _density[j];    // update dose with explicit Euler rule // diss Kerstin
         }
         else {
             _dose[j] += _dE * _fluxNew[j] * _s[_nEnergies - n - 1] / _density[j];
+            //_dose[j] += _dE * _fluxNew[j] * _s[_nEnergies - n - 1] / _density[j];
         }
     }
+    std::cout << "weight: " << _s[_nEnergies - n - 1] << " time: " << idx_iter * _dE << " energy: " << Time2Energy( idx_iter * _dE, _E_cutoff )
+              << " DONE." << std::endl;
 }
 
 void CSDPNSolver::FluxUpdate() {
+    // std::cout << "Flux update...";
     if( _reconsOrder > 1 ) {
         _mesh->ReconstructSlopesU( _nSystem, _solDx, _solDy, _sol );    // unstructured reconstruction
         //_mesh->ComputeSlopes( _nTotalEntries, _solDx, _solDy, _sol );    // unstructured reconstruction
@@ -158,6 +182,7 @@ void CSDPNSolver::FluxUpdate() {
     auto solR = _sol[2];
 
     // Loop over all spatial cells
+#pragma omp parallel for
     for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
 
         // Dirichlet cells stay at IC, farfield assumption
@@ -215,9 +240,11 @@ void CSDPNSolver::FluxUpdate() {
             }
         }
     }
+    // std::cout << "DONE." << std::endl;
 }
 
 void CSDPNSolver::FVMUpdate( unsigned idx_energy ) {
+    // std::cout << "FVM update...";
     // transform energy difference
     _dE = fabs( _energies[idx_energy + 1] - _energies[idx_energy] );
 // loop over all spatial cells
@@ -241,9 +268,14 @@ void CSDPNSolver::FVMUpdate( unsigned idx_energy ) {
         // Source Term
         // _solNew[idx_cell][0] += _dE * _Q[0][idx_cell][0];
     }
+    // std::cout << "0 -> " << _sigmaT[0][0] << std::endl;
+    // std::cout << "1 -> " << _sigmaT[0][1] << std::endl;
+    // std::cout << "2 -> " << _sigmaT[0][2] << std::endl;
+    // std::cout << "DONE." << std::endl;
 }
 
 void CSDPNSolver::PrepareVolumeOutput() {
+    // std::cout << "Prepare Volume Output...";
     unsigned nGroups = (unsigned)_settings->GetNVolumeOutput();
 
     _outputFieldNames.resize( nGroups );
@@ -292,9 +324,11 @@ void CSDPNSolver::PrepareVolumeOutput() {
             default: ErrorMessages::Error( "Volume Output Group not defined for PN Solver!", CURRENT_FUNCTION ); break;
         }
     }
+    // std::cout << "DONE." << std::endl;
 }
 
 void CSDPNSolver::WriteVolumeOutput( unsigned idx_pseudoTime ) {
+    // std::cout << "Write Volume Output...";
     unsigned nGroups = (unsigned)_settings->GetNVolumeOutput();
     double maxDose;
     if( ( _settings->GetVolumeOutputFrequency() != 0 && idx_pseudoTime % (unsigned)_settings->GetVolumeOutputFrequency() == 0 ) ||
@@ -334,6 +368,7 @@ void CSDPNSolver::WriteVolumeOutput( unsigned idx_pseudoTime ) {
             }
         }
     }
+    // std::cout << "DONE." << std::endl;
 }
 
 Vector CSDPNSolver::ConstructFlux( unsigned ) {
