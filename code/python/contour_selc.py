@@ -7,6 +7,23 @@ from skimage import io, filters,feature
 from skimage.measure import find_contours, approximate_polygon, \
     subdivide_polygon
 
+#Funtion to retrieve the indices of contours between the selected input points.
+#Even number of points are selected on the plot using gplot and then using a simple for and if loop
+#all the contours within the box created by two successive points. 
+def contour_idx(contours, x, num_points): 
+	contour_index = [] #Creating empty list to store indices of the boxed in contours
+	for k  in range(len(contours)):
+		c = contours[k][:,0,:] #Extracting all the points in a contour
+		nk = len(c) #number of points in a given contour
+		for i in range(nk):
+		    ckij = c[i] #i^th point in the k^th contour
+		    for p in range(0,int(num_points/2)):
+			    if x[2*p][0] < ckij[0] and ckij[0] < x[2*p+1][0]:#Checking if the x-coordinate of the point is within the selected point 
+			        if x[2*p][1] > ckij[1] and ckij[1] > x[2*p+1][1]: #Checking if the y-coordinate of the point is within the selected point
+			            contour_index.append(k) #appending the contour index k if one of the points of the contour lies within the box
+			    else:
+			        continue
+	return contour_index
 
 def contour_selc(img_file,method, num_points,sigma,threshold,max_val):
 	if method == 'watershed':
