@@ -7,40 +7,82 @@ from skimage import io, filters,feature
 from skimage.measure import find_contours, approximate_polygon, \
     subdivide_polygon
 
+#Funtion to retrieve the indices of contours between the selected input points.
+#Even number of points are selected on the plot using gplot and then using a simple for and if loop
+#all the contours within the box created by two successive points. 
+def contour_idx(contours, x, num_points): 
+	contour_index = [] #Creating empty list to store indices of the boxed in contours
+	for k  in range(len(contours)):
+		c = contours[k][:,0,:] #Extracting all the points in a contour
+		nk = len(c) #number of points in a given contour
+		for i in range(nk):
+		    ckij = c[i] #i^th point in the k^th contour
+		    for p in range(0,int(num_points/2)):
+			    if x[2*p][0] < ckij[0] and ckij[0] < x[2*p+1][0]:#Checking if the x-coordinate of the point is within the selected point 
+			        if x[2*p][1] > ckij[1] and ckij[1] > x[2*p+1][1]: #Checking if the y-coordinate of the point is within the selected point
+			            contour_index.append(k) #appending the contour index k if one of the points of the contour lies within the box
+			    else:
+			        continue
+	return contour_index
 
-def contour_selc(img_file, num_points,sigma,thresh,max_val):
-	if isinstance(img_file,np.ndarray) == True:
-			edges_num = img_file
+def contour_selc(img_file,method, num_points,sigma,threshold,max_val):
+	if method == 'watershed':
+		img = cv.imread(img_file)
+		b,g,r = cv.split(img)
+		rgb_img = cv.merge([r,g,b])
 
-			_, binary = cv.threshold(edges_num, thresh, max_val, cv.THRESH_BINARY_INV)
-			#plt.imshow(binary, cmap="gray")
-			binary = np.uint8(binary)
+		gray = cv.cvtColor(img,cv.COLOR_BGR2GRAY)
+		ret, thresh = cv.threshold(gray,0,255,cv.THRESH_BINARY_INV+cv.THRESH_OTSU)
 
-			#image = cv.imread("G:\\HiWi\\SLphantom.jpg")
+		# noise removal
+		kernel = np.ones((2,2),np.uint8)
+		#opening = cv.morphologyEx(thresh,cv.MORPH_OPEN,kernel, iterations = 2)
+		closing = cv.morphologyEx(thresh,cv.MORPH_CLOSE,kernel, iterations = 2)
 
-			contours, hierarchy = cv.findContours(binary, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
+		# sure background area
+		sure_bg = cv.dilate(closing,kernel,iterations=3)
 
-			plt.figure(figsize=(10,10))
+		# Finding sure foreground area
+		dist_transform = cv.distanceTransform(sure_bg,cv.DIST_L2,3)
 
-			plt.imshow(binary)
-			#n = 2*input('Enter the number of points to select the contours to include',)
-			x = plt.ginput(num_points)
+		# Threshold
+		ret, sure_fg = cv.threshold(dist_transform,0.1*dist_transform.max(),255,0)
 
-			print(x)
+		# Finding unknown region
+		sure_fg = np.uint8(sure_fg)
+		unknown = cv.subtract(sure_bg,sure_fg)
 
-			contour_index = []
-			for k  in range(len(contours)):
-				c = contours[k][:,0,:]
-				nk = len(c)
-				for i in range(nk):
-					ckij = c[i]
-					for p in range(1,num_points):
-						if x[p-1][0] < ckij[0] and ckij[0] < x[p][0]:
-							if x[p-1][1] > ckij[1] and ckij[1] > x[p][1]:
-								contour_index.append(k)
-						else:
-							continue
-	else:
+		#dimenson of the image
+		dim = np.shape(unknown)
+
+		_, binary = cv.threshold(edges_num, threshold, max_val, cv.THRESH_BINARY_INV)
+		#plt.imshow(binary, cmap="gray")
+		binary = np.uint8(binary)
+
+		#image = cv.imread("G:\\HiWi\\SLphantom.jpg")
+
+		contours, hierarchy = cv.findContours(binary, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
+
+		plt.figure(figsize=(10,10))
+
+		plt.imshow(binary)
+		#n = 2*input('Enter the number of points to select the contours to include',)
+		x = plt.ginput(num_points)
+
+
+		contour_index = []
+		for k  in range(len(contours)):
+			c = contours[k][:,0,:]
+			nk = len(c)
+			for i in range(nk):
+				ckij = c[i]
+				for p in range(1,num_points):
+					if x[p-1][0] < ckij[0] and ckij[0] < x[p][0]:
+						if x[p-1][1] > ckij[1] and ckij[1] > x[p][1]:
+							contour_index.append(k)
+					else:
+						continue
+	if method == 'canny':
 		img = Image.open(img_file) 
 		imgarray = img.convert('LA')
 		imgmat = np.array(imgarray.getdata(band=0))
@@ -57,7 +99,7 @@ def contour_selc(img_file, num_points,sigma,thresh,max_val):
 					edges_num[i-1,j] = 1 #We need to have some thickness to get contours
 
 
-		_, binary = cv.threshold(edges_num, thresh, max_val, cv.THRESH_BINARY_INV)
+		_, binary = cv.threshold(edges_num, threshold, max_val, cv.THRESH_BINARY_INV)
 		#plt.imshow(binary, cmap="gray")
 		binary = np.uint8(binary) #numbers need to be in 8bit
 
@@ -73,8 +115,6 @@ def contour_selc(img_file, num_points,sigma,thresh,max_val):
 		x = plt.ginput(num_points)
 
 
-		print(x)
-
 		contour_index = []
 		for k  in range(len(contours)):
 			c = contours[k][:,0,:]
@@ -87,7 +127,32 @@ def contour_selc(img_file, num_points,sigma,thresh,max_val):
 							contour_index.append(k)
 					else:
 						continue
-		return np.unique(contour_index),contours
+		return np.unique(contour_index),contours, hierarchy, dim
+
+# We create  function called 'mesh_holes' to collect the hierarchies of contours
+# using the hierarchy tree. We create parent-chid relationships between the different
+# contours.
+
+def mesh_holes(hierarchy):
+	hirchy = hierarchy[0,:,:]
+	m,n = np.shape(hirchy)
+	holes_list = [[] for k in range(m)]
+	for i in range(m):
+		h = hirchy[i,:]
+		if h[0] == -1 and h[1] == -1:
+			holes_list[i].append(h[3])
+			holes_list[h[2]].append(i)
+		else:
+			if h[3] == -1:
+				if h[2] == -1:
+					if h[1] != -1:
+						holes_list[i].append(h[1])
+						holes_list[h[1]].append(i)
+				else:
+					holes_list[i].append(h[2])
+			else:
+				holes_list[h[3]].append(i)
+	return holes_list
 
 
 #'G:\\HiWi\\Liver_CT.png'
