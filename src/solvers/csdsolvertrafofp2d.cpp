@@ -23,9 +23,9 @@ CSDSolverTrafoFP2D::CSDSolverTrafoFP2D( Config* settings ) : SNSolver( settings 
     _energyMax = _settings->GetMaxEnergyCSD();    // 5e0;
 
     // determine transformed energy grid for tabulated grid
-    E_trans[0] = 0.0;
-    for( unsigned i = 1; i < _nEnergies; ++i )
-        E_trans[i] = E_trans[i - 1] + ( E_tab[i] - E_tab[i - 1] ) / 2 * ( 1.0 / S_tab[i] + 1.0 / S_tab[i - 1] );
+    Vector E_transformed( E_trans.size(), 0.0 );
+    for( unsigned i = 1; i < E_trans.size(); ++i )
+        E_transformed[i] = E_transformed[i - 1] + ( E_tab[i] - E_tab[i - 1] ) / 2 * ( 1.0 / S_tab[i] + 1.0 / S_tab[i - 1] );
 
     // determine minimal and maximal energies
     double minE = 5e-5;
@@ -33,12 +33,12 @@ CSDSolverTrafoFP2D::CSDSolverTrafoFP2D( Config* settings ) : SNSolver( settings 
     _E_cutoff   = maxE;
 
     // define interpolation from energies to corresponding transformed energies \tilde{E} (without substraction of eMaxTrafo)
-    Interpolation interpEToTrafo( E_tab, E_trans );
+    Interpolation interpEToTrafo( E_tab, E_transformed );
     double eMaxTrafo = interpEToTrafo( maxE );
     double eMinTrafo = interpEToTrafo( minE );
 
     // Define intepolation back to original energy
-    Interpolation interpTrafoToE( E_trans, E_tab );
+    Interpolation interpTrafoToE( E_transformed, E_tab );
 
     // define linear grid in fully transformed energy \tilde\tilde E (cf. Dissertation Kerstion Kuepper, Eq. 1.25)
     _eTrafo        = blaze::linspace( _nEnergies, eMaxTrafo - eMaxTrafo, eMaxTrafo - eMinTrafo );
