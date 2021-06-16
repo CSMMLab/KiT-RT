@@ -44,6 +44,7 @@ double Energy2Time( const double E, const double E_CutOff ) {
 }
 
 CSDPNSolver::CSDPNSolver( Config* settings ) : PNSolver( settings ) {
+    std::cout << "Start of constructor: E_ref = " << E_ref << std::endl;
     saveE_ref        = E_ref;
     _polyDegreeBasis = settings->GetMaxMomentDegree();
 
@@ -53,6 +54,7 @@ CSDPNSolver::CSDPNSolver( Config* settings ) : PNSolver( settings ) {
     }
     _basis = NULL;
 
+    // determine transformed energy grid for tabulated grid
     E_trans[0] = 0.0;
     for( unsigned i = 1; i < _nEnergies; ++i )
         E_trans[i] = E_trans[i - 1] + ( E_tab[i] - E_tab[i - 1] ) / 2 * ( 1.0 / S_tab[i] + 1.0 / S_tab[i - 1] );
@@ -80,8 +82,6 @@ CSDPNSolver::CSDPNSolver( Config* settings ) : PNSolver( settings ) {
     for( unsigned n = 0; n < _nEnergies; ++n ) {
         _energies[n] = interpTrafoToE( eMaxTrafo - _eTrafo[n] );
     }
-
-    std::cout << "energies written" << std::endl;
 
     // evaluate corresponding stopping powers and transport coefficients
     // compute sigmaT is now done during computation in IterPreprocessing()
@@ -111,13 +111,14 @@ CSDPNSolver::CSDPNSolver( Config* settings ) : PNSolver( settings ) {
             _sol[idx_cell][idx_sys] = 0;    // isotropic
         }
     }
-    std::cout << "max moment values is " << tmp << std::endl;
 
     _solNew = _sol;
 
     _dose = std::vector<double>( _settings->GetNCells(), 0.0 );
 
     _sigmaTAtEnergy = Vector( _polyDegreeBasis, 0.0 );
+
+    std::cout << "End of constructor: E_ref = " << E_ref << std::endl;
 }
 
 CSDPNSolver::~CSDPNSolver() {
