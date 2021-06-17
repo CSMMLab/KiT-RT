@@ -108,27 +108,46 @@ CSDSolverTrafoFP2D::CSDSolverTrafoFP2D( Config* settings ) : SNSolver( settings 
 
     DPlus = 0.0;
 
+    unsigned jMinus, iMinus, jPlus, iPlus;
+
     // implementation of 2D spherical Laplacian according book "Advances in Discrete Ordinates Methodology", equation (1.136)
     for( unsigned j = 0; j < orderMu; ++j ) {
         DMinus = DPlus;
         DPlus  = DMinus - 2 * _mu[j] * _wp[j];
         for( unsigned i = 0; i < 2 * order; ++i ) {
+
             if( j > 0 ) {
-                _L( j * 2 * order + i, ( j - 1 ) * 2 * order + i ) = DMinus / ( _mu[j] - _mu[j - 1] ) / _wp[j];
-                _L( j * 2 * order + i, j * 2 * order + i )         = -DMinus / ( _mu[j] - _mu[j - 1] ) / _wp[j];
+                jMinus = j - 1;
+            }
+            else {
+                jMinus = orderMu - 1;
             }
             if( i > 0 ) {
-                _L( j * 2 * order + i, j * 2 * order + i - 1 ) = 1.0 / ( 1 - _mu[j] * _mu[j] ) * gamma[j] / ( _phi[i] - _phi[i - 1] ) / _wa[i];
-                _L( j * 2 * order + i, j * 2 * order + i ) += -1.0 / ( 1 - _mu[j] * _mu[j] ) * gamma[j] / ( _phi[i] - _phi[i - 1] ) / _wa[i];
+                iMinus = i - 1;
+            }
+            else {
+                iMinus = 2 * order - 1;
             }
             if( j < orderMu - 1 ) {
-                _L( j * 2 * order + i, ( j + 1 ) * 2 * order + i ) = DPlus / ( _mu[j + 1] - _mu[j] ) / _wp[j];
-                _L( j * 2 * order + i, j * 2 * order + i ) += -DPlus / ( _mu[j + 1] - _mu[j] ) / _wp[j];
+                jPlus = j + 1;
+            }
+            else {
+                jPlus = 0;
             }
             if( i < 2 * order - 1 ) {
-                _L( j * 2 * order + i, j * 2 * order + i + 1 ) = 1.0 / ( 1 - _mu[j] * _mu[j] ) * gamma[j] / ( _phi[i + 1] - _phi[i] ) / _wa[i];
-                _L( j * 2 * order + i, j * 2 * order + i ) += -1.0 / ( 1 - _mu[j] * _mu[j] ) * gamma[j] / ( _phi[i + 1] - _phi[i] ) / _wa[i];
+                iPlus = i + 1;
             }
+            else {
+                iPlus = 0;
+            }
+            _L( j * 2 * order + i, jMinus * 2 * order + i ) = DMinus / ( _mu[j] - _mu[jMinus] ) / _wp[j];
+            _L( j * 2 * order + i, j * 2 * order + i )      = -DMinus / ( _mu[j] - _mu[jMinus] ) / _wp[j];
+            _L( j * 2 * order + i, j * 2 * order + iMinus ) = 1.0 / ( 1 - _mu[j] * _mu[j] ) * gamma[j] / ( _phi[i] - _phi[iMinus] ) / _wa[i];
+            _L( j * 2 * order + i, j * 2 * order + i ) += -1.0 / ( 1 - _mu[j] * _mu[j] ) * gamma[j] / ( _phi[i] - _phi[iMinus] ) / _wa[i];
+            _L( j * 2 * order + i, jPlus * 2 * order + i ) = DPlus / ( _mu[jPlus] - _mu[j] ) / _wp[j];
+            _L( j * 2 * order + i, j * 2 * order + i ) += -DPlus / ( _mu[jPlus] - _mu[j] ) / _wp[j];
+            _L( j * 2 * order + i, j * 2 * order + iPlus ) = 1.0 / ( 1 - _mu[j] * _mu[j] ) * gamma[j] / ( _phi[iPlus] - _phi[i] ) / _wa[i];
+            _L( j * 2 * order + i, j * 2 * order + i ) += -1.0 / ( 1 - _mu[j] * _mu[j] ) * gamma[j] / ( _phi[iPlus] - _phi[i] ) / _wa[i];
         }
     }
 
@@ -295,7 +314,6 @@ void CSDSolverTrafoFP2D::IterPreprocessing( unsigned idx_pseudotime ) {
 #pragma omp parallel for
     for( unsigned j = 0; j < _nCells; ++j ) {
         if( _boundaryCells[j] == BOUNDARY_TYPE::DIRICHLET ) continue;
-        //_sol[j] = blaze::solve( _identity - _dE * _alpha2 * _L, psiNew[j] );
         _sol[j] = _IL * blaze::solve( _IL - _dE * _alpha * _L, _sol[j] );
     }
 }
