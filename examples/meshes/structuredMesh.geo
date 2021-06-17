@@ -1,4 +1,4 @@
-nCells = 99;
+nCells = 199;
 length = 1.0;
 //+
 Point(1) = {0, length, 0, 1.0};
