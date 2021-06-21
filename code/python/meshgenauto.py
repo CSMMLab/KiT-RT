@@ -14,7 +14,7 @@ import meshio
 import cv2 as cv
 import pymesh
 import matplotlib.colors as mcolors
-from contour_selc import contour_selc, mesh_holes
+from contour_selc import contour_selc, contour_structure
 
 def Mesh(contours, cont_idx,mesh_holes, dim, indices, lcar, remove_low_dim_cells = True):
 	with pg.geo.Geometry() as geom:
@@ -89,42 +89,50 @@ def Mesh(contours, cont_idx,mesh_holes, dim, indices, lcar, remove_low_dim_cells
 		return mesh
 
 
-cont_idx,contours,hierarchy, dim = contour_selc('G:\\HiWi\\head_CT.jpg','watershed',4,2,0,255)
-mesh_holes = mesh_holes(hierarchy)
-#mesh_holes[0].remove(59)
-del_list = []
-for k in range(len(cont_idx)):
-	if len(contours[cont_idx[k]]) < 5:
-		del_list.append(k)
+def mesh_from_image(image_path, mesh_path,num_points, method = 'watershed', small_contour = False, default_lcar = True, plot_contours = True):
 
-cont_idx = np.delete(cont_idx,del_list)
-		
-for i in range(len(cont_idx)):
-	plt.scatter(contours[cont_idx[i]][:,0,0],contours[cont_idx[i]][:,0,1], label = '{}'.format(cont_idx[i]))
-plt.legend()
-plt.show()
+	cont_idx,contours,hierarchy, dim = contour_selc(image_path,method,num_points)
 
-indices = []
-for i in range(len(cont_idx)):
-	if len(contours[cont_idx[i]]) <= 25:
-		index = np.arange(0,len(contours[cont_idx[i]]),1)
-	elif 25 < len(contours[cont_idx[i]]) <= 50:
-		index = np.arange(0,len(contours[cont_idx[i]]),2)
-	elif 50 < len(contours[cont_idx[i]]) <= 200:
-		index = np.arange(0,len(contours[cont_idx[i]]),5)
-	elif 200 < len(contours[cont_idx[i]]) <= 1000:
-		index = np.arange(0,len(contours[cont_idx[i]]),10)
-	else:
-		index = np.arange(0,len(contours[cont_idx[i]]),15)
-	indices.append(index)
+	mesh_holes = contour_tree(hierarchy)
 
-#lcar = [10,10,5,5,5,5]
-lcar = []
-for i in range(len(cont_idx)):
-	lcar.append(10)
+	if small_contour == False:
+		del_list = []
+		for k in range(len(cont_idx)):
+			if len(contours[cont_idx[k]]) < 10:
+				del_list.append(k)
 
-mesh = Mesh(contours,cont_idx,mesh_holes,dim, indices,lcar)
-mesh.remove_orphaned_nodes()
-#mesh.remove_lower_dimensional_cells()
-mesh.write("G:\\HiWi\\autogentest.vtk")
+		cont_idx = np.delete(cont_idx,del_list)
+
+	if default_lcar == True:
+		indices = []
+		lcar = []
+		for i in range(len(cont_idx)):
+			if len(contours[cont_idx[i]]) <= 25:
+				index = np.arange(0,len(contours[cont_idx[i]]),1)
+				lcar_val = 10
+			elif 25 < len(contours[cont_idx[i]]) <= 50:
+				index = np.arange(0,len(contours[cont_idx[i]]),2)
+				lcar_val = 10
+			elif 50 < len(contours[cont_idx[i]]) <= 200:
+				index = np.arange(0,len(contours[cont_idx[i]]),5)
+				lcar_val = 20
+			elif 200 < len(contours[cont_idx[i]]) <= 1000:
+				index = np.arange(0,len(contours[cont_idx[i]]),10)
+				lcar_val = 25
+			else:
+				index = np.arange(0,len(contours[cont_idx[i]]),15)
+				lcar_val = 40
+			indices.append(index)
+			lcar.append(lcar_val)
+
+	for i in range(len(cont_idx)):
+		plt.scatter(contours[cont_idx[i]][:,0,0],contours[cont_idx[i]][:,0,1], label = '{}'.format(cont_idx[i]))
+	plt.legend()
+	plt.show()
+
+	mesh = Mesh(contours,cont_idx,mesh_holes,dim, indices,lcar,remove_low_dim_cells = True)
+	#help(mesh.write)
+
+	mesh.write(mesh_path)
+
 
