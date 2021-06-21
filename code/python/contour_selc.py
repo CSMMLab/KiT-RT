@@ -133,7 +133,7 @@ def contour_selc(img_file,method, num_points,sigma,threshold,max_val):
 # using the hierarchy tree. We create parent-chid relationships between the different
 # contours.
 
-def mesh_holes(hierarchy):
+def contour_structure(hierarchy):
 	hirchy = hierarchy[0,:,:]
 	m,n = np.shape(hirchy)
 	holes_list = [[] for k in range(m)]
