@@ -25,14 +25,14 @@ def contour_idx(contours, x, num_points):
 			        continue
 	return contour_index
 
-def contour_selc(img_file,method, num_points,sigma,threshold,max_val):
+def contour_selc(img_file,method, num_points,sigma = 2,threshold = 0,max_val = 255):
 	if method == 'watershed':
 		img = cv.imread(img_file)
 		b,g,r = cv.split(img)
 		rgb_img = cv.merge([r,g,b])
 
 		gray = cv.cvtColor(img,cv.COLOR_BGR2GRAY)
-		ret, thresh = cv.threshold(gray,0,255,cv.THRESH_BINARY_INV+cv.THRESH_OTSU)
+		ret, thresh = cv.threshold(gray,threshold,max_val,cv.THRESH_BINARY_INV+cv.THRESH_OTSU)
 
 		# noise removal
 		kernel = np.ones((2,2),np.uint8)
@@ -154,11 +154,3 @@ def contour_structure(hierarchy):
 				holes_list[h[3]].append(i)
 	return holes_list
 
-
-#'G:\\HiWi\\Liver_CT.png'
-contour_index,contours = contour_selc("G:\\HiWi\\Lung_CT.png",10,2,0,255)
-print(contour_index)
-for i in range(len(contour_index)):
-	plt.scatter(contours[contour_index[i]][:,0,0],contours[contour_index[i]][:,0,1], label = '{}'.format(contour_index[i]))
-plt.legend()
-plt.show()
