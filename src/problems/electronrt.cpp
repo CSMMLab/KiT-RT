@@ -9,33 +9,33 @@ ElectronRT::ElectronRT( Config* settings, Mesh* mesh ) : ProblemBase( settings, 
 
 ElectronRT::~ElectronRT() { delete _physics; }
 
-VectorVector ElectronRT::GetScatteringXS( const Vector& energies ) {
+VectorVector ElectronRT::GetScatteringXS( const Vector& /*energies*/ ) {
     // @TODO
     // Specified in subclasses
     return VectorVector( 1, Vector( 1, 0.0 ) );
 }
 
-VectorVector ElectronRT::GetTotalXS( const Vector& energies ) {
+VectorVector ElectronRT::GetTotalXS( const Vector& /*energies*/ ) {
     // @TODO
     // Specified in subclasses
     return VectorVector( 1, Vector( 1, 0.0 ) );
 }
 
-std::vector<Matrix> ElectronRT::GetScatteringXSE( const Vector& energies, const Matrix& angles ) {
+std::vector<Matrix> ElectronRT::GetScatteringXSE( const Vector& /*energies*/, const Matrix& /*angles*/ ) {
     // @TODO
     // Specified in subclasses
     // return _physics->GetScatteringXS( energies, angles );
     return std::vector<Matrix>( 1, Matrix( 1, 1 ) );
 }
 
-Vector ElectronRT::GetTotalXSE( const Vector& energies ) {
+Vector ElectronRT::GetTotalXSE( const Vector& /*energies*/ ) {
     // @TODO
     // Specified in subclasses
     // return _physics->GetTotalXSE( energies );
     return Vector( 1 );
 }
 
-std::vector<VectorVector> ElectronRT::GetExternalSource( const Vector& energies ) {
+std::vector<VectorVector> ElectronRT::GetExternalSource( const Vector& /*energies*/ ) {
     // @TODO
     // Specified in subclasses
     return std::vector<VectorVector>( 1, std::vector<Vector>( 1, Vector( 1, 0.0 ) ) );

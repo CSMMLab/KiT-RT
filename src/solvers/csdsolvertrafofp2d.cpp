@@ -14,7 +14,6 @@
 #include <mpi.h>
 
 CSDSolverTrafoFP2D::CSDSolverTrafoFP2D( Config* settings ) : SNSolver( settings ) {
-    std::cout << "FP" << std::endl;
     _dose = std::vector<double>( _settings->GetNCells(), 0.0 );
 
     // Set angle and energies
@@ -77,7 +76,7 @@ CSDSolverTrafoFP2D::CSDSolverTrafoFP2D( Config* settings ) : SNSolver( settings 
     }
 
     for( unsigned i = 0; i < 2 * order; ++i ) {
-        _phi[i] = ( i + 0.5 ) * M_PI / order;
+        _phi[i] = ( static_cast<double>( i ) + 0.5 ) * M_PI / order;
         _wa[i]  = M_PI / order;
     }
 
@@ -86,8 +85,8 @@ CSDSolverTrafoFP2D::CSDSolverTrafoFP2D( Config* settings ) : SNSolver( settings 
 
     _FPMethod = 2;
 
-    double DMinus = 0.0;    // is beta_{n-1/2}
-    double DPlus  = 0.0;    // is beta_{n+1/2}
+    double betaMinus = 0.0;    // is beta_{n-1/2}
+    double betaPlus  = 0.0;    // is beta_{n+1/2}
 
     Vector gamma( 2 * order, 0.0 );
     double dPlus;
@@ -95,59 +94,61 @@ CSDSolverTrafoFP2D::CSDSolverTrafoFP2D( Config* settings ) : SNSolver( settings 
 
     // Setup Coefficients (see "Advances in Discrete Ordinates Methodology",  eq (1.137-1.140))
     double dMinus = 0.0;
-    DPlus         = DMinus - 2 * _mu[0] * w[0];
+    betaPlus      = betaMinus - 2.0 * _mu[0] * w[0];
     for( unsigned j = 0; j < orderMu - 1; ++j ) {
-        DMinus   = DPlus;
-        DPlus    = DMinus - 2 * _mu[j] * w[j];
-        dPlus    = ( sqrt( 1 - _mu[j + 1] * _mu[j + 1] ) - sqrt( 1 - _mu[j] * _mu[j] ) ) / ( _mu[j + 1] - _mu[j] );
-        c        = ( DPlus * dPlus - DMinus * dMinus ) / _wp[j];
-        K        = 2 * ( 1 - _mu[j] * _mu[j] ) + c * sqrt( 1 - _mu[j] * _mu[j] );
-        gamma[j] = M_PI * M_PI * K / ( 2 * order * ( 1 - std::cos( M_PI / order ) ) );
-        dMinus   = dPlus;
+        betaMinus = betaPlus;
+        betaPlus  = betaMinus - 2.0 * _mu[j] * w[j];
+        dPlus     = ( std::sqrt( 1.0 - _mu[j + 1] * _mu[j + 1] ) - std::sqrt( 1.0 - _mu[j] * _mu[j] ) ) / ( _mu[j + 1] - _mu[j] );
+        c         = ( betaPlus * dPlus - betaMinus * dMinus ) / _wp[j];
+        K         = 2.0 * ( 1.0 - _mu[j] * _mu[j] ) + c * sqrt( 1.0 - _mu[j] * _mu[j] );
+        gamma[j]  = M_PI * M_PI * K / ( 2.0 * order * ( 1.0 - std::cos( M_PI / order ) ) );
+        dMinus    = dPlus;
     }
 
-    DPlus = 0.0;
+    betaPlus = 0.0;
 
-    unsigned jMinus, iMinus, jPlus, iPlus;
+    unsigned nm1, np1, jm1, jp1;
+    auto idx = [&order]( unsigned n, unsigned j ) { return n * 2 * order + j; };
 
     // implementation of 2D spherical Laplacian according book "Advances in Discrete Ordinates Methodology", equation (1.136)
-    for( unsigned j = 0; j < orderMu; ++j ) {
-        DMinus = DPlus;
-        DPlus  = DMinus - 2 * _mu[j] * _wp[j];
-        for( unsigned i = 0; i < 2 * order; ++i ) {
+    for( unsigned n = 0; n < orderMu; ++n ) {
+        betaMinus = betaPlus;
+        betaPlus  = betaMinus - 2 * _mu[n] * _wp[n];
+        for( unsigned j = 0; j < 2 * order; ++j ) {
 
-            if( j > 0 ) {
-                jMinus = j - 1;
+            if( n == 0 ) {
+                nm1 = orderMu - 1;
+                np1 = n + 1;
+            }
+            else if( n == orderMu - 1 ) {
+                nm1 = n - 1;
+                np1 = 0;
             }
             else {
-                jMinus = orderMu - 1;
+                nm1 = n - 1;
+                np1 = n + 1;
             }
-            if( i > 0 ) {
-                iMinus = i - 1;
+            if( j == 0 ) {
+                jm1 = 2 * order - 1;
+                jp1 = j + 1;
             }
-            else {
-                iMinus = 2 * order - 1;
-            }
-            if( j < orderMu - 1 ) {
-                jPlus = j + 1;
-            }
-            else {
-                jPlus = 0;
-            }
-            if( i < 2 * order - 1 ) {
-                iPlus = i + 1;
+            else if( j == 2 * order - 1 ) {
+                jm1 = j - 1;
+                jp1 = 0;
             }
             else {
-                iPlus = 0;
+                jm1 = j - 1;
+                jp1 = j + 1;
             }
-            _L( j * 2 * order + i, jMinus * 2 * order + i ) = DMinus / ( _mu[j] - _mu[jMinus] ) / _wp[j];
-            _L( j * 2 * order + i, j * 2 * order + i )      = -DMinus / ( _mu[j] - _mu[jMinus] ) / _wp[j];
-            _L( j * 2 * order + i, j * 2 * order + iMinus ) = 1.0 / ( 1 - _mu[j] * _mu[j] ) * gamma[j] / ( _phi[i] - _phi[iMinus] ) / _wa[i];
-            _L( j * 2 * order + i, j * 2 * order + i ) += -1.0 / ( 1 - _mu[j] * _mu[j] ) * gamma[j] / ( _phi[i] - _phi[iMinus] ) / _wa[i];
-            _L( j * 2 * order + i, jPlus * 2 * order + i ) = DPlus / ( _mu[jPlus] - _mu[j] ) / _wp[j];
-            _L( j * 2 * order + i, j * 2 * order + i ) += -DPlus / ( _mu[jPlus] - _mu[j] ) / _wp[j];
-            _L( j * 2 * order + i, j * 2 * order + iPlus ) = 1.0 / ( 1 - _mu[j] * _mu[j] ) * gamma[j] / ( _phi[iPlus] - _phi[i] ) / _wa[i];
-            _L( j * 2 * order + i, j * 2 * order + i ) += -1.0 / ( 1 - _mu[j] * _mu[j] ) * gamma[j] / ( _phi[iPlus] - _phi[i] ) / _wa[i];
+
+            _L( idx( n, jp1 ), idx( np1, j ) ) += betaPlus / ( _mu[np1] - _mu[n] ) / _wp[n];
+            _L( idx( n, j ), idx( n, j ) ) -= ( betaPlus / ( _mu[np1] - _mu[n] ) + betaMinus / ( _mu[n] - _mu[nm1] ) ) / _wp[n];
+            _L( idx( n, jm1 ), idx( nm1, j ) ) += betaMinus / ( _mu[n] - _mu[nm1] ) / _wp[n];
+
+            double fac = gamma[n] / _wa[j] / ( 1.0 - _mu[n] * _mu[n] );
+            _L( idx( n, jp1 ), idx( n, jp1 ) ) += fac / ( _phi[jp1] - _phi[j] );
+            _L( idx( n, j ), idx( n, j ) ) -= fac / ( _phi[jp1] - _phi[j] ) + fac / ( _phi[j] - _phi[jm1] );
+            _L( idx( n, jm1 ), idx( n, jm1 ) ) += fac / ( _phi[j] - _phi[jm1] );
         }
     }
 
