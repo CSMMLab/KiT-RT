@@ -12,54 +12,79 @@ from skimage.measure import find_contours, approximate_polygon, \
     subdivide_polygon
 import meshio
 import cv2 as cv
+#import os
+#os.environ.pop("QT_QPA_PLATFORM_PLUGIN_PATH")
 import pymesh
 import matplotlib.colors as mcolors
-from contour_selc import contour_selc, contour_structure
-
+from contour_selc import contour_selc, contour_tree
 def Mesh(contours, cont_idx,mesh_holes, dim, indices, lcar, remove_low_dim_cells = True):
-	with pg.geo.Geometry() as geom:
-		m,n = dim #dimensions of the CT scan image
-		
-		#creating boundaray point elements in geom
-		b1 = geom.add_point([0,0],20) 
-		b2 = geom.add_point([0,m],20) 
-		b3 = geom.add_point([n,0],20) 
-		b4 = geom.add_point([n,m],20)
-		
-		#using the boundary point elements to create line elements corresponding to image boundary
-		line1 = geom.add_line(b1,b2)
-		line2 = geom.add_line(b2,b4)
-		line3 = geom.add_line(b4,b3)
-		line4 = geom.add_line(b3,b1)
-		
-		#we make a loop element in geom which makes the boundary of the CT scan
-		lines = geom.add_curve_loop([line1,line2,line3,line4])
-		
-		#creating loop elements in geom corresponding to each contour
-		loops = [] #empty list to which we append the loop elements created using the contour points
-		for k in range(len(cont_idx)):
-			l = []	#we append the point elements of the k^th contour to l
-			index = indices[k] #we use a subsection of the points of the contour
-			cont = contours[cont_idx[k]][:,0,:] #copying the contour points in the variable cont	
-			#print(k,len(cont),len(index))
-			for i in range(len(index)):
-				p = geom.add_point(cont[index[i]],lcar[k]) #creating the point element in geom of the k^th contour
-				l.append(p)
-				
-			#creating a spline element in geom using the points in the list l. For creating a curve_loop element it is required that
-			#the first and the last point elements of the two splines must match not only in value but id as well.
-			#For example, let say we have points x1,x2,x3,x4,x5,x6,x7 and x8 point elements in geom such that x4 & x5 and x1& x8 are point elements created
-			#using the same coordinates (a,b) but have a different id in geom. We create three spline elements 
-			#s1 = geom.add_bspline([x1,x2,x3,x4]), s2 = geom.add_bspline([x5,x6,x7,x8]) and s3 = geom.bspline([x4,x6,x7,x1]).
-			#Then geom.add_curveloop([s1,s2]) will create an assertion error and instead we must use geom.add_curve_loop([s1,s3])
-			s1_l = geom.add_bspline(l) 
-			s2_l = geom.add_spline([l[-1],l[0]])
 
-			l_loop = geom.add_curve_loop([s1_l,s2_l])
-			loops.append(l_loop)
+	"""
+	Creates a mesh based on the contours given as input along with containment hierarchy. 
+
+	Parameters
+	----------
+
+	contours 	: list,
+				list containing a list of contour points
+	cont_idx 	: list,
+				list of indices of contours to be meshed
+	mesh_holes	: list,
+				list containing the information regarding the child contours of each contour
+	dim 		:list (int,int),
+				dimension of the image file
+	indices		: list of arrays,
+				a list containing the subset of indices of the contours to be used in the mesh
+	lcar 		: list,
+				the meshing distance parameter
+	remove_low_dim_cells : Bool, default True
+				Removes the lower dimensional objects from the mesh after meshing
+
+	Returns
+	-------
+	out: 
+		mesh: meshio instance
+
+
+	"""
+
+
+	with pg.geo.Geometry() as geom:
 		
-		#creating the boundary surface element in geom with all contours as holes. This surface element can be meshed
-		geom.add_plane_surface(lines, holes = loops)	
+		m,n = dim #dimensions of the CT scan image
+
+		b1 = geom.add_point([0,0],40) #first boundary point element in the mesh
+		b2 = geom.add_point([0,m],40) #second boundary point element in the mesh
+		b3 = geom.add_point([n,0],40) #third boundary point element in the mesh
+		b4 = geom.add_point([n,m],40) #fourth boundary point element in the mesh
+		line1 = geom.add_line(b1,b2) #we create a line element in the mesh between points b1 and b2
+		line2 = geom.add_line(b2,b4) #we create a line element in the mesh between points b2 and b4
+		line3 = geom.add_line(b4,b3) #we create a line element in the mesh between points b4 and b3
+		line4 = geom.add_line(b3,b1) #we create a line element in the mesh between points b3 and b1
+
+		lines = geom.add_curve_loop([line1,line2,line3,line4]) #Creating a loop in the mesh using the four lines created above
+
+		loops = [] #empty list to which we append the loop elements created using the contours
+		for k in range(len(cont_idx)):
+			l = []	#empty list to append the point elements created using the points in a particular contour
+			index = indices[k] #we do not use all the points of a contour but only a portion of it which we obtain using specific indices
+			cont = contours[cont_idx[k]][:,0,:]	 #extracting the list of points of a contour
+			#print(k,len(cont),len(index)) 
+			for i in range(len(index)):
+				p = geom.add_point(cont[index[i]],lcar[k]) #creating a point element in the mesh of the k^th contour
+				l.append(p) #appending the point element to l 
+
+			s1_l = geom.add_bspline(l) #creating a spline using the points in the list l
+			#creating a two point spline element with the first and last point of the contour as the add_curve_loop function requires 
+			#that the first and the last points of two spline elements that are to be stitched together must have the same point element
+			s2_l = geom.add_spline([l[-1],l[0]]) 
+
+			l_loop = geom.add_curve_loop([s1_l,s2_l]) #creating the loop element of the contour
+			loops.append(l_loop) #appending this element to loops
+
+		geom.add_plane_surface(lines, holes = loops) #creating boundary surface element that can now be meshed
+		#print(loops)
+
 
 		#We create surface elements in the mesh for each loop (k). Using the hierarchy structure of the loops we 
 		#specify the loops (i1, i2,...,ir) that are contained the loop k and they form holes in surface element 
@@ -71,17 +96,15 @@ def Mesh(contours, cont_idx,mesh_holes, dim, indices, lcar, remove_low_dim_cells
 			for i in range(len(holes_idx)):
 				for j in range(len(cont_idx)):
 					if holes_idx[i] == cont_idx[j]:
-						holes.append(loops[j])
+						holes.append(loops[j]) 
 			if not holes:
 				geom.add_plane_surface(loops[k])
 				print('surface with no holes',cont_idx[k])
 			else:
 				geom.add_plane_surface(loops[k], holes = holes) 
 				print('surface with holes',cont_idx[k])
-				
-				
 		mesh = geom.generate_mesh() #generate the mesh element 
-		
+
 		if remove_low_dim_cells == True:
 			mesh.remove_orphaned_nodes()
 			mesh.remove_lower_dimensional_cells()
@@ -89,7 +112,38 @@ def Mesh(contours, cont_idx,mesh_holes, dim, indices, lcar, remove_low_dim_cells
 		return mesh
 
 
-def mesh_from_image(image_path, mesh_path,num_points, method = 'watershed', small_contour = False, default_lcar = True, plot_contours = True):
+def mesh_from_image(image_path, mesh_path, num_points, method = 'watershed', small_contour = False, default_lcar = True, plot_contours = True):
+	
+	"""
+	Creates a meshio instance containing the desired mesh based on the given image.
+
+	Parameters
+	----------
+
+	image_path	: str,
+				location of the image on the device
+	mesh_path	: str,
+				location where the mesh should be stored with the name of the file. Must be in .vtk format, for example, 
+				'C:/Documents/meshautogen.vtk'
+	num_points	: int,
+				number of points to be used for selecting contours, must be an even number
+	method		: str, 
+				method to use for contouring the image, default is 'watershed'
+	small_contour : Bool,
+				If True, all the contours which have lower than 10 points are removed
+	default_lcar : Bool or list,
+				If True uses the in-built meshing parameters for the mesh, feed this as a list otherwise
+	plot_contours : Bool,
+				If True plots the selected contours on top of the contoured image, default is False
+
+
+	Returns
+	-------
+
+
+
+
+	"""	
 
 	cont_idx,contours,hierarchy, dim = contour_selc(image_path,method,num_points)
 
@@ -124,15 +178,23 @@ def mesh_from_image(image_path, mesh_path,num_points, method = 'watershed', smal
 				lcar_val = 40
 			indices.append(index)
 			lcar.append(lcar_val)
+	else:
+		lcar = default_lcar
 
 	for i in range(len(cont_idx)):
 		plt.scatter(contours[cont_idx[i]][:,0,0],contours[cont_idx[i]][:,0,1], label = '{}'.format(cont_idx[i]))
 	plt.legend()
 	plt.show()
 
+	plt.close()
+
+
 	mesh = Mesh(contours,cont_idx,mesh_holes,dim, indices,lcar,remove_low_dim_cells = True)
 	#help(mesh.write)
 
 	mesh.write(mesh_path)
+
+mesh_from_image('G:\\HiWi\\abdomen_CT.png','G:\\HiWi\\autogentest.vtk',4)
+
 
 
