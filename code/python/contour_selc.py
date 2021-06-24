@@ -11,6 +11,26 @@ from skimage.measure import find_contours, approximate_polygon, \
 #Even number of points are selected on the plot using gplot and then using a simple for and if loop
 #all the contours within the box created by two successive points. 
 def contour_idx(contours, x, num_points): 
+	
+	""" 
+	As we want to use selected contours for generating the mesh, contour_idx extracts the 
+	indices of all those contours that lie within a box created by successive points in the 
+	set x. 
+
+	Parameters
+	----------
+	contours : list 
+			list of contours, where one contour is an array of size (n,2)
+	x : array
+			array containing coordinates of points used in creating boxes to search for contours within
+	
+	Returns
+	-------
+	out: list
+		list containing the indices of selected contours
+
+	"""
+	
 	contour_index = [] #Creating empty list to store indices of the boxed in contours
 	for k  in range(len(contours)):
 		c = contours[k][:,0,:] #Extracting all the points in a contour
@@ -26,6 +46,41 @@ def contour_idx(contours, x, num_points):
 	return contour_index
 
 def contour_selc(img_file,method, num_points,sigma = 2,threshold = 0,max_val = 255):
+	
+	""" 
+	To be able to contorl the mesh refinement in different regions of an image we need to identify different 
+	regions in the image. The function offers two different contouring, watershed seperation or canny contouring
+	from OpenCV. 
+
+	Parameters
+	----------
+
+	img_file	: jpg or png file
+				Image file that is to be used to create a mesh
+	method		: str, 'watershed' or 'canny'
+	num_points	: int, number of points (even) to be used for selecting contours
+	sigma		: float, default = 2
+				The level of details wanted in the canny edge detection algorithm
+	threshold	: int, default = 0
+				The minimum threshold grayscale value used in creating a binary image file
+	max_val 	: int, default = 255
+				maximum value of grayscale value to be used for creating a binary file 
+
+	
+	Returns
+	-------
+	out:
+		contour_index	: list, 
+						indices of the contours selected
+		contours 		: list of array,
+						list of all the contours (as numpy array) in the image according to method
+		hierarchy		: numpy array,
+						hierarchy tree of the different contours 
+		dim 			: list,
+						dimensions of the image
+ 
+	"""
+	
 	if method == 'watershed':
 		img = cv.imread(img_file)
 		b,g,r = cv.split(img)
@@ -134,6 +189,25 @@ def contour_selc(img_file,method, num_points,sigma = 2,threshold = 0,max_val = 2
 # contours.
 
 def contour_structure(hierarchy):
+	
+	"""
+	The function takes a hierarchy tee as an input and returns, for each contour, the list of contours that are
+	contained in it.
+
+	Parameters
+	----------
+
+	hierarchy	: array,
+				An array containing the (next node, previous node, parent node, child node) information for each
+				node
+
+	Return
+	------
+
+	out: list
+		a list containing the list of contours contained within a particular contour
+
+	"""
 	hirchy = hierarchy[0,:,:]
 	m,n = np.shape(hirchy)
 	holes_list = [[] for k in range(m)]
