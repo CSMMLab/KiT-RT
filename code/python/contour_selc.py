@@ -10,8 +10,8 @@ from skimage.measure import find_contours, approximate_polygon, \
 #Funtion to retrieve the indices of contours between the selected input points.
 #Even number of points are selected on the plot using gplot and then using a simple for and if loop
 #all the contours within the box created by two successive points. 
-def contour_idx(contours, x, num_points): 
-	
+def contour_idx(contours, x): 
+
 	""" 
 	As we want to use selected contours for generating the mesh, contour_idx extracts the 
 	indices of all those contours that lie within a box created by successive points in the 
@@ -30,14 +30,17 @@ def contour_idx(contours, x, num_points):
 		list containing the indices of selected contours
 
 	"""
-	
-	contour_index = [] #Creating empty list to store indices of the boxed in contours
+
+
+
+	x_num = int(len(x)/2) #half the number of points in the list x
+	contour_index = [] #Creating empty list to store indices of the boxed-in contours
 	for k  in range(len(contours)):
 		c = contours[k][:,0,:] #Extracting all the points in a contour
 		nk = len(c) #number of points in a given contour
 		for i in range(nk):
 		    ckij = c[i] #i^th point in the k^th contour
-		    for p in range(0,int(num_points/2)):
+		    for p in range(0,x_num):
 			    if x[2*p][0] < ckij[0] and ckij[0] < x[2*p+1][0]:#Checking if the x-coordinate of the point is within the selected point 
 			        if x[2*p][1] > ckij[1] and ckij[1] > x[2*p+1][1]: #Checking if the y-coordinate of the point is within the selected point
 			            contour_index.append(k) #appending the contour index k if one of the points of the contour lies within the box
@@ -45,8 +48,14 @@ def contour_idx(contours, x, num_points):
 			        continue
 	return contour_index
 
-def contour_selc(img_file,method, num_points,sigma = 2,threshold = 0,max_val = 255):
+
+
+
+
 	
+
+def contour_selc(img_file, method, num_points, sigma = 2, threshold = 0, max_val = 255):
+
 	""" 
 	To be able to contorl the mesh refinement in different regions of an image we need to identify different 
 	regions in the image. The function offers two different contouring, watershed seperation or canny contouring
@@ -80,14 +89,14 @@ def contour_selc(img_file,method, num_points,sigma = 2,threshold = 0,max_val = 2
 						dimensions of the image
  
 	"""
-	
+
 	if method == 'watershed':
 		img = cv.imread(img_file)
 		b,g,r = cv.split(img)
 		rgb_img = cv.merge([r,g,b])
 
 		gray = cv.cvtColor(img,cv.COLOR_BGR2GRAY)
-		ret, thresh = cv.threshold(gray,threshold,max_val,cv.THRESH_BINARY_INV+cv.THRESH_OTSU)
+		ret, thresh = cv.threshold(gray,0,255,cv.THRESH_BINARY_INV+cv.THRESH_OTSU)
 
 		# noise removal
 		kernel = np.ones((2,2),np.uint8)
@@ -110,7 +119,7 @@ def contour_selc(img_file,method, num_points,sigma = 2,threshold = 0,max_val = 2
 		#dimenson of the image
 		dim = np.shape(unknown)
 
-		_, binary = cv.threshold(edges_num, threshold, max_val, cv.THRESH_BINARY_INV)
+		_, binary = cv.threshold(unknown, threshold, max_val, cv.THRESH_BINARY_INV)
 		#plt.imshow(binary, cmap="gray")
 		binary = np.uint8(binary)
 
@@ -125,20 +134,12 @@ def contour_selc(img_file,method, num_points,sigma = 2,threshold = 0,max_val = 2
 		x = plt.ginput(num_points)
 
 
-		contour_index = []
-		for k  in range(len(contours)):
-			c = contours[k][:,0,:]
-			nk = len(c)
-			for i in range(nk):
-				ckij = c[i]
-				for p in range(1,num_points):
-					if x[p-1][0] < ckij[0] and ckij[0] < x[p][0]:
-						if x[p-1][1] > ckij[1] and ckij[1] > x[p][1]:
-							contour_index.append(k)
-					else:
-						continue
+		#list containing indices of the contours between the selected points
+		contour_index = contour_idx(contours, x)
+
 	if method == 'canny':
-		img = Image.open(img_file) 
+		img = Image.open(img_file)
+		#img = Image.open('G:\\HiWi\\SLphantom.png')
 		imgarray = img.convert('LA')
 		imgmat = np.array(imgarray.getdata(band=0))
 		imgmat.shape = (imgarray.size[1],imgarray.size[0])
@@ -148,17 +149,20 @@ def contour_selc(img_file,method, num_points,sigma = 2,threshold = 0,max_val = 2
 		m,n = np.shape(edges)
 		edges_num = np.zeros((m,n))
 		for i in range(m):
-			for j in range(n):
-				if edges[i,j] == True:
-					edges_num[i,j] = 1 
-					edges_num[i-1,j] = 1 #We need to have some thickness to get contours
+		    for j in range(n):
+		        if edges[i,j] == True:
+		            edges_num[i,j] = 1 
+		            edges_num[i-1,j] = 1
 
+		#dimenson of the image
+		dim = np.shape(edges_num)
 
 		_, binary = cv.threshold(edges_num, threshold, max_val, cv.THRESH_BINARY_INV)
 		#plt.imshow(binary, cmap="gray")
-		binary = np.uint8(binary) #numbers need to be in 8bit
+		binary = np.uint8(binary)
 
 		image = cv.imread(img_file)
+		#image = cv.imread("G:\\HiWi\\SLphantom.jpg")
 
 		contours, hierarchy = cv.findContours(binary, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
 
@@ -170,26 +174,19 @@ def contour_selc(img_file,method, num_points,sigma = 2,threshold = 0,max_val = 2
 		x = plt.ginput(num_points)
 
 
-		contour_index = []
-		for k  in range(len(contours)):
-			c = contours[k][:,0,:]
-			nk = len(c)
-			for i in range(nk):
-				ckij = c[i]
-				for p in range(1,num_points):
-					if x[p-1][0] < ckij[0] and ckij[0] < x[p][0]:
-						if x[p-1][1] > ckij[1] and ckij[1] > x[p][1]:
-							contour_index.append(k)
-					else:
-						continue
-		return np.unique(contour_index),contours, hierarchy, dim
+		contour_index = contour_idx(contours, x)
 
-# We create  function called 'mesh_holes' to collect the hierarchies of contours
-# using the hierarchy tree. We create parent-chid relationships between the different
-# contours.
+	return np.unique(contour_index),contours, hierarchy, dim
 
-def contour_structure(hierarchy):
-	
+# Function to create an list for each contour containing indices of the  
+# contours contained within it. For example, if we have a four circles indexed 1,2,3 and 4
+# such that 1 contains 2, 3 and 4. circles 2 and 3 exclusive and 2 contains circle 4 within it.
+# Then the function returns [[2,3,4],[4],[],[]] where the last two lists are empty as circles 3 and 4 do not
+# contain any other circle within it. We can also interpret these relations as a tree.
+
+
+def contour_tree(hierarchy):
+
 	"""
 	The function takes a hierarchy tee as an input and returns, for each contour, the list of contours that are
 	contained in it.
@@ -208,6 +205,9 @@ def contour_structure(hierarchy):
 		a list containing the list of contours contained within a particular contour
 
 	"""
+
+
+
 	hirchy = hierarchy[0,:,:]
 	m,n = np.shape(hirchy)
 	holes_list = [[] for k in range(m)]
