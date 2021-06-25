@@ -486,11 +486,9 @@ tags
 .gitkeep
 
 # project folder
-code/bin/*
-code/build/*
-code/input/*
-code/result/*
-code/ext/*
+ext/*
+build/*
+result/*
 
 # vscode
 .vscode/*
@@ -500,3 +498,4 @@ code/ext/*
 !.vscode/launch.json
 !.vscode/extensions.json
 .history
+_build

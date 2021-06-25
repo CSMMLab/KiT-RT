@@ -1,5 +1,0 @@
-Physics
-=======
-
-.. doxygenclass:: Physics
-   :members:

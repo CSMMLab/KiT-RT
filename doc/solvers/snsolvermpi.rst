@@ -1,5 +1,0 @@
-SNSolverMPI
-===========
-
-.. doxygenclass:: SNSolverMPI
-   :members:

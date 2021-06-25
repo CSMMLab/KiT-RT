@@ -1,5 +1,0 @@
-Solver
-==========
-
-.. doxygenclass:: Solver
-   :members:
