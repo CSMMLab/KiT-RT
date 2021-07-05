@@ -534,10 +534,35 @@ void SolverBase::SetDensity( double density ) {
     }
 }
 
+void SolverBase::SetDensity2( double density, double startpoint ) {
+    for( unsigned j = 0; j < _settings->GetNCells(); ++j ) {
+
+        if (j < (_settings->GetNCells())*startpoint ) {
+            _density[j] = 0.0;
+        } else {
+            _density[j] = density;
+        }
+        
+    }
+}
+
+void SolverBase::SetDensity3( double density, double startpoint, double endpoint ) {
+    for( unsigned j = 0; j < _settings->GetNCells(); ++j ) {
+
+        if (j < (_settings->GetNCells())*startpoint or j > (_settings->GetNCells())*endpoint) {
+            _density[j] = 0.0;
+        } else {
+            _density[j] = density;
+        }
+        
+    }
+}
+
 double SolverBase::GetDensity( ) {
     return _density[1];
 }
 
+std::vector<double> SolverBase::GetDensityVector( ) {return _density;}
 
 unsigned SolverBase::GetNQ(){
     return _nq;

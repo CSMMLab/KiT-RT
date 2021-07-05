@@ -781,8 +781,35 @@ int main( int argc, char** argv ) {
     // config->SetMeshFile(listofmeshes[1]); 
 
     // std::cout<< config->GetNQuadPoints()<<"\n";
-    
-    //  SolverBase* solver = SolverBase::Create( config);
+
+    config->SetQuadOrder(20);    
+    SolverBase* solver = SolverBase::Create( config);
+    // solver->SetDensity( 1.5); 
+    solver->SetDensity2( 1, 0.5 ); 
+    solver->SetDensity3( 1, 0.25, 0.75 ); 
+    solver->SolveQuietly(); //solver->Solve();
+    std::vector<double> data = solver->GetDensityVector();
+
+
+    int wallstart=0;
+    int wallend=0;
+
+    for(int i=0;i< data.size();i++){
+      std::cout << data[i] << "\t";
+      if(i>0){
+        if(data[i]>0 and data[i-1]==0) {wallstart=i;}
+        if(data[i-1]>0 and data[i]==0) {wallend=i;}
+      }
+    }
+
+    std::cout << "\n";
+
+    std::cout << wallstart << "\n";
+    std::cout << wallend << "\n";
+    std::cout << data.size() << "\n";
+
+    delete solver;
+   
     // std::string Meshname = "meshes/1DMesh1250.su2";
     // solver->SetNewMesh(Meshname);
     // std::cout<<solver->GetNQ()<<"\n";
@@ -836,30 +863,30 @@ int main( int argc, char** argv ) {
       */    
       //for(int n=0; n<7; n++) std::cout<<sums[n]<<"\n";      
 
-      FILE *fp;
-      fp = fopen("KIT-RT mlmc1","w");
+      // FILE *fp;
+      // fp = fopen("KIT-RT mlmc1","w");
       
       
-      float Eps[11];
-      float Eps2[] = { 50, 10, 1, 0.0 };        
+      // float Eps[11];
+      // float Eps2[] = { 50, 10, 1, 0.0 };        
 
-      memcpy(Eps,Eps2,sizeof(Eps2));        
+      // memcpy(Eps,Eps2,sizeof(Eps2));        
 
-      int M  = 3;     // refinement cost factor
-      int N0 = 15;    // initial samples on each level
-      int Lmin = 2;   // minimum refinement level
-      int Lmax = 6;   // maximum refinement level
-      int N  = 15;    // samples for convergence tests
-      int L  = 6;     // levels for convergence tests
-      int NL = 5;    //Number of sampels for level L (for mlcl())      
-      float Cl = 3.0; //Cost of level L (for mlmc())
-      float eps = 50.0;  //epsilon (for mlmc())              
+      // int M  = 3;     // refinement cost factor
+      // int N0 = 15;    // initial samples on each level
+      // int Lmin = 2;   // minimum refinement level
+      // int Lmax = 6;   // maximum refinement level
+      // int N  = 5;    // samples for convergence tests
+      // int L  = 6;     // levels for convergence tests
+      // int NL = 5;    //Number of sampels for level L (for mlcl())      
+      // float Cl = 3.0; //Cost of level L (for mlmc())
+      // float eps = 50.0;  //epsilon (for mlmc())              
 
-      // // //double P = mlmc(Lmin,Lmax,N0,eps,MLmesh_l,config,0.0,0.0,0.0,&NL,&Cl);
-      // // //std::cout<<P;
+      // // // //double P = mlmc(Lmin,Lmax,N0,eps,MLmesh_l,config,0.0,0.0,0.0,&NL,&Cl);
+      // // // //std::cout<<P;
 
-      // // mlmc_test(MLquad_l,config,M,N,L,N0,Eps,Lmin,Lmax,fp);
-      mlmc_test(MLmesh_l,config,M,N,L,N0,Eps,Lmin,Lmax,fp);  
+      // // // mlmc_test(MLquad_l,config,M,N,L,N0,Eps,Lmin,Lmax,fp);
+      // mlmc_test(MLmesh_l,config,M,N,L,N0,Eps,Lmin,Lmax,fp);  
       
 
     }

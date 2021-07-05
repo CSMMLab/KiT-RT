@@ -161,6 +161,10 @@ class SolverBase
 
     /*! @brief Set density, for MLMC purposes */
     virtual void SetDensity( double density );
+    /*! @brief Set density,startpoint between (0,1), for MLMC purposes */
+    virtual void SetDensity2( double density , double startpoint);
+    /*! @brief Set density,startpoint and endpoint (startpoint < endpoint) between (0,1), for MLMC purposes */
+    virtual void SetDensity3( double density, double startpoint, double endpoint );
     /*! @brief Get dosis*/
     virtual std::vector<double> GetDosis();
     /*! @brief Get Areas */
@@ -171,5 +175,7 @@ class SolverBase
     virtual unsigned GetNCells() const { return _nCells; };
     /*! @brief Get density*/
     virtual double GetDensity();
+    /*! @brief Get density Vector*/
+    virtual std::vector<double> GetDensityVector();
 };
 #endif    // SOLVER_H
