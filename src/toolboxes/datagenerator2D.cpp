@@ -66,7 +66,7 @@ void DataGenerator2D::SampleSolutionU() {
             std::default_random_engine generator;
             std::uniform_real_distribution<double> distribution( 0.0, 1.0 );
 
-            //#pragma omp parallel for schedule( guided )
+#pragma omp parallel for schedule( guided )
             for( unsigned long idx_set = 0; idx_set < _setSize; idx_set++ ) {
                 double mu  = std::sqrt( distribution( generator ) );
                 double phi = 2 * M_PI * distribution( generator );

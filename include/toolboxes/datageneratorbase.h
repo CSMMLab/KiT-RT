@@ -61,7 +61,7 @@ class DataGeneratorBase
     VectorVector _quadPointsSphere; /*!<  @brief (my,phi), dim(_quadPoints) = (_nq,2) */
 
     SphericalBase* _basisGenerator; /*!< @brief Class to compute and store current spherical harmonics basis */
-    VectorVector _momentBasis; /*!< @brief Moment Vector pre-computed at each quadrature point: dim= _nq x _nTotalEntries */
+    VectorVector _momentBasis;      /*!< @brief Moment Vector pre-computed at each quadrature point: dim= _nq x _nTotalEntries */
 
     NewtonOptimizer* _optimizer; /*!< @brief Class to solve minimal entropy problem */
     EntropyBase* _entropy;       /*!< @brief Class to handle entropy functional evaluations */
@@ -78,10 +78,11 @@ class DataGeneratorBase
     void PrintLoadScreen();   /*!< @brief Print screen IO*/
 
     // Helper functions
-    virtual void ComputeMoments()     = 0; /*!< @brief Pre-Compute Moments at all quadrature points. */
-    virtual void CheckRealizability() = 0; /*!< @brief Debugging helper. Will be removed */
-    virtual void ComputeSetSizeU()    = 0; /*!< @brief Computes the size of the training set, depending on the chosen settings.*/
-    void ComputeSetSizeAlpha();            /*!< @brief Computes the seSize for alphasampling */
-    void AdaptBasisSize();                 /*!< @brief In case of normal sampling, deletes zero order basis for dimension reduction. */
+    virtual void ComputeMoments()     = 0;   /*!< @brief Pre-Compute Moments at all quadrature points. */
+    virtual void CheckRealizability() = 0;   /*!< @brief Debugging helper. Will be removed */
+    virtual void ComputeSetSizeU()    = 0;   /*!< @brief Computes the size of the training set, depending on the chosen settings.*/
+    void ComputeSetSizeAlpha();              /*!< @brief Computes the seSize for alphasampling */
+    void AdaptBasisSize();                   /*!< @brief In case of normal sampling, deletes zero order basis for dimension reduction. */
+    void ComputeSmallestEV( Vector& alpha ); /*!< @brief Computes the smallest Eigenvalue of the Hessian corresponding to alpha. */
 };
 #endif    // DATAGENERATOR_H

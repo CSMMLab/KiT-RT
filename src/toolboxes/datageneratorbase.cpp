@@ -164,7 +164,59 @@ void DataGeneratorBase::ComputeTrainingData() {
 void DataGeneratorBase::SampleMultiplierAlpha() {
     double minAlphaValue = -20;
     double maxAlphaValue = 20;
+    // Rejection Sampling based on smallest EV of H
 
+    if( _settings->GetNormalizedSampling() ) {
+        if( _maxPolyDegree == 0 ) {
+            ErrorMessages::Error( "Normalized sampling not meaningful for M0 closure", CURRENT_FUNCTION );
+        }
+
+        VectorVector momentsRed = VectorVector( _nq, Vector( _nTotalEntries - 1, 0.0 ) );
+
+        for( unsigned idx_nq = 0; idx_nq < _nq; idx_nq++ ) {    // copy (reduced) moments
+            for( unsigned idx_sys = 1; idx_sys < _nTotalEntries; idx_sys++ ) {
+                momentsRed[idx_nq][idx_sys - 1] = _momentBasis[idx_nq][idx_sys];
+            }
+        }
+
+        // Create generator
+        std::default_random_engine generator;
+        std::uniform_real_distribution<double> distribution( minAlphaValue, maxAlphaValue );
+
+        for( unsigned idx_set = 0; idx_set < _setSize; idx_set++ ) {
+            VectorVector alphaRed = Vector( _nTotalEntries - 1, 0.0 );    // local reduced alpha
+
+            // Sample random multivariate uniformly distributed alpha between minAlpha and MaxAlpha.
+            for( unsigned idx_sys = 1; idx_sys < _nTotalEntries; idx_sys++ ) {
+                alphaRed[idx_sys - 1] = distribution( generator );
+            }
+            // Compute alpha_0 = log(<exp(alpha m )>) // for maxwell boltzmann! only
+            double integral = 0.0;
+            // Integrate (eta(eta'_*(alpha*m))
+            for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
+                integral += _entropy->EntropyPrimeDual( dot( alphaRed[idx_set], momentsRed[idx_quad] ) ) * _weights[idx_quad];
+            }
+            _alpha[idx_set][0] = -log( integral );    // log trafo
+
+            // Assemble complete alpha (normalized)
+            for( unsigned idx_sys = 1; idx_sys < _nTotalEntries; idx_sys++ ) {
+                _alpha[idx_set][idx_sys] = alphaRed[idx_sys - 1];
+            }
+
+            // Compute rejection criteria
+            double eigenvalue = ComputeSmallestEV( &_alpha[idx_set] );
+        }
+    }
+    else {
+        // non normalized sampling
+        // TODO
+        ErrorMessages::Error( "Non-Normalized Alpha Sampling is not yet implemented.", CURRENT_FUNCTION );
+    }
+
+    // Cubeoid
+    /*
+    double minAlphaValue = -20;
+    double maxAlphaValue = 20;
     if( _settings->GetNormalizedSampling() ) {
         // compute reduced version of alpha and m
         if( _maxPolyDegree == 0 ) {
@@ -239,6 +291,7 @@ void DataGeneratorBase::SampleMultiplierAlpha() {
         // TODO
         ErrorMessages::Error( "Not yet implemented!", CURRENT_FUNCTION );
     }
+    */
 }
 
 void DataGeneratorBase::ComputeEntropyH_dual() {
@@ -353,4 +406,11 @@ void DataGeneratorBase::ComputeSetSizeAlpha() {
     for( unsigned i = 0; i < _nTotalEntries - 2; i++ ) {
         _setSize *= _gridSize;
     }
+}
+
+double DataGeneratorBase::ComputeSmallestEV( Vector& alpha ) {
+    /* Uses a power iteration to determine the biggest EV
+     * Then use a power Iteration for A-lambdaMax I to get smalles EV */
+
+    return lambdaEV;
 }
