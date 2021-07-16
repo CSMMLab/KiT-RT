@@ -340,6 +340,12 @@ void Config::SetConfigOptions() {
     /*! @brief Flag for sampling the space of Legendre multipliers instead of the moments  \n DESCRIPTION: Sample alpha instead of u \n DEFAULT False
      * \ingroup Config */
     AddBoolOption( "REALIZABILITY_RECONS_U", _realizabilityRecons, true );
+    /*! @brief Boundary for the sampling region of the Lagrange multipliers  \n DESCRIPTION: Norm sampling boundary for alpha \n DEFAULT 20.0
+     * \ingroup Config */
+    AddDoubleOption( "ALPHA_SAMPLING_BOUND", _alphaBound, 20.0 );
+    /*! @brief Rejection sampling threshold based on the minimal Eigenvalue of the Hessian of the entropy functions  \n DESCRIPTION: Rejection
+     * sampling threshold \n DEFAULT 1e-8 \ingroup Config */
+    AddDoubleOption( "MIN_EIGENVALUE_THRESHOLD", _minEVAlphaSampling, 1e-8 );
 }
 
 void Config::SetConfigParsing( string case_filename ) {
@@ -666,6 +672,21 @@ void Config::SetPostprocessing() {
     {
         if( _dim < (unsigned short)1 || _dim > (unsigned short)3 ) {
             std::string msg = "Dimension " + std::to_string( _dim ) + "not supported.\n";
+            ErrorMessages::Error( msg, CURRENT_FUNCTION );
+        }
+    }
+
+    // Data generator postprocessing
+    {
+        if( _alphaSampling <= 0 ) {
+            std::string msg = "Norm boundary for alpha sampling must be positive. Current choice: " + std::to_string( _alphaSampling ) +
+                              ". Check choice of ALPHA_SAMPLING_BOUND.\n";
+            ErrorMessages::Error( msg, CURRENT_FUNCTION );
+        }
+        if( _minEVAlphaSampling <= 0 ) {
+            std::string msg =
+                "Minimal Eigenvalue threshold of the entropy hession must be positive. Current choice: " + std::to_string( _alphaSampling ) +
+                ". Check choice of MIN_EIGENVALUE_THRESHOLD.\n";
             ErrorMessages::Error( msg, CURRENT_FUNCTION );
         }
     }

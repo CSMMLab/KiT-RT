@@ -130,7 +130,8 @@ class Config
     bool _normalizedSampling;         /*!< @brief Flag for sampling of normalized moments, i.e. u_0 =1 */
     bool _alphaSampling;              /*!< @brief Flag for sampling alpha instead of u */
     bool _realizabilityRecons;        /*!< @brief Turns realizability reconstruction on/off for u sampling */
-
+    double _alphaBound;               /*!< @brief The norm boundary for the sampling range of alpha*/
+    double _minEVAlphaSampling;       /*!< @brief Rejection sampling criterion is a minimal eigenvalue threshold */
     // --- Parsing Functionality and Initializing of Options ---
     /*!
      * @brief Set default values for all options not yet set.
@@ -330,6 +331,8 @@ class Config
     bool inline GetNormalizedSampling() { return _normalizedSampling; }
     bool inline GetAlphaSampling() { return _alphaSampling; }
     bool inline GetRelizabilityReconsU() { return _realizabilityRecons; }
+    double inline GetAlphaSamplingBound() { return _alphaBound; }
+    double inline GetMinimalEVBound() { return _minEVAlphaSampling; }
 
     // ---- Setters for option structure
     // This section is dangerous
