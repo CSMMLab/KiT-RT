@@ -46,8 +46,7 @@ class DataGeneratorBase
     VectorVector _uSol;            /*!< @brief vector with moments. Size: (setSize,basisSize)*/
     VectorVector _alpha;           /*!< @brief vector with Lagrange multipliers. Size: (setSize,basisSize)*/
     std::vector<double> _hEntropy; /*!< @brief vector with entropy values. Size: (setSize) */
-
-    unsigned long _setSize; /*!< @brief Size of the whole training Set */
+    unsigned long _setSize;        /*!< @brief Size of the whole training Set */
     unsigned long
         _gridSize; /*!< @brief Size of the grid discretizing moment U0 for higher order sampling (has different uses for different samplers)*/
 
@@ -78,11 +77,12 @@ class DataGeneratorBase
     void PrintLoadScreen();   /*!< @brief Print screen IO*/
 
     // Helper functions
-    virtual void ComputeMoments()     = 0;   /*!< @brief Pre-Compute Moments at all quadrature points. */
-    virtual void CheckRealizability() = 0;   /*!< @brief Debugging helper. Will be removed */
-    virtual void ComputeSetSizeU()    = 0;   /*!< @brief Computes the size of the training set, depending on the chosen settings.*/
-    void ComputeSetSizeAlpha();              /*!< @brief Computes the seSize for alphasampling */
-    void AdaptBasisSize();                   /*!< @brief In case of normal sampling, deletes zero order basis for dimension reduction. */
-    void ComputeSmallestEV( Vector& alpha ); /*!< @brief Computes the smallest Eigenvalue of the Hessian corresponding to alpha. */
+    virtual void ComputeMoments()     = 0;       /*!< @brief Pre-Compute Moments at all quadrature points. */
+    virtual void CheckRealizability() = 0;       /*!< @brief Debugging helper. Will be removed */
+    virtual void ComputeSetSizeU()    = 0;       /*!< @brief Computes the size of the training set, depending on the chosen settings.*/
+    void ComputeSetSizeAlpha();                  /*!< @brief Computes the seSize for alphasampling */
+    void AdaptBasisSize();                       /*!< @brief In case of normal sampling, deletes zero order basis for dimension reduction. */
+    bool ComputeEVRejection( unsigned idx_set ); /*!< @brief Evalute rejection criterion based on  the smallest Eigenvalue of the Hessian
+                                                    corresponding to alpha[idx_set]. */
 };
 #endif    // DATAGENERATOR_H

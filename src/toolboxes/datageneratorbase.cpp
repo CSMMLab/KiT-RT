@@ -162,8 +162,7 @@ void DataGeneratorBase::ComputeTrainingData() {
 }
 
 void DataGeneratorBase::SampleMultiplierAlpha() {
-    double minAlphaValue = -20;
-    double maxAlphaValue = 20;
+    double maxAlphaValue = _settings->GetAlphaSamplingBound();
     // Rejection Sampling based on smallest EV of H
 
     if( _settings->GetNormalizedSampling() ) {
@@ -181,30 +180,33 @@ void DataGeneratorBase::SampleMultiplierAlpha() {
 
         // Create generator
         std::default_random_engine generator;
-        std::uniform_real_distribution<double> distribution( minAlphaValue, maxAlphaValue );
+        std::uniform_real_distribution<double> distribution( -1 * maxAlphaValue, maxAlphaValue );
 
         for( unsigned idx_set = 0; idx_set < _setSize; idx_set++ ) {
-            VectorVector alphaRed = Vector( _nTotalEntries - 1, 0.0 );    // local reduced alpha
+            Vector alphaRed = Vector( _nTotalEntries - 1, 0.0 );    // local reduced alpha
 
-            // Sample random multivariate uniformly distributed alpha between minAlpha and MaxAlpha.
-            for( unsigned idx_sys = 1; idx_sys < _nTotalEntries; idx_sys++ ) {
-                alphaRed[idx_sys - 1] = distribution( generator );
-            }
-            // Compute alpha_0 = log(<exp(alpha m )>) // for maxwell boltzmann! only
-            double integral = 0.0;
-            // Integrate (eta(eta'_*(alpha*m))
-            for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
-                integral += _entropy->EntropyPrimeDual( dot( alphaRed[idx_set], momentsRed[idx_quad] ) ) * _weights[idx_quad];
-            }
-            _alpha[idx_set][0] = -log( integral );    // log trafo
+            bool accepted = false;
+            while( !accepted ) {
+                // Sample random multivariate uniformly distributed alpha between minAlpha and MaxAlpha.
+                for( unsigned idx_sys = 1; idx_sys < _nTotalEntries; idx_sys++ ) {
+                    alphaRed[idx_sys - 1] = distribution( generator );
+                }
+                // Compute alpha_0 = log(<exp(alpha m )>) // for maxwell boltzmann! only
+                double integral = 0.0;
+                // Integrate (eta(eta'_*(alpha*m))
+                for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
+                    integral += _entropy->EntropyPrimeDual( dot( alphaRed, momentsRed[idx_quad] ) ) * _weights[idx_quad];
+                }
+                _alpha[idx_set][0] = -log( integral );    // log trafo
 
-            // Assemble complete alpha (normalized)
-            for( unsigned idx_sys = 1; idx_sys < _nTotalEntries; idx_sys++ ) {
-                _alpha[idx_set][idx_sys] = alphaRed[idx_sys - 1];
-            }
+                // Assemble complete alpha (normalized)
+                for( unsigned idx_sys = 1; idx_sys < _nTotalEntries; idx_sys++ ) {
+                    _alpha[idx_set][idx_sys] = alphaRed[idx_sys - 1];
+                }
 
-            // Compute rejection criteria
-            double eigenvalue = ComputeSmallestEV( &_alpha[idx_set] );
+                // Compute rejection criteria
+                accepted = ComputeEVRejection( idx_set );
+            }
         }
     }
     else {
@@ -408,9 +410,18 @@ void DataGeneratorBase::ComputeSetSizeAlpha() {
     }
 }
 
-double DataGeneratorBase::ComputeSmallestEV( Vector& alpha ) {
-    /* Uses a power iteration to determine the biggest EV
-     * Then use a power Iteration for A-lambdaMax I to get smalles EV */
+bool DataGeneratorBase::ComputeEVRejection( unsigned idx_set ) {
 
-    return lambdaEV;
+    Matrix hessian = Matrix( _nTotalEntries, _nTotalEntries, 0.0 );
+    _optimizer->ComputeHessian( _alpha[idx_set], _momentBasis, hessian );
+
+    SymMatrix hessianSym( hessian );    // Bad solution, rewrite with less memory need
+    Vector ew = Vector( _nTotalEntries, 0.0 );
+    eigen( hessianSym, ew );
+    if( min( ew ) < _settings->GetMinimalEVBound() ) {
+        std::cout << "Sampling not accepted with EV:" << min( ew ) << std::endl;
+        std::cout << "Current minimal accepted EV:" << _settings->GetMinimalEVBound() << std::endl;
+        return false;
+    }
+    return true;
 }
