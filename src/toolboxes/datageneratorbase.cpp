@@ -120,8 +120,8 @@ void DataGeneratorBase::ComputeTrainingData() {
             auto finish                           = std::chrono::high_resolution_clock::now();
             std::chrono::duration<double> elapsed = finish - start;
             timings[i]                            = elapsed.count();
-            log->info( "| Elapsed time for solving the entropy minimization problem: " + to_string( elapsed.count() ) + " seconds. Iteration" +
-                       to_string( i ) + "." );
+            log->info( "| Elapsed time for solving the entropy minimization problem: " + std::to_string( elapsed.count() ) + " seconds. Iteration" +
+                       std::to_string( i ) + "." );
             // reset training solution
             for( unsigned j = 0; j < _setSize; j++ ) {
                 for( unsigned k = 0; k < _nTotalEntries; k++ ) {
@@ -141,7 +141,7 @@ void DataGeneratorBase::ComputeTrainingData() {
         }
         stdDev /= 100;
         stdDev = sqrt( stdDev );
-        log->info( "| Mean timing: " + to_string( mean ) + " seconds. Standard deviation: " + to_string( stdDev ) + " seconds." );
+        log->info( "| Mean timing: " + std::to_string( mean ) + " seconds. Standard deviation: " + std::to_string( stdDev ) + " seconds." );
 
         // --- Postprocessing
         if( _settings->GetRelizabilityReconsU() ) {
@@ -182,6 +182,7 @@ void DataGeneratorBase::SampleMultiplierAlpha() {
         std::default_random_engine generator;
         std::uniform_real_distribution<double> distribution( -1 * maxAlphaValue, maxAlphaValue );
 
+        // Can be parallelized, but check if there is a race condition with datagenerator
         for( unsigned idx_set = 0; idx_set < _setSize; idx_set++ ) {
             Vector alphaRed = Vector( _nTotalEntries - 1, 0.0 );    // local reduced alpha
 
@@ -403,10 +404,12 @@ void DataGeneratorBase::AdaptBasisSize() {
 }
 
 void DataGeneratorBase::ComputeSetSizeAlpha() {
-    _setSize = _gridSize;
-    //
-    for( unsigned i = 0; i < _nTotalEntries - 2; i++ ) {
-        _setSize *= _gridSize;
+    if( _settings->GetSizeByDimension() ) {
+        _setSize = _gridSize;
+
+        for( unsigned i = 0; i < _nTotalEntries - 2; i++ ) {
+            _setSize *= _gridSize;
+        }
     }
 }
 
@@ -420,7 +423,7 @@ bool DataGeneratorBase::ComputeEVRejection( unsigned idx_set ) {
     eigen( hessianSym, ew );
     if( min( ew ) < _settings->GetMinimalEVBound() ) {
         std::cout << "Sampling not accepted with EV:" << min( ew ) << std::endl;
-        std::cout << "Current minimal accepted EV:" << _settings->GetMinimalEVBound() << std::endl;
+        // std::cout << "Current minimal accepted EV:" << _settings->GetMinimalEVBound() << std::endl;
         return false;
     }
     return true;

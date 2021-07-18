@@ -320,6 +320,9 @@ void Config::SetConfigOptions() {
     // Data generator related options
     /*! @brief Size of training data set \n DESCRIPTION: Size of training data set  \n DEFAULT 1 \ingroup Config */
     AddUnsignedLongOption( "TRAINING_SET_SIZE", _tainingSetSize, 1 );
+    /*! @brief Determines, if TRAINING_SET_SIZE is counted by dimension \n DESCRIPTION: Determines, if TRAINING_SET_SIZE is counted by dimension   \n
+     * DEFAULT true \ingroup Config */
+    AddBoolOption( "SIZE_BY_DIMENSION", _sizeByDimension, true );
     /*! @brief Size of training data set \n DESCRIPTION: Size of training data set  \n DEFAULT 10 \ingroup Config */
     AddUnsignedLongOption( "MAX_VALUE_FIRST_MOMENT", _maxValFirstMoment, 10 );
     /*! @brief Data generator mode \n DESCRIPTION: Check, if data generator mode is active. If yes, no solver is called, but instead the data
