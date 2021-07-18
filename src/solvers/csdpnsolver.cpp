@@ -222,7 +222,25 @@ void CSDPNSolver::FluxUpdate() {
                         break;
                     // second order solver
                     case 2:
+                        // left status of interface
+                        solL = _sol[idx_cell] + _solDx[idx_cell] * ( _interfaceMidPoints[idx_cell][idx_neighbor][0] - _cellMidPoints[idx_cell][0] ) +
+                               _solDy[idx_cell] * ( _interfaceMidPoints[idx_cell][idx_neighbor][1] - _cellMidPoints[idx_cell][1] );
+                        // right status of interface
+                        solR = _sol[_neighbors[idx_cell][idx_neighbor]] +
+                               _solDx[_neighbors[idx_cell][idx_neighbor]] *
+                                   ( _interfaceMidPoints[idx_cell][idx_neighbor][0] - _cellMidPoints[_neighbors[idx_cell][idx_neighbor]][0] ) +
+                               _solDy[_neighbors[idx_cell][idx_neighbor]] *
+                                   ( _interfaceMidPoints[idx_cell][idx_neighbor][1] - _cellMidPoints[_neighbors[idx_cell][idx_neighbor]][1] );
 
+                        _solNew[idx_cell] += _g->Flux( _AxPlus,
+                                                       _AxMinus,
+                                                       _AyPlus,
+                                                       _AyMinus,
+                                                       _AzPlus,
+                                                       _AzMinus,
+                                                       solL / _density[idx_cell],
+                                                       solR / _density[_neighbors[idx_cell][idx_neighbor]],
+                                                       _normals[idx_cell][idx_neighbor] );
                     // default: first order solver
                     default:
                         _solNew[idx_cell] += _g->Flux( _AxPlus,
