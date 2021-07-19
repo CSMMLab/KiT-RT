@@ -102,6 +102,7 @@ void DataGeneratorBase::ComputeTrainingData() {
 
         // ---- Check realizability ---
         // CheckRealizability();
+        /*
         std::vector<double> timings( 100, 0.0 );
 
         for( unsigned j = 0; j < _setSize; j++ ) {
@@ -110,25 +111,26 @@ void DataGeneratorBase::ComputeTrainingData() {
             _uSol[j][2] = 0.99 * 0.99;
         }
 
-        for( unsigned i = 0; i < 100; i++ ) {
-            // Record start time
-            auto start = std::chrono::high_resolution_clock::now();
-            // --- compute alphas ---
-            _optimizer->SolveMultiCell( _alpha, _uSol, _momentBasis );
+         for( unsigned i = 0; i < 100; i++ ) {
+        // Record start time
+        auto start = std::chrono::high_resolution_clock::now();
+        // --- compute alphas ---
+        _optimizer->SolveMultiCell( _alpha, _uSol, _momentBasis );
 
-            // Record end time
-            auto finish                           = std::chrono::high_resolution_clock::now();
-            std::chrono::duration<double> elapsed = finish - start;
-            timings[i]                            = elapsed.count();
-            log->info( "| Elapsed time for solving the entropy minimization problem: " + std::to_string( elapsed.count() ) + " seconds. Iteration" +
-                       std::to_string( i ) + "." );
-            // reset training solution
-            for( unsigned j = 0; j < _setSize; j++ ) {
-                for( unsigned k = 0; k < _nTotalEntries; k++ ) {
-                    _alpha[j][k] = 0.0;
-                }
+        // Record end time
+        auto finish                           = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double> elapsed = finish - start;
+        timings[i]                            = elapsed.count();
+        log->info( "| Elapsed time for solving the entropy minimization problem: " + std::to_string( elapsed.count() ) + " seconds. Iteration" +
+                   std::to_string( i ) + "." );
+        // reset training solution
+        for( unsigned j = 0; j < _setSize; j++ ) {
+            for( unsigned k = 0; k < _nTotalEntries; k++ ) {
+                _alpha[j][k] = 0.0;
             }
         }
+        }
+
         // Compute statistics
         double mean = 0;
         for( unsigned i = 0; i < 100; i++ ) {
@@ -142,7 +144,10 @@ void DataGeneratorBase::ComputeTrainingData() {
         stdDev /= 100;
         stdDev = sqrt( stdDev );
         log->info( "| Mean timing: " + std::to_string( mean ) + " seconds. Standard deviation: " + std::to_string( stdDev ) + " seconds." );
+        */
 
+        // --- compute alphas ---
+        _optimizer->SolveMultiCell( _alpha, _uSol, _momentBasis );
         // --- Postprocessing
         if( _settings->GetRelizabilityReconsU() ) {
             log->info( "| Making moments realizable." );

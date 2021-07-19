@@ -681,15 +681,15 @@ void Config::SetPostprocessing() {
 
     // Data generator postprocessing
     {
-        if( _alphaSampling <= 0 ) {
-            std::string msg = "Norm boundary for alpha sampling must be positive. Current choice: " + std::to_string( _alphaSampling ) +
-                              ". Check choice of ALPHA_SAMPLING_BOUND.\n";
+        if( _alphaBound <= 0 ) {
+            std::string msg = "Norm boundary for alpha sampling must be positive.\n Current choice: " + std::to_string( _alphaSampling ) +
+                              ". Check choice of ALPHA_SAMPLING_BOUND.";
             ErrorMessages::Error( msg, CURRENT_FUNCTION );
         }
         if( _minEVAlphaSampling <= 0 ) {
             std::string msg =
-                "Minimal Eigenvalue threshold of the entropy hession must be positive. Current choice: " + std::to_string( _alphaSampling ) +
-                ". Check choice of MIN_EIGENVALUE_THRESHOLD.\n";
+                "Minimal Eigenvalue threshold of the entropy hession must be positive.\n Current choice: " + std::to_string( _alphaSampling ) +
+                ". Check choice of MIN_EIGENVALUE_THRESHOLD.";
             ErrorMessages::Error( msg, CURRENT_FUNCTION );
         }
     }
