@@ -8,14 +8,16 @@
 #include <iostream>
 
 DataGeneratorClassification::DataGeneratorClassification( Config* settings ) : DataGeneratorBase( settings ) {
+    // Only 1D case right now
+
     ComputeMoments();
     _uSol              = VectorVector( _setSize, Vector( _nTotalEntries, 0.0 ) );
     _alpha             = VectorVector( _setSize, Vector( _nTotalEntries, 0.0 ) );
     _pdfClassification = Vector( _setSize, 0.0 );
 
-    double rho = 1.0;
-    Vector u   = Vector( _nTotalEntries, 0.0 );
-    double T   = 1.0;
+    double rho = 1.0;    // equal to the mass of the maxwellian
+    double u   = 0.0;    // equal to the mean of the maxwellian
+    double T   = 0.1;    // equal to the variance of the maxwellian
 
     _maxwellian = ComputeMaxwellian( rho, u, T );
 }
@@ -46,11 +48,18 @@ void DataGeneratorClassification::ComputeMoments() {
         phi = 0;    // placeholder. will not be used
 
         for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
-            my                     = _quadPointsSphere[idx_quad][0];
+            // my                     = _quadPointsSphere[idx_quad][0];
+            my                     = -5.0 + (double)idx_quad * 10.0 / (double)_nq;
             _momentBasis[idx_quad] = _basisGenerator->ComputeSphericalBasis( my, phi );
+            // Correct the second moment with factor 0.5
+            if( _nTotalEntries >= 3 ) {
+                //_momentBasis[idx_quad][2] = _momentBasis[idx_quad][2] * 0.5;
+            }
         }
     }
     else if( _settings->GetDim() == 2 || _settings->GetDim() == 3 ) {
+        ErrorMessages::Error( "Spatial Dimension not supported.", CURRENT_FUNCTION );
+
         for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
             my                     = _quadPointsSphere[idx_quad][0];
             phi                    = _quadPointsSphere[idx_quad][1];
@@ -76,12 +85,28 @@ void DataGeneratorClassification::ClassifyDensity() {
     }
 }
 
-Vector DataGeneratorClassification::ComputeMaxwellian( double rho, Vector u, double T ) {
+Vector DataGeneratorClassification::ComputeMaxwellian( double rho, double u, double T ) {
+    // Only in 1D right now
+    auto logCSV = spdlog::get( "tabular" );
+
     Vector maxwellian = Vector( _nq, 0.0 );
-    double prefactor  = rho / pow( 2 * M_PI * T, 2.0 / 3.0 );
+    double prefactor  = rho / sqrt( 2 * M_PI * T );
     for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
-        maxwellian[idx_quad] = prefactor * exp( -1 * dot( _momentBasis[idx_quad] - u, _momentBasis[idx_quad] - u ) / ( 2 * T ) );
+        maxwellian[idx_quad] = prefactor * exp( -1 * ( ( _momentBasis[idx_quad][1] - u ) * ( _momentBasis[idx_quad][1] - u ) ) / ( 2 * T ) );
+        // std::cout << maxwellian[idx_quad] << std::endl;
     }
+
+    // Compute the Moment of the maxwellian.
+    Vector maxwellianMoment = Vector( _nTotalEntries, 0.0 );
+    double moment0          = 0.0;
+    for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
+        maxwellianMoment += _momentBasis[idx_quad] * ( ( 10.0 / ( (double)_nq ) ) * maxwellian[idx_quad] );    //  _weights[idx_quad]
+        moment0 += ( _weights[idx_quad] * maxwellian[idx_quad] );
+    }
+
+    std::cout << "Maxwellian Moment:\n";
+    std::cout << maxwellianMoment << std::endl;
+    std::cout << moment0 << std::endl;
     return maxwellian;
 }
 

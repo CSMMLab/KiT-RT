@@ -33,7 +33,7 @@ class DataGeneratorClassification : public DataGeneratorBase
          @param rho: density
          @param u: bulk velocity
          @param T: Temperature*/
-    Vector ComputeMaxwellian( double rho, Vector u, double T );
+    Vector ComputeMaxwellian( double rho, double u, double T );
 };
 
 #endif    // DATAGENERATORCLASSIFICATION_H
