@@ -4,7 +4,7 @@
  * \author S. Schotthoefer
  */
 
-#include "toolboxes/datagenerator2D.h"
+#include "datagenerator/datagenerator2D.h"
 #include "common/config.h"
 #include "quadratures/quadraturebase.h"
 #include "toolboxes/errormessages.h"
@@ -13,10 +13,8 @@
 #include <iostream>
 #include <omp.h>
 
-DataGenerator2D::DataGenerator2D( Config* settings ) : DataGeneratorBase( settings ) {
+DataGenerator2D::DataGenerator2D( Config* settings ) : DataGeneratorRegression( settings ) {
     ComputeMoments();
-
-    // AdaptBasisSize(); // Bugg
 
     // Initialize Training Data
     if( _settings->GetAlphaSampling() )

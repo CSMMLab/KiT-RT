@@ -318,6 +318,8 @@ void Config::SetConfigOptions() {
     AddUnsignedShortOption( "HISTORY_OUTPUT_FREQUENCY", _historyOutputFrequency, 1 );
 
     // Data generator related options
+    /*! @brief Choice of sampling method \n DESCRIPTION:  Choose between creating a regression and a classification dataset. \ingroup Config */
+    AddEnumOption( "SAMPLER_NAME", _sampler, SamplerName_MAP, REGRESSION_SAMPLER );
     /*! @brief Size of training data set \n DESCRIPTION: Size of training data set  \n DEFAULT 1 \ingroup Config */
     AddUnsignedLongOption( "TRAINING_SET_SIZE", _tainingSetSize, 1 );
     /*! @brief Determines, if TRAINING_SET_SIZE is counted by dimension \n DESCRIPTION: Determines, if TRAINING_SET_SIZE is counted by dimension   \n

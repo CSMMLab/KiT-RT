@@ -4,7 +4,7 @@
  * \author S. Schotthoefer
  */
 
-#include "toolboxes/datagenerator1D.h"
+#include "datagenerator/datagenerator1D.h"
 #include "common/config.h"
 #include "quadratures/quadraturebase.h"
 #include "toolboxes/errormessages.h"
@@ -13,10 +13,8 @@
 #include <iostream>
 #include <omp.h>
 
-DataGenerator1D::DataGenerator1D( Config* settings ) : DataGeneratorBase( settings ) {
+DataGenerator1D::DataGenerator1D( Config* settings ) : DataGeneratorRegression( settings ) {
     ComputeMoments();
-
-    // AdaptBasisSize();
 
     // Initialize Training Data
     if( _settings->GetAlphaSampling() )

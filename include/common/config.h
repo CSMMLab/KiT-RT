@@ -123,6 +123,7 @@ class Config
     // Data Generator Settings
     /*!< @brief Check, if data generator mode is active. If yes, no solver is called, but instead the data generator is executed */
     bool _dataGeneratorMode;
+    SAMPLER_NAME _sampler;            /*!< @brief Sampling mode for regression or classification datasets */
     unsigned long _tainingSetSize;    /*!< @brief Size of training data set for data generator */
     bool _sizeByDimension;            /*!< @brief If true, the value of _trainingSetSize is the number of gridpoints in one dimension */
     unsigned long _maxValFirstMoment; /*!< @brief Size of training data set for data generator */
@@ -133,6 +134,7 @@ class Config
     bool _realizabilityRecons;        /*!< @brief Turns realizability reconstruction on/off for u sampling */
     double _alphaBound;               /*!< @brief The norm boundary for the sampling range of alpha*/
     double _minEVAlphaSampling;       /*!< @brief Rejection sampling criterion is a minimal eigenvalue threshold */
+
     // --- Parsing Functionality and Initializing of Options ---
     /*!
      * @brief Set default values for all options not yet set.
@@ -325,6 +327,7 @@ class Config
 
     // Data generator
     bool inline GetDataGeneratorMode() { return _dataGeneratorMode; }
+    SAMPLER_NAME inline GetSamplerName() { return _sampler; }
     unsigned long inline GetTrainingDataSetSize() { return _tainingSetSize; }
     bool inline GetSizeByDimension() { return _sizeByDimension; }
     unsigned long inline GetMaxValFirstMoment() { return _maxValFirstMoment; }

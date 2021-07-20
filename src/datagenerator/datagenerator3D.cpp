@@ -4,7 +4,7 @@
  * \author S. Schotthoefer
  */
 
-#include "toolboxes/datagenerator3D.h"
+#include "datagenerator/datagenerator3D.h"
 #include "common/config.h"
 #include "quadratures/quadraturebase.h"
 #include "toolboxes/errormessages.h"
@@ -13,10 +13,8 @@
 #include <iostream>
 #include <omp.h>
 
-DataGenerator3D::DataGenerator3D( Config* settings ) : DataGeneratorBase( settings ) {
+DataGenerator3D::DataGenerator3D( Config* settings ) : DataGeneratorRegression( settings ) {
     ComputeMoments();
-
-    AdaptBasisSize();
 
     // Initialize Training Data
     if( settings->GetAlphaSampling() )
@@ -35,8 +33,8 @@ void DataGenerator3D::ComputeMoments() {
     double my, phi;
 
     for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
-        my                 = _quadPointsSphere[idx_quad][0];
-        phi                = _quadPointsSphere[idx_quad][1];
+        my                     = _quadPointsSphere[idx_quad][0];
+        phi                    = _quadPointsSphere[idx_quad][1];
         _momentBasis[idx_quad] = _basisGenerator->ComputeSphericalBasis( my, phi );
     }
 }

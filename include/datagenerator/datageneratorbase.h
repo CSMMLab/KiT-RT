@@ -34,21 +34,13 @@ class DataGeneratorBase
     /*! @brief computes the training data set.
      *          Realizable set is sampled uniformly.
      *          Prototype: 1D, u in [0,100] */
-    void ComputeTrainingData();
-
-    inline VectorVector GetuSol() { return _uSol; }                /*! @brief Get the computed solution vector uSol */
-    inline VectorVector GetAlpha() { return _alpha; }              /*! @brief Get the computed vector alpha */
-    inline std::vector<double> GethEntropy() { return _hEntropy; } /*! @brief Get the computed entropy value h */
+    virtual void ComputeTrainingData() = 0;
 
   protected:
     Config* _settings; /*!< @brief config class for global information */
 
-    VectorVector _uSol;            /*!< @brief vector with moments. Size: (setSize,basisSize)*/
-    VectorVector _alpha;           /*!< @brief vector with Lagrange multipliers. Size: (setSize,basisSize)*/
-    std::vector<double> _hEntropy; /*!< @brief vector with entropy values. Size: (setSize) */
-    unsigned long _setSize;        /*!< @brief Size of the whole training Set */
-    unsigned long
-        _gridSize; /*!< @brief Size of the grid discretizing moment U0 for higher order sampling (has different uses for different samplers)*/
+    VectorVector _alpha;    /*!< @brief vector with Lagrange multipliers. Size: (setSize,basisSize)*/
+    unsigned long _setSize; /*!< @brief Size of the whole training Set */
 
     unsigned short _maxPolyDegree; /*!< @brief Max Order of Spherical Harmonics */
     unsigned _nTotalEntries;       /*!< @brief Total number of equations in the system */
@@ -66,22 +58,13 @@ class DataGeneratorBase
     EntropyBase* _entropy;       /*!< @brief Class to handle entropy functional evaluations */
 
     // Main methods
-    virtual void SampleSolutionU() = 0; /*!< @brief Samples solution vectors u */
-    void SampleMultiplierAlpha();       /*!< @brief Sample Lagrange multipliers alpha */
-    void ComputeEntropyH_dual();        /*!< @brief Compute the entropy functional at (u,alpha) in dual formulation */
-    void ComputeEntropyH_primal();      /*!< @brief  Compute the entropy functional at (u,alpha) in primal formulation */
-    void ComputeRealizableSolution();   /*!< @brief make u the realizable moment to alpha, since Newton has roundoff errors. */
+    void SampleMultiplierAlpha(); /*!< @brief Sample Lagrange multipliers alpha */
 
     // IO routines
-    void PrintTrainingData(); /*!< @brief : Print computed training data to csv file and screen */
-    void PrintLoadScreen();   /*!< @brief Print screen IO*/
+    virtual void PrintTrainingData() = 0; /*!< @brief : Print computed training data to csv file and screen */
+    void PrintLoadScreen();               /*!< @brief Print screen IO*/
 
     // Helper functions
-    virtual void ComputeMoments()     = 0;       /*!< @brief Pre-Compute Moments at all quadrature points. */
-    virtual void CheckRealizability() = 0;       /*!< @brief Debugging helper. Will be removed */
-    virtual void ComputeSetSizeU()    = 0;       /*!< @brief Computes the size of the training set, depending on the chosen settings.*/
-    void ComputeSetSizeAlpha();                  /*!< @brief Computes the seSize for alphasampling */
-    void AdaptBasisSize();                       /*!< @brief In case of normal sampling, deletes zero order basis for dimension reduction. */
     bool ComputeEVRejection( unsigned idx_set ); /*!< @brief Evalute rejection criterion based on  the smallest Eigenvalue of the Hessian
                                                     corresponding to alpha[idx_set]. */
 };

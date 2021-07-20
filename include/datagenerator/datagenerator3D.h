@@ -7,9 +7,9 @@
 #ifndef DATAGENERATOR3D_H
 #define DATAGENERATOR3D_H
 
-#include "toolboxes/datageneratorbase.h"
+#include "datageneratorregression.h"
 
-class DataGenerator3D : public DataGeneratorBase
+class DataGenerator3D : public DataGeneratorRegression
 {
   public:
     /*! @brief Class constructor. Generates training data for neural network approaches using
