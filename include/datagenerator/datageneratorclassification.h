@@ -16,13 +16,15 @@ class DataGeneratorClassification : public DataGeneratorBase
     void ComputeTrainingData() override;
 
   protected:
-    VectorVector _kineticDensity; /*!< @brief Vector with kinetic density functions evaluated at quadrature points . Size: (setSize,_nq)*/
-    Vector _maxwellian;           /*!< @brief Maxwellian pdf evaluated at the quadrature points */
+    Vector _pdfClassification; /*!< @brief One-hot vector with classification, if kinetic pdf is within or outside KL Divergence threshold*/
+    Vector _maxwellian;        /*!< @brief Maxwellian pdf evaluated at the quadrature points */
 
     // IO routines
     void PrintTrainingData() override; /*!< @brief : Print computed training data to csv file and screen */
 
     // Helper functions
+    void ComputeMoments() override; /*!< @brief Pre-Compute Moments at all quadrature points. */
+    void ClassifyDensity();         /*!< @brief Checks, if the pdf of each Lagrange multiplier is within the KL distance of the maxwellian */
     /*!< @brief Computes the Kullback Leibler Divergence of the pdfs f1 and f2, both pfds are evaluated at their quadrature points
                   @param: f1,f2. Evaluation of the pdf at their quadrature points. length of vector must be _nq.
              */

@@ -18,10 +18,11 @@ void DataGeneratorRegression::ComputeTrainingData() {
     auto log = spdlog::get( "event" );
     if( _settings->GetAlphaSampling() ) {
         // --- sample alpha ---
+        log->info( "| Sample Lagrange multipliers." );
         SampleMultiplierAlpha();
         log->info( "| Multipliers sampled." );
 
-        log->info( "| Making moments realizable problems." );
+        log->info( "| Compute realizable problems." );
 
         // --- Postprocessing
         ComputeRealizableSolution();
@@ -82,7 +83,7 @@ void DataGeneratorRegression::ComputeTrainingData() {
         _optimizer->SolveMultiCell( _alpha, _uSol, _momentBasis );
         // --- Postprocessing
         if( _settings->GetRelizabilityReconsU() ) {
-            log->info( "| Making moments realizable." );
+            log->info( "| Compute realizable problems." );
             ComputeRealizableSolution();
         }
     }
@@ -132,19 +133,6 @@ void DataGeneratorRegression::ComputeEntropyH_primal() {
                                       "\nPlease adjust the Options "
                                       "REALIZABLE_SET_EPSILON_U0 and REALIZABLE_SET_EPSILON_U1.",
                                   CURRENT_FUNCTION );
-        }
-    }
-}
-
-void DataGeneratorRegression::ComputeRealizableSolution() {
-#pragma omp parallel for schedule( guided )
-    for( unsigned idx_sol = 0; idx_sol < _setSize; idx_sol++ ) {
-        double entropyReconstruction = 0.0;
-        _uSol[idx_sol]               = 0;
-        for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
-            // Make entropyReconstruction a member vector, s.t. it does not have to be re-evaluated in ConstructFlux
-            entropyReconstruction = _entropy->EntropyPrimeDual( blaze::dot( _alpha[idx_sol], _momentBasis[idx_quad] ) );
-            _uSol[idx_sol] += _momentBasis[idx_quad] * ( _weights[idx_quad] * entropyReconstruction );
         }
     }
 }

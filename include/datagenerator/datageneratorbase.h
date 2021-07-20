@@ -39,6 +39,7 @@ class DataGeneratorBase
   protected:
     Config* _settings; /*!< @brief config class for global information */
 
+    VectorVector _uSol;     /*!< @brief vector with moments. Size: (setSize,basisSize)*/
     VectorVector _alpha;    /*!< @brief vector with Lagrange multipliers. Size: (setSize,basisSize)*/
     unsigned long _setSize; /*!< @brief Size of the whole training Set */
 
@@ -58,13 +59,15 @@ class DataGeneratorBase
     EntropyBase* _entropy;       /*!< @brief Class to handle entropy functional evaluations */
 
     // Main methods
-    void SampleMultiplierAlpha(); /*!< @brief Sample Lagrange multipliers alpha */
+    void SampleMultiplierAlpha();     /*!< @brief Sample Lagrange multipliers alpha */
+    void ComputeRealizableSolution(); /*!< @brief make u the realizable moment to alpha, since Newton has roundoff errors. */
 
     // IO routines
     virtual void PrintTrainingData() = 0; /*!< @brief : Print computed training data to csv file and screen */
     void PrintLoadScreen();               /*!< @brief Print screen IO*/
 
     // Helper functions
+    virtual void ComputeMoments() = 0;           /*!< @brief Pre-Compute Moments at all quadrature points. */
     bool ComputeEVRejection( unsigned idx_set ); /*!< @brief Evalute rejection criterion based on  the smallest Eigenvalue of the Hessian
                                                     corresponding to alpha[idx_set]. */
 };

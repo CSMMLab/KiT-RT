@@ -18,7 +18,7 @@
 #include "toolboxes/sphericalbase.h"
 #include "toolboxes/textprocessingtoolbox.h"
 
-#include <chrono>
+//#include <chrono>
 #include <iomanip>
 #include <math.h>
 #include <omp.h>
@@ -238,8 +238,22 @@ bool DataGeneratorBase::ComputeEVRejection( unsigned idx_set ) {
     eigen( hessianSym, ew );
     if( min( ew ) < _settings->GetMinimalEVBound() ) {
         std::cout << "Sampling not accepted with EV:" << min( ew ) << std::endl;
+        // std::cout << hessianSym << std::endl;
         // std::cout << "Current minimal accepted EV:" << _settings->GetMinimalEVBound() << std::endl;
         return false;
     }
     return true;
+}
+
+void DataGeneratorBase::ComputeRealizableSolution() {
+#pragma omp parallel for schedule( guided )
+    for( unsigned idx_sol = 0; idx_sol < _setSize; idx_sol++ ) {
+        double entropyReconstruction = 0.0;
+        _uSol[idx_sol]               = 0;
+        for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
+            // Make entropyReconstruction a member vector, s.t. it does not have to be re-evaluated in ConstructFlux
+            entropyReconstruction = _entropy->EntropyPrimeDual( blaze::dot( _alpha[idx_sol], _momentBasis[idx_quad] ) );
+            _uSol[idx_sol] += _momentBasis[idx_quad] * ( _weights[idx_quad] * entropyReconstruction );
+        }
+    }
 }
