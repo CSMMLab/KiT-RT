@@ -45,7 +45,8 @@ class Config
     // Quadrature
     QUAD_NAME _quadName;       /*!< @brief Quadrature Name*/
     unsigned short _quadOrder; /*!< @brief Quadrature Order*/
-    unsigned _nQuadPoints;
+    unsigned _nQuadPoints;     /*!< @brief Number of quadrature points. (Deprecated)*/
+    // std::vector<double> _1dIntegrationBounds; /*!< @brief Quadrature Order*/
 
     // Mesh
     unsigned _nCells;    /*!< @brief Number of cells in the mesh */

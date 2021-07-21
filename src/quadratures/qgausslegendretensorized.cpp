@@ -8,6 +8,7 @@ QGaussLegendreTensorized::QGaussLegendreTensorized( Config* settings ) : Quadrat
     SetNq();
     SetPointsAndWeights();
     SetConnectivity();
+    _supportedDimensions = { 3 };
 }
 
 void QGaussLegendreTensorized::SetNq() {

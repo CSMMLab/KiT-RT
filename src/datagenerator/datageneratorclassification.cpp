@@ -1,6 +1,8 @@
 #include "datagenerator/datageneratorclassification.h"
 #include "common/config.h"
 #include "entropies/entropybase.h"
+#include "optimizers/newtonoptimizer.h"
+#include "quadratures/quadraturebase.h"
 #include "spdlog/spdlog.h"
 #include "toolboxes/errormessages.h"
 #include "toolboxes/sphericalbase.h"
@@ -9,6 +11,13 @@
 
 DataGeneratorClassification::DataGeneratorClassification( Config* settings ) : DataGeneratorBase( settings ) {
     // Only 1D case right now
+    _leftBound  = -5.0;
+    _rightBound = 5.0;
+
+    // Scale the quadrature weights
+    _quadrature->ScaleWeights( _leftBound, _rightBound );
+    _weights = _quadrature->GetWeights();
+    _optimizer->ScaleQuadWeights( _leftBound, _rightBound );
 
     ComputeMoments();
     _uSol              = VectorVector( _setSize, Vector( _nTotalEntries, 0.0 ) );
@@ -48,12 +57,16 @@ void DataGeneratorClassification::ComputeMoments() {
         phi = 0;    // placeholder. will not be used
 
         for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
-            // my                     = _quadPointsSphere[idx_quad][0];
-            my                     = -5.0 + (double)idx_quad * 10.0 / (double)_nq;
+            my = _quadPointsSphere[idx_quad][0];
+
+            // Scale my to match the trunctated velocity space
+            my = ( _leftBound + _rightBound ) / 2.0 + my * ( _rightBound - _leftBound ) / 2.0;
+
             _momentBasis[idx_quad] = _basisGenerator->ComputeSphericalBasis( my, phi );
+
             // Correct the second moment with factor 0.5
             if( _nTotalEntries >= 3 ) {
-                //_momentBasis[idx_quad][2] = _momentBasis[idx_quad][2] * 0.5;
+                _momentBasis[idx_quad][2] = _momentBasis[idx_quad][2] * 0.5;
             }
         }
     }
@@ -87,26 +100,45 @@ void DataGeneratorClassification::ClassifyDensity() {
 
 Vector DataGeneratorClassification::ComputeMaxwellian( double rho, double u, double T ) {
     // Only in 1D right now
+
     auto logCSV = spdlog::get( "tabular" );
 
     Vector maxwellian = Vector( _nq, 0.0 );
     double prefactor  = rho / sqrt( 2 * M_PI * T );
     for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
         maxwellian[idx_quad] = prefactor * exp( -1 * ( ( _momentBasis[idx_quad][1] - u ) * ( _momentBasis[idx_quad][1] - u ) ) / ( 2 * T ) );
-        // std::cout << maxwellian[idx_quad] << std::endl;
+        std::cout << maxwellian[idx_quad] << std::endl;
     }
 
     // Compute the Moment of the maxwellian.
     Vector maxwellianMoment = Vector( _nTotalEntries, 0.0 );
     double moment0          = 0.0;
     for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
-        maxwellianMoment += _momentBasis[idx_quad] * ( ( 10.0 / ( (double)_nq ) ) * maxwellian[idx_quad] );    //  _weights[idx_quad]
+        std::cout << _momentBasis[idx_quad] << "\n";
+        maxwellianMoment += _momentBasis[idx_quad] * _weights[idx_quad] * maxwellian[idx_quad];    //  _weights[idx_quad]
         moment0 += ( _weights[idx_quad] * maxwellian[idx_quad] );
     }
+    // Compute the Lagrange multiplier of the maxwellian
+    Vector maxwellianAlpha = Vector( _nTotalEntries, 0.0 );
+    _optimizer->Solve( maxwellianAlpha, maxwellianMoment, _momentBasis );
 
-    std::cout << "Maxwellian Moment:\n";
-    std::cout << maxwellianMoment << std::endl;
-    std::cout << moment0 << std::endl;
+    // std::cout << "Maxwellian Moment:\n";
+    // std::cout << maxwellianMoment << std::endl;
+    // std::cout << moment0 << std::endl;
+    // std::cout << "Maxwellian Alpha:\n";
+    // std::cout << maxwellianAlpha << std::endl;
+
+    maxwellianAlpha[1] *= 2;
+    // For debugging, reconstruct the moments from Maxwellian alpha
+    double entropyReconstruction = 0.0;
+    for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
+        // Make entropyReconstruction a member vector, s.t. it does not have to be re-evaluated in ConstructFlux
+        entropyReconstruction = _entropy->EntropyPrimeDual( blaze::dot( maxwellianAlpha, _momentBasis[idx_quad] ) );
+        maxwellianMoment += _momentBasis[idx_quad] * ( _weights[idx_quad] * entropyReconstruction );
+    }
+    // std::cout << "Maxwellian Moment:\n";
+    // std::cout << maxwellianMoment << std::endl;
+
     return maxwellian;
 }
 
@@ -115,7 +147,7 @@ double DataGeneratorClassification::ComputeKLDivergence( Vector& f1, Vector& f2 
     for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
         sum += f1[idx_quad] * log( f1[idx_quad] / f2[idx_quad] );
     }
-    std::cout << "KL-Divergence:" << sum << std::endl;
+    // std::cout << "KL-Divergence:" << sum << std::endl;
     return sum;
 }
 

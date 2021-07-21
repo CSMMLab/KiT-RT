@@ -18,6 +18,8 @@ class DataGeneratorClassification : public DataGeneratorBase
   protected:
     Vector _pdfClassification; /*!< @brief One-hot vector with classification, if kinetic pdf is within or outside KL Divergence threshold*/
     Vector _maxwellian;        /*!< @brief Maxwellian pdf evaluated at the quadrature points */
+    double _leftBound;
+    double _rightBound;
 
     // IO routines
     void PrintTrainingData() override; /*!< @brief : Print computed training data to csv file and screen */

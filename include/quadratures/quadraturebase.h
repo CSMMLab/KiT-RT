@@ -72,6 +72,12 @@ class QuadratureBase
     inline VectorVectorU GetConnectivity() const {
         return _connectivity;
     } /*! @returns VectorVectorU _connectivity:  connectivity of gridpoints of the quadrature */
+    inline std::vector<unsigned short> GetSupportedDims() const {
+        return _supportedDimensions;
+    } /*!< @brief Returns approved Dimensions for this quadrature */
+    void
+    ScaleWeights( double leftBound,
+                  double rightBound ); /*!< @brief Scales the quadrature weights according to the intervall [leftBound, rightBound]. Only for 1D */
 
   protected:
     // Setter
@@ -86,14 +92,15 @@ class QuadratureBase
     virtual void SetPointsAndWeights() = 0;
 
     // Member variables
-    Config* _settings;           /*!< @brief pointer to settings class that manages the solver */
-    std::string _name;           /*!< @brief name of the quadrature */
-    unsigned _order;             /*!< @brief order of the quadrature */
-    unsigned _nq;                /*!< @brief number of gridpoints of the quadrature */
-    VectorVector _points;        /*!< @brief gridpoints of the quadrature */
-    VectorVector _pointsSphere;  /*!< @brief (my,phi)gridpoints of the quadrature in spherical cordinates */
-    Vector _weights;             /*!< @brief weights of the gridpoints of the quadrature */
-    VectorVectorU _connectivity; /*!< @brief connectivity of the gripoints of the quadrature */
+    Config* _settings;                                /*!< @brief pointer to settings class that manages the solver */
+    std::string _name;                                /*!< @brief name of the quadrature */
+    unsigned _order;                                  /*!< @brief order of the quadrature */
+    unsigned _nq;                                     /*!< @brief number of gridpoints of the quadrature */
+    VectorVector _points;                             /*!< @brief gridpoints of the quadrature */
+    VectorVector _pointsSphere;                       /*!< @brief (my,phi)gridpoints of the quadrature in spherical cordinates */
+    Vector _weights;                                  /*!< @brief weights of the gridpoints of the quadrature */
+    VectorVectorU _connectivity;                      /*!< @brief connectivity of the gripoints of the quadrature */
+    std::vector<unsigned short> _supportedDimensions; /*!< @brief number of spatial dimensions, for which the quadrature is build */
 };
 
 #endif    // QUADRATURE_H

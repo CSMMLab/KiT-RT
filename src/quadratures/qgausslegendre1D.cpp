@@ -7,6 +7,7 @@ QGaussLegendre1D::QGaussLegendre1D( Config* settings ) : QuadratureBase( setting
     SetNq();
     SetPointsAndWeights();
     SetConnectivity();
+    _supportedDimensions = { 1 };
 }
 
 QGaussLegendre1D::QGaussLegendre1D( unsigned quadOrder ) : QuadratureBase( quadOrder ) {
