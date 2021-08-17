@@ -110,6 +110,15 @@ def Mesh(contours, cont_idx,mesh_holes, dim, indices, lcar, remove_low_dim_cells
 			mesh.remove_lower_dimensional_cells()
 
 		return mesh
+	
+def contrast_equ(img_filename,out_filename):
+	image = cv.imread(img_filename,0)
+
+	clahe = cv.createCLAHE(clipLimit = 5.0, tileGridSize = (8,8))
+	cl1 = clahe.apply(image)
+	equ = cv.equalizeHist(cl1)
+
+	cv.imwrite(out_filename,equ)
 
 
 def mesh_from_image(image_path, mesh_path, num_points, method = 'watershed', small_contour = False, default_lcar = True, plot_contours = True):
@@ -194,7 +203,10 @@ def mesh_from_image(image_path, mesh_path, num_points, method = 'watershed', sma
 
 	mesh.write(mesh_path)
 
-mesh_from_image('G:\\HiWi\\abdomen_CT.png','G:\\HiWi\\autogentest.vtk',4)
+	
+contrast_equ('G:\\HiWi\\Prostate_1.png','G:\\HiWi\\Prostate_1_conteq.png')
+
+mesh_from_image('G:\\HiWi\\Prostate_1_conteq.png','G:\\HiWi\\autogentest.vtk',4)
 
 
 
