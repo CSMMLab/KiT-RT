@@ -396,7 +396,7 @@ void Config::SetConfigParsing( string case_filename ) {
                 string newString;
                 newString.append( option_name );
                 newString.append( ": invalid option name" );
-                newString.append( ". Check current RTSN options in config_template.cfg." );
+                newString.append( ". Check current KiT-RT options in config_template.cfg." );
                 newString.append( "\n" );
                 errorString.append( newString );
                 err_count++;
