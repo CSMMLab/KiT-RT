@@ -343,6 +343,9 @@ void Config::SetConfigOptions() {
     /*! @brief Flag for sampling the space of Legendre multipliers instead of the moments  \n DESCRIPTION: Sample alpha instead of u \n DEFAULT False
      * \ingroup Config */
     AddBoolOption( "ALPHA_SAMPLING", _alphaSampling, false );
+    /*! @brief Switch for sampling distribution  \n DESCRIPTION: Uniform (true) or trunctaded normal (false) \n DEFAULT true
+     * \ingroup Config */
+    AddBoolOption( "UNIFORM_SAMPLING", _sampleUniform, true );
     /*! @brief Flag for sampling the space of Legendre multipliers instead of the moments  \n DESCRIPTION: Sample alpha instead of u \n DEFAULT False
      * \ingroup Config */
     AddBoolOption( "REALIZABILITY_RECONS_U", _realizabilityRecons, true );

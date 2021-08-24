@@ -79,6 +79,28 @@ void DataGeneratorRegression::ComputeTrainingData() {
         log->info( "| Mean timing: " + std::to_string( mean ) + " seconds. Standard deviation: " + std::to_string( stdDev ) + " seconds." );
         */
 
+        // some checks
+        // Vector u     = { 1.0, 0.0, 0.5, 0.0 };
+        // Vector alpha = { 1.0, 0.0, 0.5, 0.01 };
+        //_optimizer->Solve( alpha, u, _momentBasis, 0 );
+        // std::cout << "u=" << u << "\nalpha=" << alpha << "\n";
+        // u     = { 1.0, 0.0, 0.5, 0.01 };
+        // alpha = { 1.0, 0.0, 0.5, 0.01 };
+        //_optimizer->Solve( alpha, u, _momentBasis, 0 );
+        // std::cout << "u=" << u << "\nalpha=" << alpha << "\n";
+        // u     = { 1.0, 0.0, 0.5, 0.05 };
+        // alpha = { 1.0, 0.0, 0.5, 0.01 };
+        //_optimizer->Solve( alpha, u, _momentBasis, 0 );
+        // std::cout << "u=" << u << "\nalpha=" << alpha << "\n";
+        // u     = { 1.0, 0.0, 0.5, 0.1 };
+        // alpha = { 1.0, 0.0, 0.5, 0.01 };
+        //_optimizer->Solve( alpha, u, _momentBasis, 0 );
+        // std::cout << "u=" << u << "\nalpha=" << alpha << "\n";
+        // u     = { 1.0, 0.0, 0.5, 0.2 };
+        // alpha = { 1.0, 0.0, 0.5, 0.01 };
+        //_optimizer->Solve( alpha, u, _momentBasis, 0 );
+        // std::cout << "u=" << u << "\nalpha=" << alpha << "\n";
+
         // --- compute alphas ---
         _optimizer->SolveMultiCell( _alpha, _uSol, _momentBasis );
         // --- Postprocessing

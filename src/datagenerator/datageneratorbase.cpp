@@ -106,6 +106,9 @@ void DataGeneratorBase::SampleMultiplierAlpha() {
         // Create generator
         std::default_random_engine generator;
         std::uniform_real_distribution<double> distribution( -1 * maxAlphaValue, maxAlphaValue );
+        double mean   = 0.0;
+        double stddev = maxAlphaValue / 2.0;
+        std::normal_distribution<double> distribution_normal( mean, stddev );
 
         // Can be parallelized, but check if there is a race condition with datagenerator
         for( unsigned idx_set = 0; idx_set < _setSize; idx_set++ ) {
@@ -115,7 +118,13 @@ void DataGeneratorBase::SampleMultiplierAlpha() {
             while( !accepted ) {
                 // Sample random multivariate uniformly distributed alpha between minAlpha and MaxAlpha.
                 for( unsigned idx_sys = 1; idx_sys < _nTotalEntries; idx_sys++ ) {
-                    alphaRed[idx_sys - 1] = distribution( generator );
+                    if( _settings->GetUniformSamlping() )
+                        alphaRed[idx_sys - 1] = distribution( generator );
+                    else {
+                        alphaRed[idx_sys - 1] = distribution_normal( generator );
+                        if( alphaRed[idx_sys - 1] > maxAlphaValue ) alphaRed[idx_sys - 1] = maxAlphaValue;
+                        if( alphaRed[idx_sys - 1] < -1 * maxAlphaValue ) alphaRed[idx_sys - 1] = -1 * maxAlphaValue;
+                    }
                 }
                 // Compute alpha_0 = log(<exp(alpha m )>) // for maxwell boltzmann! only
                 double integral = 0.0;

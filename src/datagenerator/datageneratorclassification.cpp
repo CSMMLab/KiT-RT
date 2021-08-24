@@ -114,7 +114,7 @@ Vector DataGeneratorClassification::ComputeMaxwellian( double rho, double u, dou
     Vector maxwellianMoment = Vector( _nTotalEntries, 0.0 );
     double moment0          = 0.0;
     for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
-        std::cout << _momentBasis[idx_quad] << "\n";
+        // std::cout << _momentBasis[idx_quad] << "\n";
         maxwellianMoment += _momentBasis[idx_quad] * _weights[idx_quad] * maxwellian[idx_quad];    //  _weights[idx_quad]
         moment0 += ( _weights[idx_quad] * maxwellian[idx_quad] );
     }
@@ -122,11 +122,11 @@ Vector DataGeneratorClassification::ComputeMaxwellian( double rho, double u, dou
     Vector maxwellianAlpha = Vector( _nTotalEntries, 0.0 );
     _optimizer->Solve( maxwellianAlpha, maxwellianMoment, _momentBasis );
 
-    // std::cout << "Maxwellian Moment:\n";
-    // std::cout << maxwellianMoment << std::endl;
+    std::cout << "Maxwellian Moment:\n";
+    std::cout << maxwellianMoment << std::endl;
     // std::cout << moment0 << std::endl;
     // std::cout << "Maxwellian Alpha:\n";
-    // std::cout << maxwellianAlpha << std::endl;
+    std::cout << maxwellianAlpha << std::endl;
 
     maxwellianAlpha[1] *= 2;
     // For debugging, reconstruct the moments from Maxwellian alpha
@@ -136,8 +136,8 @@ Vector DataGeneratorClassification::ComputeMaxwellian( double rho, double u, dou
         entropyReconstruction = _entropy->EntropyPrimeDual( blaze::dot( maxwellianAlpha, _momentBasis[idx_quad] ) );
         maxwellianMoment += _momentBasis[idx_quad] * ( _weights[idx_quad] * entropyReconstruction );
     }
-    // std::cout << "Maxwellian Moment:\n";
-    // std::cout << maxwellianMoment << std::endl;
+    std::cout << "Reconstructed Maxwellian Moment:\n";
+    std::cout << maxwellianMoment << std::endl;
 
     return maxwellian;
 }
