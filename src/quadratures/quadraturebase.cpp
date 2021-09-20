@@ -104,3 +104,14 @@ void QuadratureBase::PrintPointsAndWeights() {
         log->info( "{0}, {1}, {2}, {3}", _points[i][0], _points[i][1], _points[i][2], _weights[i] );
     }
 }
+
+void QuadratureBase::ScaleWeights( double leftBound, double rightBound ) {
+    if( !_settings ) {
+        ErrorMessages::Error( "This function is only available with an active settings file.", CURRENT_FUNCTION );
+    }
+    if( _settings->GetDim() != 1 ) {
+        ErrorMessages::Error( "This function is only available in 1 spatial dimension.", CURRENT_FUNCTION );
+    }
+
+    _weights = _weights * ( ( rightBound - leftBound ) / 2.0 );
+}

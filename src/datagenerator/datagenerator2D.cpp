@@ -4,7 +4,7 @@
  * \author S. Schotthoefer
  */
 
-#include "toolboxes/datagenerator2D.h"
+#include "datagenerator/datagenerator2D.h"
 #include "common/config.h"
 #include "quadratures/quadraturebase.h"
 #include "toolboxes/errormessages.h"
@@ -13,13 +13,14 @@
 #include <iostream>
 #include <omp.h>
 
-DataGenerator2D::DataGenerator2D( Config* settings ) : DataGeneratorBase( settings ) {
+DataGenerator2D::DataGenerator2D( Config* settings ) : DataGeneratorRegression( settings ) {
     ComputeMoments();
 
-    AdaptBasisSize();
-
     // Initialize Training Data
-    ComputeSetSize();
+    if( _settings->GetAlphaSampling() )
+        ComputeSetSizeAlpha();
+    else
+        ComputeSetSizeU();
 
     _uSol     = VectorVector( _setSize, Vector( _nTotalEntries, 0.0 ) );
     _alpha    = VectorVector( _setSize, Vector( _nTotalEntries, 0.0 ) );
@@ -32,9 +33,9 @@ void DataGenerator2D::ComputeMoments() {
     double my, phi;
 
     for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
-        my                 = _quadPointsSphere[idx_quad][0];
-        phi                = _quadPointsSphere[idx_quad][1];
-        _moments[idx_quad] = _basis->ComputeSphericalBasis( my, phi );
+        my                     = _quadPointsSphere[idx_quad][0];
+        phi                    = _quadPointsSphere[idx_quad][1];
+        _momentBasis[idx_quad] = _basisGenerator->ComputeSphericalBasis( my, phi );
     }
 }
 
@@ -63,18 +64,19 @@ void DataGenerator2D::SampleSolutionU() {
             std::default_random_engine generator;
             std::uniform_real_distribution<double> distribution( 0.0, 1.0 );
 
-            //#pragma omp parallel for schedule( guided )
+#pragma omp parallel for schedule( guided )
             for( unsigned long idx_set = 0; idx_set < _setSize; idx_set++ ) {
                 double mu  = std::sqrt( distribution( generator ) );
                 double phi = 2 * M_PI * distribution( generator );
 
-                if( std::sqrt( 1 - mu * mu ) > _settings->GetRealizableSetEpsilonU1() ) {
+                if( std::sqrt( 1 - mu * mu ) > 1 - _settings->GetRealizableSetEpsilonU0() ) {
                     idx_set--;
                     continue;
                 }
                 else {
-                    _uSol[idx_set][0] = std::sqrt( 1 - mu * mu ) * std::cos( phi );
-                    _uSol[idx_set][1] = std::sqrt( 1 - mu * mu ) * std::sin( phi );
+                    _uSol[idx_set][0] = 1.0;
+                    _uSol[idx_set][1] = std::sqrt( 1 - mu * mu ) * std::cos( phi );
+                    _uSol[idx_set][2] = std::sqrt( 1 - mu * mu ) * std::sin( phi );
                 }
             }
         }
@@ -103,13 +105,21 @@ void DataGenerator2D::SampleSolutionU() {
                     radiusU0 = _settings->GetRealizableSetEpsilonU0();    // Boundary close to 0
                 }
                 // number of points for unit circle should scale with (u_0)^2,
-                long currSetSize = ( (long)( radiusU0 * radiusU0 ) ) * _gridSize;
+                long currSetSize = _gridSize;    //(long)( ( radiusU0 * radiusU0 ) * (double)_gridSize );
 
                 for( long idx_currSet = 0; idx_currSet < currSetSize; idx_currSet++ ) {
                     double mu  = std::sqrt( distribution( generator ) );
                     double phi = 2 * M_PI * distribution( generator );
-                    if( std::sqrt( 1 - mu * mu ) > _settings->GetRealizableSetEpsilonU1() ) {
-                        idx_set--;
+                    if( std::sqrt( 1 - mu * mu ) < _settings->GetRealizableSetEpsilonU1() &&
+                        std::sqrt( 1 - mu * mu ) > radiusU0 - _settings->GetRealizableSetEpsilonU1() ) {
+                        ErrorMessages::Error( "sampling set is empty. Boundaries overlap", CURRENT_FUNCTION );    // empty set
+                    }
+                    if( std::sqrt( 1 - mu * mu ) > 1 - _settings->GetRealizableSetEpsilonU1() * radiusU0 ) {
+                        idx_currSet--;
+                        continue;
+                    }
+                    else if( std::sqrt( 1 - mu * mu ) < _settings->GetRealizableSetEpsilonU1() * radiusU0 ) {
+                        idx_currSet--;
                         continue;
                     }
                     else {
@@ -164,7 +174,7 @@ void DataGenerator2D::CheckRealizability() {
     }
 }
 
-void DataGenerator2D::ComputeSetSize() {
+void DataGenerator2D::ComputeSetSizeU() {
     if( _maxPolyDegree == 0 ) {
     }
     else if( _settings->GetNormalizedSampling() ) {
@@ -189,7 +199,7 @@ void DataGenerator2D::ComputeSetSize() {
                     radiusU0 = _settings->GetRealizableSetEpsilonU0();    // Boundary close to 0
                 }
                 // number of points for unit circle should scale with (u_0)^2,
-                long currSetSize = ( (long)( radiusU0 * radiusU0 ) ) * _gridSize;
+                long currSetSize = _gridSize;    // (long)( ( radiusU0 * radiusU0 ) * (double)_gridSize );
 
                 for( long idx_currSet = 0; idx_currSet < currSetSize; idx_currSet++ ) {
                     c++;

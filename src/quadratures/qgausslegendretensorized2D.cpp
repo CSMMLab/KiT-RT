@@ -7,6 +7,7 @@ QGaussLegendreTensorized2D::QGaussLegendreTensorized2D( Config* settings ) : QGa
     CheckOrder();
     SetNq();
     SetPointsAndWeights();
+    _supportedDimensions = { 2 };
 }
 
 void QGaussLegendreTensorized2D::SetNq() { _nq = pow( GetOrder(), 2 ); }

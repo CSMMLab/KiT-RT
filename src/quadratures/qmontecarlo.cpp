@@ -7,12 +7,14 @@ QMonteCarlo::QMonteCarlo( Config* settings ) : QuadratureBase( settings ) {
     SetNq();
     SetPointsAndWeights();
     SetConnectivity();
+    _supportedDimensions = { 1, 2, 3 };
 }
 QMonteCarlo::QMonteCarlo( unsigned quadOrder ) : QuadratureBase( quadOrder ) {
     SetName();
     SetNq();
     SetPointsAndWeights();
     SetConnectivity();
+    _supportedDimensions = { 1, 2, 3 };
 }
 
 void QMonteCarlo::SetPointsAndWeights() {

@@ -4,7 +4,7 @@
  * \author S. Schotthoefer
  */
 
-#include "toolboxes/datagenerator1D.h"
+#include "datagenerator/datagenerator1D.h"
 #include "common/config.h"
 #include "quadratures/quadraturebase.h"
 #include "toolboxes/errormessages.h"
@@ -13,13 +13,14 @@
 #include <iostream>
 #include <omp.h>
 
-DataGenerator1D::DataGenerator1D( Config* settings ) : DataGeneratorBase( settings ) {
+DataGenerator1D::DataGenerator1D( Config* settings ) : DataGeneratorRegression( settings ) {
     ComputeMoments();
 
-    // AdaptBasisSize();
-
     // Initialize Training Data
-    ComputeSetSize();
+    if( _settings->GetAlphaSampling() )
+        ComputeSetSizeAlpha();
+    else
+        ComputeSetSizeU();
 
     _uSol     = VectorVector( _setSize, Vector( _nTotalEntries, 0.0 ) );
     _alpha    = VectorVector( _setSize, Vector( _nTotalEntries, 0.0 ) );
@@ -33,8 +34,8 @@ void DataGenerator1D::ComputeMoments() {
     phi = 0;    // placeholder. will not be used
 
     for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
-        my                 = _quadPointsSphere[idx_quad][0];
-        _moments[idx_quad] = _basis->ComputeSphericalBasis( my, phi );
+        my                     = _quadPointsSphere[idx_quad][0];
+        _momentBasis[idx_quad] = _basisGenerator->ComputeSphericalBasis( my, phi );
     }
 }
 
@@ -196,7 +197,7 @@ void DataGenerator1D::CheckRealizability() {
     // Todo
 }
 
-void DataGenerator1D::ComputeSetSize() {
+void DataGenerator1D::ComputeSetSizeU() {
     if( _maxPolyDegree == 0 ) {
     }
     else if( _settings->GetSphericalBasisName() == SPHERICAL_MONOMIALS && !_settings->GetNormalizedSampling() ) {

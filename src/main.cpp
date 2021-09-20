@@ -13,7 +13,7 @@
 #include "common/io.h"
 #include "solvers/solverbase.h"
 
-#include "toolboxes/datageneratorbase.h"
+#include "datagenerator/datageneratorbase.h"
 
 #ifdef BUILD_GUI
 #include <QApplication>
