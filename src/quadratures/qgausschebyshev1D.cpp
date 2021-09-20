@@ -7,6 +7,7 @@ QGaussChebyshev1D::QGaussChebyshev1D( Config* settings ) : QuadratureBase( setti
     SetNq();
     SetPointsAndWeights();
     SetConnectivity();
+    _supportedDimensions = { 1 };
 }
 
 QGaussChebyshev1D::QGaussChebyshev1D( unsigned quadOrder ) : QuadratureBase( quadOrder ) {

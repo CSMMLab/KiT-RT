@@ -16,6 +16,7 @@ QDummy::QDummy( Config* settings ) : QuadratureBase( settings ) {
     SetNq();
     SetPointsAndWeights();
     SetConnectivity();
+    _supportedDimensions = { 1, 2, 3 };
 }
 
 QDummy::QDummy( unsigned quadOrder ) : QuadratureBase( quadOrder ) {

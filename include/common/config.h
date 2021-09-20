@@ -45,7 +45,8 @@ class Config
     // Quadrature
     QUAD_NAME _quadName;       /*!< @brief Quadrature Name*/
     unsigned short _quadOrder; /*!< @brief Quadrature Order*/
-    unsigned _nQuadPoints;
+    unsigned _nQuadPoints;     /*!< @brief Number of quadrature points. (Deprecated)*/
+    // std::vector<double> _1dIntegrationBounds; /*!< @brief Quadrature Order*/
 
     // Mesh
     unsigned _nCells;    /*!< @brief Number of cells in the mesh */
@@ -123,14 +124,18 @@ class Config
     // Data Generator Settings
     /*!< @brief Check, if data generator mode is active. If yes, no solver is called, but instead the data generator is executed */
     bool _dataGeneratorMode;
+    SAMPLER_NAME _sampler;            /*!< @brief Sampling mode for regression or classification datasets */
     unsigned long _tainingSetSize;    /*!< @brief Size of training data set for data generator */
+    bool _sizeByDimension;            /*!< @brief If true, the value of _trainingSetSize is the number of gridpoints in one dimension */
     unsigned long _maxValFirstMoment; /*!< @brief Size of training data set for data generator */
     double _RealizableSetEpsilonU0;   /*!< @brief Distance to 0 of the sampled moments to the boundary of the realizable set */
     double _RealizableSetEpsilonU1;   /*!< @brief norm(u_1)/u_0 !< _RealizableSetEpsilonU1 */
     bool _normalizedSampling;         /*!< @brief Flag for sampling of normalized moments, i.e. u_0 =1 */
     bool _alphaSampling;              /*!< @brief Flag for sampling alpha instead of u */
     bool _realizabilityRecons;        /*!< @brief Turns realizability reconstruction on/off for u sampling */
-
+    double _alphaBound;               /*!< @brief The norm boundary for the sampling range of alpha*/
+    double _minEVAlphaSampling;       /*!< @brief Rejection sampling criterion is a minimal eigenvalue threshold */
+    bool _sampleUniform;              /*!< @brief If true, samples uniform, if false, sampleswith cutoff normal distribution */
     // --- Parsing Functionality and Initializing of Options ---
     /*!
      * @brief Set default values for all options not yet set.
@@ -323,13 +328,18 @@ class Config
 
     // Data generator
     bool inline GetDataGeneratorMode() { return _dataGeneratorMode; }
+    SAMPLER_NAME inline GetSamplerName() { return _sampler; }
     unsigned long inline GetTrainingDataSetSize() { return _tainingSetSize; }
+    bool inline GetSizeByDimension() { return _sizeByDimension; }
     unsigned long inline GetMaxValFirstMoment() { return _maxValFirstMoment; }
     double GetRealizableSetEpsilonU0() { return _RealizableSetEpsilonU0; }
     double GetRealizableSetEpsilonU1() { return _RealizableSetEpsilonU1; }
     bool inline GetNormalizedSampling() { return _normalizedSampling; }
     bool inline GetAlphaSampling() { return _alphaSampling; }
+    bool inline GetUniformSamlping() { return _sampleUniform; }
     bool inline GetRelizabilityReconsU() { return _realizabilityRecons; }
+    double inline GetAlphaSamplingBound() { return _alphaBound; }
+    double inline GetMinimalEVBound() { return _minEVAlphaSampling; }
 
     // ---- Setters for option structure
     // This section is dangerous

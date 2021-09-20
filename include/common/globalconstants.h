@@ -158,4 +158,9 @@ enum SPHERICAL_BASIS_NAME { SPHERICAL_HARMONICS, SPHERICAL_MONOMIALS };
 inline std::map<std::string, SPHERICAL_BASIS_NAME> SphericalBasis_Map{ { "SPHERICAL_HARMONICS", SPHERICAL_HARMONICS },
                                                                        { "SPHERICAL_MONOMIALS", SPHERICAL_MONOMIALS } };
 
+// Datasampler Name
+enum SAMPLER_NAME { CLASSIFICATION_SAMPLER, REGRESSION_SAMPLER };
+
+inline std::map<std::string, SAMPLER_NAME> SamplerName_MAP{ { "CLASSIFICATION_SAMPLER", CLASSIFICATION_SAMPLER },
+                                                            { "REGRESSION_SAMPLER", REGRESSION_SAMPLER } };
 #endif    // GLOBAL_CONSTANTS_H

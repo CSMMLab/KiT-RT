@@ -6,6 +6,7 @@ QProduct::QProduct( unsigned order ) : QuadratureBase( order ) {
     SetNq();
     SetPointsAndWeights();
     SetConnectivity();
+    _supportedDimensions = { 2, 3 };    // Doulble check
 }
 
 QProduct::QProduct( Config* settings ) : QuadratureBase( settings ) {

@@ -194,7 +194,7 @@ template <class Tenum> class OptionEnum : public OptionBase
             str.append( this->_name );
             str.append( ": invalid option value " );
             str.append( option_value[0] );
-            str.append( ". Check current RTSN options in config_template.cfg." );
+            str.append( ". Check current KiT-RT options in config_template.cfg." );
             return str;
         }
         // If it is there, set the option value
@@ -240,7 +240,7 @@ template <class Tenum> class OptionEnumList : public OptionBase
                 str.append( this->_name );
                 str.append( ": invalid option value " );
                 str.append( option_value[i] );
-                str.append( ". Check current RTSN options in config_template.cfg." );
+                str.append( ". Check current KiT-RT options in config_template.cfg." );
                 return str;
             }
             // If it is there, set the option value
