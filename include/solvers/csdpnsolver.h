@@ -9,6 +9,11 @@ class CSDPNSolver : public PNSolver
 {
   private:
     std::vector<double> _dose; /*!< @brief TODO */
+    double _E_cutoff;
+    Vector saveE_ref;
+
+    Vector _eTrafo;
+    Vector _sigmaTAtEnergy;
 
     // Physics acess
     Vector _angle; /*!< @brief angles */

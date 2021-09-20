@@ -1,12 +1,13 @@
-nCells = 100;
+nCells = 199;
+length = 1.0;
 //+
-Point(1) = {-1, 1, 0, 1.0};
+Point(1) = {0, length, 0, 1.0};
 //+
-Point(2) = {1, 1, 0, 1.0};
+Point(2) = {length, length, 0, 1.0};
 //+
-Point(3) = {1, -1, 0, 1.0};
+Point(3) = {length, 0, 0, 1.0};
 //+
-Point(4) = {-1, -1, 0, 1.0};
+Point(4) = {0, 0, 0, 1.0};
 //+
 Line(1) = {1, 4};
 //+
