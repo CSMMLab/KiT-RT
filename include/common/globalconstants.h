@@ -115,6 +115,7 @@ enum SOLVER_NAME {
     CSD_SN_FOKKERPLANCK_TRAFO_SOLVER,
     CSD_SN_FOKKERPLANCK_TRAFO_SOLVER_2D,
     CSD_SN_FOKKERPLANCK_TRAFO_SH_SOLVER_2D,
+    CSD_PN_SOLVER,
     PN_SOLVER,
     MN_SOLVER
 };
@@ -126,6 +127,7 @@ inline std::map<std::string, SOLVER_NAME> Solver_Map{ { "SN_SOLVER", SN_SOLVER }
                                                       { "CSD_SN_FOKKERPLANCK_TRAFO_SOLVER", CSD_SN_FOKKERPLANCK_TRAFO_SOLVER },
                                                       { "CSD_SN_FOKKERPLANCK_TRAFO_SOLVER_2D", CSD_SN_FOKKERPLANCK_TRAFO_SOLVER_2D },
                                                       { "CSD_SN_FOKKERPLANCK_TRAFO_SH_SOLVER_2D", CSD_SN_FOKKERPLANCK_TRAFO_SH_SOLVER_2D },
+                                                      { "CSD_PN", CSD_PN_SOLVER },
                                                       { "PN_SOLVER", PN_SOLVER },
                                                       { "MN_SOLVER", MN_SOLVER } };
 
@@ -158,4 +160,9 @@ enum SPHERICAL_BASIS_NAME { SPHERICAL_HARMONICS, SPHERICAL_MONOMIALS };
 inline std::map<std::string, SPHERICAL_BASIS_NAME> SphericalBasis_Map{ { "SPHERICAL_HARMONICS", SPHERICAL_HARMONICS },
                                                                        { "SPHERICAL_MONOMIALS", SPHERICAL_MONOMIALS } };
 
+// Datasampler Name
+enum SAMPLER_NAME { CLASSIFICATION_SAMPLER, REGRESSION_SAMPLER };
+
+inline std::map<std::string, SAMPLER_NAME> SamplerName_MAP{ { "CLASSIFICATION_SAMPLER", CLASSIFICATION_SAMPLER },
+                                                            { "REGRESSION_SAMPLER", REGRESSION_SAMPLER } };
 #endif    // GLOBAL_CONSTANTS_H

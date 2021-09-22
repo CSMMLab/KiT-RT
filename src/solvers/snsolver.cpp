@@ -14,6 +14,8 @@
 #include <mpi.h>
 
 SNSolver::SNSolver( Config* settings ) : SolverBase( settings ) {
+    _psiDx = VectorVector( _nCells, Vector( _nq, 0.0 ) );
+    _psiDy = VectorVector( _nCells, Vector( _nq, 0.0 ) );
 
     _quadPoints = _quadrature->GetPoints();
     _weights    = _quadrature->GetWeights();

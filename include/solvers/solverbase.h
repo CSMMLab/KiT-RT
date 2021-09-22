@@ -44,8 +44,6 @@ class SolverBase
     // slope related params
     Reconstructor* _reconstructor;                        /*!< @brief reconstructor object for high-order scheme */
     unsigned _reconsOrder;                                /*!< @brief reconstruction order (current: 1 & 2) */
-    VectorVector _psiDx;                                  /*!< @brief slope of solutions in X direction */
-    VectorVector _psiDy;                                  /*!< @brief slope of solutions in Y direction */
     VectorVector _cellMidPoints;                          /*!< @brief middle point locations of elements */
     std::vector<std::vector<Vector>> _interfaceMidPoints; /*!< @brief middle point locations of edges */
 

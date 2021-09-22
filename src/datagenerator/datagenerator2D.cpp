@@ -4,7 +4,7 @@
  * \author S. Schotthoefer
  */
 
-#include "toolboxes/datagenerator2D.h"
+#include "datagenerator/datagenerator2D.h"
 #include "common/config.h"
 #include "quadratures/quadraturebase.h"
 #include "toolboxes/errormessages.h"
@@ -13,10 +13,8 @@
 #include <iostream>
 #include <omp.h>
 
-DataGenerator2D::DataGenerator2D( Config* settings ) : DataGeneratorBase( settings ) {
+DataGenerator2D::DataGenerator2D( Config* settings ) : DataGeneratorRegression( settings ) {
     ComputeMoments();
-
-    // AdaptBasisSize(); // Bugg
 
     // Initialize Training Data
     if( _settings->GetAlphaSampling() )
@@ -66,7 +64,7 @@ void DataGenerator2D::SampleSolutionU() {
             std::default_random_engine generator;
             std::uniform_real_distribution<double> distribution( 0.0, 1.0 );
 
-            //#pragma omp parallel for schedule( guided )
+#pragma omp parallel for schedule( guided )
             for( unsigned long idx_set = 0; idx_set < _setSize; idx_set++ ) {
                 double mu  = std::sqrt( distribution( generator ) );
                 double phi = 2 * M_PI * distribution( generator );

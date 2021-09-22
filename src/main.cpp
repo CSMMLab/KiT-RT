@@ -13,7 +13,7 @@
 #include "common/io.h"
 #include "solvers/solverbase.h"
 
-#include "toolboxes/datageneratorbase.h"
+#include "datagenerator/datageneratorbase.h"
 
 #ifdef BUILD_GUI
 #include <QApplication>
@@ -54,9 +54,13 @@ int main( int argc, char** argv ) {
         // Run solver and export
         solver->Solve();
         solver->PrintVolumeOutput();
+        delete solver;
     }
 
+    delete config;
+
     MPI_Finalize();
+
     return EXIT_SUCCESS;
 #endif
 }

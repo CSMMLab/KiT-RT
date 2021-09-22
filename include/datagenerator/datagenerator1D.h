@@ -1,23 +1,23 @@
 /*!
- * \file datagenerator3D.h
- * \brief Class to generate data for the neural entropy closure in 3D spatial dimensions
+ * \file datagenerator1D.h
+ * \brief Class to generate data for the neural entropy closure in 1D spatial dimensions
  * \author S. Schotthoefer
  */
 
-#ifndef DATAGENERATOR2D_H
-#define DATAGENERATOR2D_H
+#ifndef DATAGENERATOR1D_H
+#define DATAGENERATOR1D_H
 
-#include "toolboxes/datageneratorbase.h"
+#include "datageneratorregression.h"
 
-class DataGenerator2D : public DataGeneratorBase
+class DataGenerator1D : public DataGeneratorRegression
 {
   public:
     /*! @brief Class constructor. Generates training data for neural network approaches using
      *          spherical harmonics and an entropy functional and the quadrature specified by
      *          the options file.
      *   @param settings config class with global information*/
-    DataGenerator2D( Config* settings );
-    ~DataGenerator2D();
+    DataGenerator1D( Config* settings );
+    ~DataGenerator1D();
 
   private:
     // Main methods
@@ -28,4 +28,4 @@ class DataGenerator2D : public DataGeneratorBase
     void ComputeSetSizeU() override;       /*!< @brief Computes the size of the training set, depending on the chosen settings.*/
     void CheckRealizability() override;    // Debugging helper
 };
-#endif    // DATAGENERATOR2D_H
+#endif    // DATAGENERATOR1D_H
