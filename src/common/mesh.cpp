@@ -273,8 +273,8 @@ void Mesh::ReconstructSlopesS( unsigned nq, VectorVector& psiDerX, VectorVector&
             duxR = ( psi[j][k] - psi[_cellNeighbors[j][2]][k] ) / ( _cellMidPoints[j][0] - _cellMidPoints[_cellNeighbors[j][2]][0] + 1e-8 );
             duyR = ( psi[j][k] - psi[_cellNeighbors[j][2]][k] ) / ( _cellMidPoints[j][1] - _cellMidPoints[_cellNeighbors[j][2]][1] + 1e-8 );
 
-            psiDerX[j][k] = LMinMod( duxL, duxR ) * 0.5;
-            psiDerY[j][k] = LMinMod( duyL, duyR ) * 0.5;
+            psiDerX[j][k] = LMinMod( duxL, duxR );
+            psiDerY[j][k] = LMinMod( duyL, duyR );
         }
     }
 }
