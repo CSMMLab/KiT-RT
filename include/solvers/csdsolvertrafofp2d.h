@@ -10,19 +10,12 @@ class CSDSolverTrafoFP2D : public SNSolver
   private:
     std::vector<double> _dose; /*!< @brief TODO */
 
-    // Physics acess
-    Vector _energies; /*!< @brief energy levels for CSD, lenght = _nEnergies */
-    Vector _angle;    /*!< @brief angles for SN */
-
-    std::vector<Matrix> _sigmaSE; /*!<  @brief scattering cross section for all energies*/
-    Vector _sigmaTE;              /*!<  @brief total cross section for all energies*/
+    // Helper Variables
 
     Matrix _L;  /*!<  @brief Laplace Beltrami Matrix */
     Matrix _IL; /*!<  @brief Laplace Beltrami Matrix */
 
-    VectorVector _quadPoints;
     VectorVector _quadPointsSphere;
-    Vector _weights;
     Vector _mu;
     Vector _phi;
     Vector _wp;
@@ -31,6 +24,9 @@ class CSDSolverTrafoFP2D : public SNSolver
     double _alpha;
     double _alpha2;
     double _beta;
+
+    double _E_cutoff;
+    Vector _eTrafo;
 
     Vector _xi1;
     Vector _xi2;
@@ -47,8 +43,6 @@ class CSDSolverTrafoFP2D : public SNSolver
     Vector _energiesOrig; /*!< @brief original energy levels for CSD, lenght = _nEnergies */
     Matrix _identity;     /*!< @brief: identity matrix for FP scattering. Dim (_nq,_nq)*/
     double _densityMin;   /*!< @brief Minimal density of _density vector */
-
-    void GenerateEnergyGrid( bool refinement );
 
   public:
     /**

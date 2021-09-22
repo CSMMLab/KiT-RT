@@ -14,7 +14,7 @@ class PNSolver : public SolverBase
     /*! @brief PNSolver destructor */
     virtual ~PNSolver() {}
 
-  private:
+  protected:
     unsigned _nSystem;         /*!< @brief total number of equations in the system */
     unsigned _polyDegreeBasis; /*!< @brief maximal degree of the spherical harmonics basis*/
 

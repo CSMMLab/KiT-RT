@@ -6,6 +6,7 @@
 #include "fluxes/numericalflux.h"
 #include "problems/problembase.h"
 #include "quadratures/quadraturebase.h"
+#include "solvers/csdpnsolver.h"
 #include "solvers/csdsnsolver.h"
 #include "solvers/csdsolvertrafofp.h"
 #include "solvers/csdsolvertrafofp2d.h"
@@ -55,14 +56,21 @@ SolverBase::SolverBase( Config* settings ) {
     _interfaceMidPoints = interfaceMidPoints;
     _cellMidPoints      = _mesh->GetCellMidPoints();
 
-    _psiDx = VectorVector( _nCells, Vector( _nq, 0.0 ) );
-    _psiDy = VectorVector( _nCells, Vector( _nq, 0.0 ) );
+    // set time step or energy step
+    _dE = ComputeTimeStep( _settings->GetCFL() );
 
-    // set time step
-    _dE        = ComputeTimeStep( settings->GetCFL() );
-    _nEnergies = unsigned( settings->GetTEnd() / _dE );
-    _energies.resize( _nEnergies );
-    for( unsigned i = 0; i < _nEnergies; ++i ) _energies[i] = ( i + 1 ) * _dE;
+    if( _settings->GetIsCSD() ) {
+        // carefull: This gets overwritten by almost all subsolvers
+        double minE = 5e-5;    // 2.231461e-01;    // 5e-5;
+        double maxE = _settings->GetMaxEnergyCSD();
+        _nEnergies  = std::ceil( ( maxE - minE ) / _dE );
+        _energies   = blaze::linspace( _nEnergies, minE, maxE );
+        //_energies = blaze::linspace( _nEnergies, maxE, minE );    // go backwards from biggest to smallest energy
+    }
+    else {    // Not CSD Solver
+        _nEnergies = unsigned( settings->GetTEnd() / _dE );
+        _energies  = blaze::linspace( _nEnergies, 0.0, settings->GetTEnd() );    // go upward from 0 to T_end
+    }
 
     // setup problem  and store frequently used params
     _problem = ProblemBase::Create( _settings, _mesh );
@@ -91,13 +99,14 @@ SolverBase::SolverBase( Config* settings ) {
 
     // write density
     _density = _problem->GetDensity( _mesh->GetCellMidPoints() );
-    //_density = std::vector( _mesh->GetCellMidPoints().size(), 0.0 );
 }
 
 SolverBase::~SolverBase() {
     delete _quadrature;
     delete _mesh;
     delete _problem;
+    delete _reconstructor;
+    delete _g;
 }
 
 SolverBase* SolverBase::Create( Config* settings ) {
@@ -110,6 +119,7 @@ SolverBase* SolverBase::Create( Config* settings ) {
         case CSD_SN_FOKKERPLANCK_TRAFO_SOLVER: return new CSDSolverTrafoFP( settings );
         case CSD_SN_FOKKERPLANCK_TRAFO_SOLVER_2D: return new CSDSolverTrafoFP2D( settings );
         case CSD_SN_FOKKERPLANCK_TRAFO_SH_SOLVER_2D: return new CSDSolverTrafoFPSH2D( settings );
+        case CSD_PN_SOLVER: return new CSDPNSolver( settings );
         default: ErrorMessages::Error( "Creator for the chosen solver does not yet exist. This is is the fault of the coder!", CURRENT_FUNCTION );
     }
     ErrorMessages::Error( "Creator for the chosen solver does not yet exist. This is is the fault of the coder!", CURRENT_FUNCTION );
@@ -117,11 +127,8 @@ SolverBase* SolverBase::Create( Config* settings ) {
 }
 
 void SolverBase::Solve() {
-
     // --- Preprocessing ---
-
     PrepareVolumeOutput();
-
     DrawPreSolverOutput();
 
     // Adjust maxIter, depending if we have a normal run or a csd Run
@@ -129,19 +136,15 @@ void SolverBase::Solve() {
     if( _settings->GetIsCSD() ) {
         _maxIter = _nEnergies - 1;    // Since CSD does not go the last energy step
     }
-
     // Preprocessing before first pseudo time step
     SolverPreprocessing();
 
     // Loop over energies (pseudo-time of continuous slowing down approach)
     for( unsigned iter = 0; iter < _maxIter; iter++ ) {
-
         // --- Prepare Boundaries and temp variables
         IterPreprocessing( iter );
-
         // --- Compute Fluxes ---
         FluxUpdate();
-
         // --- Finite Volume Update ---
         FVMUpdate( iter );
 
@@ -231,10 +234,7 @@ void SolverBase::WriteScalarOutput( unsigned iteration ) {
 
             case ITER: _screenOutputFields[idx_field] = iteration; break;
 
-            case RMS_FLUX:
-                _screenOutputFields[idx_field] = blaze::l2Norm( _fluxNew - _flux );
-                _flux                          = _fluxNew;
-                break;
+            case RMS_FLUX: _screenOutputFields[idx_field] = blaze::l2Norm( _fluxNew - _flux ); break;
 
             case VTK_OUTPUT:
                 _screenOutputFields[idx_field] = 0;
@@ -285,7 +285,6 @@ void SolverBase::WriteScalarOutput( unsigned iteration ) {
             case RMS_FLUX:
                 if( screenOutputFields.end() == itScreenOutput ) {
                     _screenOutputFields[idx_field] = blaze::l2Norm( _fluxNew - _flux );
-                    _flux                          = _fluxNew;
                 }
                 else {
                     _historyOutputFields[idx_field] = *itScreenOutput;
@@ -311,6 +310,7 @@ void SolverBase::WriteScalarOutput( unsigned iteration ) {
             default: ErrorMessages::Error( "History output group not defined!", CURRENT_FUNCTION ); break;
         }
     }
+    _flux = _fluxNew;
 }
 
 void SolverBase::PrintScreenOutput( unsigned iteration ) {

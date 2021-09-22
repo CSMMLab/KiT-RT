@@ -11,6 +11,7 @@
 #include <mpi.h>
 
 CSDSNSolver::CSDSNSolver( Config* settings ) : SNSolver( settings ) {
+
     // std::cout << "Start CSDN Constructor\n";
     _dose = std::vector<double>( _settings->GetNCells(), 0.0 );
 
@@ -257,7 +258,6 @@ void CSDSNSolver::Solve() {
             fluxNew[j] = dot( psiNew[j], _weights );
             _dose[j] += 0.5 * _dE * ( fluxNew[j] * _s[_nEnergies - n - 1] + fluxOld[j] * _s[_nEnergies - n - 2] ) /
                         _density[j];    // update dose with trapezoidal rule
-            _solverOutput[j] = fluxNew[j];
         }
         // std::cout << "dose at boundary: " << _dose[0] << " \n| " << _sol[0] << std::endl;
 

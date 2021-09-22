@@ -7,6 +7,7 @@ class NumericalFlux
 {
   public:
     NumericalFlux();
+    virtual ~NumericalFlux(){};
     static NumericalFlux* Create();
 
     /**
