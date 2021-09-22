@@ -65,3 +65,12 @@ TEST_CASE( "unit mesh tests", "[mesh]" ) {
         REQUIRE( noUnassignedFaces );
     }
 }
+
+TEST_CASE( "second order flux tests", "[mesh]" ) {
+    std::string config_file_name = std::string( TESTS_PATH ) + "input/unit_tests/common/unit_mesh.cfg";
+
+    Config* config = new Config( config_file_name );
+    Mesh* mesh     = LoadSU2MeshFromFile( config );
+
+    SECTION( "sum of all cell areas is equal to total domain volume" ) { REQUIRE( false ); }
+}
