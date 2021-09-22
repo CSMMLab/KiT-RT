@@ -73,7 +73,7 @@ TEST_CASE( "reconstruction tests", "[mesh]" ) {
     Mesh* mesh     = LoadSU2MeshFromFile( config );
 
     int numCells = mesh->GetNumCells();
-    int nq = 3;
+    int nq = 1;
     auto cellMidPoints = mesh->GetCellMidPoints();
     auto cellBoundaryTypes = mesh->GetBoundaryTypes();
 
@@ -86,17 +86,30 @@ TEST_CASE( "reconstruction tests", "[mesh]" ) {
 
     VectorVector dux( numCells, Vector( nq, 0.0 ) );
     VectorVector duy( numCells, Vector( nq, 0.0 ) );
-    mesh->ReconstructSlopesU( nq, dux, duy, u );
 
+    mesh->ComputeSlopes( nq, dux, duy, u ); // no limiter
     bool isPass = true;
     for( unsigned k = 0; k < nq; ++k ) {
         for( unsigned j = 0; j < numCells; ++j ) {
             if( cellBoundaryTypes[j] != 2 ) continue;
-            if(abs(dux[j][k] - 1.0) > 0.01 || abs(duy[j][k] - 1.0) > 0.01){
+            if(abs(dux[j][k] - 1.0) > 0.2 || abs(duy[j][k] - 1.0) > 0.2){
+                std::cout<<j<<" "<<dux[j][k]<<" "<<duy[j][k]<<std::endl;
                 isPass = false;
             }
         }
     }
+    SECTION( "ensure correct Gauss theorem" ) { REQUIRE( isPass ); }
 
-    SECTION( "reconstruct correct Gauss theorem" ) { REQUIRE( isPass ); }
+    mesh->ReconstructSlopesU( nq, dux, duy, u ); // VK limiter
+    isPass = true;
+    for( unsigned k = 0; k < nq; ++k ) {
+        for( unsigned j = 0; j < numCells; ++j ) {
+            if( cellBoundaryTypes[j] != 2 ) continue;
+            if(abs(dux[j][k] - 1.0) > 0.2 || abs(duy[j][k] - 1.0) > 0.2){
+                std::cout<<j<<" "<<dux[j][k]<<" "<<duy[j][k]<<std::endl;
+                isPass = false;
+            }
+        }
+    }
+    SECTION( "reconstruct correct divergence" ) { REQUIRE( isPass ); }
 }

@@ -350,8 +350,8 @@ void Mesh::ReconstructSlopesU( unsigned nq, VectorVector& psiDerX, VectorVector&
 
             for( unsigned l = 0; l < _cellNeighbors[j].size(); ++l ) {
                 // step 2: choose sample points
-                psiSample[j][k][l] = 10.0 * psiDerX[j][k] * ( _cellMidPoints[_cellNeighbors[j][l]][0] - _cellMidPoints[j][0] ) +
-                                     10.0 * psiDerY[j][k] * ( _cellMidPoints[_cellNeighbors[j][l]][1] - _cellMidPoints[j][1] );
+                psiSample[j][k][l] = 0.5 * psiDerX[j][k] * ( _cellMidPoints[_cellNeighbors[j][l]][0] - _cellMidPoints[j][0] ) +
+                                     0.5 * psiDerY[j][k] * ( _cellMidPoints[_cellNeighbors[j][l]][1] - _cellMidPoints[j][1] );
 
                 // step 3: calculate Phi_ij at sample points
                 if( psiSample[j][k][l] > 0.0 ) {
