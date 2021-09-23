@@ -9,7 +9,24 @@ double FortSign( double a, double b ) {
     return 0.0;
 }
 
+template <typename T> double sgn(T val) {
+    return (T(0) < val) - (val < T(0));
+}
+
 double LMinMod( double sL, double sR ) { return 0.5 * ( FortSign( 1.0, sL ) + FortSign( 1., sR ) ) * fmin( std::fabs( sL ), std::fabs( sR ) ); }
+
+double LMinMod3( double s1, double s2, double s3 ) {
+    auto sn1 = sgn(s1);
+    auto sn2 = sgn(s2);
+    auto sn3 = sgn(s3);
+
+    double s = 0.0;
+    if(sn1 == sn2 && sn2 == sn3){
+        s = sn1 * fmin(fmin( std::fabs( s1 ), std::fabs( s2 ) ), std::fabs( s3 ) );
+    }
+
+    return s;
+}
 
 double LVanLeer( double sL, double sR ) {
 

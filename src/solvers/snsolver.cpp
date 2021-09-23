@@ -97,8 +97,8 @@ void SNSolver::FluxUpdate() {
     }
     */
     if( _reconsOrder > 1 ) {
-        _mesh->ReconstructSlopesU( _nq, _psiDx, _psiDy, _sol );    // unstructured reconstruction
-        //_mesh->ReconstructSlopesS( _nq, _psiDx, _psiDy, _psi );    // structured reconstruction (not stable currently)
+        //_mesh->ReconstructSlopesU( _nq, _psiDx, _psiDy, _sol );    // unstructured reconstruction
+        _mesh->ReconstructSlopesS( _nq, _psiDx, _psiDy, _sol );    // structured reconstruction (not stable currently)
     }
     double psiL;
     double psiR;

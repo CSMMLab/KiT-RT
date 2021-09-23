@@ -46,7 +46,9 @@ class Reconstructor
 
 double FortSign( double a, double b );
 double LMinMod( double sL, double sR );
+double LMinMod3( double s1, double s2, double s3 );
 double LVanLeer( double sL, double sR );
 double LSuperBee( double sL, double sR );
 double LVanAlbaba( double sL, double sR );
 double LWENOJS( double x );
+template <typename T> double sgn(T val);

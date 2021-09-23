@@ -269,11 +269,12 @@ void Mesh::ComputeSlopes( unsigned nq, VectorVector& psiDerX, VectorVector& psiD
 }
 
 void Mesh::ReconstructSlopesS( unsigned nq, VectorVector& psiDerX, VectorVector& psiDerY, const VectorVector& psi ) const {
-
-    double duxL;
-    double duyL;
-    double duxR;
-    double duyR;
+    double dux1;
+    double duy1;
+    double dux2;
+    double duy2;
+    double dux3;
+    double duy3;
 
     for( unsigned k = 0; k < nq; ++k ) {
         for( unsigned j = 0; j < _numCells; ++j ) {
@@ -284,14 +285,17 @@ void Mesh::ReconstructSlopesS( unsigned nq, VectorVector& psiDerX, VectorVector&
             // skip boundary cells
             if( _cellBoundaryTypes[j] != 2 ) continue;
 
-            duxL = ( psi[j][k] - psi[_cellNeighbors[j][0]][k] ) / ( _cellMidPoints[j][0] - _cellMidPoints[_cellNeighbors[j][0]][0] + 1e-8 );
-            duyL = ( psi[j][k] - psi[_cellNeighbors[j][0]][k] ) / ( _cellMidPoints[j][1] - _cellMidPoints[_cellNeighbors[j][0]][1] + 1e-8 );
+            dux1 = ( psi[j][k] - psi[_cellNeighbors[j][0]][k] ) / ( _cellMidPoints[j][0] - _cellMidPoints[_cellNeighbors[j][0]][0] + 1e-8 );
+            duy1 = ( psi[j][k] - psi[_cellNeighbors[j][0]][k] ) / ( _cellMidPoints[j][1] - _cellMidPoints[_cellNeighbors[j][0]][1] + 1e-8 );
 
-            duxR = ( psi[j][k] - psi[_cellNeighbors[j][2]][k] ) / ( _cellMidPoints[j][0] - _cellMidPoints[_cellNeighbors[j][2]][0] + 1e-8 );
-            duyR = ( psi[j][k] - psi[_cellNeighbors[j][2]][k] ) / ( _cellMidPoints[j][1] - _cellMidPoints[_cellNeighbors[j][2]][1] + 1e-8 );
+            dux2 = ( psi[j][k] - psi[_cellNeighbors[j][1]][k] ) / ( _cellMidPoints[j][0] - _cellMidPoints[_cellNeighbors[j][1]][0] + 1e-8 );
+            duy2 = ( psi[j][k] - psi[_cellNeighbors[j][1]][k] ) / ( _cellMidPoints[j][1] - _cellMidPoints[_cellNeighbors[j][1]][1] + 1e-8 );
 
-            psiDerX[j][k] = LMinMod( duxL, duxR ) * 0.5;
-            psiDerY[j][k] = LMinMod( duyL, duyR ) * 0.5;
+            dux3 = ( psi[j][k] - psi[_cellNeighbors[j][2]][k] ) / ( _cellMidPoints[j][0] - _cellMidPoints[_cellNeighbors[j][2]][0] + 1e-8 );
+            duy3 = ( psi[j][k] - psi[_cellNeighbors[j][2]][k] ) / ( _cellMidPoints[j][1] - _cellMidPoints[_cellNeighbors[j][2]][1] + 1e-8 );
+
+            psiDerX[j][k] = LMinMod3( dux1, dux2, dux3 );
+            psiDerY[j][k] = LMinMod3( duy1, duy2, duy3 );
         }
     }
 }
