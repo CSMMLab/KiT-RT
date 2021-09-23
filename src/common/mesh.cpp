@@ -296,6 +296,13 @@ void Mesh::ReconstructSlopesS( unsigned nq, VectorVector& psiDerX, VectorVector&
 
             psiDerX[j][k] = LMinMod3( dux1, dux2, dux3 );
             psiDerY[j][k] = LMinMod3( duy1, duy2, duy3 );
+            
+            /*auto sx1 = LMinMod( dux1, dux2 );
+            auto sx2 = LMinMod( dux2, dux3 );
+            psiDerX[j][k] = LMinMod( sx1, sx2 );
+            auto sy1 = LMinMod( duy1, duy2 );
+            auto sy2 = LMinMod( duy2, duy3 );
+            psiDerY[j][k] = LMinMod( sy1, sy2 );*/
         }
     }
 }
