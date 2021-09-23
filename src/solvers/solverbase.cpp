@@ -41,20 +41,22 @@ SolverBase::SolverBase( Config* settings ) {
     _reconstructor = new Reconstructor( settings );
     _reconsOrder   = _reconstructor->GetReconsOrder();
 
-    auto nodes = _mesh->GetNodes();
-    auto cells = _mesh->GetCells();
-    std::vector<std::vector<Vector>> interfaceMidPoints( _nCells, std::vector<Vector>( _mesh->GetNumNodesPerCell(), Vector( 2, 1e-10 ) ) );
-    for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
-        for( unsigned k = 0; k < _mesh->GetDim(); ++k ) {
-            for( unsigned j = 0; j < _neighbors[idx_cell].size() - 1; ++j ) {
-                interfaceMidPoints[idx_cell][j][k] = 0.5 * ( nodes[cells[idx_cell][j]][k] + nodes[cells[idx_cell][j + 1]][k] );
-            }
-            interfaceMidPoints[idx_cell][_neighbors[idx_cell].size() - 1][k] =
-                0.5 * ( nodes[cells[idx_cell][_neighbors[idx_cell].size() - 1]][k] + nodes[cells[idx_cell][0]][k] );
-        }
-    }
-    _interfaceMidPoints = interfaceMidPoints;
-    _cellMidPoints      = _mesh->GetCellMidPoints();
+    // auto nodes = _mesh->GetNodes();
+    // auto cells = _mesh->GetCells();
+    // std::vector<std::vector<Vector>> interfaceMidPoints( _nCells, std::vector<Vector>( _mesh->GetNumNodesPerCell(), Vector( 2, 1e-10 ) ) );
+    //// should be computed in Mesh class!
+    // for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
+    //    for( unsigned k = 0; k < _mesh->GetDim(); ++k ) {
+    //        for( unsigned j = 0; j < _neighbors[idx_cell].size() - 1; ++j ) {
+    //            interfaceMidPoints[idx_cell][j][k] = 0.5 * ( nodes[cells[idx_cell][j]][k] + nodes[cells[idx_cell][j + 1]][k] );
+    //        }
+    //        interfaceMidPoints[idx_cell][_neighbors[idx_cell].size() - 1][k] =
+    //            0.5 * ( nodes[cells[idx_cell][_neighbors[idx_cell].size() - 1]][k] + nodes[cells[idx_cell][0]][k] );
+    //    }
+    //}
+    _interfaceMidPoints = _mesh->GetInterfaceMidPoints();
+
+    _cellMidPoints = _mesh->GetCellMidPoints();
 
     // set time step or energy step
     _dE = ComputeTimeStep( _settings->GetCFL() );
