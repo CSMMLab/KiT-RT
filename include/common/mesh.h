@@ -23,6 +23,7 @@ class Mesh
     const unsigned _numBoundaries;   /*!< @brief number of boundary cells in the mesh */
     const unsigned _ghostCellID; /*!< @brief Id of the ghost cell. (we use only one ghost cell). equal to _numCells and therefore has the ID of the
                                     last cell + 1 */
+
     unsigned _numNodesPerBoundary;
     std::vector<std::pair<double, double>> _bounds;    // ???
 
@@ -34,6 +35,9 @@ class Mesh
     std::vector<double> _cellAreas;                    /*!< @brief cell areas of the mesh. dimension: numCells*/
     std::vector<Vector> _cellMidPoints;                /*!< @brief cell midpoints of the mesh. dimension: numCells<dim>*/
     std::vector<std::vector<unsigned>> _cellNeighbors; /*!< @brief neighbors of each cell. dimension: numCells<numNodesPerCell>*/
+    std::vector<std::vector<Vector>>
+        _interfaceMidPoints; /*!< @brief coordinates of the interface midpoints of all cells of the mesh  dimension:
+                                numCells<numNeighborsPerCell<nDim>>. interfaces of each cell are in same order as _cellNeighbors*/
 
     /*! @brief outward facing normals of each side of each cell. dimension: numCells<numNodesPerCell<dim>>, all
                 normals are facing away from the cell center, and scaled with the edge length */
@@ -53,7 +57,8 @@ class Mesh
      *  @param cellCenter: Center of the cell that has nodeA and nodeB as nodes.
      *  @return outward facing normal */
     Vector ComputeOutwardFacingNormal( const Vector& nodeA, const Vector& nodeB, const Vector& cellCenter );
-    void ComputeBounds(); /*!< @brief Computes the spatial bounds of a 2D domain. */
+    void ComputeBounds();                 /*!< @brief Computes the spatial bounds of a 2D domain. */
+    void ComputeCellInterfaceMidpoints(); /*!< @brief Computes the midpoints of all cell interfaces. */
 
   public:
     Mesh() = delete;    //  no default constructor
@@ -101,6 +106,10 @@ class Mesh
     /*! @brief Returns the minimal and maximal coordinates of all nodes for each dimension
      *  @return dimension: dim */
     const std::vector<std::pair<double, double>> GetBounds() const;
+
+    /*! @brief Returns the the coordinates of midpoints of all interfaces of all cells
+     *  @return dimension: numCells<numNeighborsPerCell<nDim>> */
+    const std::vector<std::vector<Vector>> GetInterfaceMidPoints() const;
 
     /*! @brief Returns distance of a specified cells center to the coordinate systems origin
      *  @return dimension: scalar */

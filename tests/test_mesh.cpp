@@ -66,11 +66,50 @@ TEST_CASE( "unit mesh tests", "[mesh]" ) {
     }
 }
 
-TEST_CASE( "second order flux tests", "[mesh]" ) {
+TEST_CASE( "reconstruction tests", "[mesh]" ) {
     std::string config_file_name = std::string( TESTS_PATH ) + "input/unit_tests/common/unit_mesh.cfg";
 
     Config* config = new Config( config_file_name );
     Mesh* mesh     = LoadSU2MeshFromFile( config );
 
-    SECTION( "sum of all cell areas is equal to total domain volume" ) { REQUIRE( false ); }
+    int numCells = mesh->GetNumCells();
+    int nq = 1;
+    auto cellMidPoints = mesh->GetCellMidPoints();
+    auto cellBoundaryTypes = mesh->GetBoundaryTypes();
+
+    VectorVector u( numCells, Vector( nq, 0.0 ) );
+    for( unsigned k = 0; k < nq; ++k ) {
+        for( unsigned j = 0; j < numCells; ++j ) {
+            u[j][k] = cellMidPoints[j][0] + cellMidPoints[j][1];
+        }
+    }
+
+    VectorVector dux( numCells, Vector( nq, 0.0 ) );
+    VectorVector duy( numCells, Vector( nq, 0.0 ) );
+
+    mesh->ComputeSlopes( nq, dux, duy, u ); // no limiter
+    bool isPass = true;
+    for( unsigned k = 0; k < nq; ++k ) {
+        for( unsigned j = 0; j < numCells; ++j ) {
+            if( cellBoundaryTypes[j] != 2 ) continue;
+            if(abs(dux[j][k] - 1.0) > 0.2 || abs(duy[j][k] - 1.0) > 0.2){
+                std::cout<<j<<" "<<dux[j][k]<<" "<<duy[j][k]<<std::endl;
+                isPass = false;
+            }
+        }
+    }
+    SECTION( "ensure correct Gauss theorem" ) { REQUIRE( isPass ); }
+
+    mesh->ReconstructSlopesU( nq, dux, duy, u ); // VK limiter
+    isPass = true;
+    for( unsigned k = 0; k < nq; ++k ) {
+        for( unsigned j = 0; j < numCells; ++j ) {
+            if( cellBoundaryTypes[j] != 2 ) continue;
+            if(abs(dux[j][k] - 1.0) > 0.2 || abs(duy[j][k] - 1.0) > 0.2){
+                std::cout<<j<<" "<<dux[j][k]<<" "<<duy[j][k]<<std::endl;
+                isPass = false;
+            }
+        }
+    }
+    SECTION( "reconstruct correct divergence" ) { REQUIRE( isPass ); }
 }
