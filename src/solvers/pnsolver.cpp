@@ -436,9 +436,8 @@ void PNSolver::WriteVolumeOutput( unsigned idx_pseudoTime ) {
 
                         double time = idx_pseudoTime * _dE;
 
-                        _outputFields[idx_group][0][idx_cell] = _limiter[idx_cell][0];
-                        // _outputFields[idx_group][0][idx_cell] = _problem->GetAnalyticalSolution(
-                        //     _mesh->GetCellMidPoints()[idx_cell][0], _mesh->GetCellMidPoints()[idx_cell][1], time, _sigmaS[idx_iter][idx_cell] );
+                        _outputFields[idx_group][0][idx_cell] = _outputFields[idx_group][0][idx_cell] = _problem->GetAnalyticalSolution(
+                            _mesh->GetCellMidPoints()[idx_cell][0], _mesh->GetCellMidPoints()[idx_cell][1], time, _sigmaS[idx_iter][idx_cell] );
                     }
                     break;
 

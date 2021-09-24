@@ -24,7 +24,11 @@ SNSolver::SNSolver( Config* settings ) : SolverBase( settings ) {
 }
 
 void SNSolver::IterPreprocessing( unsigned /*idx_iter*/ ) {
-    // Nothing to do for SNSolver
+    // Slope Limiter computation
+    if( _reconsOrder > 1 ) {
+        _mesh->ComputeSlopes( _nq, _solDx, _solDy, _sol );
+        _mesh->ComputeLimiter( _nq, _solDx, _solDy, _sol, _limiter );
+    }
 }
 
 void SNSolver::IterPostprocessing( unsigned /*idx_iter*/ ) {
@@ -43,66 +47,6 @@ void SNSolver::ComputeRadFlux() {
 
 void SNSolver::FluxUpdate() {
 
-    // Legacy Code form second order reconstruction:
-
-    /*
-    // reconstruction order
-    unsigned reconsOrder = _settings->GetReconsOrder();
-
-    // left and right angular flux of interface, used in numerical flux evaluation
-    double psiL;
-    double psiR;
-
-    // derivatives of angular flux in x and y directions
-    VectorVector psiDx( _nCells, Vector( _nq, 0.0 ) );
-    VectorVector psiDy( _nCells, Vector( _nq, 0.0 ) );
-
-
-    // geometric variables for derivatives computation
-    auto nodes         = _mesh->GetNodes();
-    auto cells         = _mesh->GetCells();
-    auto cellMidPoints = _mesh->GetCellMidPoints();
-
-
-    // center location of cell interfaces
-    std::vector<std::vector<Vector>> interfaceMidPoints( _nCells, std::vector<Vector>( _mesh->GetNumNodesPerCell(), Vector( 2, 1e-10 ) ) );
-    for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
-        for( unsigned k = 0; k < _mesh->GetDim(); ++k ) {
-            for( unsigned j = 0; j < _neighbors[idx_cell].size() - 1; ++j ) {
-                interfaceMidPoints[idx_cell][j][k] = 0.5 * ( nodes[cells[idx_cell][j]][k] + nodes[cells[idx_cell][j + 1]][k] );
-            }
-            interfaceMidPoints[idx_cell][_neighbors[idx_cell].size() - 1][k] =
-                0.5 * ( nodes[cells[idx_cell][_neighbors[idx_cell].size() - 1]][k] + nodes[cells[idx_cell][0]][k] );
-        }
-    }
-
-     distance between cell center to interface center
-     VectorVector cellDx( _nCells, Vector( _mesh->GetNumNodesPerCell(), 1e-10 ) );
-     VectorVector cellDy( _nCells, Vector( _mesh->GetNumNodesPerCell(), 1e-10 ) );
-
-     for( unsigned i = 0; i < _nCells; ++i ) {
-        for( unsigned j = 0; j < _mesh->GetNumNodesPerCell(); ++j ) {
-            cellDx[i][j] = interfaceMidPoints[i][j][0] - cellMidPoints[i][0];
-            cellDy[i][j] = interfaceMidPoints[i][j][1] - cellMidPoints[j][1];
-        }
-     }
-    */
-    /*
-    // reconstruct slopes for higher order solver
-     if( reconsOrder > 1 ) {
-        _mesh->ReconstructSlopesU( _nq, psiDx, psiDy, _sol );    // unstructured reconstruction
-        //_mesh->ReconstructSlopesS( _nq, psiDx, psiDy, _psi );    // structured reconstruction (not stable currently)
-    }
-    */
-    if( _reconsOrder > 1 ) {
-        // TextProcessingToolbox::PrintVectorVector( _psiDx );
-        _mesh->ComputeSlopes( _nq, _solDx, _solDy, _sol );
-        _mesh->ComputeLimiter( _nq, _solDx, _solDy, _sol, _limiter );
-
-        //_mesh->LimitSlopes( _nq, _psiDx, _psiDy, _sol );    // unstructured reconstruction
-        //_mesh->ReconstructSlopesS( _nq, _psiDx, _psiDy, _psi );    // structured reconstruction (not stable currently)
-        // TextProcessingToolbox::PrintVectorVector( _psiDx );
-    }
     double psiL;
     double psiR;
     double solL;
@@ -129,9 +73,6 @@ void SNSolver::FluxUpdate() {
                     switch( _reconsOrder ) {
                         // first order solver
                         case 1:
-                            // if( idx_cell == 24 ) {
-                            //     std::cout << "here\n";
-                            // }
                             _solNew[idx_cell][idx_quad] += _g->Flux(
                                 _quadPoints[idx_quad], _sol[idx_cell][idx_quad], _sol[nbr_glob][idx_quad], _normals[idx_cell][idx_neighbor] );
                             break;
@@ -149,42 +90,6 @@ void SNSolver::FluxUpdate() {
                                     ( _solDx[nbr_glob][idx_quad] * ( _interfaceMidPoints[idx_cell][idx_neighbor][0] - _cellMidPoints[nbr_glob][0] ) +
                                       _solDy[nbr_glob][idx_quad] * ( _interfaceMidPoints[idx_cell][idx_neighbor][1] - _cellMidPoints[nbr_glob][1] ) );
 
-                            /*
-                                                // std::cout << "cell" << idx_cell << ":" << _interfaceMidPoints[idx_cell][idx_neighbor][0] -
-                               _cellMidPoints[nbr_glob][0]
-                                                //          << " | " << _interfaceMidPoints[idx_cell][idx_neighbor][0] - _cellMidPoints[idx_cell][0]
-                               << std::endl;
-
-                                                // if( _sol[idx_cell][idx_quad] < _sol[_neighbors[idx_cell][idx_neighbor]][idx_quad] ) {
-                                                //
-                                                //    if( psiL + eps < _sol[idx_cell][idx_quad] ) {
-                                                //        std::cout << psiL << "|" << _sol[idx_cell][idx_quad] << "|" <<
-                                                //        _sol[_neighbors[idx_cell][idx_neighbor]][idx_quad]
-                                                //                  << "\n";
-                                                //    }
-                                                //    if( psiR - eps > _sol[_neighbors[idx_cell][idx_neighbor]][idx_quad] ) {
-                                                //        std::cout << psiR << "|" << _sol[idx_cell][idx_quad] << "|" <<
-                                                //        _sol[_neighbors[idx_cell][idx_neighbor]][idx_quad]
-                                                //                  << "\n";
-                                                //    }
-                                                //}
-                                                // if( _sol[idx_cell][idx_quad] > _sol[_neighbors[idx_cell][idx_neighbor]][idx_quad] ) {
-                                                //    if( psiL - eps > _sol[idx_cell][idx_quad] ) {
-                                                //        std::cout << psiL << "|" << _sol[idx_cell][idx_quad] << "|" <<
-                                                //        _sol[_neighbors[idx_cell][idx_neighbor]][idx_quad]
-                                                //                  << "\n";
-                                                //    }
-                                                //    if( psiR + eps < _sol[_neighbors[idx_cell][idx_neighbor]][idx_quad] ) {
-                                                //        std::cout << psiR << "|" << _sol[idx_cell][idx_quad] << "|" <<
-                                                //        _sol[_neighbors[idx_cell][idx_neighbor]][idx_quad]
-                                                //                  << "\n";
-                                                //    }
-                                                //}
-                                                // positivity check (if not satisfied, deduce to first order)
-                                                // if( psiL < 0.0 || psiR < 0.0 ) {
-                                                //    psiL = _sol[idx_cell][idx_quad];
-                                                //    psiR = _sol[_neighbors[idx_cell][idx_neighbor]][idx_quad];
-                                                //} */
                             // flux evaluation
                             _solNew[idx_cell][idx_quad] += _g->Flux( _quadPoints[idx_quad], psiL, psiR, _normals[idx_cell][idx_neighbor] );
                             break;
