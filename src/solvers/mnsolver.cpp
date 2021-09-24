@@ -356,10 +356,8 @@ void MNSolver::WriteVolumeOutput( unsigned idx_iter ) {
 
                         double time = idx_iter * _dE;
 
-                        _outputFields[idx_group][0][idx_cell] =
-                            _limiter[idx_cell][0];    //_problem->GetAnalyticalSolution(
-                                                      // _mesh->GetCellMidPoints()[idx_cell][0], _mesh->GetCellMidPoints()[idx_cell][1], time,
-                                                      // _sigmaS[idx_iter][idx_cell] );
+                        _outputFields[idx_group][0][idx_cell] = _problem->GetAnalyticalSolution(
+                            _mesh->GetCellMidPoints()[idx_cell][0], _mesh->GetCellMidPoints()[idx_cell][1], time, _sigmaS[idx_iter][idx_cell] );
                     }
                     break;
 
