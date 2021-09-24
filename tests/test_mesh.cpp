@@ -39,6 +39,30 @@ TEST_CASE( "unit mesh tests", "[mesh]" ) {
         REQUIRE( errorWithinBounds );
     }
 
+    SECTION( "neighbor and faces are indexed consistently" ) {
+        auto neighbors = mesh->GetNeighbours();
+        auto cellMidPoints = mesh->GetCellMidPoints();
+        auto faceMidPoints = mesh->GetInterfaceMidPoints();
+
+        bool isConsistent = true;
+        for( unsigned i = 0; i < mesh->GetNumCells(); ++i ) {
+            for( unsigned j = 0; j < mesh->GetNumNodesPerCell(); ++j ) {
+                unsigned nID = neighbors[i][j];
+                if( nID == mesh->GetNumCells() ) continue;
+
+                auto fx = faceMidPoints[i][j][0];
+                auto fy = faceMidPoints[i][j][1];
+
+                if( fx < std::min( cellMidPoints[i][0], cellMidPoints[nID][0] ) ) isConsistent = false;
+                if( fx > std::max( cellMidPoints[i][0], cellMidPoints[nID][0] ) ) isConsistent = false;
+                if( fy < std::min( cellMidPoints[i][1], cellMidPoints[nID][1] ) ) isConsistent = false;
+                if( fy > std::max( cellMidPoints[i][1], cellMidPoints[nID][1] ) ) isConsistent = false;
+            }
+        }
+
+        REQUIRE( isConsistent );
+    }
+
     SECTION( "sum over all normals yields zero" ) {
         auto n                 = mesh->GetNormals();
         double eps             = 1e-7;
