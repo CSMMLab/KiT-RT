@@ -27,8 +27,8 @@ class Mesh
     unsigned _numNodesPerBoundary;
     std::vector<std::pair<double, double>> _bounds;    // ???
 
-    std::vector<Vector> _nodes;                /*!< @brief nodes in the mesh. dimension:_numNodes<_dim> */
-    std::vector<std::vector<unsigned>> _cells; /*!< @brief cells in the mesh. dimension:_numCells<_numNodesPerCell>  */
+    std::vector<Vector> _nodes;                /*!< @brief nodes coordinates in the mesh. dimension:_numNodes<_dim> */
+    std::vector<std::vector<unsigned>> _cells; /*!< @brief node indices for each cell.  dimension:_numCells<_numNodesPerCell>  */
 
     /*! @brief boundary cells in the mesh. Pair defines boundary type of the boundary nodes of the cell. numBoundaries<(1,numBoundaryNodes)>*/
     std::vector<std::pair<BOUNDARY_TYPE, std::vector<unsigned>>> _boundaries;
@@ -134,7 +134,8 @@ class Mesh
      *  @param psiDerX is slope in x direction (gets computed. Slope is stored here)
      *  @param psiDerY is slope in y direction (gets computed. Slope is stored here)
      *  @param psi is solution for which slope is computed */
-    void ReconstructSlopesU( unsigned nq, VectorVector& psiDerX, VectorVector& psiDerY, const VectorVector& psi ) const;
+    void LimitSlopes( unsigned nq, VectorVector& psiDerX, VectorVector& psiDerY, const VectorVector& psi ) const;
+    void ComputeLimiter( unsigned nSys, const VectorVector& solDx, const VectorVector& solDy, const VectorVector& sol, VectorVector& limiter ) const;
 };
 
 #endif    // MESH_H

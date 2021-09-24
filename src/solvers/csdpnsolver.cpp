@@ -75,8 +75,8 @@ CSDPNSolver::CSDPNSolver( Config* settings ) : PNSolver( settings ) {
     // std::cout << "eMin is " << minE << " vs " << interpTrafoToE( eMinTrafo ) << std::endl;
 
     // define linear grid in fully transformed energy \tilde\tilde E (cf. Dissertation Kerstion Kuepper, Eq. 1.25)
-    _eTrafo        = blaze::linspace( _nEnergies, eMaxTrafo - eMaxTrafo, eMaxTrafo - eMinTrafo );
-    double dETrafo = _eTrafo[1] - _eTrafo[0];
+    _eTrafo = blaze::linspace( _nEnergies, eMaxTrafo - eMaxTrafo, eMaxTrafo - eMinTrafo );
+    // double dETrafo = _eTrafo[1] - _eTrafo[0];
 
     // compute Corresponding original energies
     for( unsigned n = 0; n < _nEnergies; ++n ) {
@@ -171,7 +171,7 @@ void CSDPNSolver::IterPostprocessing( unsigned idx_iter ) {
 void CSDPNSolver::FluxUpdate() {
     // std::cout << "Flux update...";
     if( _reconsOrder > 1 ) {
-        _mesh->ReconstructSlopesU( _nSystem, _solDx, _solDy, _sol );    // unstructured reconstruction
+        _mesh->LimitSlopes( _nSystem, _solDx, _solDy, _sol );    // unstructured reconstruction
         //_mesh->ComputeSlopes( _nTotalEntries, _solDx, _solDy, _sol );    // unstructured reconstruction
     }
     // Vector solL( _nTotalEntries );

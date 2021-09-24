@@ -41,19 +41,6 @@ SolverBase::SolverBase( Config* settings ) {
     _reconstructor = new Reconstructor( settings );
     _reconsOrder   = _reconstructor->GetReconsOrder();
 
-    // auto nodes = _mesh->GetNodes();
-    // auto cells = _mesh->GetCells();
-    // std::vector<std::vector<Vector>> interfaceMidPoints( _nCells, std::vector<Vector>( _mesh->GetNumNodesPerCell(), Vector( 2, 1e-10 ) ) );
-    //// should be computed in Mesh class!
-    // for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
-    //    for( unsigned k = 0; k < _mesh->GetDim(); ++k ) {
-    //        for( unsigned j = 0; j < _neighbors[idx_cell].size() - 1; ++j ) {
-    //            interfaceMidPoints[idx_cell][j][k] = 0.5 * ( nodes[cells[idx_cell][j]][k] + nodes[cells[idx_cell][j + 1]][k] );
-    //        }
-    //        interfaceMidPoints[idx_cell][_neighbors[idx_cell].size() - 1][k] =
-    //            0.5 * ( nodes[cells[idx_cell][_neighbors[idx_cell].size() - 1]][k] + nodes[cells[idx_cell][0]][k] );
-    //    }
-    //}
     _interfaceMidPoints = _mesh->GetInterfaceMidPoints();
 
     _cellMidPoints = _mesh->GetCellMidPoints();
@@ -75,9 +62,13 @@ SolverBase::SolverBase( Config* settings ) {
     }
 
     // setup problem  and store frequently used params
-    _problem = ProblemBase::Create( _settings, _mesh );
-    _sol     = _problem->SetupIC();
-    _solNew  = _sol;    // setup temporary sol variable
+    _problem      = ProblemBase::Create( _settings, _mesh );
+    _sol          = _problem->SetupIC();
+    _solNew       = _sol;    // setup temporary sol variable
+    unsigned nSys = _sol[0].size();
+    _solDx        = VectorVector( _nCells, Vector( nSys, 0.0 ) );
+    _solDy        = VectorVector( _nCells, Vector( nSys, 0.0 ) );
+    _limiter      = VectorVector( _nCells, Vector( nSys, 0.0 ) );
 
     _sigmaT = _problem->GetTotalXS( _energies );
     _sigmaS = _problem->GetScatteringXS( _energies );
@@ -187,6 +178,125 @@ double SolverBase::ComputeTimeStep( double cfl ) const {
         }
     }
     return cfl * maxEdge;
+}
+
+// --- High order reconstruction ---
+void SolverBase::ComputeGradients( unsigned nSys ) {
+    /*
+    for( unsigned idx_cell = 0; idx_cell < _numCells; ++idx_cell ) {
+        for( unsigned idx_sys = 0; idx_sys < nSys; ++idx_sys ) {
+            _solDx[idx_cell][idx_sys] = 0.0;
+            _solDy[idx_cell][idx_sys] = 0.0;
+        }
+        if( _boundaryCells[idx_cell] != BOUNDARY_TYPE::NONE ) continue;    // skip boundary cells
+
+        for( unsigned idx_sys = 0; idx_sys < nSys; ++idx_sys ) {
+            // compute derivative by summing over cell boundary using green gauss theorem and midpoint rule
+            for( unsigned idx_nbr = 0; idx_nbr < _cellNeighbors[idx_cell].size(); ++idx_nbr ) {
+                _solDx[idx_cell][idx_sys] +=
+                    0.5 * ( psi[idx_cell][idx_sys] + _sol[_cellNeighbors[idx_cell][idx_nbr]][idx_sys] ) * _normals[idx_cell][idx_nbr][0];
+                _solDy[idx_cell][idx_sys] +=
+                    0.5 * ( psi[idx_cell][idx_sys] + _sol[_cellNeighbors[idx_cell][idx_nbr]][idx_sys] ) * _normals[idx_cell][idx_nbr][1];
+            }
+            psiDerX[idx_cell][idx_sys] /= _cellAreas[idx_cell];
+            psiDerY[idx_cell][idx_sys] /= _cellAreas[idx_cell];
+        }
+    }
+    */
+}
+
+void SolverBase::ComputeLimiter() {
+    /*
+    double r    = 0.0;
+    double eps  = 1e-10;
+    double sign = 0.0;
+    for( unsigned idx_cell = 0; idx_cell < _numCells; idx_cell++ ) {
+        for( unsigned idx_sys = 0; idx_sys < nSys; idx_sys++ ) {
+            if( _cellBoundaryTypes[idx_cell] != 2 ) {
+                _limiter[idx_cell][idx_sys] = 0.0;    // turn to first order on boundaries
+                continue;                             // skip computation
+            }
+            double minSol = _sol[idx_cell][idx_sys];
+            double maxSol = _sol[idx_cell][idx_sys];
+            Vector localLimiter( _numNodesPerCell, 0.0 );
+            for( unsigned idx_nbr = 0; idx_nbr < _cellNeighbors[idx_cell].size(); idx_nbr++ ) {
+                // Compute ptswise max and minimum solultion values of current and neighbor cells
+                unsigned glob_nbr = _cellNeighbors[idx_cell][idx_nbr];
+                if( _sol[glob_nbr][idx_sys] > maxSol ) {
+                    maxSol = _sol[glob_nbr][idx_sys];
+                }
+                if( sol[glob_nbr][idx_sys] < minSol ) {
+                    minSol = _sol[glob_nbr][idx_sys];
+                }
+            }
+            for( unsigned idx_nbr = 0; idx_nbr < _cellNeighbors[idx_cell].size(); idx_nbr++ ) {
+                // Compute value at interface midpoint, called gaussPt
+                if( idx_cell == 1049 && idx_nbr == 1 ) {
+                    // std::cout << "here\n";
+                }
+                double gaussPt = 0.0;
+                double dy      = _solDy[idx_cell][idx_sys];
+                double dx      = _solDx[idx_cell][idx_sys];
+                double rijx    = _interfaceMidPoints[idx_cell][idx_nbr][0];
+                double rijy    = _interfaceMidPoints[idx_cell][idx_nbr][1];
+                double cmx     = _cellMidPoints[idx_cell][0];
+                double cmy     = _cellMidPoints[idx_cell][1];
+                double curSol  = _sol[idx_cell][idx_sys];
+
+                gaussPt = _solDx[idx_cell][idx_sys] * ( _interfaceMidPoints[idx_cell][idx_nbr][0] - _cellMidPoints[idx_cell][0] ) +
+                          _solDy[idx_cell][idx_sys] * ( _interfaceMidPoints[idx_cell][idx_nbr][1] - _cellMidPoints[idx_cell][1] );
+                // Compute limiter input
+                if( gaussPt < 0.0 )
+                    sign = -1.0;
+                else
+                    sign = 1.0;
+
+                if( gaussPt > 0.0 ) {
+                    double t1 = maxSol - _sol[idx_cell][idx_sys];
+                    r         = ( maxSol - _sol[idx_cell][idx_sys] ) / ( sign * ( std::abs( gaussPt ) + eps ) );
+                }
+                else if( gaussPt < 0.0 ) {
+                    double t1 = minSol - _sol[idx_cell][idx_sys];
+                    r         = ( minSol - _sol[idx_cell][idx_sys] ) / ( sign * ( std::abs( gaussPt ) + eps ) );
+                }
+                else
+                    r = 1.0;
+                if( r < 0 ) {
+                    std::cout << "here\n";
+                }
+                localLimiter[idx_nbr] = std::min( r, 1.0 );    // LimiterBarthJespersen( r );
+            }
+            // get smallest limiter
+            limiter[idx_cell][idx_sys] = localLimiter[0];
+            for( unsigned idx_nbr = 0; idx_nbr < _cellNeighbors[idx_cell].size(); idx_nbr++ ) {
+                if( localLimiter[idx_nbr] < limiter[idx_cell][idx_sys] ) limiter[idx_cell][idx_sys] = localLimiter[idx_nbr];
+            }
+            // check maximum principle
+            for( unsigned idx_nbr = 0; idx_nbr < _cellNeighbors[idx_cell].size(); idx_nbr++ ) {
+                double currLim = limiter[idx_cell][idx_sys];
+                double dy      = _solDy[idx_cell][idx_sys];
+                double dx      = _solDx[idx_cell][idx_sys];
+                double rijx    = _interfaceMidPoints[idx_cell][idx_nbr][0];
+                double rijy    = _interfaceMidPoints[idx_cell][idx_nbr][1];
+                double cmx     = _cellMidPoints[idx_cell][0];
+                double cmy     = _cellMidPoints[idx_cell][1];
+                double curSol  = _sol[idx_cell][idx_sys];
+                double gaussPt = _solDx[idx_cell][idx_sys] * ( _interfaceMidPoints[idx_cell][idx_nbr][0] - _cellMidPoints[idx_cell][0] ) +
+                                 _solDy[idx_cell][idx_sys] * ( _interfaceMidPoints[idx_cell][idx_nbr][1] - _cellMidPoints[idx_cell][1] );
+
+                double psiL  = _sol[idx_cell][idx_sys] + currLim * gaussPt;
+                double psiL2 = curSol + currLim * ( dx * ( rijx - cmx ) + dy * ( rijy - cmy ) );
+
+                if( psiL > maxSol ) {
+                    std::cout << "here\n";
+                }
+                if( psiL < minSol ) {
+                    std::cout << "here\n";
+                }
+            }
+        }
+    }
+    */
 }
 
 // --- IO ----

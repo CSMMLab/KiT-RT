@@ -7,6 +7,7 @@
 #include "problems/problembase.h"
 #include "quadratures/quadraturebase.h"
 #include "toolboxes/errormessages.h"
+#include "toolboxes/textprocessingtoolbox.h"
 
 // externals
 #include "spdlog/spdlog.h"
@@ -14,9 +15,6 @@
 #include <mpi.h>
 
 SNSolver::SNSolver( Config* settings ) : SolverBase( settings ) {
-    _psiDx = VectorVector( _nCells, Vector( _nq, 0.0 ) );
-    _psiDy = VectorVector( _nCells, Vector( _nq, 0.0 ) );
-
     _quadPoints = _quadrature->GetPoints();
     _weights    = _quadrature->GetWeights();
 
@@ -97,11 +95,18 @@ void SNSolver::FluxUpdate() {
     }
     */
     if( _reconsOrder > 1 ) {
-        _mesh->ReconstructSlopesU( _nq, _psiDx, _psiDy, _sol );    // unstructured reconstruction
+        // TextProcessingToolbox::PrintVectorVector( _psiDx );
+        _mesh->ComputeSlopes( _nq, _solDx, _solDy, _sol );
+        _mesh->ComputeLimiter( _nq, _solDx, _solDy, _sol, _limiter );
+
+        //_mesh->LimitSlopes( _nq, _psiDx, _psiDy, _sol );    // unstructured reconstruction
         //_mesh->ReconstructSlopesS( _nq, _psiDx, _psiDy, _psi );    // structured reconstruction (not stable currently)
+        // TextProcessingToolbox::PrintVectorVector( _psiDx );
     }
     double psiL;
     double psiR;
+    double solL;
+    double solR;
     // Loop over all spatial cells
     for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
         // Dirichlet cells stay at IC, farfield assumption
@@ -117,31 +122,96 @@ void SNSolver::FluxUpdate() {
                     _solNew[idx_cell][idx_quad] +=
                         _g->Flux( _quadPoints[idx_quad], _sol[idx_cell][idx_quad], _sol[idx_cell][idx_quad], _normals[idx_cell][idx_neighbor] );
                 else {
+                    unsigned int nbr_glob = _neighbors[idx_cell][idx_neighbor];    // global idx of neighbor cell
+                    double eps            = 1e-10;
+                    double limitR, limit;
+                    double test = 0.0;
                     switch( _reconsOrder ) {
                         // first order solver
                         case 1:
-                            _solNew[idx_cell][idx_quad] += _g->Flux( _quadPoints[idx_quad],
-                                                                     _sol[idx_cell][idx_quad],
-                                                                     _sol[_neighbors[idx_cell][idx_neighbor]][idx_quad],
-                                                                     _normals[idx_cell][idx_neighbor] );
+                            // if( idx_cell == 24 ) {
+                            //     std::cout << "here\n";
+                            // }
+                            _solNew[idx_cell][idx_quad] += _g->Flux(
+                                _quadPoints[idx_quad], _sol[idx_cell][idx_quad], _sol[nbr_glob][idx_quad], _normals[idx_cell][idx_neighbor] );
                             break;
                         // second order solver
                         case 2:
                             // left status of interface
-                            psiL = _sol[idx_cell][idx_quad] +
-                                   _psiDx[idx_cell][idx_quad] * ( _interfaceMidPoints[idx_cell][idx_neighbor][0] - _cellMidPoints[idx_cell][0] ) +
-                                   _psiDy[idx_cell][idx_quad] * ( _interfaceMidPoints[idx_cell][idx_neighbor][1] - _cellMidPoints[idx_cell][1] );
+                            psiL =
+                                _sol[idx_cell][idx_quad] +
+                                _limiter[idx_cell][idx_quad] *
+                                    ( _solDx[idx_cell][idx_quad] * ( _interfaceMidPoints[idx_cell][idx_neighbor][0] - _cellMidPoints[idx_cell][0] ) +
+                                      _solDy[idx_cell][idx_quad] * ( _interfaceMidPoints[idx_cell][idx_neighbor][1] - _cellMidPoints[idx_cell][1] ) );
+                            solL  = _sol[idx_cell][idx_quad];
+                            limit = _limiter[idx_cell][idx_quad];
+                            // std::cout << _psiDx[idx_cell][idx_quad] *
+                            //                     ( _interfaceMidPoints[idx_cell][idx_neighbor][0] - _cellMidPoints[idx_cell][0] ) +
+                            //                 _psiDy[idx_cell][idx_quad] *
+                            //                     ( _interfaceMidPoints[idx_cell][idx_neighbor][1] - _cellMidPoints[idx_cell][1] )
+                            //          << std::endl;
                             // right status of interface
-                            psiR = _sol[_neighbors[idx_cell][idx_neighbor]][idx_quad] +
-                                   _psiDx[_neighbors[idx_cell][idx_neighbor]][idx_quad] *
-                                       ( _interfaceMidPoints[idx_cell][idx_neighbor][0] - _cellMidPoints[_neighbors[idx_cell][idx_neighbor]][0] ) +
-                                   _psiDy[_neighbors[idx_cell][idx_neighbor]][idx_quad] *
-                                       ( _interfaceMidPoints[idx_cell][idx_neighbor][1] - _cellMidPoints[_neighbors[idx_cell][idx_neighbor]][1] );
-                            // positivity check (if not satisfied, deduce to first order)
-                            if( psiL < 0.0 || psiR < 0.0 ) {
-                                psiL = _sol[idx_cell][idx_quad];
-                                psiR = _sol[_neighbors[idx_cell][idx_neighbor]][idx_quad];
+
+                            psiR =
+                                _sol[nbr_glob][idx_quad] +
+                                _limiter[nbr_glob][idx_quad] *
+                                    ( _solDx[nbr_glob][idx_quad] * ( _interfaceMidPoints[idx_cell][idx_neighbor][0] - _cellMidPoints[nbr_glob][0] ) +
+                                      _solDy[nbr_glob][idx_quad] * ( _interfaceMidPoints[idx_cell][idx_neighbor][1] - _cellMidPoints[nbr_glob][1] ) );
+                            solR   = _sol[nbr_glob][idx_quad];
+                            limitR = _limiter[nbr_glob][idx_quad];
+
+                            test = blaze::norm( _interfaceMidPoints[idx_cell][idx_neighbor] - _cellMidPoints[idx_cell] );
+                            std::cout << "distance to interface: " << test << "\n";
+
+                            // double test = sqrt( ( _interfaceMidPoints[idx_cell][idx_neighbor][0] - _cellMidPoints[nbr_glob][0] ) *
+                            //                        ( _interfaceMidPoints[idx_cell][idx_neighbor][0] - _cellMidPoints[nbr_glob][0] ) +
+                            //                    ( _interfaceMidPoints[idx_cell][idx_neighbor][1] - _cellMidPoints[nbr_glob][1] ) *
+                            //                        ( _interfaceMidPoints[idx_cell][idx_neighbor][1] - _cellMidPoints[nbr_glob][1] ) );
+                            if( solR != solL ) {
+                                // std::cout << "limit" << limit << std::endl;
+                                // std::cout << "limitR" << limitR << std::endl;
+                                // std::cout << "solL" << solL << std::endl;
+                                // std::cout << "solR" << solR << std::endl;
+                                // std::cout << "psiL" << psiL << std::endl;
+                                // std::cout << "psiR" << psiR << std::endl;
+                                // std::cout << "here\n";
                             }
+                            /*
+                                                // std::cout << "cell" << idx_cell << ":" << _interfaceMidPoints[idx_cell][idx_neighbor][0] -
+                               _cellMidPoints[nbr_glob][0]
+                                                //          << " | " << _interfaceMidPoints[idx_cell][idx_neighbor][0] - _cellMidPoints[idx_cell][0]
+                               << std::endl;
+
+                                                // if( _sol[idx_cell][idx_quad] < _sol[_neighbors[idx_cell][idx_neighbor]][idx_quad] ) {
+                                                //
+                                                //    if( psiL + eps < _sol[idx_cell][idx_quad] ) {
+                                                //        std::cout << psiL << "|" << _sol[idx_cell][idx_quad] << "|" <<
+                                                //        _sol[_neighbors[idx_cell][idx_neighbor]][idx_quad]
+                                                //                  << "\n";
+                                                //    }
+                                                //    if( psiR - eps > _sol[_neighbors[idx_cell][idx_neighbor]][idx_quad] ) {
+                                                //        std::cout << psiR << "|" << _sol[idx_cell][idx_quad] << "|" <<
+                                                //        _sol[_neighbors[idx_cell][idx_neighbor]][idx_quad]
+                                                //                  << "\n";
+                                                //    }
+                                                //}
+                                                // if( _sol[idx_cell][idx_quad] > _sol[_neighbors[idx_cell][idx_neighbor]][idx_quad] ) {
+                                                //    if( psiL - eps > _sol[idx_cell][idx_quad] ) {
+                                                //        std::cout << psiL << "|" << _sol[idx_cell][idx_quad] << "|" <<
+                                                //        _sol[_neighbors[idx_cell][idx_neighbor]][idx_quad]
+                                                //                  << "\n";
+                                                //    }
+                                                //    if( psiR + eps < _sol[_neighbors[idx_cell][idx_neighbor]][idx_quad] ) {
+                                                //        std::cout << psiR << "|" << _sol[idx_cell][idx_quad] << "|" <<
+                                                //        _sol[_neighbors[idx_cell][idx_neighbor]][idx_quad]
+                                                //                  << "\n";
+                                                //    }
+                                                //}
+                                                // positivity check (if not satisfied, deduce to first order)
+                                                // if( psiL < 0.0 || psiR < 0.0 ) {
+                                                //    psiL = _sol[idx_cell][idx_quad];
+                                                //    psiR = _sol[_neighbors[idx_cell][idx_neighbor]][idx_quad];
+                                                //} */
                             // flux evaluation
                             _solNew[idx_cell][idx_quad] += _g->Flux( _quadPoints[idx_quad], psiL, psiR, _normals[idx_cell][idx_neighbor] );
                             break;
@@ -235,15 +305,17 @@ void SNSolver::WriteVolumeOutput( unsigned idx_pseudoTime ) {
             switch( _settings->GetVolumeOutput()[idx_group] ) {
                 case MINIMAL:
                     for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
-                        _outputFields[idx_group][0][idx_cell] = _fluxNew[idx_cell];
+                        _outputFields[idx_group][0][idx_cell] = _sol[idx_cell][0];    // _fluxNew[idx_cell];
                     }
                     break;
 
                 case ANALYTIC:
                     for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
                         double time                           = idx_pseudoTime * _dE;
-                        _outputFields[idx_group][0][idx_cell] = _problem->GetAnalyticalSolution(
-                            _mesh->GetCellMidPoints()[idx_cell][0], _mesh->GetCellMidPoints()[idx_cell][1], time, _sigmaS[idx_pseudoTime][idx_cell] );
+                        _outputFields[idx_group][0][idx_cell] = _limiter[idx_cell][0];
+                        // _problem->GetAnalyticalSolution(
+                        //  _mesh->GetCellMidPoints()[idx_cell][0], _mesh->GetCellMidPoints()[idx_cell][1], time,
+                        //  _sigmaS[idx_pseudoTime][idx_cell] );
                     }
                     break;
 

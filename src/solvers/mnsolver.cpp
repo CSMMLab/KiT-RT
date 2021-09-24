@@ -170,7 +170,7 @@ void MNSolver::ComputeRadFlux() {
 
 void MNSolver::FluxUpdate() {
     if( _reconsOrder > 1 ) {
-        _mesh->ReconstructSlopesU( _nSystem, _solDx, _solDy, _alpha );    // unstructured reconstruction
+        _mesh->LimitSlopes( _nSystem, _solDx, _solDy, _alpha );    // unstructured reconstruction
     }
 
 // Loop over the grid cells

@@ -125,11 +125,20 @@ std::vector<VectorVector> LineSource_SN::GetExternalSource( const Vector& /*ener
 VectorVector LineSource_SN::SetupIC() {
     VectorVector psi( _mesh->GetNumCells(), Vector( _settings->GetNQuadPoints(), 1e-10 ) );
     auto cellMids = _mesh->GetCellMidPoints();
-    double t      = 3.2e-4;    // pseudo time for gaussian smoothing
+    // double t      = 3.2e-4;    // pseudo time for gaussian smoothing
+    // for( unsigned j = 0; j < cellMids.size(); ++j ) {
+    //    double x = cellMids[j][0];
+    //    double y = cellMids[j][1];
+    //    psi[j]   = 1.0 / ( 4.0 * M_PI * t ) * std::exp( -( x * x + y * y ) / ( 4 * t ) );
+    //}
     for( unsigned j = 0; j < cellMids.size(); ++j ) {
-        double x = cellMids[j][0];
-        double y = cellMids[j][1];
-        psi[j]   = 1.0 / ( 4.0 * M_PI * t ) * std::exp( -( x * x + y * y ) / ( 4 * t ) );
+
+        if( cellMids[j][0] < 0.0 && cellMids[j][1] < 0.0 ) {
+            psi[j] = 1.0;
+        }
+        else {
+            psi[j] = 0.0;
+        }
     }
     return psi;
 }

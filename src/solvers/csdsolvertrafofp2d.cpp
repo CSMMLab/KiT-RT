@@ -40,8 +40,8 @@ CSDSolverTrafoFP2D::CSDSolverTrafoFP2D( Config* settings ) : SNSolver( settings 
     Interpolation interpTrafoToE( E_transformed, E_tab );
 
     // define linear grid in fully transformed energy \tilde\tilde E (cf. Dissertation Kerstion Kuepper, Eq. 1.25)
-    _eTrafo        = blaze::linspace( _nEnergies, eMaxTrafo - eMaxTrafo, eMaxTrafo - eMinTrafo );
-    double dETrafo = _eTrafo[1] - _eTrafo[0];
+    _eTrafo = blaze::linspace( _nEnergies, eMaxTrafo - eMaxTrafo, eMaxTrafo - eMinTrafo );
+    // double dETrafo = _eTrafo[1] - _eTrafo[0];
 
     // compute Corresponding original energies
     for( unsigned n = 0; n < _nEnergies; ++n ) {
@@ -153,7 +153,7 @@ CSDSolverTrafoFP2D::CSDSolverTrafoFP2D( Config* settings ) : SNSolver( settings 
     }
 
     // Heney-Greenstein parameter
-    double g = 0.8;
+    // double g = 0.8;
 
     // determine moments of Heney-Greenstein
     _xi = Matrix( 4, _nEnergies );

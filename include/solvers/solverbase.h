@@ -59,10 +59,13 @@ class SolverBase
     unsigned _nq;                /*!< @brief number of quadrature points */
 
     // Solution related members
-    VectorVector _sol;    /*!< @brief solution of the PDE, e.g. angular flux or moments */
-    VectorVector _solNew; /*!< @brief VectorVector to store the new flux and later the new solution per iteration */
-    Vector _fluxNew;      /*!< @brief Vector to store the new Flux. Dim _nCells */
-    Vector _flux;         /*!< @brief Vector to store the old Flux. Dim _nCells*/
+    VectorVector _sol;     /*!< @brief solution of the PDE, e.g. angular flux or moments */
+    VectorVector _solNew;  /*!< @brief VectorVector to store the new flux and later the new solution per iteration */
+    VectorVector _solDx;   /*!< @brief  solution gradient for each cell and each system var in x direction */
+    VectorVector _solDy;   /*!< @brief  solution gradient for each cell and each system var in x direction */
+    VectorVector _limiter; /*! < @brief slope limiter at cell and system pt */
+    Vector _fluxNew;       /*!< @brief Vector to store the new Flux. Dim _nCells */
+    Vector _flux;          /*!< @brief Vector to store the old Flux. Dim _nCells*/
 
     std::vector<double> _solverOutput; /*!< @brief LEGACY: Outputfield for solver ==> Will be replaced by _outputFields in the near future */
 

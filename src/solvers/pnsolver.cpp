@@ -54,7 +54,11 @@ PNSolver::PNSolver( Config* settings ) : SolverBase( settings ) {
 }
 
 void PNSolver::IterPreprocessing( unsigned /*idx_iter*/ ) {
-    // Nothing to preprocess for PNSolver
+    if( _reconsOrder > 1 ) {
+        // Reconstruct slopes for higher order fluxes
+        // unstructured reconstruction
+        _mesh->LimitSlopes( _nSystem, _solDx, _solDy, _sol );
+    }
 }
 
 void PNSolver::IterPostprocessing( unsigned /*idx_iter*/ ) {
@@ -73,10 +77,7 @@ void PNSolver::ComputeRadFlux() {
 }
 
 void PNSolver::FluxUpdate() {
-    if( _reconsOrder > 1 ) {
-        _mesh->ReconstructSlopesU( _nSystem, _solDx, _solDy, _sol );    // unstructured reconstruction
-        //_mesh->ComputeSlopes( _nTotalEntries, _solDx, _solDy, _sol );    // unstructured reconstruction
-    }
+
     // Vector solL( _nTotalEntries );
     // Vector solR( _nTotalEntries );
     auto solL = _sol[2];
@@ -340,7 +341,7 @@ void PNSolver::ComputeFluxComponents() {
     // std::cout << "Spectral Radius Z " << blaze::max( blaze::abs( eigenValues ) ) << "\n";
 
     //_combinedSpectralRadius = blaze::max( blaze::abs( eigenValues + eigenValuesX + eigenValuesY ) );
-    std::cout << "Spectral Radius combined " << blaze::max( blaze::abs( eigenValues + eigenValuesX + eigenValuesY ) ) << "\n";
+    // std::cout << "Spectral Radius combined " << blaze::max( blaze::abs( eigenValues + eigenValuesX + eigenValuesY ) ) << "\n";
 }
 
 void PNSolver::ComputeScatterMatrix() {
