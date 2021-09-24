@@ -23,6 +23,7 @@ class MNSolver : public SolverBase
     // --- Private member variables ---
     unsigned _nSystem;               /*!< @brief Total number of equations in the system */
     unsigned short _polyDegreeBasis; /*!< @brief Max polynomial degree of the basis */
+    VectorVector _kineticDensity;    /*!< @brief Kinetic density at the grid cells. dim: _nCells x _nq */
 
     // Moment basis
     SphericalBase* _basis; /*!< @brief Class to compute and store current spherical harmonics basis */
@@ -41,9 +42,6 @@ class MNSolver : public SolverBase
     VectorVector _alpha;       /*!< @brief Lagrange Multipliers for Minimal Entropy problem for each gridCell
                                                 Layout: _nCells x _nTotalEntries*/
     OptimizerBase* _optimizer; /*!< @brief Class to solve minimal entropy problem */
-
-    VectorVector _solDx; /*!< @brief  temporary storage of x-derivatives of alpha */
-    VectorVector _solDy; /*!< @brief  temporary storage of y-derivatives of alpha */
 
     // ---- Private Member functions ---
 

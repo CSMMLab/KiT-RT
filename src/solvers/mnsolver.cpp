@@ -30,10 +30,6 @@ MNSolver::MNSolver( Config* settings ) : SolverBase( settings ) {
     _quadPointsSphere = _quadrature->GetPointsSphere();
     //_settings->SetNQuadPoints( _nq );
 
-    // Initialize temporary storages of alpha derivatives
-    _solDx = VectorVector( _nCells, Vector( _nSystem, 0.0 ) );
-    _solDy = VectorVector( _nCells, Vector( _nSystem, 0.0 ) );
-
     // Initialize Scatter Matrix --
     _scatterMatDiag = Vector( _nSystem, 0.0 );
     ComputeScatterMatrix();
@@ -46,6 +42,14 @@ MNSolver::MNSolver( Config* settings ) : SolverBase( settings ) {
 
     // Initialize lagrange Multiplier
     _alpha = VectorVector( _nCells, Vector( _nSystem, 0.0 ) );
+
+    // Initialize kinetic density at grid cells
+    _kineticDensity = VectorVector( _nCells, Vector( _nq, 0.0 ) );
+
+    // Limiter variables
+    _solDx   = VectorVector( _nCells, Vector( _nq, 0.0 ) );
+    _solDy   = VectorVector( _nCells, Vector( _nq, 0.0 ) );
+    _limiter = VectorVector( _nCells, Vector( _nq, 0.0 ) );
 
     // Initialize and Pre-Compute Moments at quadrature points
     _moments = VectorVector( _nq, Vector( _nSystem, 0.0 ) );
@@ -82,18 +86,14 @@ void MNSolver::ComputeMoments() {
 Vector MNSolver::ConstructFlux( unsigned idx_cell ) {
 
     //--- Integration of moments of flux ---
-    double entropyL, entropyR, entropyFlux;
-
+    double solL, solR, kineticFlux;
     Vector flux( _nSystem, 0.0 );
 
-    //--- Temporary storages of reconstructed alpha ---
-    Vector alphaL( _nSystem, 0.0 );
-    Vector alphaR( _nSystem, 0.0 );
-
     for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
-        entropyFlux = 0.0;    // reset temorary flux
+        kineticFlux = 0.0;    // reset temorary flux
 
-        for( unsigned idx_neigh = 0; idx_neigh < _neighbors[idx_cell].size(); idx_neigh++ ) {
+        for( unsigned idx_nbr = 0; idx_nbr < _neighbors[idx_cell].size(); idx_nbr++ ) {
+            /*
             // Left side reconstruction
             if( _reconsOrder > 1 ) {
                 alphaL = _alpha[idx_cell] + _solDx[idx_cell] * ( _interfaceMidPoints[idx_cell][idx_neigh][0] - _cellMidPoints[idx_cell][0] ) +
@@ -120,19 +120,47 @@ Vector MNSolver::ConstructFlux( unsigned idx_cell ) {
                 }
                 entropyR = _entropy->EntropyPrimeDual( blaze::dot( alphaR, _moments[idx_quad] ) );
             }
-
-            // Entropy flux
-            entropyFlux += _g->Flux( _quadPoints[idx_quad], entropyL, entropyR, _normals[idx_cell][idx_neigh] );
+            */
+            if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::NEUMANN && _neighbors[idx_cell][idx_nbr] == _nCells ) {
+                // Boundary cells are first order and mirror ghost cells
+                solL = _kineticDensity[idx_cell][idx_quad];
+                solR = solL;
+            }
+            else {
+                // interior cell
+                unsigned int nbr_glob = _neighbors[idx_cell][idx_nbr];    // global idx of neighbor cell
+                if( _reconsOrder == 1 ) {
+                    solL = _kineticDensity[idx_cell][idx_quad];
+                    solR = _kineticDensity[_neighbors[idx_cell][idx_nbr]][idx_quad];
+                }
+                else if( _reconsOrder == 2 ) {
+                    solL = _kineticDensity[idx_cell][idx_quad] +
+                           _limiter[idx_cell][idx_quad] *
+                               ( _solDx[idx_cell][idx_quad] * ( _interfaceMidPoints[idx_cell][idx_nbr][0] - _cellMidPoints[idx_cell][0] ) +
+                                 _solDy[idx_cell][idx_quad] * ( _interfaceMidPoints[idx_cell][idx_nbr][1] - _cellMidPoints[idx_cell][1] ) );
+                    solR = _kineticDensity[nbr_glob][idx_quad] +
+                           _limiter[nbr_glob][idx_quad] *
+                               ( _solDx[nbr_glob][idx_quad] * ( _interfaceMidPoints[idx_cell][idx_nbr][0] - _cellMidPoints[nbr_glob][0] ) +
+                                 _solDy[nbr_glob][idx_quad] * ( _interfaceMidPoints[idx_cell][idx_nbr][1] - _cellMidPoints[nbr_glob][1] ) );
+                }
+                else {
+                    ErrorMessages::Error( "Reconstruction order not supported.", CURRENT_FUNCTION );
+                }
+            }
+            // Kinetic flux
+            kineticFlux += _g->Flux( _quadPoints[idx_quad], solL, solR, _normals[idx_cell][idx_nbr] );
         }
         // Solution flux
-        flux += _moments[idx_quad] * ( _weights[idx_quad] * entropyFlux );
+        flux += _moments[idx_quad] * ( _weights[idx_quad] * kineticFlux );
     }
     return flux;
 }
 
 void MNSolver::ComputeRealizableSolution( unsigned idx_cell ) {
     double entropyReconstruction = 0.0;
-    _sol[idx_cell]               = 0;
+    for( unsigned idx_sys = 0; idx_sys < _nSystem; idx_sys++ ) {    // reset solution
+        _sol[idx_cell] = 0;
+    }
     for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
         // Make entropyReconstruction a member vector, s.t. it does not have to be re-evaluated in ConstructFlux
         entropyReconstruction = _entropy->EntropyPrimeDual( blaze::dot( _alpha[idx_cell], _moments[idx_quad] ) );
@@ -146,9 +174,19 @@ void MNSolver::IterPreprocessing( unsigned /*idx_pseudotime*/ ) {
 
     _optimizer->SolveMultiCell( _alpha, _sol, _moments );
 
-    // ------- Relizablity Preservation Step ----
+    // ------- Solution reconstruction step ----
     for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
         ComputeRealizableSolution( idx_cell );    // already parallelized
+        for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
+            // compute the kinetic density at all grid cells
+            _kineticDensity[idx_cell][idx_quad] = _entropy->EntropyPrimeDual( blaze::dot( _alpha[idx_cell], _moments[idx_quad] ) );
+        }
+    }
+
+    // ------ Compute slope limiters and cell gradients ---
+    if( _reconsOrder > 1 ) {
+        _mesh->ComputeSlopes( _nq, _solDx, _solDy, _kineticDensity );
+        _mesh->ComputeLimiter( _nq, _solDx, _solDy, _kineticDensity, _limiter );
     }
 }
 
@@ -169,9 +207,6 @@ void MNSolver::ComputeRadFlux() {
 }
 
 void MNSolver::FluxUpdate() {
-    if( _reconsOrder > 1 ) {
-        _mesh->LimitSlopes( _nSystem, _solDx, _solDy, _alpha );    // unstructured reconstruction
-    }
 
 // Loop over the grid cells
 #pragma omp parallel for
@@ -321,8 +356,10 @@ void MNSolver::WriteVolumeOutput( unsigned idx_iter ) {
 
                         double time = idx_iter * _dE;
 
-                        _outputFields[idx_group][0][idx_cell] = _problem->GetAnalyticalSolution(
-                            _mesh->GetCellMidPoints()[idx_cell][0], _mesh->GetCellMidPoints()[idx_cell][1], time, _sigmaS[idx_iter][idx_cell] );
+                        _outputFields[idx_group][0][idx_cell] =
+                            _limiter[idx_cell][0];    //_problem->GetAnalyticalSolution(
+                                                      // _mesh->GetCellMidPoints()[idx_cell][0], _mesh->GetCellMidPoints()[idx_cell][1], time,
+                                                      // _sigmaS[idx_iter][idx_cell] );
                     }
                     break;
 

@@ -66,9 +66,6 @@ SolverBase::SolverBase( Config* settings ) {
     _sol          = _problem->SetupIC();
     _solNew       = _sol;    // setup temporary sol variable
     unsigned nSys = _sol[0].size();
-    _solDx        = VectorVector( _nCells, Vector( nSys, 0.0 ) );
-    _solDy        = VectorVector( _nCells, Vector( nSys, 0.0 ) );
-    _limiter      = VectorVector( _nCells, Vector( nSys, 0.0 ) );
 
     _sigmaT = _problem->GetTotalXS( _energies );
     _sigmaS = _problem->GetScatteringXS( _energies );

@@ -20,6 +20,12 @@ SNSolver::SNSolver( Config* settings ) : SolverBase( settings ) {
 
     ScatteringKernel* k = ScatteringKernel::CreateScatteringKernel( settings->GetKernelName(), _quadrature );
     _scatteringKernel   = k->GetScatteringKernel();
+
+    // Limiter variables
+    _solDx   = VectorVector( _nCells, Vector( _nq, 0.0 ) );
+    _solDy   = VectorVector( _nCells, Vector( _nq, 0.0 ) );
+    _limiter = VectorVector( _nCells, Vector( _nq, 0.0 ) );
+
     delete k;
 }
 
@@ -47,8 +53,6 @@ void SNSolver::ComputeRadFlux() {
 
 void SNSolver::FluxUpdate() {
 
-    double psiL;
-    double psiR;
     double solL;
     double solR;
     // Loop over all spatial cells
@@ -60,38 +64,36 @@ void SNSolver::FluxUpdate() {
             // Reset temporary variable
             _solNew[idx_cell][idx_quad] = 0.0;
             // Loop over all neighbor cells (edges) of cell j and compute numerical fluxes
-            for( unsigned idx_neighbor = 0; idx_neighbor < _neighbors[idx_cell].size(); ++idx_neighbor ) {
+            for( unsigned idx_nbr = 0; idx_nbr < _neighbors[idx_cell].size(); ++idx_nbr ) {
                 // store flux contribution on psiNew_sigmaS to save memory
-                if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::NEUMANN && _neighbors[idx_cell][idx_neighbor] == _nCells )
+                if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::NEUMANN && _neighbors[idx_cell][idx_nbr] == _nCells )
                     _solNew[idx_cell][idx_quad] +=
-                        _g->Flux( _quadPoints[idx_quad], _sol[idx_cell][idx_quad], _sol[idx_cell][idx_quad], _normals[idx_cell][idx_neighbor] );
+                        _g->Flux( _quadPoints[idx_quad], _sol[idx_cell][idx_quad], _sol[idx_cell][idx_quad], _normals[idx_cell][idx_nbr] );
                 else {
-                    unsigned int nbr_glob = _neighbors[idx_cell][idx_neighbor];    // global idx of neighbor cell
+                    unsigned int nbr_glob = _neighbors[idx_cell][idx_nbr];    // global idx of neighbor cell
                     double eps            = 1e-10;
                     double limitR, limit;
                     double test = 0.0;
                     switch( _reconsOrder ) {
                         // first order solver
                         case 1:
-                            _solNew[idx_cell][idx_quad] += _g->Flux(
-                                _quadPoints[idx_quad], _sol[idx_cell][idx_quad], _sol[nbr_glob][idx_quad], _normals[idx_cell][idx_neighbor] );
+                            _solNew[idx_cell][idx_quad] +=
+                                _g->Flux( _quadPoints[idx_quad], _sol[idx_cell][idx_quad], _sol[nbr_glob][idx_quad], _normals[idx_cell][idx_nbr] );
                             break;
                         // second order solver
                         case 2:
                             // left status of interface
-                            psiL =
-                                _sol[idx_cell][idx_quad] +
-                                _limiter[idx_cell][idx_quad] *
-                                    ( _solDx[idx_cell][idx_quad] * ( _interfaceMidPoints[idx_cell][idx_neighbor][0] - _cellMidPoints[idx_cell][0] ) +
-                                      _solDy[idx_cell][idx_quad] * ( _interfaceMidPoints[idx_cell][idx_neighbor][1] - _cellMidPoints[idx_cell][1] ) );
-                            psiR =
-                                _sol[nbr_glob][idx_quad] +
-                                _limiter[nbr_glob][idx_quad] *
-                                    ( _solDx[nbr_glob][idx_quad] * ( _interfaceMidPoints[idx_cell][idx_neighbor][0] - _cellMidPoints[nbr_glob][0] ) +
-                                      _solDy[nbr_glob][idx_quad] * ( _interfaceMidPoints[idx_cell][idx_neighbor][1] - _cellMidPoints[nbr_glob][1] ) );
+                            solL = _sol[idx_cell][idx_quad] +
+                                   _limiter[idx_cell][idx_quad] *
+                                       ( _solDx[idx_cell][idx_quad] * ( _interfaceMidPoints[idx_cell][idx_nbr][0] - _cellMidPoints[idx_cell][0] ) +
+                                         _solDy[idx_cell][idx_quad] * ( _interfaceMidPoints[idx_cell][idx_nbr][1] - _cellMidPoints[idx_cell][1] ) );
+                            solR = _sol[nbr_glob][idx_quad] +
+                                   _limiter[nbr_glob][idx_quad] *
+                                       ( _solDx[nbr_glob][idx_quad] * ( _interfaceMidPoints[idx_cell][idx_nbr][0] - _cellMidPoints[nbr_glob][0] ) +
+                                         _solDy[nbr_glob][idx_quad] * ( _interfaceMidPoints[idx_cell][idx_nbr][1] - _cellMidPoints[nbr_glob][1] ) );
 
                             // flux evaluation
-                            _solNew[idx_cell][idx_quad] += _g->Flux( _quadPoints[idx_quad], psiL, psiR, _normals[idx_cell][idx_neighbor] );
+                            _solNew[idx_cell][idx_quad] += _g->Flux( _quadPoints[idx_quad], solL, solR, _normals[idx_cell][idx_nbr] );
                             break;
                         // higher order solver
                         case 3:
@@ -101,8 +103,8 @@ void SNSolver::FluxUpdate() {
                         default:
                             _solNew[idx_cell][idx_quad] += _g->Flux( _quadPoints[idx_quad],
                                                                      _sol[idx_cell][idx_quad],
-                                                                     _sol[_neighbors[idx_cell][idx_neighbor]][idx_quad],
-                                                                     _normals[idx_cell][idx_neighbor] );
+                                                                     _sol[_neighbors[idx_cell][idx_nbr]][idx_quad],
+                                                                     _normals[idx_cell][idx_nbr] );
                     }
                 }
             }

@@ -29,6 +29,11 @@ PNSolver::PNSolver( Config* settings ) : SolverBase( settings ) {
     _AzMinus = Matrix( _nSystem, _nSystem, 0 );
     _AzAbs   = Matrix( _nSystem, _nSystem, 0 );
 
+    // Limiter variables
+    _solDx   = VectorVector( _nCells, Vector( _nSystem, 0.0 ) );
+    _solDy   = VectorVector( _nCells, Vector( _nSystem, 0.0 ) );
+    _limiter = VectorVector( _nCells, Vector( _nSystem, 0.0 ) );
+
     // Initialize Scatter Matrix
     _scatterMatDiag = Vector( _nSystem, 0 );
 
@@ -50,6 +55,9 @@ PNSolver::PNSolver( Config* settings ) : SolverBase( settings ) {
 }
 
 void PNSolver::IterPreprocessing( unsigned /*idx_iter*/ ) {
+
+    // ------ Compute slope limiters and cell gradients ---
+
     if( _reconsOrder > 1 ) {
         _mesh->ComputeSlopes( _nSystem, _solDx, _solDy, _sol );
         _mesh->ComputeLimiter( _nSystem, _solDx, _solDy, _sol, _limiter );
@@ -412,11 +420,11 @@ void PNSolver::PrepareVolumeOutput() {
     }
 }
 
-void PNSolver::WriteVolumeOutput( unsigned idx_pseudoTime ) {
+void PNSolver::WriteVolumeOutput( unsigned idx_iter ) {
     unsigned nGroups = (unsigned)_settings->GetNVolumeOutput();
 
-    if( ( _settings->GetVolumeOutputFrequency() != 0 && idx_pseudoTime % (unsigned)_settings->GetVolumeOutputFrequency() == 0 ) ||
-        ( idx_pseudoTime == _nEnergies - 1 ) /* need sol at last iteration */ ) {
+    if( ( _settings->GetVolumeOutputFrequency() != 0 && idx_iter % (unsigned)_settings->GetVolumeOutputFrequency() == 0 ) ||
+        ( idx_iter == _nEnergies - 1 ) /* need sol at last iteration */ ) {
         for( unsigned idx_group = 0; idx_group < nGroups; idx_group++ ) {
             switch( _settings->GetVolumeOutput()[idx_group] ) {
                 case MINIMAL:
@@ -434,7 +442,7 @@ void PNSolver::WriteVolumeOutput( unsigned idx_pseudoTime ) {
                 case ANALYTIC:
                     for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
 
-                        double time = idx_pseudoTime * _dE;
+                        double time = idx_iter * _dE;
 
                         _outputFields[idx_group][0][idx_cell] = _outputFields[idx_group][0][idx_cell] = _problem->GetAnalyticalSolution(
                             _mesh->GetCellMidPoints()[idx_cell][0], _mesh->GetCellMidPoints()[idx_cell][1], time, _sigmaS[idx_iter][idx_cell] );

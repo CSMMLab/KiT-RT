@@ -121,21 +121,13 @@ class Mesh
      *  @param psiDerX is slope in x direction (gets computed. Slope is stored here)
      *  @param psiDerY is slope in y direction (gets computed. Slope is stored here)
      *  @param psi is solution for which slope is computed */
-    // Not used
     void ComputeSlopes( unsigned nq, VectorVector& psiDerX, VectorVector& psiDerY, const VectorVector& psi ) const;
 
-    /*! @brief Structured mesh slope reconstruction with flux limiters.
-     *  @param nq is number of quadrature points
-     *  @param psiDerX is slope in x direction (gets computed. Slope is stored here)
-     *  @param psiDerY is slope in y direction (gets computed. Slope is stored here)
-     *  @param psi is solution for which slope is computed */
-    void ReconstructSlopesS( unsigned nq, VectorVector& psiDerX, VectorVector& psiDerY, const VectorVector& psi ) const;
     /*! @brief Use gauss theorem and limiters. For unstructured mesh *
      *  @param nq is number of quadrature points
      *  @param psiDerX is slope in x direction (gets computed. Slope is stored here)
      *  @param psiDerY is slope in y direction (gets computed. Slope is stored here)
      *  @param psi is solution for which slope is computed */
-    void LimitSlopes( unsigned nq, VectorVector& psiDerX, VectorVector& psiDerY, const VectorVector& psi ) const;
     void ComputeLimiter( unsigned nSys, const VectorVector& solDx, const VectorVector& solDy, const VectorVector& sol, VectorVector& limiter ) const;
 };
 

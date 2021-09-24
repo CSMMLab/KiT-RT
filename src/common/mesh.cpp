@@ -271,34 +271,6 @@ void Mesh::ComputeSlopes( unsigned nq, VectorVector& psiDerX, VectorVector& psiD
     }
 }
 
-void Mesh::ReconstructSlopesS( unsigned nq, VectorVector& psiDerX, VectorVector& psiDerY, const VectorVector& psi ) const {
-
-    double duxL;
-    double duyL;
-    double duxR;
-    double duyR;
-
-    for( unsigned k = 0; k < nq; ++k ) {
-        for( unsigned j = 0; j < _numCells; ++j ) {
-            // reset derivatives
-            psiDerX[j][k] = 0.0;
-            psiDerY[j][k] = 0.0;
-
-            // skip boundary cells
-            if( _cellBoundaryTypes[j] != 2 ) continue;
-
-            duxL = ( psi[j][k] - psi[_cellNeighbors[j][0]][k] ) / ( _cellMidPoints[j][0] - _cellMidPoints[_cellNeighbors[j][0]][0] + 1e-8 );
-            duyL = ( psi[j][k] - psi[_cellNeighbors[j][0]][k] ) / ( _cellMidPoints[j][1] - _cellMidPoints[_cellNeighbors[j][0]][1] + 1e-8 );
-
-            duxR = ( psi[j][k] - psi[_cellNeighbors[j][2]][k] ) / ( _cellMidPoints[j][0] - _cellMidPoints[_cellNeighbors[j][2]][0] + 1e-8 );
-            duyR = ( psi[j][k] - psi[_cellNeighbors[j][2]][k] ) / ( _cellMidPoints[j][1] - _cellMidPoints[_cellNeighbors[j][2]][1] + 1e-8 );
-
-            psiDerX[j][k] = LMinMod( duxL, duxR ) * 0.5;
-            psiDerY[j][k] = LMinMod( duyL, duyR ) * 0.5;
-        }
-    }
-}
-
 void Mesh::ComputeLimiter(
     unsigned nSys, const VectorVector& solDx, const VectorVector& solDy, const VectorVector& sol, VectorVector& limiter ) const {
     double r    = 0.0;
@@ -325,19 +297,7 @@ void Mesh::ComputeLimiter(
             }
             for( unsigned idx_nbr = 0; idx_nbr < _cellNeighbors[idx_cell].size(); idx_nbr++ ) {
                 // Compute value at interface midpoint, called gaussPt
-                if( idx_cell == 1049 && idx_nbr == 1 ) {
-                    // std::cout << "here\n";
-                }
                 double gaussPt = 0.0;
-                // double dy      = solDy[idx_cell][idx_sys];
-                // double dx      = solDx[idx_cell][idx_sys];
-                // double rijx    = _cellInterfaceMidPoints[idx_cell][idx_nbr][0];
-                // double rijy    = _cellInterfaceMidPoints[idx_cell][idx_nbr][1];
-                // double cmx     = _cellMidPoints[idx_cell][0];
-                // double cmy     = _cellMidPoints[idx_cell][1];
-                // double curSol  = sol[idx_cell][idx_sys];
-                //_nodes[_cells[idx_cell][idx_nbr]]
-                // _interfaceMidPoints[idx_cell][idx_nbr]
                 // gauss point is at cell vertex
                 gaussPt = solDx[idx_cell][idx_sys] * ( _nodes[_cells[idx_cell][idx_nbr]][0] - _cellMidPoints[idx_cell][0] ) +
                           solDy[idx_cell][idx_sys] * ( _nodes[_cells[idx_cell][idx_nbr]][1] - _cellMidPoints[idx_cell][1] );
@@ -358,7 +318,6 @@ void Mesh::ComputeLimiter(
                 else {
                     r = 1.0;
                 }
-                // r = 1.0;
                 if( r < 0.0 ) {
                     std::cout << "r <0.0 \n";
                 }
@@ -388,18 +347,18 @@ void Mesh::ComputeLimiter(
             // check maximum principle
             for( unsigned idx_nbr = 0; idx_nbr < _cellNeighbors[idx_cell].size(); idx_nbr++ ) {
                 double currLim = limiter[idx_cell][idx_sys];
-                double dy      = solDy[idx_cell][idx_sys];
-                double dx      = solDx[idx_cell][idx_sys];
-                double rijx    = _cellInterfaceMidPoints[idx_cell][idx_nbr][0];
-                double rijy    = _cellInterfaceMidPoints[idx_cell][idx_nbr][1];
-                double cmx     = _cellMidPoints[idx_cell][0];
-                double cmy     = _cellMidPoints[idx_cell][1];
-                double curSol  = sol[idx_cell][idx_sys];
+                // double dy      = solDy[idx_cell][idx_sys];
+                // double dx      = solDx[idx_cell][idx_sys];
+                // double rijx    = _cellInterfaceMidPoints[idx_cell][idx_nbr][0];
+                // double rijy    = _cellInterfaceMidPoints[idx_cell][idx_nbr][1];
+                // double cmx     = _cellMidPoints[idx_cell][0];
+                // double cmy     = _cellMidPoints[idx_cell][1];
+                // double curSol  = sol[idx_cell][idx_sys];
                 double gaussPt = solDx[idx_cell][idx_sys] * ( _cellInterfaceMidPoints[idx_cell][idx_nbr][0] - _cellMidPoints[idx_cell][0] ) +
                                  solDy[idx_cell][idx_sys] * ( _cellInterfaceMidPoints[idx_cell][idx_nbr][1] - _cellMidPoints[idx_cell][1] );
 
-                double psiL  = sol[idx_cell][idx_sys] + currLim * gaussPt;
-                double psiL2 = curSol + currLim * ( dx * ( rijx - cmx ) + dy * ( rijy - cmy ) );
+                double psiL = sol[idx_cell][idx_sys] + currLim * gaussPt;
+                // double psiL2 = curSol + currLim * ( dx * ( rijx - cmx ) + dy * ( rijy - cmy ) );
 
                 if( psiL > maxSol ) {
                     // std::cout << "max principle hurt\n";
@@ -425,187 +384,6 @@ void Mesh::ComputeLimiter(
 }
 
 // double LimiterBarthJespersen( double r ) { return std::min( r, 1.0 ); }
-
-void Mesh::LimitSlopes( unsigned nSys, VectorVector& solDx, VectorVector& solDy, const VectorVector& sol ) const {
-    /* Requires correct derivative values */
-    double phi;
-    double eps = 1e-10;    // safety epsilon, hard coded
-
-    Vector deltaSolMax( nSys, 0.0 );
-    Vector deltaSolMin( nSys, 0.0 );
-    VectorVector gaussPt( nSys, Vector( _numNodesPerCell, 0.0 ) );
-    VectorVector limiter( nSys, Vector( _numNodesPerCell, 0.0 ) );
-
-    for( unsigned i = 0; i < _numCells; ++i ) {
-        // skip boundary cells
-        if( _cellBoundaryTypes[i] != 2 ) continue;
-        // reset local values
-        for( unsigned q = 0; q < nSys; ++q ) {
-            deltaSolMax[q] = 0.0;
-            deltaSolMin[q] = 0.0;
-            for( unsigned j = 0; j < _numNodesPerCell; ++j ) {
-                gaussPt[q][j] = 0.0;
-                limiter[q][j] = 0.0;
-            }
-        }
-        // calculate  largest difference of values between current and neighboring cells
-        for( unsigned q = 0; q < nSys; ++q ) {
-            for( unsigned j = 0; j < _numNodesPerCell; ++j ) {
-                double deltaNbr = sol[_cellNeighbors[i][j]][q] - sol[i][q];
-                if( deltaNbr > deltaSolMax[q] ) deltaSolMax[q] = deltaNbr;    // largest positive difference
-                if( deltaNbr < deltaSolMin[q] ) deltaSolMin[q] = deltaNbr;    // largest negative difference
-            }
-        }
-        // compute unconstrained value at each gauss point
-        for( unsigned q = 0; q < nSys; ++q ) {
-            for( unsigned j = 0; j < _numNodesPerCell; ++j ) {
-
-                // step 2: 1st order gauss point
-                gaussPt[q][j] = 0.5 * solDx[i][q] * ( _cellMidPoints[_cellNeighbors[i][j]][0] - _cellMidPoints[i][0] ) +
-                                0.5 * solDy[i][q] * ( _cellMidPoints[_cellNeighbors[i][j]][1] - _cellMidPoints[i][1] );
-            }
-        }
-        // compute venkatakrishnan limiter function
-        for( unsigned q = 0; q < nSys; ++q ) {
-            phi = std::numeric_limits<double>::infinity();
-            for( unsigned j = 0; j < _numNodesPerCell; ++j ) {
-                double y = 0.0;
-                if( gaussPt[q][j] > 0.0 ) y = deltaSolMax[q] / gaussPt[q][j];
-                if( gaussPt[q][j] < 0.0 )
-                    y = deltaSolMin[q] / gaussPt[q][j];
-                else
-                    y = 1.0;
-                limiter[q][j] = ( y * y + 2 * y ) / ( y * y + y + 2 );    // original venkatakrishnan
-                // get minimum limiter
-                if( limiter[q][j] < phi ) phi = limiter[q][j];
-            }
-            // step 5: limit the slope reconstructed from Gauss theorem
-            solDx[i][q] *= phi;
-            solDy[i][q] *= phi;
-
-            for( unsigned j = 0; j < _numNodesPerCell; ++j ) {
-                // Check if reconstruction is TVD
-                // unsigned nbr_glob = _cellNeighbors[i][j];
-
-                // double psiL = sol[i][q] + solDx[i][q] * ( _interfaceMidPoints[i][j][0] - _cellMidPoints[i][0] ) +
-                //              solDy[i][q] * ( _interfaceMidPoints[i][j][1] - _cellMidPoints[i][1] );
-                // double psiR = sol[nbr_glob][q] + solDx[nbr_glob][q] * ( _interfaceMidPoints[i][j][0] - _cellMidPoints[nbr_glob][0] ) +
-                //              solDy[nbr_glob][q] * ( _interfaceMidPoints[i][j][1] - _cellMidPoints[nbr_glob][1] );
-
-                // get max differnce between nbrs and recons
-
-                double deltaSolMax_test  = sol[i][q];
-                double deltaSolMin_test  = sol[i][q];
-                double deltaSolMax_testR = sol[i][q];
-                double deltaSolMin_testR = sol[i][q];
-
-                for( unsigned l = 0; l < _numNodesPerCell; ++l ) {
-                    double deltaNbrL = sol[_cellNeighbors[i][l]][q];
-                    double deltaNbrR = sol[_cellNeighbors[i][l]][q];
-                    if( deltaNbrL > deltaSolMax_test ) deltaSolMax_test = deltaNbrL;      // largest positive difference
-                    if( deltaNbrL < deltaSolMin_test ) deltaSolMin_test = deltaNbrL;      // largest negative difference
-                    if( deltaNbrR > deltaSolMax_testR ) deltaSolMax_testR = deltaNbrR;    // largest positive difference
-                    if( deltaNbrR < deltaSolMin_testR ) deltaSolMin_testR = deltaNbrR;    // largest negative difference
-                }
-                // compare extrema
-                // if( psiL > deltaSolMax_test + eps ) {
-                //    std::cout << "tvd not ok psiL max\n";
-                //    deltaSolMax_test = psiL;
-                //}    // largest positive difference
-                // if( psiL + eps < deltaSolMin_test ) {
-                //    std::cout << "tvd not ok psiL min\n";
-                //    deltaSolMin_test = psiL;
-                //}    // largest negative difference
-                // if( psiR > deltaSolMax_testR + eps ) {
-                //    std::cout << "tvd not ok psiR max\n";
-                //    deltaSolMax_testR = psiR;
-                //}    // largest positive difference
-                // if( psiR + eps < deltaSolMin_testR ) {
-                //    std::cout << "tvd not ok psiR min\n";
-                //    deltaSolMin_testR = psiR;
-                //}    // largest negative difference
-            }
-        }
-    }
-}
-
-/*
-void Mesh::ReconstructSlopesU2( unsigned nSys, VectorVector& psiDerX, VectorVector& psiDerY, const VectorVector& psi ) const {
-
-    double phi;
-    double eps = 1e-3;
-
-    // VectorVector dPsiMax = std::vector( _numCells, Vector( nq, 0.0 ) );
-    // VectorVector dPsiMin = std::vector( _numCells, Vector( nq, 0.0 ) );
-    // std::vector<std::vector<Vector>> psiSample( _numCells, std::vector<Vector>( nSys, Vector( _numNodesPerCell, 0.0 ) ) );
-    // std::vector<std::vector<Vector>> phiSample( _numCells, std::vector<Vector>( nSys, Vector( _numNodesPerCell, 0.0 ) ) );
-
-    for( unsigned i = 0; i < _numCells; ++i ) {
-        // set local values
-        Vector dPsiMax( nSys, 0.0 );
-        Vector dPsiMin( nSys, 0.0 );
-        VectorVector delta( nSys, Vector( _numNodesPerCell, 0.0 ) );
-        VectorVector limiter( nSys, Vector( _numNodesPerCell, 0.0 ) );
-        // reset derivatives
-        for( unsigned q = 0; q < nSys; ++q ) {
-            psiDerX[i][q] = 0.0;
-            psiDerY[i][q] = 0.0;
-        }
-        // skip boundary cells
-        if( _cellBoundaryTypes[i] != 2 ) continue;
-        // calculate limiter
-        for( unsigned q = 0; q < nSys; ++q ) {
-            // version 2: Venkatakrishnan limiter
-            // step 1: calculate psi difference around neighbors and theoretical derivatives by Gauss theorem
-            for( unsigned j = 0; j < _cellNeighbors[i].size(); ++j ) {
-                if( psi[_cellNeighbors[i][j]][q] > dPsiMax[q] ) dPsiMax[q] = psi[_cellNeighbors[i][j]][q];
-                if( psi[_cellNeighbors[i][j]][q] < dPsiMin[q] ) dPsiMin[q] = psi[_cellNeighbors[i][j]][q];
-                dPsiMax[q] -= -psi[i][q];
-                dPsiMin[q] -= -psi[i][q];
-
-                psiDerX[i][q] += 0.5 * ( psi[i][q] + psi[_cellNeighbors[i][j]][q] ) * _cellNormals[i][j][0] / _cellAreas[i];
-                psiDerY[i][q] += 0.5 * ( psi[i][q] + psi[_cellNeighbors[i][j]][q] ) * _cellNormals[i][j][1] / _cellAreas[i];
-            }
-
-            for( unsigned j = 0; j < _cellNeighbors[i].size(); ++j ) {
-
-                // step 2: choose sample points Delta
-                delta[q][j] = psiDerX[i][q] * ( _interfaceMidPoints[i][j][0] - _cellMidPoints[i][0] ) +
-                              psiDerY[i][q] * ( _interfaceMidPoints[i][j][1] - _cellMidPoints[i][1] );
-
-                // step 3: calculate Phi_ij at sample points
-                if( delta[q][j] > 0.0 ) {
-                    limiter[q][j] = ( dPsiMax[q] * dPsiMax[q] + 2.0 * dPsiMax[q] * delta[q][j] + eps ) /
-                                    ( dPsiMax[q] * dPsiMax[q] + 2.0 * delta[q][j] * delta[q][j] + dPsiMax[q] * delta[q][j] + eps );
-                }
-                else if( delta[q][j] < 0.0 ) {
-                    limiter[q][j] = ( dPsiMin[q] * dPsiMin[q] + 2.0 * dPsiMin[q] * delta[q][j] + eps ) /
-                                    ( dPsiMin[q] * dPsiMin[q] + 2.0 * delta[q][j] * delta[q][j] + dPsiMin[q] * delta[q][j] + eps );
-                }
-                else {
-                    limiter[q][j] = 1.0;
-                }
-                std::cout << limiter[q][j] << std::endl;
-
-                if( limiter[q][j] < 0 ) {
-                    std::cout << "error:" << limiter[q][j] << std::endl;
-                }
-                if( limiter[q][j] < -1.0 ) {
-                    std::cout << "error:" << limiter[q][j] << std::endl;
-                }
-            }
-
-            // step 4: find minimum limiter function phi
-            phi = min( limiter[q] );
-            // phi = fmin( 0.5, abs(phi) );
-
-            // step 5: limit the slope reconstructed from Gauss theorem
-            psiDerX[i][q] *= phi;
-            psiDerY[i][q] *= phi;
-        }
-    }
-}
-*/
 
 void Mesh::ComputeBounds() {
     _bounds = std::vector( _dim, std::make_pair( std::numeric_limits<double>::infinity(), -std::numeric_limits<double>::infinity() ) );

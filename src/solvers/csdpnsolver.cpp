@@ -171,7 +171,7 @@ void CSDPNSolver::IterPostprocessing( unsigned idx_iter ) {
 void CSDPNSolver::FluxUpdate() {
     // std::cout << "Flux update...";
     if( _reconsOrder > 1 ) {
-        _mesh->LimitSlopes( _nSystem, _solDx, _solDy, _sol );    // unstructured reconstruction
+        //_mesh->LimitSlopes( _nSystem, _solDx, _solDy, _sol );    // unstructured reconstruction
         //_mesh->ComputeSlopes( _nTotalEntries, _solDx, _solDy, _sol );    // unstructured reconstruction
     }
     // Vector solL( _nTotalEntries );
