@@ -48,10 +48,11 @@ CSDPNSolver::CSDPNSolver( Config* settings ) : PNSolver( settings ) {
     saveE_ref        = E_ref;
     _polyDegreeBasis = settings->GetMaxMomentDegree();
 
-    // SanityChecks
-    for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
-        _density[idx_cell] = 1.0;
-    }
+    // Limiter variables
+    _solDx   = VectorVector( _nCells, Vector( _nSystem, 0.0 ) );
+    _solDy   = VectorVector( _nCells, Vector( _nSystem, 0.0 ) );
+    _limiter = VectorVector( _nCells, Vector( _nSystem, 0.0 ) );
+
     _basis = NULL;
 
     // determine transformed energy grid for tabulated grid
@@ -125,12 +126,17 @@ CSDPNSolver::~CSDPNSolver() {
     if( _basis ) delete _basis;
 }
 
-void CSDPNSolver::SolverPreprocessing() {
-
-    // cross sections do not need to be transformed to ETilde energy grid since e.g. TildeSigmaT(ETilde) = SigmaT(E(ETilde))
-}
-
 void CSDPNSolver::IterPreprocessing( unsigned idx_iter ) {
+    if( _reconsOrder > 1 ) {
+        auto solDivRho = _sol;
+        for( unsigned j = 0; j < _nCells; ++j ) {
+            solDivRho[j] = _sol[j] / _density[j];
+        }
+
+        _mesh->ComputeSlopes( _nSystem, _solDx, _solDy, solDivRho );
+        _mesh->ComputeLimiter( _nSystem, _solDx, _solDy, solDivRho, _limiter );
+    }
+
     Vector sigmaSAtEnergy( _polyDegreeBasis );
     // compute scattering cross section at current energy
     for( unsigned idx_degree = 0; idx_degree < _polyDegreeBasis; ++idx_degree ) {
@@ -141,6 +147,11 @@ void CSDPNSolver::IterPreprocessing( unsigned idx_iter ) {
     for( unsigned idx_degree = 0; idx_degree < _polyDegreeBasis; ++idx_degree ) {
         _sigmaTAtEnergy[idx_degree] = ( sigmaSAtEnergy[0] - sigmaSAtEnergy[idx_degree] );
     }
+}
+
+void CSDPNSolver::SolverPreprocessing() {
+
+    // cross sections do not need to be transformed to ETilde energy grid since e.g. TildeSigmaT(ETilde) = SigmaT(E(ETilde))
 }
 
 void CSDPNSolver::IterPostprocessing( unsigned idx_iter ) {
@@ -169,18 +180,10 @@ void CSDPNSolver::IterPostprocessing( unsigned idx_iter ) {
 }
 
 void CSDPNSolver::FluxUpdate() {
-    // std::cout << "Flux update...";
-    if( _reconsOrder > 1 ) {
-        //_mesh->LimitSlopes( _nSystem, _solDx, _solDy, _sol );    // unstructured reconstruction
-        //_mesh->ComputeSlopes( _nTotalEntries, _solDx, _solDy, _sol );    // unstructured reconstruction
-    }
-    // Vector solL( _nTotalEntries );
-    // Vector solR( _nTotalEntries );
-    auto solL = _sol[2];
-    auto solR = _sol[2];
+    Vector solL( _nSystem, 0.0 );
+    Vector solR( _nSystem, 0.0 );
 
     // Loop over all spatial cells
-#pragma omp parallel for
     for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
 
         // Dirichlet cells stay at IC, farfield assumption
@@ -206,6 +209,7 @@ void CSDPNSolver::FluxUpdate() {
                                                _sol[idx_cell] / _density[idx_cell],
                                                _normals[idx_cell][idx_neighbor] );
             else {
+                unsigned int nbr_glob = _neighbors[idx_cell][idx_neighbor];    // global idx of neighbor cell
                 switch( _reconsOrder ) {
                     // first order solver
                     case 1:
@@ -223,24 +227,20 @@ void CSDPNSolver::FluxUpdate() {
                     // second order solver
                     case 2:
                         // left status of interface
-                        solL = _sol[idx_cell] + _solDx[idx_cell] * ( _interfaceMidPoints[idx_cell][idx_neighbor][0] - _cellMidPoints[idx_cell][0] ) +
-                               _solDy[idx_cell] * ( _interfaceMidPoints[idx_cell][idx_neighbor][1] - _cellMidPoints[idx_cell][1] );
-                        // right status of interface
-                        solR = _sol[_neighbors[idx_cell][idx_neighbor]] +
-                               _solDx[_neighbors[idx_cell][idx_neighbor]] *
-                                   ( _interfaceMidPoints[idx_cell][idx_neighbor][0] - _cellMidPoints[_neighbors[idx_cell][idx_neighbor]][0] ) +
-                               _solDy[_neighbors[idx_cell][idx_neighbor]] *
-                                   ( _interfaceMidPoints[idx_cell][idx_neighbor][1] - _cellMidPoints[_neighbors[idx_cell][idx_neighbor]][1] );
-
-                        _solNew[idx_cell] += _g->Flux( _AxPlus,
-                                                       _AxMinus,
-                                                       _AyPlus,
-                                                       _AyMinus,
-                                                       _AzPlus,
-                                                       _AzMinus,
-                                                       solL / _density[idx_cell],
-                                                       solR / _density[_neighbors[idx_cell][idx_neighbor]],
-                                                       _normals[idx_cell][idx_neighbor] );
+                        for( unsigned idx_sys = 0; idx_sys < _nSystem; idx_sys++ ) {
+                            solL[idx_sys] =
+                                _sol[idx_cell][idx_sys] / _density[idx_cell] +
+                                _limiter[idx_cell][idx_sys] *
+                                    ( _solDx[idx_cell][idx_sys] * ( _interfaceMidPoints[idx_cell][idx_neighbor][0] - _cellMidPoints[idx_cell][0] ) +
+                                      _solDy[idx_cell][idx_sys] * ( _interfaceMidPoints[idx_cell][idx_neighbor][1] - _cellMidPoints[idx_cell][1] ) );
+                            solR[idx_sys] = _sol[nbr_glob][idx_sys] / _density[nbr_glob];
+                            +_limiter[nbr_glob][idx_sys] *
+                                ( _solDx[nbr_glob][idx_sys] * ( _interfaceMidPoints[idx_cell][idx_neighbor][0] - _cellMidPoints[nbr_glob][0] ) +
+                                  _solDy[nbr_glob][idx_sys] * ( _interfaceMidPoints[idx_cell][idx_neighbor][1] - _cellMidPoints[nbr_glob][1] ) );
+                        }
+                        // flux evaluation
+                        _solNew[idx_cell] +=
+                            _g->Flux( _AxPlus, _AxMinus, _AyPlus, _AyMinus, _AzPlus, _AzMinus, solL, solR, _normals[idx_cell][idx_neighbor] );
                         break;
                     // default: first order solver
                     default:
@@ -257,7 +257,6 @@ void CSDPNSolver::FluxUpdate() {
             }
         }
     }
-    // std::cout << "DONE." << std::endl;
 }
 
 void CSDPNSolver::FVMUpdate( unsigned idx_energy ) {
@@ -288,8 +287,8 @@ void CSDPNSolver::FVMUpdate( unsigned idx_energy ) {
     }
     // treat scattering implicitly
     if( implicitScattering ) {
-// loop over all spatial cells
-#pragma omp parallel for
+        // loop over all spatial cells
+        //#pragma omp parallel for
         for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
             // Dirichlet cells stay at IC, farfield assumption
             if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::DIRICHLET ) continue;
