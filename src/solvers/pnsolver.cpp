@@ -1,11 +1,11 @@
 #include "solvers/pnsolver.h"
 #include "common/config.h"
+#include "common/globalconstants.h"
 #include "common/io.h"
 #include "common/mesh.h"
 #include "fluxes/numericalflux.h"
 #include "toolboxes/errormessages.h"
 #include "toolboxes/textprocessingtoolbox.h"
-
 // externals
 #include "spdlog/spdlog.h"
 #include <mpi.h>
@@ -73,10 +73,10 @@ void PNSolver::ComputeRadFlux() {
 
 void PNSolver::FluxUpdate() {
 
-    // Vector solL( _nTotalEntries );
-    // Vector solR( _nTotalEntries );
-    auto solL = _sol[2];    // refactor! typesafety!
-    auto solR = _sol[2];
+    Vector solL( _nSystem, 0.0 );
+    Vector solR( _nSystem, 0.0 );
+    // auto solL = _sol[2];    // refactor! typesafety!
+    // auto solR = _sol[2];
 
     // Loop over all spatial cells
     for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
@@ -115,12 +115,12 @@ void PNSolver::FluxUpdate() {
                     case 2:
                         // left status of interface
                         for( unsigned idx_sys = 0; idx_sys < _nSystem; idx_sys++ ) {
-                            solL =
+                            solL[idx_sys] =
                                 _sol[idx_cell][idx_sys] +
                                 _limiter[idx_cell][idx_sys] *
                                     ( _solDx[idx_cell][idx_sys] * ( _interfaceMidPoints[idx_cell][idx_neighbor][0] - _cellMidPoints[idx_cell][0] ) +
                                       _solDy[idx_cell][idx_sys] * ( _interfaceMidPoints[idx_cell][idx_neighbor][1] - _cellMidPoints[idx_cell][1] ) );
-                            solR =
+                            solR[idx_sys] =
                                 _sol[nbr_glob][idx_sys] +
                                 _limiter[nbr_glob][idx_sys] *
                                     ( _solDx[nbr_glob][idx_sys] * ( _interfaceMidPoints[idx_cell][idx_neighbor][0] - _cellMidPoints[nbr_glob][0] ) +
@@ -400,6 +400,13 @@ void PNSolver::PrepareVolumeOutput() {
                     }
                 }
                 break;
+            case ANALYTIC:
+                // one entry per cell
+                _outputFields[idx_group].resize( 1 );
+                _outputFieldNames[idx_group].resize( 1 );
+                _outputFields[idx_group][0].resize( _nCells );
+                _outputFieldNames[idx_group][0] = std::string( "analytic radiation flux density" );
+                break;
             default: ErrorMessages::Error( "Volume Output Group not defined for PN Solver!", CURRENT_FUNCTION ); break;
         }
     }
@@ -424,6 +431,17 @@ void PNSolver::WriteVolumeOutput( unsigned idx_pseudoTime ) {
                         }
                     }
                     break;
+                case ANALYTIC:
+                    for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
+
+                        double time = idx_pseudoTime * _dE;
+
+                        _outputFields[idx_group][0][idx_cell] = _limiter[idx_cell][0];
+                        // _outputFields[idx_group][0][idx_cell] = _problem->GetAnalyticalSolution(
+                        //     _mesh->GetCellMidPoints()[idx_cell][0], _mesh->GetCellMidPoints()[idx_cell][1], time, _sigmaS[idx_iter][idx_cell] );
+                    }
+                    break;
+
                 default: ErrorMessages::Error( "Volume Output Group not defined for PN Solver!", CURRENT_FUNCTION ); break;
             }
         }

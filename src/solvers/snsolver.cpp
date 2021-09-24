@@ -278,17 +278,15 @@ void SNSolver::WriteVolumeOutput( unsigned idx_pseudoTime ) {
             switch( _settings->GetVolumeOutput()[idx_group] ) {
                 case MINIMAL:
                     for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
-                        _outputFields[idx_group][0][idx_cell] = _sol[idx_cell][0];    // _fluxNew[idx_cell];
+                        _outputFields[idx_group][0][idx_cell] = _fluxNew[idx_cell];
                     }
                     break;
 
                 case ANALYTIC:
                     for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
                         double time                           = idx_pseudoTime * _dE;
-                        _outputFields[idx_group][0][idx_cell] = _limiter[idx_cell][0];
-                        // _problem->GetAnalyticalSolution(
-                        //  _mesh->GetCellMidPoints()[idx_cell][0], _mesh->GetCellMidPoints()[idx_cell][1], time,
-                        //  _sigmaS[idx_pseudoTime][idx_cell] );
+                        _outputFields[idx_group][0][idx_cell] = _problem->GetAnalyticalSolution(
+                            _mesh->GetCellMidPoints()[idx_cell][0], _mesh->GetCellMidPoints()[idx_cell][1], time, _sigmaS[idx_pseudoTime][idx_cell] );
                     }
                     break;
 
