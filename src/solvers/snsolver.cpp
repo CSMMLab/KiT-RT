@@ -143,39 +143,12 @@ void SNSolver::FluxUpdate() {
                                 _limiter[idx_cell][idx_quad] *
                                     ( _solDx[idx_cell][idx_quad] * ( _interfaceMidPoints[idx_cell][idx_neighbor][0] - _cellMidPoints[idx_cell][0] ) +
                                       _solDy[idx_cell][idx_quad] * ( _interfaceMidPoints[idx_cell][idx_neighbor][1] - _cellMidPoints[idx_cell][1] ) );
-                            solL  = _sol[idx_cell][idx_quad];
-                            limit = _limiter[idx_cell][idx_quad];
-                            // std::cout << _psiDx[idx_cell][idx_quad] *
-                            //                     ( _interfaceMidPoints[idx_cell][idx_neighbor][0] - _cellMidPoints[idx_cell][0] ) +
-                            //                 _psiDy[idx_cell][idx_quad] *
-                            //                     ( _interfaceMidPoints[idx_cell][idx_neighbor][1] - _cellMidPoints[idx_cell][1] )
-                            //          << std::endl;
-                            // right status of interface
-
                             psiR =
                                 _sol[nbr_glob][idx_quad] +
                                 _limiter[nbr_glob][idx_quad] *
                                     ( _solDx[nbr_glob][idx_quad] * ( _interfaceMidPoints[idx_cell][idx_neighbor][0] - _cellMidPoints[nbr_glob][0] ) +
                                       _solDy[nbr_glob][idx_quad] * ( _interfaceMidPoints[idx_cell][idx_neighbor][1] - _cellMidPoints[nbr_glob][1] ) );
-                            solR   = _sol[nbr_glob][idx_quad];
-                            limitR = _limiter[nbr_glob][idx_quad];
 
-                            test = blaze::norm( _interfaceMidPoints[idx_cell][idx_neighbor] - _cellMidPoints[idx_cell] );
-                            std::cout << "distance to interface: " << test << "\n";
-
-                            // double test = sqrt( ( _interfaceMidPoints[idx_cell][idx_neighbor][0] - _cellMidPoints[nbr_glob][0] ) *
-                            //                        ( _interfaceMidPoints[idx_cell][idx_neighbor][0] - _cellMidPoints[nbr_glob][0] ) +
-                            //                    ( _interfaceMidPoints[idx_cell][idx_neighbor][1] - _cellMidPoints[nbr_glob][1] ) *
-                            //                        ( _interfaceMidPoints[idx_cell][idx_neighbor][1] - _cellMidPoints[nbr_glob][1] ) );
-                            if( solR != solL ) {
-                                // std::cout << "limit" << limit << std::endl;
-                                // std::cout << "limitR" << limitR << std::endl;
-                                // std::cout << "solL" << solL << std::endl;
-                                // std::cout << "solR" << solR << std::endl;
-                                // std::cout << "psiL" << psiL << std::endl;
-                                // std::cout << "psiR" << psiR << std::endl;
-                                // std::cout << "here\n";
-                            }
                             /*
                                                 // std::cout << "cell" << idx_cell << ":" << _interfaceMidPoints[idx_cell][idx_neighbor][0] -
                                _cellMidPoints[nbr_glob][0]

@@ -36,7 +36,7 @@ class Mesh
     std::vector<Vector> _cellMidPoints;                /*!< @brief cell midpoints of the mesh. dimension: numCells<dim>*/
     std::vector<std::vector<unsigned>> _cellNeighbors; /*!< @brief neighbors of each cell. dimension: numCells<numNodesPerCell>*/
     std::vector<std::vector<Vector>>
-        _interfaceMidPoints; /*!< @brief coordinates of the interface midpoints of all cells of the mesh  dimension:
+        _cellInterfaceMidPoints; /*!< @brief coordinates of the interface midpoints of all cells of the mesh  dimension:
                                 numCells<numNeighborsPerCell<nDim>>. interfaces of each cell are in same order as _cellNeighbors*/
 
     /*! @brief outward facing normals of each side of each cell. dimension: numCells<numNodesPerCell<dim>>, all
@@ -57,8 +57,9 @@ class Mesh
      *  @param cellCenter: Center of the cell that has nodeA and nodeB as nodes.
      *  @return outward facing normal */
     Vector ComputeOutwardFacingNormal( const Vector& nodeA, const Vector& nodeB, const Vector& cellCenter );
-    void ComputeBounds();                 /*!< @brief Computes the spatial bounds of a 2D domain. */
-    void ComputeCellInterfaceMidpoints(); /*!< @brief Computes the midpoints of all cell interfaces. */
+    void ComputeBounds(); /*!< @brief Computes the spatial bounds of a 2D domain. */
+    Vector ComputeCellInterfaceMidpoints( const Vector& nodeA,
+                                          const Vector& nodeB ); /*!< @brief compute the midpoint of the edge between nodeA and nodeB */
 
   public:
     Mesh() = delete;    //  no default constructor

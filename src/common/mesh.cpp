@@ -18,7 +18,7 @@ Mesh::Mesh( std::vector<Vector> nodes,
     ComputeCellMidpoints();
     ComputeConnectivity();
     ComputeBounds();
-    ComputeCellInterfaceMidpoints();
+    // ComputeCellInterfaceMidpoints();
 }
 
 Mesh::~Mesh() {}
@@ -39,6 +39,7 @@ void Mesh::ComputeConnectivity() {
     // 'part' vectors store information for each single MPI thread
     std::vector<int> neighborsFlatPart( _numNodesPerCell * chunkSize, -1 );
     std::vector<Vector> normalsFlatPart( _numNodesPerCell * chunkSize, Vector( _dim, -1.0 ) );
+    std::vector<Vector> interfaceMidFlatPart( _numNodesPerCell * chunkSize, Vector( _dim, -1.0 ) );
 
     // pre sort cells and boundaries; sorting is needed for std::set_intersection
     auto sortedCells( _cells );
@@ -85,7 +86,8 @@ void Mesh::ComputeConnectivity() {
                     pos++;    // neighbors should be at same edge position for cells i AND j
                 neighborsFlatPart[pos] = j;
                 // compute normal vector
-                normalsFlatPart[pos] = ComputeOutwardFacingNormal( _nodes[commonElements[0]], _nodes[commonElements[1]], _cellMidPoints[i] );
+                normalsFlatPart[pos]      = ComputeOutwardFacingNormal( _nodes[commonElements[0]], _nodes[commonElements[1]], _cellMidPoints[i] );
+                interfaceMidFlatPart[pos] = ComputeCellInterfaceMidpoints( _nodes[commonElements[0]], _nodes[commonElements[1]] );
                 ctr++;
             }
         }
@@ -107,8 +109,9 @@ void Mesh::ComputeConnectivity() {
                     unsigned pos0 = _numNodesPerCell * ( i - mpiCellStart );
                     unsigned pos  = pos0;
                     while( neighborsFlatPart[pos] != -1 && pos < pos0 + _numNodesPerCell - 1 && pos < chunkSize * _numNodesPerCell - 1 ) pos++;
-                    neighborsFlatPart[pos] = _ghostCellID;
-                    normalsFlatPart[pos]   = ComputeOutwardFacingNormal( _nodes[commonElements[0]], _nodes[commonElements[1]], _cellMidPoints[i] );
+                    neighborsFlatPart[pos]    = _ghostCellID;
+                    normalsFlatPart[pos]      = ComputeOutwardFacingNormal( _nodes[commonElements[0]], _nodes[commonElements[1]], _cellMidPoints[i] );
+                    interfaceMidFlatPart[pos] = ComputeCellInterfaceMidpoints( _nodes[commonElements[0]], _nodes[commonElements[1]] );
                 }
             }
         }
@@ -117,9 +120,11 @@ void Mesh::ComputeConnectivity() {
     // gather distributed data on all MPI threads
     std::vector<int> neighborsFlat( _numNodesPerCell * chunkSize * comm_size, -1 );
     std::vector<Vector> normalsFlat( _numNodesPerCell * chunkSize * comm_size, Vector( _dim, 0.0 ) );
+    std::vector<Vector> interfaceMidFlat( _numNodesPerCell * chunkSize * comm_size, Vector( _dim, 0.0 ) );
     if( comm_size == 1 ) {    // can be done directly if there is only one MPI thread
         neighborsFlat.assign( neighborsFlatPart.begin(), neighborsFlatPart.end() );
         normalsFlat.assign( normalsFlatPart.begin(), normalsFlatPart.end() );
+        interfaceMidFlat.assign( interfaceMidFlatPart.begin(), interfaceMidFlatPart.end() );
     }
     else {
         MPI_Allgather( neighborsFlatPart.data(),
@@ -141,6 +146,8 @@ void Mesh::ComputeConnectivity() {
     // reorder neighbors and normals into nested structure
     _cellNeighbors.resize( _numCells );
     _cellNormals.resize( _numCells );
+    _cellInterfaceMidPoints.resize( _numCells );
+
     for( unsigned i = 0; i < neighborsFlat.size(); ++i ) {
         unsigned IDi = static_cast<unsigned>( i / static_cast<double>( _numNodesPerCell ) );
         unsigned IDj = neighborsFlat[i];
@@ -149,12 +156,14 @@ void Mesh::ComputeConnectivity() {
             if( std::find( _cellNeighbors[IDi].begin(), _cellNeighbors[IDi].end(), _ghostCellID ) == _cellNeighbors[IDi].end() ) {
                 _cellNeighbors[IDi].push_back( _ghostCellID );
                 _cellNormals[IDi].push_back( normalsFlat[i] );
+                _cellInterfaceMidPoints[IDi].push_back( interfaceMidFlat[i] );
             }
         }
         else {    // normal cell neighbor
             if( std::find( _cellNeighbors[IDi].begin(), _cellNeighbors[IDi].end(), IDj ) == _cellNeighbors[IDi].end() ) {
                 _cellNeighbors[IDi].push_back( IDj );
                 _cellNormals[IDi].push_back( normalsFlat[i] );
+                _cellInterfaceMidPoints[IDi].push_back( interfaceMidFlat[i] );
             }
         }
     }
@@ -224,20 +233,10 @@ void Mesh::ComputeCellMidpoints() {
     }
 }
 
-void Mesh::ComputeCellInterfaceMidpoints() {
-    std::vector<std::vector<Vector>> interfaceMidPoints( _numCells, std::vector<Vector>( _numNodesPerCell, Vector( _dim, 0.0 ) ) );
-    // should be computed in Mesh class!
-    for( unsigned idx_cell = 0; idx_cell < _numCells; ++idx_cell ) {
-        for( unsigned idx_dim = 0; idx_dim < _dim; ++idx_dim ) {
-            for( unsigned idx_node = 0; idx_node < _numNodesPerCell - 1; ++idx_node ) {
-                interfaceMidPoints[idx_cell][idx_node][idx_dim] =
-                    0.5 * ( _nodes[_cells[idx_cell][idx_node]][idx_dim] + _nodes[_cells[idx_cell][idx_node + 1]][idx_dim] );
-            }
-            interfaceMidPoints[idx_cell][_numNodesPerCell - 1][idx_dim] =
-                0.5 * ( _nodes[_cells[idx_cell][_numNodesPerCell - 1]][idx_dim] + _nodes[_cells[idx_cell][0]][idx_dim] );
-        }
-    }
-    _interfaceMidPoints = interfaceMidPoints;
+Vector Mesh::ComputeCellInterfaceMidpoints( const Vector& nodeA, const Vector& nodeB ) {
+    Vector interfaceMidPt( _dim, 0.0 );
+    interfaceMidPt = 0.5 * ( nodeA + nodeB );
+    return interfaceMidPt;
 }
 
 Vector Mesh::ComputeOutwardFacingNormal( const Vector& nodeA, const Vector& nodeB, const Vector& cellCenter ) {
@@ -332,8 +331,8 @@ void Mesh::ComputeLimiter(
                 double gaussPt = 0.0;
                 double dy      = solDy[idx_cell][idx_sys];
                 double dx      = solDx[idx_cell][idx_sys];
-                double rijx    = _interfaceMidPoints[idx_cell][idx_nbr][0];
-                double rijy    = _interfaceMidPoints[idx_cell][idx_nbr][1];
+                double rijx    = _cellInterfaceMidPoints[idx_cell][idx_nbr][0];
+                double rijy    = _cellInterfaceMidPoints[idx_cell][idx_nbr][1];
                 double cmx     = _cellMidPoints[idx_cell][0];
                 double cmy     = _cellMidPoints[idx_cell][1];
                 double curSol  = sol[idx_cell][idx_sys];
@@ -393,13 +392,13 @@ void Mesh::ComputeLimiter(
                 double currLim = limiter[idx_cell][idx_sys];
                 double dy      = solDy[idx_cell][idx_sys];
                 double dx      = solDx[idx_cell][idx_sys];
-                double rijx    = _interfaceMidPoints[idx_cell][idx_nbr][0];
-                double rijy    = _interfaceMidPoints[idx_cell][idx_nbr][1];
+                double rijx    = _cellInterfaceMidPoints[idx_cell][idx_nbr][0];
+                double rijy    = _cellInterfaceMidPoints[idx_cell][idx_nbr][1];
                 double cmx     = _cellMidPoints[idx_cell][0];
                 double cmy     = _cellMidPoints[idx_cell][1];
                 double curSol  = sol[idx_cell][idx_sys];
-                double gaussPt = solDx[idx_cell][idx_sys] * ( _interfaceMidPoints[idx_cell][idx_nbr][0] - _cellMidPoints[idx_cell][0] ) +
-                                 solDy[idx_cell][idx_sys] * ( _interfaceMidPoints[idx_cell][idx_nbr][1] - _cellMidPoints[idx_cell][1] );
+                double gaussPt = solDx[idx_cell][idx_sys] * ( _cellInterfaceMidPoints[idx_cell][idx_nbr][0] - _cellMidPoints[idx_cell][0] ) +
+                                 solDy[idx_cell][idx_sys] * ( _cellInterfaceMidPoints[idx_cell][idx_nbr][1] - _cellMidPoints[idx_cell][1] );
 
                 double psiL  = sol[idx_cell][idx_sys] + currLim * gaussPt;
                 double psiL2 = curSol + currLim * ( dx * ( rijx - cmx ) + dy * ( rijy - cmy ) );
@@ -628,7 +627,7 @@ const std::vector<std::vector<unsigned>>& Mesh::GetNeighbours() const { return _
 const std::vector<std::vector<Vector>>& Mesh::GetNormals() const { return _cellNormals; }
 const std::vector<BOUNDARY_TYPE>& Mesh::GetBoundaryTypes() const { return _cellBoundaryTypes; }
 const std::vector<std::pair<double, double>> Mesh::GetBounds() const { return _bounds; }
-const std::vector<std::vector<Vector>> Mesh::GetInterfaceMidPoints() const { return _interfaceMidPoints; }
+const std::vector<std::vector<Vector>> Mesh::GetInterfaceMidPoints() const { return _cellInterfaceMidPoints; }
 
 double Mesh::GetDistanceToOrigin( unsigned idx_cell ) const {
     double distance = 0.0;

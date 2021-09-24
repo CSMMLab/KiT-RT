@@ -98,6 +98,11 @@ class SolverBase
          @param idx_iter  current (peudo) time iteration */
     virtual void FVMUpdate( unsigned idx_iter ) = 0;
 
+    // High order spatial reconstruction
+    void ComputeGradients( unsigned nSys );               /*!<  @brief Computes the cell gradient using green gauss theorem */
+    void ComputeLimiter();                                /*!< @brief Compute the slope limiter for all cells */
+    void ComputeInterfaceValue( const unsigned idx_nbr ); /*!< @brief Compute the slope values at the interface to neighbor idx_nbr */
+
     // Helper
     /*! @brief ComputeTimeStep calculates the maximal stable time step using the cfl number
         @param cfl Courant-Friedrichs-Levy condition number */
