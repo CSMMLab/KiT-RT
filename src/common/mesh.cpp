@@ -329,13 +329,13 @@ void Mesh::ComputeLimiter(
                     // std::cout << "here\n";
                 }
                 double gaussPt = 0.0;
-                double dy      = solDy[idx_cell][idx_sys];
-                double dx      = solDx[idx_cell][idx_sys];
-                double rijx    = _cellInterfaceMidPoints[idx_cell][idx_nbr][0];
-                double rijy    = _cellInterfaceMidPoints[idx_cell][idx_nbr][1];
-                double cmx     = _cellMidPoints[idx_cell][0];
-                double cmy     = _cellMidPoints[idx_cell][1];
-                double curSol  = sol[idx_cell][idx_sys];
+                // double dy      = solDy[idx_cell][idx_sys];
+                // double dx      = solDx[idx_cell][idx_sys];
+                // double rijx    = _cellInterfaceMidPoints[idx_cell][idx_nbr][0];
+                // double rijy    = _cellInterfaceMidPoints[idx_cell][idx_nbr][1];
+                // double cmx     = _cellMidPoints[idx_cell][0];
+                // double cmy     = _cellMidPoints[idx_cell][1];
+                // double curSol  = sol[idx_cell][idx_sys];
                 //_nodes[_cells[idx_cell][idx_nbr]]
                 // _interfaceMidPoints[idx_cell][idx_nbr]
                 // gauss point is at cell vertex
@@ -349,12 +349,10 @@ void Mesh::ComputeLimiter(
 
                 if( std::abs( gaussPt ) > eps ) {
                     if( gaussPt > 0.0 ) {
-                        double t1 = maxSol - sol[idx_cell][idx_sys];
-                        r         = ( maxSol - sol[idx_cell][idx_sys] ) / gaussPt;
+                        r = ( maxSol - sol[idx_cell][idx_sys] ) / gaussPt;
                     }
                     else if( gaussPt < 0.0 ) {
-                        double t1 = minSol - sol[idx_cell][idx_sys];
-                        r         = ( minSol - sol[idx_cell][idx_sys] ) / gaussPt;
+                        r = ( minSol - sol[idx_cell][idx_sys] ) / gaussPt;
                     }
                 }
                 else {
