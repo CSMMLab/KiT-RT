@@ -71,9 +71,7 @@ void SNSolver::FluxUpdate() {
                         _g->Flux( _quadPoints[idx_quad], _sol[idx_cell][idx_quad], _sol[idx_cell][idx_quad], _normals[idx_cell][idx_nbr] );
                 else {
                     unsigned int nbr_glob = _neighbors[idx_cell][idx_nbr];    // global idx of neighbor cell
-                    double eps            = 1e-10;
-                    double limitR, limit;
-                    double test = 0.0;
+
                     switch( _reconsOrder ) {
                         // first order solver
                         case 1:

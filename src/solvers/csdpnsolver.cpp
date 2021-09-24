@@ -241,6 +241,7 @@ void CSDPNSolver::FluxUpdate() {
                                                        solL / _density[idx_cell],
                                                        solR / _density[_neighbors[idx_cell][idx_neighbor]],
                                                        _normals[idx_cell][idx_neighbor] );
+                        break;
                     // default: first order solver
                     default:
                         _solNew[idx_cell] += _g->Flux( _AxPlus,

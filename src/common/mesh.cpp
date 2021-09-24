@@ -273,9 +273,8 @@ void Mesh::ComputeSlopes( unsigned nq, VectorVector& psiDerX, VectorVector& psiD
 
 void Mesh::ComputeLimiter(
     unsigned nSys, const VectorVector& solDx, const VectorVector& solDy, const VectorVector& sol, VectorVector& limiter ) const {
-    double r    = 0.0;
-    double eps  = 1e-7;
-    double sign = 0.0;
+    double r   = 0.0;
+    double eps = 1e-10;
     for( unsigned idx_cell = 0; idx_cell < _numCells; idx_cell++ ) {
         for( unsigned idx_sys = 0; idx_sys < nSys; idx_sys++ ) {
             if( _cellBoundaryTypes[idx_cell] != 2 ) {
@@ -302,10 +301,6 @@ void Mesh::ComputeLimiter(
                 gaussPt = solDx[idx_cell][idx_sys] * ( _nodes[_cells[idx_cell][idx_nbr]][0] - _cellMidPoints[idx_cell][0] ) +
                           solDy[idx_cell][idx_sys] * ( _nodes[_cells[idx_cell][idx_nbr]][1] - _cellMidPoints[idx_cell][1] );
                 // Compute limiter input
-                if( gaussPt < 0.0 )
-                    sign = -1.0;
-                else
-                    sign = 1.0;
 
                 if( std::abs( gaussPt ) > eps ) {
                     if( gaussPt > 0.0 ) {
