@@ -59,7 +59,7 @@ include_directories( ${CMAKE_SOURCE_DIR}/ext/blaze )
 include_directories( ${CMAKE_SOURCE_DIR}/ext/cpptoml/include )
 include_directories( ${CMAKE_SOURCE_DIR}/ext/spdlog/include )
 
-set( CORE_LIBRARIES ${Python3_LIBRARIES} ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} ${MPI_LIBRARIES} ${VTK_LIBRARIES} OpenMP::OpenMP_CXX -lstdc++fs )
+set( CORE_LIBRARIES ${Python3_LIBRARIES} ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} ${MPI_LIBRARIES} ${VTK_LIBRARIES} OpenMP::OpenMP_CXX -lc++abi )
 #################################################
 
 
