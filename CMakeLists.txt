@@ -59,7 +59,13 @@ include_directories( ${CMAKE_SOURCE_DIR}/ext/blaze )
 include_directories( ${CMAKE_SOURCE_DIR}/ext/cpptoml/include )
 include_directories( ${CMAKE_SOURCE_DIR}/ext/spdlog/include )
 
-set( CORE_LIBRARIES ${Python3_LIBRARIES} ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} ${MPI_LIBRARIES} ${VTK_LIBRARIES} OpenMP::OpenMP_CXX -lstdc++fs )
+if( CMAKE_CXX_COMPILER_ID MATCHES "AppleClang" )
+    set( FILESYSTEM_LIBRARIES "-lc++abi" )
+else()
+    set( FILESYSTEM_LIBRARIES "-lstdc++fs" )
+endif()
+
+set( CORE_LIBRARIES ${Python3_LIBRARIES} ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} ${MPI_LIBRARIES} ${VTK_LIBRARIES} ${FILESYSTEM_LIBRARIES} OpenMP::OpenMP_CXX  )
 #################################################
 
 
