@@ -1,6 +1,7 @@
 ### Project specific ###
 *.cfg
 bin/*
+*.su2
 
 ### C++ ###
 # Prerequisites
