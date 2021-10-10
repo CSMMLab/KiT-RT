@@ -24,12 +24,16 @@ def generate(image_name, mesh_name):
     char_length = min(xRes,yRes)*10 #arbitrary
     geom = pg.opencascade.Geometry()
     domain = add_rectangle(0.0, 0.0, dimensions[0], dimensions[1], char_length, geom)
+    ##
+    points:list = []
+    pg2 = geom.add_point((70.0,55,0))
+    ##
     geom.add_physical(domain.lines, label="void")
 
     mesh_code = geom.get_code()
     with open(mesh_name+".geo","w") as mesh_file:
         mesh_file.write(mesh_code,)
-    os.system('gmsh '+mesh_name+'.geo -2 -format su2 -save_all > /dev/null')
+    os.system('gmsh '+mesh_name+'.geo -2 -format su2 -save_all > /dev/null') # call gmsh
     os.system('rm '+mesh_name+'.geo > /dev/null')
 
     return gsImage

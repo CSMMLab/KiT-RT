@@ -107,7 +107,7 @@ void DataGeneratorBase::SampleMultiplierAlpha() {
         std::default_random_engine generator;
         std::uniform_real_distribution<double> distribution( -1 * maxAlphaValue, maxAlphaValue );
         double mean   = 0.0;
-        double stddev = maxAlphaValue / 2.0;
+        double stddev = maxAlphaValue / 3.0;
         std::normal_distribution<double> distribution_normal( mean, stddev );
 
         // Can be parallelized, but check if there is a race condition with datagenerator
@@ -152,8 +152,8 @@ void DataGeneratorBase::SampleMultiplierAlpha() {
 
     // Cubeoid
     /*
-    double minAlphaValue = -20;
-    double maxAlphaValue = 20;
+    double minAlphaValue = -1 * maxAlphaValue;
+    // double maxAlphaValue = maxAlphaValue;
     if( _settings->GetNormalizedSampling() ) {
         // compute reduced version of alpha and m
         if( _maxPolyDegree == 0 ) {
@@ -170,8 +170,9 @@ void DataGeneratorBase::SampleMultiplierAlpha() {
         }
 
         // Sample alphaRed as uniform grid from [minAlphaValue, maxAlphaValue], then compute alpha_0 s.t. u_0 = 1
-        double dalpha  = ( maxAlphaValue - minAlphaValue ) / (double)_gridSize;
-        unsigned count = 0;
+        double _gridSize = floor( pow( (double)_setSize, 1 / (double)( _nTotalEntries - 1 ) ) );
+        double dalpha    = ( maxAlphaValue - minAlphaValue ) / (double)_gridSize;
+        unsigned count   = 0;
 
         switch( _nTotalEntries - 1 ) {
             case 1:
