@@ -1,5 +1,6 @@
 ### Project specific ###
 *.cfg
+bin/*
 
 ### C++ ###
 # Prerequisites
