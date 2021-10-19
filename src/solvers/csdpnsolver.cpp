@@ -233,10 +233,11 @@ void CSDPNSolver::FluxUpdate() {
                                 _limiter[idx_cell][idx_sys] *
                                     ( _solDx[idx_cell][idx_sys] * ( _interfaceMidPoints[idx_cell][idx_neighbor][0] - _cellMidPoints[idx_cell][0] ) +
                                       _solDy[idx_cell][idx_sys] * ( _interfaceMidPoints[idx_cell][idx_neighbor][1] - _cellMidPoints[idx_cell][1] ) );
-                            solR[idx_sys] = _sol[nbr_glob][idx_sys] / _density[nbr_glob];
-                            +_limiter[nbr_glob][idx_sys] *
-                                ( _solDx[nbr_glob][idx_sys] * ( _interfaceMidPoints[idx_cell][idx_neighbor][0] - _cellMidPoints[nbr_glob][0] ) +
-                                  _solDy[nbr_glob][idx_sys] * ( _interfaceMidPoints[idx_cell][idx_neighbor][1] - _cellMidPoints[nbr_glob][1] ) );
+                            solR[idx_sys] =
+                                _sol[nbr_glob][idx_sys] / _density[nbr_glob] +
+                                _limiter[nbr_glob][idx_sys] *
+                                    ( _solDx[nbr_glob][idx_sys] * ( _interfaceMidPoints[idx_cell][idx_neighbor][0] - _cellMidPoints[nbr_glob][0] ) +
+                                      _solDy[nbr_glob][idx_sys] * ( _interfaceMidPoints[idx_cell][idx_neighbor][1] - _cellMidPoints[nbr_glob][1] ) );
                         }
                         // flux evaluation
                         _solNew[idx_cell] +=

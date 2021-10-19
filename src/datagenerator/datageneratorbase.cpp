@@ -128,7 +128,7 @@ void DataGeneratorBase::SampleMultiplierAlpha() {
                 }
                 // Compute alpha_0 = log(<exp(alpha m )>) // for maxwell boltzmann! only
                 double integral = 0.0;
-                // Integrate (eta(eta'_*(alpha*m))
+                // Integrate <eta'_*(alpha*m)>
                 for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
                     integral += _entropy->EntropyPrimeDual( dot( alphaRed, momentsRed[idx_quad] ) ) * _weights[idx_quad];
                 }
@@ -264,6 +264,7 @@ void DataGeneratorBase::ComputeRealizableSolution() {
             // Make entropyReconstruction a member vector, s.t. it does not have to be re-evaluated in ConstructFlux
             entropyReconstruction = _entropy->EntropyPrimeDual( blaze::dot( _alpha[idx_sol], _momentBasis[idx_quad] ) );
             _uSol[idx_sol] += _momentBasis[idx_quad] * ( _weights[idx_quad] * entropyReconstruction );
+            // std::cout << _momentBasis[idx_quad] << std::endl;
         }
     }
 }

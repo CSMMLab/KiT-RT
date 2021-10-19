@@ -113,6 +113,7 @@ void DataGeneratorRegression::ComputeTrainingData() {
     log->info( "| Compute entropies." );
 
     // --- compute entropy functional ---
+    // ComputeEntropyH_dual();
     ComputeEntropyH_primal();
 
     log->info( "| Print Solution." );
