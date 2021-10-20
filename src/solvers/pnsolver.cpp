@@ -4,6 +4,7 @@
 #include "common/io.h"
 #include "common/mesh.h"
 #include "fluxes/numericalflux.h"
+#include "problems/problembase.h"
 #include "toolboxes/errormessages.h"
 #include "toolboxes/textprocessingtoolbox.h"
 // externals
