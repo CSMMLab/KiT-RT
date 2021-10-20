@@ -24,10 +24,6 @@ def generate(image_name, mesh_name):
     char_length = min(xRes,yRes)*10 #arbitrary
     geom = pg.opencascade.Geometry()
     domain = add_rectangle(0.0, 0.0, dimensions[0], dimensions[1], char_length, geom)
-    ##
-    points:list = []
-    pg2 = geom.add_point((70.0,55,0))
-    ##
     geom.add_physical(domain.lines, label="void")
 
     mesh_code = geom.get_code()
