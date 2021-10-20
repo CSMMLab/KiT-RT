@@ -196,7 +196,6 @@ void DataGeneratorRegression::PrintTrainingData() {
 void DataGeneratorRegression::ComputeSetSizeAlpha() {
     if( _settings->GetSizeByDimension() ) {
         _setSize = _gridSize;
-
         for( unsigned i = 0; i < _nTotalEntries - 2; i++ ) {
             _setSize *= _gridSize;
         }

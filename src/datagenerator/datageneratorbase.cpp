@@ -107,7 +107,7 @@ void DataGeneratorBase::SampleMultiplierAlpha() {
         std::default_random_engine generator;
         std::uniform_real_distribution<double> distribution( -1 * maxAlphaValue, maxAlphaValue );
         double mean   = 0.0;
-        double stddev = maxAlphaValue / 3.0;
+        double stddev = maxAlphaValue / 6.0;
         std::normal_distribution<double> distribution_normal( mean, stddev );
 
         // Can be parallelized, but check if there is a race condition with datagenerator
