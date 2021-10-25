@@ -6,7 +6,9 @@ Quadratures
 
    quadraturebase
    qgausslegendre1D
+   qgausschebyshev1D
    qgausslegendretensorized
+   qgausslegendretensorized2D
    qldfesa
    qlebedev
    qlevelsymmetric
