@@ -6,6 +6,7 @@
 #include "fluxes/numericalflux.h"
 #include "problems/problembase.h"
 #include "quadratures/quadraturebase.h"
+#include "solvers/csdpnsolver.h"
 #include "solvers/csdsnsolver.h"
 #include "solvers/csdsolvertrafofp.h"
 #include "solvers/csdsolvertrafofp2d.h"
@@ -87,7 +88,6 @@ SolverBase::SolverBase( Config* settings ) {
 
     // write density
     _density = _problem->GetDensity( _mesh->GetCellMidPoints() );
-
 }
 
 SolverBase::~SolverBase() {
@@ -281,7 +281,6 @@ void SolverBase::WriteScalarOutput( unsigned iteration ) {
             case RMS_FLUX:
                 if( screenOutputFields.end() == itScreenOutput ) {
                     _screenOutputFields[idx_field] = blaze::l2Norm( _fluxNew - _flux );
-
                 }
                 else {
                     _historyOutputFields[idx_field] = *itScreenOutput;
