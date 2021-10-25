@@ -64,6 +64,11 @@ class SolverBase
     Vector _fluxNew;      /*!< @brief Vector to store the new Flux. Dim _nCells */
     Vector _flux;         /*!< @brief Vector to store the old Flux. Dim _nCells*/
 
+    //  solution gradient and limiter for each cell and each system var. dim: _nCells x nSys. nSys depents on the solver (either moments or quadpts)
+    VectorVector _solDx;   /*!< @brief  solution gradient in x direction*/
+    VectorVector _solDy;   /*!< @brief  solution gradient in y direction*/
+    VectorVector _limiter; /*! < @brief slope limiter at cell and system pt */
+
     std::vector<double> _solverOutput; /*!< @brief LEGACY: Outputfield for solver ==> Will be replaced by _outputFields in the near future */
 
     // Output related members

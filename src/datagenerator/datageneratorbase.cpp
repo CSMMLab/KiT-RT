@@ -107,7 +107,7 @@ void DataGeneratorBase::SampleMultiplierAlpha() {
         std::default_random_engine generator;
         std::uniform_real_distribution<double> distribution( -1 * maxAlphaValue, maxAlphaValue );
         double mean   = 0.0;
-        double stddev = maxAlphaValue / 2.0;
+        double stddev = maxAlphaValue / 6.0;
         std::normal_distribution<double> distribution_normal( mean, stddev );
 
         // Can be parallelized, but check if there is a race condition with datagenerator
@@ -128,7 +128,7 @@ void DataGeneratorBase::SampleMultiplierAlpha() {
                 }
                 // Compute alpha_0 = log(<exp(alpha m )>) // for maxwell boltzmann! only
                 double integral = 0.0;
-                // Integrate (eta(eta'_*(alpha*m))
+                // Integrate <eta'_*(alpha*m)>
                 for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
                     integral += _entropy->EntropyPrimeDual( dot( alphaRed, momentsRed[idx_quad] ) ) * _weights[idx_quad];
                 }
@@ -152,8 +152,8 @@ void DataGeneratorBase::SampleMultiplierAlpha() {
 
     // Cubeoid
     /*
-    double minAlphaValue = -20;
-    double maxAlphaValue = 20;
+    double minAlphaValue = -1 * maxAlphaValue;
+    // double maxAlphaValue = maxAlphaValue;
     if( _settings->GetNormalizedSampling() ) {
         // compute reduced version of alpha and m
         if( _maxPolyDegree == 0 ) {
@@ -170,8 +170,9 @@ void DataGeneratorBase::SampleMultiplierAlpha() {
         }
 
         // Sample alphaRed as uniform grid from [minAlphaValue, maxAlphaValue], then compute alpha_0 s.t. u_0 = 1
-        double dalpha  = ( maxAlphaValue - minAlphaValue ) / (double)_gridSize;
-        unsigned count = 0;
+        double _gridSize = floor( pow( (double)_setSize, 1 / (double)( _nTotalEntries - 1 ) ) );
+        double dalpha    = ( maxAlphaValue - minAlphaValue ) / (double)_gridSize;
+        unsigned count   = 0;
 
         switch( _nTotalEntries - 1 ) {
             case 1:
@@ -263,6 +264,7 @@ void DataGeneratorBase::ComputeRealizableSolution() {
             // Make entropyReconstruction a member vector, s.t. it does not have to be re-evaluated in ConstructFlux
             entropyReconstruction = _entropy->EntropyPrimeDual( blaze::dot( _alpha[idx_sol], _momentBasis[idx_quad] ) );
             _uSol[idx_sol] += _momentBasis[idx_quad] * ( _weights[idx_quad] * entropyReconstruction );
+            // std::cout << _momentBasis[idx_quad] << std::endl;
         }
     }
 }

@@ -13,9 +13,6 @@ class SNSolver : public SolverBase
     VectorVector _quadPoints; /*!<  @brief quadrature points, dim(_quadPoints) = (_nq,spatialDim) */
     Vector _weights;          /*!<  @brief quadrature weights, dim(_weights) = (_nq) */
 
-    VectorVector _psiDx; /*!< @brief slope of solutions in X direction */
-    VectorVector _psiDy; /*!< @brief slope of solutions in Y direction */
-
   public:
     /*! @brief SNSolver constructor
      * @param settings stores all needed information

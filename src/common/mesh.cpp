@@ -18,6 +18,7 @@ Mesh::Mesh( std::vector<Vector> nodes,
     ComputeCellMidpoints();
     ComputeConnectivity();
     ComputeBounds();
+    // ComputeCellInterfaceMidpoints();
 }
 
 Mesh::~Mesh() {}
@@ -38,6 +39,7 @@ void Mesh::ComputeConnectivity() {
     // 'part' vectors store information for each single MPI thread
     std::vector<int> neighborsFlatPart( _numNodesPerCell * chunkSize, -1 );
     std::vector<Vector> normalsFlatPart( _numNodesPerCell * chunkSize, Vector( _dim, -1.0 ) );
+    std::vector<Vector> interfaceMidFlatPart( _numNodesPerCell * chunkSize, Vector( _dim, -1.0 ) );
 
     // pre sort cells and boundaries; sorting is needed for std::set_intersection
     auto sortedCells( _cells );
@@ -84,7 +86,8 @@ void Mesh::ComputeConnectivity() {
                     pos++;    // neighbors should be at same edge position for cells i AND j
                 neighborsFlatPart[pos] = j;
                 // compute normal vector
-                normalsFlatPart[pos] = ComputeOutwardFacingNormal( _nodes[commonElements[0]], _nodes[commonElements[1]], _cellMidPoints[i] );
+                normalsFlatPart[pos]      = ComputeOutwardFacingNormal( _nodes[commonElements[0]], _nodes[commonElements[1]], _cellMidPoints[i] );
+                interfaceMidFlatPart[pos] = ComputeCellInterfaceMidpoints( _nodes[commonElements[0]], _nodes[commonElements[1]] );
                 ctr++;
             }
         }
@@ -106,8 +109,9 @@ void Mesh::ComputeConnectivity() {
                     unsigned pos0 = _numNodesPerCell * ( i - mpiCellStart );
                     unsigned pos  = pos0;
                     while( neighborsFlatPart[pos] != -1 && pos < pos0 + _numNodesPerCell - 1 && pos < chunkSize * _numNodesPerCell - 1 ) pos++;
-                    neighborsFlatPart[pos] = _ghostCellID;
-                    normalsFlatPart[pos]   = ComputeOutwardFacingNormal( _nodes[commonElements[0]], _nodes[commonElements[1]], _cellMidPoints[i] );
+                    neighborsFlatPart[pos]    = _ghostCellID;
+                    normalsFlatPart[pos]      = ComputeOutwardFacingNormal( _nodes[commonElements[0]], _nodes[commonElements[1]], _cellMidPoints[i] );
+                    interfaceMidFlatPart[pos] = ComputeCellInterfaceMidpoints( _nodes[commonElements[0]], _nodes[commonElements[1]] );
                 }
             }
         }
@@ -116,9 +120,11 @@ void Mesh::ComputeConnectivity() {
     // gather distributed data on all MPI threads
     std::vector<int> neighborsFlat( _numNodesPerCell * chunkSize * comm_size, -1 );
     std::vector<Vector> normalsFlat( _numNodesPerCell * chunkSize * comm_size, Vector( _dim, 0.0 ) );
+    std::vector<Vector> interfaceMidFlat( _numNodesPerCell * chunkSize * comm_size, Vector( _dim, 0.0 ) );
     if( comm_size == 1 ) {    // can be done directly if there is only one MPI thread
         neighborsFlat.assign( neighborsFlatPart.begin(), neighborsFlatPart.end() );
         normalsFlat.assign( normalsFlatPart.begin(), normalsFlatPart.end() );
+        interfaceMidFlat.assign( interfaceMidFlatPart.begin(), interfaceMidFlatPart.end() );
     }
     else {
         MPI_Allgather( neighborsFlatPart.data(),
@@ -140,6 +146,8 @@ void Mesh::ComputeConnectivity() {
     // reorder neighbors and normals into nested structure
     _cellNeighbors.resize( _numCells );
     _cellNormals.resize( _numCells );
+    _cellInterfaceMidPoints.resize( _numCells );
+
     for( unsigned i = 0; i < neighborsFlat.size(); ++i ) {
         unsigned IDi = static_cast<unsigned>( i / static_cast<double>( _numNodesPerCell ) );
         unsigned IDj = neighborsFlat[i];
@@ -148,12 +156,14 @@ void Mesh::ComputeConnectivity() {
             if( std::find( _cellNeighbors[IDi].begin(), _cellNeighbors[IDi].end(), _ghostCellID ) == _cellNeighbors[IDi].end() ) {
                 _cellNeighbors[IDi].push_back( _ghostCellID );
                 _cellNormals[IDi].push_back( normalsFlat[i] );
+                _cellInterfaceMidPoints[IDi].push_back( interfaceMidFlat[i] );
             }
         }
         else {    // normal cell neighbor
             if( std::find( _cellNeighbors[IDi].begin(), _cellNeighbors[IDi].end(), IDj ) == _cellNeighbors[IDi].end() ) {
                 _cellNeighbors[IDi].push_back( IDj );
                 _cellNormals[IDi].push_back( normalsFlat[i] );
+                _cellInterfaceMidPoints[IDi].push_back( interfaceMidFlat[i] );
             }
         }
     }
@@ -215,12 +225,18 @@ void Mesh::ComputeCellAreas() {
 
 void Mesh::ComputeCellMidpoints() {
     _cellMidPoints = std::vector( _numCells, Vector( _dim, 0.0 ) );
-    for( unsigned j = 0; j < _numCells; ++j ) {
-        for( unsigned l = 0; l < _cells[j].size(); ++l ) {
+    for( unsigned j = 0; j < _numCells; ++j ) {               // loop over cells
+        for( unsigned l = 0; l < _cells[j].size(); ++l ) {    // loop over nodes of the cell
             _cellMidPoints[j] = _cellMidPoints[j] + _nodes[_cells[j][l]];
         }
-        _cellMidPoints[j] = _cellMidPoints[j] / static_cast<double>( _cells[j].size() );
+        _cellMidPoints[j] = _cellMidPoints[j] / static_cast<double>( _cells[j].size() );    // arithmetic mean of node coord
     }
+}
+
+Vector Mesh::ComputeCellInterfaceMidpoints( const Vector& nodeA, const Vector& nodeB ) {
+    Vector interfaceMidPt( _dim, 0.0 );
+    interfaceMidPt = 0.5 * ( nodeA + nodeB );
+    return interfaceMidPt;
 }
 
 Vector Mesh::ComputeOutwardFacingNormal( const Vector& nodeA, const Vector& nodeB, const Vector& cellCenter ) {
@@ -235,151 +251,134 @@ Vector Mesh::ComputeOutwardFacingNormal( const Vector& nodeA, const Vector& node
 }
 
 void Mesh::ComputeSlopes( unsigned nq, VectorVector& psiDerX, VectorVector& psiDerY, const VectorVector& psi ) const {
-    for( unsigned k = 0; k < nq; ++k ) {
-        for( unsigned j = 0; j < _numCells; ++j ) {
-            psiDerX[j][k] = 0.0;
-            psiDerY[j][k] = 0.0;
+    for( unsigned idx_sys = 0; idx_sys < nq; ++idx_sys ) {
+        for( unsigned idx_cell = 0; idx_cell < _numCells; ++idx_cell ) {
+            psiDerX[idx_cell][idx_sys] = 0.0;
+            psiDerY[idx_cell][idx_sys] = 0.0;
 
             // if( cell->IsBoundaryCell() ) continue; // skip ghost cells
-            if( _cellBoundaryTypes[j] != 2 ) continue;    // skip ghost cells
+            if( _cellBoundaryTypes[idx_cell] != 2 ) continue;    // skip ghost cells
             // compute derivative by summing over cell boundary
-            for( unsigned l = 0; l < _cellNeighbors[j].size(); ++l ) {
-                psiDerX[j][k] = psiDerX[j][k] + 0.5 * ( psi[j][k] + psi[_cellNeighbors[j][l]][k] ) * _cellNormals[j][l][0] / _cellAreas[j];
-                psiDerY[j][k] = psiDerY[j][k] + 0.5 * ( psi[j][k] + psi[_cellNeighbors[j][l]][k] ) * _cellNormals[j][l][1] / _cellAreas[j];
+            for( unsigned idx_nbr = 0; idx_nbr < _cellNeighbors[idx_cell].size(); ++idx_nbr ) {
+                psiDerX[idx_cell][idx_sys] +=
+                    0.5 * ( psi[idx_cell][idx_sys] + psi[_cellNeighbors[idx_cell][idx_nbr]][idx_sys] ) * _cellNormals[idx_cell][idx_nbr][0];
+                psiDerY[idx_cell][idx_sys] +=
+                    0.5 * ( psi[idx_cell][idx_sys] + psi[_cellNeighbors[idx_cell][idx_nbr]][idx_sys] ) * _cellNormals[idx_cell][idx_nbr][1];
             }
+            psiDerX[idx_cell][idx_sys] /= _cellAreas[idx_cell];
+            psiDerY[idx_cell][idx_sys] /= _cellAreas[idx_cell];
         }
     }
 }
 
-void Mesh::ReconstructSlopesS( unsigned nq, VectorVector& psiDerX, VectorVector& psiDerY, const VectorVector& psi ) const {
-
-    double duxL;
-    double duyL;
-    double duxR;
-    double duyR;
-
-    for( unsigned k = 0; k < nq; ++k ) {
-        for( unsigned j = 0; j < _numCells; ++j ) {
-            // reset derivatives
-            psiDerX[j][k] = 0.0;
-            psiDerY[j][k] = 0.0;
-
-            // skip boundary cells
-            if( _cellBoundaryTypes[j] != 2 ) continue;
-
-            duxL = ( psi[j][k] - psi[_cellNeighbors[j][0]][k] ) / ( _cellMidPoints[j][0] - _cellMidPoints[_cellNeighbors[j][0]][0] + 1e-8 );
-            duyL = ( psi[j][k] - psi[_cellNeighbors[j][0]][k] ) / ( _cellMidPoints[j][1] - _cellMidPoints[_cellNeighbors[j][0]][1] + 1e-8 );
-
-            duxR = ( psi[j][k] - psi[_cellNeighbors[j][2]][k] ) / ( _cellMidPoints[j][0] - _cellMidPoints[_cellNeighbors[j][2]][0] + 1e-8 );
-            duyR = ( psi[j][k] - psi[_cellNeighbors[j][2]][k] ) / ( _cellMidPoints[j][1] - _cellMidPoints[_cellNeighbors[j][2]][1] + 1e-8 );
-
-            psiDerX[j][k] = LMinMod( duxL, duxR ) * 0.5;
-            psiDerY[j][k] = LMinMod( duyL, duyR ) * 0.5;
-        }
-    }
-}
-
-void Mesh::ReconstructSlopesU( unsigned nq, VectorVector& psiDerX, VectorVector& psiDerY, const VectorVector& psi ) const {
-
-    double phi;
-    // VectorVector dPsiMax = std::vector( _numCells, Vector( nq, 0.0 ) );
-    // VectorVector dPsiMin = std::vector( _numCells, Vector( nq, 0.0 ) );
-    VectorVector dPsiMax( _numCells, Vector( nq, 0.0 ) );
-    VectorVector dPsiMin( _numCells, Vector( nq, 0.0 ) );
-
-    std::vector<std::vector<Vector>> psiSample( _numCells, std::vector<Vector>( nq, Vector( _numNodesPerCell, 0.0 ) ) );
-    std::vector<std::vector<Vector>> phiSample( _numCells, std::vector<Vector>( nq, Vector( _numNodesPerCell, 0.0 ) ) );
-
-    for( unsigned k = 0; k < nq; ++k ) {
-        for( unsigned j = 0; j < _numCells; ++j ) {
-            // reset derivatives
-            psiDerX[j][k] = 0.0;
-            psiDerY[j][k] = 0.0;
-
-            // skip boundary cells
-            if( _cellBoundaryTypes[j] != 2 ) continue;
-
-            /*
-            // version 1: original taste
-            // step 1: calculate psi difference around neighbors and theoretical derivatives by Gauss theorem
-            for( unsigned l = 0; l < _cellNeighbors[j].size(); ++l ) {
-                if( psi[_cellNeighbors[j][l]][k] - psi[j][k] > dPsiMax[j][k] ) dPsiMax[j][k] = psi[_cellNeighbors[j][l]][k] - psi[j][k];
-                if( psi[_cellNeighbors[j][l]][k] - psi[j][k] < dPsiMin[j][k] ) dPsiMin[j][k] = psi[_cellNeighbors[j][l]][k] - psi[j][k];
-
-                psiDerX[j][k] += 0.5 * ( psi[j][k] + psi[_cellNeighbors[j][l]][k] ) * _cellNormals[j][l][0] / _cellAreas[j];
-                psiDerY[j][k] += 0.5 * ( psi[j][k] + psi[_cellNeighbors[j][l]][k] ) * _cellNormals[j][l][1] / _cellAreas[j];
+void Mesh::ComputeLimiter(
+    unsigned nSys, const VectorVector& solDx, const VectorVector& solDy, const VectorVector& sol, VectorVector& limiter ) const {
+    double r   = 0.0;
+    double eps = 1e-10;
+    for( unsigned idx_cell = 0; idx_cell < _numCells; idx_cell++ ) {
+        for( unsigned idx_sys = 0; idx_sys < nSys; idx_sys++ ) {
+            if( _cellBoundaryTypes[idx_cell] != 2 ) {
+                limiter[idx_cell][idx_sys] = 0.0;    // turn to first order on boundaries
+                continue;                            // skip computation
             }
-
-            for( unsigned l = 0; l < _cellNeighbors[j].size(); ++l ) {
-                // step 2: choose sample points
-                // psiSample[j][k][l] = 0.5 * ( psi[j][k] + psi[_cellNeighbors[j][l]][k] ); // interface central points
-                psiSample[j][k][l] = psi[j][k] +
-                                     psiDerX[j][k] * ( _nodes[_cells[j][l]][0] - _cellMidPoints[j][0] ) +
-                                     psiDerY[j][k] * ( _nodes[_cells[j][l]][1] - _cellMidPoints[j][1] );    // vertex points
-
-                // step 3: calculate Phi_ij at sample points
-                if( psiSample[j][k][l] > psi[j][k] ) {
-                    phiSample[j][k][l] = fmin( 1.0, dPsiMax[j][k] / ( psiSample[j][k][l] - psi[j][k] ) );
+            double minSol = sol[idx_cell][idx_sys];
+            double maxSol = sol[idx_cell][idx_sys];
+            Vector localLimiter( _numNodesPerCell, 0.0 );
+            for( unsigned idx_nbr = 0; idx_nbr < _cellNeighbors[idx_cell].size(); idx_nbr++ ) {
+                // Compute ptswise max and minimum solultion values of current and neighbor cells
+                unsigned glob_nbr = _cellNeighbors[idx_cell][idx_nbr];
+                if( sol[glob_nbr][idx_sys] > maxSol ) {
+                    maxSol = sol[glob_nbr][idx_sys];
                 }
-                else if( psiSample[j][l][k] < psi[j][k] ) {
-                    phiSample[j][k][l] = fmin( 1.0, dPsiMin[j][k] / ( psiSample[j][k][l] - psi[j][k] ) );
+                if( sol[glob_nbr][idx_sys] < minSol ) {
+                    minSol = sol[glob_nbr][idx_sys];
+                }
+            }
+            for( unsigned idx_nbr = 0; idx_nbr < _cellNeighbors[idx_cell].size(); idx_nbr++ ) {
+                // Compute value at interface midpoint, called gaussPt
+                double gaussPt = 0.0;
+                // gauss point is at cell vertex
+                gaussPt = solDx[idx_cell][idx_sys] * ( _nodes[_cells[idx_cell][idx_nbr]][0] - _cellMidPoints[idx_cell][0] ) +
+                          solDy[idx_cell][idx_sys] * ( _nodes[_cells[idx_cell][idx_nbr]][1] - _cellMidPoints[idx_cell][1] );
+                // Compute limiter input
+
+                if( std::abs( gaussPt ) > eps ) {
+                    if( gaussPt > 0.0 ) {
+                        r = ( maxSol - sol[idx_cell][idx_sys] ) / gaussPt;
+                    }
+                    else if( gaussPt < 0.0 ) {
+                        r = ( minSol - sol[idx_cell][idx_sys] ) / gaussPt;
+                    }
                 }
                 else {
-                    phiSample[j][k][l] = 1.0;
+                    r = 1.0;
+                }
+                if( r < 0.0 ) {
+                    std::cout << "r <0.0 \n";
+                }
+                localLimiter[idx_nbr] = std::min( r, 1.0 );    // LimiterBarthJespersen( r );
+                // double epsVenka = ( 1 * sqrt( _cellAreas[idx_cell] ) );
+                // epsVenka        = epsVenka * epsVenka * epsVenka;
+                // double dMax     = maxSol - sol[idx_cell][idx_sys];
+                // double dMin     = minSol - sol[idx_cell][idx_sys];
+                //// venkat limiter
+                // if( gaussPt > 0.0 ) {
+                //    localLimiter[idx_nbr] = ( 1 / gaussPt ) * ( ( dMax * dMax + epsVenka * epsVenka ) * gaussPt + 2 * gaussPt * gaussPt * dMax ) /
+                //                            ( dMax * dMax + 2 * gaussPt * gaussPt + dMax * gaussPt + epsVenka * epsVenka );
+                //}
+                // else if( gaussPt < 0.0 ) {
+                //    localLimiter[idx_nbr] = ( 1 / gaussPt ) * ( ( dMin * dMin + epsVenka * epsVenka ) * gaussPt + 2 * gaussPt * gaussPt * dMin ) /
+                //                            ( dMin * dMin + 2 * gaussPt * gaussPt + dMin * gaussPt + epsVenka * epsVenka );
+                //}
+                // else {
+                //    localLimiter[idx_nbr] = 1.0;
+                //}
+            }
+            // get smallest limiter
+            limiter[idx_cell][idx_sys] = localLimiter[0];
+            for( unsigned idx_nbr = 0; idx_nbr < _cellNeighbors[idx_cell].size(); idx_nbr++ ) {
+                if( localLimiter[idx_nbr] < limiter[idx_cell][idx_sys] ) limiter[idx_cell][idx_sys] = localLimiter[idx_nbr];
+            }
+            // check maximum principle
+            for( unsigned idx_nbr = 0; idx_nbr < _cellNeighbors[idx_cell].size(); idx_nbr++ ) {
+                double currLim = limiter[idx_cell][idx_sys];
+                // double dy      = solDy[idx_cell][idx_sys];
+                // double dx      = solDx[idx_cell][idx_sys];
+                // double rijx    = _cellInterfaceMidPoints[idx_cell][idx_nbr][0];
+                // double rijy    = _cellInterfaceMidPoints[idx_cell][idx_nbr][1];
+                // double cmx     = _cellMidPoints[idx_cell][0];
+                // double cmy     = _cellMidPoints[idx_cell][1];
+                // double curSol  = sol[idx_cell][idx_sys];
+                double gaussPt = solDx[idx_cell][idx_sys] * ( _cellInterfaceMidPoints[idx_cell][idx_nbr][0] - _cellMidPoints[idx_cell][0] ) +
+                                 solDy[idx_cell][idx_sys] * ( _cellInterfaceMidPoints[idx_cell][idx_nbr][1] - _cellMidPoints[idx_cell][1] );
+
+                double psiL = sol[idx_cell][idx_sys] + currLim * gaussPt;
+                // double psiL2 = curSol + currLim * ( dx * ( rijx - cmx ) + dy * ( rijy - cmy ) );
+
+                if( psiL > maxSol ) {
+                    // std::cout << "max principle hurt\n";
+                    // gaussPt = solDx[idx_cell][idx_sys] * ( _nodes[_cells[idx_cell][idx_nbr]][0] - _cellMidPoints[idx_cell][0] ) +
+                    //           solDy[idx_cell][idx_sys] * ( _nodes[_cells[idx_cell][idx_nbr]][1] - _cellMidPoints[idx_cell][1] );
+                    // std::cout << "gaussPt" << gaussPt << "\n";
+                    // std::cout << "enumMax" << maxSol - sol[idx_cell][idx_sys] << "\n";
+                    // std::cout << "enumMin" << minSol - sol[idx_cell][idx_sys] << "\n";
+                    // std::cout << "minSol" << minSol << "psiL" << psiL << "maxSol" << maxSol << "\n";
+                    // limiter[idx_cell][idx_sys] = 0.0;
+                }
+                if( psiL < minSol ) {
+                    // std::cout << "min principle hurt\n";
+                    // std::cout << "gaussPt" << gaussPt << "\n";
+                    // std::cout << "enumMax" << maxSol - sol[idx_cell][idx_sys] << "\n";
+                    // std::cout << "enumMin" << minSol - sol[idx_cell][idx_sys] << "\n";
+                    // std::cout << "minSol" << minSol << "psiL" << psiL << "maxSol" << maxSol << "\n";
+                    // limiter[idx_cell][idx_sys] = 0.0;
                 }
             }
-
-            // step 4: find minimum limiter function phi
-            phi = min( phiSample[j][k] );
-
-            // step 5: limit the slope reconstructed from Gauss theorem
-            psiDerX[j][k] *= phi;
-            psiDerY[j][k] *= phi;
-            */
-
-            double eps = 1e-6;
-            // version 2: Venkatakrishnan limiter
-            // step 1: calculate psi difference around neighbors and theoretical derivatives by Gauss theorem
-            for( unsigned l = 0; l < _cellNeighbors[j].size(); ++l ) {
-                if( psi[_cellNeighbors[j][l]][k] - psi[j][k] > dPsiMax[j][k] ) dPsiMax[j][k] = psi[_cellNeighbors[j][l]][k] - psi[j][k];
-                if( psi[_cellNeighbors[j][l]][k] - psi[j][k] < dPsiMin[j][k] ) dPsiMin[j][k] = psi[_cellNeighbors[j][l]][k] - psi[j][k];
-
-                psiDerX[j][k] += 0.5 * ( psi[j][k] + psi[_cellNeighbors[j][l]][k] ) * _cellNormals[j][l][0] / _cellAreas[j];
-                psiDerY[j][k] += 0.5 * ( psi[j][k] + psi[_cellNeighbors[j][l]][k] ) * _cellNormals[j][l][1] / _cellAreas[j];
-            }
-
-            for( unsigned l = 0; l < _cellNeighbors[j].size(); ++l ) {
-                // step 2: choose sample points
-                psiSample[j][k][l] = 10.0 * psiDerX[j][k] * ( _cellMidPoints[_cellNeighbors[j][l]][0] - _cellMidPoints[j][0] ) +
-                                     10.0 * psiDerY[j][k] * ( _cellMidPoints[_cellNeighbors[j][l]][1] - _cellMidPoints[j][1] );
-
-                // step 3: calculate Phi_ij at sample points
-                if( psiSample[j][k][l] > 0.0 ) {
-                    phiSample[j][k][l] =
-                        ( dPsiMax[j][k] * dPsiMax[j][k] + 2.0 * dPsiMax[j][k] * psiSample[j][k][l] + eps ) /
-                        ( dPsiMax[j][k] * dPsiMax[j][k] + dPsiMax[j][k] * psiSample[j][k][l] + 2.0 * psiSample[j][k][l] * psiSample[j][k][l] + eps );
-                }
-                else if( psiSample[j][k][l] < 0.0 ) {
-                    phiSample[j][k][l] =
-                        ( dPsiMin[j][k] * dPsiMin[j][k] + 2.0 * dPsiMin[j][k] * psiSample[j][k][l] + eps ) /
-                        ( dPsiMin[j][k] * dPsiMin[j][k] + dPsiMin[j][k] * psiSample[j][k][l] + 2.0 * psiSample[j][k][l] * psiSample[j][k][l] + eps );
-                    ;
-                }
-                else {
-                    phiSample[j][k][l] = 1.0;
-                }
-            }
-
-            // step 4: find minimum limiter function phi
-            phi = min( phiSample[j][k] );
-            // phi = fmin( 0.5, abs(phi) );
-
-            // step 5: limit the slope reconstructed from Gauss theorem
-            psiDerX[j][k] *= phi;
-            psiDerY[j][k] *= phi;
         }
     }
 }
+
+// double LimiterBarthJespersen( double r ) { return std::min( r, 1.0 ); }
 
 void Mesh::ComputeBounds() {
     _bounds = std::vector( _dim, std::make_pair( std::numeric_limits<double>::infinity(), -std::numeric_limits<double>::infinity() ) );
@@ -399,6 +398,7 @@ const std::vector<std::vector<unsigned>>& Mesh::GetNeighbours() const { return _
 const std::vector<std::vector<Vector>>& Mesh::GetNormals() const { return _cellNormals; }
 const std::vector<BOUNDARY_TYPE>& Mesh::GetBoundaryTypes() const { return _cellBoundaryTypes; }
 const std::vector<std::pair<double, double>> Mesh::GetBounds() const { return _bounds; }
+const std::vector<std::vector<Vector>> Mesh::GetInterfaceMidPoints() const { return _cellInterfaceMidPoints; }
 
 double Mesh::GetDistanceToOrigin( unsigned idx_cell ) const {
     double distance = 0.0;

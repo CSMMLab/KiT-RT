@@ -70,6 +70,7 @@ enum QUAD_NAME {
  */
 inline std::map<std::string, QUAD_NAME> Quadrature_Map{ { "MONTE_CARLO", QUAD_MonteCarlo },
                                                         { "GAUSS_LEGENDRE_TENSORIZED", QUAD_GaussLegendreTensorized },
+                                                        { "GAUSS_LEGENDRE_TENSORIZED_2D", QUAD_GaussLegendreTensorized2D },
                                                         { "PRODUCT", QUAD_Product },
                                                         { "GAUSS_LEGENDRE_1D", QUAD_GaussLegendre1D },
                                                         { "LEVEL_SYMMETRIC", QUAD_LevelSymmetric },

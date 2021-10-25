@@ -23,17 +23,21 @@ class Mesh
     const unsigned _numBoundaries;   /*!< @brief number of boundary cells in the mesh */
     const unsigned _ghostCellID; /*!< @brief Id of the ghost cell. (we use only one ghost cell). equal to _numCells and therefore has the ID of the
                                     last cell + 1 */
+
     unsigned _numNodesPerBoundary;
     std::vector<std::pair<double, double>> _bounds;    // ???
 
-    std::vector<Vector> _nodes;                /*!< @brief nodes in the mesh. dimension:_numNodes<_dim> */
-    std::vector<std::vector<unsigned>> _cells; /*!< @brief cells in the mesh. dimension:_numCells<_numNodesPerCell>  */
+    std::vector<Vector> _nodes;                /*!< @brief nodes coordinates in the mesh. dimension:_numNodes<_dim> */
+    std::vector<std::vector<unsigned>> _cells; /*!< @brief node indices for each cell.  dimension:_numCells<_numNodesPerCell>  */
 
     /*! @brief boundary cells in the mesh. Pair defines boundary type of the boundary nodes of the cell. numBoundaries<(1,numBoundaryNodes)>*/
     std::vector<std::pair<BOUNDARY_TYPE, std::vector<unsigned>>> _boundaries;
     std::vector<double> _cellAreas;                    /*!< @brief cell areas of the mesh. dimension: numCells*/
     std::vector<Vector> _cellMidPoints;                /*!< @brief cell midpoints of the mesh. dimension: numCells<dim>*/
     std::vector<std::vector<unsigned>> _cellNeighbors; /*!< @brief neighbors of each cell. dimension: numCells<numNodesPerCell>*/
+    std::vector<std::vector<Vector>>
+        _cellInterfaceMidPoints; /*!< @brief coordinates of the interface midpoints of all cells of the mesh  dimension:
+                                numCells<numNeighborsPerCell<nDim>>. interfaces of each cell are in same order as _cellNeighbors*/
 
     /*! @brief outward facing normals of each side of each cell. dimension: numCells<numNodesPerCell<dim>>, all
                 normals are facing away from the cell center, and scaled with the edge length */
@@ -54,6 +58,8 @@ class Mesh
      *  @return outward facing normal */
     Vector ComputeOutwardFacingNormal( const Vector& nodeA, const Vector& nodeB, const Vector& cellCenter );
     void ComputeBounds(); /*!< @brief Computes the spatial bounds of a 2D domain. */
+    Vector ComputeCellInterfaceMidpoints( const Vector& nodeA,
+                                          const Vector& nodeB ); /*!< @brief compute the midpoint of the edge between nodeA and nodeB */
 
   public:
     Mesh() = delete;    //  no default constructor
@@ -102,6 +108,10 @@ class Mesh
      *  @return dimension: dim */
     const std::vector<std::pair<double, double>> GetBounds() const;
 
+    /*! @brief Returns the the coordinates of midpoints of all interfaces of all cells
+     *  @return dimension: numCells<numNeighborsPerCell<nDim>> */
+    const std::vector<std::vector<Vector>> GetInterfaceMidPoints() const;
+
     /*! @brief Returns distance of a specified cells center to the coordinate systems origin
      *  @return dimension: scalar */
     double GetDistanceToOrigin( unsigned idx_cell ) const;
@@ -111,21 +121,14 @@ class Mesh
      *  @param psiDerX is slope in x direction (gets computed. Slope is stored here)
      *  @param psiDerY is slope in y direction (gets computed. Slope is stored here)
      *  @param psi is solution for which slope is computed */
-    // Not used
     void ComputeSlopes( unsigned nq, VectorVector& psiDerX, VectorVector& psiDerY, const VectorVector& psi ) const;
 
-    /*! @brief Structured mesh slope reconstruction with flux limiters.
-     *  @param nq is number of quadrature points
-     *  @param psiDerX is slope in x direction (gets computed. Slope is stored here)
-     *  @param psiDerY is slope in y direction (gets computed. Slope is stored here)
-     *  @param psi is solution for which slope is computed */
-    void ReconstructSlopesS( unsigned nq, VectorVector& psiDerX, VectorVector& psiDerY, const VectorVector& psi ) const;
     /*! @brief Use gauss theorem and limiters. For unstructured mesh *
      *  @param nq is number of quadrature points
      *  @param psiDerX is slope in x direction (gets computed. Slope is stored here)
      *  @param psiDerY is slope in y direction (gets computed. Slope is stored here)
      *  @param psi is solution for which slope is computed */
-    void ReconstructSlopesU( unsigned nq, VectorVector& psiDerX, VectorVector& psiDerY, const VectorVector& psi ) const;
+    void ComputeLimiter( unsigned nSys, const VectorVector& solDx, const VectorVector& solDy, const VectorVector& sol, VectorVector& limiter ) const;
 };
 
 #endif    // MESH_H
