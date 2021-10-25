@@ -116,8 +116,11 @@ SolverBase* SolverBase::Create( Config* settings ) {
 }
 
 void SolverBase::Solve() {
+
     // --- Preprocessing ---
+
     PrepareVolumeOutput();
+
     DrawPreSolverOutput();
 
     // Adjust maxIter, depending if we have a normal run or a csd Run
@@ -125,15 +128,19 @@ void SolverBase::Solve() {
     if( _settings->GetIsCSD() ) {
         _maxIter = _nEnergies - 1;    // Since CSD does not go the last energy step
     }
+
     // Preprocessing before first pseudo time step
     SolverPreprocessing();
 
     // Loop over energies (pseudo-time of continuous slowing down approach)
     for( unsigned iter = 0; iter < _maxIter; iter++ ) {
+
         // --- Prepare Boundaries and temp variables
         IterPreprocessing( iter );
+
         // --- Compute Fluxes ---
         FluxUpdate();
+
         // --- Finite Volume Update ---
         FVMUpdate( iter );
 
