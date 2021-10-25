@@ -4,11 +4,11 @@
  * \author S. Schotthoefer
  */
 
-#include "datagenerator/datagenerator2D.h"
-#include "common/config.h"
-#include "quadratures/quadraturebase.h"
-#include "toolboxes/errormessages.h"
-#include "toolboxes/sphericalbase.h"
+#include "datagenerator/datagenerator2D.hpp"
+#include "common/config.hpp"
+#include "quadratures/quadraturebase.hpp"
+#include "toolboxes/errormessages.hpp"
+#include "toolboxes/sphericalbase.hpp"
 
 #include <iostream>
 #include <omp.h>

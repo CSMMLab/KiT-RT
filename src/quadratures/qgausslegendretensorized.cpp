@@ -1,6 +1,6 @@
-#include "quadratures/qgausslegendretensorized.h"
-#include "common/config.h"
-#include "toolboxes/errormessages.h"
+#include "quadratures/qgausslegendretensorized.hpp"
+#include "common/config.hpp"
+#include "toolboxes/errormessages.hpp"
 
 QGaussLegendreTensorized::QGaussLegendreTensorized( Config* settings ) : QuadratureBase( settings ) {
     SetName();

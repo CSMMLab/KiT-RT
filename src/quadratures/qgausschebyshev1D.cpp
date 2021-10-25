@@ -1,5 +1,5 @@
-#include "quadratures/qgausschebyshev1D.h"
-#include "toolboxes/errormessages.h"
+#include "quadratures/qgausschebyshev1D.hpp"
+#include "toolboxes/errormessages.hpp"
 
 QGaussChebyshev1D::QGaussChebyshev1D( Config* settings ) : QuadratureBase( settings ) {
     SetName();

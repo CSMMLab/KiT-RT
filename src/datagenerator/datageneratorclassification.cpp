@@ -1,12 +1,12 @@
-#include "datagenerator/datageneratorclassification.h"
-#include "common/config.h"
-#include "entropies/entropybase.h"
-#include "optimizers/newtonoptimizer.h"
-#include "quadratures/quadraturebase.h"
-#include "spdlog/spdlog.h"
-#include "toolboxes/errormessages.h"
-#include "toolboxes/sphericalbase.h"
+#include "datagenerator/datageneratorclassification.hpp"
+#include "common/config.hpp"
+#include "entropies/entropybase.hpp"
+#include "optimizers/newtonoptimizer.hpp"
+#include "quadratures/quadraturebase.hpp"
+#include "toolboxes/errormessages.hpp"
+#include "toolboxes/sphericalbase.hpp"
 
+#include "spdlog/spdlog.h"
 #include <iostream>
 
 DataGeneratorClassification::DataGeneratorClassification( Config* settings ) : DataGeneratorBase( settings ) {

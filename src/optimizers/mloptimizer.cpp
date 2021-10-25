@@ -3,9 +3,9 @@
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 #include <numpy/arrayobject.h>
 
-#include "common/config.h"
-#include "optimizers/mloptimizer.h"
-#include "toolboxes/errormessages.h"
+#include "common/config.hpp"
+#include "optimizers/mloptimizer.hpp"
+#include "toolboxes/errormessages.hpp"
 #include <iostream>
 
 MLOptimizer::MLOptimizer( Config* settings ) : OptimizerBase( settings ) {

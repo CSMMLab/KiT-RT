@@ -1,10 +1,10 @@
 #include <numeric>
 
 #include "catch.hpp"
-#include "common/config.h"
-#include "common/globalconstants.h"
-#include "common/io.h"
-#include "common/mesh.h"
+#include "common/config.hpp"
+#include "common/globalconstants.hpp"
+#include "common/io.hpp"
+#include "common/mesh.hpp"
 
 TEST_CASE( "unit mesh tests", "[mesh]" ) {
     std::string config_file_name = std::string( TESTS_PATH ) + "input/unit_tests/common/unit_mesh.cfg";
@@ -40,7 +40,7 @@ TEST_CASE( "unit mesh tests", "[mesh]" ) {
     }
 
     SECTION( "neighbor and faces are indexed consistently" ) {
-        auto neighbors = mesh->GetNeighbours();
+        auto neighbors     = mesh->GetNeighbours();
         auto cellMidPoints = mesh->GetCellMidPoints();
         auto faceMidPoints = mesh->GetInterfaceMidPoints();
 

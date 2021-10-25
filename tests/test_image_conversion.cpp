@@ -2,11 +2,11 @@
 #include <numeric>
 
 #include "catch.hpp"
-#include "common/config.h"
-#include "common/io.h"
-#include "common/mesh.h"
-#include "toolboxes/interpolation.h"
-#include "toolboxes/textprocessingtoolbox.h"
+#include "common/config.hpp"
+#include "common/io.hpp"
+#include "common/mesh.hpp"
+#include "toolboxes/interpolation.hpp"
+#include "toolboxes/textprocessingtoolbox.hpp"
 
 TEST_CASE( "convert image data to grayscale matrix", "[image I/O]" ) {
     std::string config_file_name = std::string( TESTS_PATH ) + "input/unit_tests/common/image_conversion.cfg";

@@ -1,5 +1,5 @@
-#include "quadratures/qproduct.h"
-#include "toolboxes/errormessages.h"
+#include "quadratures/qproduct.hpp"
+#include "toolboxes/errormessages.hpp"
 
 QProduct::QProduct( unsigned order ) : QuadratureBase( order ) {
     SetName();

@@ -1,5 +1,5 @@
-#include "quadratures/qlookupquadrature.h"
-#include "toolboxes/errormessages.h"
+#include "quadratures/qlookupquadrature.hpp"
+#include "toolboxes/errormessages.hpp"
 #include <fstream>
 #include <math.h>
 #include <sstream>

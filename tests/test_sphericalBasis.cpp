@@ -1,8 +1,8 @@
 #include "catch.hpp"
-#include "common/config.h"
-#include "quadratures/qgausslegendretensorized.h"
-#include "toolboxes/sphericalharmonics.h"
-#include "toolboxes/sphericalmonomials.h"
+#include "common/config.hpp"
+#include "quadratures/qgausslegendretensorized.hpp"
+#include "toolboxes/sphericalharmonics.hpp"
+#include "toolboxes/sphericalmonomials.hpp"
 
 #include <fstream>
 #include <iostream>

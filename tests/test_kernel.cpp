@@ -1,9 +1,9 @@
 #include <numeric>
 
 #include "catch.hpp"
-#include "common/config.h"
-#include "kernels/isotropic.h"
-#include "quadratures/quadraturebase.h"
+#include "common/config.hpp"
+#include "kernels/isotropic.hpp"
+#include "quadratures/quadraturebase.hpp"
 
 TEST_CASE( "test all scattering kernels", "[kernel]" ) {
     std::string filename = std::string( TESTS_PATH ) + "input/unit_tests/kernels/unit_kernel.cfg";

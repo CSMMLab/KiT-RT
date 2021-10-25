@@ -1,6 +1,6 @@
-#include "problems/isotropicsource2d.h"
-#include "common/config.h"
-#include "common/mesh.h"
+#include "problems/isotropicsource2d.hpp"
+#include "common/config.hpp"
+#include "common/mesh.hpp"
 
 IsotropicSource2D::IsotropicSource2D( Config* settings, Mesh* mesh ) : ElectronRT( settings, mesh ) {}
 

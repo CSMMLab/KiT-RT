@@ -1,10 +1,10 @@
-#include "solvers/csdsnsolver.h"
-#include "common/config.h"
-#include "common/io.h"
-#include "fluxes/numericalflux.h"
-#include "kernels/scatteringkernelbase.h"
-#include "problems/icru.h"
-#include "problems/problembase.h"
+#include "solvers/csdsnsolver.hpp"
+#include "common/config.hpp"
+#include "common/io.hpp"
+#include "fluxes/numericalflux.hpp"
+#include "kernels/scatteringkernelbase.hpp"
+#include "problems/icru.hpp"
+#include "problems/problembase.hpp"
 
 // externals
 #include "spdlog/spdlog.h"

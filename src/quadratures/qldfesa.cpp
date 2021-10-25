@@ -1,6 +1,6 @@
-#include "quadratures/qldfesa.h"
-#include "quadratures/lookuptable_ldfesa.h"
-#include "toolboxes/errormessages.h"
+#include "quadratures/qldfesa.hpp"
+#include "quadratures/lookuptable_ldfesa.hpp"
+#include "toolboxes/errormessages.hpp"
 
 QLDFESA::QLDFESA( Config* settings ) : QLookupQuadrature( settings ) {
     SetAvailOrders();

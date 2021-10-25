@@ -1,14 +1,14 @@
-#include "common/config.h"
+#include "common/config.hpp"
 
-#include "problems/aircavity1d.h"
-#include "problems/checkerboard.h"
-#include "problems/electronrt.h"
-#include "problems/isotropicsource2d.h"
-#include "problems/linesource.h"
-#include "problems/musclebonelung.h"
-#include "problems/phantom2d.h"
-#include "problems/problembase.h"
-#include "problems/waterphantom.h"
+#include "problems/aircavity1d.hpp"
+#include "problems/checkerboard.hpp"
+#include "problems/electronrt.hpp"
+#include "problems/isotropicsource2d.hpp"
+#include "problems/linesource.hpp"
+#include "problems/musclebonelung.hpp"
+#include "problems/phantom2d.hpp"
+#include "problems/problembase.hpp"
+#include "problems/waterphantom.hpp"
 
 ProblemBase::ProblemBase( Config* settings, Mesh* mesh ) {
     _settings = settings;

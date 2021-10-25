@@ -6,7 +6,7 @@
  * Disclaimer: This class structure was copied and modifed with open source permission from SU2 v7.0.3 https://su2code.github.io/
  */
 
-#include "common/optionstructure.h"
+#include "common/optionstructure.hpp"
 
 // --- Members of OptionBase ----
 

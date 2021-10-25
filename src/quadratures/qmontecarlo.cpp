@@ -1,4 +1,4 @@
-#include "quadratures/qmontecarlo.h"
+#include "quadratures/qmontecarlo.hpp"
 
 #include <math.h>
 

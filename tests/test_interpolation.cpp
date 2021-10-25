@@ -1,5 +1,5 @@
 #include "catch.hpp"
-#include "toolboxes/interpolation.h"
+#include "toolboxes/interpolation.hpp"
 
 #include <iostream>
 

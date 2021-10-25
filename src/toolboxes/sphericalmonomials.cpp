@@ -4,8 +4,8 @@
  * @author S. Schotthöfer
  */
 
-#include "toolboxes/sphericalmonomials.h"
-#include "toolboxes/errormessages.h"
+#include "toolboxes/sphericalmonomials.hpp"
+#include "toolboxes/errormessages.hpp"
 
 SphericalMonomials::SphericalMonomials( unsigned L_degree ) {
     _LMaxDegree = L_degree;

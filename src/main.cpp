@@ -9,11 +9,11 @@
 #include <mpi.h>
 #include <string>
 
-#include "common/config.h"
-#include "common/io.h"
-#include "solvers/solverbase.h"
+#include "common/config.hpp"
+#include "common/io.hpp"
+#include "solvers/solverbase.hpp"
 
-#include "datagenerator/datageneratorbase.h"
+#include "datagenerator/datageneratorbase.hpp"
 
 #ifdef BUILD_GUI
 #include <QApplication>
