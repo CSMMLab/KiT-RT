@@ -198,3 +198,8 @@ void NewtonOptimizer::Solve( Vector& alpha, Vector& sol, const VectorVector& mom
     if( _settings->GetDim() == 1 ) {
     }
 }
+
+void NewtonOptimizer::ScaleQuadWeights( double leftBound, double rightBound ) {
+    _quadrature->ScaleWeights( leftBound, rightBound );
+    _weights = _quadrature->GetWeights();
+}

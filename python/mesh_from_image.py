@@ -29,7 +29,7 @@ def generate(image_name, mesh_name):
     mesh_code = geom.get_code()
     with open(mesh_name+".geo","w") as mesh_file:
         mesh_file.write(mesh_code,)
-    os.system('gmsh '+mesh_name+'.geo -2 -format su2 -save_all > /dev/null')
+    os.system('gmsh '+mesh_name+'.geo -2 -format su2 -save_all > /dev/null') # call gmsh
     os.system('rm '+mesh_name+'.geo > /dev/null')
 
     return gsImage

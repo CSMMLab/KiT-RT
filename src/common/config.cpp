@@ -9,6 +9,7 @@
 #include "common/config.h"
 #include "common/globalconstants.h"
 #include "common/optionstructure.h"
+#include "quadratures/quadraturebase.h"
 #include "toolboxes/errormessages.h"
 #include "toolboxes/textprocessingtoolbox.h"
 
@@ -77,7 +78,7 @@ Config::~Config( void ) {
     // delete _option map values proberly
     for( auto const& x : _optionMap ) {
         delete x.second;
-        _optionMap.erase( x.first );
+        //_optionMap.erase( x.first );
     }
 }
 
@@ -318,8 +319,13 @@ void Config::SetConfigOptions() {
     AddUnsignedShortOption( "HISTORY_OUTPUT_FREQUENCY", _historyOutputFrequency, 1 );
 
     // Data generator related options
+    /*! @brief Choice of sampling method \n DESCRIPTION:  Choose between creating a regression and a classification dataset. \ingroup Config */
+    AddEnumOption( "SAMPLER_NAME", _sampler, SamplerName_MAP, REGRESSION_SAMPLER );
     /*! @brief Size of training data set \n DESCRIPTION: Size of training data set  \n DEFAULT 1 \ingroup Config */
     AddUnsignedLongOption( "TRAINING_SET_SIZE", _tainingSetSize, 1 );
+    /*! @brief Determines, if TRAINING_SET_SIZE is counted by dimension \n DESCRIPTION: Determines, if TRAINING_SET_SIZE is counted by dimension   \n
+     * DEFAULT true \ingroup Config */
+    AddBoolOption( "SIZE_BY_DIMENSION", _sizeByDimension, true );
     /*! @brief Size of training data set \n DESCRIPTION: Size of training data set  \n DEFAULT 10 \ingroup Config */
     AddUnsignedLongOption( "MAX_VALUE_FIRST_MOMENT", _maxValFirstMoment, 10 );
     /*! @brief Data generator mode \n DESCRIPTION: Check, if data generator mode is active. If yes, no solver is called, but instead the data
@@ -337,9 +343,18 @@ void Config::SetConfigOptions() {
     /*! @brief Flag for sampling the space of Legendre multipliers instead of the moments  \n DESCRIPTION: Sample alpha instead of u \n DEFAULT False
      * \ingroup Config */
     AddBoolOption( "ALPHA_SAMPLING", _alphaSampling, false );
+    /*! @brief Switch for sampling distribution  \n DESCRIPTION: Uniform (true) or trunctaded normal (false) \n DEFAULT true
+     * \ingroup Config */
+    AddBoolOption( "UNIFORM_SAMPLING", _sampleUniform, true );
     /*! @brief Flag for sampling the space of Legendre multipliers instead of the moments  \n DESCRIPTION: Sample alpha instead of u \n DEFAULT False
      * \ingroup Config */
     AddBoolOption( "REALIZABILITY_RECONS_U", _realizabilityRecons, true );
+    /*! @brief Boundary for the sampling region of the Lagrange multipliers  \n DESCRIPTION: Norm sampling boundary for alpha \n DEFAULT 20.0
+     * \ingroup Config */
+    AddDoubleOption( "ALPHA_SAMPLING_BOUND", _alphaBound, 20.0 );
+    /*! @brief Rejection sampling threshold based on the minimal Eigenvalue of the Hessian of the entropy functions  \n DESCRIPTION: Rejection
+     * sampling threshold \n DEFAULT 1e-8 \ingroup Config */
+    AddDoubleOption( "MIN_EIGENVALUE_THRESHOLD", _minEVAlphaSampling, 1e-8 );
 }
 
 void Config::SetConfigParsing( string case_filename ) {
@@ -381,7 +396,7 @@ void Config::SetConfigParsing( string case_filename ) {
                 string newString;
                 newString.append( option_name );
                 newString.append( ": invalid option name" );
-                newString.append( ". Check current RTSN options in config_template.cfg." );
+                newString.append( ". Check current KiT-RT options in config_template.cfg." );
                 newString.append( "\n" );
                 errorString.append( newString );
                 err_count++;
@@ -469,6 +484,7 @@ void Config::SetPostprocessing() {
         case CSD_SN_FOKKERPLANCK_TRAFO_SOLVER_2D:       // Fallthrough
         case CSD_SN_FOKKERPLANCK_TRAFO_SH_SOLVER_2D:    // Fallthrough
         case CSD_SN_SOLVER:                             // Fallthrough
+        case CSD_PN_SOLVER:                             // Fallthrough
             _csd = true;
             break;
         default: _csd = false;
@@ -485,15 +501,30 @@ void Config::SetPostprocessing() {
                                   CURRENT_FUNCTION );
         }
     }
+    // Quadrature Postprocessing
+    {
+        QuadratureBase* quad                      = QuadratureBase::Create( this );
+        std::vector<unsigned short> supportedDims = quad->GetSupportedDims();
 
-    // --- Solver setup ---
-    if( GetSolverName() == PN_SOLVER && GetSphericalBasisName() != SPHERICAL_HARMONICS ) {
-        ErrorMessages::Error( "PN Solver only works with spherical harmonics basis.\nThis should be the default setting for option SPHERICAL_BASIS.",
-                              CURRENT_FUNCTION );
+        if( std::find( supportedDims.begin(), supportedDims.end(), _dim ) == supportedDims.end() ) {
+            // Dimension not supported
+            std::string msg = "Chosen spatial dimension not supported for this Quadrature.\nChosen spatial dimension " + std::to_string( _dim ) + ".";
+            ErrorMessages::Error( msg, CURRENT_FUNCTION );
+        }
+        delete quad;
     }
 
-    if( GetSolverName() == MN_SOLVER && GetSphericalBasisName() == SPHERICAL_MONOMIALS && GetMaxMomentDegree() > 1 ) {
-        ErrorMessages::Error( "MN Solver only with monomial basis only stable up to degree 1. This is a TODO.", CURRENT_FUNCTION );
+    // --- Solver setup ---
+    {
+        if( GetSolverName() == PN_SOLVER && GetSphericalBasisName() != SPHERICAL_HARMONICS ) {
+            ErrorMessages::Error(
+                "PN Solver only works with spherical harmonics basis.\nThis should be the default setting for option SPHERICAL_BASIS.",
+                CURRENT_FUNCTION );
+        }
+
+        if( GetSolverName() == MN_SOLVER && GetSphericalBasisName() == SPHERICAL_MONOMIALS && GetMaxMomentDegree() > 1 ) {
+            ErrorMessages::Error( "MN Solver only with monomial basis only stable up to degree 1. This is a TODO.", CURRENT_FUNCTION );
+        }
     }
 
     // --- Output Postprocessing ---
@@ -576,6 +607,17 @@ void Config::SetPostprocessing() {
                                               CURRENT_FUNCTION );
                     }
                     break;
+                case CSD_PN_SOLVER:
+                    supportedGroups = { MINIMAL, MEDICAL, MOMENTS };
+                    if( supportedGroups.end() == std::find( supportedGroups.begin(), supportedGroups.end(), _volumeOutput[idx_volOutput] ) ) {
+
+                        ErrorMessages::Error(
+                            "CSD_PN_SOLVER types only supports volume output MEDICAL, MOMENTS and MINIMAL.\nPlease check your .cfg file.",
+                            CURRENT_FUNCTION );
+                    }
+                    break;
+                default:
+                    ErrorMessages::Error( "Solver output check not implemented for this Solver.\nThis is the fault of the coder.", CURRENT_FUNCTION );
             }
         }
 
@@ -666,6 +708,21 @@ void Config::SetPostprocessing() {
     {
         if( _dim < (unsigned short)1 || _dim > (unsigned short)3 ) {
             std::string msg = "Dimension " + std::to_string( _dim ) + "not supported.\n";
+            ErrorMessages::Error( msg, CURRENT_FUNCTION );
+        }
+    }
+
+    // Data generator postprocessing
+    {
+        if( _alphaBound <= 0 ) {
+            std::string msg = "Norm boundary for alpha sampling must be positive.\n Current choice: " + std::to_string( _alphaSampling ) +
+                              ". Check choice of ALPHA_SAMPLING_BOUND.";
+            ErrorMessages::Error( msg, CURRENT_FUNCTION );
+        }
+        if( _minEVAlphaSampling <= 0 ) {
+            std::string msg =
+                "Minimal Eigenvalue threshold of the entropy hession must be positive.\n Current choice: " + std::to_string( _alphaSampling ) +
+                ". Check choice of MIN_EIGENVALUE_THRESHOLD.";
             ErrorMessages::Error( msg, CURRENT_FUNCTION );
         }
     }

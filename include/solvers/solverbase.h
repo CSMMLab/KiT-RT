@@ -44,8 +44,6 @@ class SolverBase
     // slope related params
     Reconstructor* _reconstructor;                        /*!< @brief reconstructor object for high-order scheme */
     unsigned _reconsOrder;                                /*!< @brief reconstruction order (current: 1 & 2) */
-    VectorVector _psiDx;                                  /*!< @brief slope of solutions in X direction */
-    VectorVector _psiDy;                                  /*!< @brief slope of solutions in Y direction */
     VectorVector _cellMidPoints;                          /*!< @brief middle point locations of elements */
     std::vector<std::vector<Vector>> _interfaceMidPoints; /*!< @brief middle point locations of edges */
 
@@ -65,6 +63,11 @@ class SolverBase
     VectorVector _solNew; /*!< @brief VectorVector to store the new flux and later the new solution per iteration */
     Vector _fluxNew;      /*!< @brief Vector to store the new Flux. Dim _nCells */
     Vector _flux;         /*!< @brief Vector to store the old Flux. Dim _nCells*/
+
+    //  solution gradient and limiter for each cell and each system var. dim: _nCells x nSys. nSys depents on the solver (either moments or quadpts)
+    VectorVector _solDx;   /*!< @brief  solution gradient in x direction*/
+    VectorVector _solDy;   /*!< @brief  solution gradient in y direction*/
+    VectorVector _limiter; /*! < @brief slope limiter at cell and system pt */
 
     std::vector<double> _solverOutput; /*!< @brief LEGACY: Outputfield for solver ==> Will be replaced by _outputFields in the near future */
 

@@ -7,6 +7,7 @@
 #include "problems/problembase.h"
 #include "quadratures/qproduct.h"
 #include "quadratures/quadraturebase.h"
+#include "solvers/csdpn_starmap_constants.h"
 
 // externals
 #include "spdlog/spdlog.h"
@@ -20,8 +21,32 @@ CSDSolverTrafoFP2D::CSDSolverTrafoFP2D( Config* settings ) : SNSolver( settings 
     _energyMin = 1e-4 * 0.511;
     _energyMax = _settings->GetMaxEnergyCSD();    // 5e0;
 
-    // write equidistant energy grid (false) or refined grid (true)
-    GenerateEnergyGrid( false );
+    // determine transformed energy grid for tabulated grid
+    Vector E_transformed( E_trans.size(), 0.0 );
+    for( unsigned i = 1; i < E_trans.size(); ++i )
+        E_transformed[i] = E_transformed[i - 1] + ( E_tab[i] - E_tab[i - 1] ) / 2 * ( 1.0 / S_tab[i] + 1.0 / S_tab[i - 1] );
+
+    // determine minimal and maximal energies
+    double minE = 5e-5;
+    double maxE = _settings->GetMaxEnergyCSD();
+    _E_cutoff   = maxE;
+
+    // define interpolation from energies to corresponding transformed energies \tilde{E} (without substraction of eMaxTrafo)
+    Interpolation interpEToTrafo( E_tab, E_transformed );
+    double eMaxTrafo = interpEToTrafo( maxE );
+    double eMinTrafo = interpEToTrafo( minE );
+
+    // Define intepolation back to original energy
+    Interpolation interpTrafoToE( E_transformed, E_tab );
+
+    // define linear grid in fully transformed energy \tilde\tilde E (cf. Dissertation Kerstion Kuepper, Eq. 1.25)
+    _eTrafo = blaze::linspace( _nEnergies, eMaxTrafo - eMaxTrafo, eMaxTrafo - eMinTrafo );
+    // double dETrafo = _eTrafo[1] - _eTrafo[0];
+
+    // compute Corresponding original energies
+    for( unsigned n = 0; n < _nEnergies; ++n ) {
+        _energies[n] = interpTrafoToE( eMaxTrafo - _eTrafo[n] );
+    }
 
     // create quadrature
     unsigned order    = _quadrature->GetOrder();
@@ -51,7 +76,7 @@ CSDSolverTrafoFP2D::CSDSolverTrafoFP2D( Config* settings ) : SNSolver( settings 
     }
 
     for( unsigned i = 0; i < 2 * order; ++i ) {
-        _phi[i] = ( i + 0.5 ) * M_PI / order;
+        _phi[i] = ( static_cast<double>( i ) + 0.5 ) * M_PI / order;
         _wa[i]  = M_PI / order;
     }
 
@@ -60,8 +85,8 @@ CSDSolverTrafoFP2D::CSDSolverTrafoFP2D( Config* settings ) : SNSolver( settings 
 
     _FPMethod = 2;
 
-    double DMinus = 0.0;    // is beta_{n-1/2}
-    double DPlus  = 0.0;    // is beta_{n+1/2}
+    double betaMinus = 0.0;    // is beta_{n-1/2}
+    double betaPlus  = 0.0;    // is beta_{n+1/2}
 
     Vector gamma( 2 * order, 0.0 );
     double dPlus;
@@ -69,54 +94,69 @@ CSDSolverTrafoFP2D::CSDSolverTrafoFP2D( Config* settings ) : SNSolver( settings 
 
     // Setup Coefficients (see "Advances in Discrete Ordinates Methodology",  eq (1.137-1.140))
     double dMinus = 0.0;
-    DPlus         = DMinus - 2 * _mu[0] * w[0];
+    betaPlus      = betaMinus - 2.0 * _mu[0] * w[0];
     for( unsigned j = 0; j < orderMu - 1; ++j ) {
-        DMinus   = DPlus;
-        DPlus    = DMinus - 2 * _mu[j] * w[j];
-        dPlus    = ( sqrt( 1 - _mu[j + 1] * _mu[j + 1] ) - sqrt( 1 - _mu[j] * _mu[j] ) ) / ( _mu[j + 1] - _mu[j] );
-        c        = ( DPlus * dPlus - DMinus * dMinus ) / _wp[j];
-        K        = 2 * ( 1 - _mu[j] * _mu[j] ) + c * sqrt( 1 - _mu[j] * _mu[j] );
-        gamma[j] = M_PI * M_PI * K / ( 2 * order * ( 1 - std::cos( M_PI / order ) ) );
-        dMinus   = dPlus;
+        betaMinus = betaPlus;
+        betaPlus  = betaMinus - 2.0 * _mu[j] * w[j];
+        dPlus     = ( std::sqrt( 1.0 - _mu[j + 1] * _mu[j + 1] ) - std::sqrt( 1.0 - _mu[j] * _mu[j] ) ) / ( _mu[j + 1] - _mu[j] );
+        c         = ( betaPlus * dPlus - betaMinus * dMinus ) / _wp[j];
+        K         = 2.0 * ( 1.0 - _mu[j] * _mu[j] ) + c * sqrt( 1.0 - _mu[j] * _mu[j] );
+        gamma[j]  = M_PI * M_PI * K / ( 2.0 * order * ( 1.0 - std::cos( M_PI / order ) ) );
+        dMinus    = dPlus;
     }
 
-    DPlus = 0.0;
+    betaPlus = 0.0;
+
+    unsigned nm1, np1, jm1, jp1;
+    auto idx = [&order]( unsigned n, unsigned j ) { return n * 2 * order + j; };
 
     // implementation of 2D spherical Laplacian according book "Advances in Discrete Ordinates Methodology", equation (1.136)
-    for( unsigned j = 0; j < orderMu; ++j ) {
-        DMinus = DPlus;
-        DPlus  = DMinus - 2 * _mu[j] * _wp[j];
-        for( unsigned i = 0; i < 2 * order; ++i ) {
-            if( j > 0 ) {
-                _L( j * 2 * order + i, ( j - 1 ) * 2 * order + i ) = DMinus / ( _mu[j] - _mu[j - 1] ) / _wp[j];
-                _L( j * 2 * order + i, j * 2 * order + i )         = -DMinus / ( _mu[j] - _mu[j - 1] ) / _wp[j];
+    for( unsigned n = 0; n < orderMu; ++n ) {
+        betaMinus = betaPlus;
+        betaPlus  = betaMinus - 2 * _mu[n] * _wp[n];
+        for( unsigned j = 0; j < 2 * order; ++j ) {
+
+            if( n == 0 ) {
+                nm1 = orderMu - 1;
+                np1 = n + 1;
             }
-            if( i > 0 ) {
-                _L( j * 2 * order + i, j * 2 * order + i - 1 ) = 1.0 / ( 1 - _mu[j] * _mu[j] ) * gamma[j] / ( _phi[i] - _phi[i - 1] ) / _wa[i];
-                _L( j * 2 * order + i, j * 2 * order + i ) += -1.0 / ( 1 - _mu[j] * _mu[j] ) * gamma[j] / ( _phi[i] - _phi[i - 1] ) / _wa[i];
+            else if( n == orderMu - 1 ) {
+                nm1 = n - 1;
+                np1 = 0;
             }
-            if( j < orderMu - 1 ) {
-                _L( j * 2 * order + i, ( j + 1 ) * 2 * order + i ) = DPlus / ( _mu[j + 1] - _mu[j] ) / _wp[j];
-                _L( j * 2 * order + i, j * 2 * order + i ) += -DPlus / ( _mu[j + 1] - _mu[j] ) / _wp[j];
+            else {
+                nm1 = n - 1;
+                np1 = n + 1;
             }
-            if( i < 2 * order - 1 ) {
-                _L( j * 2 * order + i, j * 2 * order + i + 1 ) = 1.0 / ( 1 - _mu[j] * _mu[j] ) * gamma[j] / ( _phi[i + 1] - _phi[i] ) / _wa[i];
-                _L( j * 2 * order + i, j * 2 * order + i ) += -1.0 / ( 1 - _mu[j] * _mu[j] ) * gamma[j] / ( _phi[i + 1] - _phi[i] ) / _wa[i];
+            if( j == 0 ) {
+                jm1 = 2 * order - 1;
+                jp1 = j + 1;
             }
+            else if( j == 2 * order - 1 ) {
+                jm1 = j - 1;
+                jp1 = 0;
+            }
+            else {
+                jm1 = j - 1;
+                jp1 = j + 1;
+            }
+
+            _L( idx( n, jp1 ), idx( np1, j ) ) += betaPlus / ( _mu[np1] - _mu[n] ) / _wp[n];
+            _L( idx( n, j ), idx( n, j ) ) -= ( betaPlus / ( _mu[np1] - _mu[n] ) + betaMinus / ( _mu[n] - _mu[nm1] ) ) / _wp[n];
+            _L( idx( n, jm1 ), idx( nm1, j ) ) += betaMinus / ( _mu[n] - _mu[nm1] ) / _wp[n];
+
+            double fac = gamma[n] / _wa[j] / ( 1.0 - _mu[n] * _mu[n] );
+            _L( idx( n, jp1 ), idx( n, jp1 ) ) += fac / ( _phi[jp1] - _phi[j] );
+            _L( idx( n, j ), idx( n, j ) ) -= fac / ( _phi[jp1] - _phi[j] ) + fac / ( _phi[j] - _phi[jm1] );
+            _L( idx( n, jm1 ), idx( n, jm1 ) ) += fac / ( _phi[j] - _phi[jm1] );
         }
     }
 
     // Heney-Greenstein parameter
-    double g = 0.8;
+    // double g = 0.8;
 
-    // determine momente of Heney-Greenstein
-    _xi1 = Vector( _nEnergies, 1.0 - g );    // paper Olbrant, Frank (11)
-    _xi2 = Vector( _nEnergies, 4.0 / 3.0 - 2.0 * g + 2.0 / 3.0 * g * g );
-    _xi  = Matrix( 4, _nEnergies );
-    for( unsigned n = 0; n < _nEnergies; ++n ) {
-        _xi( 1, n ) = 1.0 - g;
-        _xi( 2, n ) = 4.0 / 3.0 - 2.0 * g + 2.0 / 3.0 * g * g;
-    }
+    // determine moments of Heney-Greenstein
+    _xi = Matrix( 4, _nEnergies );
 
     // initialize stopping power vector
     _s = Vector( _nEnergies, 1.0 );
@@ -124,71 +164,12 @@ CSDSolverTrafoFP2D::CSDSolverTrafoFP2D( Config* settings ) : SNSolver( settings 
     _RT = true;
 
     // read in medical data if radiation therapy option selected
-    if( _RT ) {
-        /*
-        _nEnergies = 100;
-        _energies.resize(_nEnergies);
-        _xi = Matrix(6,_nEnergies);
-        double minExp = -4.0;
-        double  maxExp = 1.5;
-        for( int n = 0; n<_nEnergies; ++n){
-            double exponent = minExp + ( maxExp - minExp ) / ( _nEnergies - 1 ) * n;
-            _energies[n] = pow(10.0,exponent);
-        }*/
-        ICRU database( _mu, _energies, _settings );
-        database.GetTransportCoefficients( _xi );
-        database.GetStoppingPower( _s );
-        /*
-        // print coefficients
-        std::cout<<"E = [";
-        for( unsigned n = 0; n<_nEnergies; ++n){
-            std::cout<<_energies[n]<<"; ";
-        }
-        std::cout<<"];"<<std::endl;
-        std::cout<<"xi = [";
-        for( unsigned n = 0; n<_nEnergies; ++n){
-            std::cout<<_xi(0,n)<<" "<<_xi(1,n)<<" "<<_xi(2,n)<<" "<<_xi(3,n)<<" "<<_xi(4,n)<<" "<<_xi(5,n)<<"; ";
-        }
-        std::cout<<"];"<<std::endl;
-        */
-    }
+    ICRU database( _mu, _energies, _settings );
+    database.GetTransportCoefficients( _xi );
+    database.GetStoppingPower( _s );
 
-    //_density = std::vector<double>( _nCells, 1.0 );
-    // exit(EXIT_SUCCESS);
-}
-
-void CSDSolverTrafoFP2D::GenerateEnergyGrid( bool refinement ) {
-    _dE = ComputeTimeStep( _settings->GetCFL() );
-    if( !refinement ) {
-        _nEnergies = unsigned( ( _energyMax - _energyMin ) / _dE );
-        _energies.resize( _nEnergies );
-        for( unsigned n = 0; n < _nEnergies; ++n ) {
-            _energies[n] = _energyMin + ( _energyMax - _energyMin ) / ( _nEnergies - 1 ) * n;
-        }
-    }
-    else {
-        // hard-coded positions for energy-grid refinement
-        double energySwitch    = 0.58;
-        double energySwitchMin = 0.03;
-
-        // number of energies per intervals [E_min,energySwitchMin], [energySwitchMin,energySwitch], [energySwitch,E_Max]
-        unsigned nEnergies1 = unsigned( ( _energyMax - energySwitch ) / _dE );
-        unsigned nEnergies2 = unsigned( ( energySwitch - energySwitchMin ) / ( _dE / 2 ) );
-        unsigned nEnergies3 = unsigned( ( energySwitchMin - _energyMin ) / ( _dE / 3 ) );
-        _nEnergies          = nEnergies1 + nEnergies2 + nEnergies3 - 2;
-        _energies.resize( _nEnergies );
-
-        // write equidistant energy grid in each interval
-        for( unsigned n = 0; n < nEnergies3; ++n ) {
-            _energies[n] = _energyMin + ( energySwitchMin - _energyMin ) / ( nEnergies3 - 1 ) * n;
-        }
-        for( unsigned n = 1; n < nEnergies2; ++n ) {
-            _energies[n + nEnergies3 - 1] = energySwitchMin + ( energySwitch - energySwitchMin ) / ( nEnergies2 - 1 ) * n;
-        }
-        for( unsigned n = 1; n < nEnergies1; ++n ) {
-            _energies[n + nEnergies3 + nEnergies2 - 2] = energySwitch + ( _energyMax - energySwitch ) / ( nEnergies1 - 1 ) * n;
-        }
-    }
+    _density = std::vector<double>( _nCells, 1.0 );
+    _sol     = _problem->SetupIC();
 }
 
 // IO
@@ -305,11 +286,11 @@ void CSDSolverTrafoFP2D::FluxUpdate() {
 
 void CSDSolverTrafoFP2D::IterPreprocessing( unsigned idx_pseudotime ) {
     unsigned n = idx_pseudotime;
-    _dE        = fabs( _energies[n + 1] - _energies[n] );    // is the sign correct here?
+    _dE        = _eTrafo[idx_pseudotime + 1] - _eTrafo[idx_pseudotime];
 
-    double xi1 = _xi( 1, _nEnergies - n - 1 );
-    double xi2 = _xi( 2, _nEnergies - n - 1 );
-    double xi3 = _xi( 3, _nEnergies - n - 1 );
+    double xi1 = _xi( 1, n );
+    double xi2 = _xi( 2, n );
+    double xi3 = _xi( 3, n );
 
     // setup coefficients in FP step
     if( _FPMethod == 1 ) {
@@ -330,21 +311,10 @@ void CSDSolverTrafoFP2D::IterPreprocessing( unsigned idx_pseudotime ) {
 
     _IL = _identity - _beta * _L;
 
-    // write BC for water phantom
-    if( _RT && false ) {
-        for( unsigned k = 0; k < _nq; ++k ) {
-            if( _quadPoints[k][0] > 0 ) {
-                _sol[0][k] = 1e5 * exp( -200.0 * pow( 1.0 - _quadPoints[k][0], 2 ) ) *
-                             exp( -50.0 * pow( _energyMax - _energiesOrig[_nEnergies - n - 1], 2 ) ) * _density[0] * _s[_nEnergies - n - 1];
-            }
-        }
-    }
-
 // add FP scattering term implicitly
 #pragma omp parallel for
     for( unsigned j = 0; j < _nCells; ++j ) {
         if( _boundaryCells[j] == BOUNDARY_TYPE::DIRICHLET ) continue;
-        //_sol[j] = blaze::solve( _identity - _dE * _alpha2 * _L, psiNew[j] );
         _sol[j] = _IL * blaze::solve( _IL - _dE * _alpha * _L, _sol[j] );
     }
 }
@@ -360,14 +330,12 @@ void CSDSolverTrafoFP2D::IterPostprocessing( unsigned idx_pseudotime ) {
     for( unsigned j = 0; j < _nCells; ++j ) {
         _fluxNew[j] = dot( _sol[j], _weights );
         if( n > 0 ) {
-            _dose[j] += 0.5 * _dE * ( _fluxNew[j] * _s[_nEnergies - n - 1] + _flux[j] * _s[_nEnergies - n] ) /
-                        _density[j];    // update dose with trapezoidal rule
+            _dose[j] += 0.5 * _dE * ( _fluxNew[j] * _s[n] + _flux[j] * _s[n] ) / _density[j];    // update dose with trapezoidal rule
         }
         else {
-            _dose[j] += _dE * _fluxNew[j] * _s[_nEnergies - n - 1] / _density[j];
+            _dose[j] += _dE * _fluxNew[j] * _s[n] / _density[j];
         }
-        _solverOutput[j] = _fluxNew[j];
-        _flux[j]         = _fluxNew[j];
+        _flux[j] = _fluxNew[j];
     }
 
     // --- Compute Flux for solution and Screen Output ---
@@ -379,20 +347,12 @@ void CSDSolverTrafoFP2D::SolverPreprocessing() {
 
     _densityMin = 0.1;
     for( unsigned j = 0; j < _nCells; ++j ) {
+        _density[j] = 1.0;
         if( _density[j] < _densityMin ) _density[j] = _densityMin;
     }
 
     // save original energy field for boundary conditions
     _energiesOrig = _energies;
-
-    // setup incoming BC on left
-    //_sol = VectorVector( _density.size(), Vector( _settings->GetNQuadPoints(), 0.0 ) );    // hard coded IC, needs to be changed
-    // for( unsigned k = 0; k < _nq; ++k ) {
-    //    if( _quadPoints[k][0] > 0 && !_RT ) _sol[0][k] = 1e5 * exp( -10.0 * pow( 1.0 - _quadPoints[k][0], 2 ) );
-    //}
-    // hard coded boundary type for 1D testcases (otherwise cells will be NEUMANN)
-    //_boundaryCells[0]           = BOUNDARY_TYPE::DIRICHLET;
-    //_boundaryCells[_nCells - 1] = BOUNDARY_TYPE::DIRICHLET;
 
     // setup identity matrix for FP scattering
     _identity = Matrix( _nq, _nq, 0.0 );
@@ -401,26 +361,13 @@ void CSDSolverTrafoFP2D::SolverPreprocessing() {
 
     int rank;
     MPI_Comm_rank( MPI_COMM_WORLD, &rank );
-    // if( rank == 0 ) log->info( "{:10}   {:10}", "E", "dFlux" );
 
 // do substitution from psi to psiTildeHat (cf. Dissertation Kerstion Kuepper, Eq. 1.23)
 #pragma omp parallel for
     for( unsigned j = 0; j < _nCells; ++j ) {
         for( unsigned k = 0; k < _nq; ++k ) {
-            _sol[j][k] = _sol[j][k] * _density[j] * _s[_nEnergies - 1];    // note that _s[_nEnergies - 1] is stopping power at highest energy
+            _sol[j][k] = _sol[j][k] * _density[j] * _s[0];    // note that _s[_nEnergies - 1] is stopping power at highest energy
         }
-    }
-    // store transformed energies ETilde instead of E in _energies vector (cf. Dissertation Kerstion Kuepper, Eq. 1.25)
-    double tmp   = 0.0;
-    _energies[0] = 0.0;
-    for( unsigned n = 1; n < _nEnergies; ++n ) {
-        tmp          = tmp + _dE * 0.5 * ( 1.0 / _s[n] + 1.0 / _s[n - 1] );
-        _energies[n] = tmp;
-    }
-
-    // store transformed energies ETildeTilde instead of ETilde in _energies vector (cf. Dissertation Kerstion Kuepper, Eq. 1.25)
-    for( unsigned n = 0; n < _nEnergies; ++n ) {
-        _energies[n] = _energies[_nEnergies - 1] - _energies[n];
     }
 
     // determine minimal density for CFL computation

@@ -14,7 +14,7 @@ class PNSolver : public SolverBase
     /*! @brief PNSolver destructor */
     virtual ~PNSolver() {}
 
-  private:
+  protected:
     unsigned _nSystem;         /*!< @brief total number of equations in the system */
     unsigned _polyDegreeBasis; /*!< @brief maximal degree of the spherical harmonics basis*/
 
@@ -37,9 +37,6 @@ class PNSolver : public SolverBase
 
     Vector _scatterMatDiag; /*!< @brief diagonal of the scattering matrix (its a diagonal matrix by construction). Contains eigenvalues of the
                                scattering kernel.  */
-
-    VectorVector _solDx; /*!< @brief  Temporary storage of x-derivatives of solution */
-    VectorVector _solDy; /*!< @brief  Temporary storage of y-derivatives of solution */
 
     // ---- Member functions ----
 

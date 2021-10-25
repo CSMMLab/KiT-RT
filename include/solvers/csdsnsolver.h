@@ -9,8 +9,7 @@ class CSDSNSolver : public SNSolver
     std::vector<double> _dose; /*!< @brief TODO */
 
     // Physics acess
-    Vector _energies; /*!< @brief energy levels for CSD, lenght = _nEnergies */
-    Vector _angle;    /*!< @brief angles for SN */
+    Vector _angle; /*!< @brief angles for SN */
 
     std::vector<Matrix> _sigmaSE; /*!<  @brief scattering cross section for all energies*/
     Vector _sigmaTE;              /*!<  @brief total cross section for all energies*/
