@@ -1,6 +1,6 @@
-#include "problems/electronrt.h"
-#include "common/config.h"
-#include "common/mesh.h"
+#include "problems/electronrt.hpp"
+#include "common/config.hpp"
+#include "common/mesh.hpp"
 
 // Constructor: Legacy code, physics class is no longer used
 ElectronRT::ElectronRT( Config* settings, Mesh* mesh ) : ProblemBase( settings, mesh ) {

@@ -5,6 +5,7 @@ Solvers
    :maxdepth: 1
 
    solverbase
+   csdpnsolver
    csdsnsolver
    csdsnsolverfp
    csdsnsolvernotrafo

@@ -1,10 +1,10 @@
 #include <numeric>
 
 #include "catch.hpp"
-#include "common/config.h"
-#include "optimizers/optimizerbase.h"
-#include "quadratures/quadraturebase.h"
-#include "toolboxes/sphericalharmonics.h"
+#include "common/config.hpp"
+#include "optimizers/optimizerbase.hpp"
+#include "quadratures/quadraturebase.hpp"
+#include "toolboxes/sphericalharmonics.hpp"
 
 TEST_CASE( "Test the Newton Optimizer", "[optimizers]" ) {
     std::string filename = std::string( TESTS_PATH ) + "input/unit_tests/optimizers/unit_optimizerNewton.cfg";
@@ -31,7 +31,6 @@ TEST_CASE( "Test the Newton Optimizer", "[optimizers]" ) {
     Vector alpha( nTotalEntries, 27.0 );
 
     // Get Moments
-   
 
     VectorVector moments = VectorVector( quad->GetNq() );
     double my, phi;

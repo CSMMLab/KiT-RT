@@ -1,21 +1,21 @@
-#include "solvers/csdpnsolver.h"
-#include "common/config.h"
-#include "common/globalconstants.h"
-#include "common/io.h"
-#include "common/mesh.h"
-#include "fluxes/numericalflux.h"
-#include "kernels/scatteringkernelbase.h"
-#include "problems/icru.h"
-#include "problems/problembase.h"
-#include "solvers/csdpn_starmap_constants.h"
-#include "toolboxes/textprocessingtoolbox.h"
+#include "solvers/csdpnsolver.hpp"
+#include "common/config.hpp"
+#include "common/globalconstants.hpp"
+#include "common/io.hpp"
+#include "common/mesh.hpp"
+#include "fluxes/numericalflux.hpp"
+#include "kernels/scatteringkernelbase.hpp"
+#include "problems/icru.hpp"
+#include "problems/problembase.hpp"
+#include "solvers/csdpn_starmap_constants.hpp"
+#include "toolboxes/textprocessingtoolbox.hpp"
 // externals
 #include "spdlog/spdlog.h"
 #include <iostream>
 #include <mpi.h>
 
-#include "quadratures/quadraturebase.h"
-#include "toolboxes/sphericalbase.h"
+#include "quadratures/quadraturebase.hpp"
+#include "toolboxes/sphericalbase.hpp"
 
 double normpdf( double x, double mu, double sigma ) {
     return INV_SQRT_2PI / sigma * std::exp( -( ( x - mu ) * ( x - mu ) ) / ( 2.0 * sigma * sigma ) );

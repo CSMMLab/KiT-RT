@@ -1,8 +1,8 @@
-#include "datagenerator/datageneratorregression.h"
-#include "common/config.h"
-#include "entropies/entropybase.h"
-#include "optimizers/newtonoptimizer.h"
-#include "toolboxes/errormessages.h"
+#include "datagenerator/datageneratorregression.hpp"
+#include "common/config.hpp"
+#include "entropies/entropybase.hpp"
+#include "optimizers/newtonoptimizer.hpp"
+#include "toolboxes/errormessages.hpp"
 
 #include <math.h>
 

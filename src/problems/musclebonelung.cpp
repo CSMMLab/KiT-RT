@@ -1,6 +1,6 @@
-#include "problems/musclebonelung.h"
-#include "common/config.h"
-#include "common/mesh.h"
+#include "problems/musclebonelung.hpp"
+#include "common/config.hpp"
+#include "common/mesh.hpp"
 
 MuscleBoneLung::MuscleBoneLung( Config* settings, Mesh* mesh ) : ElectronRT( settings, mesh ) {}
 

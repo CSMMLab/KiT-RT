@@ -1,9 +1,9 @@
-#include "problems/linesource.h"
-#include "common/config.h"
-#include "common/mesh.h"
-#include "problems/epics.h"
-#include "quadratures/quadraturebase.h"
-#include "toolboxes/sphericalbase.h"
+#include "problems/linesource.hpp"
+#include "common/config.hpp"
+#include "common/mesh.hpp"
+#include "problems/epics.hpp"
+#include "quadratures/quadraturebase.hpp"
+#include "toolboxes/sphericalbase.hpp"
 #include <complex>
 
 // ---- Linesource ----

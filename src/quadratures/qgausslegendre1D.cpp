@@ -1,5 +1,5 @@
-#include "quadratures/qgausslegendre1D.h"
-#include "toolboxes/errormessages.h"
+#include "quadratures/qgausslegendre1D.hpp"
+#include "toolboxes/errormessages.hpp"
 
 QGaussLegendre1D::QGaussLegendre1D( Config* settings ) : QuadratureBase( settings ) {
     SetName();

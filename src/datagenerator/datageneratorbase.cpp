@@ -4,21 +4,21 @@
  * \author S. Schotthoefer
  */
 
-#include "datagenerator/datageneratorbase.h"
-#include "common/config.h"
-#include "datagenerator/datagenerator1D.h"
-#include "datagenerator/datagenerator2D.h"
-#include "datagenerator/datagenerator3D.h"
-#include "datagenerator/datageneratorclassification.h"
-#include "entropies/entropybase.h"
-#include "optimizers/newtonoptimizer.h"
-#include "quadratures/quadraturebase.h"
-#include "spdlog/spdlog.h"
-#include "toolboxes/errormessages.h"
-#include "toolboxes/sphericalbase.h"
-#include "toolboxes/textprocessingtoolbox.h"
+#include "datagenerator/datageneratorbase.hpp"
+#include "common/config.hpp"
+#include "datagenerator/datagenerator1D.hpp"
+#include "datagenerator/datagenerator2D.hpp"
+#include "datagenerator/datagenerator3D.hpp"
+#include "datagenerator/datageneratorclassification.hpp"
+#include "entropies/entropybase.hpp"
+#include "optimizers/newtonoptimizer.hpp"
+#include "quadratures/quadraturebase.hpp"
+#include "toolboxes/errormessages.hpp"
+#include "toolboxes/sphericalbase.hpp"
+#include "toolboxes/textprocessingtoolbox.hpp"
 
 //#include <chrono>
+#include "spdlog/spdlog.h"
 #include <iomanip>
 #include <math.h>
 #include <omp.h>

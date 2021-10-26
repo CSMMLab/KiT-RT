@@ -1,5 +1,5 @@
-#include "toolboxes/interpolation.h"
-#include "toolboxes/errormessages.h"
+#include "toolboxes/interpolation.hpp"
+#include "toolboxes/errormessages.hpp"
 #include <blaze/math/lapack/posv.h>
 
 // Change Vector type to blaze for std input

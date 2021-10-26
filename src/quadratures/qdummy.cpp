@@ -9,7 +9,7 @@
  *
  */
 
-#include "quadratures/qdummy.h"
+#include "quadratures/qdummy.hpp"
 
 QDummy::QDummy( Config* settings ) : QuadratureBase( settings ) {
     SetName();

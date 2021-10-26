@@ -6,12 +6,12 @@
  * Disclaimer: This class structure was copied and modifed with open source permission from SU2 v7.0.3 https://su2code.github.io/
  */
 
-#include "common/config.h"
-#include "common/globalconstants.h"
-#include "common/optionstructure.h"
-#include "quadratures/quadraturebase.h"
-#include "toolboxes/errormessages.h"
-#include "toolboxes/textprocessingtoolbox.h"
+#include "common/config.hpp"
+#include "common/globalconstants.hpp"
+#include "common/optionstructure.hpp"
+#include "quadratures/quadraturebase.hpp"
+#include "toolboxes/errormessages.hpp"
+#include "toolboxes/textprocessingtoolbox.hpp"
 
 // externals
 #include "spdlog/sinks/basic_file_sink.h"

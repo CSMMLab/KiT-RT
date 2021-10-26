@@ -1,6 +1,6 @@
-#include "problems/waterphantom.h"
-#include "common/config.h"
-#include "common/mesh.h"
+#include "problems/waterphantom.hpp"
+#include "common/config.hpp"
+#include "common/mesh.hpp"
 
 WaterPhantom::WaterPhantom( Config* settings, Mesh* mesh ) : ElectronRT( settings, mesh ) {}
 

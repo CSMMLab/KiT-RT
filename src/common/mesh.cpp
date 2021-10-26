@@ -1,4 +1,4 @@
-#include "common/mesh.h"
+#include "common/mesh.hpp"
 
 #include <chrono>
 

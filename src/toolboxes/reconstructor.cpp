@@ -1,5 +1,5 @@
-#include "toolboxes/reconstructor.h"
-#include "common/config.h"
+#include "toolboxes/reconstructor.hpp"
+#include "common/config.hpp"
 
 Reconstructor::Reconstructor( Config* settings ) { _reconsOrder = settings->GetReconsOrder(); }
 
