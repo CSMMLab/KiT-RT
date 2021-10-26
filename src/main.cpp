@@ -12,7 +12,6 @@
 #include "common/config.h"
 #include "common/io.h"
 #include "solvers/solverbase.h"
-
 #include "toolboxes/datageneratorbase.h"
 
 #ifdef BUILD_GUI
