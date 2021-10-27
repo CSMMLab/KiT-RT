@@ -8,6 +8,8 @@
 #include "quadratures/qlevelsymmetric.h"
 #include "quadratures/qmontecarlo.h"
 #include "quadratures/qproduct.h"
+//#include "quadratures/qicosahedron.h"
+#include "quadratures/qicosahedrontriang.h"
 #include "toolboxes/errormessages.h"
 
 QuadratureBase::QuadratureBase( Config* settings ) {
@@ -31,6 +33,8 @@ QuadratureBase* QuadratureBase::Create( Config* settings ) {
         case QUAD_LDFESA: return new QLDFESA( settings );
         case QUAD_Lebedev: return new QLebedev( settings );
         case QUAD_Product: return new QProduct( settings );
+        //case QUAD_Icosahedron_Mid: return new QIcosahedron( settings ); // TODO add Icosahedron files
+        case QUAD_Icosahedron_Triang: return new QIcosahedronII( settings );
         default: ErrorMessages::Error( "Creator for the chosen quadrature does not yet exist. This is the fault of the coder!", CURRENT_FUNCTION );
     }
     return nullptr;
@@ -49,6 +53,8 @@ QuadratureBase* QuadratureBase::Create( QUAD_NAME name, unsigned quadOrder ) {
         case QUAD_LDFESA: return new QLDFESA( quadOrder );
         case QUAD_Lebedev: return new QLebedev( quadOrder );
         case QUAD_Product: return new QProduct( quadOrder );
+        //case QUAD_Icosahedron_Mid: return new QIcosahedron( quadOrder );
+        case QUAD_Icosahedron_Triang: return new QIcosahedronII( quadOrder );
         default: ErrorMessages::Error( "Creator for the chosen quadrature does not yet exist. This is the fault of the coder!", CURRENT_FUNCTION );
     }
     return nullptr;
