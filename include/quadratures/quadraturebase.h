@@ -73,6 +73,14 @@ class QuadratureBase
         return _connectivity;
     } /*! @returns VectorVectorU _connectivity:  connectivity of gridpoints of the quadrature */
 
+    /* If local_refinement = false: return  values from not refined quadrature object */
+    inline unsigned GetNqRefined() const { return _nqRefined; }
+    inline VectorVector GetPointsRefined() const { return _pointsRefined; }
+    inline Vector GetWeightsRefined() const { return _weightsRefined; }
+    inline VectorVectorU GetRefineVector() const { return _refineVector; }
+    inline VectorVectorU GetNeighbours() const { return _neighbours; }
+    inline VectorVectorU GetNeighboursRefined() const {return _neighboursRefined; }
+
   protected:
     // Setter
     inline void SetOrder( unsigned order ) { _order = order; } /*! @brief sets: order of the quadrature */
@@ -94,6 +102,13 @@ class QuadratureBase
     VectorVector _pointsSphere;  /*!< @brief (my,phi)gridpoints of the quadrature in spherical cordinates */
     Vector _weights;             /*!< @brief weights of the gridpoints of the quadrature */
     VectorVectorU _connectivity; /*!< @brief connectivity of the gripoints of the quadrature */
+
+    unsigned _nqRefined;
+    VectorVector _pointsRefined;
+    Vector _weightsRefined;
+    VectorVectorU _refineVector;
+    VectorVectorU _neighbours;
+    VectorVectorU _neighboursRefined;
 };
 
 #endif    // QUADRATURE_H
