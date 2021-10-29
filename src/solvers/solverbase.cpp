@@ -15,6 +15,11 @@
 #include "solvers/mnsolver.h"
 #include "solvers/pnsolver.h"
 #include "solvers/snsolver.h"
+#include "solvers/refinesnsolver.h"
+#include "solvers/firstcollisionmnsolver.h"
+#include "solvers/firstcollisionsnsolver.h"
+#include "solvers/firstcollisioncsdsnsolver.h"
+
 
 #include <mpi.h>
 
