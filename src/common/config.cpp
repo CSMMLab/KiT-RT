@@ -222,6 +222,7 @@ void Config::SetConfigOptions() {
     AddEnumOption( "QUAD_TYPE", _quadName, Quadrature_Map, QUAD_MonteCarlo );
     /*!\brief QUAD_ORDER \n DESCRIPTION: Order of Quadrature rule \n DEFAULT 2 \ingroup Config.*/
     AddUnsignedShortOption( "QUAD_ORDER", _quadOrder, 1 );
+    AddUnsignedShortOption( "QUAD_ORDER_FINE", _quadOrderFine, 1);
 
     // Solver related options
     /*! @brief MAX_MOMENT_ORDER \n: DESCRIPTON: Specifies the maximal order of Moments for PN and SN Solver */
@@ -242,6 +243,19 @@ void Config::SetConfigOptions() {
     /*! @brief ContinuousSlowingDown \n DESCRIPTION: If true, the program uses the continuous slowing down approximation to treat energy dependent
      * problems. \n DEFAULT false \ingroup Config */
     // AddBoolOption( "CONTINUOUS_SLOWING_DOWN", _csd, false );
+    /*! @brief REFINE_ITER \n DESCRIPTION: Nr of Iterations in which Refinement is wanted \n DEFAULT 0 \ingroup Config.*/
+    AddUnsignedShortOption( "REFINE_ITER", _refineIter, 0 );
+    /*! @brief AS_BETA \n DESCRIPTION: Beta value for Artificial Scattering \n DEFAULT 0 \ingroup Config.*/
+    AddDoubleOption( "BETA_AS", _betaAS, 0.0);
+    /*! @brief SIGMA_AS \n DESCRIPTION: Scattering crosssection of Artificial Scattering \n DEFAULT 0 \ingroup Config.*/
+    AddDoubleOption("SCATTER_COEFF_AS", _sigmaAS, 0.0);
+    /*! @brief FIRST_COLLISION_SOLVER \n DESCRIPTION: Chosen Solver for Uncollided Part of First Collision Solver \n DEFAULT SN_SOLVER \ingroup Config.*/
+    AddEnumOption( "UNCOLLIDED_SOLVER", _uncollidedSolverName, Solver_Map, SN_SOLVER);
+    /*! @brief LOCAL_REFINEMENT \n DESCRIPTION: If true, local refinement methods are used \n DEFAULT false \ingroup Config. */
+    AddBoolOption( "LOCAL_REFINEMENT", _localRefine, false );
+    /*! @brief LOCAL_REFINEMENT \n DESCRIPTION: If true, artificial scattering terms are added \n DEFAULT false \ingroup Config. */
+    AddBoolOption( "ARTIFICIAL_SCATTERING", _artificialScattering, false );
+
 
     // Problem Relateed Options
     /*! @brief MaterialDir \n DESCRIPTION: Relative Path to the data directory (used in the ICRU database class), starting from the directory of the
@@ -525,6 +539,8 @@ void Config::SetPostprocessing() {
         for( unsigned short idx_volOutput = 0; idx_volOutput < _nVolumeOutput; idx_volOutput++ ) {
             switch( _solverName ) {
                 case SN_SOLVER:
+                case FIRST_COLLISION_SOLVER:
+                case REFINE_SN_SOLVER:
                     supportedGroups = { MINIMAL, ANALYTIC };
                     if( supportedGroups.end() == std::find( supportedGroups.begin(), supportedGroups.end(), _volumeOutput[idx_volOutput] ) ) {
                         ErrorMessages::Error( "SN_SOLVER only supports volume output MINIMAL and ANALYTIC.\nPlease check your .cfg file.",
