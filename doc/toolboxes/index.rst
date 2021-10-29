@@ -6,5 +6,9 @@ Toolboxes
 
    errormessages
    interpolation
+   textprocessingtoolbox
+   pyhelper
    reconstructor
+   shpericalbase
+   sphericalmonomials
    sphericalharmonics

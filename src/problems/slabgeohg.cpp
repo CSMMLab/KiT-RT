@@ -1,7 +1,7 @@
-#include "problems/slabgeohg.h"
-#include "common/config.h"
-#include "common/mesh.h"
-#include "problems/epics.h"
+#include "problems/slabgeohg.hpp"
+#include "common/config.hpp"
+#include "common/mesh.hpp"
+#include "problems/epics.hpp"
 
 // ---- SlabGeoHG ----
 

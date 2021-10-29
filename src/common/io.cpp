@@ -4,13 +4,12 @@
  * \author  J. Kusch, S. Schotthoefer, P. Stammer,  J. Wolters, T. Xiao
  */
 
-#include "common/io.h"
-#include "common/config.h"
-#include "common/mesh.h"
-#include "common/typedef.h"
-
-#include "toolboxes/errormessages.h"
-#include "toolboxes/textprocessingtoolbox.h"
+#include "common/io.hpp"
+#include "common/config.hpp"
+#include "common/mesh.hpp"
+#include "common/typedef.hpp"
+#include "toolboxes/errormessages.hpp"
+#include "toolboxes/textprocessingtoolbox.hpp"
 
 #include <iostream>
 
@@ -336,7 +335,7 @@ void PrintLogHeader( std::string inputFile ) {
         log->info( "|    _  _____ _____     ____ _____                                     |" );
         log->info( "|   | |/ /_ _|_   _|   |  _ \\_   _|                                    |" );
         log->info( "|   | ' / | |  | |_____| |_) || |            Version                   |" );
-        log->info( "|   | . \\ | |  | |_____|  _ < | |             0.0.2                    |" );
+        log->info( "|   | . \\ | |  | |_____|  _ < | |             0.1.0                    |" );
         log->info( "|   |_|\\_\\___| |_|     |_| \\_\\|_|                                      |" );
         log->info( "|                                                                      |" );
         log->info( "------------------------------------------------------------------------" );

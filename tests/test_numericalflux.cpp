@@ -1,8 +1,8 @@
 #include <numeric>
 
 #include "catch.hpp"
-#include "common/typedef.h"
-#include "fluxes/upwindflux.h"
+#include "common/typedef.hpp"
+#include "fluxes/upwindflux.hpp"
 
 TEST_CASE( "numerical flux unit tests", "[numericalflux]" ) {
 

@@ -1,5 +1,5 @@
-#include "quadratures/qgausschebyshev1D.h"
-#include "toolboxes/errormessages.h"
+#include "quadratures/qgausschebyshev1D.hpp"
+#include "toolboxes/errormessages.hpp"
 
 QGaussChebyshev1D::QGaussChebyshev1D( Config* settings ) : QuadratureBase( settings ) {
     SetName();
@@ -7,6 +7,7 @@ QGaussChebyshev1D::QGaussChebyshev1D( Config* settings ) : QuadratureBase( setti
     SetNq();
     SetPointsAndWeights();
     SetConnectivity();
+    _supportedDimensions = { 1 };
 }
 
 QGaussChebyshev1D::QGaussChebyshev1D( unsigned quadOrder ) : QuadratureBase( quadOrder ) {

@@ -4,11 +4,11 @@
  * @author S. Schotthöfer
  */
 
-#include "toolboxes/sphericalbase.h"
-#include "common/config.h"
-#include "toolboxes/errormessages.h"
-#include "toolboxes/sphericalharmonics.h"
-#include "toolboxes/sphericalmonomials.h"
+#include "toolboxes/sphericalbase.hpp"
+#include "common/config.hpp"
+#include "toolboxes/errormessages.hpp"
+#include "toolboxes/sphericalharmonics.hpp"
+#include "toolboxes/sphericalmonomials.hpp"
 
 SphericalBase* SphericalBase::Create( Config* settings ) {
     SPHERICAL_BASIS_NAME name = settings->GetSphericalBasisName();

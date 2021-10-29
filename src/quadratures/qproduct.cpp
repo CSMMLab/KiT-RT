@@ -1,11 +1,12 @@
-#include "quadratures/qproduct.h"
-#include "toolboxes/errormessages.h"
+#include "quadratures/qproduct.hpp"
+#include "toolboxes/errormessages.hpp"
 
 QProduct::QProduct( unsigned order ) : QuadratureBase( order ) {
     SetName();
     SetNq();
     SetPointsAndWeights();
     SetConnectivity();
+    _supportedDimensions = { 2, 3 };    // Doulble check
 }
 
 QProduct::QProduct( Config* settings ) : QuadratureBase( settings ) {

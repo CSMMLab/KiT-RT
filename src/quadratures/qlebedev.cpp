@@ -1,6 +1,6 @@
-#include "quadratures/qlebedev.h"
-#include "quadratures/lookuptable_lebedev.h"
-#include "toolboxes/errormessages.h"
+#include "quadratures/qlebedev.hpp"
+#include "quadratures/lookuptable_lebedev.hpp"
+#include "toolboxes/errormessages.hpp"
 
 QLebedev::QLebedev( Config* settings ) : QLookupQuadrature( settings ) {
     SetAvailOrders();

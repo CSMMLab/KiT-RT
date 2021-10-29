@@ -1,5 +1,5 @@
 #include "catch.hpp"
-#include "common/config.h"
+#include "common/config.hpp"
 
 TEST_CASE( "Read in Config Template" ) {
     std::string filename = std::string( TESTS_PATH ) + "input/unit_tests/common/unit_config.cfg";

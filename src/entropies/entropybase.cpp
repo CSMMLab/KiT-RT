@@ -1,7 +1,7 @@
-#include "entropies/entropybase.h"
-#include "common/config.h"
-#include "entropies/maxwellboltzmannentropy.h"
-#include "entropies/quadraticentropy.h"
+#include "entropies/entropybase.hpp"
+#include "common/config.hpp"
+#include "entropies/maxwellboltzmannentropy.hpp"
+#include "entropies/quadraticentropy.hpp"
 
 EntropyBase* EntropyBase::Create( Config* settings ) {
 

@@ -1,7 +1,7 @@
 #include "catch.hpp"
-#include "common/config.h"
-#include "common/globalconstants.h"
-#include "quadratures/quadraturebase.h"
+#include "common/config.hpp"
+#include "common/globalconstants.hpp"
+#include "quadratures/quadraturebase.hpp"
 
 #include <vector>
 

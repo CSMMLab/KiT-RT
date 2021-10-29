@@ -1,8 +1,8 @@
-#include "optimizers/optimizerbase.h"
-#include "common/config.h"
-#include "entropies/entropybase.h"
-#include "optimizers/mloptimizer.h"
-#include "optimizers/newtonoptimizer.h"
+#include "optimizers/optimizerbase.hpp"
+#include "common/config.hpp"
+#include "entropies/entropybase.hpp"
+#include "optimizers/mloptimizer.hpp"
+#include "optimizers/newtonoptimizer.hpp"
 
 OptimizerBase::OptimizerBase( Config* settings ) {
     _entropy  = EntropyBase::Create( settings );

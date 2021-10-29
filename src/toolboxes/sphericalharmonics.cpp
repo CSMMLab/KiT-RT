@@ -1,5 +1,5 @@
-#include "toolboxes/sphericalharmonics.h"
-#include "toolboxes/errormessages.h"
+#include "toolboxes/sphericalharmonics.hpp"
+#include "toolboxes/errormessages.hpp"
 #include <math.h>
 
 SphericalHarmonics::SphericalHarmonics( unsigned L_degree ) {

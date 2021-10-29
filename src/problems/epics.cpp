@@ -1,4 +1,4 @@
-#include "problems/epics.h"
+#include "problems/epics.hpp"
 
 EPICS::EPICS( std::string fileName_H, std::string fileName_O, std::string fileName_stppower ) {
     _xsScatteringH2O.resize( 2 );
