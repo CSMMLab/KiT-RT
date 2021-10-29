@@ -2,7 +2,7 @@
 // Created by chinsp on 29/10/21.
 //
 
-#include "firstcollisionmnsolver.h"
+#include "../../include/solvers/firstcollisionmnsolver.h"
 
 #include "common/config.h"
 #include "common/io.h"
