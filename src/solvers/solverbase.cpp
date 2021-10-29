@@ -22,13 +22,15 @@
 
 
 #include <mpi.h>
+#include <time.h>
+
 
 SolverBase::SolverBase( Config* settings ) {
     _settings = settings;
 
     // @TODO save parameters from settings class
 
-    // build mesh and store  and store frequently used params
+    // build mesh and store frequently used params
     _mesh      = LoadSU2MeshFromFile( settings );
     _areas     = _mesh->GetCellAreas();
     _neighbors = _mesh->GetNeighbours();
@@ -108,13 +110,20 @@ SolverBase::~SolverBase() {
 SolverBase* SolverBase::Create( Config* settings ) {
     switch( settings->GetSolverName() ) {
         case SN_SOLVER: return new SNSolver( settings );
-
         case PN_SOLVER: return new PNSolver( settings );
         case MN_SOLVER: return new MNSolver( settings );
         case CSD_SN_SOLVER: return new CSDSNSolver( settings );
         case CSD_SN_FOKKERPLANCK_TRAFO_SOLVER: return new CSDSolverTrafoFP( settings );
         case CSD_SN_FOKKERPLANCK_TRAFO_SOLVER_2D: return new CSDSolverTrafoFP2D( settings );
         case CSD_SN_FOKKERPLANCK_TRAFO_SH_SOLVER_2D: return new CSDSolverTrafoFPSH2D( settings );
+        case REFINE_SN_SOLVER: return new RefineSNSolver( settings );
+        case FIRST_COLLISION_SOLVER:
+            switch ( settings-> GetFirstCollisionSolver() ){
+                case SN_SOLVER: return new FirstCollisionSNSolver( settings );
+                case MN_SOLVER: return new FirstCollisionMNSolver( settings );
+                default: ErrorMessages::Error( "Creator for the chosen First Collison Solver does not yet exist.", CURRENT_FUNCTION );
+            }
+        case FIRST_COLLISION_CSD_SN_SOLVER: return new FirstCollisionCSDSNSolver( settings );
         default: ErrorMessages::Error( "Creator for the chosen solver does not yet exist. This is is the fault of the coder!", CURRENT_FUNCTION );
     }
     ErrorMessages::Error( "Creator for the chosen solver does not yet exist. This is is the fault of the coder!", CURRENT_FUNCTION );
@@ -122,6 +131,9 @@ SolverBase* SolverBase::Create( Config* settings ) {
 }
 
 void SolverBase::Solve() {
+
+    FILE * timefile = fopen((_settings->GetLogDir() + "/TimesCompare.txt").c_str(), "a+");
+    clock_t start = clock();
 
     // --- Preprocessing ---
 
@@ -141,6 +153,8 @@ void SolverBase::Solve() {
     // Loop over energies (pseudo-time of continuous slowing down approach)
     for( unsigned iter = 0; iter < _maxIter; iter++ ) {
 
+        clock_t startiter = clock();
+
         // --- Prepare Boundaries and temp variables
         IterPreprocessing( iter );
 
@@ -152,6 +166,8 @@ void SolverBase::Solve() {
 
         // --- Iter Postprocessing ---
         IterPostprocessing( iter );
+        clock_t enditer = clock() - startiter;
+        fprintf(timefile, "Iteration %u: \t %f sec. \n", iter, enditer/(float)CLOCKS_PER_SEC);
 
         // --- Solver Output ---
         WriteVolumeOutput( iter );
@@ -164,6 +180,11 @@ void SolverBase::Solve() {
     // --- Postprocessing ---
 
     DrawPostSolverOutput();
+    clock_t end = clock() - start;
+    fprintf(timefile, "\nTime for complete Run: %f \n \n", end/(float)CLOCKS_PER_SEC );
+
+    fclose(timefile);
+
 }
 
 void SolverBase::PrintVolumeOutput() const { ExportVTK( _settings->GetOutputFile(), _outputFields, _outputFieldNames, _mesh ); }
