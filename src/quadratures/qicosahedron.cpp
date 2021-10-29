@@ -2,7 +2,7 @@
 // Created by chinsp on 29/10/21.
 //
 
-#include "qicosahedron.h"
+#include "../../include/quadratures/qicosahedron.h"
 #include "include/common/config.h"
 #include "include/toolboxes/errormessages.h"
 
