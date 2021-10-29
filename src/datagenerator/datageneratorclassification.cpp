@@ -33,9 +33,9 @@ DataGeneratorClassification::DataGeneratorClassification( Config* settings ) : D
     //_pdfClassification = Vector( _setSize, 0.0 );
     _kineticDensity = VectorVector( _setSize, Vector( _nq, 0.0 ) );
 
-    double rho = 1.0;    // equal to the mass of the maxwellian
-    double u   = 0.0;    // equal to the mean of the maxwellian
-    double T   = 0.1;    // equal to the variance of the maxwellian
+    // double rho = 1.0;    // equal to the mass of the maxwellian
+    // double u   = 0.0;    // equal to the mean of the maxwellian
+    // double T   = 0.1;    // equal to the variance of the maxwellian
 
     //_maxwellian = ComputeMaxwellian( rho, u, T );
 }
