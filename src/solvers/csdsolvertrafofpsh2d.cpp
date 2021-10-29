@@ -1,5 +1,5 @@
-#include "solvers/csdsolvertrafofpsh2d.h"
-#include "problems/icru.h"
+#include "solvers/csdsolvertrafofpsh2d.hpp"
+#include "problems/icru.hpp"
 
 CSDSolverTrafoFPSH2D::CSDSolverTrafoFPSH2D( Config* settings ) : SNSolver( settings ) {
     _dose = std::vector<double>( _settings->GetNCells(), 0.0 );
@@ -478,8 +478,6 @@ void CSDSolverTrafoFPSH2D::IterPostprocessing( unsigned idx_pseudotime ) {
         else {
             _dose[j] += _dE * _fluxNew[j] * _s[_nEnergies - n - 1] / _density[j];
         }
-        _solverOutput[j] = _fluxNew[j];
-        _flux[j]         = _fluxNew[j];
     }
 }
 

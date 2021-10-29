@@ -1,9 +1,9 @@
-#include "problems/linesource.h"
-#include "common/config.h"
-#include "common/mesh.h"
-#include "problems/epics.h"
-#include "quadratures/quadraturebase.h"
-#include "toolboxes/sphericalbase.h"
+#include "problems/linesource.hpp"
+#include "common/config.hpp"
+#include "common/mesh.hpp"
+#include "problems/epics.hpp"
+#include "quadratures/quadraturebase.hpp"
+#include "toolboxes/sphericalbase.hpp"
 #include <complex>
 
 // ---- Linesource ----
@@ -37,7 +37,7 @@ double LineSource::GetAnalyticalSolution( double x, double y, double t, double /
         }
     }
 
-    return ( 4 * M_PI ) * solution;    // Scaling of soolution
+    return ( 2 * M_PI ) * solution;    // Scaling of soolution ( 4 * M_PI ) *
 }
 
 double LineSource::HelperIntRho_ptc( double R, double t ) {

@@ -1,6 +1,6 @@
-#include "problems/phantom2d.h"
-#include "common/config.h"
-#include "common/mesh.h"
+#include "problems/phantom2d.hpp"
+#include "common/config.hpp"
+#include "common/mesh.hpp"
 
 Phantom2D::Phantom2D( Config* settings, Mesh* mesh ) : ElectronRT( settings, mesh ) {}
 

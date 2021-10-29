@@ -1,11 +1,11 @@
-#include "solvers/csdsolvertrafofp.h"
-#include "common/config.h"
-#include "common/io.h"
-#include "fluxes/numericalflux.h"
-#include "kernels/scatteringkernelbase.h"
-#include "problems/icru.h"
-#include "problems/problembase.h"
-#include "quadratures/quadraturebase.h"
+#include "solvers/csdsolvertrafofp.hpp"
+#include "common/config.hpp"
+#include "common/io.hpp"
+#include "fluxes/numericalflux.hpp"
+#include "kernels/scatteringkernelbase.hpp"
+#include "problems/icru.hpp"
+#include "problems/problembase.hpp"
+#include "quadratures/quadraturebase.hpp"
 
 // externals
 #include "spdlog/spdlog.h"
@@ -188,6 +188,7 @@ void CSDSolverTrafoFP::IterPostprocessing( unsigned idx_pseudotime ) {
     _sol = _solNew;
 
     unsigned n = idx_pseudotime;
+    // Compute Dose
     for( unsigned j = 0; j < _nCells; ++j ) {
         _fluxNew[j] = dot( _sol[j], _weights );
         if( n > 0 ) {
@@ -197,8 +198,7 @@ void CSDSolverTrafoFP::IterPostprocessing( unsigned idx_pseudotime ) {
         else {
             _dose[j] += _dE * _fluxNew[j] * _s[_nEnergies - n - 1] / _density[j];
         }
-        _solverOutput[j] = _fluxNew[j];
-        _flux[j]         = _fluxNew[j];
+        _flux[j] = _fluxNew[j];
     }
 
     // --- Compute Flux for solution and Screen Output ---

@@ -9,11 +9,11 @@
 #include <mpi.h>
 #include <string>
 
-#include "common/config.h"
-#include "common/io.h"
-#include "solvers/solverbase.h"
+#include "common/config.hpp"
+#include "common/io.hpp"
+#include "solvers/solverbase.hpp"
 
-#include "toolboxes/datageneratorbase.h"
+#include "datagenerator/datageneratorbase.hpp"
 
 #ifdef BUILD_GUI
 #include <QApplication>
@@ -54,9 +54,13 @@ int main( int argc, char** argv ) {
         // Run solver and export
         solver->Solve();
         solver->PrintVolumeOutput();
+        delete solver;
     }
 
+    delete config;
+
     MPI_Finalize();
+
     return EXIT_SUCCESS;
 #endif
 }

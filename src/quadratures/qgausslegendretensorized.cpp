@@ -1,6 +1,6 @@
-#include "quadratures/qgausslegendretensorized.h"
-#include "common/config.h"
-#include "toolboxes/errormessages.h"
+#include "quadratures/qgausslegendretensorized.hpp"
+#include "common/config.hpp"
+#include "toolboxes/errormessages.hpp"
 
 QGaussLegendreTensorized::QGaussLegendreTensorized( Config* settings ) : QuadratureBase( settings ) {
     SetName();
@@ -8,6 +8,7 @@ QGaussLegendreTensorized::QGaussLegendreTensorized( Config* settings ) : Quadrat
     SetNq();
     SetPointsAndWeights();
     SetConnectivity();
+    _supportedDimensions = { 3 };
 }
 
 void QGaussLegendreTensorized::SetNq() {

@@ -1,12 +1,12 @@
-#include "quadratures/qlookupquadrature.h"
-#include "toolboxes/errormessages.h"
+#include "quadratures/qlookupquadrature.hpp"
+#include "toolboxes/errormessages.hpp"
 #include <fstream>
 #include <math.h>
 #include <sstream>
 
-QLookupQuadrature::QLookupQuadrature( Config* settings ) : QuadratureBase( settings ) {}
+QLookupQuadrature::QLookupQuadrature( Config* settings ) : QuadratureBase( settings ) { _supportedDimensions = { 3 }; }
 
-QLookupQuadrature::QLookupQuadrature( unsigned quadOrder ) : QuadratureBase( quadOrder ) {}
+QLookupQuadrature::QLookupQuadrature( unsigned quadOrder ) : QuadratureBase( quadOrder ) { _supportedDimensions = { 3 }; }
 
 void QLookupQuadrature::printAvailOrders() const {
     auto log                    = spdlog::get( "event" );

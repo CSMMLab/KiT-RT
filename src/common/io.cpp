@@ -4,13 +4,12 @@
  * \author  J. Kusch, S. Schotthoefer, P. Stammer,  J. Wolters, T. Xiao
  */
 
-#include "common/io.h"
-#include "common/config.h"
-#include "common/mesh.h"
-#include "common/typedef.h"
-
-#include "toolboxes/errormessages.h"
-#include "toolboxes/textprocessingtoolbox.h"
+#include "common/io.hpp"
+#include "common/config.hpp"
+#include "common/mesh.hpp"
+#include "common/typedef.hpp"
+#include "toolboxes/errormessages.hpp"
+#include "toolboxes/textprocessingtoolbox.hpp"
 
 #include <iostream>
 

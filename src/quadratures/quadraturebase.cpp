@@ -1,14 +1,14 @@
-#include "quadratures/quadraturebase.h"
-#include "common/config.h"
-#include "quadratures/qgausschebyshev1D.h"
-#include "quadratures/qgausslegendre1D.h"
-#include "quadratures/qgausslegendretensorized.h"
-#include "quadratures/qldfesa.h"
-#include "quadratures/qlebedev.h"
-#include "quadratures/qlevelsymmetric.h"
-#include "quadratures/qmontecarlo.h"
-#include "quadratures/qproduct.h"
-#include "toolboxes/errormessages.h"
+#include "quadratures/quadraturebase.hpp"
+#include "common/config.hpp"
+#include "quadratures/qgausschebyshev1D.hpp"
+#include "quadratures/qgausslegendre1D.hpp"
+#include "quadratures/qgausslegendretensorized.hpp"
+#include "quadratures/qldfesa.hpp"
+#include "quadratures/qlebedev.hpp"
+#include "quadratures/qlevelsymmetric.hpp"
+#include "quadratures/qmontecarlo.hpp"
+#include "quadratures/qproduct.hpp"
+#include "toolboxes/errormessages.hpp"
 
 QuadratureBase::QuadratureBase( Config* settings ) {
     _settings = settings;
@@ -103,4 +103,15 @@ void QuadratureBase::PrintPointsAndWeights() {
     for( unsigned i = 0; i < _nq; i++ ) {
         log->info( "{0}, {1}, {2}, {3}", _points[i][0], _points[i][1], _points[i][2], _weights[i] );
     }
+}
+
+void QuadratureBase::ScaleWeights( double leftBound, double rightBound ) {
+    if( !_settings ) {
+        ErrorMessages::Error( "This function is only available with an active settings file.", CURRENT_FUNCTION );
+    }
+    if( _settings->GetDim() != 1 ) {
+        ErrorMessages::Error( "This function is only available in 1 spatial dimension.", CURRENT_FUNCTION );
+    }
+
+    _weights = _weights * ( ( rightBound - leftBound ) / 2.0 );
 }

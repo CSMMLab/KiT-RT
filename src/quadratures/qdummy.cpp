@@ -9,13 +9,14 @@
  *
  */
 
-#include "quadratures/qdummy.h"
+#include "quadratures/qdummy.hpp"
 
 QDummy::QDummy( Config* settings ) : QuadratureBase( settings ) {
     SetName();
     SetNq();
     SetPointsAndWeights();
     SetConnectivity();
+    _supportedDimensions = { 1, 2, 3 };
 }
 
 QDummy::QDummy( unsigned quadOrder ) : QuadratureBase( quadOrder ) {

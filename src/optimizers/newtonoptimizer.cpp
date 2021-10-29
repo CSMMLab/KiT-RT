@@ -4,12 +4,12 @@
  * @author S. Schotthöfer
  */
 
-#include "optimizers/newtonoptimizer.h"
-#include "common/config.h"
-#include "entropies/entropybase.h"
-#include "quadratures/quadraturebase.h"
-#include "toolboxes/errormessages.h"
-#include "toolboxes/textprocessingtoolbox.h"
+#include "optimizers/newtonoptimizer.hpp"
+#include "common/config.hpp"
+#include "entropies/entropybase.hpp"
+#include "quadratures/quadraturebase.hpp"
+#include "toolboxes/errormessages.hpp"
+#include "toolboxes/textprocessingtoolbox.hpp"
 
 #include <omp.h>
 
@@ -197,4 +197,9 @@ void NewtonOptimizer::Solve( Vector& alpha, Vector& sol, const VectorVector& mom
     }
     if( _settings->GetDim() == 1 ) {
     }
+}
+
+void NewtonOptimizer::ScaleQuadWeights( double leftBound, double rightBound ) {
+    _quadrature->ScaleWeights( leftBound, rightBound );
+    _weights = _quadrature->GetWeights();
 }
