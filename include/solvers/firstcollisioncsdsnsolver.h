@@ -10,7 +10,7 @@
 class QuadratureBase;
 class ScatteringKernel;
 
-class FirstCollisionCSDSNSolver : public Solver
+class FirstCollisionCSDSNSolver : public SolverBase( settings )
 {
 
 public:
