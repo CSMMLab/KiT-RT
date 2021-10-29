@@ -2,7 +2,7 @@
 // Created by chinsp on 29/10/21.
 //
 
-#include "refinesnsolver.h"
+#include "../../include/solvers/refinesnsolver.h"
 #include "common/config.h"
 #include "common/io.h"
 #include "common/mesh.h"
