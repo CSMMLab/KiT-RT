@@ -34,7 +34,7 @@ void QDummy::SetName() {
 void QDummy::SetNq() { _nq = 0; }
 
 void QDummy::SetPointsAndWeights() {
-    _points  = VectorVector( GetNq() );
+    _pointsKarth  = VectorVector( GetNq() );
     _weights = Vector( GetNq(), 4.0 * M_PI / GetNq() );
     // @TODO: DUMMYCOMPUTATION
 }

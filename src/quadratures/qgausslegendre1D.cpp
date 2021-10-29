@@ -50,15 +50,15 @@ void QGaussLegendre1D::SetPointsAndWeights() {
     weights1D = sorted_weights;
 
     // resize points and weights
-    _points.resize( _nq );
+    _pointsKarth.resize( _nq );
     _weights.resize( _nq );
     unsigned dim = 1;
     for( unsigned k = 0; k < _nq; ++k ) {
-        _points[k].resize( dim );
-        _points[k][0] = nodes1D[k];
+        _pointsKarth[k].resize( dim );
+        _pointsKarth[k][0] = nodes1D[k];
         _weights[k]   = weights1D[k];
     }
-    _pointsSphere = _points;
+    _pointsSphere = _pointsKarth;
 }
 
 void QGaussLegendre1D::SetConnectivity() {    // TODO
@@ -152,7 +152,7 @@ double QGaussLegendre1D::Integrate( double ( *f )( double, double, double ) ) { 
     double z      = 0.0;
     double w      = 0.0;
     for( unsigned i = 0; i < _nq; i++ ) {
-        x = _points[i][0];
+        x = _pointsKarth[i][0];
         w = _weights[i];
         result += w * f( x, y, z );
     }

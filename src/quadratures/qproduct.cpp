@@ -57,9 +57,9 @@ void QProduct::SetPointsAndWeights() {
     //=> In 2D we would count everything twice. (not wrong with scaling
 
     // resize points and weights
-    _points.resize( _nq );
+    _pointsKarth.resize( _nq );
     _pointsSphere.resize( _nq );
-    for( auto& p : _points ) {
+    for( auto& p : _pointsKarth ) {
         p.resize( 3 );
     }
     for( auto& p : _pointsSphere ) {
@@ -71,9 +71,9 @@ void QProduct::SetPointsAndWeights() {
     // transform tensorized (x,y,z)-grid to spherical grid points
     for( unsigned j = 0; j < 2 * _order; ++j ) {
         for( unsigned i = 0; i < 2 * _order; ++i ) {
-            _points[j * ( 2 * _order ) + i][0] = sqrt( 1 - nodes1D[j] * nodes1D[j] ) * std::cos( phi[i] );
-            _points[j * ( 2 * _order ) + i][1] = sqrt( 1 - nodes1D[j] * nodes1D[j] ) * std::sin( phi[i] );
-            _points[j * ( 2 * _order ) + i][2] = nodes1D[j];
+            _pointsKarth[j * ( 2 * _order ) + i][0] = sqrt( 1 - nodes1D[j] * nodes1D[j] ) * std::cos( phi[i] );
+            _pointsKarth[j * ( 2 * _order ) + i][1] = sqrt( 1 - nodes1D[j] * nodes1D[j] ) * std::sin( phi[i] );
+            _pointsKarth[j * ( 2 * _order ) + i][2] = nodes1D[j];
 
             _pointsSphere[j * ( 2 * _order ) + i][0] = nodes1D[j];    // my
             _pointsSphere[j * ( 2 * _order ) + i][1] = phi[i];        // phi

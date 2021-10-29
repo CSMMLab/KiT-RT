@@ -107,7 +107,7 @@ void DataGeneratorBase::SampleMultiplierAlpha() {
         std::default_random_engine generator;
         std::uniform_real_distribution<double> distribution( -1 * maxAlphaValue, maxAlphaValue );
         double mean   = 0.0;
-        double stddev = maxAlphaValue / 6.0;
+        double stddev = maxAlphaValue / 3.0;
         std::normal_distribution<double> distribution_normal( mean, stddev );
 
         // Can be parallelized, but check if there is a race condition with datagenerator
@@ -242,7 +242,6 @@ bool DataGeneratorBase::ComputeEVRejection( unsigned idx_set ) {
 
     Matrix hessian = Matrix( _nTotalEntries, _nTotalEntries, 0.0 );
     _optimizer->ComputeHessian( _alpha[idx_set], _momentBasis, hessian );
-
     SymMatrix hessianSym( hessian );    // Bad solution, rewrite with less memory need
     Vector ew = Vector( _nTotalEntries, 0.0 );
     eigen( hessianSym, ew );

@@ -9,6 +9,7 @@
 #include "quadratures/qmontecarlo.hpp"
 #include "quadratures/qproduct.hpp"
 #include "toolboxes/errormessages.hpp"
+#include "toolboxes/textprocessingtoolbox.hpp"
 
 QuadratureBase::QuadratureBase( Config* settings ) {
     _settings = settings;
@@ -57,7 +58,7 @@ QuadratureBase* QuadratureBase::Create( QUAD_NAME name, unsigned quadOrder ) {
 double QuadratureBase::Integrate( double ( *f )( double, double, double ) ) {
     double result = 0.0;
     for( unsigned i = 0; i < _nq; i++ ) {
-        result += _weights[i] * f( _points[i][0], _points[i][1], _points[i][2] );
+        result += _weights[i] * f( _pointsKarth[i][0], _pointsKarth[i][1], _pointsKarth[i][2] );
     }
     return result;
 }
@@ -75,7 +76,7 @@ std::vector<double> QuadratureBase::Integrate( std::vector<double> ( *f )( doubl
     std::vector<double> funcEval( len, 0.0 );
 
     for( unsigned i = 0; i < _nq; i++ ) {
-        funcEval = f( _points[i][0], _points[i][1], _points[i][2] );
+        funcEval = f( _pointsKarth[i][0], _pointsKarth[i][1], _pointsKarth[i][2] );
         for( unsigned idx_len = 0; idx_len < len; idx_len++ ) {
             result[idx_len] += _weights[i] * funcEval[idx_len];
         }
@@ -95,23 +96,27 @@ void QuadratureBase::PrintWeights() {
 void QuadratureBase::PrintPoints() {
     auto log = spdlog::get( "event" );
     for( unsigned i = 0; i < _nq; i++ ) {
-        log->info( "{0}, {1}, {2}", _points[i][0], _points[i][1], _points[i][2] );
+        log->info( "{0}, {1}, {2}", _pointsKarth[i][0], _pointsKarth[i][1], _pointsKarth[i][2] );
     }
 }
 void QuadratureBase::PrintPointsAndWeights() {
     auto log = spdlog::get( "event" );
     for( unsigned i = 0; i < _nq; i++ ) {
-        log->info( "{0}, {1}, {2}, {3}", _points[i][0], _points[i][1], _points[i][2], _weights[i] );
+        log->info( "{0}, {1}, {2}, {3}", _pointsKarth[i][0], _pointsKarth[i][1], _pointsKarth[i][2], _weights[i] );
     }
 }
 
-void QuadratureBase::ScaleWeights( double leftBound, double rightBound ) {
+void QuadratureBase::ScalePointsAndWeights( double leftBound, double rightBound ) {
+    // Scale from [-1,1] to [leftBound,rightBound]
     if( !_settings ) {
         ErrorMessages::Error( "This function is only available with an active settings file.", CURRENT_FUNCTION );
     }
     if( _settings->GetDim() != 1 ) {
         ErrorMessages::Error( "This function is only available in 1 spatial dimension.", CURRENT_FUNCTION );
     }
-
-    _weights = _weights * ( ( rightBound - leftBound ) / 2.0 );
+    _weights = _weights * ( rightBound - leftBound ) / 2.0;
+    for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
+        _pointsKarth[idx_quad][0]  = leftBound + ( _pointsKarth[idx_quad][0] + 1.0 ) * ( rightBound - leftBound ) / 2.0;     //
+        _pointsSphere[idx_quad][0] = leftBound + ( _pointsSphere[idx_quad][0] + 1.0 ) * ( rightBound - leftBound ) / 2.0;    //
+    }
 }

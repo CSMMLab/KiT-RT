@@ -136,6 +136,8 @@ class Config
     double _alphaBound;               /*!< @brief The norm boundary for the sampling range of alpha*/
     double _minEVAlphaSampling;       /*!< @brief Rejection sampling criterion is a minimal eigenvalue threshold */
     bool _sampleUniform;              /*!< @brief If true, samples uniform, if false, sampleswith cutoff normal distribution */
+    double _maxSamplingVelocity;      /*!< @brief The lower bound for the velocity space in the 1D classification sampler */
+    double _minSamplingVelocity;      /*!< @brief The upper bound for the velocity space in the 1D classification sampler */
     // --- Parsing Functionality and Initializing of Options ---
     /*!
      * @brief Set default values for all options not yet set.
@@ -340,6 +342,8 @@ class Config
     bool inline GetRelizabilityReconsU() { return _realizabilityRecons; }
     double inline GetAlphaSamplingBound() { return _alphaBound; }
     double inline GetMinimalEVBound() { return _minEVAlphaSampling; }
+    double inline GetMinimalSamplingVelocity() { return _minSamplingVelocity; }
+    double inline GetMaximalSamplingVelocity() { return _maxSamplingVelocity; }
 
     // ---- Setters for option structure
     // This section is dangerous

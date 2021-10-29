@@ -355,6 +355,12 @@ void Config::SetConfigOptions() {
     /*! @brief Rejection sampling threshold based on the minimal Eigenvalue of the Hessian of the entropy functions  \n DESCRIPTION: Rejection
      * sampling threshold \n DEFAULT 1e-8 \ingroup Config */
     AddDoubleOption( "MIN_EIGENVALUE_THRESHOLD", _minEVAlphaSampling, 1e-8 );
+    /*! @brief Boundary for the sampling region of the Lagrange multipliers  \n DESCRIPTION: Norm sampling boundary for alpha \n DEFAULT 20.0
+     * \ingroup Config */
+    AddDoubleOption( "MAX_VELOCITY", _maxSamplingVelocity, 5.0 );
+    /*! @brief Boundary for the sampling region of the Lagrange multipliers  \n DESCRIPTION: Norm sampling boundary for alpha \n DEFAULT 20.0
+     * \ingroup Config */
+    AddDoubleOption( "MIN_VELOCITY", _minSamplingVelocity, 5.0 );
 }
 
 void Config::SetConfigParsing( string case_filename ) {

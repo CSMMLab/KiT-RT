@@ -18,8 +18,9 @@ class DataGeneratorClassification : public DataGeneratorBase
   protected:
     Vector _pdfClassification; /*!< @brief One-hot vector with classification, if kinetic pdf is within or outside KL Divergence threshold*/
     Vector _maxwellian;        /*!< @brief Maxwellian pdf evaluated at the quadrature points */
-    double _leftBound;
-    double _rightBound;
+    double _leftBound;          /*!<  @brief Left bound of the velocity domain (1D) */
+    double _rightBound;        /*!< @brief Right bound of the velocity domain (1D) */
+    VectorVector _kineticDensity; /*!< @brief vector if sampled kinetic densities, evaluated at quadrature points */
 
     // IO routines
     void PrintTrainingData() override; /*!< @brief : Print computed training data to csv file and screen */
@@ -36,6 +37,11 @@ class DataGeneratorClassification : public DataGeneratorBase
          @param u: bulk velocity
          @param T: Temperature*/
     Vector ComputeMaxwellian( double rho, double u, double T );
+
+    /*!< @brief Computes the kinetic density from the given Lagrange multipliers alpha at the quadrature points.
+     *          f = exp(alpha*m) and stores it in _kineticDensity
+             */
+    void ReconstructKineticDensity();
 };
 
 #endif    // DATAGENERATORCLASSIFICATION_H
