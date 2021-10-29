@@ -3,8 +3,8 @@
 //
 
 #include "../../include/quadratures/qicosahedron.h"
-#include "include/common/config.h"
-#include "include/toolboxes/errormessages.h"
+#include "../../include/common/config.h"
+#include "../../include/toolboxes/errormessages.h"
 
 #include <stdio.h>
 #include <iostream>
