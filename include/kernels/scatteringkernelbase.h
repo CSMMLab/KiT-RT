@@ -30,6 +30,8 @@ class ScatteringKernel
     /*! @brief Computes the scattering kernel and for the whole SN system and stores it in a Matrix
         @return Matrix with discretized scattering kernel */
     virtual Matrix GetScatteringKernel() = 0;
+    virtual Matrix GetScatteringKernelFirstCollision( unsigned nqF, Vector weightsF ) = 0;
+
 
     /*! @brief Creates an object of the child class of ScatteringKernelBase corresponding to the enum KERNEL_NAME */
     static ScatteringKernel* CreateScatteringKernel( KERNEL_NAME name, QuadratureBase* quad );
