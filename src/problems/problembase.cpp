@@ -25,12 +25,16 @@ ProblemBase* ProblemBase::Create( Config* settings, Mesh* mesh ) {
         case PROBLEM_LineSource: {
             if( settings->GetSolverName() == PN_SOLVER || settings->GetSolverName() == MN_SOLVER )
                 return new LineSource_PN( settings, mesh );
+            else if ( settings->GetSolverName() == FIRST_COLLISION_SOLVER && settings->GetFirstCollisionSolver() == MN_SOLVER )
+                return new LineSource_PN( settings, mesh );
             else
                 return new LineSource_SN( settings, mesh );    // default
         }
         case PROBLEM_Checkerboard: {
             if( settings->GetSolverName() == PN_SOLVER || settings->GetSolverName() == MN_SOLVER )
                 return new Checkerboard_Moment( settings, mesh );
+            else if ( settings->GetSolverName() == FIRST_COLLISION_SOLVER && settings->GetFirstCollisionSolver() == MN_SOLVER )
+                return new Checkerboard_PN( settings, mesh );
             else
                 return new Checkerboard_SN( settings, mesh );    // default
         }
