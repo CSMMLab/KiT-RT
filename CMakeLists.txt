@@ -36,7 +36,7 @@ find_package( LAPACK REQUIRED )
 include_directories( ${LAPACK_INCLUDE_DIR} )
 
 find_package( BLAS )
-
+# TODO change Hints for VTK and Python before merging
 find_package( VTK COMPONENTS vtkIOGeometry vtkFiltersCore REQUIRED HINTS ~/VTK-install)
 
 find_package( Python3 COMPONENTS Interpreter Development NumPy REQUIRED HINTS ~/anaconda3/lib/python3.8)
