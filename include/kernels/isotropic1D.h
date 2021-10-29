@@ -19,6 +19,7 @@ class Isotropic1D : public ScatteringKernel
     ~Isotropic1D();
 
     virtual Matrix GetScatteringKernel();
+    virtual Matrix GetScatteringKernelFirstCollision( unsigned nqF, Vector weightsF ); // not used in 1D case
 };
 
 #endif
