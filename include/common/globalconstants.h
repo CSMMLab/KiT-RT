@@ -63,7 +63,9 @@ enum QUAD_NAME {
     QUAD_Lebedev,
     QUAD_LDFESA,
     QUAD_Product,
-    QUAD_GaussChebyshev1D
+    QUAD_GaussChebyshev1D,
+    QUAD_Icosahedron_Mid,
+    QUAD_Icosahedron_Triang
 };
 
 /*! @brief Conversion Map String to enum
@@ -74,7 +76,10 @@ inline std::map<std::string, QUAD_NAME> Quadrature_Map{ { "MONTE_CARLO", QUAD_Mo
                                                         { "GAUSS_LEGENDRE_1D", QUAD_GaussLegendre1D },
                                                         { "LEVEL_SYMMETRIC", QUAD_LevelSymmetric },
                                                         { "LEBEDEV", QUAD_Lebedev },
-                                                        { "LDFESA", QUAD_LDFESA } };
+                                                        { "LDFESA", QUAD_LDFESA },
+                                                        { "ICOSAHEDRON", QUAD_Icosahedron_Mid },
+                                                        { "ICOSAHEDRON_TRIANG", QUAD_Icosahedron_Triang}
+};
 
 // Problem name
 enum PROBLEM_NAME {
@@ -116,7 +121,10 @@ enum SOLVER_NAME {
     CSD_SN_FOKKERPLANCK_TRAFO_SOLVER_2D,
     CSD_SN_FOKKERPLANCK_TRAFO_SH_SOLVER_2D,
     PN_SOLVER,
-    MN_SOLVER
+    MN_SOLVER,
+    FIRST_COLLISION_SOLVER,
+    FIRST_COLLISION_CSD_SN_SOLVER,
+    REFINE_SN_SOLVER
 };
 
 inline std::map<std::string, SOLVER_NAME> Solver_Map{ { "SN_SOLVER", SN_SOLVER },
@@ -127,7 +135,11 @@ inline std::map<std::string, SOLVER_NAME> Solver_Map{ { "SN_SOLVER", SN_SOLVER }
                                                       { "CSD_SN_FOKKERPLANCK_TRAFO_SOLVER_2D", CSD_SN_FOKKERPLANCK_TRAFO_SOLVER_2D },
                                                       { "CSD_SN_FOKKERPLANCK_TRAFO_SH_SOLVER_2D", CSD_SN_FOKKERPLANCK_TRAFO_SH_SOLVER_2D },
                                                       { "PN_SOLVER", PN_SOLVER },
-                                                      { "MN_SOLVER", MN_SOLVER } };
+                                                      { "MN_SOLVER", MN_SOLVER },
+                                                      { "FIRST_COLLISION_SOLVER", FIRST_COLLISION_SOLVER },
+                                                      { "FIRST_COLLISION_CSD_SN_SOLVER", FIRST_COLLISION_CSD_SN_SOLVER },
+                                                      { "REFINE_SN_SOLVER", REFINE_SN_SOLVER }
+};
 
 // Entropy functional
 enum ENTROPY_NAME { QUADRATIC, MAXWELL_BOLTZMANN, BOSE_EINSTEIN, FERMI_DIRAC };
