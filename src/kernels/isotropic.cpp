@@ -25,3 +25,24 @@ Matrix Isotropic::GetScatteringKernel() {
     }
     return kernel;
 }
+
+Matrix Isotropic::GetScatteringKernelFirstCollision(unsigned nqF, Vector w ) {
+
+    unsigned nq = _quad->GetNq();
+    Matrix kernel( nq, nqF );
+    for( unsigned i = 0; i < nq; ++i )
+        for( unsigned j = 0; j < nqF; ++j ) kernel( i, j ) = w[j] / ( 4 * M_PI );
+
+    // scale kernel to ensure mass conservation
+    double tmp;
+    for( unsigned i = 0; i < nq; ++i ) {
+        tmp = 0.0;
+        for( unsigned j = 0; j < nqF; ++j ) {
+            tmp += kernel( i, j );
+        }
+        for( unsigned j = 0; j < nqF; ++j ) {
+            kernel( i, j ) /= tmp;
+        }
+    }
+    return kernel;
+}

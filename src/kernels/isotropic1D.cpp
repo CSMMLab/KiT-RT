@@ -1,5 +1,6 @@
 #include "kernels/isotropic1D.h"
 #include "quadratures/quadraturebase.h"
+#include "toolboxes/errormessages.h"
 
 Isotropic1D::Isotropic1D( QuadratureBase* quad ) : ScatteringKernel( quad ) {}
 
@@ -26,3 +27,7 @@ Matrix Isotropic1D::GetScatteringKernel() {
     }
     return kernel;
 }
+
+Matrix Isotropic1D::GetScatteringKernelFirstCollision( unsigned , Vector ){
+    ErrorMessages::Error("First Collision ScatteringKernel not defined for Isotropic1D case. Please choose Isotropic Kernel!", CURRENT_FUNCTION );
+} // not used
