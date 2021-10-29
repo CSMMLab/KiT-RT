@@ -1,0 +1,8 @@
+//
+// Created by chinsp on 29/10/21.
+//
+
+#ifndef FIRSTCOLLISIONSNSOLVER_H
+#define FIRSTCOLLISIONSNSOLVER_H
+
+#endif //FIRSTCOLLISIONSNSOLVER_H
