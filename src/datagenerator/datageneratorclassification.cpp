@@ -28,8 +28,8 @@ DataGeneratorClassification::DataGeneratorClassification( Config* settings ) : D
     _quadPointsSphere = _quadrature->GetPointsSphere();
 
     ComputeMoments();
-    _uSol              = VectorVector( ); // Not needed
-    _alpha             = VectorVector( _setSize, Vector( _nTotalEntries, 0.0 ) );
+    _uSol  = VectorVector();    // Not needed
+    _alpha = VectorVector( _setSize, Vector( _nTotalEntries, 0.0 ) );
     //_pdfClassification = Vector( _setSize, 0.0 );
     _kineticDensity = VectorVector( _setSize, Vector( _nq, 0.0 ) );
 
@@ -61,7 +61,7 @@ void DataGeneratorClassification::ComputeTrainingData() {
 }
 
 void DataGeneratorClassification::ReconstructKineticDensity() {
-    for (unsigned idx_set = 0; idx_set  < _setSize; idx_set++){
+    for( unsigned idx_set = 0; idx_set < _setSize; idx_set++ ) {
         for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
             _kineticDensity[idx_set][idx_quad] = _entropy->EntropyPrimeDual( blaze::dot( _alpha[idx_set], _momentBasis[idx_quad] ) );
         }
@@ -80,7 +80,7 @@ void DataGeneratorClassification::ComputeMoments() {
             _momentBasis[idx_quad] = _basisGenerator->ComputeSphericalBasis( my, phi );
 
             // Correct the second moment with factor 0.5
-            //if( _nTotalEntries >= 3 ) {
+            // if( _nTotalEntries >= 3 ) {
             //    _momentBasis[idx_quad][2] = _momentBasis[idx_quad][2] * 0.5;
             //}
         }
@@ -172,15 +172,20 @@ void DataGeneratorClassification::PrintTrainingData() {
     auto logCSV = spdlog::get( "tabular" );
     log->info( "---------------------- Data Generation Successful ------------------------" );
 
-    std::stringstream quadPtsStream;
+    std::stringstream quadPtsStream, quadWeightsStream;
     for( unsigned idx_quad = 0; idx_quad < _nq - 1; idx_quad++ ) {
         quadPtsStream << std::fixed << std::setprecision( 12 ) << _quadPointsSphere[idx_quad][0] << ",";
     }
     quadPtsStream << std::fixed << std::setprecision( 12 ) << _quadPointsSphere[_nq - 1][0];
-
     std::string quadPtsString = quadPtsStream.str();
-
     logCSV->info( quadPtsString );
+
+    for( unsigned idx_quad = 0; idx_quad < _nq - 1; idx_quad++ ) {
+        quadWeightsStream << std::fixed << std::setprecision( 12 ) << _weights[idx_quad] << ",";
+    }
+    quadWeightsStream << std::fixed << std::setprecision( 12 ) << _weights[_nq - 1];
+    std::string quadWeightsString = quadWeightsStream.str();
+    logCSV->info( quadWeightsString );
 
     for( unsigned idx_set = 0; idx_set < _setSize; idx_set++ ) {
 
