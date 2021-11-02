@@ -42,7 +42,11 @@ class CSDSolverTrafoFP : public SNSolver
     Vector _energiesOrig; /*!< @brief original energy levels for CSD, lenght = _nEnergies */
     Matrix _identity;     /*!< @brief: identity matrix for FP scattering. Dim (_nq,_nq)*/
 
-  public:
+    double _sigmaAS;
+    double _betaAS;
+    Vector _xiAS;
+
+public:
     /**
      * @brief CSDSolverTrafoFP constructor
      * @param settings stores all needed information
@@ -62,6 +66,10 @@ class CSDSolverTrafoFP : public SNSolver
     void IterPreprocessing( unsigned idx_pseudotime ) override final;
     void virtual IterPostprocessing( unsigned idx_pseudotime ) override final;
     void SolverPreprocessing() override final;
+
+    // Helper
+    void GetASTransportCoefficients();
+    void Refinement();
 };
 
 #endif    // CSDSOLVERTRAFOFP_H
