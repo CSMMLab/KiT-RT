@@ -24,6 +24,13 @@ CSDSolverTrafoFP::CSDSolverTrafoFP( Config* settings ) : SNSolver( settings ) {
 
     // create 1D quadrature
     unsigned nq            = _settings->GetNQuadPoints();
+    if (_settings->GetIsLocalRefine()){
+        Refinement();
+        nq = _nq;
+        _sol = VectorVector( _nCells, Vector(_nq, 0.0 ));
+        _solNew = _sol;
+    }
+
     QuadratureBase* quad1D = QuadratureBase::Create( QUAD_GaussLegendre1D, nq );
     Vector w               = quad1D->GetWeights();
     VectorVector muVec     = quad1D->GetPoints();
@@ -99,7 +106,22 @@ CSDSolverTrafoFP::CSDSolverTrafoFP( Config* settings ) : SNSolver( settings ) {
         */
     }
 
+    // Density
     _density = std::vector<double>( _nCells, 1.0 );
+    std::vector<double> densities( 167, 1.04 );    // muscle layer
+    std::vector<double> bone( 167, 1.85 );
+    std::vector<double> lung( 665, 0.03);    // maybe this is just the lung tissue and after that there should be air?
+
+    // Concatenate layers
+    densities.insert( densities.end(), bone.begin(), bone.end() );
+    densities.insert( densities.end(), lung.begin(), lung.end() );
+    //_density = densities;
+
+
+    _sigmaAS = _settings->GetSigmaAS();
+    _betaAS = _settings->GetBetaAS();
+    GetASTransportCoefficients(); // -> Get _xiAS;
+
     // exit(EXIT_SUCCESS);
 }
 
@@ -144,7 +166,11 @@ void CSDSolverTrafoFP::IterPreprocessing( unsigned idx_pseudotime ) {
     for( unsigned j = 0; j < _nCells; ++j ) {
         if( _boundaryCells[j] == BOUNDARY_TYPE::DIRICHLET ) continue;
         //_sol[j] = blaze::solve( identity - _dE * _alpha2 * _L, psiNew[j] );
+        //_sol[j] = blaze::solve( _identity - _dE * _alpha2 * _L, _sol[j] );
         _sol[j] = _IL * blaze::solve( _IL - _dE * _alpha * _L, _sol[j] );
+        if ( _settings->GetIsArtificialScattering())
+            _sol[ j ] = blaze::solve( _identity - M_PI * _xiAS[1] * _sigmaAS * _L , _sol[ j ]);
+
     }
 }
 
@@ -338,6 +364,26 @@ void CSDSolverTrafoFP::PrepareVolumeOutput() {
 }
 
 void CSDSolverTrafoFP::WriteVolumeOutput( unsigned idx_pseudoTime ) {
+    if(( _settings->GetVolumeOutputFrequency() != 0 && idx_pseudoTime % (unsigned)_settings->GetVolumeOutputFrequency() == 0 ) ||
+        ( idx_pseudoTime == _maxIter - 1 ) ){
+        FILE * DoseFile = fopen( (_settings->GetLogDir() + "/DoseFile" + std::to_string(idx_pseudoTime)).c_str(), "a+");
+        FILE * FluxFile = fopen( (_settings->GetLogDir() + "/FluxFile" + std::to_string(idx_pseudoTime)).c_str(), "a+");
+        double dose;
+
+        for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++){
+            if ( idx_cell > 0){
+                dose = 0.5 * _dE *( _fluxNew[idx_cell] * _s[_nEnergies - idx_pseudoTime - 1] + _flux[idx_cell] * _s[_nEnergies - idx_pseudoTime ] ) /
+                       _density[idx_cell];
+            }
+            else{
+                dose = _dE * _fluxNew[idx_cell] * _s[_nEnergies - idx_pseudoTime - 1] / _density[idx_cell];
+            }
+            fprintf(DoseFile, "%f\n", (float) dose);
+            fprintf(FluxFile, "%f\n", (float) _fluxNew[idx_cell]);
+        }
+        fclose(DoseFile);
+        fclose(FluxFile);
+    }
     unsigned nGroups = (unsigned)_settings->GetNVolumeOutput();
     double maxDose;
     if( ( _settings->GetVolumeOutputFrequency() != 0 && idx_pseudoTime % (unsigned)_settings->GetVolumeOutputFrequency() == 0 ) ||
@@ -370,4 +416,95 @@ void CSDSolverTrafoFP::WriteVolumeOutput( unsigned idx_pseudoTime ) {
             }
         }
     }
+}
+
+void CSDSolverTrafoFP::GetASTransportCoefficients() {
+
+    // Calculate Artificial Scattering Kernel
+    Matrix muM( _nq, _nq);
+    Vector muV( _nq * _nq );
+    double sum;
+    Matrix ASKernel(_nq, _nq, 0.0);
+    Vector ASV( _nq *_nq );
+    for ( unsigned id = 0; id < _nq; id ++){
+        for ( unsigned jd = 0; jd < _nq; jd ++){
+            double mu =_quadPoints[id][0] * _quadPoints[jd][0] ;
+            muM( id, jd ) = mu;
+            double expTerm = ( - ( ( mu - 1 ) * ( mu - 1 ) ) * _nq * _nq ) / ( _betaAS * _betaAS );
+            ASKernel( id, jd ) = _nq / _betaAS * exp( expTerm );
+            sum += ASKernel( id, jd );
+        }
+        for ( unsigned jd = 0; jd < _nq; jd++){
+            ASKernel( id , jd ) /= sum;        // Normalize per Row
+        }
+    }
+    // Get Matrices in Vector Format
+    for( unsigned i = 0; i < muM.rows(); ++i ) {
+        for( unsigned j = 0; j < muM.columns(); ++j ) {
+            muV[i * muM.columns() + j] = std::fabs( muM( i, j ) );
+            ASV[i * ASKernel.columns() + j] = ASKernel(i,j);
+        }
+    }
+    _xiAS = Vector(3);
+    for( unsigned n = 0; n < _xiAS.size(); n++){
+        _xiAS[n] = 0.0;
+        for ( unsigned k = 0; k <_nq; k++)
+            _xiAS[n] -= 0.5 * ( pow( 1.0 - muV[k + 1], n ) * ASV[k + 1] + pow( 1.0 - muV[k], n ) * ASV[k] ) * ( muV[k + 1] - muV[k] );
+    }
+}
+
+
+void CSDSolverTrafoFP::Refinement(){
+    std::cout << "Refinemnt Entered" << std::endl;
+    QuadratureBase * quad2 = QuadratureBase::Create( _settings->GetQuadName(), _settings->GetQuadOrderFine());
+    double nqF = quad2->GetNq();
+    VectorVector quadPointsF = quad2->GetPoints();
+    Vector weightsF = quad2->GetWeights();
+    VectorVector quadPointsNew = VectorVector( _nq * nqF, Vector( 3 ) );
+    Vector weightsNew = Vector( _nq * nqF );
+
+    unsigned minID = _nq;
+    unsigned maxID = 0;
+    double weightsum = 0.0;
+
+    unsigned ind = 0;
+    for( unsigned id = 0; id < _nq; id ++ ){
+        if (  _quadPoints[id][0] < 0.7 ){ // these are the points that are not refined
+            quadPointsNew[ ind ] = _quadPoints[ id ];
+            weightsNew[ ind ] = _weights[ id ];
+            ind += 1;
+        }
+        else{
+            if( id < minID ){ minID = id; }
+            if( id > maxID ){ maxID = id; }
+            weightsum += _weights[id];
+        }
+    }
+    std::cout << "Check Determine" << std::endl;
+    std::cout << "MinID: " << minID << "MaxId: " << maxID << std::endl;
+
+    double ws = 0.0;
+    for( unsigned id = 0; id < nqF; id ++ ){
+        ws += weightsF[id]; // sum of actual weights
+    }
+
+    double qMax, qMin;
+    if (maxID == _nq - 1 ){ qMax = 1.0; }
+    else{ qMax = _quadPoints[maxID + 1][0]; }
+    if (minID == 0 ){ qMin = -1.0; }
+    else{ qMin = _quadPoints[minID - 1][0]; }
+    std::cout << "QMin: " << qMin << "QMax: " << qMax << std::endl;
+
+    for ( unsigned id = 0; id < nqF; id++){
+        quadPointsNew[ind] = quadPointsF[id] * (qMax - qMin) / 2 + ( qMax + qMin ) / 2;
+        weightsNew[ind] = weightsF[id] / ws * weightsum; // adapt weights
+        ind += 1;
+    }
+    _nq = ind;
+
+    quadPointsNew.resize( _nq );
+    weightsNew.resize( _nq );
+    _quadPoints = quadPointsNew;
+    _weights = weightsNew;
+
 }
