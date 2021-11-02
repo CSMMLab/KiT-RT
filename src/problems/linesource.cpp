@@ -5,6 +5,8 @@
 #include "quadratures/quadraturebase.h"
 #include "toolboxes/sphericalbase.h"
 #include <complex>
+#include <iostream>
+
 
 // ---- Linesource ----
 
@@ -113,6 +115,20 @@ LineSource_SN::LineSource_SN( Config* settings, Mesh* mesh ) : LineSource( setti
 LineSource_SN::~LineSource_SN() {}
 
 VectorVector LineSource_SN::GetScatteringXS( const Vector& energies ) {
+    /*
+     std::vector<VectorVector> extSource( energies.size(), std::vector<Vector>(_mesh->GetNumCells(), Vector( _settings->GetNQuadPoints(), 0.0 )));
+     auto cellMids = _mesh->GetCellMidPoints();
+     double t      = 3.2e-4;    // pseudo time for gaussian smoothing
+     for( unsigned j = 0; j < cellMids.size(); ++j ) {
+         double x = cellMids[j][0];
+         double y = cellMids[j][1];
+         for ( unsigned id = 0; id < _settings->GetNQuadPoints(); id++){
+             extSource[0][j][id]  = 1.0 / ( 4.0 * M_PI * t ) * std::exp( -( x * x + y * y ) / ( 4 * t ) );
+         }
+     }
+     return extSource;
+     */
+
     return VectorVector( energies.size(), Vector( _mesh->GetNumCells(), _sigmaS ) );
 }
 
@@ -123,6 +139,10 @@ std::vector<VectorVector> LineSource_SN::GetExternalSource( const Vector& /*ener
 }
 
 VectorVector LineSource_SN::SetupIC() {
+    /*
+    VectorVector psi( _mesh->GetNumCells(), Vector( _settings->GetNQuadPoints(), 0.0 ) );
+    */
+
     VectorVector psi( _mesh->GetNumCells(), Vector( _settings->GetNQuadPoints(), 1e-10 ) );
     auto cellMids = _mesh->GetCellMidPoints();
     double t      = 3.2e-4;    // pseudo time for gaussian smoothing
