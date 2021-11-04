@@ -39,7 +39,7 @@ find_package( BLAS )
 # TODO change Hints for VTK and Python before merging
 find_package( VTK COMPONENTS vtkIOGeometry vtkFiltersCore REQUIRED HINTS ~/VTK-install)
 
-find_package( Python3 COMPONENTS Interpreter Development NumPy REQUIRED HINTS ~/anaconda3/lib/python3.8)
+find_package( Python3 COMPONENTS Interpreter Development NumPy REQUIRED)
 include_directories( ${Python3_INCLUDE_DIRS} ${Python3_NumPy_INCLUDE_DIRS} )
 add_compile_definitions( KITRT_PYTHON_PATH="${CMAKE_SOURCE_DIR}/python" )
 

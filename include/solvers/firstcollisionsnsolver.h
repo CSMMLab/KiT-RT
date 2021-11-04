@@ -10,14 +10,13 @@
 class QuadratureBase;
 class ScatteringKernel;
 
-class FirstCollisionSNSolver : public SolverBase ( settings )
-{
+class FirstCollisionSNSolver : public SolverBase ( settings ) {
 
 public:
     /*! @brief Constructor of FirstCollisonSNSolver */
     FirstCollisionSNSolver( Config * settings );
     /*! @brief Destructor of FirstCollisionSNSolver */
-    ~FirstCollisionSNSolver() {}
+    virtual ~FirstCollisionSNSolver() {}
 
     /*! @brief: Solver function */
     void Solve() override;
@@ -69,7 +68,7 @@ private:
 
     // Variables
 
-private:
+//private:
     bool localizedIC;
     ScatteringKernel * KERNEL;
     Matrix _scatteringKernel;       /*! @brief Scattering Kernel of coarse quadrature grid */
