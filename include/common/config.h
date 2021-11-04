@@ -46,10 +46,19 @@ class Config
     QUAD_NAME _quadName;       /*!< @brief Quadrature Name*/
     unsigned short _quadOrder; /*!< @brief Quadrature Order*/
     unsigned _nQuadPoints;
+    unsigned short _quadOrderFine;
+
 
     // Mesh
     unsigned _nCells;    /*!< @brief Number of cells in the mesh */
     unsigned short _dim; /*!< @brief spatial dimensionality of the mesh/test case */
+    unsigned short _refineIter;      /*!< @brief Nr of Iterations for which refinement is wanted */
+    double _betaAS;                  /*!< @brief Beta Value for Artificial Scattering */
+    double _sigmaAS;                 /*!< @brief Sigma Value for Artificial Scattering */
+    SOLVER_NAME _uncollidedSolverName;  /*!< @brief Chosen Solver for Uncollided Part of First Collision Solver */
+    bool _localRefine;  /*!< @brief is true if Local Refinement is wanted */
+    bool _artificialScattering; /*!< @brief is true if Artificial Scattering is wanted */
+
 
     // Boundary Conditions
     /*!< @brief List of all Pairs (marker, BOUNDARY_TYPE), e.g. (farfield,DIRICHLET).
@@ -267,6 +276,8 @@ class Config
     unsigned GetNQuadPoints() { return _nQuadPoints; }
     QUAD_NAME inline GetQuadName() const { return _quadName; }
     unsigned short inline GetQuadOrder() const { return _quadOrder; }
+    unsigned short inline GetQuadOrderFine() const { return _quadOrderFine; }
+
 
     // Mesh Structure
     unsigned GetNCells() { return _nCells; }
@@ -283,6 +294,15 @@ class Config
     double inline GetTEnd() const { return _tEnd; }
     bool inline GetSNAllGaussPts() const { return _allGaussPts; }
     bool inline GetIsCSD() const { return _csd; }
+
+    // FirstCollision
+    SOLVER_NAME inline GetFirstCollisionSolver() const { return _uncollidedSolverName; }
+    bool inline GetIsLocalRefine() const { return _localRefine; }
+    unsigned short inline GetRefineIter() const { return _refineIter; }
+    bool inline GetIsArtificialScattering() const { return _artificialScattering; }
+    double inline GetBetaAS() const { return _betaAS; }
+    double inline GetSigmaAS() const { return _sigmaAS; }
+
 
     // Linesource
     double inline GetSigmaS() const { return _sigmaS; }
