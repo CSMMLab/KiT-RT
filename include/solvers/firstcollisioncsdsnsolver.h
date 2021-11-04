@@ -6,23 +6,26 @@
 #define FIRSTCOLLISIONCSDSNSOLVER_H
 
 #include "solverbase.h"
+#include "solvers/firstcollisionsnsolver.h"
 
 class QuadratureBase;
 class ScatteringKernel;
 
-class FirstCollisionCSDSNSolver : public SolverBase( settings )
+class FirstCollisionCSDSNSolver : public FirstCollisionSNSolver
 {
-
-public:
+  public:
     /*! @brief Constructor of FirstCollisonSNSolver */
     FirstCollisionCSDSNSolver( Config * settings );
     /*! @brief Destructor of FirstCollisionSNSolver */
-    ~FirstCollisionCSDSNSolver() {}
+    virtual ~FirstCollisionCSDSNSolver() {}
 
     /*! @brief: Solver function */
     void Solve() override;
 
-private:
+    void PrepareVolumeOutput() override;
+    void WriteVolumeOutput( unsigned idx_pseudoTime ) override;
+
+  private:
     /*! @brief Performs preprocessing for the solver (CSD transformations) */
     void SolverPreprocessing( ) override;
     /*! @brief Performs preprocessing for the current solver iteration */
@@ -67,13 +70,10 @@ private:
     void Refinement();
     Matrix SetupLaplaceBeltrami( VectorVector p, Vector w );
 
-    void PrepareVolumeOutput() override;
-    void WriteVolumeOutput( unsigned idx_pseudoTime ) override;
 
 
     // Variables
-
-private:
+  private:
     // CSD Variables
     bool _RT;
     std::vector<double> _dose;

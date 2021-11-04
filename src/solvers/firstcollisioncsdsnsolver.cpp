@@ -26,7 +26,7 @@
 #include <stdio.h>
 
 
-FirstCollisionCSDSNSolver::FirstCollisionCSDSNSolver( Config * _settings ) : Solver ( _settings ){
+FirstCollisionCSDSNSolver::FirstCollisionCSDSNSolver( Config * settings ) : Solver ( settings ) {
 
     _FPMethod = 2;
     _RT = false;
@@ -242,7 +242,7 @@ FirstCollisionCSDSNSolver::FirstCollisionCSDSNSolver( Config * _settings ) : Sol
     std::cout << " Check Build " << std::endl;
 }
 
-void FirstCollisionCSDSNSolver::Solve(){
+void FirstCollisionCSDSNSolver::Solve() {
 
     PrepareVolumeOutput();
     DrawPreSolverOutput();
@@ -401,7 +401,7 @@ void FirstCollisionCSDSNSolver::IterPreprocessing( unsigned idx_energy ){
 
 }
 
-void FirstCollisionCSDSNSolver::FluxUpdateUncollided(){
+void FirstCollisionCSDSNSolver::FluxUpdateUncollided() {
 
     _psiDx = VectorVector( _nCells, Vector( _nq, 0.0 ) );
     _psiDy = VectorVector( _nCells, Vector( _nq, 0.0 ) );
