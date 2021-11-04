@@ -2,7 +2,7 @@
 // Created by chinsp on 27/10/21.
 //
 
-include "../../include/quadratures/qicosahedrontriang.h"
+#include "../../include/quadratures/qicosahedrontriang.h"
 #include "common/config.h"
 #include "toolboxes/errormessages.h"
 

@@ -30,11 +30,10 @@ private:
     double GetArea( Vector, Vector, Vector);          /*!@brief Calculates the area of a spherical triangle */
 
     // Variables
-private:
     VectorVectorU _faces;
     VectorVector _vertices;
     VectorVector _ptsTriang;
     VectorVectorU _triangles;
-}
+};
 
 #endif //QICOSAHEDRONTRIANG_H
