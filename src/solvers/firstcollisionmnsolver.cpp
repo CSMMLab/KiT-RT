@@ -28,7 +28,7 @@
 #include <stdio.h>
 
 
-FirstCollisionMNSolver::FirstCollisionMNSolver( Config * _settings ) : Solver ( _settings ){
+FirstCollisionMNSolver::FirstCollisionMNSolver( Config * _settings ) : SolverBase ( _settings ){
     /////// Variables for coarse Setting
     _nq = _quadrature->GetNq();
     _quadPoints = _quadrature->GetPoints();
