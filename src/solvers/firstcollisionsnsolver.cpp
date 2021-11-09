@@ -25,7 +25,7 @@
 #include <stdio.h>
 
 
-FirstCollisionSNSolver::FirstCollisionSNSolver( Config * settings ) : Solver ( settings ){
+FirstCollisionSNSolver::FirstCollisionSNSolver( Config * settings ) : SolverBase ( settings ){
 
     localizedIC = false; // Source only in positive x-direction
 
