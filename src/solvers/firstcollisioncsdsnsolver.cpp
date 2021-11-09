@@ -26,7 +26,7 @@
 #include <stdio.h>
 
 
-FirstCollisionCSDSNSolver::FirstCollisionCSDSNSolver( Config * settings ) : Solver ( settings ) {
+FirstCollisionCSDSNSolver::FirstCollisionCSDSNSolver( Config * settings ) : FirstCollisionSNSolver ( settings ) {
 
     _FPMethod = 2;
     _RT = false;
