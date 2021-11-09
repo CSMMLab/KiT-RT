@@ -26,7 +26,7 @@ private:
     /*! @brief Performs preprocessing for the current solver iteration */
     void IterPreprocessing( unsigned idx_pseudotime ) override;
     /*! @brief Performs postprocessing for the current solver iteration */
-    void IterPostprocessing( unsigned idx_iter ) override;
+    void IterPostprocessing( ) override;
     /*! @brief: Computes the flux of the solution to check conservation properties */
     void ComputeRadFlux() override;
 
