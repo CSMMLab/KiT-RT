@@ -80,8 +80,7 @@ TEST_CASE( "Quadrature Tests", "[quadrature]" ) {
             lowAccuracyTesting = false;
             if( quadraturename == QUAD_GaussLegendreTensorized || quadraturename == QUAD_GaussLegendre1D ||
                 quadraturename == QUAD_GaussLegendreTensorized2D || quadraturename == QUAD_LevelSymmetric || quadraturename == QUAD_Lebedev ||
-                quadraturename == QUAD_LDFESA || quadraturename == QUAD_Product || quadraturename == QUAD_Icosahedron_Triang ||
-                quadraturename == QUAD_Icosahedron_Triang )
+                quadraturename == QUAD_LDFESA || quadraturename == QUAD_Product )
                 lowAccuracyTesting = true;
 
             for( auto quadratureorder : quadratureorders[quadraturename] ) {
