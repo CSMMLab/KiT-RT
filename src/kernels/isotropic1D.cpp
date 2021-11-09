@@ -30,4 +30,6 @@ Matrix Isotropic1D::GetScatteringKernel() {
 
 Matrix Isotropic1D::GetScatteringKernelFirstCollision( unsigned , Vector ){
     ErrorMessages::Error("First Collision ScatteringKernel not defined for Isotropic1D case. Please choose Isotropic Kernel!", CURRENT_FUNCTION );
+    Matrix A ( 1, 1 );
+    return A;
 } // not used
