@@ -579,6 +579,7 @@ void Config::SetPostprocessing() {
                                               CURRENT_FUNCTION );
                     }
                     break;
+                case FIRST_COLLISION_CSD_SN_SOLVER:
                 case CSD_SN_NOTRAFO_SOLVER:                     // Fallthrough
                 case CSD_SN_FOKKERPLANCK_SOLVER:                // Fallthrough
                 case CSD_SN_FOKKERPLANCK_TRAFO_SOLVER:          // Fallthrough
