@@ -34,7 +34,7 @@ ProblemBase* ProblemBase::Create( Config* settings, Mesh* mesh ) {
             if( settings->GetSolverName() == PN_SOLVER || settings->GetSolverName() == MN_SOLVER )
                 return new Checkerboard_Moment( settings, mesh );
             else if ( settings->GetSolverName() == FIRST_COLLISION_SOLVER && settings->GetFirstCollisionSolver() == MN_SOLVER )
-                return new Checkerboard_PN( settings, mesh );
+                return new Checkerboard_Moment( settings, mesh );
             else
                 return new Checkerboard_SN( settings, mesh );    // default
         }
