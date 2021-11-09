@@ -9,7 +9,7 @@ class EntropyBase;
 class SphericalBase;
 class OptimizerBase;
 
-class FirstCollisionSolver : public SolverBase( settings )
+class FirstCollisionSolver : public SolverBase
 {
 protected:
 

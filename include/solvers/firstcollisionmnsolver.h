@@ -11,9 +11,17 @@ class EntropyBase;
 class SphericalBase;
 class OptimizerBase;
 
-class FirstCollisionMNSolver : public SolverBase( settings )
-{
-private:
+class FirstCollisionMNSolver : public SolverBase {
+  public:
+    // Constructor of FirstCollisonSolver
+    FirstCollisionMNSolver( Config * settings );
+    // Destructor
+    virtual ~FirstCollisionMNSolver() {}
+
+
+    void Solve() override; // overrides Basis Solver !!
+
+  private:
 
     virtual void IterPreprocessing( unsigned idx_pseudotime ) override;
     virtual void IterPostprocessing( ) override;
@@ -34,24 +42,13 @@ private:
     Vector ConstructFluxMN( unsigned idx_cell );
     Vector ConstructFluxSN( unsigned idx_cell );
 
-
-public:
-    // Constructor of FirstCollisonSolver
-    FirstCollisionMNSolver( Config * settings );
-    // Destructor
-    virtual ~FirstCollisionMNSolver() {}
-
-
-    void Solve() override; // overrides Basis Solver !!
-
-private:
+  private:
     void PrepareVolumeOutput() override;
     void WriteVolumeOutput( unsigned idx_pseudoTime ) override;
 
 
     // Variables
-
-protected:
+  protected:
 
     VectorVector _solF;
     VectorVector _solNewF;
@@ -72,9 +69,6 @@ protected:
     VectorVector _quadPointsSphere;
     Matrix _scatteringKernel;
     VectorVector _QFirstCollision;
-
-
-
 
 };
 
