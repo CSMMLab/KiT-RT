@@ -90,9 +90,8 @@ void MLOptimizer::initNumpy() {
 void MLOptimizer::initializePython() {
     // Initialize the Python Interpreter
     std::string pyPath = KITRT_PYTHON_PATH;
-    pyPath             = pyPath + "/../ext/neuralEntropy/python";
+    pyPath             = pyPath + "/../ext/neuralEntropy";
     if( !Py_IsInitialized() ) {
-
         Py_InitializeEx( 0 );
         if( !Py_IsInitialized() ) {
             ErrorMessages::Error( "Python init failed!", CURRENT_FUNCTION );
