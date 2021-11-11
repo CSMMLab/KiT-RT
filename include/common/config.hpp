@@ -138,6 +138,10 @@ class Config
     bool _sampleUniform;              /*!< @brief If true, samples uniform, if false, sampleswith cutoff normal distribution */
     double _maxSamplingVelocity;      /*!< @brief The lower bound for the velocity space in the 1D classification sampler */
     double _minSamplingVelocity;      /*!< @brief The upper bound for the velocity space in the 1D classification sampler */
+    double _maxSamplingTemperature;   /*!< @brief The lower bound for the interval to draw temperatures for the 1D classification sampler */
+    double _minSamplingTemperature;   /*!< @brief The upper bound for the interval to draw temperatures for the 1D classification sampler */
+    unsigned short _nTemperatures;    /*!< @brief The number of sampling temperatures for the kinetic density sampler */
+
     // --- Parsing Functionality and Initializing of Options ---
     /*!
      * @brief Set default values for all options not yet set.
@@ -344,6 +348,9 @@ class Config
     double inline GetMinimalEVBound() { return _minEVAlphaSampling; }
     double inline GetMinimalSamplingVelocity() { return _minSamplingVelocity; }
     double inline GetMaximalSamplingVelocity() { return _maxSamplingVelocity; }
+    double inline GetMinimalSamplingTemperature() { return _minSamplingTemperature; }
+    double inline GetMaximalSamplingTemperature() { return _maxSamplingTemperature; }
+    unsigned short inline GetNSamplingTemperatures() { return _nTemperatures; }
 
     // ---- Setters for option structure
     // This section is dangerous
