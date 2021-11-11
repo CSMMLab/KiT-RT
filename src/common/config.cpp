@@ -735,10 +735,6 @@ void Config::SetPostprocessing() {
                 ". Check choice of MIN_EIGENVALUE_THRESHOLD.";
             ErrorMessages::Error( msg, CURRENT_FUNCTION );
         }
-        // if( _normalizedSampling == true && _sampler == CLASSIFICATION_SAMPLER ) {
-        //    std::string msg = "Normalized Sampling is not combinable with slassification sampler.\nCheck choice of NORMALIZED_SAMPLING.";
-        //    ErrorMessages::Error( msg, CURRENT_FUNCTION );
-        //}
     }
 }
 
