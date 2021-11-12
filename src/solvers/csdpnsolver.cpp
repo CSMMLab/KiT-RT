@@ -91,7 +91,18 @@ CSDPNSolver::CSDPNSolver( Config* settings ) : PNSolver( settings ) {
     Vector etmp = E_tab;
     Vector stmp = S_tab;
     Interpolation interpS( etmp, stmp );
-    _s = interpS( _energies );
+    _s        = interpS( _energies );
+    double dE = _eTrafo[2] - _eTrafo[1];
+    Vector eTrafoMid( _nEnergies - 1 );
+    for( unsigned n = 0; n < _nEnergies - 1; ++n ) {
+        eTrafoMid[n] = _eTrafo[n] + dE / 2;
+    }
+    // compute Corresponding original energies at intermediate points
+    Vector eMid( _nEnergies - 1 );
+    for( unsigned n = 0; n < _nEnergies; ++n ) {
+        eMid[n] = interpTrafoToE( eMaxTrafo - eTrafoMid[n] );
+    }
+    _sMid = interpS( eMid );
 
     // write initial condition
     Vector pos_beam = Vector{ 0.5, 0.5 };
@@ -142,7 +153,7 @@ void CSDPNSolver::IterPreprocessing( unsigned idx_iter ) {
     for( unsigned idx_degree = 0; idx_degree < _polyDegreeBasis; ++idx_degree ) {
         // setup interpolation from E to sigma at degree idx_degree
         Interpolation interp( saveE_ref, blaze::column( sigma_ref, idx_degree ) );
-        sigmaSAtEnergy[idx_degree] = interp( _energies[idx_iter] );
+        sigmaSAtEnergy[idx_degree] = interp( _energies[idx_iter + 1] );    // TODO: check if this is really idx_iter+1
     }
     for( unsigned idx_degree = 0; idx_degree < _polyDegreeBasis; ++idx_degree ) {
         _sigmaTAtEnergy[idx_degree] = ( sigmaSAtEnergy[0] - sigmaSAtEnergy[idx_degree] );
@@ -165,16 +176,16 @@ void CSDPNSolver::IterPostprocessing( unsigned idx_iter ) {
     unsigned n = idx_iter;
     // -- Compute Dose
     for( unsigned j = 0; j < _nCells; ++j ) {
-        if( n > 0 ) {
-            _dose[j] +=
-                0.5 * _dE * ( _fluxNew[j] * _s[n] + _flux[j] * _s[n - 1] ) / _density[j];    // update dose with trapezoidal rule // diss Kerstin
+        if( n > 0 || n < _nEnergies - 1 ) {
+            _dose[j] += _dE * ( _fluxNew[j] * _sMid[n] ) / _density[j];    // update dose with trapezoidal rule // diss Kerstin
             //_dose[j] += _dE * ( _fluxNew[j] * _s[_nEnergies - n - 1] ) / _density[j];    // update dose with explicit Euler rule // diss Kerstin
         }
         else {
-            _dose[j] += _dE * _fluxNew[j] * _s[n] / _density[j];
+            _dose[j] += 0.5 * _dE * ( _fluxNew[j] * _sMid[n] ) / _density[j];
             //_dose[j] += _dE * _fluxNew[j] * _s[_nEnergies - n - 1] / _density[j];
         }
     }
+    // obj.dose.+= dE * ( uNew[:, 1] + uOUnc ) * obj.csd.SMid[n]./ obj.densityVec./ ( 1 + ( n == 1 || n == nEnergies ) );
     std::cout << "weight: " << _s[n] << " time: " << idx_iter * _dE << " energy: " << Time2Energy( idx_iter * _dE, _E_cutoff ) << " DONE."
               << std::endl;
 }
