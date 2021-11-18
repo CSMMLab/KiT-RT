@@ -7,7 +7,7 @@
 #ifndef REGULARIZEDNEWTONOPTIMIZER_H
 #define REGULARIZEDNEWTONOPTIMIZER_H
 
-#include "optimizerbase.hpp"
+#include "newtonoptimizer.hpp"
 
 class QuadratureBase;
 
