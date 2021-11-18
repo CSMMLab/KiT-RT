@@ -110,7 +110,7 @@ void DataGeneratorRegression::ComputeTrainingData() {
         // --- compute alphas ---
         _optimizer->SolveMultiCell( _alpha, _uSol, _momentBasis );
         // --- Postprocessing
-        if( _settings->GetRelizabilityReconsU() ) {
+        if( _settings->GetRealizabilityReconstruction() ) {
             log->info( "| Compute realizable problems." );
             ComputeRealizableSolution();
         }

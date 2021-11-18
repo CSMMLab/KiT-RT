@@ -240,9 +240,9 @@ void Config::SetConfigOptions() {
     /*! @brief CleanFluxMatrices \n DESCRIPTION:  If true, very low entries (10^-10 or smaller) of the flux matrices will be set to zero,
      * to improve floating point accuracy \n DEFAULT false \ingroup Config */
     AddBoolOption( "CLEAN_FLUX_MATRICES", _cleanFluxMat, false );
-    /*! @brief Realizability Step for MN solver \n DESCRIPTION: If true, MN solvers use a realizability reconstruction step in each time step. \n
-     * DEFAULT false \ingroup Config */
-    AddBoolOption( "REALIZABILITY_STEP", _realizabilityStep, false );
+    /*! @brief Realizability Step for MN solver \n DESCRIPTION: If true, MN solvers use a realizability reconstruction step in each time step. Also
+     * applicable in regression sampling \n DEFAULT false \ingroup Config */
+    AddBoolOption( "REALIZABILITY_RECONSTRUCTION", _realizabilityRecons, false );
 
     // Problem Relateed Options
     /*! @brief MaterialDir \n DESCRIPTION: Relative Path to the data directory (used in the ICRU database class), starting from the directory of the
@@ -347,9 +347,6 @@ void Config::SetConfigOptions() {
     /*! @brief Switch for sampling distribution  \n DESCRIPTION: Uniform (true) or trunctaded normal (false) \n DEFAULT true
      * \ingroup Config */
     AddBoolOption( "UNIFORM_SAMPLING", _sampleUniform, true );
-    /*! @brief Flag for sampling the space of Legendre multipliers instead of the moments  \n DESCRIPTION: Sample alpha instead of u \n DEFAULT False
-     * \ingroup Config */
-    AddBoolOption( "REALIZABILITY_RECONS_U", _realizabilityRecons, true );
     /*! @brief Boundary for the sampling region of the Lagrange multipliers  \n DESCRIPTION: Norm sampling boundary for alpha \n DEFAULT 20.0
      * \ingroup Config */
     AddDoubleOption( "ALPHA_SAMPLING_BOUND", _alphaBound, 20.0 );

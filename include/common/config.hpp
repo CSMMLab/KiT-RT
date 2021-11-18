@@ -69,7 +69,7 @@ class Config
     ENTROPY_NAME _entropyName;       /*!< @brief Name of the used Entropy Functional */
     unsigned short _maxMomentDegree; /*!< @brief Maximal Order of Moments for PN and MN Solver */
     unsigned short _reconsOrder;     /*!< @brief Spatial Order of Accuracy for Solver */
-    bool _realizabilityStep;         /*!< @brief Flag to perform realizability step */
+    bool _realizabilityRecons;       /*!< @brief Turns realizability reconstruction on/off for u sampling and MN solver */
 
     /*!< @brief If true, very low entries (10^-10 or smaller) of the flux matrices will be set to zero,
      * to improve floating point accuracy */
@@ -133,7 +133,6 @@ class Config
     double _RealizableSetEpsilonU1;   /*!< @brief norm(u_1)/u_0 !< _RealizableSetEpsilonU1 */
     bool _normalizedSampling;         /*!< @brief Flag for sampling of normalized moments, i.e. u_0 =1 */
     bool _alphaSampling;              /*!< @brief Flag for sampling alpha instead of u */
-    bool _realizabilityRecons;        /*!< @brief Turns realizability reconstruction on/off for u sampling */
     double _alphaBound;               /*!< @brief The norm boundary for the sampling range of alpha*/
     double _minEVAlphaSampling;       /*!< @brief Rejection sampling criterion is a minimal eigenvalue threshold */
     bool _sampleUniform;              /*!< @brief If true, samples uniform, if false, sampleswith cutoff normal distribution */
@@ -295,7 +294,7 @@ class Config
     double inline GetTEnd() const { return _tEnd; }
     bool inline GetSNAllGaussPts() const { return _allGaussPts; }
     bool inline GetIsCSD() const { return _csd; }
-    bool inline GetRealizabilityStep() const { return _realizabilityStep; }
+    bool inline GetRealizabilityReconstruction() { return _realizabilityRecons; }
 
     // Linesource
     double inline GetSigmaS() const { return _sigmaS; }
@@ -345,7 +344,6 @@ class Config
     bool inline GetNormalizedSampling() { return _normalizedSampling; }
     bool inline GetAlphaSampling() { return _alphaSampling; }
     bool inline GetUniformSamlping() { return _sampleUniform; }
-    bool inline GetRelizabilityReconsU() { return _realizabilityRecons; }
     double inline GetAlphaSamplingBound() { return _alphaBound; }
     double inline GetMinimalEVBound() { return _minEVAlphaSampling; }
     double inline GetMinimalSamplingVelocity() { return _minSamplingVelocity; }
