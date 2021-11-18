@@ -272,8 +272,10 @@ void Config::SetConfigOptions() {
     AddEnumOption( "ENTROPY_FUNCTIONAL", _entropyName, Entropy_Map, QUADRATIC );
     /*! @brief Optimizer Name \n DESCRIPTION:  Optimizer used to determine the minimal Entropy reconstruction \n DEFAULT NEWTON \ingroup Config */
     AddEnumOption( "ENTROPY_OPTIMIZER", _entropyOptimizerName, Optimizer_Map, NEWTON );
-
     // Newton optimizer related options
+    /*! @brief Regularization Parameter \n DESCRIPTION:  Regularization Parameter for the regularized entropy closure. Must not be negative \n DEFAULT
+     * 1e-2 \ingroup Config */
+    AddDoubleOption( "REGULARIZER_GAMMA", _regularizerGamma, 1e-2 );
     /*! @brief Newton Optimizer Epsilon \n DESCRIPTION:  Convergencce Epsilon for Newton Optimizer \n DEFAULT 1e-3 \ingroup Config */
     AddDoubleOption( "NEWTON_EPSILON", _optimizerEpsilon, 0.001 );
     /*! @brief Max Iter Newton Optmizers \n DESCRIPTION: Max number of newton iterations \n DEFAULT 10 \ingroup Config */
@@ -286,7 +288,6 @@ void Config::SetConfigOptions() {
     /*! @brief Newton Fast mode \n DESCRIPTION:  If true, we skip the Newton optimizer for Quadratic entropy and set alpha = u \n DEFAULT false
      * \ingroup Config */
     AddBoolOption( "NEWTON_FAST_MODE", _newtonFastMode, false );
-
     // Neural Entropy Closure options
     AddUnsignedShortOption( "NEURAL_MODEL", _neuralModel, 4 );
 

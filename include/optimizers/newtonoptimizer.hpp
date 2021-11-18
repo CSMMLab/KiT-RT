@@ -23,21 +23,21 @@ class NewtonOptimizer : public OptimizerBase
 
     /*! @brief Computes the objective function
                 grad = <eta(alpha*m)> - alpha*sol */
-    double ComputeObjFunc( Vector& alpha, Vector& sol, const VectorVector& moments );
+    virtual double ComputeObjFunc( Vector& alpha, Vector& sol, const VectorVector& moments );
 
     /*! @brief Computes hessian of objective function and stores it in hessian
         grad = <mXm*eta*'(alpha*m)> */
-    void ComputeHessian( Vector& alpha, const VectorVector& moments, Matrix& hessian );
+    virtual void ComputeHessian( Vector& alpha, const VectorVector& moments, Matrix& hessian );
 
     /*! @brief In 1D, this function scales the quadrature weigths to compute the entropy integrals in arbitrary (bounded) intervals
         @param leftBound : left boundary of the interval
         @param rightBound : right boundary of the interval*/
     void ScaleQuadWeights( double leftBound, double rightBound );
 
-  private:
+  protected:
     /*! @brief Computes gradient of objective function and stores it in grad
                 grad = <m*eta*'(alpha*m)> - sol */
-    void ComputeGradient( Vector& alpha, Vector& sol, const VectorVector& moments, Vector& grad );
+    virtual void ComputeGradient( Vector& alpha, Vector& sol, const VectorVector& moments, Vector& grad );
 
     QuadratureBase* _quadrature; /*!< @brief used quadrature */    // THis is memory doubling! Try to use a pointer.
 

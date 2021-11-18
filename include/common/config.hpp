@@ -105,7 +105,7 @@ class Config
     double _newtonStepSize;               /*!< @brief Stepsize factor for newton optimizer */
     unsigned long _newtonLineSearchIter;  /*!< @brief Maximal Number of line search iterations for newton optimizer */
     bool _newtonFastMode;                 /*!< @brief If true, we skip the NewtonOptimizer for quadratic entropy and assign alpha = u */
-
+    double _regularizerGamma;             /*!< @brief Regularization parameter for the regularized closure */
     // NeuralModel
     unsigned short _neuralModel; /*!< @brief  Version number of the employed neural model */
     // Output Options
@@ -307,7 +307,7 @@ class Config
     unsigned long inline GetNewtonMaxLineSearches() const { return _newtonLineSearchIter; }
     bool inline GetNewtonFastMode() const { return _newtonFastMode; }
     OPTIMIZER_NAME inline GetOptimizerName() const { return _entropyOptimizerName; }
-
+    double inline GetRegularizerGamma() const { return _regularizerGamma; }
     // Neural Closure
     unsigned short inline GetNeuralModel() { return _neuralModel; }
 

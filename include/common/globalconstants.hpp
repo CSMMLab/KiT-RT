@@ -139,9 +139,9 @@ inline std::map<std::string, ENTROPY_NAME> Entropy_Map{
     { "QUADRATIC", QUADRATIC }, { "MAXWELL_BOLTZMANN", MAXWELL_BOLTZMANN }, { "BOSE_EINSTEIN", BOSE_EINSTEIN }, { "FERMI_DIRAC", FERMI_DIRAC } };
 
 // Optimizer
-enum OPTIMIZER_NAME { NEWTON, ML };
+enum OPTIMIZER_NAME { NEWTON, REGULARIZED_NEWTON, ML };
 
-inline std::map<std::string, OPTIMIZER_NAME> Optimizer_Map{ { "NEWTON", NEWTON }, { "ML", ML } };
+inline std::map<std::string, OPTIMIZER_NAME> Optimizer_Map{ { "NEWTON", NEWTON }, { "REGULARIZED_NEWTON", REGULARIZED_NEWTON }, { "ML", ML } };
 
 // Volume output
 enum VOLUME_OUTPUT { ANALYTIC, MINIMAL, MOMENTS, DUAL_MOMENTS, MEDICAL };
