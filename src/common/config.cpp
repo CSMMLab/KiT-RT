@@ -240,9 +240,9 @@ void Config::SetConfigOptions() {
     /*! @brief CleanFluxMatrices \n DESCRIPTION:  If true, very low entries (10^-10 or smaller) of the flux matrices will be set to zero,
      * to improve floating point accuracy \n DEFAULT false \ingroup Config */
     AddBoolOption( "CLEAN_FLUX_MATRICES", _cleanFluxMat, false );
-    /*! @brief ContinuousSlowingDown \n DESCRIPTION: If true, the program uses the continuous slowing down approximation to treat energy dependent
-     * problems. \n DEFAULT false \ingroup Config */
-    // AddBoolOption( "CONTINUOUS_SLOWING_DOWN", _csd, false );
+    /*! @brief Realizability Step for MN solver \n DESCRIPTION: If true, MN solvers use a realizability reconstruction step in each time step. \n
+     * DEFAULT false \ingroup Config */
+    AddBoolOption( "REALIZABILITY_STEP", _realizabilityStep, false );
 
     // Problem Relateed Options
     /*! @brief MaterialDir \n DESCRIPTION: Relative Path to the data directory (used in the ICRU database class), starting from the directory of the
@@ -735,6 +735,13 @@ void Config::SetPostprocessing() {
                 "Minimal Eigenvalue threshold of the entropy hession must be positive.\n Current choice: " + std::to_string( _alphaSampling ) +
                 ". Check choice of MIN_EIGENVALUE_THRESHOLD.";
             ErrorMessages::Error( msg, CURRENT_FUNCTION );
+        }
+    }
+
+    // Optimizer postprocessing
+    {
+        if( _regularizerGamma <= 0.0 ) {
+            ErrorMessages( "REGULARIZER_GAMMA must be positive.", CURRENT_FUNCTION );
         }
     }
 }

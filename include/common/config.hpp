@@ -69,6 +69,7 @@ class Config
     ENTROPY_NAME _entropyName;       /*!< @brief Name of the used Entropy Functional */
     unsigned short _maxMomentDegree; /*!< @brief Maximal Order of Moments for PN and MN Solver */
     unsigned short _reconsOrder;     /*!< @brief Spatial Order of Accuracy for Solver */
+    bool _realizabilityStep;         /*!< @brief Flag to perform realizability step */
 
     /*!< @brief If true, very low entries (10^-10 or smaller) of the flux matrices will be set to zero,
      * to improve floating point accuracy */
@@ -294,6 +295,7 @@ class Config
     double inline GetTEnd() const { return _tEnd; }
     bool inline GetSNAllGaussPts() const { return _allGaussPts; }
     bool inline GetIsCSD() const { return _csd; }
+    bool inline GetRealizabilityStep() const { return _realizabilityStep; }
 
     // Linesource
     double inline GetSigmaS() const { return _sigmaS; }
