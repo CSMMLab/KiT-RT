@@ -738,7 +738,7 @@ void Config::SetPostprocessing() {
     // Optimizer postprocessing
     {
         if( _regularizerGamma <= 0.0 ) {
-            ErrorMessages( "REGULARIZER_GAMMA must be positive.", CURRENT_FUNCTION );
+            ErrorMessages::Error( "REGULARIZER_GAMMA must be positive.", CURRENT_FUNCTION );
         }
     }
 }
