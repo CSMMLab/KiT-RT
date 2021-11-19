@@ -26,7 +26,7 @@ class DataGeneratorClassification : public DataGeneratorBase
     void PrintTrainingData() override; /*!< @brief : Print computed training data to csv file and screen */
 
     // Helper functions
-    void ComputeMoments() override; /*!< @brief Pre-Compute Moments at all quadrature points. */
+    virtual void ComputeMoments() override = 0; /*!< @brief Pre-Compute Moments at all quadrature points. */
     void ClassifyDensity();         /*!< @brief Checks, if the pdf of each Lagrange multiplier is within the KL distance of the maxwellian */
     /*!< @brief Computes the Kullback Leibler Divergence of the pdfs f1 and f2, both pfds are evaluated at their quadrature points
                   @param: f1,f2. Evaluation of the pdf at their quadrature points. length of vector must be _nq.
@@ -43,7 +43,7 @@ class DataGeneratorClassification : public DataGeneratorBase
     void ReconstructKineticDensity();
 
     /*!< @brief Sample Lagrange multipliers alpha, with mean values corresponding to a maxwellian distribution */
-    void SampleMultiplierAlpha() override;
+    virtual void SampleMultiplierAlpha() override = 0;
 };
 
 #endif    // DATAGENERATORCLASSIFICATION_H
