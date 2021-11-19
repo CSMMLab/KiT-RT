@@ -22,9 +22,10 @@ DataGeneratorClassification::DataGeneratorClassification( Config* settings ) : D
     _rightBound = _settings->GetMaximalSamplingVelocity();
 
     // Scale the quadrature weights
-    _quadrature->ScalePointsAndWeights( _leftBound, _rightBound );
-    _optimizer->ScaleQuadWeights( _leftBound, _rightBound );
+    _quadrature->ScalePointsAndWeights( _rightBound );
+    _optimizer->ScaleQuadWeights( _rightBound );
     _weights          = _quadrature->GetWeights();
+    std::cout << "sum of weights: " << _quadrature->SumUpWeights() << "\n";
     _quadPointsSphere = _quadrature->GetPointsSphere();
 
     _uSol           = VectorVector();    // Not needed

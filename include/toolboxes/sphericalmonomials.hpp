@@ -74,7 +74,7 @@ class SphericalMonomials : public SphericalBase
     unsigned Factorial( unsigned n );
 
     /*! @brief Function to compute first component of spherical unit vector
-     *          Omega_x = sqrt(1-my*my)*cos(phi)
+     *          Omega_x =  sqrt(1-my*my)*cos(phi)
      *  @return first component of spherical unit vector */
     double Omega_x( double my, double phi );
 

@@ -16,7 +16,10 @@
 #include "spdlog/spdlog.h"
 #include <iostream>
 
-DataGeneratorClassification2D::DataGeneratorClassification2D( Config* settings ) : DataGeneratorClassification( settings ) { ComputeMoments(); }
+DataGeneratorClassification2D::DataGeneratorClassification2D( Config* settings ) : DataGeneratorClassification( settings ) {
+    ErrorMessages::Error( "2D Classification sampler is a work in progress\n", CURRENT_FUNCTION );
+    ComputeMoments();
+}
 
 DataGeneratorClassification2D::~DataGeneratorClassification2D() {}
 

@@ -77,7 +77,7 @@ void QGaussLegendreTensorized2D::SetPointsAndWeights() {
         for( unsigned i = 0; i < 2 * _order; ++i ) {
             _pointsKarth[j * ( 2 * _order ) + i][0] = sqrt( 1 - nodes1D[j] * nodes1D[j] ) * std::cos( phi[i] );
             _pointsKarth[j * ( 2 * _order ) + i][1] = sqrt( 1 - nodes1D[j] * nodes1D[j] ) * std::sin( phi[i] );
-            _pointsKarth[j * ( 2 * _order ) + i][2] = 0;
+            _pointsKarth[j * ( 2 * _order ) + i][2] = 0.0;
 
             _pointsSphere[j * ( 2 * _order ) + i][0] = nodes1D[j];    // my
             _pointsSphere[j * ( 2 * _order ) + i][1] = phi[i];        // phi
