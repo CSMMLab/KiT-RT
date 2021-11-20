@@ -89,11 +89,11 @@ void DataGeneratorClassification1D::SampleMultiplierAlpha() {
                         }
                         if( _alpha[idx_set][idx_sys] > meanAlpha[idx_sys] + maxAlphaValue ) {
                             _alpha[idx_set][idx_sys] = meanAlpha[idx_sys] + maxAlphaValue;
-                            std::cout << "lower bound touched\n";
+                            std::cout << "upper bound touched\n";
                         }
                         if( _alpha[idx_set][idx_sys] < meanAlpha[idx_sys] - maxAlphaValue ) {
                             _alpha[idx_set][idx_sys] = meanAlpha[idx_sys] - maxAlphaValue;
-                            std::cout << "upper bound touched \n";
+                            std::cout << "lower bound touched \n";
                         }
                     }
                     // Compute rejection criteria
@@ -158,14 +158,6 @@ void DataGeneratorClassification1D::SampleMultiplierAlpha() {
                         }
                         else {
                             alphaRed[idx_sys - 1] = distributionAlphaRest( generator );
-                        }
-                        if( alphaRed[idx_sys - 1] > meanAlpha[idx_sys] + maxAlphaValue ) {
-                            alphaRed[idx_sys - 1] = meanAlpha[idx_sys] + maxAlphaValue;
-                            std::cout << "lower bound touched\n";
-                        }
-                        if( alphaRed[idx_sys - 1] < meanAlpha[idx_sys] - maxAlphaValue ) {
-                            alphaRed[idx_sys - 1] = meanAlpha[idx_sys] - maxAlphaValue;
-                            std::cout << "upper bound touched \n";
                         }
                     }
                     // Compute alpha_0 = log(<exp(alpha m )>) // for maxwell boltzmann! only

@@ -123,8 +123,8 @@ void QuadratureBase::ScalePointsAndWeights( double velocityScaling ) {
     }
     for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
         for( unsigned idx_dim = 0; idx_dim < _settings->GetDim(); idx_dim++ ) {
-            _pointsKarth[idx_quad][idx_dim]  = _pointsKarth[idx_quad][idx_dim] * velocityScaling;    //
-            _pointsSphere[idx_quad][idx_dim] = _pointsKarth[idx_quad][idx_dim] * velocityScaling;    //
+            _pointsKarth[idx_quad][idx_dim]  = _pointsKarth[idx_quad][idx_dim] * velocityScaling;     //
+            _pointsSphere[idx_quad][idx_dim] = _pointsSphere[idx_quad][idx_dim] * velocityScaling;    //
         }
     }
 }
