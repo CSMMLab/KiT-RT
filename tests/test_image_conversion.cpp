@@ -7,7 +7,7 @@
 #include "common/mesh.hpp"
 #include "toolboxes/interpolation.hpp"
 #include "toolboxes/textprocessingtoolbox.hpp"
-
+/*
 TEST_CASE( "convert image data to grayscale matrix", "[image I/O]" ) {
     std::string config_file_name = std::string( TESTS_PATH ) + "input/unit_tests/common/image_conversion.cfg";
 
@@ -97,3 +97,4 @@ TEST_CASE( "convert image data to grayscale matrix", "[image I/O]" ) {
 
     std::remove( testMesh.c_str() );
 }
+*/

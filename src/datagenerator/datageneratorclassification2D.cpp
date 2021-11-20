@@ -17,18 +17,19 @@
 #include <iostream>
 
 DataGeneratorClassification2D::DataGeneratorClassification2D( Config* settings ) : DataGeneratorClassification( settings ) {
-    ErrorMessages::Error( "2D Classification sampler is a work in progress\n", CURRENT_FUNCTION );
+    // ErrorMessages::Error( "2D Classification sampler is a work in progress\n", CURRENT_FUNCTION );
     ComputeMoments();
 }
 
 DataGeneratorClassification2D::~DataGeneratorClassification2D() {}
 
 void DataGeneratorClassification2D::ComputeMoments() {
-    double my, phi;
+    double my, phi, r;
     for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
         my                     = _quadPointsSphere[idx_quad][0];
         phi                    = _quadPointsSphere[idx_quad][1];
-        _momentBasis[idx_quad] = _basisGenerator->ComputeSphericalBasis( my, phi );
+        r                      = _quadPointsSphere[idx_quad][2];
+        _momentBasis[idx_quad] = _basisGenerator->ComputeSphericalBasis( my, phi, r );
     }
 }
 
@@ -93,8 +94,8 @@ void DataGeneratorClassification2D::SampleMultiplierAlpha() {
                         else if( idx_sys == 3 ) {                       // v_y^2
                             _alpha[idx_set][idx_sys] = meanAlpha[3];    // fixed value
                         }
-                        else if( idx_sys == 4 ) {              // v_y*v_x
-                            _alpha[idx_set][idx_sys] = 0.0;    // moment not used
+                        else if( idx_sys == 4 ) {                                             // v_y*v_x
+                            _alpha[idx_set][idx_sys] = distributionAlphaRest( generator );    // mixed term as disturbation
                         }
                         else if( idx_sys == 5 ) {                       // v_x^2
                             _alpha[idx_set][idx_sys] = meanAlpha[5];    // fixed value (same as v_y^2
@@ -176,8 +177,8 @@ void DataGeneratorClassification2D::SampleMultiplierAlpha() {
                         else if( idx_sys == 3 ) {                    // v_y^2
                             alphaRed[idx_sys - 1] = meanAlpha[3];    // fixed value
                         }
-                        else if( idx_sys == 4 ) {           // v_y*v_x
-                            alphaRed[idx_sys - 1] = 0.0;    // moment not used
+                        else if( idx_sys == 4 ) {                                          // v_y*v_x
+                            alphaRed[idx_sys - 1] = distributionAlphaRest( generator );    // mixed term as disturbation
                         }
                         else if( idx_sys == 5 ) {                    // v_x^2
                             alphaRed[idx_sys - 1] = meanAlpha[5];    // fixed value (same as v_y^2
@@ -187,11 +188,11 @@ void DataGeneratorClassification2D::SampleMultiplierAlpha() {
                         }
                         if( alphaRed[idx_sys - 1] > meanAlpha[idx_sys] + maxAlphaValue ) {
                             alphaRed[idx_sys - 1] = meanAlpha[idx_sys] + maxAlphaValue;
-                            std::cout << "lower bound touched\n";
+                            // std::cout << "lower bound touched\n";
                         }
                         if( alphaRed[idx_sys - 1] < meanAlpha[idx_sys] - maxAlphaValue ) {
                             alphaRed[idx_sys - 1] = meanAlpha[idx_sys] - maxAlphaValue;
-                            std::cout << "upper bound touched \n";
+                            // std::cout << "upper bound touched \n";
                         }
                     }
                     // Compute alpha_0 = log(<exp(alpha m )>) // for maxwell boltzmann! only

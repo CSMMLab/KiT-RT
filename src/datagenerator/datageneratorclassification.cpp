@@ -18,12 +18,11 @@
 
 DataGeneratorClassification::DataGeneratorClassification( Config* settings ) : DataGeneratorBase( settings ) {
     // Only 1D case right now
-    _leftBound  = _settings->GetMinimalSamplingVelocity();
-    _rightBound = _settings->GetMaximalSamplingVelocity();
+    _maxVelocity = _settings->GetMaximalSamplingVelocity();
 
     // Scale the quadrature weights
-    _quadrature->ScalePointsAndWeights( _rightBound );
-    _optimizer->ScaleQuadWeights( _rightBound );
+    _quadrature->ScalePointsAndWeights( _maxVelocity );
+    _optimizer->ScaleQuadWeights( _maxVelocity );
     _weights = _quadrature->GetWeights();
     // std::cout << "sum of weights: " << _quadrature->SumUpWeights() << "\n";
     _quadPointsSphere = _quadrature->GetPointsSphere();

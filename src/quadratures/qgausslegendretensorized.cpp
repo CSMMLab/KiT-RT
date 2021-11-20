@@ -73,7 +73,7 @@ void QGaussLegendreTensorized::SetPointsAndWeights() {
         p.resize( 3 );
     }
     for( auto& p : _pointsSphere ) {
-        p.resize( 2 );
+        p.resize( 3 );
     }
 
     _weights.resize( _nq );
@@ -87,6 +87,7 @@ void QGaussLegendreTensorized::SetPointsAndWeights() {
 
             _pointsSphere[j * ( 2 * _order ) + i][0] = nodes1D[j];    // my
             _pointsSphere[j * ( 2 * _order ) + i][1] = phi[i];        // phi
+            _pointsSphere[j * ( 2 * _order ) + i][2] = 1.0;           // radius r
 
             _weights[j * ( 2 * _order ) + i] = normalizationFactor * M_PI / _order * weights1D[j];
         }

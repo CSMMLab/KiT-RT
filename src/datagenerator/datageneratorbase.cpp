@@ -255,7 +255,7 @@ bool DataGeneratorBase::ComputeEVRejection( unsigned idx_set ) {
     Vector ew = Vector( _nTotalEntries, 0.0 );
     eigen( hessianSym, ew );
     if( min( ew ) < _settings->GetMinimalEVBound() ) {
-        // std::cout << "Sampling not accepted with EV:" << min( ew ) << std::endl;
+        std::cout << "Sampling not accepted with EV:" << min( ew ) << std::endl;
         // std::cout << hessianSym << std::endl;
         // std::cout << "Current minimal accepted EV:" << _settings->GetMinimalEVBound() << std::endl;
         return false;

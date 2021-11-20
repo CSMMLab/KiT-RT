@@ -357,8 +357,8 @@ void Config::SetConfigOptions() {
     AddDoubleOption( "MIN_EIGENVALUE_THRESHOLD", _minEVAlphaSampling, 1e-8 );
     /*! @brief Boundary for the velocity integral  \n DESCRIPTION: Upper boundary for the velocity integral \n DEFAULT 5.0  * \ingroup Config */
     AddDoubleOption( "MAX_VELOCITY", _maxSamplingVelocity, 5.0 );
-    /*! @brief Boundary for the velocity integral  \n DESCRIPTION: Lower boundary for the velocity integral \n DEFAULT 5.0  * \ingroup Config */
-    AddDoubleOption( "MIN_VELOCITY", _minSamplingVelocity, -5.0 );
+    ///*! @brief Boundary for the velocity integral  \n DESCRIPTION: Lower boundary for the velocity integral \n DEFAULT 5.0  * \ingroup Config */
+    // AddDoubleOption( "MIN_VELOCITY", _minSamplingVelocity, -5.0 );
     /*! @brief Boundary for the sampling temperature  \n DESCRIPTION: Upper boundary for the sampling temperature \n DEFAULT 1.0  * \ingroup Config */
     AddDoubleOption( "MAX_TEMPERATURE", _maxSamplingTemperature, 1 );
     /*! @brief Boundary for the sampling temperature  \n DESCRIPTION: Lower boundary for the sampling temperature \n DEFAULT 0.1  * \ingroup Config */

@@ -130,7 +130,7 @@ TEST_CASE( "test  spherical harmonics basis ", "[spherical_harmonics]" ) {
         QGaussLegendreTensorized quad( config );
 
         double my, phi, w;
-        Vector moment = testBase.ComputeSphericalBasis( 0, 1, 0 );
+        Vector moment = testBase.ComputeSphericalBasisKarthesian( 0, 1, 0 );
         // 9 basis moments if degree = 2
 
         Matrix results( moment.size(), moment.size(), 0.0 );
@@ -182,8 +182,8 @@ TEST_CASE( "test  spherical harmonics basis ", "[spherical_harmonics]" ) {
             x       = quad.GetPoints()[idx_quad][0];
             y       = quad.GetPoints()[idx_quad][1];
             z       = quad.GetPoints()[idx_quad][2];
-            moment1 = testBase.ComputeSphericalBasis( x, y, z );
-            moment2 = testBase.ComputeSphericalBasis( -x, -y, -z );
+            moment1 = testBase.ComputeSphericalBasisKarthesian( x, y, z );
+            moment2 = testBase.ComputeSphericalBasisKarthesian( -x, -y, -z );
 
             unsigned idx_sys;
             double result = 0.;

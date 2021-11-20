@@ -29,13 +29,15 @@ unsigned SphericalHarmonics::GetGlobalIndexBasis( int l_degree, int k_order ) {
                        l_degree * l_degree ) /* number of previous indices untill level l-1 */;
 }
 
-Vector SphericalHarmonics::ComputeSphericalBasis( double my, double phi ) {
+Vector SphericalHarmonics::ComputeSphericalBasis( double my, double phi, double r ) {
+    // radius r is not used and always assumed to be 1
+
     ComputeAssLegendrePoly( my );
     ComputeYBasis( phi );
     return _YBasis;
 }
 
-Vector SphericalHarmonics::ComputeSphericalBasis( double x, double y, double z ) {
+Vector SphericalHarmonics::ComputeSphericalBasisKarthesian( double x, double y, double z ) {
 
     // transform (x,y,z) into (my,phi)
     double my  = z;
