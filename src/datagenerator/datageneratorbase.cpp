@@ -60,10 +60,10 @@ DataGeneratorBase::DataGeneratorBase( Config* settings ) {
     _momentBasis = VectorVector( _nq, Vector( _nTotalEntries, 0.0 ) );
 
     // Optimizer
-    if( _settings->GetOptimizerName() == REGULARIZED_NEWTON ) {
+    if( _settings->GetOptimizerName() == NEWTON ) {
         _optimizer = new NewtonOptimizer( _settings );
     }
-    else if( _settings->GetOptimizerName() == NEWTON ) {
+    else if( _settings->GetOptimizerName() == REGULARIZED_NEWTON ) {
         _optimizer = new RegularizedNewtonOptimizer( _settings );
     }
     else {
