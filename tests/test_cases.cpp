@@ -166,7 +166,6 @@ TEST_CASE( "MN_SOLVER", "[validation_tests]" ) {
             }
             REQUIRE( errorWithinBounds );
         }
-
         {    // ---  Maxwell Boltzmann Entropy ---
             std::string config_file_name = std::string( TESTS_PATH ) + mn_fileDir + "linesource_MN_MB.cfg";
 
@@ -187,8 +186,29 @@ TEST_CASE( "MN_SOLVER", "[validation_tests]" ) {
             }
             REQUIRE( errorWithinBounds );
         }
+        {    // --- Regularized Maxwell Boltzmann Entropy ---
+            std::string config_file_name = std::string( TESTS_PATH ) + mn_fileDir + "linesource_MN_MB_regularized.cfg";
+
+            Config* config     = new Config( config_file_name );
+            SolverBase* solver = SolverBase::Create( config );
+            solver->Solve();
+            solver->PrintVolumeOutput();
+
+            auto test      = readVTKFile( std::string( TESTS_PATH ) + "result/rtsn_test_linesource_MN_MB_regularized.vtk" );
+            auto reference = readVTKFile( std::string( TESTS_PATH ) + mn_fileDir + "linesource_MN_MB_regularized_reference.vtk" );
+
+            double eps             = 1e-3;
+            bool errorWithinBounds = true;
+
+            REQUIRE( test.size() == reference.size() );
+            for( unsigned i = 0; i < test.size(); ++i ) {
+                if( std::fabs( test[i] - reference[i] ) > eps ) errorWithinBounds = false;
+            }
+            REQUIRE( errorWithinBounds );
+        }
     }
 }
+
 /*
 TEST_CASE( "CSD_SN_FP_SOLVER", "[validation_tests]" ) {
     std::string csd_sn_fileDir = "input/validation_tests/CSD_SN_FP_solver/";
