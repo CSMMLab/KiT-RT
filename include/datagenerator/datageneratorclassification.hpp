@@ -22,7 +22,7 @@ class DataGeneratorClassification : public DataGeneratorBase
     VectorVector _kineticDensity; /*!< @brief vector if sampled kinetic densities, evaluated at quadrature points */
 
     // IO routines
-    void PrintTrainingData() override; /*!< @brief : Print computed training data to csv file and screen */
+    void PrintTrainingData() override = 0; /*!< @brief : Print computed training data to csv file and screen */
 
     // Helper functions
     virtual void ComputeMoments() override = 0; /*!< @brief Pre-Compute Moments at all quadrature points. */

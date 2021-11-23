@@ -181,3 +181,39 @@ void DataGeneratorClassification1D::SampleMultiplierAlpha() {
         }
     }
 }
+
+void DataGeneratorClassification1D::PrintTrainingData() {
+
+    auto log    = spdlog::get( "event" );
+    auto logCSV = spdlog::get( "tabular" );
+    log->info( "---------------------- Data Generation Successful ------------------------" );
+
+    std::stringstream quadPtsStream, quadWeightsStream;
+    for( unsigned idx_quad = 0; idx_quad < _nq - 1; idx_quad++ ) {
+        quadPtsStream << std::fixed << std::setprecision( 12 ) << _quadPointsSphere[idx_quad][0] << ",";
+    }
+    quadPtsStream << std::fixed << std::setprecision( 12 ) << _quadPointsSphere[_nq - 1][0];
+    std::string quadPtsString = quadPtsStream.str();
+    logCSV->info( quadPtsString );
+
+    for( unsigned idx_quad = 0; idx_quad < _nq - 1; idx_quad++ ) {
+        quadWeightsStream << std::fixed << std::setprecision( 12 ) << _weights[idx_quad] << ",";
+    }
+    quadWeightsStream << std::fixed << std::setprecision( 12 ) << _weights[_nq - 1];
+    std::string quadWeightsString = quadWeightsStream.str();
+    logCSV->info( quadWeightsString );
+
+    for( unsigned idx_set = 0; idx_set < _setSize; idx_set++ ) {
+
+        std::stringstream streamDensity;
+        for( unsigned idx_quad = 0; idx_quad < _nq - 1; idx_quad++ ) {
+            streamDensity << std::fixed << std::setprecision( 12 ) << _kineticDensity[idx_set][idx_quad] << ",";
+        }
+        streamDensity << std::fixed << std::setprecision( 12 ) << _kineticDensity[idx_set][_nq - 1];
+
+        std::string densityString = streamDensity.str();
+
+        logCSV->info( densityString );
+    }
+    log->info( "------------------------- Data printed to file ---------------------------" );
+}

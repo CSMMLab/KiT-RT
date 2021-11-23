@@ -13,9 +13,11 @@ class DataGeneratorClassification1D : public DataGeneratorClassification
     DataGeneratorClassification1D( Config* settings );
     ~DataGeneratorClassification1D();
 
+
   protected:
     void ComputeMoments() final;        /*!< @brief Pre-Compute Moments at all quadrature points. */
     void SampleMultiplierAlpha() final; /*!< @brief Sample Lagrange multipliers alpha, with mean values corresponding to a maxwellian distribution */
+    void PrintTrainingData() final;     /*!< @brief : Print computed training data to csv file and screen */
 };
 
 #endif    // DATAGENERATORCLASSIFICATION1D_H
