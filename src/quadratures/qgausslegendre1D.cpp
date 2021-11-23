@@ -56,7 +56,7 @@ void QGaussLegendre1D::SetPointsAndWeights() {
     for( unsigned k = 0; k < _nq; ++k ) {
         _pointsKarth[k].resize( dim );
         _pointsKarth[k][0] = nodes1D[k];
-        _weights[k]   = weights1D[k];
+        _weights[k]        = weights1D[k];
     }
     _pointsSphere = _pointsKarth;
 }

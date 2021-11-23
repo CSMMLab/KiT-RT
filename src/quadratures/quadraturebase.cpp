@@ -106,17 +106,27 @@ void QuadratureBase::PrintPointsAndWeights() {
     }
 }
 
-void QuadratureBase::ScalePointsAndWeights( double leftBound, double rightBound ) {
-    // Scale from [-1,1] to [leftBound,rightBound]
+void QuadratureBase::ScalePointsAndWeights( double velocityScaling ) {
+    // Scale from [-1,1] to [-velocityScaling,velocityScaling] in 1D
+    // Scale radius of velocity sphere with velocityScaling in 2D and 3D
     if( !_settings ) {
         ErrorMessages::Error( "This function is only available with an active settings file.", CURRENT_FUNCTION );
     }
-    if( _settings->GetDim() != 1 ) {
-        ErrorMessages::Error( "This function is only available in 1 spatial dimension.", CURRENT_FUNCTION );
+    if( _settings->GetDim() == 1 ) {
+        _weights = _weights * velocityScaling;
+        for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
+            _pointsKarth[idx_quad][0]  = _pointsKarth[idx_quad][0] * velocityScaling;
+            _pointsSphere[idx_quad][0] = _pointsSphere[idx_quad][0] * velocityScaling;    // scale radius
+        }
     }
-    _weights = _weights * ( rightBound - leftBound ) / 2.0;
-    for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
-        _pointsKarth[idx_quad][0]  = leftBound + ( _pointsKarth[idx_quad][0] + 1.0 ) * ( rightBound - leftBound ) / 2.0;     //
-        _pointsSphere[idx_quad][0] = leftBound + ( _pointsSphere[idx_quad][0] + 1.0 ) * ( rightBound - leftBound ) / 2.0;    //
+    else {    // 2D and 3D get same scaling with increasing radius
+        _weights = _weights * velocityScaling * velocityScaling;
+        _weights = _weights * velocityScaling * velocityScaling;
+        for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
+            for( unsigned idx_dim = 0; idx_dim < _settings->GetDim(); idx_dim++ ) {    // Karthesian
+                _pointsKarth[idx_quad][idx_dim] = _pointsKarth[idx_quad][idx_dim] * velocityScaling;
+            }
+            _pointsSphere[idx_quad][2] = _pointsSphere[idx_quad][2] * velocityScaling;    // scale radius
+        }
     }
 }

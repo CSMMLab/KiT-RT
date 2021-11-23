@@ -30,9 +30,9 @@ class NewtonOptimizer : public OptimizerBase
     void ComputeHessian( Vector& alpha, const VectorVector& moments, Matrix& hessian );
 
     /*! @brief In 1D, this function scales the quadrature weigths to compute the entropy integrals in arbitrary (bounded) intervals
-        @param leftBound : left boundary of the interval
-        @param rightBound : right boundary of the interval*/
-    void ScaleQuadWeights( double leftBound, double rightBound );
+        @param velocityScale :scaling factor of the symmetric velocity intervall with mean 0
+        */
+    void ScaleQuadWeights( double velocityScale );
 
   private:
     /*! @brief Computes gradient of objective function and stores it in grad
