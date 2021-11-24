@@ -4,6 +4,6 @@
 [submodule "ext/Catch2"]
 	path = ext/Catch2
 	url = git://github.com/catchorg/Catch2.git
-[submodule "code/ext/blaze"]
+[submodule "ext/blaze"]
 	path = ext/blaze
 	url = https://bitbucket.org/blaze-lib/blaze.git
