@@ -225,13 +225,13 @@ void DataGeneratorClassification2D::PrintTrainingData() {
 
     std::stringstream quadPtsStream1, quadPtsStream2, quadPtsStream3, quadWeightsStream;
     for( unsigned idx_quad = 0; idx_quad < _nq - 1; idx_quad++ ) {
-        quadPtsStream1 << std::fixed << std::setprecision( 12 ) << _quadPointsSphere[idx_quad][0] << ",";
-        quadPtsStream2 << std::fixed << std::setprecision( 12 ) << _quadPointsSphere[idx_quad][1] << ",";
-        quadPtsStream3 << std::fixed << std::setprecision( 12 ) << _quadPointsSphere[idx_quad][2] << ",";
+        quadPtsStream1 << std::fixed << std::setprecision( 12 ) << _quadPoints[idx_quad][0] << ",";
+        quadPtsStream2 << std::fixed << std::setprecision( 12 ) << _quadPoints[idx_quad][1] << ",";
+        quadPtsStream3 << std::fixed << std::setprecision( 12 ) << _quadPoints[idx_quad][2] << ",";
     }
-    quadPtsStream1 << std::fixed << std::setprecision( 12 ) << _quadPointsSphere[_nq - 1][0];
-    quadPtsStream2 << std::fixed << std::setprecision( 12 ) << _quadPointsSphere[_nq - 1][1];
-    quadPtsStream3 << std::fixed << std::setprecision( 12 ) << _quadPointsSphere[_nq - 1][2];
+    quadPtsStream1 << std::fixed << std::setprecision( 12 ) << _quadPoints[_nq - 1][0];
+    quadPtsStream2 << std::fixed << std::setprecision( 12 ) << _quadPoints[_nq - 1][1];
+    quadPtsStream3 << std::fixed << std::setprecision( 12 ) << _quadPoints[_nq - 1][2];
     std::string quadPtsString = quadPtsStream1.str();
     logCSV->info( quadPtsString );
     quadPtsString = quadPtsStream2.str();
