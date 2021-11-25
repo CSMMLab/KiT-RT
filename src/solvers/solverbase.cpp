@@ -117,12 +117,12 @@ SolverBase* SolverBase::Create( Config* settings ) {
         case CSD_SN_FOKKERPLANCK_TRAFO_SOLVER_2D: return new CSDSolverTrafoFP2D( settings );
         case CSD_SN_FOKKERPLANCK_TRAFO_SH_SOLVER_2D: return new CSDSolverTrafoFPSH2D( settings );
         case REFINE_SN_SOLVER: return new RefineSNSolver( settings );
-        case FIRST_COLLISION_SOLVER:
+        /*case FIRST_COLLISION_SOLVER:
             switch ( settings-> GetFirstCollisionSolver() ){
                 case SN_SOLVER: return new FirstCollisionSNSolver( settings );
                 case MN_SOLVER: return new FirstCollisionMNSolver( settings );
                 default: ErrorMessages::Error( "Creator for the chosen First Collison Solver does not yet exist.", CURRENT_FUNCTION );
-            }
+            }*/
         case FIRST_COLLISION_CSD_SN_SOLVER: return new FirstCollisionCSDSNSolver( settings );
         default: ErrorMessages::Error( "Creator for the chosen solver does not yet exist. This is is the fault of the coder!", CURRENT_FUNCTION );
     }
