@@ -117,6 +117,7 @@ SolverBase* SolverBase::Create( Config* settings ) {
         case CSD_SN_FOKKERPLANCK_TRAFO_SOLVER_2D: return new CSDSolverTrafoFP2D( settings );
         case CSD_SN_FOKKERPLANCK_TRAFO_SH_SOLVER_2D: return new CSDSolverTrafoFPSH2D( settings );
         case REFINE_SN_SOLVER: return new RefineSNSolver( settings );
+        case FIRST_COLLISION_SN_SOLVER: return new FirstCollisionSNSolver( settings );
         /*case FIRST_COLLISION_SOLVER:
             switch ( settings-> GetFirstCollisionSolver() ){
                 case SN_SOLVER: return new FirstCollisionSNSolver( settings );
