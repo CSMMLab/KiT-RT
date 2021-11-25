@@ -530,9 +530,9 @@ void Config::SetPostprocessing() {
                 CURRENT_FUNCTION );
         }
 
-        if( GetSolverName() == MN_SOLVER && GetSphericalBasisName() == SPHERICAL_MONOMIALS && GetMaxMomentDegree() > 1 ) {
-            ErrorMessages::Error( "MN Solver only with monomial basis only stable up to degree 1. This is a TODO.", CURRENT_FUNCTION );
-        }
+        // if( GetSolverName() == MN_SOLVER && GetSphericalBasisName() == SPHERICAL_MONOMIALS && GetMaxMomentDegree() > 1 ) {
+        //     ErrorMessages::Error( "MN Solver only with monomial basis only stable up to degree 1. This is a TODO.", CURRENT_FUNCTION );
+        // }
     }
 
     // --- Output Postprocessing ---

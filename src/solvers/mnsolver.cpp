@@ -66,9 +66,20 @@ MNSolver::~MNSolver() {
 void MNSolver::ComputeScatterMatrix() {
 
     // --- Isotropic ---
-    _scatterMatDiag[0] = -1.0;
-    for( unsigned idx_diag = 1; idx_diag < _nSystem; idx_diag++ ) {
-        _scatterMatDiag[idx_diag] = 0.0;
+    if( _settings->GetSphericalBasisName() == SPHERICAL_HARMONICS ) {
+        _scatterMatDiag[0] = -1.0;
+        for( unsigned idx_diag = 1; idx_diag < _nSystem; idx_diag++ ) {
+            _scatterMatDiag[idx_diag] = 0.0;
+        }
+    }
+    else {    // SPHERICAL_MONOMIALS
+        for( unsigned idx_diag = 0; idx_diag < _nSystem; idx_diag++ ) {
+            _scatterMatDiag[idx_diag] = 0.0;
+            if( idx_diag % 2 == 0 ) {
+                _scatterMatDiag[idx_diag] = 1.0 / ( idx_diag + 1.0 );
+            }
+        }
+        std::cout << _scatterMatDiag << "\n";
     }
 }
 
