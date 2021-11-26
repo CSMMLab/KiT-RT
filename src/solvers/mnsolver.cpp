@@ -30,10 +30,6 @@ MNSolver::MNSolver( Config* settings ) : SolverBase( settings ) {
     _quadPointsSphere = _quadrature->GetPointsSphere();
     //_settings->SetNQuadPoints( _nq );
 
-    // Initialize Scatter Matrix --
-    _scatterMatDiag = Vector( _nSystem, 0.0 );
-    ComputeScatterMatrix();
-
     // Initialize Entropy
     _entropy = EntropyBase::Create( _settings );
 
@@ -52,9 +48,12 @@ MNSolver::MNSolver( Config* settings ) : SolverBase( settings ) {
     _limiter = VectorVector( _nCells, Vector( _nq, 0.0 ) );
 
     // Initialize and Pre-Compute Moments at quadrature points
-    _moments = VectorVector( _nq, Vector( _nSystem, 0.0 ) );
-
+    _momentBasis = VectorVector( _nq, Vector( _nSystem, 0.0 ) );
     ComputeMoments();
+
+    // Initialize Scatter Matrix --
+    _scatterMatDiag = Vector( _nSystem, 0.0 );
+    ComputeScatterMatrix();
 }
 
 MNSolver::~MNSolver() {
@@ -67,16 +66,22 @@ void MNSolver::ComputeScatterMatrix() {
 
     // --- Isotropic ---
     if( _settings->GetSphericalBasisName() == SPHERICAL_HARMONICS ) {
-        _scatterMatDiag[0] = -1.0;
+        _scatterMatDiag[0] = 1.0;
         for( unsigned idx_diag = 1; idx_diag < _nSystem; idx_diag++ ) {
-            _scatterMatDiag[idx_diag] = 0.0;
+            _scatterMatDiag[idx_diag] = 0.0;    // SPHERICAL_HARMONICS are orthogonal basis
         }
     }
     else {    // SPHERICAL_MONOMIALS
-        for( unsigned idx_diag = 0; idx_diag < _nSystem; idx_diag++ ) {
-            _scatterMatDiag[idx_diag] = 0.0;
-            if( idx_diag % 2 == 0 ) {
-                _scatterMatDiag[idx_diag] = 1.0 / ( idx_diag + 1.0 );
+        for( unsigned idx_sys = 0; idx_sys < _nSystem; idx_sys++ ) {
+            _scatterMatDiag[idx_sys] = 0.0;
+            for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
+                _scatterMatDiag[idx_sys] += _momentBasis[idx_quad][idx_sys] * _weights[idx_quad];
+            }
+            if( _settings->GetDim() == 2 ) {
+                _scatterMatDiag[idx_sys] /= M_PI;
+            }
+            else {    // 3D
+                _scatterMatDiag[idx_sys] /= 4.0 * M_PI;
             }
         }
         std::cout << _scatterMatDiag << "\n";
@@ -90,7 +95,7 @@ void MNSolver::ComputeMoments() {
         my  = _quadPointsSphere[idx_quad][0];
         phi = _quadPointsSphere[idx_quad][1];
 
-        _moments[idx_quad] = _basis->ComputeSphericalBasis( my, phi );
+        _momentBasis[idx_quad] = _basis->ComputeSphericalBasis( my, phi );
     }
 }
 
@@ -133,36 +138,36 @@ Vector MNSolver::ConstructFlux( unsigned idx_cell ) {
             kineticFlux += _g->Flux( _quadPoints[idx_quad], solL, solR, _normals[idx_cell][idx_nbr] );
         }
         // Solution flux
-        flux += _moments[idx_quad] * ( _weights[idx_quad] * kineticFlux );
+        flux += _momentBasis[idx_quad] * ( _weights[idx_quad] * kineticFlux );
     }
     return flux;
 }
 
 void MNSolver::ComputeRealizableSolution( unsigned idx_cell ) {
-    double entropyReconstruction = 0.0;
+    // double entropyReconstruction = 0.0;
     for( unsigned idx_sys = 0; idx_sys < _nSystem; idx_sys++ ) {    // reset solution
         _sol[idx_cell] = 0;
     }
     for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
         // Make entropyReconstruction a member vector, s.t. it does not have to be re-evaluated in ConstructFlux
-        entropyReconstruction = _entropy->EntropyPrimeDual( blaze::dot( _alpha[idx_cell], _moments[idx_quad] ) );
-        _sol[idx_cell] += _moments[idx_quad] * ( _weights[idx_quad] * entropyReconstruction );
+        // entropyReconstruction = _entropy->EntropyPrimeDual( blaze::dot( _alpha[idx_cell], _momentBasis[idx_quad] ) );
+        _sol[idx_cell] += _momentBasis[idx_quad] * ( _weights[idx_quad] * _kineticDensity[idx_cell][idx_quad] );
     }
 }
 
 void MNSolver::IterPreprocessing( unsigned /*idx_pseudotime*/ ) {
 
-    // ------- Reconstruction Step ----------------
+    // ------- Entropy closure Step ----------------
 
-    _optimizer->SolveMultiCell( _alpha, _sol, _moments );
+    _optimizer->SolveMultiCell( _alpha, _sol, _momentBasis );
 
     // ------- Solution reconstruction step ----
     for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
-        if( _settings->GetRealizabilityReconstruction() ) ComputeRealizableSolution( idx_cell );    // already parallelized
         for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
             // compute the kinetic density at all grid cells
-            _kineticDensity[idx_cell][idx_quad] = _entropy->EntropyPrimeDual( blaze::dot( _alpha[idx_cell], _moments[idx_quad] ) );
+            _kineticDensity[idx_cell][idx_quad] = _entropy->EntropyPrimeDual( blaze::dot( _alpha[idx_cell], _momentBasis[idx_quad] ) );
         }
+        if( _settings->GetRealizabilityReconstruction() ) ComputeRealizableSolution( idx_cell );    // already parallelized
     }
 
     // ------ Compute slope limiters and cell gradients ---
@@ -206,12 +211,12 @@ void MNSolver::FVMUpdate( unsigned idx_iter ) {
         // Dirichlet Boundaries stay
         if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::DIRICHLET ) continue;
         // Flux update
-        for( unsigned idx_system = 0; idx_system < _nSystem; idx_system++ ) {
-            _solNew[idx_cell][idx_system] = _sol[idx_cell][idx_system] -
-                                            ( _dE / _areas[idx_cell] ) * _solNew[idx_cell][idx_system] /* cell averaged flux */
-                                            - _dE * _sol[idx_cell][idx_system] *
-                                                  ( _sigmaT[idx_iter][idx_cell]                                    /* absorbtion influence */
-                                                    + _sigmaS[idx_iter][idx_cell] * _scatterMatDiag[idx_system] ); /* scattering influence */
+        for( unsigned idx_sys = 0; idx_sys < _nSystem; idx_sys++ ) {
+            _solNew[idx_cell][idx_sys] =
+                _sol[idx_cell][idx_sys]                                                                          /* old solution */
+                - ( _dE / _areas[idx_cell] ) * _solNew[idx_cell][idx_sys]                                        /* cell averaged flux */
+                + _dE * _sigmaS[idx_iter][idx_cell] * _sol[idx_cell][0] * _scatterMatDiag[idx_sys]               /* scattering gain */
+                - _dE * ( _sigmaT[idx_iter][idx_cell] + _sigmaS[idx_iter][idx_cell] ) * _sol[idx_cell][idx_sys]; /* scattering and absorbtion loss */
         }
         // Source Term
         _solNew[idx_cell][0] += _dE * _Q[0][idx_cell][0];

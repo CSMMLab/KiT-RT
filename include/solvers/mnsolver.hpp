@@ -27,7 +27,7 @@ class MNSolver : public SolverBase
 
     // Moment basis
     SphericalBase* _basis; /*!< @brief Class to compute and store current spherical harmonics basis */
-    VectorVector _moments; /*!< @brief Moment Vector pre-computed at each quadrature point: dim= _nq x _nTotalEntries */
+    VectorVector _momentBasis; /*!< @brief Moment Vector pre-computed at each quadrature point: dim= _nq x _nTotalEntries */
 
     // Scattering
     Vector _scatterMatDiag; /*!< @brief Diagonal of the scattering matrix (its a diagonal matrix by construction) */
