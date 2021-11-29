@@ -118,7 +118,7 @@ TEST_CASE( "PN_SOLVER", "[validation_tests]" ) {
         REQUIRE( errorWithinBounds );
     }
 }
-/*
+
 TEST_CASE( "MN_SOLVER", "[validation_tests]" ) {
     std::string mn_fileDir = "input/validation_tests/MN_solver/";
 
@@ -142,7 +142,7 @@ TEST_CASE( "MN_SOLVER", "[validation_tests]" ) {
         }
         REQUIRE( errorWithinBounds );
     }
-
+    /*
     SECTION( "linesource" ) {
 
         // --- Quadratic Entropy
@@ -206,9 +206,9 @@ TEST_CASE( "MN_SOLVER", "[validation_tests]" ) {
             }
             REQUIRE( errorWithinBounds );
         }
-    }
+    }*/
 }
-*/
+
 /*
 TEST_CASE( "CSD_SN_FP_SOLVER", "[validation_tests]" ) {
     std::string csd_sn_fileDir = "input/validation_tests/CSD_SN_FP_solver/";
