@@ -121,7 +121,6 @@ void QuadratureBase::ScalePointsAndWeights( double velocityScaling ) {
     }
     else {    // 2D and 3D get same scaling with increasing radius
         _weights = _weights * velocityScaling * velocityScaling;
-        _weights = _weights * velocityScaling * velocityScaling;
         for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
             for( unsigned idx_dim = 0; idx_dim < _settings->GetDim(); idx_dim++ ) {    // Karthesian
                 _pointsKarth[idx_quad][idx_dim] = _pointsKarth[idx_quad][idx_dim] * velocityScaling;
