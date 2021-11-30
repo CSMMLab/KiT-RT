@@ -52,6 +52,8 @@ TEST_CASE( "SN_SOLVER", "[validation_tests]" ) {
             if( std::fabs( test[i] - reference[i] ) > eps ) errorWithinBounds = false;
         }
         REQUIRE( errorWithinBounds );
+        delete solver;
+        delete config;
     }
 
     SECTION( "linesource" ) {
@@ -72,6 +74,8 @@ TEST_CASE( "SN_SOLVER", "[validation_tests]" ) {
             if( std::fabs( test[i] - reference[i] ) > eps ) errorWithinBounds = false;
         }
         REQUIRE( errorWithinBounds );
+        delete solver;
+        delete config;
     }
 }
 
@@ -95,6 +99,8 @@ TEST_CASE( "PN_SOLVER", "[validation_tests]" ) {
             if( std::fabs( test[i] - reference[i] ) > eps ) errorWithinBounds = false;
         }
         REQUIRE( errorWithinBounds );
+        delete solver;
+        delete config;
     }
 
     SECTION( "linesource" ) {
@@ -116,6 +122,8 @@ TEST_CASE( "PN_SOLVER", "[validation_tests]" ) {
             if( std::fabs( test[i] - reference[i] ) > eps ) errorWithinBounds = false;
         }
         REQUIRE( errorWithinBounds );
+        delete solver;
+        delete config;
     }
 }
 
@@ -141,10 +149,10 @@ TEST_CASE( "MN_SOLVER", "[validation_tests]" ) {
             if( std::fabs( test[i] - reference[i] ) > eps ) errorWithinBounds = false;
         }
         REQUIRE( errorWithinBounds );
+        delete solver;
+        delete config;
     }
-    /*
     SECTION( "linesource" ) {
-
         // --- Quadratic Entropy
         {
             std::string config_file_name = std::string( TESTS_PATH ) + mn_fileDir + "linesource_MN_Quad.cfg";
@@ -165,6 +173,8 @@ TEST_CASE( "MN_SOLVER", "[validation_tests]" ) {
                 if( std::fabs( test[i] - reference[i] ) > eps ) errorWithinBounds = false;
             }
             REQUIRE( errorWithinBounds );
+            delete solver;
+            delete config;
         }
         {    // ---  Maxwell Boltzmann Entropy ---
             std::string config_file_name = std::string( TESTS_PATH ) + mn_fileDir + "linesource_MN_MB.cfg";
@@ -185,6 +195,8 @@ TEST_CASE( "MN_SOLVER", "[validation_tests]" ) {
                 if( std::fabs( test[i] - reference[i] ) > eps ) errorWithinBounds = false;
             }
             REQUIRE( errorWithinBounds );
+            delete solver;
+            delete config;
         }
         {    // --- Regularized Maxwell Boltzmann Entropy ---
             std::string config_file_name = std::string( TESTS_PATH ) + mn_fileDir + "linesource_MN_MB_regularized.cfg";
@@ -205,8 +217,10 @@ TEST_CASE( "MN_SOLVER", "[validation_tests]" ) {
                 if( std::fabs( test[i] - reference[i] ) > eps ) errorWithinBounds = false;
             }
             REQUIRE( errorWithinBounds );
+            delete solver;
+            delete config;
         }
-    }*/
+    }
 }
 
 /*
