@@ -175,6 +175,60 @@ TEST_CASE( "Quadrature Tests", "[quadrature]" ) {
         REQUIRE( testPassed );
     }
 
+    SECTION( "Quadrature points tests for 2D.", "[quadrature]" ) {
+        // check if 2-norm of karthesian points equals to sqrt(1-mu^2),  where mu is from spherical quad points
+        bool testPassed         = true;
+        bool lowAccuracyTesting = false;
+
+        for( auto quadraturename : quadraturenames ) {
+            // Set quadName
+            config->SetQuadName( quadraturename );
+
+            lowAccuracyTesting = false;
+
+            if( quadraturename != QUAD_GaussLegendreTensorized2D ) continue;    // 1D and 2D test case not meaningful here
+
+            for( auto quadratureorder : quadratureorders[quadraturename] ) {
+                // Set quadOrder
+                config->SetQuadOrder( quadratureorder );
+
+                QuadratureBase* Q         = QuadratureBase::Create( config );
+                VectorVector points       = Q->GetPoints();          //(v_x,v_y,v_z)
+                VectorVector pointsSphere = Q->GetPointsSphere();    // (mu, phi, r)
+
+                for( unsigned i = 0; i < Q->GetNq(); i++ ) {
+                    double ptNorm = norm( points[i] );
+                    double ref    = sqrt( 1 - pointsSphere[i][0] * pointsSphere[i][0] );
+                    double ptMu   = sqrt( 1 - ptNorm * ptNorm );
+                    Vector pt3d( 3 );
+                    pt3d[0] = points[i][0];
+                    pt3d[1] = points[i][1];
+                    pt3d[2] = ptMu;
+
+                    if( !approxequal( ref, ptNorm ) ) {
+                        testPassed = false;
+                        PrintErrorMsg( config, std::abs( ref - ptNorm ), ref, lowAccuracyTesting );
+                        printf( "Errorous index: %d\n", i );
+                    }
+                    if( !approxequal( pointsSphere[i][0], ptMu ) ) {
+                        if( !approxequal( -pointsSphere[i][0], ptMu ) ) {
+                            testPassed = false;
+                            PrintErrorMsg( config, std::abs( pointsSphere[i][0] - ptMu ), ptMu, lowAccuracyTesting );
+                            printf( "Errorous index: %d\n", i );
+                        }
+                    }
+                    if( !approxequal( 1.0, norm( pt3d ), lowAccuracyTesting ) ) {
+                        testPassed = false;
+                        PrintErrorMsg( config, std::abs( 1.0 - norm( pt3d ) ), norm( pt3d ), lowAccuracyTesting );
+                        printf( "Errorous index: %d\n", i );
+                    }
+                }
+                delete Q;
+            }
+        }
+        REQUIRE( testPassed );
+    }
+
     SECTION( "Nq is actually equal to the number of weights.", "[quadrature]" ) {
 
         for( auto quadraturename : quadraturenames ) {
