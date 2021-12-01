@@ -24,7 +24,7 @@ class FirstCollisionMNSolver : public SolverBase {
   private:
 
     virtual void IterPreprocessing( unsigned idx_pseudotime ) override;
-    virtual void IterPostprocessing( ) override;
+    virtual void IterPostprocessing( unsigned idx_pseudotime ) override;
 
     void FluxUpdate() override; // necessary to define but not used
     virtual void FluxUpdateUncollided( );

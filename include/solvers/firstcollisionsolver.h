@@ -14,7 +14,7 @@ class FirstCollisionSolver : public SolverBase
 protected:
 
     virtual void IterPreprocessing( unsigned idx_pseudotime ) override;
-    virtual void IterPostprocessing( ) override;
+    virtual void IterPostprocessing( unsigned idx_pseudotime ) override;
 
     void FluxUpdate() override;
     virtual void FluxUpdateUncollided( );

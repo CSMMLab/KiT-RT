@@ -603,7 +603,7 @@ void FirstCollisionCSDSNSolver::FVMUpdateCollided( unsigned idx_energy ){
         _solNew[ idx_cell ] += _dE * _QFirstCollision[ idx_cell ];
     }
 }
-void FirstCollisionCSDSNSolver::IterPostprocessing( ){}
+/*void FirstCollisionCSDSNSolver::IterPostprocessing( unsigned iter ){}*/
 void FirstCollisionCSDSNSolver::IterPostprocessing( unsigned iter ){
     _sol = _solNew;
     _solFC = _solNewFC;

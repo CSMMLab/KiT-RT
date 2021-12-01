@@ -92,7 +92,7 @@ void FirstCollisionMNSolver::Solve(){
         FVMUpdateCollided( idx_energy );
         std::cout << "Check Collided FVM" << std::endl;
 
-        IterPostprocessing( );
+        IterPostprocessing( idx_energy );
         std::cout << "Check Postprocessing" << std::endl;
 
 
@@ -223,7 +223,7 @@ void FirstCollisionMNSolver::FVMUpdateCollided( unsigned idx_energy ){
     }
 }
 
-void FirstCollisionMNSolver::IterPostprocessing( ){
+void FirstCollisionMNSolver::IterPostprocessing( unsigned idx_cell ){
 
     _sol = _solNew;
     for ( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell ++)

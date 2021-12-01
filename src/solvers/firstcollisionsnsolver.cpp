@@ -204,7 +204,7 @@ void FirstCollisionSNSolver::Solve(){
         }
         */
         t = clock();
-        IterPostprocessing( );
+        IterPostprocessing( idx_energy );
 
         WriteVolumeOutput( idx_energy );
         WriteScalarOutput( idx_energy );
@@ -596,7 +596,7 @@ void FirstCollisionSNSolver::FVMUpdateCollided( unsigned idx_energy ){
     }
 }
 
-void FirstCollisionSNSolver::IterPostprocessing( ){
+void FirstCollisionSNSolver::IterPostprocessing( unsigned idx_energy ){
 
     _sol = _solNew;
     _solFC = _solNewFC; // was set in FV Update Uncollided

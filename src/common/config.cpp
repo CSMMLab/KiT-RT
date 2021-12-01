@@ -539,7 +539,7 @@ void Config::SetPostprocessing() {
         for( unsigned short idx_volOutput = 0; idx_volOutput < _nVolumeOutput; idx_volOutput++ ) {
             switch( _solverName ) {
                 case SN_SOLVER:
-                case FIRST_COLLISION_SOLVER:
+                case FIRST_COLLISION_SN_SOLVER:
                 case REFINE_SN_SOLVER:
                     supportedGroups = { MINIMAL, ANALYTIC };
                     if( supportedGroups.end() == std::find( supportedGroups.begin(), supportedGroups.end(), _volumeOutput[idx_volOutput] ) ) {

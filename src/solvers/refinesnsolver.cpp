@@ -103,7 +103,7 @@ void RefineSNSolver::Solve(){
         t4 = clock() - t;
 
         // --- Postprocessing --> Calculate Radient Flux ---
-        IterPostprocessing();
+        IterPostprocessing( idx_energy );
 
         // --- File Outputs ---
         clock_t enditer = clock() - startiter;

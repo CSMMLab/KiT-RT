@@ -31,7 +31,7 @@ class FirstCollisionCSDSNSolver : public FirstCollisionSNSolver
     /*! @brief Performs preprocessing for the current solver iteration */
     void IterPreprocessing( unsigned idx_pseudotime ) override;
     /*! @brief Performs postprocessing for the current solver iteration */
-    void IterPostprocessing( ) override; // not used
+    /*void IterPostprocessing( unsigned idx_pseudotime ) override; // not used*/
     void IterPostprocessing( unsigned iter );
     /*! @brief: Computes the flux of the solution to check conservation properties */
     void ComputeRadFlux() override;
