@@ -43,20 +43,21 @@ void DataGeneratorClassification2D::SampleMultiplierAlpha() {
 
     unsigned localSetSize = unsigned( _setSize / nTemp );
 
-    if( !_settings->GetNormalizedSampling() ) {
+    if( !_settings->GetNormalizedSampling() ) {    // Not normalized
         for( unsigned idx_temp = 0; idx_temp < nTemp; idx_temp++ ) {
             if( idx_temp == nTemp - 1 ) {
                 localSetSize = _setSize - ( nTemp - 1 ) * localSetSize;
             }
             double rho = 1.0;
             double u   = 0.0;    // for both dimension (both 0, so it's ok)
-            double T   = idx_temp * dTemp;
-            auto logg  = spdlog::get( "event" );
+            double T   = idx_temp * dTemp + tempMin;
+
+            auto logg = spdlog::get( "event" );
             logg->info( "| Sample Lagrange multipliers with mean based on Maxwellians with\n| Density =" + std::to_string( rho ) +
                         "\n| Bulk velocity =" + std::to_string( u ) + "\n| Temperature =" + std::to_string( T ) + "\n|" );
 
             Vector meanAlpha = Vector( 6, 0.0 );
-            meanAlpha[0]     = log( rho / pow( 2 * M_PI, 3.0 / 2.0 ) ) - u * u / ( 2.0 * T );
+            meanAlpha[0]     = log( rho / ( 2 * M_PI * T ) ) - u * u / ( 2.0 * T );
             meanAlpha[1]     = 2.0 * u / ( 2.0 * T );    // v_x
             meanAlpha[2]     = 2.0 * u / ( 2.0 * T );    // v_y
             meanAlpha[3]     = -1.0 / ( 2.0 * T );       // same for both directions
@@ -64,7 +65,7 @@ void DataGeneratorClassification2D::SampleMultiplierAlpha() {
             meanAlpha[5]     = -1.0 / ( 2.0 * T );       // same for both directions
 
             logg->info( "| Lagrange multiplier means are:\n| Alpha0 =" + std::to_string( meanAlpha[0] ) +
-                        "\n| Alpha1,Alpha2 =" + std::to_string( meanAlpha[1] ) + "\n| Alpha3 =" + std::to_string( meanAlpha[2] ) + "\n|" );
+                        "\n| Alpha1,Alpha2 =" + std::to_string( meanAlpha[1] ) + "\n| Alpha3 =" + std::to_string( meanAlpha[3] ) + "\n|" );
 
             double maxAlphaValue = _settings->GetAlphaSamplingBound();
             double stddev        = maxAlphaValue / 3.0;
@@ -77,7 +78,7 @@ void DataGeneratorClassification2D::SampleMultiplierAlpha() {
 
             // Can be parallelized, but check if there is a race condition with datagenerator
             for( unsigned idx_loc = 0; idx_loc < localSetSize; idx_loc++ ) {
-                unsigned idx_set = idx_temp * nTemp + idx_loc;
+                unsigned idx_set = idx_temp * localSetSize + idx_loc;
                 bool accepted    = false;
                 while( !accepted ) {
                     // Sample random multivariate uniformly distributed alpha between minAlpha and MaxAlpha.
@@ -118,7 +119,7 @@ void DataGeneratorClassification2D::SampleMultiplierAlpha() {
             }
         }
     }
-    else {
+    else {    // Normalized
         for( unsigned idx_temp = 0; idx_temp < nTemp; idx_temp++ ) {
             if( idx_temp == nTemp - 1 ) {
                 localSetSize = _setSize - ( nTemp - 1 ) * localSetSize;
@@ -131,7 +132,7 @@ void DataGeneratorClassification2D::SampleMultiplierAlpha() {
                         "\n| Bulk velocity =" + std::to_string( u ) + "\n| Temperature =" + std::to_string( T ) + "\n|" );
 
             Vector meanAlpha = Vector( 6, 0.0 );
-            meanAlpha[0]     = log( rho / pow( 2 * M_PI, 3.0 / 2.0 ) ) - u * u / ( 2.0 * T );
+            meanAlpha[0]     = log( rho / ( 2 * M_PI ) ) - u * u / ( 2.0 * T );
             meanAlpha[1]     = 2.0 * u / ( 2.0 * T );    // v_x
             meanAlpha[2]     = 2.0 * u / ( 2.0 * T );    // v_y
             meanAlpha[3]     = -1.0 / ( 2.0 * T );       // same for both directions
@@ -247,6 +248,21 @@ void DataGeneratorClassification2D::PrintTrainingData() {
     logCSV->info( quadWeightsString );
 
     for( unsigned idx_set = 0; idx_set < _setSize; idx_set++ ) {
+
+        // Test the moments of the kinetic density
+        // Vector u    = Vector( _nTotalEntries, 0.0 );
+        // double tmp  = 0.0;
+        // double recT = 0.0;
+        // for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
+        //    u += _momentBasis[idx_quad] * _weights[idx_quad] * _kineticDensity[idx_set][idx_quad];
+        //    tmp += _weights[idx_quad] * _kineticDensity[idx_set][idx_quad];
+        //    recT += 0.5 * ( _momentBasis[idx_quad][1] * _momentBasis[idx_quad][1] + _momentBasis[idx_quad][2] * _momentBasis[idx_quad][2] ) *
+        //            _weights[idx_quad] * _kineticDensity[idx_set][idx_quad];
+        //}
+        // std::cout << "alpha_" << idx_set << " : " << _alpha[idx_set] << "\n";
+        // std::cout << "u_" << idx_set << " : " << u << "\n";
+        // std::cout << "rho" << idx_set << " : " << tmp << "\n";
+        // std::cout << "T" << idx_set << " : " << recT << "\n";
 
         std::stringstream streamDensity;
         for( unsigned idx_quad = 0; idx_quad < _nq - 1; idx_quad++ ) {

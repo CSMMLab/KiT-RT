@@ -237,8 +237,8 @@ TEST_CASE( "test  spherical harmonics basis ", "[spherical_harmonics]" ) {
     }
 }
 
-double Omega_xBase( double my, double phi ) { return sqrt( 1 - my * my ) * sin( phi ); }
-double Omega_yBase( double my, double phi ) { return sqrt( 1 - my * my ) * cos( phi ); }
+double Omega_xBase( double my, double phi ) { return sqrt( 1 - my * my ) * cos( phi ); }
+double Omega_yBase( double my, double phi ) { return sqrt( 1 - my * my ) * sin( phi ); }
 double Omega_zBase( double my ) { return my; }
 
 double SphericalMonomial_0( double /* my */, double /* phi */ ) { return 1; }

@@ -24,11 +24,11 @@ DataGeneratorClassification::DataGeneratorClassification( Config* settings ) : D
     _quadrature->ScalePointsAndWeights( _maxVelocity );
     _optimizer->ScaleQuadWeights( _maxVelocity );
     _weights = _quadrature->GetWeights();
-    // std::cout << "sum of weights: " << _quadrature->SumUpWeights() << "\n";
+    std::cout << "sum of weights: " << _quadrature->SumUpWeights() << "\n";
     _quadPointsSphere = _quadrature->GetPointsSphere();
     _quadPoints       = _quadrature->GetPoints();
 
-    _uSol           = VectorVector();    // Not needed
+    _uSol           = VectorVector( _setSize, Vector( _nTotalEntries, 0.0 ) );    // Not needed
     _alpha          = VectorVector( _setSize, Vector( _nTotalEntries, 0.0 ) );
     _kineticDensity = VectorVector( _setSize, Vector( _nq, 0.0 ) );
 }

@@ -6,8 +6,10 @@
 #include "quadratures/qldfesa.hpp"
 #include "quadratures/qlebedev.hpp"
 #include "quadratures/qlevelsymmetric.hpp"
+#include "quadratures/qmidpointtensorized.hpp"
 #include "quadratures/qmontecarlo.hpp"
 #include "quadratures/qproduct.hpp"
+#include "quadratures/qrectangular.hpp"
 #include "toolboxes/errormessages.hpp"
 #include "toolboxes/textprocessingtoolbox.hpp"
 
@@ -26,12 +28,17 @@ QuadratureBase* QuadratureBase::Create( Config* settings ) {
         case QUAD_GaussLegendreTensorized: return new QGaussLegendreTensorized( settings );
         case QUAD_GaussLegendre1D: return new QGaussLegendre1D( settings );
         case QUAD_GaussLegendreTensorized2D: return new QGaussLegendreTensorized2D( settings );
-
         case QUAD_GaussChebyshev1D: return new QGaussChebyshev1D( settings );
         case QUAD_LevelSymmetric: return new QLevelSymmetric( settings );
         case QUAD_LDFESA: return new QLDFESA( settings );
         case QUAD_Lebedev: return new QLebedev( settings );
         case QUAD_Product: return new QProduct( settings );
+        // case QUAD_Midpoint1D: return new QMidpoint1D( settings );
+        // case QUAD_Midpoint2D: return new QMidpointTensorized2D( settings );
+        // case QUAD_Midpoint3D: return new QMidpointTensorized( settings );
+        case QUAD_Rectangular1D: return new QRectangular1D( settings );
+        case QUAD_Rectangular2D: return new QRectangular2D( settings );
+        case QUAD_Rectangular3D: return new QRectangular( settings );
         default: ErrorMessages::Error( "Creator for the chosen quadrature does not yet exist. This is the fault of the coder!", CURRENT_FUNCTION );
     }
     return nullptr;

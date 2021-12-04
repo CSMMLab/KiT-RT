@@ -75,15 +75,13 @@ void QGaussLegendreTensorized2D::SetPointsAndWeights() {
     // transform tensorized (x,y,z)-grid to spherical grid points
     for( unsigned j = 0; j < range; ++j ) {
         for( unsigned i = 0; i < 2 * _order; ++i ) {
-            _pointsKarth[j * ( 2 * _order ) + i][0] = sqrt( 1 - nodes1D[j] * nodes1D[j] ) * std::cos( phi[i] );
-            _pointsKarth[j * ( 2 * _order ) + i][1] = sqrt( 1 - nodes1D[j] * nodes1D[j] ) * std::sin( phi[i] );
-            _pointsKarth[j * ( 2 * _order ) + i][2] = 0.0;
-
+            _pointsKarth[j * ( 2 * _order ) + i][0]  = sqrt( 1 - nodes1D[j] * nodes1D[j] ) * std::cos( phi[i] );
+            _pointsKarth[j * ( 2 * _order ) + i][1]  = sqrt( 1 - nodes1D[j] * nodes1D[j] ) * std::sin( phi[i] );
+            _pointsKarth[j * ( 2 * _order ) + i][2]  = 0.0;
             _pointsSphere[j * ( 2 * _order ) + i][0] = nodes1D[j];    // my
             _pointsSphere[j * ( 2 * _order ) + i][1] = phi[i];        // phi
             _pointsSphere[j * ( 2 * _order ) + i][2] = 1.0;           // radius r
-
-            _weights[j * ( 2 * _order ) + i] = normalizationFactor * M_PI / _order * weights1D[j];
+            _weights[j * ( 2 * _order ) + i]         = normalizationFactor * M_PI / _order * weights1D[j];
         }
     }
 }

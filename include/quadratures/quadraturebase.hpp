@@ -76,7 +76,7 @@ class QuadratureBase
     inline std::vector<unsigned short> GetSupportedDims() const { return _supportedDimensions; }
     /*!< @brief Scales the quadrature weights according to the intervall [-velocityScaling , velocityScaling] in 1D
                 Scales the radius of the velocity sphere by velocityScaling in 2D and 3D */
-    void ScalePointsAndWeights( double velocityScaling );
+    virtual void ScalePointsAndWeights( double velocityScaling );
 
   protected:
     // Setter

@@ -46,13 +46,13 @@ void DataGeneratorClassification1D::SampleMultiplierAlpha() {
             }
             double rho = 1.0;
             double u   = 0.0;
-            double T   = idx_temp * dTemp;
+            double T   = idx_temp * dTemp + tempMin;
             auto logg  = spdlog::get( "event" );
             logg->info( "| Sample Lagrange multipliers with mean based on Maxwellians with\n| Density =" + std::to_string( rho ) +
                         "\n| Bulk velocity =" + std::to_string( u ) + "\n| Temperature =" + std::to_string( T ) + "\n|" );
 
             Vector meanAlpha = Vector( 3, 0.0 );
-            meanAlpha[0]     = log( rho / pow( 2 * M_PI, 3.0 / 2.0 ) ) - u * u / ( 2.0 * T );
+            meanAlpha[0]     = log( pow( rho / ( 2 * M_PI * T ), 1.0 / 2.0 ) ) - u * u / ( 2.0 * T );
             meanAlpha[1]     = 2.0 * u / ( 2.0 * T );
             meanAlpha[2]     = -1.0 / ( 2.0 * T );
 
@@ -70,7 +70,7 @@ void DataGeneratorClassification1D::SampleMultiplierAlpha() {
 
             // Can be parallelized, but check if there is a race condition with datagenerator
             for( unsigned idx_loc = 0; idx_loc < localSetSize; idx_loc++ ) {
-                unsigned idx_set = idx_temp * nTemp + idx_loc;
+                unsigned idx_set = idx_temp * localSetSize + idx_loc;
                 bool accepted    = false;
                 while( !accepted ) {
                     // Sample random multivariate uniformly distributed alpha between minAlpha and MaxAlpha.
@@ -96,7 +96,7 @@ void DataGeneratorClassification1D::SampleMultiplierAlpha() {
                             std::cout << "lower bound touched \n";
                         }
                     }
-                    // Compute rejection criteria
+                    //  Compute rejection criteria
                     accepted = ComputeEVRejection( idx_set );
                 }
             }
@@ -115,7 +115,7 @@ void DataGeneratorClassification1D::SampleMultiplierAlpha() {
                         "\n| Bulk velocity =" + std::to_string( u ) + "\n| Temperature =" + std::to_string( T ) + "\n|" );
 
             Vector meanAlpha = Vector( 3, 0.0 );
-            meanAlpha[0]     = log( rho / pow( 2 * M_PI, 3.0 / 2.0 ) ) - u * u / ( 2.0 * T );
+            meanAlpha[0]     = log( rho / pow( 2 * M_PI * T, 1.0 / 2.0 ) ) - u * u / ( 2.0 * T );
             meanAlpha[1]     = 2.0 * u / ( 2.0 * T );
             meanAlpha[2]     = -1.0 / ( 2.0 * T );
 
@@ -142,10 +142,12 @@ void DataGeneratorClassification1D::SampleMultiplierAlpha() {
             std::normal_distribution<double> distributionAlphaRest( 0.0, stddev );
 
             // Can be parallelized, but check if there is a race condition with datagenerator
-            for( unsigned idx_set = 0; idx_set < _setSize; idx_set++ ) {
-                Vector alphaRed = Vector( _nTotalEntries - 1, 0.0 );    // local reduced alpha
+            for( unsigned idx_loc = 0; idx_loc < localSetSize; idx_loc++ ) {
+                unsigned idx_set = idx_temp * localSetSize + idx_loc;
 
-                bool accepted = false;
+                Vector alphaRed = Vector( _nTotalEntries - 1, 0.0 );    // local reduced alpha
+                bool accepted   = false;
+
                 while( !accepted ) {
                     // Sample random multivariate uniformly distributed alpha between minAlpha and MaxAlpha.
                     for( unsigned idx_sys = 1; idx_sys < _nTotalEntries; idx_sys++ ) {
@@ -162,8 +164,7 @@ void DataGeneratorClassification1D::SampleMultiplierAlpha() {
                     }
                     // Compute alpha_0 = log(<exp(alpha m )>) // for maxwell boltzmann! only
                     double integral = 0.0;
-                    // std::cout << alphaRed << "\n";
-                    // Integrate <eta'_*(alpha*m)>
+
                     for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
                         integral += _entropy->EntropyPrimeDual( dot( alphaRed, momentsRed[idx_quad] ) ) * _weights[idx_quad];
                     }

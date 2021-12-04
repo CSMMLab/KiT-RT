@@ -63,7 +63,13 @@ enum QUAD_NAME {
     QUAD_Lebedev,
     QUAD_LDFESA,
     QUAD_Product,
-    QUAD_GaussChebyshev1D
+    QUAD_Rectangular1D,
+    QUAD_Rectangular2D,
+    QUAD_Rectangular3D,
+    QUAD_GaussChebyshev1D,
+    QUAD_Midpoint1D,
+    QUAD_Midpoint2D,
+    QUAD_Midpoint3D,
 };
 
 /*! @brief Conversion Map String to enum
@@ -75,7 +81,13 @@ inline std::map<std::string, QUAD_NAME> Quadrature_Map{ { "MONTE_CARLO", QUAD_Mo
                                                         { "GAUSS_LEGENDRE_1D", QUAD_GaussLegendre1D },
                                                         { "LEVEL_SYMMETRIC", QUAD_LevelSymmetric },
                                                         { "LEBEDEV", QUAD_Lebedev },
-                                                        { "LDFESA", QUAD_LDFESA } };
+                                                        { "LDFESA", QUAD_LDFESA },
+                                                        { "MIDPOINT_1D", QUAD_Midpoint1D },
+                                                        { "MIDPOINT_2D", QUAD_Midpoint2D },
+                                                        { "MIDPOINT_3D", QUAD_Midpoint3D },
+                                                        { "RECTANGULAR_1D", QUAD_Rectangular1D },
+                                                        { "RECTANGULAR_2D", QUAD_Rectangular2D },
+                                                        { "RECTANGULAR_3D", QUAD_Rectangular3D } };
 
 // Problem name
 enum PROBLEM_NAME {
