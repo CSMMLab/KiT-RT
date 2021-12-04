@@ -247,8 +247,8 @@ bool DataGeneratorBase::ComputeEVRejection( unsigned idx_set ) {
 
     Matrix hessian = Matrix( _nTotalEntries, _nTotalEntries, 0.0 );
     // std::cout << idx_set << "\n";
-    // std::cout << _alpha[idx_set] << "\n";
-    // TextProcessingToolbox::PrintVectorVector( _momentBasis );
+    //  std::cout << _alpha[idx_set] << "\n";
+    //  TextProcessingToolbox::PrintVectorVector( _momentBasis );
     _optimizer->ComputeHessian( _alpha[idx_set], _momentBasis, hessian );
     // TextProcessingToolbox::PrintMatrix( hessian );
     SymMatrix hessianSym( hessian );    // Bad solution, rewrite with less memory need

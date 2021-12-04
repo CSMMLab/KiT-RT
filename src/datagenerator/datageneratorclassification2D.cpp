@@ -162,8 +162,9 @@ void DataGeneratorClassification2D::SampleMultiplierAlpha() {
             std::normal_distribution<double> distributionAlphaRest( 0.0, stddev );
 
             // Can be parallelized, but check if there is a race condition with datagenerator
-            for( unsigned idx_set = 0; idx_set < _setSize; idx_set++ ) {
-                Vector alphaRed = Vector( _nTotalEntries - 1, 0.0 );    // local reduced alpha
+            for( unsigned idx_loc = 0; idx_loc < localSetSize; idx_loc++ ) {
+                unsigned idx_set = idx_temp * localSetSize + idx_loc;
+                Vector alphaRed  = Vector( _nTotalEntries - 1, 0.0 );    // local reduced alpha
 
                 bool accepted = false;
                 while( !accepted ) {
