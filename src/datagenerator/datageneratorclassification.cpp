@@ -1,3 +1,9 @@
+/*!
+ * \file datageneratorclassification.h
+ * \brief Class to generate data for the continuum breakdown classifier
+ * \author S. Schotthoefer
+ */
+
 #include "datagenerator/datageneratorclassification.hpp"
 #include "common/config.hpp"
 #include "entropies/entropybase.hpp"
@@ -5,30 +11,26 @@
 #include "quadratures/quadraturebase.hpp"
 #include "toolboxes/errormessages.hpp"
 #include "toolboxes/sphericalbase.hpp"
+#include "toolboxes/textprocessingtoolbox.hpp"
 
 #include "spdlog/spdlog.h"
 #include <iostream>
 
 DataGeneratorClassification::DataGeneratorClassification( Config* settings ) : DataGeneratorBase( settings ) {
     // Only 1D case right now
-    _leftBound  = -5.0;
-    _rightBound = 5.0;
+    _maxVelocity = _settings->GetMaximalSamplingVelocity();
 
     // Scale the quadrature weights
-    _quadrature->ScaleWeights( _leftBound, _rightBound );
+    _quadrature->ScalePointsAndWeights( _maxVelocity );
+    _optimizer->ScaleQuadWeights( _maxVelocity );
     _weights = _quadrature->GetWeights();
-    _optimizer->ScaleQuadWeights( _leftBound, _rightBound );
+    std::cout << "sum of weights: " << _quadrature->SumUpWeights() << "\n";
+    _quadPointsSphere = _quadrature->GetPointsSphere();
+    _quadPoints       = _quadrature->GetPoints();
 
-    ComputeMoments();
-    _uSol              = VectorVector( _setSize, Vector( _nTotalEntries, 0.0 ) );
-    _alpha             = VectorVector( _setSize, Vector( _nTotalEntries, 0.0 ) );
-    _pdfClassification = Vector( _setSize, 0.0 );
-
-    double rho = 1.0;    // equal to the mass of the maxwellian
-    double u   = 0.0;    // equal to the mean of the maxwellian
-    double T   = 0.1;    // equal to the variance of the maxwellian
-
-    _maxwellian = ComputeMaxwellian( rho, u, T );
+    _uSol           = VectorVector( _setSize, Vector( _nTotalEntries, 0.0 ) );    // Not needed
+    _alpha          = VectorVector( _setSize, Vector( _nTotalEntries, 0.0 ) );
+    _kineticDensity = VectorVector( _setSize, Vector( _nq, 0.0 ) );
 }
 
 DataGeneratorClassification::~DataGeneratorClassification() {}
@@ -40,47 +42,22 @@ void DataGeneratorClassification::ComputeTrainingData() {
     SampleMultiplierAlpha();
     log->info( "| Multipliers sampled." );
     log->info( "| Reconstruct kinetic density functions." );
+    ReconstructKineticDensity();
     log->info( "| Compute KL Divergence to Maxwellian with threshold XXX." );
-    ClassifyDensity();
+    // ClassifyDensity();
     log->info( "| Compute realizable problems." );
-    ComputeRealizableSolution();
+    // ComputeRealizableSolution();
     log->info( "| Print Solution." );
 
     // --- Print everything ----
     PrintTrainingData();
 }
 
-void DataGeneratorClassification::ComputeMoments() {
-    double my, phi;
-
-    if( _settings->GetDim() == 1 ) {
-        phi = 0;    // placeholder. will not be used
-
+void DataGeneratorClassification::ReconstructKineticDensity() {
+    for( unsigned idx_set = 0; idx_set < _setSize; idx_set++ ) {
         for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
-            my = _quadPointsSphere[idx_quad][0];
-
-            // Scale my to match the trunctated velocity space
-            my = ( _leftBound + _rightBound ) / 2.0 + my * ( _rightBound - _leftBound ) / 2.0;
-
-            _momentBasis[idx_quad] = _basisGenerator->ComputeSphericalBasis( my, phi );
-
-            // Correct the second moment with factor 0.5
-            if( _nTotalEntries >= 3 ) {
-                _momentBasis[idx_quad][2] = _momentBasis[idx_quad][2] * 0.5;
-            }
+            _kineticDensity[idx_set][idx_quad] = _entropy->EntropyPrimeDual( blaze::dot( _alpha[idx_set], _momentBasis[idx_quad] ) );
         }
-    }
-    else if( _settings->GetDim() == 2 || _settings->GetDim() == 3 ) {
-        ErrorMessages::Error( "Spatial Dimension not supported.", CURRENT_FUNCTION );
-
-        for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
-            my                     = _quadPointsSphere[idx_quad][0];
-            phi                    = _quadPointsSphere[idx_quad][1];
-            _momentBasis[idx_quad] = _basisGenerator->ComputeSphericalBasis( my, phi );
-        }
-    }
-    else {
-        ErrorMessages::Error( "Spatial Dimension not supported.", CURRENT_FUNCTION );
     }
 }
 
@@ -149,32 +126,4 @@ double DataGeneratorClassification::ComputeKLDivergence( Vector& f1, Vector& f2 
     }
     // std::cout << "KL-Divergence:" << sum << std::endl;
     return sum;
-}
-
-void DataGeneratorClassification::PrintTrainingData() {
-
-    auto log    = spdlog::get( "event" );
-    auto logCSV = spdlog::get( "tabular" );
-    log->info( "---------------------- Data Generation Successful ------------------------" );
-
-    std::string uSolString = "";
-    for( unsigned idx_sys = 0; idx_sys < _nTotalEntries; idx_sys++ ) {
-        uSolString += "u_" + std::to_string( idx_sys ) + ",";
-    }
-    logCSV->info( uSolString + " equilibrium" );
-
-    for( unsigned idx_set = 0; idx_set < _setSize; idx_set++ ) {
-
-        std::stringstream streamU, streamEquilibrium;
-
-        for( unsigned idx_sys = 0; idx_sys < _nTotalEntries; idx_sys++ ) {
-            streamU << std::fixed << std::setprecision( 12 ) << _uSol[idx_set][idx_sys] << ",";
-        }
-        streamEquilibrium << std::fixed << std::setprecision( 1 ) << _pdfClassification[idx_set];
-
-        std::string uSolString        = streamU.str();
-        std::string equilibriumString = streamEquilibrium.str();
-
-        logCSV->info( uSolString + equilibriumString );
-    }
 }

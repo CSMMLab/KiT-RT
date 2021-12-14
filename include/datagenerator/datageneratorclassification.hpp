@@ -16,17 +16,17 @@ class DataGeneratorClassification : public DataGeneratorBase
     void ComputeTrainingData() override;
 
   protected:
-    Vector _pdfClassification; /*!< @brief One-hot vector with classification, if kinetic pdf is within or outside KL Divergence threshold*/
-    Vector _maxwellian;        /*!< @brief Maxwellian pdf evaluated at the quadrature points */
-    double _leftBound;
-    double _rightBound;
+    Vector _pdfClassification;    /*!< @brief One-hot vector with classification, if kinetic pdf is within or outside KL Divergence threshold*/
+    Vector _maxwellian;           /*!< @brief Maxwellian pdf evaluated at the quadrature points */
+    double _maxVelocity;          /*!< @brief Bound of the velocity domain (1D) */
+    VectorVector _kineticDensity; /*!< @brief vector if sampled kinetic densities, evaluated at quadrature points */
 
     // IO routines
-    void PrintTrainingData() override; /*!< @brief : Print computed training data to csv file and screen */
+    void PrintTrainingData() override = 0; /*!< @brief : Print computed training data to csv file and screen */
 
     // Helper functions
-    void ComputeMoments() override; /*!< @brief Pre-Compute Moments at all quadrature points. */
-    void ClassifyDensity();         /*!< @brief Checks, if the pdf of each Lagrange multiplier is within the KL distance of the maxwellian */
+    virtual void ComputeMoments() override = 0; /*!< @brief Pre-Compute Moments at all quadrature points. */
+    void ClassifyDensity(); /*!< @brief Checks, if the pdf of each Lagrange multiplier is within the KL distance of the maxwellian */
     /*!< @brief Computes the Kullback Leibler Divergence of the pdfs f1 and f2, both pfds are evaluated at their quadrature points
                   @param: f1,f2. Evaluation of the pdf at their quadrature points. length of vector must be _nq.
              */
@@ -36,6 +36,13 @@ class DataGeneratorClassification : public DataGeneratorBase
          @param u: bulk velocity
          @param T: Temperature*/
     Vector ComputeMaxwellian( double rho, double u, double T );
+
+    /*!< @brief Computes the kinetic density from the given Lagrange multipliers alpha at the quadrature points.
+     *          f = exp(alpha*m) and stores it in _kineticDensity             */
+    void ReconstructKineticDensity();
+
+    /*!< @brief Sample Lagrange multipliers alpha, with mean values corresponding to a maxwellian distribution */
+    virtual void SampleMultiplierAlpha() override = 0;
 };
 
 #endif    // DATAGENERATORCLASSIFICATION_H

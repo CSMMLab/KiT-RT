@@ -355,6 +355,16 @@ void Config::SetConfigOptions() {
     /*! @brief Rejection sampling threshold based on the minimal Eigenvalue of the Hessian of the entropy functions  \n DESCRIPTION: Rejection
      * sampling threshold \n DEFAULT 1e-8 \ingroup Config */
     AddDoubleOption( "MIN_EIGENVALUE_THRESHOLD", _minEVAlphaSampling, 1e-8 );
+    /*! @brief Boundary for the velocity integral  \n DESCRIPTION: Upper boundary for the velocity integral \n DEFAULT 5.0  * \ingroup Config */
+    AddDoubleOption( "MAX_VELOCITY", _maxSamplingVelocity, 5.0 );
+    ///*! @brief Boundary for the velocity integral  \n DESCRIPTION: Lower boundary for the velocity integral \n DEFAULT 5.0  * \ingroup Config */
+    // AddDoubleOption( "MIN_VELOCITY", _minSamplingVelocity, -5.0 );
+    /*! @brief Boundary for the sampling temperature  \n DESCRIPTION: Upper boundary for the sampling temperature \n DEFAULT 1.0  * \ingroup Config */
+    AddDoubleOption( "MAX_TEMPERATURE", _maxSamplingTemperature, 1 );
+    /*! @brief Boundary for the sampling temperature  \n DESCRIPTION: Lower boundary for the sampling temperature \n DEFAULT 0.1  * \ingroup Config */
+    AddDoubleOption( "MIN_TEMPERATURE", _minSamplingTemperature, 0.1 );
+    /*! @brief Number of temperature samples  \n DESCRIPTION: Number of temperature samples for the sampler \n DEFAULT 10  * \ingroup Config */
+    AddUnsignedShortOption( "N_TEMPERATURES", _nTemperatures, 10 );
 }
 
 void Config::SetConfigParsing( string case_filename ) {
@@ -958,14 +968,14 @@ void Config::InitLogger() {
                 struct tm tstruct;
                 char buf[80];
                 tstruct = *localtime( &now );
-                strftime( buf, sizeof( buf ), "%Y-%m-%d_%X_csv", &tstruct );
+                strftime( buf, sizeof( buf ), "%Y-%m-%d_%X.csv", &tstruct );
 
                 // set filename
                 std::string filename;
                 if( _logFileName.compare( "use_date" ) == 0 )
                     filename = buf;    // set filename to date and time
                 else
-                    filename = _logFileName + "_csv";
+                    filename = _logFileName + ".csv";
 
                 // in case of existing files append '_#'
                 int ctr = 0;

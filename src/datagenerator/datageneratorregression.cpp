@@ -1,3 +1,9 @@
+/*!
+ * \file datageneratorregression.h
+ * \brief Class to generate data for the neural entropy closure
+ * \author S. Schotthoefer
+ */
+
 #include "datagenerator/datageneratorregression.hpp"
 #include "common/config.hpp"
 #include "entropies/entropybase.hpp"

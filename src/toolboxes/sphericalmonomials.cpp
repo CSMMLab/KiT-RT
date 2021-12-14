@@ -21,23 +21,24 @@ SphericalMonomials::SphericalMonomials( unsigned L_degree, unsigned short spatia
     _YBasis = Vector( GetBasisSize() );
 }
 
-Vector SphericalMonomials::ComputeSphericalBasis( double my, double phi ) {
-
+Vector SphericalMonomials::ComputeSphericalBasis( double my, double phi, double r ) {
+    // default for (maximal) radius r = 1
     switch( _spatialDim ) {
-        case 1: return ComputeSphericalBasis1D( my ); break;
-        case 2: return ComputeSphericalBasis2D( my, phi ); break;
-        default: return ComputeSphericalBasis3D( my, phi ); break;
+        case 1: return ComputeSphericalBasis1D( my, r ); break;
+        case 2: return ComputeSphericalBasis2D( my, phi, r ); break;
+        default: return ComputeSphericalBasis3D( my, phi, r ); break;
     }
 }
 
-Vector SphericalMonomials::ComputeSphericalBasis1D( double my ) {
+Vector SphericalMonomials::ComputeSphericalBasis1D( double my, double r ) {
+    // default for (maximal) radius r = 1
     unsigned idx_vector = 0;
     unsigned a;
     double omega_Z;
     // go over all degrees of polynomials
     for( unsigned idx_degree = 0; idx_degree <= _LMaxDegree; idx_degree++ ) {
         // elem = Omega_x^a : a = idx_degree
-        omega_Z             = Omega_z( my );
+        omega_Z             = Omega_z( my, r );
         a                   = idx_degree;    // a uniquely defined
         _YBasis[idx_vector] = Power( omega_Z, a );
         idx_vector++;
@@ -45,32 +46,34 @@ Vector SphericalMonomials::ComputeSphericalBasis1D( double my ) {
     return _YBasis;
 }
 
-Vector SphericalMonomials::ComputeSphericalBasis2D( double my, double phi ) {
+Vector SphericalMonomials::ComputeSphericalBasis2D( double my, double phi, double r ) {
+    // default for (maximal) radius r = 1
     unsigned idx_vector = 0;
-    double omega_X, omega_Y;
+    double omegaX, omegaY;
     unsigned a, b;
 
     // go over all degrees of polynomials
     for( unsigned idx_degree = 0; idx_degree <= _LMaxDegree; idx_degree++ ) {
         // elem = Omega_x^a+ Omega_y^b  : a+b = idx_degree
-        omega_X = Omega_x( my, phi );
-        omega_Y = Omega_y( my, phi );
+        omegaX = Omega_x( my, phi, r );
+        omegaY = Omega_y( my, phi, r );
         for( a = 0; a <= idx_degree; a++ ) {
             b                   = idx_degree - a;    // b uniquely defined
-            _YBasis[idx_vector] = Power( omega_X, a ) * Power( omega_Y, b );
+            _YBasis[idx_vector] = Power( omegaX, a ) * Power( omegaY, b );
             idx_vector++;
         }
     }
     return _YBasis;
 }
 
-Vector SphericalMonomials::ComputeSphericalBasis3D( double my, double phi ) {
+Vector SphericalMonomials::ComputeSphericalBasis3D( double my, double phi, double r ) {
+    // default for radius r = 1
     unsigned idx_vector = 0;
     unsigned a, b, c;
 
-    double omega_X = Omega_x( my, phi );
-    double omega_Y = Omega_y( my, phi );
-    double omega_Z = Omega_z( my );
+    double omega_X = Omega_x( my, phi, r );
+    double omega_Y = Omega_y( my, phi, r );
+    double omega_Z = Omega_z( my, r );
     // go over all degrees of polynomials
     for( unsigned idx_degree = 0; idx_degree <= _LMaxDegree; idx_degree++ ) {
         // elem = Omega_x^a+ Omega_y^b +Omega_z^c : a+b+c = idx_degree
@@ -85,17 +88,21 @@ Vector SphericalMonomials::ComputeSphericalBasis3D( double my, double phi ) {
     return _YBasis;
 }
 
-Vector SphericalMonomials::ComputeSphericalBasis( double x, double y, double z ) {
+Vector SphericalMonomials::ComputeSphericalBasisKarthesian( double x, double y, double z ) {
     // transform (x,y,z) into (my,phi)
-    double my  = z;
-    double phi = 0.0;
+    double my  = z;                                // my = z
+    double phi = atan2( y, x );                    // phi in [-pi,pi]
+    double r   = sqrt( x * x + y * y + z * z );    // radius r
 
-    if( y >= 0 )
-        phi = acos( x );
-    else
-        phi = 2 * M_PI - acos( x );
+    // adapt intervall s.t. phi in [0,2pi]
+    if( phi < 0 ) {
+        phi = 2 * M_PI + phi;
+    }
+    // std::cout << x << " | " << y << " | " << z << "\n";
+    // std::cout << my << " | " << phi << " | " << r << "\n";
+    // std::cout << Omega_x( my, phi, r ) << " | " << Omega_y( my, phi, r ) << " | " << Omega_z( my, r ) << "\n ----------\n";
 
-    return ComputeSphericalBasis( my, phi );
+    return ComputeSphericalBasis( my, phi, r );
 }
 
 unsigned SphericalMonomials::GetBasisSize() {
@@ -125,9 +132,9 @@ unsigned SphericalMonomials::GetGlobalIndexBasis( int l_degree, int k_order ) {
 
 unsigned SphericalMonomials::Factorial( unsigned n ) { return ( n == 1 || n == 0 ) ? 1 : Factorial( n - 1 ) * n; }
 
-double SphericalMonomials::Omega_x( double my, double phi ) { return sqrt( 1 - my * my ) * sin( phi ); }
-double SphericalMonomials::Omega_y( double my, double phi ) { return sqrt( 1 - my * my ) * cos( phi ); }
-double SphericalMonomials::Omega_z( double my ) { return my; }
+double SphericalMonomials::Omega_x( double my, double phi, double r ) { return r * sqrt( 1 - my * my ) * cos( phi ); }
+double SphericalMonomials::Omega_y( double my, double phi, double r ) { return r * sqrt( 1 - my * my ) * sin( phi ); }
+double SphericalMonomials::Omega_z( double my, double r ) { return r * my; }
 
 double SphericalMonomials::Power( double basis, unsigned exponent ) {
     if( exponent == 0 ) return 1.0;               // basis^0

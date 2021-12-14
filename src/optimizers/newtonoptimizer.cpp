@@ -60,10 +60,8 @@ void NewtonOptimizer::ComputeHessian( Vector& alpha, const VectorVector& moments
             // if( idx_Col == idx_Row ) hessian( idx_Row, idx_Col ) = 1.0;
         }
     }
-
     // Integrate
     for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
-
         hessian +=
             outer( moments[idx_quad], moments[idx_quad] ) * ( _entropy->EntropyHessianDual( dot( alpha, moments[idx_quad] ) ) * _weights[idx_quad] );
     }
@@ -199,7 +197,7 @@ void NewtonOptimizer::Solve( Vector& alpha, Vector& sol, const VectorVector& mom
     }
 }
 
-void NewtonOptimizer::ScaleQuadWeights( double leftBound, double rightBound ) {
-    _quadrature->ScaleWeights( leftBound, rightBound );
+void NewtonOptimizer::ScaleQuadWeights( double velocityScale ) {
+    _quadrature->ScalePointsAndWeights( velocityScale );
     _weights = _quadrature->GetWeights();
 }
