@@ -12,6 +12,7 @@
 #include "datagenerator/datageneratorclassification.hpp"
 #include "entropies/entropybase.hpp"
 #include "optimizers/newtonoptimizer.hpp"
+#include "optimizers/partregularizednewtonoptimizer.hpp"
 #include "optimizers/regularizednewtonoptimizer.hpp"
 #include "quadratures/quadraturebase.hpp"
 #include "toolboxes/errormessages.hpp"
@@ -60,16 +61,12 @@ DataGeneratorBase::DataGeneratorBase( Config* settings ) {
     _momentBasis = VectorVector( _nq, Vector( _nTotalEntries, 0.0 ) );
 
     // Optimizer
-    if( _settings->GetOptimizerName() == NEWTON ) {
-        _optimizer = new NewtonOptimizer( _settings );
+    switch( settings->GetOptimizerName() ) {
+        case NEWTON: _optimizer = new NewtonOptimizer( settings ); break;
+        case REGULARIZED_NEWTON: _optimizer = new RegularizedNewtonOptimizer( settings ); break;
+        case PART_REGULARIZED_NEWTON: _optimizer = new PartRegularizedNewtonOptimizer( settings ); break;
+        default: ErrorMessages::Error( "Optimizer choice not feasible for datagenerator.", CURRENT_FUNCTION ); break;
     }
-    else if( _settings->GetOptimizerName() == REGULARIZED_NEWTON ) {
-        _optimizer = new RegularizedNewtonOptimizer( _settings );
-    }
-    else {
-        ErrorMessages::Error( "Optimizer choice not feasible for datagenerator.", CURRENT_FUNCTION );
-    }
-
     // Entropy
     _entropy = EntropyBase::Create( _settings );
 }

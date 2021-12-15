@@ -1,6 +1,6 @@
 /*!
  * @file newtonoptimizer.h
- * @brief class for solving the minimal entropy optimization problem using a newton optimizer with line search.
+ * @brief class for solving the minimal entropy optimization problem using a regularized newton optimizer with line search.
  * @author S. Schotthöfer
  */
 

@@ -1,6 +1,6 @@
 /*!
  * @file newtonoptimizer.cpp
- * @brief class for solving the minimal entropy optimization problem using a newton optimizer with line search.
+ * @brief class for solving the minimal entropy optimization problem using a regularized newton optimizer with line search.
  * @author S. Schotthöfer
  */
 
@@ -22,7 +22,7 @@ RegularizedNewtonOptimizer::~RegularizedNewtonOptimizer() {}
 
 double RegularizedNewtonOptimizer::ComputeObjFunc( Vector& alpha, Vector& sol, const VectorVector& moments ) {
     double result = NewtonOptimizer::ComputeObjFunc( alpha, sol, moments );    // Calls non regularized objective function
-    result += 0.5 * _gamma * norm( alpha ) * norm( alpha );                    // Add regularizer norm(_alpha)
+    result += 0.5 * _gamma * dot( alpha, alpha );                              // Add regularizer norm(_alpha)
     return result;
 }
 
