@@ -396,8 +396,8 @@ TEST_CASE( "Data Generator Regression", "[dataGen]" ) {
     std::string out_fileDir = "input/validation_tests/dataGenerator/";
     spdlog::drop_all();    // Make sure to write in own logging file
 
-    std::string config_file_name       = std::string( TESTS_PATH ) + out_fileDir + "validate_dataGen.cfg";
-    std::string historyLoggerReference = std::string( TESTS_PATH ) + out_fileDir + "validate_dataGen_csv_reference";
+    std::string config_file_name       = std::string( TESTS_PATH ) + out_fileDir + "validate_dataGen_regression.cfg";
+    std::string historyLoggerReference = std::string( TESTS_PATH ) + out_fileDir + "validate_dataGen_regression_csv_reference";
     std::string historyLogger          = std::string( TESTS_PATH ) + "result/logs/validate_dataGen.csv";
 
     // --- Generate Data ---

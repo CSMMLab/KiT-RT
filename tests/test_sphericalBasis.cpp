@@ -130,7 +130,7 @@ TEST_CASE( "test  spherical harmonics basis ", "[spherical_harmonics]" ) {
         QGaussLegendreTensorized quad( config );
 
         double my, phi, w;
-        Vector moment = testBase.ComputeSphericalBasis( 0, 1, 0 );
+        Vector moment = testBase.ComputeSphericalBasisKarthesian( 0, 1, 0 );
         // 9 basis moments if degree = 2
 
         Matrix results( moment.size(), moment.size(), 0.0 );
@@ -182,8 +182,8 @@ TEST_CASE( "test  spherical harmonics basis ", "[spherical_harmonics]" ) {
             x       = quad.GetPoints()[idx_quad][0];
             y       = quad.GetPoints()[idx_quad][1];
             z       = quad.GetPoints()[idx_quad][2];
-            moment1 = testBase.ComputeSphericalBasis( x, y, z );
-            moment2 = testBase.ComputeSphericalBasis( -x, -y, -z );
+            moment1 = testBase.ComputeSphericalBasisKarthesian( x, y, z );
+            moment2 = testBase.ComputeSphericalBasisKarthesian( -x, -y, -z );
 
             unsigned idx_sys;
             double result = 0.;
@@ -237,8 +237,8 @@ TEST_CASE( "test  spherical harmonics basis ", "[spherical_harmonics]" ) {
     }
 }
 
-double Omega_xBase( double my, double phi ) { return sqrt( 1 - my * my ) * sin( phi ); }
-double Omega_yBase( double my, double phi ) { return sqrt( 1 - my * my ) * cos( phi ); }
+double Omega_xBase( double my, double phi ) { return sqrt( 1 - my * my ) * cos( phi ); }
+double Omega_yBase( double my, double phi ) { return sqrt( 1 - my * my ) * sin( phi ); }
 double Omega_zBase( double my ) { return my; }
 
 double SphericalMonomial_0( double /* my */, double /* phi */ ) { return 1; }

@@ -61,9 +61,9 @@ class QuadratureBase
     static QuadratureBase* Create( QUAD_NAME name, unsigned quadOrder );
 
     // Getter
-    inline std::string GetName() const { return _name; }      /*! @returns std::string _name:  name of the quadrature */
-    inline unsigned GetOrder() const { return _order; }       /*! @returns unsigned _order:  order of the quadrature */
-    inline unsigned GetNq() const { return _nq; }             /*! @returns unsigned _nq:  number of gridpoints of the quadrature */
+    inline std::string GetName() const { return _name; }           /*! @returns std::string _name:  name of the quadrature */
+    inline unsigned GetOrder() const { return _order; }            /*! @returns unsigned _order:  order of the quadrature */
+    inline unsigned GetNq() const { return _nq; }                  /*! @returns unsigned _nq:  number of gridpoints of the quadrature */
     inline VectorVector GetPoints() const { return _pointsKarth; } /*! @returns VectorVector _points:  coordinates of gridpoints of the quadrature */
     inline VectorVector GetPointsSphere() const {
         return _pointsSphere;
@@ -74,8 +74,9 @@ class QuadratureBase
     inline VectorVectorU GetConnectivity() const { return _connectivity; }
     /*!< @brief Returns approved Dimensions for this quadrature */
     inline std::vector<unsigned short> GetSupportedDims() const { return _supportedDimensions; }
-    /*!< @brief Scales the quadrature weights according to the intervall [leftBound, rightBound]. Only for 1D */
-    void ScalePointsAndWeights( double leftBound, double rightBound );
+    /*!< @brief Scales the quadrature weights according to the intervall [-velocityScaling , velocityScaling] in 1D
+                Scales the radius of the velocity sphere by velocityScaling in 2D and 3D */
+    virtual void ScalePointsAndWeights( double velocityScaling );
 
   protected:
     // Setter
@@ -95,7 +96,7 @@ class QuadratureBase
     unsigned _order;                                  /*!< @brief order of the quadrature */
     unsigned _nq;                                     /*!< @brief number of gridpoints of the quadrature */
     VectorVector _pointsKarth;                        /*!< @brief gridpoints of the quadrature */
-    VectorVector _pointsSphere;                       /*!< @brief (my,phi)gridpoints of the quadrature in spherical cordinates */
+    VectorVector _pointsSphere;                       /*!< @brief (my,phi,r)gridpoints of the quadrature in spherical cordinates */
     Vector _weights;                                  /*!< @brief weights of the gridpoints of the quadrature */
     VectorVectorU _connectivity;                      /*!< @brief connectivity of the gripoints of the quadrature */
     std::vector<unsigned short> _supportedDimensions; /*!< @brief number of spatial dimensions, for which the quadrature is build */

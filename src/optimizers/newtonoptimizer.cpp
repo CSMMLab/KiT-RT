@@ -197,7 +197,7 @@ void NewtonOptimizer::Solve( Vector& alpha, Vector& sol, const VectorVector& mom
     }
 }
 
-void NewtonOptimizer::ScaleQuadWeights( double leftBound, double rightBound ) {
-    _quadrature->ScalePointsAndWeights( leftBound, rightBound );
+void NewtonOptimizer::ScaleQuadWeights( double velocityScale ) {
+    _quadrature->ScalePointsAndWeights( velocityScale );
     _weights = _quadrature->GetWeights();
 }

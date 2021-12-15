@@ -92,9 +92,10 @@ void QLookupQuadrature::SetPointsAndWeights() {
 
     // Transform _points to _pointsSphere ==>transform (x,y,z) into (my,phi)
     for( unsigned idx = 0; idx < _nq; idx++ ) {
-        _pointsSphere[idx].resize( 2 );                                       // (my,phi)
-        _pointsSphere[idx][0] = _pointsKarth[idx][2];                              // my = z
+        _pointsSphere[idx].resize( 3 );                                                 // (my,phi)
+        _pointsSphere[idx][0] = _pointsKarth[idx][2];                                   // my = z
         _pointsSphere[idx][1] = atan2( _pointsKarth[idx][1], _pointsKarth[idx][0] );    // phi in [-pi,pi]
+        _pointsSphere[idx][2] = 1.0;                                                    // radius r
 
         // adapt intervall s.t. phi in [0,2pi]
         if( _pointsSphere[idx][1] < 0 ) {

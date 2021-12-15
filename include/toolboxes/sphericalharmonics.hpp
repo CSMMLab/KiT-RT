@@ -31,7 +31,7 @@ class SphericalHarmonics : public SphericalBase
      *  @param  phi - spherical coordinate, 0 <= phi <= 2*pi
      *  @return vector of basis functions at point (my, phi) with size N = L² +2L
      */
-    Vector ComputeSphericalBasis( double my, double phi ) override;
+    Vector ComputeSphericalBasis( double my, double phi, double r = 1.0 ) override;
 
     /*! @brief   Computes all N = L² +2L basis functions at point (x, y, z) on the unit sphere
      *  @param   x coordinates on unit sphere
@@ -39,7 +39,7 @@ class SphericalHarmonics : public SphericalBase
      *  @param   z coordinates on unit sphere
      *  @return  vector of basis functions at point (x,y,z) with size N = L² +2L
      */
-    Vector ComputeSphericalBasis( double x, double y, double z ) override;
+    Vector ComputeSphericalBasisKarthesian( double x, double y, double z ) override;
 
     /*! @brief  Computes an entire set of (komplex congjugate) P_l^k and stores
      *          it in the vector _assLegendreP

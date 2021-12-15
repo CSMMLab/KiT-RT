@@ -25,7 +25,7 @@ void QGaussChebyshev1D::SetPointsAndWeights() {
     for( unsigned k = 1; k <= _nq; ++k ) {
         _pointsKarth[k - 1].resize( dim );
         _pointsKarth[k - 1][0] = std::cos( ( 2 * k - 1 ) * M_PI / ( 2 * _nq ) );
-        _weights[k - 1]   = 1.0 / std::sqrt( 1 - _pointsKarth[k - 1][0] * _pointsKarth[k - 1][0] );
+        _weights[k - 1]        = 1.0 / std::sqrt( 1 - _pointsKarth[k - 1][0] * _pointsKarth[k - 1][0] );
         std::cout << _pointsKarth[k - 1][0] << "\t" << _weights[k - 1] << std::endl;
     }
     _pointsSphere = _pointsKarth;

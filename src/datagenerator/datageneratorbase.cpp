@@ -9,7 +9,8 @@
 #include "datagenerator/datagenerator1D.hpp"
 #include "datagenerator/datagenerator2D.hpp"
 #include "datagenerator/datagenerator3D.hpp"
-#include "datagenerator/datageneratorclassification.hpp"
+#include "datagenerator/datageneratorclassification1D.hpp"
+#include "datagenerator/datageneratorclassification2D.hpp"
 #include "entropies/entropybase.hpp"
 #include "optimizers/newtonoptimizer.hpp"
 #include "optimizers/partregularizednewtonoptimizer.hpp"
@@ -87,7 +88,11 @@ DataGeneratorBase* DataGeneratorBase::Create( Config* settings ) {
         }
     }
     else if( settings->GetSamplerName() == CLASSIFICATION_SAMPLER ) {
-        return new DataGeneratorClassification( settings );
+        switch( settings->GetDim() ) {
+            case 1: return new DataGeneratorClassification1D( settings );
+            case 2: return new DataGeneratorClassification2D( settings );
+            default: ErrorMessages::Error( "Sampling for more than 3 dimensions is not yet supported.", CURRENT_FUNCTION );
+        }
     }
     return nullptr;
 }
@@ -248,15 +253,15 @@ bool DataGeneratorBase::ComputeEVRejection( unsigned idx_set ) {
 
     Matrix hessian = Matrix( _nTotalEntries, _nTotalEntries, 0.0 );
     // std::cout << idx_set << "\n";
-    // std::cout << _alpha[idx_set] << "\n";
-    // TextProcessingToolbox::PrintVectorVector( _momentBasis );
+    //  std::cout << _alpha[idx_set] << "\n";
+    //  TextProcessingToolbox::PrintVectorVector( _momentBasis );
     _optimizer->ComputeHessian( _alpha[idx_set], _momentBasis, hessian );
     // TextProcessingToolbox::PrintMatrix( hessian );
     SymMatrix hessianSym( hessian );    // Bad solution, rewrite with less memory need
     Vector ew = Vector( _nTotalEntries, 0.0 );
     eigen( hessianSym, ew );
     if( min( ew ) < _settings->GetMinimalEVBound() ) {
-        // std::cout << "Sampling not accepted with EV:" << min( ew ) << std::endl;
+        std::cout << "Sampling not accepted with EV:" << min( ew ) << std::endl;
         // std::cout << hessianSym << std::endl;
         // std::cout << "Current minimal accepted EV:" << _settings->GetMinimalEVBound() << std::endl;
         return false;
