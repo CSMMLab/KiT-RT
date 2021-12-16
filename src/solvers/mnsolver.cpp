@@ -145,8 +145,9 @@ Vector MNSolver::ConstructFlux( unsigned idx_cell ) {
 
 void MNSolver::ComputeRealizableSolution( unsigned idx_cell ) {
     // double entropyReconstruction = 0.0;
+
     for( unsigned idx_sys = 0; idx_sys < _nSystem; idx_sys++ ) {    // reset solution
-        _sol[idx_cell] = 0;
+        _sol[idx_cell][idx_sys] = 0.0;
     }
     for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
         // Make entropyReconstruction a member vector, s.t. it does not have to be re-evaluated in ConstructFlux
@@ -167,7 +168,7 @@ void MNSolver::IterPreprocessing( unsigned /*idx_pseudotime*/ ) {
             // compute the kinetic density at all grid cells
             _kineticDensity[idx_cell][idx_quad] = _entropy->EntropyPrimeDual( blaze::dot( _alpha[idx_cell], _momentBasis[idx_quad] ) );
         }
-        if( _settings->GetRealizabilityReconstruction() ) ComputeRealizableSolution( idx_cell );    // already parallelized
+        if( _settings->GetRealizabilityReconstruction() ) ComputeRealizableSolution( idx_cell );
     }
 
     // ------ Compute slope limiters and cell gradients ---
