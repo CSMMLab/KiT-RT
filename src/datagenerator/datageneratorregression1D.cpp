@@ -4,7 +4,7 @@
  * \author S. Schotthoefer
  */
 
-#include "datagenerator/datagenerator1D.hpp"
+#include "datagenerator/datageneratorregression1D.hpp"
 #include "common/config.hpp"
 #include "quadratures/quadraturebase.hpp"
 #include "toolboxes/errormessages.hpp"
@@ -13,7 +13,7 @@
 #include <iostream>
 #include <omp.h>
 
-DataGenerator1D::DataGenerator1D( Config* settings ) : DataGeneratorRegression( settings ) {
+DataGeneratorRegression1D::DataGeneratorRegression1D( Config* settings ) : DataGeneratorRegression( settings ) {
     ComputeMoments();
 
     // Initialize Training Data
@@ -27,9 +27,9 @@ DataGenerator1D::DataGenerator1D( Config* settings ) : DataGeneratorRegression( 
     _hEntropy = std::vector<double>( _setSize, 0.0 );
 }
 
-DataGenerator1D::~DataGenerator1D() {}
+DataGeneratorRegression1D::~DataGeneratorRegression1D() {}
 
-void DataGenerator1D::ComputeMoments() {
+void DataGeneratorRegression1D::ComputeMoments() {
     double my, phi;
     phi = 0;    // placeholder. will not be used
 
@@ -39,7 +39,7 @@ void DataGenerator1D::ComputeMoments() {
     }
 }
 
-void DataGenerator1D::SampleSolutionU() {
+void DataGeneratorRegression1D::SampleSolutionU() {
     // Use necessary conditions from Monreal, Dissertation, Chapter 3.2.1, Page 26
 
     // --- Determine stepsizes etc ---
@@ -193,11 +193,11 @@ void DataGenerator1D::SampleSolutionU() {
     }
 }
 
-void DataGenerator1D::CheckRealizability() {
+void DataGeneratorRegression1D::CheckRealizability() {
     // Todo
 }
 
-void DataGenerator1D::ComputeSetSizeU() {
+void DataGeneratorRegression1D::ComputeSetSizeU() {
     if( _maxPolyDegree == 0 ) {
     }
     else if( _settings->GetSphericalBasisName() == SPHERICAL_MONOMIALS && !_settings->GetNormalizedSampling() ) {

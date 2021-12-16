@@ -138,12 +138,7 @@ void DataGeneratorRegression::ComputeEntropyH_dual() {
 void DataGeneratorRegression::ComputeEntropyH_primal() {
 #pragma omp parallel for schedule( guided )
     for( unsigned idx_set = 0; idx_set < _setSize; idx_set++ ) {
-        double result = 0.0;
-        // Integrate (eta(eta'_*(alpha*m))
-        for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
-            result += _entropy->Entropy( _entropy->EntropyPrimeDual( dot( _alpha[idx_set], _momentBasis[idx_quad] ) ) ) * _weights[idx_quad];
-        }
-        _hEntropy[idx_set] = result;
+        _hEntropy[idx_set] = -1 * _optimizer->ComputeObjFunc( _alpha[idx_set], _uSol[idx_set], _momentBasis );
     }
 
     for( unsigned idx_set = 0; idx_set < _setSize; idx_set++ ) {
