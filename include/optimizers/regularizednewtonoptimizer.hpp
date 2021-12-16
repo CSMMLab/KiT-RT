@@ -31,6 +31,13 @@ class RegularizedNewtonOptimizer : public NewtonOptimizer
         @param rightBound : right boundary of the interval*/
     void ScaleQuadWeights( double leftBound, double rightBound );
 
+    /*! @brief Reconstruct the moment sol from the Lagrange multiplier alpha
+     *  @param sol moment vector
+     *  @param alpha Lagrange multipliers
+     *  @param moments Moment basis
+     */
+    void ReconstructMoments( Vector& sol, const Vector& alpha, const VectorVector& moments ) override;
+
   private:
     /*! @brief Computes gradient of objective function and stores it in grad
                 grad = <m*eta*'(alpha*m)> - sol + _gamma*alpha */

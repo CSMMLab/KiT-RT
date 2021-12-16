@@ -35,3 +35,8 @@ void RegularizedNewtonOptimizer::ComputeHessian( Vector& alpha, const VectorVect
     NewtonOptimizer::ComputeHessian( alpha, moments, hessian );    // compute unregularized hessian)
     hessian += _gamma * IdentityMatrix( alpha.size() );
 }
+
+void RegularizedNewtonOptimizer::ReconstructMoments( Vector& sol, const Vector& alpha, const VectorVector& moments ) {
+    NewtonOptimizer::ReconstructMoments( sol, alpha, moments );
+    sol += _gamma * alpha;    // Add regularizer _alpha^r
+}

@@ -34,6 +34,13 @@ class NewtonOptimizer : public OptimizerBase
         */
     void ScaleQuadWeights( double velocityScale );
 
+    /*! @brief Reconstruct the moment sol from the Lagrange multiplier alpha
+     *  @param sol moment vector
+     *  @param alpha Lagrange multipliers
+     *  @param moments Moment basis
+     */
+    virtual void ReconstructMoments( Vector& sol, const Vector& alpha, const VectorVector& moments );
+
   protected:
     /*! @brief Computes gradient of objective function and stores it in grad
                 grad = <m*eta*'(alpha*m)> - sol */
@@ -46,7 +53,7 @@ class NewtonOptimizer : public OptimizerBase
 
     double _epsilon;                 /*!< @brief Termination criterion for newton optimizer */
     unsigned short _maxIterations;   /*!< @brief Max iterations of the newton solver */
-    double _alpha;                   /*!< @brief Newton Step Size */
+    double _delta;                   /*!< @brief Newton Step Size */
     unsigned short _maxLineSearches; /*!< @brief Max amount of line searches for Newton Algo */
 };
 

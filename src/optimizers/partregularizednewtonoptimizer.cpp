@@ -24,7 +24,7 @@ PartRegularizedNewtonOptimizer::~PartRegularizedNewtonOptimizer() {}
 double PartRegularizedNewtonOptimizer::ComputeObjFunc( Vector& alpha, Vector& sol, const VectorVector& moments ) {
     double result = NewtonOptimizer::ComputeObjFunc( alpha, sol, moments );    // Calls non regularized objective function
     for( unsigned idx_sys = 1; idx_sys < alpha.size(); idx_sys++ ) {
-        result += 0.5 * _gamma * alpha[idx_sys] * alpha[idx_sys];    // Add regularizer norm(_alpha^r)
+        result += 0.5 * _gamma * alpha[idx_sys] * alpha[idx_sys];    // Add regularizer norm(_alpha^r)^2
     }
     return result;
 }
@@ -40,5 +40,12 @@ void PartRegularizedNewtonOptimizer::ComputeHessian( Vector& alpha, const Vector
     NewtonOptimizer::ComputeHessian( alpha, moments, hessian );    // compute unregularized hessian)
     for( unsigned idx_sys = 1; idx_sys < alpha.size(); idx_sys++ ) {
         hessian( idx_sys, idx_sys ) += _gamma;    // Add block identity matrix with regularizer
+    }
+}
+
+void PartRegularizedNewtonOptimizer::ReconstructMoments( Vector& sol, const Vector& alpha, const VectorVector& moments ) {
+    NewtonOptimizer::ReconstructMoments( sol, alpha, moments );
+    for( unsigned idx_sys = 1; idx_sys < alpha.size(); idx_sys++ ) {
+        sol[idx_sys] += _gamma * alpha[idx_sys];    // Add regularizer _alpha^r
     }
 }

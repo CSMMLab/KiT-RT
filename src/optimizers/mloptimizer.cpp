@@ -211,3 +211,7 @@ double* MLOptimizer::callNetworkMultiCell( const unsigned batchSize, const unsig
 
     return nn_output;
 }
+
+void MLOptimizer::ReconstructMoments( Vector& sol, const Vector& alpha, const VectorVector& moments ) {
+    ErrorMessages::Error( "This function is not yet implemented.", CURRENT_FUNCTION );
+}
