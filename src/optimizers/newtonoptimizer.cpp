@@ -18,7 +18,7 @@ NewtonOptimizer::NewtonOptimizer( Config* settings ) : OptimizerBase( settings )
     _nq              = _quadrature->GetNq();
     _weights         = _quadrature->GetWeights();
     _maxIterations   = settings->GetNewtonIter();
-    _alpha           = settings->GetNewtonStepSize();
+    _delta           = settings->GetNewtonStepSize();
     _maxLineSearches = settings->GetNewtonMaxLineSearches();
     _epsilon         = settings->GetNewtonOptimizerEpsilon();
 }
@@ -60,10 +60,8 @@ void NewtonOptimizer::ComputeHessian( Vector& alpha, const VectorVector& moments
             // if( idx_Col == idx_Row ) hessian( idx_Row, idx_Col ) = 1.0;
         }
     }
-
     // Integrate
     for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
-
         hessian +=
             outer( moments[idx_quad], moments[idx_quad] ) * ( _entropy->EntropyHessianDual( dot( alpha, moments[idx_quad] ) ) * _weights[idx_quad] );
     }
@@ -131,14 +129,14 @@ void NewtonOptimizer::Solve( Vector& alpha, Vector& sol, const VectorVector& mom
     invert( H );
 
     if( _maxIterations == 1 ) {
-        alpha = alpha - _alpha * H * grad;
+        alpha = alpha - _delta * H * grad;
         return;
     }
 
     Vector alphaNew( nSize, 0.0 );    //  New newton step
     Vector dalphaNew( nSize );        //  Gradient at New newton step
 
-    alphaNew = alpha - _alpha * H * grad;
+    alphaNew = alpha - _delta * H * grad;
 
     // Compute Gradient of new point;
     ComputeGradient( alphaNew, sol, moments, dalphaNew );
@@ -152,7 +150,7 @@ void NewtonOptimizer::Solve( Vector& alpha, Vector& sol, const VectorVector& mom
             dalpha = -grad;
             ComputeHessian( alpha, moments, H );
             invert( H );
-            alphaNew = alpha - _alpha * H * grad;
+            alphaNew = alpha - _delta * H * grad;
             ComputeGradient( alphaNew, sol, moments, dalphaNew );
         }
 
@@ -163,7 +161,7 @@ void NewtonOptimizer::Solve( Vector& alpha, Vector& sol, const VectorVector& mom
         while( norm( dalpha ) < norm( dalphaNew ) || !std::isfinite( norm( dalphaNew ) ) ) {
             stepSize *= 0.5;
 
-            alphaNew = alpha - stepSize * _alpha * H * grad;
+            alphaNew = alpha - stepSize * _delta * H * grad;
             ComputeGradient( alphaNew, sol, moments, dalphaNew );
 
             // Check if FONC is fullfilled
@@ -199,7 +197,19 @@ void NewtonOptimizer::Solve( Vector& alpha, Vector& sol, const VectorVector& mom
     }
 }
 
-void NewtonOptimizer::ScaleQuadWeights( double leftBound, double rightBound ) {
-    _quadrature->ScaleWeights( leftBound, rightBound );
+void NewtonOptimizer::ScaleQuadWeights( double velocityScale ) {
+    _quadrature->ScalePointsAndWeights( velocityScale );
     _weights = _quadrature->GetWeights();
+}
+
+void NewtonOptimizer::ReconstructMoments( Vector& sol, const Vector& alpha, const VectorVector& moments ) {
+    double entropyReconstruction = 0.0;
+    for( unsigned idx_sys = 0; idx_sys < sol.size(); idx_sys++ ) {
+        sol[idx_sys] = 0.0;
+    }
+    for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
+        // Make entropyReconstruction a member vector, s.t. it does not have to be re-evaluated in ConstructFlux
+        entropyReconstruction = _entropy->EntropyPrimeDual( blaze::dot( alpha, moments[idx_quad] ) );
+        sol += moments[idx_quad] * ( _weights[idx_quad] * entropyReconstruction );
+    }
 }

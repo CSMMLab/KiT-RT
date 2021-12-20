@@ -6,12 +6,15 @@
 
 #include "datagenerator/datageneratorbase.hpp"
 #include "common/config.hpp"
-#include "datagenerator/datagenerator1D.hpp"
-#include "datagenerator/datagenerator2D.hpp"
-#include "datagenerator/datagenerator3D.hpp"
-#include "datagenerator/datageneratorclassification.hpp"
+#include "datagenerator/datageneratorclassification1D.hpp"
+#include "datagenerator/datageneratorclassification2D.hpp"
+#include "datagenerator/datageneratorregression1D.hpp"
+#include "datagenerator/datageneratorregression2D.hpp"
+#include "datagenerator/datageneratorregression3D.hpp"
 #include "entropies/entropybase.hpp"
 #include "optimizers/newtonoptimizer.hpp"
+#include "optimizers/partregularizednewtonoptimizer.hpp"
+#include "optimizers/regularizednewtonoptimizer.hpp"
 #include "quadratures/quadraturebase.hpp"
 #include "toolboxes/errormessages.hpp"
 #include "toolboxes/sphericalbase.hpp"
@@ -59,8 +62,12 @@ DataGeneratorBase::DataGeneratorBase( Config* settings ) {
     _momentBasis = VectorVector( _nq, Vector( _nTotalEntries, 0.0 ) );
 
     // Optimizer
-    _optimizer = new NewtonOptimizer( _settings );
-
+    switch( settings->GetOptimizerName() ) {
+        case NEWTON: _optimizer = new NewtonOptimizer( settings ); break;
+        case REGULARIZED_NEWTON: _optimizer = new RegularizedNewtonOptimizer( settings ); break;
+        case PART_REGULARIZED_NEWTON: _optimizer = new PartRegularizedNewtonOptimizer( settings ); break;
+        default: ErrorMessages::Error( "Optimizer choice not feasible for datagenerator.", CURRENT_FUNCTION ); break;
+    }
     // Entropy
     _entropy = EntropyBase::Create( _settings );
 }
@@ -74,14 +81,18 @@ DataGeneratorBase* DataGeneratorBase::Create( Config* settings ) {
 
     if( settings->GetSamplerName() == REGRESSION_SAMPLER ) {
         switch( settings->GetDim() ) {
-            case 1: return new DataGenerator1D( settings );
-            case 2: return new DataGenerator2D( settings );
-            case 3: return new DataGenerator3D( settings );
+            case 1: return new DataGeneratorRegression1D( settings );
+            case 2: return new DataGeneratorRegression2D( settings );
+            case 3: return new DataGeneratorRegression3D( settings );
             default: ErrorMessages::Error( "Sampling for more than 3 dimensions is not yet supported.", CURRENT_FUNCTION );
         }
     }
     else if( settings->GetSamplerName() == CLASSIFICATION_SAMPLER ) {
-        return new DataGeneratorClassification( settings );
+        switch( settings->GetDim() ) {
+            case 1: return new DataGeneratorClassification1D( settings );
+            case 2: return new DataGeneratorClassification2D( settings );
+            default: ErrorMessages::Error( "Sampling for more than 3 dimensions is not yet supported.", CURRENT_FUNCTION );
+        }
     }
     return nullptr;
 }
@@ -241,8 +252,11 @@ void DataGeneratorBase::PrintLoadScreen() {
 bool DataGeneratorBase::ComputeEVRejection( unsigned idx_set ) {
 
     Matrix hessian = Matrix( _nTotalEntries, _nTotalEntries, 0.0 );
+    // std::cout << idx_set << "\n";
+    //  std::cout << _alpha[idx_set] << "\n";
+    //  TextProcessingToolbox::PrintVectorVector( _momentBasis );
     _optimizer->ComputeHessian( _alpha[idx_set], _momentBasis, hessian );
-
+    // TextProcessingToolbox::PrintMatrix( hessian );
     SymMatrix hessianSym( hessian );    // Bad solution, rewrite with less memory need
     Vector ew = Vector( _nTotalEntries, 0.0 );
     eigen( hessianSym, ew );
@@ -256,15 +270,8 @@ bool DataGeneratorBase::ComputeEVRejection( unsigned idx_set ) {
 }
 
 void DataGeneratorBase::ComputeRealizableSolution() {
-#pragma omp parallel for schedule( guided )
+    //#pragma omp parallel for schedule( guided )
     for( unsigned idx_sol = 0; idx_sol < _setSize; idx_sol++ ) {
-        double entropyReconstruction = 0.0;
-        _uSol[idx_sol]               = 0;
-        for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
-            // Make entropyReconstruction a member vector, s.t. it does not have to be re-evaluated in ConstructFlux
-            entropyReconstruction = _entropy->EntropyPrimeDual( blaze::dot( _alpha[idx_sol], _momentBasis[idx_quad] ) );
-            _uSol[idx_sol] += _momentBasis[idx_quad] * ( _weights[idx_quad] * entropyReconstruction );
-            // std::cout << _momentBasis[idx_quad] << std::endl;
-        }
+        _optimizer->ReconstructMoments( _uSol[idx_sol], _alpha[idx_sol], _momentBasis );
     }
 }

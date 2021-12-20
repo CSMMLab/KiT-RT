@@ -69,6 +69,7 @@ class Config
     ENTROPY_NAME _entropyName;       /*!< @brief Name of the used Entropy Functional */
     unsigned short _maxMomentDegree; /*!< @brief Maximal Order of Moments for PN and MN Solver */
     unsigned short _reconsOrder;     /*!< @brief Spatial Order of Accuracy for Solver */
+    bool _realizabilityRecons;       /*!< @brief Turns realizability reconstruction on/off for u sampling and MN solver */
 
     /*!< @brief If true, very low entries (10^-10 or smaller) of the flux matrices will be set to zero,
      * to improve floating point accuracy */
@@ -105,7 +106,7 @@ class Config
     double _newtonStepSize;               /*!< @brief Stepsize factor for newton optimizer */
     unsigned long _newtonLineSearchIter;  /*!< @brief Maximal Number of line search iterations for newton optimizer */
     bool _newtonFastMode;                 /*!< @brief If true, we skip the NewtonOptimizer for quadratic entropy and assign alpha = u */
-
+    double _regularizerGamma;             /*!< @brief Regularization parameter for the regularized closure */
     // NeuralModel
     unsigned short _neuralModel; /*!< @brief  Version number of the employed neural model */
     // Output Options
@@ -132,10 +133,15 @@ class Config
     double _RealizableSetEpsilonU1;   /*!< @brief norm(u_1)/u_0 !< _RealizableSetEpsilonU1 */
     bool _normalizedSampling;         /*!< @brief Flag for sampling of normalized moments, i.e. u_0 =1 */
     bool _alphaSampling;              /*!< @brief Flag for sampling alpha instead of u */
-    bool _realizabilityRecons;        /*!< @brief Turns realizability reconstruction on/off for u sampling */
     double _alphaBound;               /*!< @brief The norm boundary for the sampling range of alpha*/
     double _minEVAlphaSampling;       /*!< @brief Rejection sampling criterion is a minimal eigenvalue threshold */
     bool _sampleUniform;              /*!< @brief If true, samples uniform, if false, sampleswith cutoff normal distribution */
+    double _maxSamplingVelocity;      /*!< @brief The lower bound for the velocity space in the 1D classification sampler */
+    // double _minSamplingVelocity;      /*!< @brief The upper bound for the velocity space in the 1D classification sampler */
+    double _maxSamplingTemperature; /*!< @brief The lower bound for the interval to draw temperatures for the 1D classification sampler */
+    double _minSamplingTemperature; /*!< @brief The upper bound for the interval to draw temperatures for the 1D classification sampler */
+    unsigned short _nTemperatures;  /*!< @brief The number of sampling temperatures for the kinetic density sampler */
+
     // --- Parsing Functionality and Initializing of Options ---
     /*!
      * @brief Set default values for all options not yet set.
@@ -288,6 +294,7 @@ class Config
     double inline GetTEnd() const { return _tEnd; }
     bool inline GetSNAllGaussPts() const { return _allGaussPts; }
     bool inline GetIsCSD() const { return _csd; }
+    bool inline GetRealizabilityReconstruction() { return _realizabilityRecons; }
 
     // Linesource
     double inline GetSigmaS() const { return _sigmaS; }
@@ -301,7 +308,7 @@ class Config
     unsigned long inline GetNewtonMaxLineSearches() const { return _newtonLineSearchIter; }
     bool inline GetNewtonFastMode() const { return _newtonFastMode; }
     OPTIMIZER_NAME inline GetOptimizerName() const { return _entropyOptimizerName; }
-
+    double inline GetRegularizerGamma() const { return _regularizerGamma; }
     // Neural Closure
     unsigned short inline GetNeuralModel() { return _neuralModel; }
 
@@ -337,9 +344,13 @@ class Config
     bool inline GetNormalizedSampling() { return _normalizedSampling; }
     bool inline GetAlphaSampling() { return _alphaSampling; }
     bool inline GetUniformSamlping() { return _sampleUniform; }
-    bool inline GetRelizabilityReconsU() { return _realizabilityRecons; }
     double inline GetAlphaSamplingBound() { return _alphaBound; }
     double inline GetMinimalEVBound() { return _minEVAlphaSampling; }
+    // double inline GetMinimalSamplingVelocity() { return _minSamplingVelocity; }
+    double inline GetMaximalSamplingVelocity() { return _maxSamplingVelocity; }
+    double inline GetMinimalSamplingTemperature() { return _minSamplingTemperature; }
+    double inline GetMaximalSamplingTemperature() { return _maxSamplingTemperature; }
+    unsigned short inline GetNSamplingTemperatures() { return _nTemperatures; }
 
     // ---- Setters for option structure
     // This section is dangerous

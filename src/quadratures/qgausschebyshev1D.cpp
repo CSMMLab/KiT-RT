@@ -19,16 +19,16 @@ QGaussChebyshev1D::QGaussChebyshev1D( unsigned quadOrder ) : QuadratureBase( qua
 }
 
 void QGaussChebyshev1D::SetPointsAndWeights() {
-    _points.resize( _nq );
+    _pointsKarth.resize( _nq );
     _weights.resize( _nq );
     unsigned dim = 1;
     for( unsigned k = 1; k <= _nq; ++k ) {
-        _points[k - 1].resize( dim );
-        _points[k - 1][0] = std::cos( ( 2 * k - 1 ) * M_PI / ( 2 * _nq ) );
-        _weights[k - 1]   = 1.0 / std::sqrt( 1 - _points[k - 1][0] * _points[k - 1][0] );
-        std::cout << _points[k - 1][0] << "\t" << _weights[k - 1] << std::endl;
+        _pointsKarth[k - 1].resize( dim );
+        _pointsKarth[k - 1][0] = std::cos( ( 2 * k - 1 ) * M_PI / ( 2 * _nq ) );
+        _weights[k - 1]        = 1.0 / std::sqrt( 1 - _pointsKarth[k - 1][0] * _pointsKarth[k - 1][0] );
+        std::cout << _pointsKarth[k - 1][0] << "\t" << _weights[k - 1] << std::endl;
     }
-    _pointsSphere = _points;
+    _pointsSphere = _pointsKarth;
 }
 
 void QGaussChebyshev1D::SetConnectivity() {    // TODO
@@ -48,7 +48,7 @@ double QGaussChebyshev1D::Integrate( double ( *f )( double, double, double ) ) {
     double z      = 0.0;
     double w      = 0.0;
     for( unsigned i = 0; i < _nq; i++ ) {
-        x = _points[i][0];
+        x = _pointsKarth[i][0];
         w = _weights[i];
         result += w * f( x, y, z );
     }

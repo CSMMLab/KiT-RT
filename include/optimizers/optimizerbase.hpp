@@ -36,6 +36,12 @@ class OptimizerBase
      *  @param   moments  VectorVector to the moment basis evaluated at all quadpoints    */
     virtual void SolveMultiCell( VectorVector& alpha, VectorVector& u, const VectorVector& moments ) = 0;
 
+    /*! @brief Reconstruct the moment sol from the Lagrange multiplier alpha
+     *  @param sol moment vector
+     *  @param alpha Lagrange multipliers
+     *  @param moments Moment basis      */
+    virtual void ReconstructMoments( Vector& sol, const Vector& alpha, const VectorVector& moments ) = 0;
+
   protected:
     EntropyBase* _entropy; /*!< @brief Class to handle entropy functional evaluations */
     Config* _settings;     /*!< @brief Pointer to settings class of the solver */

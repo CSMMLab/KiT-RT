@@ -4,7 +4,7 @@
  * \author S. Schotthoefer
  */
 
-#include "datagenerator/datagenerator3D.hpp"
+#include "datagenerator/datageneratorregression3D.hpp"
 #include "common/config.hpp"
 #include "quadratures/quadraturebase.hpp"
 #include "toolboxes/errormessages.hpp"
@@ -13,7 +13,7 @@
 #include <iostream>
 #include <omp.h>
 
-DataGenerator3D::DataGenerator3D( Config* settings ) : DataGeneratorRegression( settings ) {
+DataGeneratorRegression3D::DataGeneratorRegression3D( Config* settings ) : DataGeneratorRegression( settings ) {
     ComputeMoments();
 
     // Initialize Training Data
@@ -27,9 +27,9 @@ DataGenerator3D::DataGenerator3D( Config* settings ) : DataGeneratorRegression( 
     _hEntropy = std::vector<double>( _setSize, 0.0 );
 }
 
-DataGenerator3D::~DataGenerator3D() {}
+DataGeneratorRegression3D::~DataGeneratorRegression3D() {}
 
-void DataGenerator3D::ComputeMoments() {
+void DataGeneratorRegression3D::ComputeMoments() {
     double my, phi;
 
     for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
@@ -39,7 +39,7 @@ void DataGenerator3D::ComputeMoments() {
     }
 }
 
-void DataGenerator3D::SampleSolutionU() {
+void DataGeneratorRegression3D::SampleSolutionU() {
     // Use necessary conditions from Monreal, Dissertation, Chapter 3.2.1, Page 26
 
     // --- Determine stepsizes etc ---
@@ -111,7 +111,7 @@ void DataGenerator3D::SampleSolutionU() {
     }
 }
 
-void DataGenerator3D::CheckRealizability() {
+void DataGeneratorRegression3D::CheckRealizability() {
     double epsilon = _settings->GetRealizableSetEpsilonU0();
     if( _maxPolyDegree == 1 ) {
 #pragma omp parallel for schedule( guided )
@@ -149,7 +149,7 @@ void DataGenerator3D::CheckRealizability() {
     }
 }
 
-void DataGenerator3D::ComputeSetSizeU() {
+void DataGeneratorRegression3D::ComputeSetSizeU() {
     if( _maxPolyDegree == 0 ) {
     }
     else if( _maxPolyDegree == 1 && _settings->GetSphericalBasisName() == SPHERICAL_MONOMIALS ) {

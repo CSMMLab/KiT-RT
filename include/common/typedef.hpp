@@ -6,6 +6,7 @@
 #include <blaze/math/DynamicVector.h>
 
 typedef blaze::DynamicMatrix<double> Matrix;    // Row Major by default!
+typedef blaze::IdentityMatrix<double> IdentityMatrix;
 typedef blaze::DynamicMatrix<double, blaze::columnMajor> MatrixCol;
 typedef blaze::SymmetricMatrix<blaze::DynamicMatrix<double, blaze::rowMajor>> SymMatrix;    // Row Major by default!
 typedef blaze::SymmetricMatrix<blaze::DynamicMatrix<double, blaze::columnMajor>> SymMatrixCol;

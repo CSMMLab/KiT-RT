@@ -26,15 +26,16 @@ class SphericalBase
     /*! @brief  Computes all N basis functions at point (my, phi)
      *  @param  my cos(theta) - spherical coordinate, -1 <= x <= 1
      *  @param  phi spherical coordinate, 0 <= phi <= 2*pi
+     *  @param  r radius of sphere. Hardcoded to r=1 for spherical harmonics.
      *  @return vector of basis functions at point (my, phi) with size N
      */
-    virtual Vector ComputeSphericalBasis( double my, double phi ) = 0;
+    virtual Vector ComputeSphericalBasis( double my, double phi, double r = 1.0 ) = 0;
 
     /*! @brief  Computes all basis functions at point (x, y, z) on the unit sphere
      *  @param  x,y,z coordinates on unit sphere
      *  @return vector of basis functions at point (x,y,z) with size N
      */
-    virtual Vector ComputeSphericalBasis( double x, double y, double z ) = 0;
+    virtual Vector ComputeSphericalBasisKarthesian( double x, double y, double z ) = 0;
 
     /*! @brief Return size of complete Basisvector */
     virtual unsigned GetBasisSize() = 0;
