@@ -7,6 +7,8 @@ option( BUILD_GUI "additionally builds a user interface" OFF )
 option( BUILD_DOC "builds Doxygen and Sphinx documentation" OFF )
 option( BUILD_UNITY "enables unity build for faster compile times" ON )
 option( BUILD_CODE_COV "enables compiler option required for code coverage analysis" OFF )
+option( BUILD_ML "enables build with tensorflow backend access" OFF )
+
 #################################################
 
 
@@ -41,8 +43,8 @@ find_package( VTK COMPONENTS vtkIOGeometry vtkFiltersCore REQUIRED )
 
 find_package( Python3 COMPONENTS Interpreter Development NumPy REQUIRED )
 include_directories( ${Python3_INCLUDE_DIRS} ${Python3_NumPy_INCLUDE_DIRS} )
-add_compile_definitions( KITRT_PYTHON_PATH="${CMAKE_SOURCE_DIR}/python" )
 
+add_compile_definitions( KITRT_PYTHON_PATH="${CMAKE_SOURCE_DIR}/python" )
 add_compile_definitions( BLAZE_USE_SHARED_MEMORY_PARALLELIZATION=0 )
 message( STATUS "Blaze: Shared memory parallelization disabled" )
 if( BLAS_FOUND )
@@ -54,12 +56,14 @@ else()
     add_compile_definitions( BLAZE_BLAS_MODE=0 )
 endif()
 include( blaze-cache-config )
-include_directories( ${CMAKE_SOURCE_DIR}/ext/blaze )
 
+include_directories( ${CMAKE_SOURCE_DIR}/ext/blaze )
 include_directories( ${CMAKE_SOURCE_DIR}/ext/cpptoml/include )
 include_directories( ${CMAKE_SOURCE_DIR}/ext/spdlog/include )
 
 set( CORE_LIBRARIES ${Python3_LIBRARIES} ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} ${MPI_LIBRARIES} ${VTK_LIBRARIES} OpenMP::OpenMP_CXX -lstdc++fs )
+
+
 #################################################
 
 
@@ -148,6 +152,23 @@ if( BUILD_GUI )
 endif()
 #################################################
 
+### BUILD ML ###################################
+if( BUILD_ML )
+    # Tensorflow
+    include_directories( ${CMAKE_SOURCE_DIR}/ext/cppflow/include/ )
+    find_library(TENSORFLOW_LIB tensorflow)
+    add_executable( ${CMAKE_PROJECT_NAME}_ML ${SRCS} ${EXT_SRCS} )
+
+    #target_include_directories(example PRIVATE /home/steffen/Projects/tfTest/cppflow_rep/include/ $ENV{HOME}/libtensorflow2/include)
+    target_compile_definitions( ${CMAKE_PROJECT_NAME}_ML PUBLIC BUILD_ML )
+    target_link_libraries( ${CMAKE_PROJECT_NAME}_ML ${CORE_LIBRARIES} ${TENSORFLOW_LIB})
+    set_target_properties( ${CMAKE_PROJECT_NAME}_ML PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin" )
+    target_compile_options( ${CMAKE_PROJECT_NAME}_ML PUBLIC "$<$<CONFIG:DEBUG>:${KITRT_DEBUG_OPTIONS}>" )
+    target_compile_options( ${CMAKE_PROJECT_NAME}_ML PUBLIC "$<$<CONFIG:RELWITHDEBINFO>:${KITRT_RELWITHDEBINFO_OPTIONS}>" )
+    target_compile_options( ${CMAKE_PROJECT_NAME}_ML PUBLIC "$<$<CONFIG:RELEASE>:${KITRT_RELEASE_OPTIONS}>" )
+
+endif()
+#################################################
 
 ### BUILD DOCUMENTATION #########################
 if( BUILD_DOC )
