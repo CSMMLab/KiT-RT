@@ -70,6 +70,7 @@ void MLOptimizer::SolveMultiCell( VectorVector& alpha, VectorVector& u, const Ve
 
     // Only for debugging.... Needs to go to constructor
     VectorVector momentsRed = VectorVector( _nq, Vector( _nSystem - 1, 0.0 ) );
+#pragma omp parallel for
     for( unsigned idx_nq = 0; idx_nq < _nq; idx_nq++ ) {    // copy (reduced) moments
         for( unsigned idx_sys = 1; idx_sys < _nSystem; idx_sys++ ) {
             momentsRed[idx_nq][idx_sys - 1] = moments[idx_nq][idx_sys];
@@ -77,12 +78,13 @@ void MLOptimizer::SolveMultiCell( VectorVector& alpha, VectorVector& u, const Ve
     }
 
     // Transform VectorVector to flattened vector<float> and normalize data
+#pragma omp parallel for
     for( unsigned idx_cell = 0; idx_cell < _settings->GetNCells(); idx_cell++ ) {
         if( u[idx_cell][0] > 0 ) {
             //_modelServingVectorU[idx_cell * ( _nSystem - 1 ) + 0] = 0.0;
             //_modelServingVectorU[idx_cell * ( _nSystem - 1 ) + 1] = 0.5;
             for( unsigned idx_sys = 0; idx_sys < _nSystem - 1; idx_sys++ ) {
-                //_modelServingVectorU[idx_cell * ( _nSystem - 1 ) + idx_sys] = (float)( u[idx_cell][idx_sys + 1] / u[idx_cell][0] );
+                _modelServingVectorU[idx_cell * ( _nSystem - 1 ) + idx_sys] = (float)( u[idx_cell][idx_sys + 1] / u[idx_cell][0] );
             }
         }
         else {
@@ -100,8 +102,9 @@ void MLOptimizer::SolveMultiCell( VectorVector& alpha, VectorVector& u, const Ve
     _modelServingVectorAlpha = output[1].get_data<float>();
     // std::cout << output[1] << "\n";
     //  Postprocessing
-    Vector alphaRed = Vector( _nSystem - 1, 0.0 );    // local reduced alpha
+#pragma omp parallel for
     for( unsigned idx_cell = 0; idx_cell < _settings->GetNCells(); idx_cell++ ) {
+        Vector alphaRed = Vector( _nSystem - 1, 0.0 );    // local reduced alpha
         for( unsigned idx_sys = 0; idx_sys < _nSystem - 1; idx_sys++ ) {
             alphaRed[idx_sys]            = (double)_modelServingVectorAlpha[idx_cell * ( _nSystem - 1 ) + idx_sys];
             alpha[idx_cell][idx_sys + 1] = alphaRed[idx_sys];
