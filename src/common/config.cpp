@@ -289,7 +289,7 @@ void Config::SetConfigOptions() {
      * \ingroup Config */
     AddBoolOption( "NEWTON_FAST_MODE", _newtonFastMode, false );
     // Neural Entropy Closure options
-    AddUnsignedShortOption( "NEURAL_MODEL", _neuralModel, 4 );
+    AddUnsignedShortOption( "NEURAL_MODEL_MK", _neuralModel, 11 );
 
     // Mesh related options
     // Boundary Markers

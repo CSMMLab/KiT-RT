@@ -41,7 +41,6 @@ class Config
     std::string _logFileName; /*!< @brief Name of log file*/
     std::string _meshFile;    /*!< @brief Name of mesh file*/
     std::string _ctFile;      /*!< @brief Name of CT file*/
-
     // Quadrature
     QUAD_NAME _quadName;       /*!< @brief Quadrature Name*/
     unsigned short _quadOrder; /*!< @brief Quadrature Order*/
@@ -310,7 +309,7 @@ class Config
     OPTIMIZER_NAME inline GetOptimizerName() const { return _entropyOptimizerName; }
     double inline GetRegularizerGamma() const { return _regularizerGamma; }
     // Neural Closure
-    unsigned short inline GetNeuralModel() { return _neuralModel; }
+    unsigned short inline GetModelMK() { return _neuralModel; }
 
     // Boundary Conditions
     BOUNDARY_TYPE GetBoundaryType( std::string nameMarker ) const; /*!< @brief Get Boundary Type of given marker */
