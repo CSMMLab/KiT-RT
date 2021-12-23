@@ -88,7 +88,19 @@ foreach( TMP_PATH ${SRCS} )
     endif()
 endforeach( TMP_PATH )
 include_directories( ${CMAKE_SOURCE_DIR}/include )
+if( BUILD_ML )
+    # Tensorflow
+    include_directories( ${CMAKE_SOURCE_DIR}/ext/cppflow/include/ )
+    find_library(TENSORFLOW_LIB tensorflow)
+    # Specify Path for tensorflow models
+    add_compile_definitions( TENSORFLOW_MODEL_PATH="${CMAKE_SOURCE_DIR}/tfmodels" )
+endif()
+
 add_executable( ${CMAKE_PROJECT_NAME} ${SRCS} ${EXT_SRCS} )
+if( BUILD_ML )
+    target_compile_definitions( ${CMAKE_PROJECT_NAME} PUBLIC BUILD_ML )
+    target_link_libraries( ${CMAKE_PROJECT_NAME} ${CORE_LIBRARIES} ${TENSORFLOW_LIB})
+endif()
 target_link_libraries( ${CMAKE_PROJECT_NAME} ${CORE_LIBRARIES} )
 target_compile_options( ${CMAKE_PROJECT_NAME} PUBLIC "$<$<CONFIG:DEBUG>:${KITRT_DEBUG_OPTIONS}>" )
 target_compile_options( ${CMAKE_PROJECT_NAME} PUBLIC "$<$<CONFIG:RELWITHDEBINFO>:${KITRT_RELWITHDEBINFO_OPTIONS}>" )
@@ -97,24 +109,25 @@ target_compile_options( ${CMAKE_PROJECT_NAME} PUBLIC "$<$<CONFIG:RELEASE>:${KITR
 
 
 ### BUILD ML ###################################
-if( BUILD_ML )
-    # Tensorflow
-    include_directories( ${CMAKE_SOURCE_DIR}/ext/cppflow/include/ )
-    find_library(TENSORFLOW_LIB tensorflow)
-    add_executable( ${CMAKE_PROJECT_NAME}_ML ${SRCS} ${EXT_SRCS} )
-
-    # Specify Path for tensorflow models
-    add_compile_definitions( TENSORFLOW_MODEL_PATH="${CMAKE_SOURCE_DIR}/tfmodels" )
-
-    #target_include_directories(example PRIVATE /home/steffen/Projects/tfTest/cppflow_rep/include/ $ENV{HOME}/libtensorflow2/include)
-    target_compile_definitions( ${CMAKE_PROJECT_NAME}_ML PUBLIC BUILD_ML )
-    target_link_libraries( ${CMAKE_PROJECT_NAME}_ML ${CORE_LIBRARIES} ${TENSORFLOW_LIB})
-    set_target_properties( ${CMAKE_PROJECT_NAME}_ML PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin" )
-    target_compile_options( ${CMAKE_PROJECT_NAME}_ML PUBLIC "$<$<CONFIG:DEBUG>:${KITRT_DEBUG_OPTIONS}>" )
-    target_compile_options( ${CMAKE_PROJECT_NAME}_ML PUBLIC "$<$<CONFIG:RELWITHDEBINFO>:${KITRT_RELWITHDEBINFO_OPTIONS}>" )
-    target_compile_options( ${CMAKE_PROJECT_NAME}_ML PUBLIC "$<$<CONFIG:RELEASE>:${KITRT_RELEASE_OPTIONS}>" )
-
-endif()
+# Standalone ML Build (legacy)
+#if( BUILD_ML )
+#    # Tensorflow
+#    include_directories( ${CMAKE_SOURCE_DIR}/ext/cppflow/include/ )
+#    find_library(TENSORFLOW_LIB tensorflow)
+#    add_executable( ${CMAKE_PROJECT_NAME} ${SRCS} ${EXT_SRCS} )
+#
+#    # Specify Path for tensorflow models
+#    add_compile_definitions( TENSORFLOW_MODEL_PATH="${CMAKE_SOURCE_DIR}/tfmodels" )
+#
+#    target_compile_definitions( ${CMAKE_PROJECT_NAME} PUBLIC BUILD_ML )
+#    target_link_libraries( ${CMAKE_PROJECT_NAME} ${CORE_LIBRARIES} ${TENSORFLOW_LIB})
+#    set_target_properties( ${CMAKE_PROJECT_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin" )
+#
+#    target_compile_options( ${CMAKE_PROJECT_NAME} PUBLIC "$<$<CONFIG:DEBUG>:${KITRT_DEBUG_OPTIONS}>" )
+#    target_compile_options( ${CMAKE_PROJECT_NAME} PUBLIC "$<$<CONFIG:RELWITHDEBINFO>:${KITRT_RELWITHDEBINFO_OPTIONS}>" )
+#    target_compile_options( ${CMAKE_PROJECT_NAME} PUBLIC "$<$<CONFIG:RELEASE>:${KITRT_RELEASE_OPTIONS}>" )
+#
+#endif()
 #################################################
 
 
