@@ -176,6 +176,9 @@ TEST_CASE( "MN_SOLVER", "[validation_tests]" ) {
             delete solver;
             delete config;
         }
+    }
+    SECTION( "linesource Maxwell Boltzmann" ) {
+
         {    // ---  Maxwell Boltzmann Entropy ---
             std::string config_file_name = std::string( TESTS_PATH ) + mn_fileDir + "linesource_MN_MB.cfg";
 
@@ -198,6 +201,9 @@ TEST_CASE( "MN_SOLVER", "[validation_tests]" ) {
             delete solver;
             delete config;
         }
+    }
+    SECTION( "linesource Maxwell Boltzmann regularized" ) {
+
         {    // --- Regularized Maxwell Boltzmann Entropy ---
             std::string config_file_name = std::string( TESTS_PATH ) + mn_fileDir + "linesource_MN_MB_regularized.cfg";
 
@@ -566,12 +572,9 @@ TEST_CASE( "Data Generator Regularized Regression", "[dataGen]" ) {
         tokenize( lineRef, delimHist, outRef );
 
         if( out.size() != outRef.size() ) {
-            std::cout << out.size() << "here\n";
-            std::cout << outRef.size() << "here\n";
-            std::cout << "here\n";
-            std::cout << lineRef << "\n" << line << "\n";
-            std::cout << "here\n";
-            std::cout << historyLoggerReference;
+            std::cout << out.size() << "\n";
+            std::cout << outRef.size() << "\n";
+            std::cout << "---------\n";
             testPassed = false;
             break;
         }
@@ -579,7 +582,7 @@ TEST_CASE( "Data Generator Regularized Regression", "[dataGen]" ) {
         for( unsigned idx_token = 1; idx_token < out.size(); idx_token++ ) {    // Skip date  ==> start from 1
             lineValid = outRef[idx_token].compare( out[idx_token] ) == 0;
             if( !lineValid ) {
-                std::cout << lineRef << "\n" << line << "\n";
+                std::cout << lineRef << "\n" << line << "\n------\n";
                 testPassed = false;
                 break;
             }
