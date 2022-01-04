@@ -590,6 +590,5 @@ TEST_CASE( "Data Generator Regularized Regression", "[dataGen]" ) {
         count++;
     }
     REQUIRE( testPassed );
-
     delete datagen;
 }
