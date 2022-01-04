@@ -1,1 +1,1 @@
-docker run -t --rm -v $(pwd)/..:/mnt rtsn/test:latest /bin/bash -c "/mnt/scripts/docker_script.sh"
+docker run -t --rm -v $(pwd)/../..:/mnt kitrt/test:latest /bin/bash -c "/mnt/tools/CI/docker_script.sh"
