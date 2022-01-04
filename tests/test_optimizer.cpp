@@ -142,7 +142,7 @@ TEST_CASE( "Test the Regularized Newton Optimizer", "[optimizers]" ) {
     optimizer->Solve( alpha, u, momentBasis );
     // Reconstruc alpha
 
-    Vector uRecons( nTotalEntries, 0.5 );
+    Vector uRecons( nTotalEntries, 0.0 );
     optimizer->ReconstructMoments( uRecons, alpha, momentBasis );
     // std::cout << alpha << "\n" << uRecons << "\n" << u << "\n";
 
