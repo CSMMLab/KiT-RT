@@ -1,4 +1,4 @@
-#include "solvers/csdpnsolver.hpp"
+#include "solvers/csdpnsolver_jl.hpp"
 #include "common/config.hpp"
 #include "common/globalconstants.hpp"
 #include "common/io.hpp"
@@ -17,6 +17,7 @@
 #include "quadratures/quadraturebase.hpp"
 #include "toolboxes/sphericalbase.hpp"
 
+/*
 double normpdf( double x, double mu, double sigma ) {
     return INV_SQRT_2PI / sigma * std::exp( -( ( x - mu ) * ( x - mu ) ) / ( 2.0 * sigma * sigma ) );
 }
@@ -41,9 +42,9 @@ Vector Energy2Time( const Vector& E, const double E_CutOff ) {
 double Energy2Time( const double E, const double E_CutOff ) {
     Interpolation interp( E_tab, E_trans );
     return std::fmax( 0, interp( E_CutOff - E ) );
-}
+}*/
 
-CSDPNSolver::CSDPNSolver( Config* settings ) : PNSolver( settings ) {
+CSDPNSolver_JL::CSDPNSolver_JL( Config* settings ) : PNSolver( settings ) {
     std::cout << "Start of constructor: E_ref = " << E_ref << std::endl;
     saveE_ref        = E_ref;
     _polyDegreeBasis = settings->GetMaxMomentDegree();
@@ -122,11 +123,11 @@ CSDPNSolver::CSDPNSolver( Config* settings ) : PNSolver( settings ) {
     std::cout << "End of constructor: E_ref = " << E_ref << std::endl;
 }
 
-CSDPNSolver::~CSDPNSolver() {
+CSDPNSolver_JL::~CSDPNSolver_JL() {
     if( _basis ) delete _basis;
 }
 
-void CSDPNSolver::IterPreprocessing( unsigned idx_iter ) {
+void CSDPNSolver_JL::IterPreprocessing( unsigned idx_iter ) {
     if( _reconsOrder > 1 ) {
         auto solDivRho = _sol;
         for( unsigned j = 0; j < _nCells; ++j ) {
@@ -147,14 +148,14 @@ void CSDPNSolver::IterPreprocessing( unsigned idx_iter ) {
     for( unsigned idx_degree = 0; idx_degree < _polyDegreeBasis; ++idx_degree ) {
         _sigmaTAtEnergy[idx_degree] = ( sigmaSAtEnergy[0] - sigmaSAtEnergy[idx_degree] );
     }
+    TextProcessingToolbox::PrintVectorToFile( _sigmaTAtEnergy, "sigmaAtEnergy_" + std::to_string( idx_iter ) + ".csv", _polyDegreeBasis );
 }
 
-void CSDPNSolver::SolverPreprocessing() {
-
+void CSDPNSolver_JL::SolverPreprocessing() {
     // cross sections do not need to be transformed to ETilde energy grid since e.g. TildeSigmaT(ETilde) = SigmaT(E(ETilde))
 }
 
-void CSDPNSolver::IterPostprocessing( unsigned idx_iter ) {
+void CSDPNSolver_JL::IterPostprocessing( unsigned idx_iter ) {
     // std::cout << "Iter Postprocessing...";
     // --- Update Solution ---
     _sol = _solNew;
@@ -179,7 +180,7 @@ void CSDPNSolver::IterPostprocessing( unsigned idx_iter ) {
               << std::endl;
 }
 
-void CSDPNSolver::FluxUpdate() {
+void CSDPNSolver_JL::FluxUpdate() {
     Vector solL( _nSystem, 0.0 );
     Vector solR( _nSystem, 0.0 );
 
@@ -260,7 +261,7 @@ void CSDPNSolver::FluxUpdate() {
     }
 }
 
-void CSDPNSolver::FVMUpdate( unsigned idx_energy ) {
+void CSDPNSolver_JL::FVMUpdate( unsigned idx_energy ) {
     bool implicitScattering = true;
     // transform energy difference
     _dE = fabs( _eTrafo[idx_energy + 1] - _eTrafo[idx_energy] );
@@ -303,7 +304,7 @@ void CSDPNSolver::FVMUpdate( unsigned idx_energy ) {
     }
 }
 
-void CSDPNSolver::PrepareVolumeOutput() {
+void CSDPNSolver_JL::PrepareVolumeOutput() {
     // std::cout << "Prepare Volume Output...";
     unsigned nGroups = (unsigned)_settings->GetNVolumeOutput();
 
@@ -356,7 +357,7 @@ void CSDPNSolver::PrepareVolumeOutput() {
     // std::cout << "DONE." << std::endl;
 }
 
-void CSDPNSolver::WriteVolumeOutput( unsigned idx_pseudoTime ) {
+void CSDPNSolver_JL::WriteVolumeOutput( unsigned idx_pseudoTime ) {
     // std::cout << "Write Volume Output...";
     unsigned nGroups = (unsigned)_settings->GetNVolumeOutput();
     double maxDose;
@@ -400,7 +401,7 @@ void CSDPNSolver::WriteVolumeOutput( unsigned idx_pseudoTime ) {
     // std::cout << "DONE." << std::endl;
 }
 
-Vector CSDPNSolver::ConstructFlux( unsigned ) {
+Vector CSDPNSolver_JL::ConstructFlux( unsigned ) {
     // for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
     //    flux += _moments[idx_quad] * ( _weights[idx_quad] * entropyFlux );
     //}

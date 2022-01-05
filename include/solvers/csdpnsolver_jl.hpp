@@ -1,11 +1,11 @@
-#ifndef CSDPNSOLVER_H
-#define CSDPNSOLVER_H
+#ifndef CSDPNSOLVER_JL_H
+#define CSDPNSOLVER_JL_H
 
 #include "solvers/pnsolver.hpp"
 
 class SphericalBase;
 
-class CSDPNSolver : public PNSolver
+class CSDPNSolver_JL : public PNSolver
 {
   private:
     std::vector<double> _dose; /*!< @brief TODO */
@@ -39,9 +39,9 @@ class CSDPNSolver : public PNSolver
      * @brief CSDPNSolver constructor
      * @param settings stores all needed information
      */
-    CSDPNSolver( Config* settings );
+    CSDPNSolver_JL( Config* settings );
 
-    virtual ~CSDPNSolver();
+    virtual ~CSDPNSolver_JL();
 
     // virtual Solve() override;
 
@@ -60,4 +60,4 @@ class CSDPNSolver : public PNSolver
     Vector ConstructFlux( unsigned idx_cell );
 };
 
-#endif    // CSDPNSOLVER_H
+#endif    // CSDPNSOLVER_JL_H

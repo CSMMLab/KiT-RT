@@ -616,6 +616,7 @@ void Config::SetPostprocessing() {
                     }
                     break;
                 case CSD_PN_SOLVER:
+                case CSD_PN_SOLVER_JL:
                     supportedGroups = { MINIMAL, MEDICAL, MOMENTS };
                     if( supportedGroups.end() == std::find( supportedGroups.begin(), supportedGroups.end(), _volumeOutput[idx_volOutput] ) ) {
 

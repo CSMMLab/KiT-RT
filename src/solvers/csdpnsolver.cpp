@@ -8,14 +8,17 @@
 #include "problems/icru.hpp"
 #include "problems/problembase.hpp"
 #include "solvers/csdpn_starmap_constants.hpp"
+#include "toolboxes/errormessages.hpp"
 #include "toolboxes/textprocessingtoolbox.hpp"
 // externals
 #include "spdlog/spdlog.h"
-#include <iostream>
 #include <mpi.h>
 
 #include "quadratures/quadraturebase.hpp"
 #include "toolboxes/sphericalbase.hpp"
+
+#include <fstream>
+#include <iostream>
 
 double normpdf( double x, double mu, double sigma ) {
     return INV_SQRT_2PI / sigma * std::exp( -( ( x - mu ) * ( x - mu ) ) / ( 2.0 * sigma * sigma ) );
@@ -57,9 +60,9 @@ CSDPNSolver::CSDPNSolver( Config* settings ) : PNSolver( settings ) {
 
     // determine transformed energy grid for tabulated grid
     Vector E_transformed( E_trans.size(), 0.0 );
-    for( unsigned i = 1; i < E_trans.size(); ++i )
+    for( unsigned i = 1; i < E_trans.size(); ++i ) {
         E_transformed[i] = E_transformed[i - 1] + ( E_tab[i] - E_tab[i - 1] ) / 2 * ( 1.0 / S_tab[i] + 1.0 / S_tab[i - 1] );
-
+    }
     // determine minimal and maximal energies
     double minE = 5e-5;
     double maxE = _settings->GetMaxEnergyCSD();
@@ -120,6 +123,27 @@ CSDPNSolver::CSDPNSolver( Config* settings ) : PNSolver( settings ) {
     _sigmaTAtEnergy = Vector( _polyDegreeBasis, 0.0 );
 
     std::cout << "End of constructor: E_ref = " << E_ref << std::endl;
+
+    std::ofstream myfile;
+    myfile.open( "energies.csv" );
+    myfile << _energies[0];
+    for( unsigned idx_e = 1; idx_e < _nEnergies; idx_e++ ) {
+        myfile << "," << _energies[idx_e];
+    }
+    myfile.close();
+    myfile.open( "energies_trafo.csv" );
+    myfile << _eTrafo[0];
+    for( unsigned idx_e = 1; idx_e < _nEnergies; idx_e++ ) {
+        myfile << "," << _eTrafo[idx_e];
+    }
+    myfile.close();
+    myfile.open( "min_max_energy_trafo.csv" );
+    myfile << eMinTrafo << "," << eMaxTrafo;
+    myfile.close();
+    myfile.close();
+    myfile.open( "min_max_energy.csv" );
+    myfile << minE << "," << maxE;
+    myfile.close();
 }
 
 CSDPNSolver::~CSDPNSolver() {
