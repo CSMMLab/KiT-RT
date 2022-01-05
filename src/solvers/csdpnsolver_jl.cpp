@@ -45,7 +45,7 @@ double Energy2Time( const double E, const double E_CutOff ) {
 }*/
 
 CSDPNSolver_JL::CSDPNSolver_JL( Config* settings ) : PNSolver( settings ) {
-    std::cout << "Start of constructor: E_ref = " << E_ref << std::endl;
+    //  std::cout << "Start of constructor: E_ref = " << E_ref << std::endl;
     saveE_ref        = E_ref;
     _polyDegreeBasis = settings->GetMaxMomentDegree();
 
@@ -73,8 +73,6 @@ CSDPNSolver_JL::CSDPNSolver_JL( Config* settings ) : PNSolver( settings ) {
 
     // check what happens if we intepolate back
     Interpolation interpTrafoToE( E_transformed, E_tab );
-    // std::cout << "eMax is " << maxE << " vs " << interpTrafoToE( eMaxTrafo ) << std::endl;
-    // std::cout << "eMin is " << minE << " vs " << interpTrafoToE( eMinTrafo ) << std::endl;
 
     // define linear grid in fully transformed energy \tilde\tilde E (cf. Dissertation Kerstion Kuepper, Eq. 1.25)
     _eTrafo = blaze::linspace( _nEnergies, eMaxTrafo - eMaxTrafo, eMaxTrafo - eMinTrafo );
@@ -118,9 +116,10 @@ CSDPNSolver_JL::CSDPNSolver_JL( Config* settings ) : PNSolver( settings ) {
 
     _dose = std::vector<double>( _settings->GetNCells(), 0.0 );
 
-    _sigmaTAtEnergy = Vector( _polyDegreeBasis, 0.0 );
+    _sigmaTAtEnergy = Vector( _polyDegreeBasis + 1, 0.0 );
 
-    std::cout << "End of constructor: E_ref = " << E_ref << std::endl;
+    // std::cout << "End of constructor: E_ref = " << E_ref << std::endl;
+    TextProcessingToolbox::PrintVectorToFile( _energies, "energies.csv", _nEnergies );
 }
 
 CSDPNSolver_JL::~CSDPNSolver_JL() {
@@ -133,22 +132,20 @@ void CSDPNSolver_JL::IterPreprocessing( unsigned idx_iter ) {
         for( unsigned j = 0; j < _nCells; ++j ) {
             solDivRho[j] = _sol[j] / _density[j];
         }
-
         _mesh->ComputeSlopes( _nSystem, _solDx, _solDy, solDivRho );
         _mesh->ComputeLimiter( _nSystem, _solDx, _solDy, solDivRho, _limiter );
     }
 
-    Vector sigmaSAtEnergy( _polyDegreeBasis );
+    Vector sigmaSAtEnergy( _polyDegreeBasis + 1, 0.0 );
     // compute scattering cross section at current energy
-    for( unsigned idx_degree = 0; idx_degree < _polyDegreeBasis; ++idx_degree ) {
+    for( unsigned idx_degree = 0; idx_degree <= _polyDegreeBasis; ++idx_degree ) {
         // setup interpolation from E to sigma at degree idx_degree
         Interpolation interp( saveE_ref, blaze::column( sigma_ref, idx_degree ) );
-        sigmaSAtEnergy[idx_degree] = interp( _energies[idx_iter] );
+        sigmaSAtEnergy[idx_degree] = interp( _energies[idx_iter + 1] );
     }
-    for( unsigned idx_degree = 0; idx_degree < _polyDegreeBasis; ++idx_degree ) {
+    for( unsigned idx_degree = 0; idx_degree <= _polyDegreeBasis; ++idx_degree ) {
         _sigmaTAtEnergy[idx_degree] = ( sigmaSAtEnergy[0] - sigmaSAtEnergy[idx_degree] );
     }
-    TextProcessingToolbox::PrintVectorToFile( _sigmaTAtEnergy, "sigmaAtEnergy_" + std::to_string( idx_iter ) + ".csv", _polyDegreeBasis );
 }
 
 void CSDPNSolver_JL::SolverPreprocessing() {

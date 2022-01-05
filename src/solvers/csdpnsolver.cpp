@@ -47,7 +47,7 @@ double Energy2Time( const double E, const double E_CutOff ) {
 }
 
 CSDPNSolver::CSDPNSolver( Config* settings ) : PNSolver( settings ) {
-    std::cout << "Start of constructor: E_ref = " << E_ref << std::endl;
+    // std::cout << "Start of constructor: E_ref = " << E_ref << std::endl;
     saveE_ref        = E_ref;
     _polyDegreeBasis = settings->GetMaxMomentDegree();
 
@@ -122,28 +122,7 @@ CSDPNSolver::CSDPNSolver( Config* settings ) : PNSolver( settings ) {
 
     _sigmaTAtEnergy = Vector( _polyDegreeBasis, 0.0 );
 
-    std::cout << "End of constructor: E_ref = " << E_ref << std::endl;
-
-    std::ofstream myfile;
-    myfile.open( "energies.csv" );
-    myfile << _energies[0];
-    for( unsigned idx_e = 1; idx_e < _nEnergies; idx_e++ ) {
-        myfile << "," << _energies[idx_e];
-    }
-    myfile.close();
-    myfile.open( "energies_trafo.csv" );
-    myfile << _eTrafo[0];
-    for( unsigned idx_e = 1; idx_e < _nEnergies; idx_e++ ) {
-        myfile << "," << _eTrafo[idx_e];
-    }
-    myfile.close();
-    myfile.open( "min_max_energy_trafo.csv" );
-    myfile << eMinTrafo << "," << eMaxTrafo;
-    myfile.close();
-    myfile.close();
-    myfile.open( "min_max_energy.csv" );
-    myfile << minE << "," << maxE;
-    myfile.close();
+    // std::cout << "End of constructor: E_ref = " << E_ref << std::endl;
 }
 
 CSDPNSolver::~CSDPNSolver() {

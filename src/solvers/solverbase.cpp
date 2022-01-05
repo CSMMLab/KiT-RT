@@ -54,13 +54,11 @@ SolverBase::SolverBase( Config* settings ) {
         double maxE = _settings->GetMaxEnergyCSD();
         _nEnergies  = std::ceil( ( maxE - minE ) / _dE );
         _energies   = blaze::linspace( _nEnergies, minE, maxE );
-        //_energies = blaze::linspace( _nEnergies, maxE, minE );    // go backwards from biggest to smallest energy
     }
     else {    // Not CSD Solver
         _nEnergies = unsigned( settings->GetTEnd() / _dE );
         _energies  = blaze::linspace( _nEnergies, 0.0, settings->GetTEnd() );    // go upward from 0 to T_end
     }
-
     // setup problem  and store frequently used params
     _problem = ProblemBase::Create( _settings, _mesh );
     _sol     = _problem->SetupIC();
