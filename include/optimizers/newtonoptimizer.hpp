@@ -23,21 +23,28 @@ class NewtonOptimizer : public OptimizerBase
 
     /*! @brief Computes the objective function
                 grad = <eta(alpha*m)> - alpha*sol */
-    double ComputeObjFunc( Vector& alpha, Vector& sol, const VectorVector& moments );
+    virtual double ComputeObjFunc( Vector& alpha, Vector& sol, const VectorVector& moments );
 
     /*! @brief Computes hessian of objective function and stores it in hessian
         grad = <mXm*eta*'(alpha*m)> */
-    void ComputeHessian( Vector& alpha, const VectorVector& moments, Matrix& hessian );
+    virtual void ComputeHessian( Vector& alpha, const VectorVector& moments, Matrix& hessian );
 
     /*! @brief In 1D, this function scales the quadrature weigths to compute the entropy integrals in arbitrary (bounded) intervals
         @param velocityScale :scaling factor of the symmetric velocity intervall with mean 0
         */
     void ScaleQuadWeights( double velocityScale );
 
-  private:
+    /*! @brief Reconstruct the moment sol from the Lagrange multiplier alpha
+     *  @param sol moment vector
+     *  @param alpha Lagrange multipliers
+     *  @param moments Moment basis
+     */
+    virtual void ReconstructMoments( Vector& sol, const Vector& alpha, const VectorVector& moments );
+
+  protected:
     /*! @brief Computes gradient of objective function and stores it in grad
                 grad = <m*eta*'(alpha*m)> - sol */
-    void ComputeGradient( Vector& alpha, Vector& sol, const VectorVector& moments, Vector& grad );
+    virtual void ComputeGradient( Vector& alpha, Vector& sol, const VectorVector& moments, Vector& grad );
 
     QuadratureBase* _quadrature; /*!< @brief used quadrature */    // THis is memory doubling! Try to use a pointer.
 
@@ -46,7 +53,7 @@ class NewtonOptimizer : public OptimizerBase
 
     double _epsilon;                 /*!< @brief Termination criterion for newton optimizer */
     unsigned short _maxIterations;   /*!< @brief Max iterations of the newton solver */
-    double _alpha;                   /*!< @brief Newton Step Size */
+    double _delta;                   /*!< @brief Newton Step Size */
     unsigned short _maxLineSearches; /*!< @brief Max amount of line searches for Newton Algo */
 };
 

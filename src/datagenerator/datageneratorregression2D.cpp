@@ -4,7 +4,7 @@
  * \author S. Schotthoefer
  */
 
-#include "datagenerator/datagenerator2D.hpp"
+#include "datagenerator/datageneratorregression2D.hpp"
 #include "common/config.hpp"
 #include "quadratures/quadraturebase.hpp"
 #include "toolboxes/errormessages.hpp"
@@ -13,7 +13,7 @@
 #include <iostream>
 #include <omp.h>
 
-DataGenerator2D::DataGenerator2D( Config* settings ) : DataGeneratorRegression( settings ) {
+DataGeneratorRegression2D::DataGeneratorRegression2D( Config* settings ) : DataGeneratorRegression( settings ) {
     ComputeMoments();
 
     // Initialize Training Data
@@ -27,9 +27,9 @@ DataGenerator2D::DataGenerator2D( Config* settings ) : DataGeneratorRegression( 
     _hEntropy = std::vector<double>( _setSize, 0.0 );
 }
 
-DataGenerator2D::~DataGenerator2D() {}
+DataGeneratorRegression2D::~DataGeneratorRegression2D() {}
 
-void DataGenerator2D::ComputeMoments() {
+void DataGeneratorRegression2D::ComputeMoments() {
     double my, phi;
 
     for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
@@ -39,7 +39,7 @@ void DataGenerator2D::ComputeMoments() {
     }
 }
 
-void DataGenerator2D::SampleSolutionU() {
+void DataGeneratorRegression2D::SampleSolutionU() {
     // Use necessary conditions from Monreal, Dissertation, Chapter 3.2.1, Page 26
 
     // different processes for different
@@ -137,7 +137,7 @@ void DataGenerator2D::SampleSolutionU() {
     }
 }
 
-void DataGenerator2D::CheckRealizability() {
+void DataGeneratorRegression2D::CheckRealizability() {
     double epsilon = _settings->GetRealizableSetEpsilonU0();
     if( _maxPolyDegree == 1 ) {
         //#pragma omp parallel for schedule( guided )
@@ -174,7 +174,7 @@ void DataGenerator2D::CheckRealizability() {
     }
 }
 
-void DataGenerator2D::ComputeSetSizeU() {
+void DataGeneratorRegression2D::ComputeSetSizeU() {
     if( _maxPolyDegree == 0 ) {
     }
     else if( _settings->GetNormalizedSampling() ) {

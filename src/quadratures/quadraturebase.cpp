@@ -51,6 +51,9 @@ QuadratureBase* QuadratureBase::Create( QUAD_NAME name, unsigned quadOrder ) {
         case QUAD_GaussLegendreTensorized:
             ErrorMessages::Error( "This quadrature must be initialized with a settings constructor!", CURRENT_FUNCTION );
             break;
+        case QUAD_GaussLegendreTensorized2D:
+            ErrorMessages::Error( "This quadrature must be initialized with a settings constructor!", CURRENT_FUNCTION );
+            break;
         case QUAD_GaussLegendre1D: return new QGaussLegendre1D( quadOrder );
         case QUAD_GaussChebyshev1D: return new QGaussChebyshev1D( quadOrder );
         case QUAD_LevelSymmetric: return new QLevelSymmetric( quadOrder );

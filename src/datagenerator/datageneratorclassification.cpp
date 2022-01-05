@@ -24,7 +24,7 @@ DataGeneratorClassification::DataGeneratorClassification( Config* settings ) : D
     _quadrature->ScalePointsAndWeights( _maxVelocity );
     _optimizer->ScaleQuadWeights( _maxVelocity );
     _weights = _quadrature->GetWeights();
-    std::cout << "sum of weights: " << _quadrature->SumUpWeights() << "\n";
+    // std::cout << "sum of weights: " << _quadrature->SumUpWeights() << "\n";
     _quadPointsSphere = _quadrature->GetPointsSphere();
     _quadPoints       = _quadrature->GetPoints();
 
@@ -84,7 +84,7 @@ Vector DataGeneratorClassification::ComputeMaxwellian( double rho, double u, dou
     double prefactor  = rho / sqrt( 2 * M_PI * T );
     for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
         maxwellian[idx_quad] = prefactor * exp( -1 * ( ( _momentBasis[idx_quad][1] - u ) * ( _momentBasis[idx_quad][1] - u ) ) / ( 2 * T ) );
-        std::cout << maxwellian[idx_quad] << std::endl;
+        // std::cout << maxwellian[idx_quad] << std::endl;
     }
 
     // Compute the Moment of the maxwellian.
@@ -99,11 +99,11 @@ Vector DataGeneratorClassification::ComputeMaxwellian( double rho, double u, dou
     Vector maxwellianAlpha = Vector( _nTotalEntries, 0.0 );
     _optimizer->Solve( maxwellianAlpha, maxwellianMoment, _momentBasis );
 
-    std::cout << "Maxwellian Moment:\n";
-    std::cout << maxwellianMoment << std::endl;
-    // std::cout << moment0 << std::endl;
-    // std::cout << "Maxwellian Alpha:\n";
-    std::cout << maxwellianAlpha << std::endl;
+    // std::cout << "Maxwellian Moment:\n";
+    // std::cout << maxwellianMoment << std::endl;
+    //  std::cout << moment0 << std::endl;
+    //  std::cout << "Maxwellian Alpha:\n";
+    // std::cout << maxwellianAlpha << std::endl;
 
     maxwellianAlpha[1] *= 2;
     // For debugging, reconstruct the moments from Maxwellian alpha
@@ -113,8 +113,8 @@ Vector DataGeneratorClassification::ComputeMaxwellian( double rho, double u, dou
         entropyReconstruction = _entropy->EntropyPrimeDual( blaze::dot( maxwellianAlpha, _momentBasis[idx_quad] ) );
         maxwellianMoment += _momentBasis[idx_quad] * ( _weights[idx_quad] * entropyReconstruction );
     }
-    std::cout << "Reconstructed Maxwellian Moment:\n";
-    std::cout << maxwellianMoment << std::endl;
+    // std::cout << "Reconstructed Maxwellian Moment:\n";
+    // std::cout << maxwellianMoment << std::endl;
 
     return maxwellian;
 }

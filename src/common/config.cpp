@@ -240,9 +240,9 @@ void Config::SetConfigOptions() {
     /*! @brief CleanFluxMatrices \n DESCRIPTION:  If true, very low entries (10^-10 or smaller) of the flux matrices will be set to zero,
      * to improve floating point accuracy \n DEFAULT false \ingroup Config */
     AddBoolOption( "CLEAN_FLUX_MATRICES", _cleanFluxMat, false );
-    /*! @brief ContinuousSlowingDown \n DESCRIPTION: If true, the program uses the continuous slowing down approximation to treat energy dependent
-     * problems. \n DEFAULT false \ingroup Config */
-    // AddBoolOption( "CONTINUOUS_SLOWING_DOWN", _csd, false );
+    /*! @brief Realizability Step for MN solver \n DESCRIPTION: If true, MN solvers use a realizability reconstruction step in each time step. Also
+     * applicable in regression sampling \n DEFAULT false \ingroup Config */
+    AddBoolOption( "REALIZABILITY_RECONSTRUCTION", _realizabilityRecons, false );
 
     // Problem Relateed Options
     /*! @brief MaterialDir \n DESCRIPTION: Relative Path to the data directory (used in the ICRU database class), starting from the directory of the
@@ -272,8 +272,10 @@ void Config::SetConfigOptions() {
     AddEnumOption( "ENTROPY_FUNCTIONAL", _entropyName, Entropy_Map, QUADRATIC );
     /*! @brief Optimizer Name \n DESCRIPTION:  Optimizer used to determine the minimal Entropy reconstruction \n DEFAULT NEWTON \ingroup Config */
     AddEnumOption( "ENTROPY_OPTIMIZER", _entropyOptimizerName, Optimizer_Map, NEWTON );
-
     // Newton optimizer related options
+    /*! @brief Regularization Parameter \n DESCRIPTION:  Regularization Parameter for the regularized entropy closure. Must not be negative \n DEFAULT
+     * 1e-2 \ingroup Config */
+    AddDoubleOption( "REGULARIZER_GAMMA", _regularizerGamma, 1e-2 );
     /*! @brief Newton Optimizer Epsilon \n DESCRIPTION:  Convergencce Epsilon for Newton Optimizer \n DEFAULT 1e-3 \ingroup Config */
     AddDoubleOption( "NEWTON_EPSILON", _optimizerEpsilon, 0.001 );
     /*! @brief Max Iter Newton Optmizers \n DESCRIPTION: Max number of newton iterations \n DEFAULT 10 \ingroup Config */
@@ -286,7 +288,6 @@ void Config::SetConfigOptions() {
     /*! @brief Newton Fast mode \n DESCRIPTION:  If true, we skip the Newton optimizer for Quadratic entropy and set alpha = u \n DEFAULT false
      * \ingroup Config */
     AddBoolOption( "NEWTON_FAST_MODE", _newtonFastMode, false );
-
     // Neural Entropy Closure options
     AddUnsignedShortOption( "NEURAL_MODEL", _neuralModel, 4 );
 
@@ -346,9 +347,6 @@ void Config::SetConfigOptions() {
     /*! @brief Switch for sampling distribution  \n DESCRIPTION: Uniform (true) or trunctaded normal (false) \n DEFAULT true
      * \ingroup Config */
     AddBoolOption( "UNIFORM_SAMPLING", _sampleUniform, true );
-    /*! @brief Flag for sampling the space of Legendre multipliers instead of the moments  \n DESCRIPTION: Sample alpha instead of u \n DEFAULT False
-     * \ingroup Config */
-    AddBoolOption( "REALIZABILITY_RECONS_U", _realizabilityRecons, true );
     /*! @brief Boundary for the sampling region of the Lagrange multipliers  \n DESCRIPTION: Norm sampling boundary for alpha \n DEFAULT 20.0
      * \ingroup Config */
     AddDoubleOption( "ALPHA_SAMPLING_BOUND", _alphaBound, 20.0 );
@@ -532,9 +530,9 @@ void Config::SetPostprocessing() {
                 CURRENT_FUNCTION );
         }
 
-        if( GetSolverName() == MN_SOLVER && GetSphericalBasisName() == SPHERICAL_MONOMIALS && GetMaxMomentDegree() > 1 ) {
-            ErrorMessages::Error( "MN Solver only with monomial basis only stable up to degree 1. This is a TODO.", CURRENT_FUNCTION );
-        }
+        // if( GetSolverName() == MN_SOLVER && GetSphericalBasisName() == SPHERICAL_MONOMIALS && GetMaxMomentDegree() > 1 ) {
+        //     ErrorMessages::Error( "MN Solver only with monomial basis only stable up to degree 1. This is a TODO.", CURRENT_FUNCTION );
+        // }
     }
 
     // --- Output Postprocessing ---
@@ -734,6 +732,13 @@ void Config::SetPostprocessing() {
                 "Minimal Eigenvalue threshold of the entropy hession must be positive.\n Current choice: " + std::to_string( _alphaSampling ) +
                 ". Check choice of MIN_EIGENVALUE_THRESHOLD.";
             ErrorMessages::Error( msg, CURRENT_FUNCTION );
+        }
+    }
+
+    // Optimizer postprocessing
+    {
+        if( _regularizerGamma <= 0.0 ) {
+            ErrorMessages::Error( "REGULARIZER_GAMMA must be positive.", CURRENT_FUNCTION );
         }
     }
 }

@@ -3,6 +3,9 @@
 #include "entropies/entropybase.hpp"
 #include "optimizers/mloptimizer.hpp"
 #include "optimizers/newtonoptimizer.hpp"
+#include "optimizers/partregularizednewtonoptimizer.hpp"
+#include "optimizers/regularizednewtonoptimizer.hpp"
+#include "toolboxes/errormessages.hpp"
 
 OptimizerBase::OptimizerBase( Config* settings ) {
     _entropy  = EntropyBase::Create( settings );
@@ -14,10 +17,11 @@ OptimizerBase::~OptimizerBase() { delete _entropy; }
 OptimizerBase* OptimizerBase::Create( Config* settings ) {
     switch( settings->GetOptimizerName() ) {
         case NEWTON: return new NewtonOptimizer( settings );
+        case REGULARIZED_NEWTON: return new RegularizedNewtonOptimizer( settings );
+        case PART_REGULARIZED_NEWTON: return new PartRegularizedNewtonOptimizer( settings );
         case ML:
             return new MLOptimizer( settings );
-
             // extend to other optimizers
-        default: return new NewtonOptimizer( settings );
+        default: ErrorMessages::Error( "Optimizer of choice not implemented.", CURRENT_FUNCTION ); return new NewtonOptimizer( settings );
     }
 }
