@@ -170,7 +170,10 @@ TEST_CASE( "MN_SOLVER", "[validation_tests]" ) {
 
             REQUIRE( test.size() == reference.size() );
             for( unsigned i = 0; i < test.size(); ++i ) {
-                if( std::fabs( test[i] - reference[i] ) > eps ) errorWithinBounds = false;
+                if( std::fabs( test[i] - reference[i] ) > eps ) {
+                    errorWithinBounds = false;
+                    std::cout << "Error:" << std::fabs( test[i] - reference[i] ) << "\n";
+                }
             }
             REQUIRE( errorWithinBounds );
             delete solver;
@@ -195,7 +198,10 @@ TEST_CASE( "MN_SOLVER", "[validation_tests]" ) {
 
             REQUIRE( test.size() == reference.size() );
             for( unsigned i = 0; i < test.size(); ++i ) {
-                if( std::fabs( test[i] - reference[i] ) > eps ) errorWithinBounds = false;
+                if( std::fabs( test[i] - reference[i] ) > eps ) {
+                    errorWithinBounds = false;
+                    std::cout << "Error:" << std::fabs( test[i] - reference[i] ) << "\n";
+                }
             }
             REQUIRE( errorWithinBounds );
             delete solver;
@@ -220,7 +226,10 @@ TEST_CASE( "MN_SOLVER", "[validation_tests]" ) {
 
             REQUIRE( test.size() == reference.size() );
             for( unsigned i = 0; i < test.size(); ++i ) {
-                if( std::fabs( test[i] - reference[i] ) > eps ) errorWithinBounds = false;
+                if( std::fabs( test[i] - reference[i] ) > eps ) {
+                    errorWithinBounds = false;
+                    std::cout << "Error:" << std::fabs( test[i] - reference[i] ) << "\n";
+                }
             }
             REQUIRE( errorWithinBounds );
             delete solver;
