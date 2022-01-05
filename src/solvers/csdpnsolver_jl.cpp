@@ -118,6 +118,19 @@ CSDPNSolver_JL::CSDPNSolver_JL( Config* settings ) : PNSolver( settings ) {
 
     _sigmaTAtEnergy = Vector( _polyDegreeBasis + 1, 0.0 );
 
+    // compute stopping power between energies for dose computation
+    double dE = _eTrafo[2] - _eTrafo[1];
+    Vector eTrafoMid( _nEnergies - 1 );
+    for( unsigned n = 0; n < _nEnergies - 1; ++n ) {
+        eTrafoMid[n] = _eTrafo[n] + dE / 2;
+    }
+    // compute Corresponding original energies at intermediate points
+    Vector eMid( _nEnergies - 1 );
+    for( unsigned n = 0; n < _nEnergies; ++n ) {
+        eMid[n] = interpTrafoToE( eMaxTrafo - eTrafoMid[n] );
+    }
+    _sMid = interpS( eMid );
+
     // std::cout << "End of constructor: E_ref = " << E_ref << std::endl;
     TextProcessingToolbox::PrintVectorToFile( _energies, "energies.csv", _nEnergies );
 }
@@ -163,13 +176,12 @@ void CSDPNSolver_JL::IterPostprocessing( unsigned idx_iter ) {
     unsigned n = idx_iter;
     // -- Compute Dose
     for( unsigned j = 0; j < _nCells; ++j ) {
-        if( n > 0 ) {
-            _dose[j] +=
-                0.5 * _dE * ( _fluxNew[j] * _s[n] + _flux[j] * _s[n - 1] ) / _density[j];    // update dose with trapezoidal rule // diss Kerstin
+        if( n > 0 || n < _nEnergies - 1 ) {
+            _dose[j] += _dE * ( _fluxNew[j] * _sMid[n] ) / _density[j];    // update dose with trapezoidal rule // diss Kerstin
             //_dose[j] += _dE * ( _fluxNew[j] * _s[_nEnergies - n - 1] ) / _density[j];    // update dose with explicit Euler rule // diss Kerstin
         }
         else {
-            _dose[j] += _dE * _fluxNew[j] * _s[n] / _density[j];
+            _dose[j] += 0.5 * _dE * ( _fluxNew[j] * _sMid[n] ) / _density[j];
             //_dose[j] += _dE * _fluxNew[j] * _s[_nEnergies - n - 1] / _density[j];
         }
     }
