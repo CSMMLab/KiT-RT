@@ -72,10 +72,9 @@ inline void PrintMatrixToFile( const Matrix mat, std::string filename, unsigned 
 inline void PrintVectorToFile( const Vector vec, std::string filename, unsigned vecsize ) {
     std::ofstream myfile;
     myfile.open( filename );
-    for( unsigned i = 0; i < vecsize - 1; i++ ) {
-        myfile << vec[i] << ",";
+    for( unsigned i = 0; i < vecsize; i++ ) {
+        myfile << vec[i] << "\n";
     }
-    myfile << vec[vecsize - 1];
     myfile.close();
 }
 /*!
