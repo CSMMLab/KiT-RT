@@ -77,6 +77,20 @@ inline void PrintVectorToFile( const Vector vec, std::string filename, unsigned 
     }
     myfile.close();
 }
+
+inline void PrintVectorVectorToFile( const VectorVector vecvec, std::string filename, unsigned size_outer, unsigned size_inner ) {
+    std::ofstream myfile;
+    myfile.open( filename );
+    for( unsigned i = 0; i < size_outer; i++ ) {
+        for( unsigned j = 0; j < size_inner - 1; j++ ) {
+            myfile << vecvec[i][j] << ",";
+        }
+        myfile << vecvec[i][size_inner - 1];
+        myfile << ";\n";
+    }
+    myfile.close();
+}
+
 /*!
  * @brief utility function for returning the last number in a string
  * @param str string to be checked

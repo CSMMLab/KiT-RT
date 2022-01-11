@@ -23,4 +23,17 @@ class IsotropicSource2D : public ElectronRT
     std::vector<double> GetDensity( const VectorVector& cellMidPoints );
 };
 
+class IsotropicSource2D_Moment : public ElectronRT
+{
+  private:
+    IsotropicSource2D_Moment() = delete;
+
+  public:
+    IsotropicSource2D_Moment( Config* settings, Mesh* mesh );
+    virtual ~IsotropicSource2D_Moment();
+    virtual std::vector<VectorVector> GetExternalSource( const Vector& energies );
+    virtual VectorVector SetupIC();
+    std::vector<double> GetDensity( const VectorVector& cellMidPoints );
+};
+
 #endif    // ISOTROPICSOURCE2D_H

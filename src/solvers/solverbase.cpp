@@ -46,8 +46,13 @@ SolverBase::SolverBase( Config* settings ) {
     _cellMidPoints = _mesh->GetCellMidPoints();
 
     // set time step or energy step
-    _dE = ComputeTimeStep( _settings->GetCFL() );
-
+    if( _settings->GetSolverName() == CSD_PN_SOLVER_JL ) {
+        _dE = 1. / 90.;
+        std::cout << "cfl: " << _settings->GetCFL() << " _dE " << _dE << "\n";
+    }
+    else {
+        _dE = ComputeTimeStep( _settings->GetCFL() );
+    }
     if( _settings->GetIsCSD() ) {
         // carefull: This gets overwritten by almost all subsolvers
         double minE = 5e-5;    // 2.231461e-01;    // 5e-5;

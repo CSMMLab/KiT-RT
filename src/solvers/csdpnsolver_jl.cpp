@@ -95,7 +95,7 @@ CSDPNSolver_JL::CSDPNSolver_JL( Config* settings ) : PNSolver( settings ) {
     // write initial condition
     Vector pos_beam = Vector{ 0.5, 0.5 };
     _sol            = VectorVector( _nCells, Vector( _nSystem, 0.0 ) );
-    double tmp      = 0.0;
+
     for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
         double x            = _cellMidPoints[idx_cell][0];
         double y            = _cellMidPoints[idx_cell][1];
@@ -103,14 +103,26 @@ CSDPNSolver_JL::CSDPNSolver_JL( Config* settings ) : PNSolver( settings ) {
         double f            = normpdf( x, pos_beam[0], stddev ) * normpdf( y, pos_beam[1], stddev );
 
         _sol[idx_cell][0] = f * StarMAPmoments[0];
-        if( _sol[idx_cell][0] > tmp ) tmp = _sol[idx_cell][0];
 
         for( unsigned idx_sys = 1; idx_sys < _nSystem; idx_sys++ ) {
-
-            //_sol[idx_cell][idx_sys] = f * StarMAPmoments[idx_sys];    // must be VectorVector
-            _sol[idx_cell][idx_sys] = 0;    // isotropic
+            _sol[idx_cell][idx_sys] = f * StarMAPmoments[idx_sys];    // must be VectorVector
         }
     }
+
+    //// check normpdf
+    // VectorVector testVec = VectorVector( 100, Vector( 2 + _nSystem, 0.0 ) );
+    // double dx            = 1.0 / 100.0;
+    // for( unsigned i = 0; i < 100; i++ ) {
+    //     const double stddev = .01;
+    //     testVec[i][0]       = dx * i;
+    //     testVec[i][1]       = dx * i;
+    //
+    //    for( unsigned idx_sys = 0; idx_sys < _nSystem; idx_sys++ ) {
+    //        testVec[i][idx_sys + 2] =
+    //            normpdf( testVec[i][0], pos_beam[0], stddev ) * normpdf( testVec[i][1], pos_beam[1], stddev ) * StarMAPmoments[idx_sys];
+    //    }
+    //}
+    // TextProcessingToolbox::PrintVectorVectorToFile( testVec, "IC_fullMoments.csv", 100, 2 + _nSystem );
 
     _solNew = _sol;
 
@@ -131,10 +143,15 @@ CSDPNSolver_JL::CSDPNSolver_JL( Config* settings ) : PNSolver( settings ) {
     }
     _sMid = interpS( eMid );
 
-    // std::cout << "End of constructor: E_ref = " << E_ref << std::endl;
-    TextProcessingToolbox::PrintVectorToFile( _s, "stopping.csv", _nEnergies );
-    TextProcessingToolbox::PrintVectorToFile( _sMid, "_sMid.csv", _nEnergies );
-    TextProcessingToolbox::PrintVectorToFile( _energies, "energies.csv", _nEnergies );
+    // // std::cout << "End of constructor: E_ref = " << E_ref << std::endl;
+    // TextProcessingToolbox::PrintVectorToFile( _s, "stopping.csv", _nEnergies );
+    // TextProcessingToolbox::PrintVectorToFile( _sMid, "_sMid.csv", _nEnergies - 1 );
+    // TextProcessingToolbox::PrintVectorToFile( _energies, "energies.csv", _nEnergies );
+    // TextProcessingToolbox::PrintVectorToFile( _eTrafo, "energiesTrafo.csv", _nEnergies );
+    // TextProcessingToolbox::PrintMatrixToFile( _AxPlus, "AxPlus.csv", _nSystem );
+    // TextProcessingToolbox::PrintMatrixToFile( _AxMinus, "AxMinus.csv", _nSystem );
+    // TextProcessingToolbox::PrintMatrixToFile( _AyPlus, "AyPlus.csv", _nSystem );
+    // TextProcessingToolbox::PrintMatrixToFile( _AyMinus, "AyMinus.csv", _nSystem );
 }
 
 CSDPNSolver_JL::~CSDPNSolver_JL() {
@@ -178,24 +195,25 @@ void CSDPNSolver_JL::IterPostprocessing( unsigned idx_iter ) {
     unsigned n = idx_iter;
     // -- Compute Dose
     for( unsigned j = 0; j < _nCells; ++j ) {
-        if( n > 0 || n < _nEnergies - 1 ) {
-            _dose[j] += _dE * ( _fluxNew[j] * _sMid[n] ) / _density[j];    // update dose with trapezoidal rule // diss Kerstin
+        if( n > 0 && n < _nEnergies - 1 ) {
+            _dose[j] += _dE * ( _sol[j][0] * _sMid[n] ) / _density[j];    // update dose with trapezoidal rule // diss Kerstin
         }
         else {
-            _dose[j] += 0.5 * _dE * ( _fluxNew[j] * _sMid[n] ) / _density[j];
+            _dose[j] += 0.5 * _dE * ( _sol[j][0] * _sMid[n] ) / _density[j];
         }
     }
-    // std::cout << "weight: " << _s[n] << " time: " << idx_iter * _dE << " energy: " << Time2Energy( idx_iter * _dE, _E_cutoff ) << " DONE."
-    //           << std::endl;
 }
 
 void CSDPNSolver_JL::FluxUpdate() {
-    Vector solL( _nSystem, 0.0 );
-    Vector solR( _nSystem, 0.0 );
+    // Vector solL( _nSystem, 0.0 );
+    // Vector solR( _nSystem, 0.0 );
 
     // Loop over all spatial cells
-    for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
+#pragma omp parallel for
 
+    for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
+        Vector solL( _nSystem, 0.0 );
+        Vector solR( _nSystem, 0.0 );
         // Dirichlet cells stay at IC, farfield assumption
         if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::DIRICHLET ) continue;
 
@@ -274,10 +292,11 @@ void CSDPNSolver_JL::FVMUpdate( unsigned idx_energy ) {
     bool implicitScattering = true;
     // transform energy difference
     _dE = fabs( _eTrafo[idx_energy + 1] - _eTrafo[idx_energy] );
-// loop over all spatial cells
+
+    // loop over all spatial cells
 #pragma omp parallel for
     for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
-        // Dirichlet cells stay at IC, farfield assumption
+        //  Dirichlet cells stay at IC, farfield assumption
         if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::DIRICHLET ) continue;
         for( int idx_l = 0; idx_l <= (int)_polyDegreeBasis; idx_l++ ) {
             for( int idx_k = -idx_l; idx_k <= idx_l; idx_k++ ) {
@@ -287,6 +306,7 @@ void CSDPNSolver_JL::FVMUpdate( unsigned idx_energy ) {
                         _sol[idx_cell][idx_sys] - ( _dE / _areas[idx_cell] ) * _solNew[idx_cell][idx_sys]; /* cell averaged flux */
                 }
                 else {
+                    // std::cout << "here\n";
                     _solNew[idx_cell][idx_sys] = _sol[idx_cell][idx_sys] -
                                                  ( _dE / _areas[idx_cell] ) * _solNew[idx_cell][idx_sys]   /* cell averaged flux */
                                                  - _dE * _sol[idx_cell][idx_sys] * _sigmaTAtEnergy[idx_l]; /* scattering */
@@ -297,15 +317,21 @@ void CSDPNSolver_JL::FVMUpdate( unsigned idx_energy ) {
         }
     }
     // treat scattering implicitly
+
     if( implicitScattering ) {
         // loop over all spatial cells
-        //#pragma omp parallel for
+#pragma omp parallel for
         for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
             // Dirichlet cells stay at IC, farfield assumption
             if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::DIRICHLET ) continue;
             for( int idx_l = 0; idx_l <= (int)_polyDegreeBasis; idx_l++ ) {
                 for( int idx_k = -idx_l; idx_k <= idx_l; idx_k++ ) {
-                    int idx_sys                = GlobalIndex( idx_l, idx_k );
+                    int idx_sys = GlobalIndex( idx_l, idx_k );
+                    // if( abs( _solNew[idx_cell][idx_sys] / ( 1.0 + _dE * _sigmaTAtEnergy[idx_l] ) ) > 1e-5 ) {
+                    //     std::cout << "scatter at cell:" << idx_cell << " : " << _solNew[idx_cell][idx_sys] / ( 1.0 + _dE *
+                    // _sigmaTAtEnergy[idx_l] )
+                    //               << "\n";
+                    // }
                     _solNew[idx_cell][idx_sys] = _solNew[idx_cell][idx_sys] / ( 1.0 + _dE * _sigmaTAtEnergy[idx_l] ); /* scattering */
                 }
             }
@@ -363,11 +389,9 @@ void CSDPNSolver_JL::PrepareVolumeOutput() {
             default: ErrorMessages::Error( "Volume Output Group not defined for PN Solver!", CURRENT_FUNCTION ); break;
         }
     }
-    // std::cout << "DONE." << std::endl;
 }
 
 void CSDPNSolver_JL::WriteVolumeOutput( unsigned idx_pseudoTime ) {
-    // std::cout << "Write Volume Output...";
     unsigned nGroups = (unsigned)_settings->GetNVolumeOutput();
     double maxDose;
     if( ( _settings->GetVolumeOutputFrequency() != 0 && idx_pseudoTime % (unsigned)_settings->GetVolumeOutputFrequency() == 0 ) ||
@@ -384,7 +408,7 @@ void CSDPNSolver_JL::WriteVolumeOutput( unsigned idx_pseudoTime ) {
                 case MEDICAL:
                     // Compute Dose
                     for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
-                        _outputFields[idx_group][0][idx_cell] += _dose[idx_cell];
+                        _outputFields[idx_group][0][idx_cell] = _dose[idx_cell];
                     }
                     // Compute normalized dose
                     _outputFields[idx_group][1] = _outputFields[idx_group][0];
@@ -407,7 +431,6 @@ void CSDPNSolver_JL::WriteVolumeOutput( unsigned idx_pseudoTime ) {
             }
         }
     }
-    // std::cout << "DONE." << std::endl;
 }
 
 Vector CSDPNSolver_JL::ConstructFlux( unsigned ) {
