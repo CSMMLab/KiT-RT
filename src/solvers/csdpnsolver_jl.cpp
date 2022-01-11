@@ -53,8 +53,7 @@ CSDPNSolver_JL::CSDPNSolver_JL( Config* settings ) : PNSolver( settings ) {
     _solDx   = VectorVector( _nCells, Vector( _nSystem, 0.0 ) );
     _solDy   = VectorVector( _nCells, Vector( _nSystem, 0.0 ) );
     _limiter = VectorVector( _nCells, Vector( _nSystem, 0.0 ) );
-
-    _basis = NULL;
+    _basis   = NULL;
 
     // determine transformed energy grid for tabulated grid
     Vector E_transformed( E_trans.size(), 0.0 );
@@ -306,7 +305,6 @@ void CSDPNSolver_JL::FVMUpdate( unsigned idx_energy ) {
                         _sol[idx_cell][idx_sys] - ( _dE / _areas[idx_cell] ) * _solNew[idx_cell][idx_sys]; /* cell averaged flux */
                 }
                 else {
-                    // std::cout << "here\n";
                     _solNew[idx_cell][idx_sys] = _sol[idx_cell][idx_sys] -
                                                  ( _dE / _areas[idx_cell] ) * _solNew[idx_cell][idx_sys]   /* cell averaged flux */
                                                  - _dE * _sol[idx_cell][idx_sys] * _sigmaTAtEnergy[idx_l]; /* scattering */
