@@ -5,7 +5,7 @@
 
 class SphericalBase;
 
-class CSDPNSolver_JL : public PNSolver
+class CSDPNSolver : public PNSolver
 {
   private:
     std::vector<double> _dose; /*!< @brief TODO */
@@ -39,9 +39,9 @@ class CSDPNSolver_JL : public PNSolver
      * @brief CSDPNSolver constructor
      * @param settings stores all needed information
      */
-    CSDPNSolver_JL( Config* settings );
+    CSDPNSolver( Config* settings );
 
-    virtual ~CSDPNSolver_JL();
+    virtual ~CSDPNSolver();
 
     // virtual Solve() override;
 
