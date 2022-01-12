@@ -238,6 +238,29 @@ TEST_CASE( "MN_SOLVER", "[validation_tests]" ) {
     }
 }
 
+TEST_CASE( "CSD_PN_SOLVER", "[validation_tests]" ) {
+    std::string csd_sn_fileDir = "input/validation_tests/CSD_PN_solver/";
+    SECTION( "point source dual density" ) {
+
+        std::string config_file_name = std::string( TESTS_PATH ) + csd_sn_fileDir + "point_source_dual_density.cfg";
+
+        Config* config     = new Config( config_file_name );
+        SolverBase* solver = SolverBase::Create( config );
+        solver->Solve();
+        solver->PrintVolumeOutput();
+        auto test      = readVTKFile( std::string( TESTS_PATH ) + "result/test_pointsource_dual_density.vtk" );
+        auto reference = readVTKFile( std::string( TESTS_PATH ) + csd_sn_fileDir + "point_source_dual_density_reference.vtk" );
+
+        double eps = 1e-3;
+        REQUIRE( test.size() == reference.size() );
+        bool errorWithinBounds = true;
+        for( unsigned i = 0; i < test.size(); ++i ) {
+            if( std::fabs( test[i] - reference[i] ) > eps ) errorWithinBounds = false;
+        }
+        REQUIRE( errorWithinBounds );
+    }
+}
+
 /*
 TEST_CASE( "CSD_SN_FP_SOLVER", "[validation_tests]" ) {
     std::string csd_sn_fileDir = "input/validation_tests/CSD_SN_FP_solver/";

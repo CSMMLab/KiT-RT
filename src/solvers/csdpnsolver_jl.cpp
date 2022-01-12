@@ -17,33 +17,6 @@
 #include "quadratures/quadraturebase.hpp"
 #include "toolboxes/sphericalbase.hpp"
 
-/*
-double normpdf( double x, double mu, double sigma ) {
-    return INV_SQRT_2PI / sigma * std::exp( -( ( x - mu ) * ( x - mu ) ) / ( 2.0 * sigma * sigma ) );
-}
-
-Vector Time2Energy( const Vector& t, const double E_CutOff ) {
-    Interpolation interp( E_trans, E_tab );
-    Interpolation interp2( E_tab, E_trans );
-    return blaze::max( 0, interp( interp2( E_CutOff, 0 ) - t ) );
-}
-
-double Time2Energy( const double t, const double E_CutOff ) {
-    Interpolation interp( E_trans, E_tab );
-    Interpolation interp2( E_tab, E_trans );
-    return std::fmax( 0.0, interp( E_CutOff - t ) );
-}
-
-Vector Energy2Time( const Vector& E, const double E_CutOff ) {
-    Interpolation interp( E_tab, E_trans );
-    return blaze::max( 0, interp( E_CutOff - E ) );
-}
-
-double Energy2Time( const double E, const double E_CutOff ) {
-    Interpolation interp( E_tab, E_trans );
-    return std::fmax( 0, interp( E_CutOff - E ) );
-}*/
-
 CSDPNSolver_JL::CSDPNSolver_JL( Config* settings ) : PNSolver( settings ) {
     //  std::cout << "Start of constructor: E_ref = " << E_ref << std::endl;
     saveE_ref        = E_ref;
@@ -99,7 +72,7 @@ CSDPNSolver_JL::CSDPNSolver_JL( Config* settings ) : PNSolver( settings ) {
         double x            = _cellMidPoints[idx_cell][0];
         double y            = _cellMidPoints[idx_cell][1];
         const double stddev = .01;
-        double f            = normpdf( x, pos_beam[0], stddev ) * normpdf( y, pos_beam[1], stddev );
+        double f            = NormPDF( x, pos_beam[0], stddev ) * NormPDF( y, pos_beam[1], stddev );
 
         _sol[idx_cell][0] = f * StarMAPmoments[0];
 
@@ -226,30 +199,30 @@ void CSDPNSolver_JL::FluxUpdate() {
 
             // Compute flux contribution and store in psiNew to save memory
             if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::NEUMANN && _neighbors[idx_cell][idx_neighbor] == _nCells )
-                _solNew[idx_cell] += _g->Flux( _AxPlus,
-                                               _AxMinus,
-                                               _AyPlus,
-                                               _AyMinus,
-                                               _AzPlus,
-                                               _AzMinus,
-                                               _sol[idx_cell] / _density[idx_cell],
-                                               _sol[idx_cell] / _density[idx_cell],
-                                               _normals[idx_cell][idx_neighbor] );
+                _solNew[idx_cell] += _g->FluxXZ( _AxPlus,
+                                                 _AxMinus,
+                                                 _AyPlus,
+                                                 _AyMinus,
+                                                 _AzPlus,
+                                                 _AzMinus,
+                                                 _sol[idx_cell] / _density[idx_cell],
+                                                 _sol[idx_cell] / _density[idx_cell],
+                                                 _normals[idx_cell][idx_neighbor] );
             else {
                 unsigned int nbr_glob = _neighbors[idx_cell][idx_neighbor];    // global idx of neighbor cell
                 switch( _reconsOrder ) {
                     // first order solver
                     case 1:
                         _solNew[idx_cell] +=
-                            _g->Flux( _AxPlus,
-                                      _AxMinus,
-                                      _AyPlus,
-                                      _AyMinus,
-                                      _AzPlus,
-                                      _AzMinus,
-                                      _sol[idx_cell] * ( 1.0 / _density[idx_cell] ),
-                                      _sol[_neighbors[idx_cell][idx_neighbor]] * ( 1.0 / _density[_neighbors[idx_cell][idx_neighbor]] ),
-                                      _normals[idx_cell][idx_neighbor] );
+                            _g->FluxXZ( _AxPlus,
+                                        _AxMinus,
+                                        _AyPlus,
+                                        _AyMinus,
+                                        _AzPlus,
+                                        _AzMinus,
+                                        _sol[idx_cell] * ( 1.0 / _density[idx_cell] ),
+                                        _sol[_neighbors[idx_cell][idx_neighbor]] * ( 1.0 / _density[_neighbors[idx_cell][idx_neighbor]] ),
+                                        _normals[idx_cell][idx_neighbor] );
                         break;
                     // second order solver
                     case 2:
@@ -268,19 +241,19 @@ void CSDPNSolver_JL::FluxUpdate() {
                         }
                         // flux evaluation
                         _solNew[idx_cell] +=
-                            _g->Flux( _AxPlus, _AxMinus, _AyPlus, _AyMinus, _AzPlus, _AzMinus, solL, solR, _normals[idx_cell][idx_neighbor] );
+                            _g->FluxXZ( _AxPlus, _AxMinus, _AyPlus, _AyMinus, _AzPlus, _AzMinus, solL, solR, _normals[idx_cell][idx_neighbor] );
                         break;
                     // default: first order solver
                     default:
-                        _solNew[idx_cell] += _g->Flux( _AxPlus,
-                                                       _AxMinus,
-                                                       _AyPlus,
-                                                       _AyMinus,
-                                                       _AzPlus,
-                                                       _AzMinus,
-                                                       _sol[idx_cell] / _density[idx_cell],
-                                                       _sol[_neighbors[idx_cell][idx_neighbor]] / _density[_neighbors[idx_cell][idx_neighbor]],
-                                                       _normals[idx_cell][idx_neighbor] );
+                        _solNew[idx_cell] += _g->FluxXZ( _AxPlus,
+                                                         _AxMinus,
+                                                         _AyPlus,
+                                                         _AyMinus,
+                                                         _AzPlus,
+                                                         _AzMinus,
+                                                         _sol[idx_cell] / _density[idx_cell],
+                                                         _sol[_neighbors[idx_cell][idx_neighbor]] / _density[_neighbors[idx_cell][idx_neighbor]],
+                                                         _normals[idx_cell][idx_neighbor] );
                 }
             }
         }
@@ -436,4 +409,30 @@ Vector CSDPNSolver_JL::ConstructFlux( unsigned ) {
     //    flux += _moments[idx_quad] * ( _weights[idx_quad] * entropyFlux );
     //}
     return Vector( 1, 0.0 );
+}
+
+double CSDPNSolver_JL::NormPDF( double x, double mu, double sigma ) {
+    return INV_SQRT_2PI / sigma * std::exp( -( ( x - mu ) * ( x - mu ) ) / ( 2.0 * sigma * sigma ) );
+}
+
+Vector CSDPNSolver_JL::Time2Energy( const Vector& t, const double E_CutOff ) {
+    Interpolation interp( E_trans, E_tab );
+    Interpolation interp2( E_tab, E_trans );
+    return blaze::max( 0, interp( interp2( E_CutOff, 0 ) - t ) );
+}
+
+double CSDPNSolver_JL::Time2Energy( const double t, const double E_CutOff ) {
+    Interpolation interp( E_trans, E_tab );
+    Interpolation interp2( E_tab, E_trans );
+    return std::fmax( 0.0, interp( E_CutOff - t ) );
+}
+
+Vector CSDPNSolver_JL::Energy2Time( const Vector& E, const double E_CutOff ) {
+    Interpolation interp( E_tab, E_trans );
+    return blaze::max( 0, interp( E_CutOff - E ) );
+}
+
+double CSDPNSolver_JL::Energy2Time( const double E, const double E_CutOff ) {
+    Interpolation interp( E_tab, E_trans );
+    return std::fmax( 0, interp( E_CutOff - E ) );
 }
