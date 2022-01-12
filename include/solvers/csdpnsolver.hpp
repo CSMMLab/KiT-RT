@@ -1,5 +1,5 @@
-#ifndef CSDPNSOLVER_JL_H
-#define CSDPNSOLVER_JL_H
+#ifndef CSDPNSOLVER_H
+#define CSDPNSOLVER_H
 
 #include "solvers/pnsolver.hpp"
 
@@ -67,4 +67,4 @@ class CSDPNSolver : public PNSolver
     double Energy2Time( const double E, const double E_CutOff );
 };
 
-#endif    // CSDPNSOLVER_JL_H
+#endif    // CSDPNSOLVER_H
