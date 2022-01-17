@@ -194,14 +194,10 @@ CSDSolverTrafoFP2D::CSDSolverTrafoFP2D( Config* settings ) : SNSolver( settings 
     // Heney-Greenstein parameter
     // double g = 0.8;
 
-    std::cout << "before database" << std::endl;
-
     // determine moments of Heney-Greenstein
     _xi = Matrix( 4, _nEnergies );
     ICRU database( _mu, _energies, _settings );
     database.GetTransportCoefficients( _xi );
-
-    std::cout << "after database" << std::endl;
 
     _RT = true;
 }
@@ -281,6 +277,16 @@ void CSDSolverTrafoFP2D::WriteVolumeOutput( unsigned idx_pseudoTime ) {
                 default: ErrorMessages::Error( "Volume Output Group not defined for CSD_SN_FP_TRAFO Solver!", CURRENT_FUNCTION ); break;
             }
         }
+    }
+    if( idx_pseudoTime == _nEnergies - 2 ) {
+        std::cout << _settings->GetOutputFile().append( ".txt" ) << std::endl;
+        std::ofstream out( _settings->GetOutputFile().append( ".txt" ) );
+        unsigned nx = _settings->GetNCells();
+
+        for( unsigned j = 0; j < nx; ++j ) {
+            out << _cellMidPoints[j][0] << " " << _cellMidPoints[j][1] << " " << _dose[j] << std::endl;
+        }
+        out.close();
     }
 }
 
@@ -386,7 +392,6 @@ void CSDSolverTrafoFP2D::SolverPreprocessing() {
 
     _densityMin = 0.1;
     for( unsigned j = 0; j < _nCells; ++j ) {
-        _density[j] = 1.0;
         if( _density[j] < _densityMin ) _density[j] = _densityMin;
     }
 
