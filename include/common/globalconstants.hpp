@@ -129,7 +129,7 @@ enum SOLVER_NAME {
     CSD_SN_FOKKERPLANCK_TRAFO_SOLVER_2D,
     CSD_SN_FOKKERPLANCK_TRAFO_SH_SOLVER_2D,
     CSD_PN_SOLVER,
-    CSD_PN_SOLVER_JL,
+    CSD_MN_SOLVER,
     PN_SOLVER,
     MN_SOLVER
 };
@@ -142,7 +142,7 @@ inline std::map<std::string, SOLVER_NAME> Solver_Map{ { "SN_SOLVER", SN_SOLVER }
                                                       { "CSD_SN_FOKKERPLANCK_TRAFO_SOLVER_2D", CSD_SN_FOKKERPLANCK_TRAFO_SOLVER_2D },
                                                       { "CSD_SN_FOKKERPLANCK_TRAFO_SH_SOLVER_2D", CSD_SN_FOKKERPLANCK_TRAFO_SH_SOLVER_2D },
                                                       { "CSD_PN", CSD_PN_SOLVER },
-                                                      { "CSD_PN_JL", CSD_PN_SOLVER_JL },
+                                                      { "CSD_MN", CSD_MN_SOLVER },
                                                       { "PN_SOLVER", PN_SOLVER },
                                                       { "MN_SOLVER", MN_SOLVER } };
 

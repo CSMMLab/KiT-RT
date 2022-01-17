@@ -6,6 +6,7 @@
 #include "fluxes/numericalflux.hpp"
 #include "problems/problembase.hpp"
 #include "quadratures/quadraturebase.hpp"
+#include "solvers/csdmnsolver.hpp"
 #include "solvers/csdpnsolver.hpp"
 #include "solvers/csdsnsolver.hpp"
 #include "solvers/csdsolvertrafofp.hpp"
@@ -106,6 +107,7 @@ SolverBase* SolverBase::Create( Config* settings ) {
         case CSD_SN_FOKKERPLANCK_TRAFO_SOLVER_2D: return new CSDSolverTrafoFP2D( settings );
         case CSD_SN_FOKKERPLANCK_TRAFO_SH_SOLVER_2D: return new CSDSolverTrafoFPSH2D( settings );
         case CSD_PN_SOLVER: return new CSDPNSolver( settings );
+        case CSD_MN_SOLVER: return new CSDMNSolver( settings );
 
         default: ErrorMessages::Error( "Creator for the chosen solver does not yet exist. This is is the fault of the coder!", CURRENT_FUNCTION );
     }
@@ -442,6 +444,7 @@ void SolverBase::DrawPreSolverOutput() {
         }
         log->info( "---------------------------- Solver Starts -----------------------------" );
         log->info( "| The simulation will run for {} iterations.", _nEnergies );
+        log->info( "| The spatial grid contains {} cells.", _nCells );
         log->info( hLine );
         log->info( lineToPrint );
         log->info( hLine );
