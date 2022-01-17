@@ -63,10 +63,11 @@ SolverBase::SolverBase( Config* settings ) {
     _problem = ProblemBase::Create( _settings, _mesh );
     _sol     = _problem->SetupIC();
     _solNew  = _sol;    // setup temporary sol variable
-
-    _sigmaT = _problem->GetTotalXS( _energies );
-    _sigmaS = _problem->GetScatteringXS( _energies );
-    _Q      = _problem->GetExternalSource( _energies );
+    if( !_settings->GetIsCSD() ) {
+        _sigmaT = _problem->GetTotalXS( _energies );
+        _sigmaS = _problem->GetScatteringXS( _energies );
+        _Q      = _problem->GetExternalSource( _energies );
+    }
 
     // setup numerical flux
     _g = NumericalFlux::Create();
