@@ -18,15 +18,10 @@
 #include "toolboxes/sphericalbase.hpp"
 
 CSDPNSolver::CSDPNSolver( Config* settings ) : PNSolver( settings ) {
-    //  std::cout << "Start of constructor: E_ref = " << E_ref << std::endl;
-    saveE_ref        = E_ref;
-    _polyDegreeBasis = settings->GetMaxMomentDegree();
+    // --- Initialize Dose
+    _dose = std::vector<double>( _nCells, 0.0 );
 
-    // Limiter variables
-    _solDx   = VectorVector( _nCells, Vector( _nSystem, 0.0 ) );
-    _solDy   = VectorVector( _nCells, Vector( _nSystem, 0.0 ) );
-    _limiter = VectorVector( _nCells, Vector( _nSystem, 0.0 ) );
-    _basis   = NULL;
+    // --- Compute transformed energy grid ---
 
     // determine transformed energy grid for tabulated grid
     Vector E_transformed( E_trans.size(), 0.0 );
@@ -36,7 +31,6 @@ CSDPNSolver::CSDPNSolver( Config* settings ) : PNSolver( settings ) {
     // determine minimal and maximal energies
     double minE = 5e-5;
     double maxE = _settings->GetMaxEnergyCSD();
-    _E_cutoff   = maxE;
 
     // define interpolation from energies to corresponding transformed energies \tilde{E} (without substraction of eMaxTrafo)
     Interpolation interpEToTrafo( E_tab, E_transformed );
@@ -54,9 +48,6 @@ CSDPNSolver::CSDPNSolver( Config* settings ) : PNSolver( settings ) {
     for( unsigned n = 0; n < _nEnergies; ++n ) {
         _energies[n] = interpTrafoToE( eMaxTrafo - _eTrafo[n] );
     }
-
-    // Initialize dose
-    _dose = std::vector<double>( _nCells, 0.0 );
 
     // --- evaluate corresponding stopping powers and transport coefficients
 
@@ -80,13 +71,11 @@ CSDPNSolver::CSDPNSolver( Config* settings ) : PNSolver( settings ) {
     _sMid = interpS( eMid );
 }
 
-CSDPNSolver::~CSDPNSolver() {
-    if( _basis ) delete _basis;
-}
+CSDPNSolver::~CSDPNSolver() {}
 
 void CSDPNSolver::IterPreprocessing( unsigned idx_iter ) {
     if( _reconsOrder > 1 ) {
-        auto solDivRho = _sol;
+        VectorVector solDivRho = _sol;
         for( unsigned j = 0; j < _nCells; ++j ) {
             solDivRho[j] = _sol[j] / _density[j];
         }
@@ -98,7 +87,7 @@ void CSDPNSolver::IterPreprocessing( unsigned idx_iter ) {
     // compute scattering cross section at current energy
     for( unsigned idx_degree = 0; idx_degree <= _polyDegreeBasis; ++idx_degree ) {
         // setup interpolation from E to sigma at degree idx_degree
-        Interpolation interp( saveE_ref, blaze::column( sigma_ref, idx_degree ) );
+        Interpolation interp( E_ref, blaze::column( sigma_ref, idx_degree ) );
         sigmaSAtEnergy[idx_degree] = interp( _energies[idx_iter + 1] );
     }
     for( unsigned idx_degree = 0; idx_degree <= _polyDegreeBasis; ++idx_degree ) {
@@ -106,9 +95,7 @@ void CSDPNSolver::IterPreprocessing( unsigned idx_iter ) {
     }
 }
 
-void CSDPNSolver::SolverPreprocessing() {
-    // cross sections do not need to be transformed to ETilde energy grid since e.g. TildeSigmaT(ETilde) = SigmaT(E(ETilde))
-}
+void CSDPNSolver::SolverPreprocessing() {}
 
 void CSDPNSolver::IterPostprocessing( unsigned idx_iter ) {
     // std::cout << "Iter Postprocessing...";
@@ -118,14 +105,13 @@ void CSDPNSolver::IterPostprocessing( unsigned idx_iter ) {
     // --- Compute Flux for solution and Screen Output ---
     ComputeRadFlux();
 
-    unsigned n = idx_iter;
     // -- Compute Dose
     for( unsigned j = 0; j < _nCells; ++j ) {
-        if( n > 0 && n < _nEnergies - 1 ) {
-            _dose[j] += _dE * ( _sol[j][0] * _sMid[n] ) / _density[j];    // update dose with trapezoidal rule // diss Kerstin
+        if( idx_iter > 0 && idx_iter < _nEnergies - 1 ) {
+            _dose[j] += _dE * ( _sol[j][0] * _sMid[idx_iter] ) / _density[j];    // update dose with trapezoidal rule // diss Kerstin
         }
         else {
-            _dose[j] += 0.5 * _dE * ( _sol[j][0] * _sMid[n] ) / _density[j];
+            _dose[j] += 0.5 * _dE * ( _sol[j][0] * _sMid[idx_iter] ) / _density[j];
         }
     }
 }
@@ -225,7 +211,8 @@ void CSDPNSolver::FVMUpdate( unsigned idx_energy ) {
                 int idx_sys = GlobalIndex( idx_l, idx_k );
                 if( implicitScattering ) {
                     _solNew[idx_cell][idx_sys] =
-                        _sol[idx_cell][idx_sys] - ( _dE / _areas[idx_cell] ) * _solNew[idx_cell][idx_sys]; /* cell averaged flux */
+                        _sol[idx_cell][idx_sys] - ( _dE / _areas[idx_cell] ) * _solNew[idx_cell][idx_sys];            /* cell averaged flux */
+                    _solNew[idx_cell][idx_sys] = _solNew[idx_cell][idx_sys] / ( 1.0 + _dE * _sigmaTAtEnergy[idx_l] ); /* implicit scattering */
                 }
                 else {
                     _solNew[idx_cell][idx_sys] = _sol[idx_cell][idx_sys] -
@@ -235,27 +222,6 @@ void CSDPNSolver::FVMUpdate( unsigned idx_energy ) {
             }
             // Source Term
             // _solNew[idx_cell][0] += _dE * _Q[0][idx_cell][0];
-        }
-    }
-    // treat scattering implicitly
-
-    if( implicitScattering ) {
-        // loop over all spatial cells
-#pragma omp parallel for
-        for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
-            // Dirichlet cells stay at IC, farfield assumption
-            if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::DIRICHLET ) continue;
-            for( int idx_l = 0; idx_l <= (int)_polyDegreeBasis; idx_l++ ) {
-                for( int idx_k = -idx_l; idx_k <= idx_l; idx_k++ ) {
-                    int idx_sys = GlobalIndex( idx_l, idx_k );
-                    // if( abs( _solNew[idx_cell][idx_sys] / ( 1.0 + _dE * _sigmaTAtEnergy[idx_l] ) ) > 1e-5 ) {
-                    //     std::cout << "scatter at cell:" << idx_cell << " : " << _solNew[idx_cell][idx_sys] / ( 1.0 + _dE *
-                    // _sigmaTAtEnergy[idx_l] )
-                    //               << "\n";
-                    // }
-                    _solNew[idx_cell][idx_sys] = _solNew[idx_cell][idx_sys] / ( 1.0 + _dE * _sigmaTAtEnergy[idx_l] ); /* scattering */
-                }
-            }
         }
     }
 }
@@ -307,7 +273,7 @@ void CSDPNSolver::PrepareVolumeOutput() {
                     }
                 }
                 break;
-            default: ErrorMessages::Error( "Volume Output Group not defined for PN Solver!", CURRENT_FUNCTION ); break;
+            default: ErrorMessages::Error( "Volume Output Group not defined for CSD PN Solver!", CURRENT_FUNCTION ); break;
         }
     }
 }
@@ -348,41 +314,34 @@ void CSDPNSolver::WriteVolumeOutput( unsigned idx_pseudoTime ) {
                     }
                     break;
 
-                default: ErrorMessages::Error( "Volume Output Group not defined for CSD_PN_TRAFO Solver!", CURRENT_FUNCTION ); break;
+                default: ErrorMessages::Error( "Volume Output Group not defined for CSD PN Solver!", CURRENT_FUNCTION ); break;
             }
         }
     }
-}
-
-Vector CSDPNSolver::ConstructFlux( unsigned ) {
-    // for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
-    //    flux += _moments[idx_quad] * ( _weights[idx_quad] * entropyFlux );
-    //}
-    return Vector( 1, 0.0 );
 }
 
 double CSDPNSolver::NormPDF( double x, double mu, double sigma ) {
     return INV_SQRT_2PI / sigma * std::exp( -( ( x - mu ) * ( x - mu ) ) / ( 2.0 * sigma * sigma ) );
 }
 
-Vector CSDPNSolver::Time2Energy( const Vector& t, const double E_CutOff ) {
-    Interpolation interp( E_trans, E_tab );
-    Interpolation interp2( E_tab, E_trans );
-    return blaze::max( 0, interp( interp2( E_CutOff, 0 ) - t ) );
-}
-
-double CSDPNSolver::Time2Energy( const double t, const double E_CutOff ) {
-    Interpolation interp( E_trans, E_tab );
-    Interpolation interp2( E_tab, E_trans );
-    return std::fmax( 0.0, interp( E_CutOff - t ) );
-}
-
-Vector CSDPNSolver::Energy2Time( const Vector& E, const double E_CutOff ) {
-    Interpolation interp( E_tab, E_trans );
-    return blaze::max( 0, interp( E_CutOff - E ) );
-}
-
-double CSDPNSolver::Energy2Time( const double E, const double E_CutOff ) {
-    Interpolation interp( E_tab, E_trans );
-    return std::fmax( 0, interp( E_CutOff - E ) );
-}
+// Vector CSDPNSolver::Time2Energy( const Vector& t, const double E_CutOff ) {
+//     Interpolation interp( E_trans, E_tab );
+//     Interpolation interp2( E_tab, E_trans );
+//     return blaze::max( 0, interp( interp2( E_CutOff, 0 ) - t ) );
+// }
+//
+// double CSDPNSolver::Time2Energy( const double t, const double E_CutOff ) {
+//     Interpolation interp( E_trans, E_tab );
+//     Interpolation interp2( E_tab, E_trans );
+//     return std::fmax( 0.0, interp( E_CutOff - t ) );
+// }
+//
+// Vector CSDPNSolver::Energy2Time( const Vector& E, const double E_CutOff ) {
+//     Interpolation interp( E_tab, E_trans );
+//     return blaze::max( 0, interp( E_CutOff - E ) );
+// }
+//
+// double CSDPNSolver::Energy2Time( const double E, const double E_CutOff ) {
+//     Interpolation interp( E_tab, E_trans );
+//     return std::fmax( 0, interp( E_CutOff - E ) );
+// }
