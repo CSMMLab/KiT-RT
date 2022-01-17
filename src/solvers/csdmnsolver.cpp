@@ -1,21 +1,16 @@
 #include "solvers/csdmnsolver.hpp"
 #include "common/config.hpp"
-#include "common/globalconstants.hpp"
-#include "common/io.hpp"
 #include "common/mesh.hpp"
+#include "entropies/entropybase.hpp"
 #include "fluxes/numericalflux.hpp"
-#include "kernels/scatteringkernelbase.hpp"
-#include "problems/icru.hpp"
-#include "problems/problembase.hpp"
+#include "optimizers/optimizerbase.hpp"
 #include "solvers/csdpn_starmap_constants.hpp"
+#include "toolboxes/interpolation.hpp"
+#include "toolboxes/sphericalbase.hpp"
 #include "toolboxes/textprocessingtoolbox.hpp"
+
 // externals
 #include "spdlog/spdlog.h"
-#include <iostream>
-#include <mpi.h>
-
-#include "quadratures/quadraturebase.hpp"
-#include "toolboxes/sphericalbase.hpp"
 
 CSDMNSolver::CSDMNSolver( Config* settings ) : MNSolver( settings ) {
     // --- Initialize Dose ---

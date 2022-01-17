@@ -1,5 +1,5 @@
+#include "problems/problembase.hpp"
 #include "common/config.hpp"
-
 #include "problems/aircavity1d.hpp"
 #include "problems/checkerboard.hpp"
 #include "problems/electronrt.hpp"
@@ -7,7 +7,6 @@
 #include "problems/linesource.hpp"
 #include "problems/musclebonelung.hpp"
 #include "problems/phantom2d.hpp"
-#include "problems/problembase.hpp"
 #include "problems/waterphantom.hpp"
 
 ProblemBase::ProblemBase( Config* settings, Mesh* mesh ) {

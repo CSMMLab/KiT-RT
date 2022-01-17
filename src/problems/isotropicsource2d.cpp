@@ -1,10 +1,15 @@
 #include "problems/isotropicsource2d.hpp"
 #include "common/config.hpp"
+#include "common/io.hpp"
 #include "common/mesh.hpp"
 #include "problems/problembase.hpp"
 #include "solvers/csdpn_starmap_constants.hpp"
 #include "toolboxes/errormessages.hpp"
+#include "toolboxes/interpolation.hpp"
 #include "toolboxes/sphericalbase.hpp"
+
+#include <fstream>
+#include <numeric>
 
 IsotropicSource2D::IsotropicSource2D( Config* settings, Mesh* mesh ) : ProblemBase( settings, mesh ) {}
 

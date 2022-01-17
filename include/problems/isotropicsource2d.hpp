@@ -1,15 +1,9 @@
 #ifndef ISOTROPICSOURCE2D_H
 #define ISOTROPICSOURCE2D_H
 
-#include "common/config.hpp"
-#include "common/io.hpp"
-#include "common/mesh.hpp"
-#include "toolboxes/interpolation.hpp"
+#include "problems/problembase.hpp"
 
-#include <fstream>
-#include <numeric>
-
-class ProblemBase;
+class Config;
 
 class IsotropicSource2D : public ProblemBase
 {

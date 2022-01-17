@@ -1,21 +1,13 @@
 #include "solvers/csdpnsolver.hpp"
 #include "common/config.hpp"
-#include "common/globalconstants.hpp"
-#include "common/io.hpp"
 #include "common/mesh.hpp"
 #include "fluxes/numericalflux.hpp"
-#include "kernels/scatteringkernelbase.hpp"
-#include "problems/icru.hpp"
 #include "problems/problembase.hpp"
 #include "solvers/csdpn_starmap_constants.hpp"
-#include "toolboxes/textprocessingtoolbox.hpp"
+#include "toolboxes/interpolation.hpp"
+
 // externals
 #include "spdlog/spdlog.h"
-#include <iostream>
-#include <mpi.h>
-
-#include "quadratures/quadraturebase.hpp"
-#include "toolboxes/sphericalbase.hpp"
 
 CSDPNSolver::CSDPNSolver( Config* settings ) : PNSolver( settings ) {
     // --- Initialize Dose
