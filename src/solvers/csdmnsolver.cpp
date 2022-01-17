@@ -18,8 +18,6 @@
 #include "toolboxes/sphericalbase.hpp"
 
 CSDMNSolver::CSDMNSolver( Config* settings ) : MNSolver( settings ) {
-
-    std::cout << "size_sol" << _sol[0].size() << "\n";
     // --- Initialize Dose ---
     _dose = std::vector<double>( _nCells, 0.0 );
 
@@ -73,9 +71,7 @@ CSDMNSolver::CSDMNSolver( Config* settings ) : MNSolver( settings ) {
     _sMid = interpS( eMid );
 }
 
-CSDMNSolver::~CSDMNSolver() {
-    if( _basis ) delete _basis;
-}
+CSDMNSolver::~CSDMNSolver() {}
 
 void CSDMNSolver::IterPreprocessing( unsigned idx_iter ) {
 

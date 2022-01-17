@@ -161,9 +161,10 @@ void MNSolver::IterPreprocessing( unsigned /*idx_pseudotime*/ ) {
 
     // ------- Entropy closure Step ----------------
 
-    _optimizer->SolveMultiCell( _alpha, _sol, _momentBasis );
+    _optimizer->SolveMultiCell( _alpha, _sol, _momentBasis );    // parallel
 
     // ------- Solution reconstruction step ----
+#pragma omp parallel for
     for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
         for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
             // compute the kinetic density at all grid cells
@@ -174,8 +175,8 @@ void MNSolver::IterPreprocessing( unsigned /*idx_pseudotime*/ ) {
 
     // ------ Compute slope limiters and cell gradients ---
     if( _reconsOrder > 1 ) {
-        _mesh->ComputeSlopes( _nq, _solDx, _solDy, _kineticDensity );
-        _mesh->ComputeLimiter( _nq, _solDx, _solDy, _kineticDensity, _limiter );
+        _mesh->ComputeSlopes( _nq, _solDx, _solDy, _kineticDensity );               // parallel
+        _mesh->ComputeLimiter( _nq, _solDx, _solDy, _kineticDensity, _limiter );    // parallel
     }
 }
 
@@ -207,8 +208,8 @@ void MNSolver::FluxUpdate() {
 }
 
 void MNSolver::FVMUpdate( unsigned idx_iter ) {
-    // Loop over the grid cells
-    //#pragma omp parallel for
+// Loop over the grid cells
+#pragma omp parallel for
     for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
         // Dirichlet Boundaries stay
         if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::DIRICHLET ) continue;

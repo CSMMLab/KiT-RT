@@ -30,10 +30,6 @@ class CSDMNSolver : public MNSolver
 
     // Helper Functions for CSD
     double NormPDF( double x, double mu, double sigma );
-    // Vector Time2Energy( const Vector& t, const double E_CutOff );
-    // double Time2Energy( const double t, const double E_CutOff );
-    // Vector Energy2Time( const Vector& E, const double E_CutOff );
-    // double Energy2Time( const double E, const double E_CutOff );
 };
 
 #endif    // CSDMNSolver_H
