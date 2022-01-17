@@ -3,6 +3,7 @@
 #include "problems/aircavity1d.hpp"
 #include "problems/checkerboard.hpp"
 #include "problems/electronrt.hpp"
+#include "problems/epics.hpp"
 #include "problems/isotropicsource2d.hpp"
 #include "problems/linesource.hpp"
 #include "problems/musclebonelung.hpp"

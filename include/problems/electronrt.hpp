@@ -1,7 +1,6 @@
 #ifndef ELECTRONRT_H
 #define ELECTRONRT_H
 
-#include "epics.hpp"
 #include "problembase.hpp"
 
 class ElectronRT : public ProblemBase
