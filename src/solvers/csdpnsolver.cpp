@@ -55,51 +55,15 @@ CSDPNSolver::CSDPNSolver( Config* settings ) : PNSolver( settings ) {
         _energies[n] = interpTrafoToE( eMaxTrafo - _eTrafo[n] );
     }
 
-    // evaluate corresponding stopping powers and transport coefficients
-    // compute sigmaT is now done during computation in IterPreprocessing()
+    // Initialize dose
+    _dose = std::vector<double>( _nCells, 0.0 );
+
+    // --- evaluate corresponding stopping powers and transport coefficients
 
     // compute stopping powers
     Vector etmp = E_tab;
     Vector stmp = S_tab;
     Interpolation interpS( etmp, stmp );
-    _s = interpS( _energies );
-
-    // write initial condition
-    Vector pos_beam = Vector{ 0.5, 0.5 };
-    _sol            = VectorVector( _nCells, Vector( _nSystem, 0.0 ) );
-
-    for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
-        double x            = _cellMidPoints[idx_cell][0];
-        double y            = _cellMidPoints[idx_cell][1];
-        const double stddev = .01;
-        double f            = NormPDF( x, pos_beam[0], stddev ) * NormPDF( y, pos_beam[1], stddev );
-
-        _sol[idx_cell][0] = f * StarMAPmoments[0];
-
-        for( unsigned idx_sys = 1; idx_sys < _nSystem; idx_sys++ ) {
-            _sol[idx_cell][idx_sys] = f * StarMAPmoments[idx_sys];    // must be VectorVector
-        }
-    }
-
-    //// check normpdf
-    // VectorVector testVec = VectorVector( 100, Vector( 2 + _nSystem, 0.0 ) );
-    // double dx            = 1.0 / 100.0;
-    // for( unsigned i = 0; i < 100; i++ ) {
-    //     const double stddev = .01;
-    //     testVec[i][0]       = dx * i;
-    //     testVec[i][1]       = dx * i;
-    //
-    //    for( unsigned idx_sys = 0; idx_sys < _nSystem; idx_sys++ ) {
-    //        testVec[i][idx_sys + 2] =
-    //            normpdf( testVec[i][0], pos_beam[0], stddev ) * normpdf( testVec[i][1], pos_beam[1], stddev ) * StarMAPmoments[idx_sys];
-    //    }
-    //}
-    // TextProcessingToolbox::PrintVectorVectorToFile( testVec, "IC_fullMoments.csv", 100, 2 + _nSystem );
-
-    _solNew = _sol;
-
-    _dose = std::vector<double>( _settings->GetNCells(), 0.0 );
-
     _sigmaTAtEnergy = Vector( _polyDegreeBasis + 1, 0.0 );
 
     // compute stopping power between energies for dose computation
@@ -114,16 +78,6 @@ CSDPNSolver::CSDPNSolver( Config* settings ) : PNSolver( settings ) {
         eMid[n] = interpTrafoToE( eMaxTrafo - eTrafoMid[n] );
     }
     _sMid = interpS( eMid );
-
-    // // std::cout << "End of constructor: E_ref = " << E_ref << std::endl;
-    // TextProcessingToolbox::PrintVectorToFile( _s, "stopping.csv", _nEnergies );
-    // TextProcessingToolbox::PrintVectorToFile( _sMid, "_sMid.csv", _nEnergies - 1 );
-    // TextProcessingToolbox::PrintVectorToFile( _energies, "energies.csv", _nEnergies );
-    // TextProcessingToolbox::PrintVectorToFile( _eTrafo, "energiesTrafo.csv", _nEnergies );
-    // TextProcessingToolbox::PrintMatrixToFile( _AxPlus, "AxPlus.csv", _nSystem );
-    // TextProcessingToolbox::PrintMatrixToFile( _AxMinus, "AxMinus.csv", _nSystem );
-    // TextProcessingToolbox::PrintMatrixToFile( _AyPlus, "AyPlus.csv", _nSystem );
-    // TextProcessingToolbox::PrintMatrixToFile( _AyMinus, "AyMinus.csv", _nSystem );
 }
 
 CSDPNSolver::~CSDPNSolver() {
@@ -177,12 +131,8 @@ void CSDPNSolver::IterPostprocessing( unsigned idx_iter ) {
 }
 
 void CSDPNSolver::FluxUpdate() {
-    // Vector solL( _nSystem, 0.0 );
-    // Vector solR( _nSystem, 0.0 );
-
     // Loop over all spatial cells
 #pragma omp parallel for
-
     for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
         Vector solL( _nSystem, 0.0 );
         Vector solR( _nSystem, 0.0 );

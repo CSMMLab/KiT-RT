@@ -51,10 +51,10 @@ class LineSource_SN : public LineSource
     LineSource_SN( Config* settings, Mesh* mesh );
     ~LineSource_SN();
 
-    virtual VectorVector GetScatteringXS( const Vector& energies ) override;
-    virtual VectorVector GetTotalXS( const Vector& energies ) override;
-    virtual std::vector<VectorVector> GetExternalSource( const Vector& energies ) override;
-    virtual VectorVector SetupIC() override;
+    VectorVector GetScatteringXS( const Vector& energies ) override;
+    VectorVector GetTotalXS( const Vector& energies ) override;
+    std::vector<VectorVector> GetExternalSource( const Vector& energies ) override;
+    VectorVector SetupIC() override;
 };
 
 class LineSource_SN_Pseudo1D : public LineSource_SN
@@ -95,10 +95,10 @@ class LineSource_PN : public LineSource
     LineSource_PN( Config* settings, Mesh* mesh );
     ~LineSource_PN();
 
-    virtual VectorVector GetScatteringXS( const Vector& energies ) override;
-    virtual VectorVector GetTotalXS( const Vector& energies ) override;
-    virtual std::vector<VectorVector> GetExternalSource( const Vector& energies ) override;
-    virtual VectorVector SetupIC() override;
+    VectorVector GetScatteringXS( const Vector& energies ) override;
+    VectorVector GetTotalXS( const Vector& energies ) override;
+    std::vector<VectorVector> GetExternalSource( const Vector& energies ) override;
+    VectorVector SetupIC() override;
 };
 
 #endif    // LINESOURCE_H

@@ -42,9 +42,9 @@ ProblemBase* ProblemBase::Create( Config* settings, Mesh* mesh ) {
         case PROBLEM_LineSource_Pseudo_1D: return new LineSource_SN_Pseudo1D( settings, mesh );
         case PROBLEM_LineSource_Pseudo_1D_Physics: return new LineSource_SN_Pseudo1D_Physics( settings, mesh );
         case PROBLEM_IsotropicSource_2D:
-            if( settings->GetSolverName() == CSD_PN_SOLVER_JL )
+            if( settings->GetSolverName() == CSD_PN_SOLVER )
                 return new IsotropicSource2D_Moment( settings, mesh );
-            else
+            else // CSD_SN_SOLVER
                 return new IsotropicSource2D( settings, mesh );    // default
         default: return new ElectronRT( settings, mesh );          // Use RadioTherapy as dummy
     }
