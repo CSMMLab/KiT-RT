@@ -119,6 +119,7 @@ void CSDMNSolver::IterPostprocessing( unsigned idx_iter ) {
     ComputeRadFlux();
 
     // --- Compute Dose ---
+#pragma omp parallel for
     for( unsigned j = 0; j < _nCells; ++j ) {
         if( idx_iter > 0 && idx_iter < _nEnergies - 1 ) {
             _dose[j] += _dE * ( _sol[j][0] * _sMid[idx_iter] ) / _density[j];    // update dose with trapezoidal rule // diss Kerstin
