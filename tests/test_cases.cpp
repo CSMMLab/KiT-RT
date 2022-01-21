@@ -280,7 +280,6 @@ TEST_CASE( "CSD_PN_SOLVER", "[validation_tests]" ) {
     }
 }
 
-/*
 TEST_CASE( "CSD_MN_SOLVER", "[validation_tests]" ) {
     std::string csd_mn_fileDir = "input/validation_tests/CSD_MN_solver/";
     SECTION( "point source dual density" ) {
@@ -301,6 +300,7 @@ TEST_CASE( "CSD_MN_SOLVER", "[validation_tests]" ) {
         }
         REQUIRE( errorWithinBounds );
     }
+    /*
     SECTION( "point source dual density 2nd order" ) {
 
         std::string config_file_name = std::string( TESTS_PATH ) + csd_mn_fileDir + "point_source_dual_density_2nd_order.cfg";
@@ -319,9 +319,9 @@ TEST_CASE( "CSD_MN_SOLVER", "[validation_tests]" ) {
             if( std::fabs( test[i] - reference[i] ) > eps ) errorWithinBounds = false;
         }
         REQUIRE( errorWithinBounds );
-    }
+    }*/
 }
-*/
+
 // --- Validation Tests Output ---
 void tokenize( std::string const& str, const char delim, std::vector<std::string>& out ) {
     size_t start;
