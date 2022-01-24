@@ -1,20 +1,18 @@
-#ifndef CSDPNSOLVER_H
-#define CSDPNSOLVER_H
+#ifndef CSDMNSolver_H
+#define CSDMNSolver_H
 
-#include "solvers/pnsolver.hpp"
+#include "solvers/mnsolver.hpp"
 
-class SphericalBase;
-
-class CSDPNSolver : public PNSolver
+class CSDMNSolver : public MNSolver
 {
   public:
     /**
-     * @brief CSDPNSolver constructor
+     * @brief CSDMNSolver constructor
      * @param settings stores all needed information
      */
-    CSDPNSolver( Config* settings );
+    CSDMNSolver( Config* settings );
 
-    virtual ~CSDPNSolver();
+    virtual ~CSDMNSolver();
 
   private:
     std::vector<double> _dose; /*!< @brief Radiation Dose */
@@ -28,9 +26,10 @@ class CSDPNSolver : public PNSolver
     void FVMUpdate( unsigned idx_energy ) override;
     void PrepareVolumeOutput() override;
     void WriteVolumeOutput( unsigned idx_pseudoTime ) override;
+    Vector ConstructFlux( unsigned idx_cell ) override;
 
     // Helper Functions for CSD
     double NormPDF( double x, double mu, double sigma );
 };
 
-#endif    // CSDPNSOLVER_H
+#endif    // CSDMNSolver_H

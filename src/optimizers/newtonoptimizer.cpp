@@ -193,7 +193,8 @@ void NewtonOptimizer::Solve( Vector& alpha, Vector& sol, const VectorVector& mom
                                   std::to_string( ComputeObjFunc( alpha, sol, moments ) ) + "\nBoundary Ratio: " + std::to_string( normU1 / sol[0] ),
                               CURRENT_FUNCTION );
     }
-    if( _settings->GetDim() == 1 ) {
+    else {
+        ErrorMessages::Error( "Newton did not converge at cell " + std::to_string( idx_cell ), CURRENT_FUNCTION );
     }
 }
 

@@ -50,14 +50,14 @@ class MNSolver : public SolverBase
     void WriteVolumeOutput( unsigned idx_iter ) override;
 
     // Solver
-    void FVMUpdate( unsigned idx_iter ) override;
-    void FluxUpdate() override;
-    void IterPreprocessing( unsigned /*idx_iter*/ ) override;
-    void IterPostprocessing( unsigned /*idx_iter*/ ) override;
+    virtual void FVMUpdate( unsigned idx_iter ) override;
+    virtual void FluxUpdate() override;
+    virtual void IterPreprocessing( unsigned /*idx_iter*/ ) override;
+    virtual void IterPostprocessing( unsigned /*idx_iter*/ ) override;
     /*! @brief  Construct flux by computing the Moment of the  sum of FVM discretization at the interface of cell
      *  @param  idx_cell  current cell id
      *  @returns  sum over all neighbors of flux for all moments at interface of idx_cell, idx_neighbor */
-    Vector ConstructFlux( unsigned idx_cell );
+    virtual Vector ConstructFlux( unsigned idx_cell );
     /*! @brief Corrects the solution _sol[idx_cell] to be realizable w.r.t. the reconstructed entropy (eta'(alpha*m))
         @param idx_cell  cell where the correction happens*/
     void ComputeRealizableSolution( unsigned idx_cell );

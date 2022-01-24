@@ -211,12 +211,14 @@ VectorVector LineSource_PN::SetupIC() {
 
     // Initial condition is dirac impulse at (x,y) = (0,0) ==> constant in angle ==> all moments - exept first - are zero.
     double t       = 3.2e-4;    // pseudo time for gaussian smoothing (Approx to dirac impulse)
-    double epsilon = 1e-2;      // minimal value for first moment to avoid div by zero error
+    double epsilon = 1e-4;      // minimal value for first moment to avoid div by zero error
+
     for( unsigned j = 0; j < cellMids.size(); ++j ) {
         double x = cellMids[j][0];
         double y = cellMids[j][1];    // (x- 0.5) * (x- 0.5)
 
         double kinetic_density = std::max( 1.0 / ( 4.0 * M_PI * t ) * std::exp( -( x * x + y * y ) / ( 4 * t ) ), epsilon );
+
         if( _settings->GetSphericalBasisName() == SPHERICAL_MONOMIALS ) {
             psi[j] = kinetic_density * uIC / uIC[0];    // Remember scaling
         }

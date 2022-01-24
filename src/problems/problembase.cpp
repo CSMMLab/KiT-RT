@@ -1,13 +1,13 @@
+#include "problems/problembase.hpp"
 #include "common/config.hpp"
-
 #include "problems/aircavity1d.hpp"
 #include "problems/checkerboard.hpp"
 #include "problems/electronrt.hpp"
+#include "problems/epics.hpp"
 #include "problems/isotropicsource2d.hpp"
 #include "problems/linesource.hpp"
 #include "problems/musclebonelung.hpp"
 #include "problems/phantom2d.hpp"
-#include "problems/problembase.hpp"
 #include "problems/waterphantom.hpp"
 
 ProblemBase::ProblemBase( Config* settings, Mesh* mesh ) {
@@ -43,8 +43,12 @@ ProblemBase* ProblemBase::Create( Config* settings, Mesh* mesh ) {
         case PROBLEM_Phantom2D: return new Phantom2D( settings, mesh );
         case PROBLEM_LineSource_Pseudo_1D: return new LineSource_SN_Pseudo1D( settings, mesh );
         case PROBLEM_LineSource_Pseudo_1D_Physics: return new LineSource_SN_Pseudo1D_Physics( settings, mesh );
-        case PROBLEM_IsotropicSource_2D: return new IsotropicSource2D( settings, mesh );
-        default: return new ElectronRT( settings, mesh );    // Use RadioTherapy as dummy
+        case PROBLEM_IsotropicSource_2D:
+            if( settings->GetSolverName() == CSD_PN_SOLVER || settings->GetSolverName() == CSD_MN_SOLVER )
+                return new IsotropicSource2D_Moment( settings, mesh );
+            else                                                   // CSD_SN_SOLVER
+                return new IsotropicSource2D( settings, mesh );    // default
+        default: return new ElectronRT( settings, mesh );          // Use RadioTherapy as dummy
     }
 }
 

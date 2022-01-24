@@ -82,14 +82,11 @@ void PNSolver::ComputeRadFlux() {
 
 void PNSolver::FluxUpdate() {
 
-    Vector solL( _nSystem, 0.0 );
-    Vector solR( _nSystem, 0.0 );
-    // auto solL = _sol[2];    // refactor! typesafety!
-    // auto solR = _sol[2];
-
     // Loop over all spatial cells
+#pragma omp parallel for
     for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
-
+        Vector solL( _nSystem, 0.0 );
+        Vector solR( _nSystem, 0.0 );
         // Dirichlet cells stay at IC, farfield assumption
         if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::DIRICHLET ) continue;
 
@@ -157,7 +154,8 @@ void PNSolver::FluxUpdate() {
 }
 
 void PNSolver::FVMUpdate( unsigned idx_energy ) {
-    // Loop over all spatial cells
+// Loop over all spatial cells
+#pragma omp parallel for
     for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
         // Dirichlet cells stay at IC, farfield assumption
         if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::DIRICHLET ) continue;

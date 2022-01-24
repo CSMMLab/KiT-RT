@@ -6,6 +6,7 @@
 #include "fluxes/numericalflux.hpp"
 #include "problems/problembase.hpp"
 #include "quadratures/quadraturebase.hpp"
+#include "solvers/csdmnsolver.hpp"
 #include "solvers/csdpnsolver.hpp"
 #include "solvers/csdsnsolver.hpp"
 #include "solvers/csdsolvertrafofp.hpp"
@@ -54,21 +55,20 @@ SolverBase::SolverBase( Config* settings ) {
         double maxE = _settings->GetMaxEnergyCSD();
         _nEnergies  = std::ceil( ( maxE - minE ) / _dE );
         _energies   = blaze::linspace( _nEnergies, minE, maxE );
-        //_energies = blaze::linspace( _nEnergies, maxE, minE );    // go backwards from biggest to smallest energy
     }
     else {    // Not CSD Solver
         _nEnergies = unsigned( settings->GetTEnd() / _dE );
         _energies  = blaze::linspace( _nEnergies, 0.0, settings->GetTEnd() );    // go upward from 0 to T_end
     }
-
     // setup problem  and store frequently used params
     _problem = ProblemBase::Create( _settings, _mesh );
     _sol     = _problem->SetupIC();
     _solNew  = _sol;    // setup temporary sol variable
-
-    _sigmaT = _problem->GetTotalXS( _energies );
-    _sigmaS = _problem->GetScatteringXS( _energies );
-    _Q      = _problem->GetExternalSource( _energies );
+    if( !_settings->GetIsCSD() ) {
+        _sigmaT = _problem->GetTotalXS( _energies );
+        _sigmaS = _problem->GetScatteringXS( _energies );
+        _Q      = _problem->GetExternalSource( _energies );
+    }
 
     // setup numerical flux
     _g = NumericalFlux::Create();
@@ -109,6 +109,8 @@ SolverBase* SolverBase::Create( Config* settings ) {
         case CSD_SN_FOKKERPLANCK_TRAFO_SOLVER_2D: return new CSDSolverTrafoFP2D( settings );
         case CSD_SN_FOKKERPLANCK_TRAFO_SH_SOLVER_2D: return new CSDSolverTrafoFPSH2D( settings );
         case CSD_PN_SOLVER: return new CSDPNSolver( settings );
+        case CSD_MN_SOLVER: return new CSDMNSolver( settings );
+
         default: ErrorMessages::Error( "Creator for the chosen solver does not yet exist. This is is the fault of the coder!", CURRENT_FUNCTION );
     }
     ErrorMessages::Error( "Creator for the chosen solver does not yet exist. This is is the fault of the coder!", CURRENT_FUNCTION );
@@ -444,6 +446,7 @@ void SolverBase::DrawPreSolverOutput() {
         }
         log->info( "---------------------------- Solver Starts -----------------------------" );
         log->info( "| The simulation will run for {} iterations.", _nEnergies );
+        log->info( "| The spatial grid contains {} cells.", _nCells );
         log->info( hLine );
         log->info( lineToPrint );
         log->info( hLine );
