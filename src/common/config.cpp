@@ -575,7 +575,8 @@ void Config::SetPostprocessing() {
                                               CURRENT_FUNCTION );
                     }
                     break;
-                case MN_SOLVER:
+                case MN_SOLVER:    // Fallthrough
+                case MN_SOLVER_NORMALIZED:
                     supportedGroups = { MINIMAL, MOMENTS, DUAL_MOMENTS, ANALYTIC };
                     if( supportedGroups.end() == std::find( supportedGroups.begin(), supportedGroups.end(), _volumeOutput[idx_volOutput] ) ) {
 

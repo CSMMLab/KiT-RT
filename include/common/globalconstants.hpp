@@ -130,7 +130,8 @@ enum SOLVER_NAME {
     CSD_SN_FOKKERPLANCK_TRAFO_SH_SOLVER_2D,
     CSD_PN_SOLVER,
     PN_SOLVER,
-    MN_SOLVER
+    MN_SOLVER,
+    MN_SOLVER_NORMALIZED
 };
 
 inline std::map<std::string, SOLVER_NAME> Solver_Map{ { "SN_SOLVER", SN_SOLVER },
@@ -142,7 +143,8 @@ inline std::map<std::string, SOLVER_NAME> Solver_Map{ { "SN_SOLVER", SN_SOLVER }
                                                       { "CSD_SN_FOKKERPLANCK_TRAFO_SH_SOLVER_2D", CSD_SN_FOKKERPLANCK_TRAFO_SH_SOLVER_2D },
                                                       { "CSD_PN", CSD_PN_SOLVER },
                                                       { "PN_SOLVER", PN_SOLVER },
-                                                      { "MN_SOLVER", MN_SOLVER } };
+                                                      { "MN_SOLVER", MN_SOLVER },
+                                                      { "MN_SOLVER_NORMALIZED", MN_SOLVER_NORMALIZED } };
 
 // Entropy functional
 enum ENTROPY_NAME { QUADRATIC, MAXWELL_BOLTZMANN, BOSE_EINSTEIN, FERMI_DIRAC };
