@@ -2,6 +2,7 @@
 #include "common/config.hpp"
 #include "common/mesh.hpp"
 #include "toolboxes/sphericalbase.hpp"
+#include "toolboxes/textprocessingtoolbox.hpp"
 
 // ---- Checkerboard Sn ----
 // Constructor for Ckeckerboard case with Sn
