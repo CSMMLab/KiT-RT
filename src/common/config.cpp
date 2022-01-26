@@ -260,8 +260,12 @@ void Config::SetConfigOptions() {
     AddBoolOption( "SN_ALL_GAUSS_PTS", _allGaussPts, false );
 
     // Linesource Testcase Options
-    /*! @brief SCATTER_COEFF \n DESCRIPTION: Sets the scattering coefficient for the Linesource test case. \n DEFAULT 0.0 \ingroup Config */
+    /*! @brief SCATTER_COEFF \n DESCRIPTION: Sets the scattering coefficient for the Linesource test case. \n DEFAULT 1.0 \ingroup Config */
     AddDoubleOption( "SCATTER_COEFF", _sigmaS, 1.0 );
+
+    // Checkerboard Testcase Options
+    /*! @brief SCATTER_COEFF \n DESCRIPTION: Sets the Source magnitude for the checkerboard testcase. \n DEFAULT 1.0 \ingroup Config */
+    AddDoubleOption( "SOURCE_MAGNITUDE", _magQ, 1.0 );
 
     // CSD related options
     /*! @brief MAX_ENERGY_CSD \n DESCRIPTION: Sets maximum energy for the CSD simulation.\n DEFAULT \ingroup Config */
@@ -580,7 +584,8 @@ void Config::SetPostprocessing() {
                                               CURRENT_FUNCTION );
                     }
                     break;
-                case MN_SOLVER:
+                case MN_SOLVER:    // Fallthrough
+                case MN_SOLVER_NORMALIZED:
                     supportedGroups = { MINIMAL, MOMENTS, DUAL_MOMENTS, ANALYTIC };
                     if( supportedGroups.end() == std::find( supportedGroups.begin(), supportedGroups.end(), _volumeOutput[idx_volOutput] ) ) {
 

@@ -23,13 +23,15 @@ ProblemBase* ProblemBase::Create( Config* settings, Mesh* mesh ) {
     // Choose problem type
     switch( name ) {
         case PROBLEM_LineSource: {
-            if( settings->GetSolverName() == PN_SOLVER || settings->GetSolverName() == MN_SOLVER )
+            if( settings->GetSolverName() == PN_SOLVER || settings->GetSolverName() == MN_SOLVER ||
+                settings->GetSolverName() == MN_SOLVER_NORMALIZED )
                 return new LineSource_PN( settings, mesh );
             else
                 return new LineSource_SN( settings, mesh );    // default
         }
         case PROBLEM_Checkerboard: {
-            if( settings->GetSolverName() == PN_SOLVER || settings->GetSolverName() == MN_SOLVER )
+            if( settings->GetSolverName() == PN_SOLVER || settings->GetSolverName() == MN_SOLVER ||
+                settings->GetSolverName() == MN_SOLVER_NORMALIZED )
                 return new Checkerboard_Moment( settings, mesh );
             else
                 return new Checkerboard_SN( settings, mesh );    // default

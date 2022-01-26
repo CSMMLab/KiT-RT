@@ -1,6 +1,7 @@
 #include "problems/aircavity1d.hpp"
 #include "common/config.hpp"
 #include "common/mesh.hpp"
+#include "problems/epics.hpp"
 
 AirCavity1D::AirCavity1D( Config* settings, Mesh* mesh ) : ElectronRT( settings, mesh ) {}
 

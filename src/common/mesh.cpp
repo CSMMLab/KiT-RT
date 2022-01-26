@@ -252,11 +252,10 @@ Vector Mesh::ComputeOutwardFacingNormal( const Vector& nodeA, const Vector& node
 
 void Mesh::ComputeSlopes( unsigned nq, VectorVector& psiDerX, VectorVector& psiDerY, const VectorVector& psi ) const {
 #pragma omp parallel for
-    for( unsigned idx_sys = 0; idx_sys < nq; ++idx_sys ) {
-        for( unsigned idx_cell = 0; idx_cell < _numCells; ++idx_cell ) {
+    for( unsigned idx_cell = 0; idx_cell < _numCells; ++idx_cell ) {
+        for( unsigned idx_sys = 0; idx_sys < nq; ++idx_sys ) {
             psiDerX[idx_cell][idx_sys] = 0.0;
             psiDerY[idx_cell][idx_sys] = 0.0;
-
             // if( cell->IsBoundaryCell() ) continue; // skip ghost cells
             if( _cellBoundaryTypes[idx_cell] != 2 ) continue;    // skip ghost cells
             // compute derivative by summing over cell boundary
@@ -279,7 +278,6 @@ void Mesh::ComputeLimiter(
     for( unsigned idx_cell = 0; idx_cell < _numCells; idx_cell++ ) {
         for( unsigned idx_sys = 0; idx_sys < nSys; idx_sys++ ) {
             double r = 0.0;
-
             if( _cellBoundaryTypes[idx_cell] != 2 ) {
                 limiter[idx_cell][idx_sys] = 0.0;    // turn to first order on boundaries
                 continue;                            // skip computation

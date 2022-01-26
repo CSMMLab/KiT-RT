@@ -80,7 +80,8 @@ class Config
 
     // Linesource
     double _sigmaS; /*!< @brief Scattering coeffient for Linesource test case */
-
+    // Checkerboard
+    double _magQ; /*!< @brief Magnitude of Source */
     // Database ICRU
     std::string _dataDir; /*!< @brief material directory */
     // ElectronRT
@@ -297,7 +298,8 @@ class Config
 
     // Linesource
     double inline GetSigmaS() const { return _sigmaS; }
-
+    // Checkerboard
+    double inline GetSourceMagnitude() const { return _magQ; }
     // CSD
     double inline GetMaxEnergyCSD() const { return _maxEnergyCSD; }
     //  Optimizer
