@@ -92,14 +92,13 @@ void MNSolver::ComputeMoments() {
     double my, phi;
 
     for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
-        my  = _quadPointsSphere[idx_quad][0];
-        phi = _quadPointsSphere[idx_quad][1];
-
+        my                     = _quadPointsSphere[idx_quad][0];
+        phi                    = _quadPointsSphere[idx_quad][1];
         _momentBasis[idx_quad] = _basis->ComputeSphericalBasis( my, phi );
     }
 }
 
-Vector MNSolver::ConstructFlux( unsigned idx_cell ) {
+Vector MNSolver::ConstructFlux( unsigned idx_cell ) {    // REFACTOR FOR SPEED!
     //--- Integration of moments of flux ---
     double solL, solR, kineticFlux;
     Vector flux( _nSystem, 0.0 );
@@ -159,11 +158,23 @@ void MNSolver::ComputeRealizableSolution( unsigned idx_cell ) {
 
 void MNSolver::IterPreprocessing( unsigned /*idx_pseudotime*/ ) {
 
+    // if( _settings->GetOptimizerName() == NEWTON ) {
+    //     for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
+    //         if( _sol[idx_cell][0] < 0.0 ) {
+    //             std::string resString = "Negative moment at cell: " + std::to_string( idx_cell ) + "\nCoordinates " +
+    //                                     std::to_string( _mesh->GetCellMidPoints()[idx_cell][0] ) + "|" +
+    //                                     std::to_string( _mesh->GetCellMidPoints()[idx_cell][1] );
+    //             ErrorMessages::Error( resString, CURRENT_FUNCTION );
+    //         }
+    //     }
+    // }
+
     // ------- Entropy closure Step ----------------
 
-    _optimizer->SolveMultiCell( _alpha, _sol, _momentBasis );
+    _optimizer->SolveMultiCell( _alpha, _sol, _momentBasis );    // parallel
 
     // ------- Solution reconstruction step ----
+#pragma omp parallel for
     for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
         for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
             // compute the kinetic density at all grid cells
@@ -174,8 +185,8 @@ void MNSolver::IterPreprocessing( unsigned /*idx_pseudotime*/ ) {
 
     // ------ Compute slope limiters and cell gradients ---
     if( _reconsOrder > 1 ) {
-        _mesh->ComputeSlopes( _nq, _solDx, _solDy, _kineticDensity );
-        _mesh->ComputeLimiter( _nq, _solDx, _solDy, _kineticDensity, _limiter );
+        _mesh->ComputeSlopes( _nq, _solDx, _solDy, _kineticDensity );               // parallel
+        _mesh->ComputeLimiter( _nq, _solDx, _solDy, _kineticDensity, _limiter );    // parallel
     }
 }
 
@@ -207,8 +218,8 @@ void MNSolver::FluxUpdate() {
 }
 
 void MNSolver::FVMUpdate( unsigned idx_iter ) {
-    // Loop over the grid cells
-    //#pragma omp parallel for
+// Loop over the grid cells
+#pragma omp parallel for
     for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
         // Dirichlet Boundaries stay
         if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::DIRICHLET ) continue;

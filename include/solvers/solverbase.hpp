@@ -49,6 +49,7 @@ class SolverBase
 
     std::vector<double> _density; /*!< @brief patient density, dim(_density) = _nCells (only for csdsolver) */
     Vector _s;                    /*!< @brief stopping power, dim(_s) = _maxIter (only for csdsolver) */
+    Vector _sMid;                 /*!< @brief stopping power at intermediate time steps, dim(_s) = _maxIter (only for csdsolver) */
 
     std::vector<VectorVector> _Q; /*!< @brief external source term. Dim(_Q) = _maxIter x (_nCells x _nSystem) */
     VectorVector _sigmaS;         /*!< @brief scattering cross section for all energies. len: _nEnergies x _nCells */

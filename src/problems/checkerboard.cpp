@@ -1,7 +1,9 @@
 #include "problems/checkerboard.hpp"
 #include "common/config.hpp"
 #include "common/mesh.hpp"
+#include "quadratures/quadraturebase.hpp"
 #include "toolboxes/sphericalbase.hpp"
+#include "toolboxes/textprocessingtoolbox.hpp"
 
 // ---- Checkerboard Sn ----
 // Constructor for Ckeckerboard case with Sn
@@ -32,7 +34,7 @@ std::vector<VectorVector> Checkerboard_SN::GetExternalSource( const Vector& /*en
     VectorVector Q( _mesh->GetNumCells(), Vector( 1u, 0.0 ) );
     auto cellMids = _mesh->GetCellMidPoints();
     for( unsigned j = 0; j < cellMids.size(); ++j ) {
-        if( isSource( cellMids[j] ) ) Q[j] = 1.0 / ( 4 * M_PI );    // isotropic source
+        if( isSource( cellMids[j] ) ) Q[j] = _settings->GetSourceMagnitude() / ( 4 * M_PI );    // isotropic source
     }
     return std::vector<VectorVector>( 1u, Q );
 }
@@ -96,17 +98,89 @@ VectorVector Checkerboard_Moment::GetScatteringXS( const Vector& energies ) { re
 VectorVector Checkerboard_Moment::GetTotalXS( const Vector& energies ) { return VectorVector( energies.size(), _totalXS ); }
 
 std::vector<VectorVector> Checkerboard_Moment::GetExternalSource( const Vector& /*energies*/ ) {
-    VectorVector Q( _mesh->GetNumCells(), Vector( 1u, 0.0 ) );
-    auto cellMids = _mesh->GetCellMidPoints();
-    for( unsigned j = 0; j < cellMids.size(); ++j ) {
-        if( isSource( cellMids[j] ) ) Q[j] = 1.0 / std::sqrt( 4 * M_PI );    // isotropic source
+    // In case of PN, spherical basis is per default SPHERICAL_HARMONICS
+    SphericalBase* tempBase  = SphericalBase::Create( _settings );
+    unsigned ntotalEquations = tempBase->GetBasisSize();
+
+    VectorVector Q( _mesh->GetNumCells(), Vector( ntotalEquations, 0.0 ) );    // zero could lead to problems?
+    VectorVector cellMids = _mesh->GetCellMidPoints();
+
+    Vector uIC( ntotalEquations, 0 );
+
+    if( _settings->GetSphericalBasisName() == SPHERICAL_MONOMIALS ) {
+        QuadratureBase* quad          = QuadratureBase::Create( _settings );
+        VectorVector quadPointsSphere = quad->GetPointsSphere();
+        Vector w                      = quad->GetWeights();
+
+        double my, phi;
+        VectorVector moments = VectorVector( quad->GetNq(), Vector( tempBase->GetBasisSize(), 0.0 ) );
+
+        for( unsigned idx_quad = 0; idx_quad < quad->GetNq(); idx_quad++ ) {
+            my                = quadPointsSphere[idx_quad][0];
+            phi               = quadPointsSphere[idx_quad][1];
+            moments[idx_quad] = tempBase->ComputeSphericalBasis( my, phi );
+        }
+        // Integrate <1*m> to get factors for monomial basis in isotropic scattering
+        for( unsigned idx_quad = 0; idx_quad < quad->GetNq(); idx_quad++ ) {
+            uIC += w[idx_quad] * moments[idx_quad];
+        }
+        delete quad;
     }
+    double kinetic_density = _settings->GetSourceMagnitude();
+    for( unsigned j = 0; j < cellMids.size(); ++j ) {
+        if( isSource( cellMids[j] ) ) {
+            if( _settings->GetSphericalBasisName() == SPHERICAL_MONOMIALS ) {
+                Q[j] = kinetic_density * uIC / uIC[0];    // Remember scaling
+            }
+            if( _settings->GetSphericalBasisName() == SPHERICAL_HARMONICS ) {
+                Q[j][0] = kinetic_density / std::sqrt( 4 * M_PI );
+            }
+        }
+    }
+    delete tempBase;    // Only temporally needed
     return std::vector<VectorVector>( 1u, Q );
 }
 
 VectorVector Checkerboard_Moment::SetupIC() {
-    int ntotalEquations = _basis->GetBasisSize();
-    VectorVector psi( _mesh->GetNumCells(), Vector( ntotalEquations, 1e-10 ) );
+    // In case of PN, spherical basis is per default SPHERICAL_HARMONICS
+    SphericalBase* tempBase  = SphericalBase::Create( _settings );
+    unsigned ntotalEquations = tempBase->GetBasisSize();
+
+    VectorVector psi( _mesh->GetNumCells(), Vector( ntotalEquations, 0 ) );    // zero could lead to problems?
+    VectorVector cellMids = _mesh->GetCellMidPoints();
+
+    Vector uIC( ntotalEquations, 0 );
+
+    if( _settings->GetSphericalBasisName() == SPHERICAL_MONOMIALS ) {
+        QuadratureBase* quad          = QuadratureBase::Create( _settings );
+        VectorVector quadPointsSphere = quad->GetPointsSphere();
+        Vector w                      = quad->GetWeights();
+
+        double my, phi;
+        VectorVector moments = VectorVector( quad->GetNq(), Vector( tempBase->GetBasisSize(), 0.0 ) );
+
+        for( unsigned idx_quad = 0; idx_quad < quad->GetNq(); idx_quad++ ) {
+            my                = quadPointsSphere[idx_quad][0];
+            phi               = quadPointsSphere[idx_quad][1];
+            moments[idx_quad] = tempBase->ComputeSphericalBasis( my, phi );
+        }
+        // Integrate <1*m> to get factors for monomial basis in isotropic scattering
+        for( unsigned idx_quad = 0; idx_quad < quad->GetNq(); idx_quad++ ) {
+            uIC += w[idx_quad] * moments[idx_quad];
+        }
+        delete quad;
+    }
+    // Initial condition is dirac impulse at (x,y) = (0,0) ==> constant in angle ==> all moments - exept first - are zero.
+    double kinetic_density = 1e-3;
+    for( unsigned j = 0; j < cellMids.size(); ++j ) {
+        if( _settings->GetSphericalBasisName() == SPHERICAL_MONOMIALS ) {
+            psi[j] = kinetic_density * uIC / uIC[0];    // Remember scaling
+        }
+        if( _settings->GetSphericalBasisName() == SPHERICAL_HARMONICS ) {
+            psi[j][0] = kinetic_density;
+        }
+    }
+    delete tempBase;    // Only temporally needed
     return psi;
 }
 

@@ -260,8 +260,12 @@ void Config::SetConfigOptions() {
     AddBoolOption( "SN_ALL_GAUSS_PTS", _allGaussPts, false );
 
     // Linesource Testcase Options
-    /*! @brief SCATTER_COEFF \n DESCRIPTION: Sets the scattering coefficient for the Linesource test case. \n DEFAULT 0.0 \ingroup Config */
+    /*! @brief SCATTER_COEFF \n DESCRIPTION: Sets the scattering coefficient for the Linesource test case. \n DEFAULT 1.0 \ingroup Config */
     AddDoubleOption( "SCATTER_COEFF", _sigmaS, 1.0 );
+
+    // Checkerboard Testcase Options
+    /*! @brief SCATTER_COEFF \n DESCRIPTION: Sets the Source magnitude for the checkerboard testcase. \n DEFAULT 1.0 \ingroup Config */
+    AddDoubleOption( "SOURCE_MAGNITUDE", _magQ, 1.0 );
 
     // CSD related options
     /*! @brief MAX_ENERGY_CSD \n DESCRIPTION: Sets maximum energy for the CSD simulation.\n DEFAULT \ingroup Config */
@@ -493,6 +497,7 @@ void Config::SetPostprocessing() {
         case CSD_SN_FOKKERPLANCK_TRAFO_SH_SOLVER_2D:    // Fallthrough
         case CSD_SN_SOLVER:                             // Fallthrough
         case CSD_PN_SOLVER:                             // Fallthrough
+        case CSD_MN_SOLVER:                             // Fallthrough
             _csd = true;
             break;
         default: _csd = false;
@@ -530,9 +535,13 @@ void Config::SetPostprocessing() {
                 CURRENT_FUNCTION );
         }
 
-        // if( GetSolverName() == MN_SOLVER && GetSphericalBasisName() == SPHERICAL_MONOMIALS && GetMaxMomentDegree() > 1 ) {
-        //     ErrorMessages::Error( "MN Solver only with monomial basis only stable up to degree 1. This is a TODO.", CURRENT_FUNCTION );
-        // }
+        if( GetSolverName() == CSD_MN_SOLVER && GetSphericalBasisName() != SPHERICAL_HARMONICS ) {
+            ErrorMessages::Error( "CSD_MN_SOLVER only works with Spherical Harmonics currently.", CURRENT_FUNCTION );
+        }
+
+        if( GetReconsOrder() > 2 ) {
+            ErrorMessages::Error( "Solvers only work with 1st and 2nd order spatial fluxes.", CURRENT_FUNCTION );
+        }
     }
 
     // --- Output Postprocessing ---
@@ -575,7 +584,8 @@ void Config::SetPostprocessing() {
                                               CURRENT_FUNCTION );
                     }
                     break;
-                case MN_SOLVER:
+                case MN_SOLVER:    // Fallthrough
+                case MN_SOLVER_NORMALIZED:
                     supportedGroups = { MINIMAL, MOMENTS, DUAL_MOMENTS, ANALYTIC };
                     if( supportedGroups.end() == std::find( supportedGroups.begin(), supportedGroups.end(), _volumeOutput[idx_volOutput] ) ) {
 
@@ -622,6 +632,15 @@ void Config::SetPostprocessing() {
                         ErrorMessages::Error(
                             "CSD_PN_SOLVER types only supports volume output MEDICAL, MOMENTS and MINIMAL.\nPlease check your .cfg file.",
                             CURRENT_FUNCTION );
+                    }
+                    break;
+                case CSD_MN_SOLVER:
+                    supportedGroups = { MINIMAL, MEDICAL, MOMENTS, DUAL_MOMENTS };
+                    if( supportedGroups.end() == std::find( supportedGroups.begin(), supportedGroups.end(), _volumeOutput[idx_volOutput] ) ) {
+
+                        ErrorMessages::Error( "CSD_MN_SOLVER types only supports volume output MEDICAL, MOMENTS, DUAL_MOMENTS and MINIMAL.\nPlease "
+                                              "check your .cfg file.",
+                                              CURRENT_FUNCTION );
                     }
                     break;
                 default:

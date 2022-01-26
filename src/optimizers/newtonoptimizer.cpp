@@ -170,7 +170,19 @@ void NewtonOptimizer::Solve( Vector& alpha, Vector& sol, const VectorVector& mom
                 return;
             }
             else if( ++lineSearchCounter > _maxLineSearches ) {
-                ErrorMessages::Error( "Newton needed too many refinement steps!  at cell " + std::to_string( idx_cell ), CURRENT_FUNCTION );
+                std::string uSolString = "At moment: (" + std::to_string( sol[0] );
+                for( unsigned i = 1; i < nSize; i++ ) {
+                    uSolString += " | " + std::to_string( sol[i] );
+                }
+                uSolString += ").";
+                std::string alphaSolString = "At mulitplier: (" + std::to_string( alpha[0] );
+                for( unsigned i = 1; i < nSize; i++ ) {
+                    alphaSolString += " | " + std::to_string( alpha[i] );
+                }
+                alphaSolString += ").";
+                ErrorMessages::Error( "Newton needed too many refinement steps!  at cell " + std::to_string( idx_cell ) + ",\n " + uSolString + "\n" +
+                                          alphaSolString,
+                                      CURRENT_FUNCTION );
             }
         }
         alpha = alphaNew;
@@ -185,15 +197,24 @@ void NewtonOptimizer::Solve( Vector& alpha, Vector& sol, const VectorVector& mom
     }
     uSolString += ").";
 
-    if( _settings->GetDim() != 1 ) {
+    std::string alphaSolString = "At mulitplier: (" + std::to_string( alpha[0] );
+    for( unsigned i = 1; i < nSize; i++ ) {
+        alphaSolString += " | " + std::to_string( alpha[i] );
+    }
+    alphaSolString += ").";
+
+    if( _settings->GetDim() == 3 ) {
         Vector u1     = { sol[1], sol[2], sol[3] };
         double normU1 = norm( u1 );
-        ErrorMessages::Error( "Newton did not converge at cell " + std::to_string( idx_cell ) + "\n" + uSolString +
-                                  "\nNorm of gradient: " + std::to_string( norm( dalphaNew ) ) + "\nObjective function value: " +
-                                  std::to_string( ComputeObjFunc( alpha, sol, moments ) ) + "\nBoundary Ratio: " + std::to_string( normU1 / sol[0] ),
+        ErrorMessages::Error( "Newton did not converge at cell " + std::to_string( idx_cell ) + "\n" + uSolString + "\n " + alphaSolString +
+                                  "\nObjective function value: " + std::to_string( ComputeObjFunc( alpha, sol, moments ) ) +
+                                  "\nBoundary Ratio: " + std::to_string( normU1 / sol[0] ),
                               CURRENT_FUNCTION );
     }
-    if( _settings->GetDim() == 1 ) {
+    else {
+        ErrorMessages::Error( "Newton did not converge at cell " + std::to_string( idx_cell ) + "\n" + uSolString + "\nMultiplier: " +
+                                  alphaSolString + "\nObjective function value: " + std::to_string( ComputeObjFunc( alpha, sol, moments ) ),
+                              CURRENT_FUNCTION );
     }
 }
 

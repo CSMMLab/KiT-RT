@@ -1,16 +1,19 @@
-#include "solvers/csdpnsolver.hpp"
+#include "solvers/csdmnsolver.hpp"
 #include "common/config.hpp"
 #include "common/mesh.hpp"
+#include "entropies/entropybase.hpp"
 #include "fluxes/numericalflux.hpp"
-#include "problems/problembase.hpp"
+#include "optimizers/optimizerbase.hpp"
 #include "solvers/csdpn_starmap_constants.hpp"
 #include "toolboxes/interpolation.hpp"
+#include "toolboxes/sphericalbase.hpp"
+#include "toolboxes/textprocessingtoolbox.hpp"
 
 // externals
 #include "spdlog/spdlog.h"
 
-CSDPNSolver::CSDPNSolver( Config* settings ) : PNSolver( settings ) {
-    // --- Initialize Dose
+CSDMNSolver::CSDMNSolver( Config* settings ) : MNSolver( settings ) {
+    // --- Initialize Dose ---
     _dose = std::vector<double>( _nCells, 0.0 );
 
     // --- Compute transformed energy grid ---
@@ -63,18 +66,35 @@ CSDPNSolver::CSDPNSolver( Config* settings ) : PNSolver( settings ) {
     _sMid = interpS( eMid );
 }
 
-CSDPNSolver::~CSDPNSolver() {}
+CSDMNSolver::~CSDMNSolver() {}
 
-void CSDPNSolver::IterPreprocessing( unsigned idx_iter ) {
+void CSDMNSolver::IterPreprocessing( unsigned idx_iter ) {
+
+    // ------- Entropy closure Step ----------------
+
+    _optimizer->SolveMultiCell( _alpha, _sol, _momentBasis );
+
+    // ------- Solution reconstruction step ----
+    //#pragma omp parallel for
+    for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
+        for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
+            // compute the kinetic density at all grid cells
+            _kineticDensity[idx_cell][idx_quad] = _entropy->EntropyPrimeDual( blaze::dot( _alpha[idx_cell], _momentBasis[idx_quad] ) );
+        }
+        if( _settings->GetRealizabilityReconstruction() ) ComputeRealizableSolution( idx_cell );
+    }
+
+    // ------ Compute density normalized slope limiters and cell gradients ---
     if( _reconsOrder > 1 ) {
         VectorVector solDivRho = _sol;
         for( unsigned j = 0; j < _nCells; ++j ) {
             solDivRho[j] = _sol[j] / _density[j];
         }
-        _mesh->ComputeSlopes( _nSystem, _solDx, _solDy, solDivRho );
-        _mesh->ComputeLimiter( _nSystem, _solDx, _solDy, solDivRho, _limiter );
+        _mesh->ComputeSlopes( _nq, _solDx, _solDy, _kineticDensity );
+        _mesh->ComputeLimiter( _nq, _solDx, _solDy, _kineticDensity, _limiter );
     }
 
+    // ------ evaluate scatter coefficient at current energy level
     Vector sigmaSAtEnergy( _polyDegreeBasis + 1, 0.0 );
     // compute scattering cross section at current energy
     for( unsigned idx_degree = 0; idx_degree <= _polyDegreeBasis; ++idx_degree ) {
@@ -87,17 +107,19 @@ void CSDPNSolver::IterPreprocessing( unsigned idx_iter ) {
     }
 }
 
-void CSDPNSolver::SolverPreprocessing() {}
+void CSDMNSolver::SolverPreprocessing() {
+    // cross sections do not need to be transformed to ETilde energy grid since e.g. TildeSigmaT(ETilde) = SigmaT(E(ETilde))
+}
 
-void CSDPNSolver::IterPostprocessing( unsigned idx_iter ) {
-    // std::cout << "Iter Postprocessing...";
+void CSDMNSolver::IterPostprocessing( unsigned idx_iter ) {
     // --- Update Solution ---
     _sol = _solNew;
 
     // --- Compute Flux for solution and Screen Output ---
     ComputeRadFlux();
 
-    // -- Compute Dose
+    // --- Compute Dose ---
+#pragma omp parallel for
     for( unsigned j = 0; j < _nCells; ++j ) {
         if( idx_iter > 0 && idx_iter < _nEnergies - 1 ) {
             _dose[j] += _dE * ( _sol[j][0] * _sMid[idx_iter] ) / _density[j];    // update dose with trapezoidal rule // diss Kerstin
@@ -108,91 +130,64 @@ void CSDPNSolver::IterPostprocessing( unsigned idx_iter ) {
     }
 }
 
-void CSDPNSolver::FluxUpdate() {
-    // Loop over all spatial cells
-#pragma omp parallel for
-    for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
-        Vector solL( _nSystem, 0.0 );
-        Vector solR( _nSystem, 0.0 );
-        // Dirichlet cells stay at IC, farfield assumption
-        if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::DIRICHLET ) continue;
+Vector CSDMNSolver::ConstructFlux( unsigned idx_cell ) {
+    //--- Integration of moments of flux ---
+    double solL, solR, kineticFlux;
+    Vector flux( _nSystem, 0.0 );
 
-        // Reset temporary variable psiNew
-        for( unsigned idx_sys = 0; idx_sys < _nSystem; idx_sys++ ) {
-            _solNew[idx_cell][idx_sys] = 0.0;
-        }
+    for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
+        kineticFlux = 0.0;    // reset temorary flux
 
-        // Loop over all neighbor cells (edges) of cell j and compute numerical fluxes
-        for( unsigned idx_neighbor = 0; idx_neighbor < _neighbors[idx_cell].size(); idx_neighbor++ ) {
-
-            // Compute flux contribution and store in psiNew to save memory
-            if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::NEUMANN && _neighbors[idx_cell][idx_neighbor] == _nCells )
-                _solNew[idx_cell] += _g->FluxXZ( _AxPlus,
-                                                 _AxMinus,
-                                                 _AyPlus,
-                                                 _AyMinus,
-                                                 _AzPlus,
-                                                 _AzMinus,
-                                                 _sol[idx_cell] / _density[idx_cell],
-                                                 _sol[idx_cell] / _density[idx_cell],
-                                                 _normals[idx_cell][idx_neighbor] );
+        for( unsigned idx_nbr = 0; idx_nbr < _neighbors[idx_cell].size(); idx_nbr++ ) {
+            if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::NEUMANN && _neighbors[idx_cell][idx_nbr] == _nCells ) {
+                // Boundary cells are first order and mirror ghost cells
+                solL = _kineticDensity[idx_cell][idx_quad] / _density[idx_cell];
+                solR = solL;
+            }
             else {
-                unsigned int nbr_glob = _neighbors[idx_cell][idx_neighbor];    // global idx of neighbor cell
-                switch( _reconsOrder ) {
-                    // first order solver
-                    case 1:
-                        _solNew[idx_cell] +=
-                            _g->FluxXZ( _AxPlus,
-                                        _AxMinus,
-                                        _AyPlus,
-                                        _AyMinus,
-                                        _AzPlus,
-                                        _AzMinus,
-                                        _sol[idx_cell] * ( 1.0 / _density[idx_cell] ),
-                                        _sol[_neighbors[idx_cell][idx_neighbor]] * ( 1.0 / _density[_neighbors[idx_cell][idx_neighbor]] ),
-                                        _normals[idx_cell][idx_neighbor] );
-                        break;
-                    // second order solver
-                    case 2:
-                        // left status of interface
-                        for( unsigned idx_sys = 0; idx_sys < _nSystem; idx_sys++ ) {
-                            solL[idx_sys] =
-                                _sol[idx_cell][idx_sys] / _density[idx_cell] +
-                                _limiter[idx_cell][idx_sys] *
-                                    ( _solDx[idx_cell][idx_sys] * ( _interfaceMidPoints[idx_cell][idx_neighbor][0] - _cellMidPoints[idx_cell][0] ) +
-                                      _solDy[idx_cell][idx_sys] * ( _interfaceMidPoints[idx_cell][idx_neighbor][1] - _cellMidPoints[idx_cell][1] ) );
-                            solR[idx_sys] =
-                                _sol[nbr_glob][idx_sys] / _density[nbr_glob] +
-                                _limiter[nbr_glob][idx_sys] *
-                                    ( _solDx[nbr_glob][idx_sys] * ( _interfaceMidPoints[idx_cell][idx_neighbor][0] - _cellMidPoints[nbr_glob][0] ) +
-                                      _solDy[nbr_glob][idx_sys] * ( _interfaceMidPoints[idx_cell][idx_neighbor][1] - _cellMidPoints[nbr_glob][1] ) );
-                        }
-                        // flux evaluation
-                        _solNew[idx_cell] +=
-                            _g->FluxXZ( _AxPlus, _AxMinus, _AyPlus, _AyMinus, _AzPlus, _AzMinus, solL, solR, _normals[idx_cell][idx_neighbor] );
-                        break;
-                    // default: first order solver
-                    default:
-                        _solNew[idx_cell] += _g->FluxXZ( _AxPlus,
-                                                         _AxMinus,
-                                                         _AyPlus,
-                                                         _AyMinus,
-                                                         _AzPlus,
-                                                         _AzMinus,
-                                                         _sol[idx_cell] / _density[idx_cell],
-                                                         _sol[_neighbors[idx_cell][idx_neighbor]] / _density[_neighbors[idx_cell][idx_neighbor]],
-                                                         _normals[idx_cell][idx_neighbor] );
+                // interior cell
+                unsigned int nbr_glob = _neighbors[idx_cell][idx_nbr];    // global idx of neighbor cell
+                if( _reconsOrder == 1 ) {
+                    solL = _kineticDensity[idx_cell][idx_quad] / _density[idx_cell];
+                    solR = _kineticDensity[nbr_glob][idx_quad] / _density[nbr_glob];
+                }
+                else if( _reconsOrder == 2 ) {
+                    solL = _kineticDensity[idx_cell][idx_quad] / _density[idx_cell] +
+                           _limiter[idx_cell][idx_quad] *
+                               ( _solDx[idx_cell][idx_quad] * ( _interfaceMidPoints[idx_cell][idx_nbr][0] - _cellMidPoints[idx_cell][0] ) +
+                                 _solDy[idx_cell][idx_quad] * ( _interfaceMidPoints[idx_cell][idx_nbr][1] - _cellMidPoints[idx_cell][1] ) );
+                    solR = _kineticDensity[nbr_glob][idx_quad] / _density[nbr_glob] +
+                           _limiter[nbr_glob][idx_quad] *
+                               ( _solDx[nbr_glob][idx_quad] * ( _interfaceMidPoints[idx_cell][idx_nbr][0] - _cellMidPoints[nbr_glob][0] ) +
+                                 _solDy[nbr_glob][idx_quad] * ( _interfaceMidPoints[idx_cell][idx_nbr][1] - _cellMidPoints[nbr_glob][1] ) );
+                }
+                else {
+                    ErrorMessages::Error( "Reconstruction order not supported.", CURRENT_FUNCTION );
                 }
             }
+            // Kinetic flux
+            kineticFlux += _g->Flux( _quadPoints[idx_quad], solL, solR, _normals[idx_cell][idx_nbr] );
         }
+        // Solution flux
+        flux += _momentBasis[idx_quad] * ( _weights[idx_quad] * kineticFlux );
+    }
+    return flux;
+}
+
+void CSDMNSolver::FluxUpdate() {
+// Loop over the grid cells
+#pragma omp parallel for
+    for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
+        // Dirichlet Boundaries stayd
+        if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::DIRICHLET ) continue;
+        _solNew[idx_cell] = ConstructFlux( idx_cell );
     }
 }
 
-void CSDPNSolver::FVMUpdate( unsigned idx_energy ) {
+void CSDMNSolver::FVMUpdate( unsigned idx_energy ) {
     bool implicitScattering = true;
     // transform energy difference
     _dE = fabs( _eTrafo[idx_energy + 1] - _eTrafo[idx_energy] );
-
     // loop over all spatial cells
 #pragma omp parallel for
     for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
@@ -200,7 +195,7 @@ void CSDPNSolver::FVMUpdate( unsigned idx_energy ) {
         if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::DIRICHLET ) continue;
         for( int idx_l = 0; idx_l <= (int)_polyDegreeBasis; idx_l++ ) {
             for( int idx_k = -idx_l; idx_k <= idx_l; idx_k++ ) {
-                int idx_sys = GlobalIndex( idx_l, idx_k );
+                int idx_sys = _basis->GetGlobalIndexBasis( idx_l, idx_k );
                 if( implicitScattering ) {
                     _solNew[idx_cell][idx_sys] =
                         _sol[idx_cell][idx_sys] - ( _dE / _areas[idx_cell] ) * _solNew[idx_cell][idx_sys];            /* cell averaged flux */
@@ -212,13 +207,13 @@ void CSDPNSolver::FVMUpdate( unsigned idx_energy ) {
                                                  - _dE * _sol[idx_cell][idx_sys] * _sigmaTAtEnergy[idx_l]; /* scattering */
                 }
             }
-            // Source Term
+            // Source Term TODO
             // _solNew[idx_cell][0] += _dE * _Q[0][idx_cell][0];
         }
     }
 }
 
-void CSDPNSolver::PrepareVolumeOutput() {
+void CSDMNSolver::PrepareVolumeOutput() {
     // std::cout << "Prepare Volume Output...";
     unsigned nGroups = (unsigned)_settings->GetNVolumeOutput();
 
@@ -228,6 +223,7 @@ void CSDPNSolver::PrepareVolumeOutput() {
     // Prepare all OutputGroups ==> Specified in option VOLUME_OUTPUT
     for( unsigned idx_group = 0; idx_group < nGroups; idx_group++ ) {
         // Prepare all Output Fields per group
+        unsigned glob_idx = 0;
 
         // Different procedure, depending on the Group...
         switch( _settings->GetVolumeOutput()[idx_group] ) {
@@ -255,22 +251,57 @@ void CSDPNSolver::PrepareVolumeOutput() {
                 // As many entries as there are moments in the system
                 _outputFields[idx_group].resize( _nSystem );
                 _outputFieldNames[idx_group].resize( _nSystem );
-
-                for( int idx_l = 0; idx_l <= (int)_polyDegreeBasis; idx_l++ ) {
-                    for( int idx_k = -idx_l; idx_k <= idx_l; idx_k++ ) {
-                        _outputFields[idx_group][GlobalIndex( idx_l, idx_k )].resize( _nCells );
-
-                        _outputFieldNames[idx_group][GlobalIndex( idx_l, idx_k )] =
-                            std::string( "u_" + std::to_string( idx_l ) + "^" + std::to_string( idx_k ) );
+                if( _settings->GetSphericalBasisName() == SPHERICAL_HARMONICS ) {
+                    for( int idx_l = 0; idx_l <= (int)_polyDegreeBasis; idx_l++ ) {
+                        for( int idx_k = -idx_l; idx_k <= idx_l; idx_k++ ) {
+                            glob_idx = _basis->GetGlobalIndexBasis( idx_l, idx_k );
+                            _outputFields[idx_group][glob_idx].resize( _nCells );
+                            _outputFieldNames[idx_group][glob_idx] = std::string( "u_" + std::to_string( idx_l ) + "^" + std::to_string( idx_k ) );
+                        }
+                    }
+                }
+                else {
+                    for( unsigned idx_l = 0; idx_l <= _polyDegreeBasis; idx_l++ ) {
+                        unsigned maxOrder_k = _basis->GetCurrDegreeSize( idx_l );
+                        for( unsigned idx_k = 0; idx_k < maxOrder_k; idx_k++ ) {
+                            _outputFields[idx_group][_basis->GetGlobalIndexBasis( idx_l, idx_k )].resize( _nCells );
+                            _outputFieldNames[idx_group][_basis->GetGlobalIndexBasis( idx_l, idx_k )] =
+                                std::string( "u_" + std::to_string( idx_l ) + "^" + std::to_string( idx_k ) );
+                        }
                     }
                 }
                 break;
-            default: ErrorMessages::Error( "Volume Output Group not defined for CSD PN Solver!", CURRENT_FUNCTION ); break;
+            case DUAL_MOMENTS:
+                // As many entries as there are moments in the system
+                _outputFields[idx_group].resize( _nSystem );
+                _outputFieldNames[idx_group].resize( _nSystem );
+
+                if( _settings->GetSphericalBasisName() == SPHERICAL_HARMONICS ) {
+                    for( int idx_l = 0; idx_l <= (int)_polyDegreeBasis; idx_l++ ) {
+                        for( int idx_k = -idx_l; idx_k <= idx_l; idx_k++ ) {
+                            _outputFields[idx_group][_basis->GetGlobalIndexBasis( idx_l, idx_k )].resize( _nCells );
+                            _outputFieldNames[idx_group][_basis->GetGlobalIndexBasis( idx_l, idx_k )] =
+                                std::string( "alpha_" + std::to_string( idx_l ) + "^" + std::to_string( idx_k ) );
+                        }
+                    }
+                }
+                else {
+                    for( int idx_l = 0; idx_l <= (int)_polyDegreeBasis; idx_l++ ) {
+                        unsigned maxOrder_k = _basis->GetCurrDegreeSize( idx_l );
+                        for( unsigned idx_k = 0; idx_k < maxOrder_k; idx_k++ ) {
+                            _outputFields[idx_group][_basis->GetGlobalIndexBasis( idx_l, idx_k )].resize( _nCells );
+                            _outputFieldNames[idx_group][_basis->GetGlobalIndexBasis( idx_l, idx_k )] =
+                                std::string( "alpha_" + std::to_string( idx_l ) + "^" + std::to_string( idx_k ) );
+                        }
+                    }
+                }
+                break;
+            default: ErrorMessages::Error( "Volume Output Group not defined for CSD MN Solver!", CURRENT_FUNCTION ); break;
         }
     }
 }
 
-void CSDPNSolver::WriteVolumeOutput( unsigned idx_pseudoTime ) {
+void CSDMNSolver::WriteVolumeOutput( unsigned idx_pseudoTime ) {
     unsigned nGroups = (unsigned)_settings->GetNVolumeOutput();
     double maxDose;
     if( ( _settings->GetVolumeOutputFrequency() != 0 && idx_pseudoTime % (unsigned)_settings->GetVolumeOutputFrequency() == 0 ) ||
@@ -305,35 +336,19 @@ void CSDPNSolver::WriteVolumeOutput( unsigned idx_pseudoTime ) {
                         }
                     }
                     break;
-
-                default: ErrorMessages::Error( "Volume Output Group not defined for CSD PN Solver!", CURRENT_FUNCTION ); break;
+                case DUAL_MOMENTS:
+                    for( unsigned idx_sys = 0; idx_sys < _nSystem; idx_sys++ ) {
+                        for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
+                            _outputFields[idx_group][idx_sys][idx_cell] = _alpha[idx_cell][idx_sys];
+                        }
+                    }
+                    break;
+                default: ErrorMessages::Error( "Volume Output Group not defined for CSD MN Solver!", CURRENT_FUNCTION ); break;
             }
         }
     }
 }
 
-double CSDPNSolver::NormPDF( double x, double mu, double sigma ) {
+double CSDMNSolver::NormPDF( double x, double mu, double sigma ) {
     return INV_SQRT_2PI / sigma * std::exp( -( ( x - mu ) * ( x - mu ) ) / ( 2.0 * sigma * sigma ) );
 }
-
-// Vector CSDPNSolver::Time2Energy( const Vector& t, const double E_CutOff ) {
-//     Interpolation interp( E_trans, E_tab );
-//     Interpolation interp2( E_tab, E_trans );
-//     return blaze::max( 0, interp( interp2( E_CutOff, 0 ) - t ) );
-// }
-//
-// double CSDPNSolver::Time2Energy( const double t, const double E_CutOff ) {
-//     Interpolation interp( E_trans, E_tab );
-//     Interpolation interp2( E_tab, E_trans );
-//     return std::fmax( 0.0, interp( E_CutOff - t ) );
-// }
-//
-// Vector CSDPNSolver::Energy2Time( const Vector& E, const double E_CutOff ) {
-//     Interpolation interp( E_tab, E_trans );
-//     return blaze::max( 0, interp( E_CutOff - E ) );
-// }
-//
-// double CSDPNSolver::Energy2Time( const double E, const double E_CutOff ) {
-//     Interpolation interp( E_tab, E_trans );
-//     return std::fmax( 0, interp( E_CutOff - E ) );
-// }
