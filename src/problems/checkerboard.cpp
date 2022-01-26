@@ -97,15 +97,6 @@ VectorVector Checkerboard_Moment::GetScatteringXS( const Vector& energies ) { re
 VectorVector Checkerboard_Moment::GetTotalXS( const Vector& energies ) { return VectorVector( energies.size(), _totalXS ); }
 
 std::vector<VectorVector> Checkerboard_Moment::GetExternalSource( const Vector& /*energies*/ ) {
-    // VectorVector Q( _mesh->GetNumCells(), Vector( 1u, 0.0 ) );
-    // auto cellMids = _mesh->GetCellMidPoints();
-    // for( unsigned j = 0; j < cellMids.size(); ++j ) {
-    //     if( isSource( cellMids[j] ) ) Q[j] = 1.0 / std::sqrt( 4 * M_PI );    // isotropic source
-    // }
-    // TextProcessingToolbox::PrintVectorVector( Q );
-    //
-    //  return std::vector<VectorVector>( 1u, Q );
-
     // In case of PN, spherical basis is per default SPHERICAL_HARMONICS
     SphericalBase* tempBase  = SphericalBase::Create( _settings );
     unsigned ntotalEquations = tempBase->GetBasisSize();

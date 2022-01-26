@@ -81,27 +81,27 @@ TEST_CASE( "SN_SOLVER", "[validation_tests]" ) {
 
 TEST_CASE( "PN_SOLVER", "[validation_tests]" ) {
     std::string pn_fileDir = "input/validation_tests/PN_solver/";
-    SECTION( "checkerboard" ) {
-        std::string config_file_name = std::string( TESTS_PATH ) + pn_fileDir + "checkerboard_PN.cfg";
-
-        Config* config     = new Config( config_file_name );
-        SolverBase* solver = SolverBase::Create( config );
-        solver->Solve();
-        solver->PrintVolumeOutput();
-
-        auto test      = readVTKFile( std::string( TESTS_PATH ) + "result/rtsn_test_checkerboard_PN.vtk" );
-        auto reference = readVTKFile( std::string( TESTS_PATH ) + pn_fileDir + "checkerboard_PN_reference.vtk" );
-
-        double eps             = 1e-3;
-        bool errorWithinBounds = true;
-        REQUIRE( test.size() == reference.size() );
-        for( unsigned i = 0; i < test.size(); ++i ) {
-            if( std::fabs( test[i] - reference[i] ) > eps ) errorWithinBounds = false;
-        }
-        REQUIRE( errorWithinBounds );
-        delete solver;
-        delete config;
-    }
+    // SECTION( "checkerboard" ) {
+    //     std::string config_file_name = std::string( TESTS_PATH ) + pn_fileDir + "checkerboard_PN.cfg";
+    //
+    //     Config* config     = new Config( config_file_name );
+    //     SolverBase* solver = SolverBase::Create( config );
+    //     solver->Solve();
+    //     solver->PrintVolumeOutput();
+    //
+    //     auto test      = readVTKFile( std::string( TESTS_PATH ) + "result/rtsn_test_checkerboard_PN.vtk" );
+    //     auto reference = readVTKFile( std::string( TESTS_PATH ) + pn_fileDir + "checkerboard_PN_reference.vtk" );
+    //
+    //     double eps             = 1e-3;
+    //     bool errorWithinBounds = true;
+    //     REQUIRE( test.size() == reference.size() );
+    //     for( unsigned i = 0; i < test.size(); ++i ) {
+    //         if( std::fabs( test[i] - reference[i] ) > eps ) errorWithinBounds = false;
+    //     }
+    //     REQUIRE( errorWithinBounds );
+    //     delete solver;
+    //     delete config;
+    // }
 
     SECTION( "linesource" ) {
         std::string config_file_name = std::string( TESTS_PATH ) + pn_fileDir + "linesource_PN.cfg";
@@ -130,28 +130,28 @@ TEST_CASE( "PN_SOLVER", "[validation_tests]" ) {
 TEST_CASE( "MN_SOLVER", "[validation_tests]" ) {
     std::string mn_fileDir = "input/validation_tests/MN_solver/";
 
-    SECTION( "checkerboard" ) {
-        std::string config_file_name = std::string( TESTS_PATH ) + mn_fileDir + "checkerboard_MN.cfg";
-
-        Config* config     = new Config( config_file_name );
-        SolverBase* solver = SolverBase::Create( config );
-        solver->Solve();
-        solver->PrintVolumeOutput();
-
-        auto test      = readVTKFile( std::string( TESTS_PATH ) + "result/rtsn_test_checkerboard_MN.vtk" );
-        auto reference = readVTKFile( std::string( TESTS_PATH ) + mn_fileDir + "checkerboard_MN_reference.vtk" );
-
-        double eps             = 1e-3;
-        bool errorWithinBounds = true;
-
-        REQUIRE( test.size() == reference.size() );
-        for( unsigned i = 0; i < test.size(); ++i ) {
-            if( std::fabs( test[i] - reference[i] ) > eps ) errorWithinBounds = false;
-        }
-        REQUIRE( errorWithinBounds );
-        delete solver;
-        delete config;
-    }
+    // SECTION( "checkerboard" ) {
+    //     std::string config_file_name = std::string( TESTS_PATH ) + mn_fileDir + "checkerboard_MN.cfg";
+    //
+    //    Config* config     = new Config( config_file_name );
+    //    SolverBase* solver = SolverBase::Create( config );
+    //    solver->Solve();
+    //    solver->PrintVolumeOutput();
+    //
+    //    auto test      = readVTKFile( std::string( TESTS_PATH ) + "result/rtsn_test_checkerboard_MN.vtk" );
+    //    auto reference = readVTKFile( std::string( TESTS_PATH ) + mn_fileDir + "checkerboard_MN_reference.vtk" );
+    //
+    //    double eps             = 1e-3;
+    //    bool errorWithinBounds = true;
+    //
+    //    REQUIRE( test.size() == reference.size() );
+    //    for( unsigned i = 0; i < test.size(); ++i ) {
+    //        if( std::fabs( test[i] - reference[i] ) > eps ) errorWithinBounds = false;
+    //    }
+    //    REQUIRE( errorWithinBounds );
+    //    delete solver;
+    //    delete config;
+    //}
     SECTION( "linesource" ) {
         // --- Quadratic Entropy
         {
