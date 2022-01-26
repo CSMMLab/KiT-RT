@@ -33,7 +33,7 @@ std::vector<VectorVector> Checkerboard_SN::GetExternalSource( const Vector& /*en
     VectorVector Q( _mesh->GetNumCells(), Vector( 1u, 0.0 ) );
     auto cellMids = _mesh->GetCellMidPoints();
     for( unsigned j = 0; j < cellMids.size(); ++j ) {
-        if( isSource( cellMids[j] ) ) Q[j] = 1.0 / ( 4 * M_PI );    // isotropic source
+        if( isSource( cellMids[j] ) ) Q[j] = _settings->GetSourceMagnitude() / ( 4 * M_PI );    // isotropic source
     }
     return std::vector<VectorVector>( 1u, Q );
 }
@@ -134,7 +134,7 @@ std::vector<VectorVector> Checkerboard_Moment::GetExternalSource( const Vector& 
         }
         delete quad;
     }
-    double kinetic_density = 5.0;
+    double kinetic_density = _settings->GetSourceMagnitude();
     for( unsigned j = 0; j < cellMids.size(); ++j ) {
         if( isSource( cellMids[j] ) ) {
             if( _settings->GetSphericalBasisName() == SPHERICAL_MONOMIALS ) {

@@ -28,11 +28,13 @@ void MNSolverNormalized::IterPreprocessing( unsigned /*idx_pseudotime*/ ) {
         _u0[idx_cell] = _sol[idx_cell][0];
         _sol[idx_cell] /= _u0[idx_cell];    // assume _u0 > 0 always!!
     }
+    TextProcessingToolbox::PrintVectorVectorToFile( _sol, "solution", _nCells, _nSystem );
 
     // TextProcessingToolbox::PrintVectorVector( _sol );
     _optimizer->SolveMultiCell( _alpha, _sol, _momentBasis );
 
     // ------- Solution reconstruction step ----
+#pragma omp parallel for
     for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
         for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
             // compute the kinetic density at all grid cells
@@ -45,7 +47,7 @@ void MNSolverNormalized::IterPreprocessing( unsigned /*idx_pseudotime*/ ) {
 
     // ------ Compute slope limiters and cell gradients ---
     if( _reconsOrder > 1 ) {
-        _mesh->ComputeSlopes( _nq, _solDx, _solDy, _kineticDensity );
-        _mesh->ComputeLimiter( _nq, _solDx, _solDy, _kineticDensity, _limiter );
+        _mesh->ComputeSlopes( _nq, _solDx, _solDy, _kineticDensity );               // parallel
+        _mesh->ComputeLimiter( _nq, _solDx, _solDy, _kineticDensity, _limiter );    // parallel
     }
 }
