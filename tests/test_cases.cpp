@@ -282,7 +282,7 @@ TEST_CASE( "CSD_PN_SOLVER", "[validation_tests]" ) {
 
 TEST_CASE( "CSD_MN_SOLVER", "[validation_tests]" ) {
     std::string csd_mn_fileDir = "input/validation_tests/CSD_MN_solver/";
-    SECTION( "point source dual density" ) {
+    /*SECTION( "point source dual density" ) {
 
         std::string config_file_name = std::string( TESTS_PATH ) + csd_mn_fileDir + "point_source_dual_density.cfg";
         Config* config               = new Config( config_file_name );
@@ -299,7 +299,7 @@ TEST_CASE( "CSD_MN_SOLVER", "[validation_tests]" ) {
             if( std::fabs( test[i] - reference[i] ) > eps ) errorWithinBounds = false;
         }
         REQUIRE( errorWithinBounds );
-    }
+    }*/
     /*
     SECTION( "point source dual density 2nd order" ) {
 
