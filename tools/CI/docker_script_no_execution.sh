@@ -5,6 +5,6 @@ git submodule update --init --recursive
 mkdir build
 cd build
 rm -rf *
-cmake -G Ninja -DCMAKE_BUILD_UNITY=FALSE -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=False ../
+cmake -G Ninja -DCMAKE_BUILD_UNITY=FALSE -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=False -DBUILD_ML=True ../
 ninja
 
