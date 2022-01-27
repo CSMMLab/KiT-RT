@@ -137,7 +137,7 @@ void ExportVTK( const std::string fileName,
 
 Mesh* LoadSU2MeshFromFile( const Config* settings ) {
     auto log = spdlog::get( "event" );
-
+    log->info( "| Importing mesh. This may take a while for large meshes.", _nEnergies );
     unsigned dim;
     std::vector<Vector> nodes;
     std::vector<std::vector<unsigned>> cells;
