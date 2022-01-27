@@ -542,6 +542,9 @@ void Config::SetPostprocessing() {
         if( GetReconsOrder() > 2 ) {
             ErrorMessages::Error( "Solvers only work with 1st and 2nd order spatial fluxes.", CURRENT_FUNCTION );
         }
+        if( GetOptimizerName() == ML && GetSolverName() != MN_SOLVER_NORMALIZED ) {
+            ErrorMessages::Error( "ML Optimizer only works with normalized MN Solver.", CURRENT_FUNCTION );
+        }
     }
 
     // --- Output Postprocessing ---

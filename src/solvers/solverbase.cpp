@@ -490,7 +490,8 @@ void SolverBase::DrawPostSolverOutput() {
             hLine += tmpLine;
         }
         log->info( hLine );
-        log->info( "| Postprocessing screen output goes here." );
+        log->info( "| The volume output files have been stored at " + _settings->GetOutputFile() );
+        log->info( "| The log files have been stored at " + _settings->GetLogDir() + _settings->GetLogFile() );
         log->info( "--------------------------- Solver Finished ----------------------------" );
     }
 }
