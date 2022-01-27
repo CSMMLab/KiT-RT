@@ -293,6 +293,7 @@ Mesh* LoadSU2MeshFromFile( const Config* settings ) {
         ErrorMessages::Error( "Cannot open mesh file '" + settings->GetMeshFile() + "!", CURRENT_FUNCTION );
     }
     ifs.close();
+    log->info( "| Mesh imported." );
     return new Mesh( nodes, cells, boundaries );
 }
 
