@@ -30,6 +30,15 @@ A short description of kinetic theory can be found [here](https://kit-rt.readthe
  - python3
  - VTK
  - git
+ 
+### Tensorflow installation
+If you choose to enable the machine learning tools via the BUILD_ML option, you need to install the tensorflow C-API:
+```
+FILENAME=libtensorflow-cpu-linux-x86_64-2.7.0.tar.gz
+wget -q --no-check-certificate https://storage.googleapis.com/tensorflow/libtensorflow/${FILENAME}
+tar -C /usr/local -xzf ${FILENAME}
+ldconfig /usr/local/lib
+```
 
 ### Python dependencies
 - pydicom
