@@ -236,6 +236,28 @@ TEST_CASE( "MN_SOLVER", "[validation_tests]" ) {
             delete config;
         }
     }
+    SECTION( "checkerboard neural network closed" ) {
+        std::string config_file_name = std::string( TESTS_PATH ) + mn_fileDir + "checkerboard_MN_neural.cfg";
+
+        Config* config     = new Config( config_file_name );
+        SolverBase* solver = SolverBase::Create( config );
+        solver->Solve();
+        solver->PrintVolumeOutput();
+
+        auto test      = readVTKFile( std::string( TESTS_PATH ) + "result/rtsn_test_checkerboard_MN_neural.vtk" );
+        auto reference = readVTKFile( std::string( TESTS_PATH ) + mn_fileDir + "checkerboard_MN_reference_neural.vtk" );
+
+        double eps             = 1e-3;
+        bool errorWithinBounds = true;
+
+        REQUIRE( test.size() == reference.size() );
+        for( unsigned i = 0; i < test.size(); ++i ) {
+            if( std::fabs( test[i] - reference[i] ) > eps ) errorWithinBounds = false;
+        }
+        REQUIRE( errorWithinBounds );
+        delete solver;
+        delete config;
+    }
 }
 
 TEST_CASE( "CSD_PN_SOLVER", "[validation_tests]" ) {
