@@ -22,7 +22,7 @@ jobs:
         run: |
           git submodule update --init --recursive
           mkdir build && cd build
-          cmake -G Ninja -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=ON -DBUILD_CODE_COV=ON ..
+          cmake -G Ninja -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=ON -DBUILD_ML=ON -DBUILD_CODE_COV=ON ..
           ninja
 
       - name: Run unit tests
