@@ -203,7 +203,7 @@ if( BUILD_DOC )
     find_package( Doxygen REQUIRED )
     find_package( Sphinx REQUIRED )
 
-    file( GLOB_RECURSE DOC_HEADER RELATIVE ${CMAKE_SOURCE_DIR} "include/*.h" )
+    file( GLOB_RECURSE DOC_HEADER RELATIVE ${CMAKE_SOURCE_DIR} "include/*.hpp" )
 
     set( DOXYGEN_INPUT_DIR ${PROJECT_SOURCE_DIR} )
     set( DOXYGEN_OUTPUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/docs/doxygen )
