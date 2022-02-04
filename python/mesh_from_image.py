@@ -31,5 +31,6 @@ def generate(image_name, mesh_name):
         mesh_file.write(mesh_code,)
     os.system('gmsh '+mesh_name+'.geo -2 -format su2 -save_all > /dev/null') # call gmsh
     os.system('rm '+mesh_name+'.geo > /dev/null')
-
+    print(gsImage.shape)
+    print(geom)
     return gsImage
