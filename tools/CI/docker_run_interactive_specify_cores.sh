@@ -1,1 +1,1 @@
-docker run -i -t --rm --cpuset-cpus=0-1 -v $(pwd)/../..:/mnt kitrt-ml-cpu /bin/bash  
+docker run -i -t --rm --cpuset-cpus=0-3 -v $(pwd)/../..:/mnt kitrt/test_ml:latest /bin/bash  
