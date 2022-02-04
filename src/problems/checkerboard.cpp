@@ -8,7 +8,6 @@
 // ---- Checkerboard Sn ----
 // Constructor for Ckeckerboard case with Sn
 Checkerboard_SN::Checkerboard_SN( Config* settings, Mesh* mesh ) : ProblemBase( settings, mesh ) {
-    _physics = nullptr;
 
     // Initialise crosssections to 1
     _scatteringXS = Vector( _mesh->GetNumCells(), 1.0 );
@@ -74,8 +73,7 @@ bool Checkerboard_SN::isSource( const Vector& pos ) const {
 // Constructor for checkerboard case with Pn
 Checkerboard_Moment::Checkerboard_Moment( Config* settings, Mesh* mesh ) : ProblemBase( settings, mesh ) {
 
-    _basis   = SphericalBase::Create( _settings );
-    _physics = nullptr;
+    _basis = SphericalBase::Create( _settings );
 
     // Initialise crosssections = 1 (scattering)
     _scatteringXS = Vector( _mesh->GetNumCells(), 1.0 );

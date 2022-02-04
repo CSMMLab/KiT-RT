@@ -79,7 +79,7 @@ void NewtonOptimizer::SolveMultiCell( VectorVector& alpha, VectorVector& sol, co
         return;
     }
 
-#pragma omp parallel for schedule( guided )
+    //#pragma omp parallel for schedule( guided )
     for( unsigned idx_cell = 0; idx_cell < nCells; idx_cell++ ) {
         // std::cout << "Sol Vector"
         //          << "|" << sol[idx_cell] << "\n";

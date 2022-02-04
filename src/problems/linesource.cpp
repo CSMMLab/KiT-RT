@@ -1,17 +1,14 @@
 #include "problems/linesource.hpp"
 #include "common/config.hpp"
 #include "common/mesh.hpp"
-#include "problems/epics.hpp"
 #include "quadratures/quadraturebase.hpp"
 #include "toolboxes/sphericalbase.hpp"
 #include <complex>
 
 // ---- Linesource ----
 
-LineSource::LineSource( Config* settings, Mesh* mesh ) : ProblemBase( settings, mesh ) {
-    _physics = nullptr;
-    _sigmaS  = settings->GetSigmaS();
-}
+LineSource::LineSource( Config* settings, Mesh* mesh ) : ProblemBase( settings, mesh ) { _sigmaS = settings->GetSigmaS(); }
+
 LineSource::~LineSource() {}
 
 double LineSource::GetAnalyticalSolution( double x, double y, double t, double /*sigma_s*/ ) {
@@ -129,7 +126,7 @@ VectorVector LineSource_SN::SetupIC() {
     for( unsigned j = 0; j < cellMids.size(); ++j ) {
         double x = cellMids[j][0];
         double y = cellMids[j][1];
-        psi[j]   = 1.0 / ( 4.0 * M_PI * t ) * std::exp( -( x * x + y * y ) / ( 4 * t ) );
+        psi[j]   = Vector( _settings->GetNQuadPoints(), 1.0 / ( 4.0 * M_PI * t ) * std::exp( -( x * x + y * y ) / ( 4 * t ) ) );
     }
     return psi;
 }
@@ -148,18 +145,6 @@ VectorVector LineSource_SN_Pseudo1D::SetupIC() {
     }
     return psi;
 }
-
-// ---- LineSource_SN_Pseudo1D_Physics ----
-
-LineSource_SN_Pseudo1D_Physics::LineSource_SN_Pseudo1D_Physics( Config* settings, Mesh* mesh ) : LineSource_SN_Pseudo1D( settings, mesh ) {
-    _physics = new EPICS( settings->GetHydrogenFile(), settings->GetOxygenFile(), "../input/stopping_power.txt" );
-}
-
-std::vector<Matrix> LineSource_SN_Pseudo1D_Physics::GetScatteringXSE( const Vector& energies, const Matrix& angles ) {
-    return _physics->GetScatteringXS( energies, angles );
-}
-
-Vector LineSource_SN_Pseudo1D_Physics::GetTotalXSE( const Vector& energies ) { return _physics->GetTotalXSE( energies ); }
 
 // ---- LineSource_PN ----
 

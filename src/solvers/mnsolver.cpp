@@ -170,7 +170,8 @@ void MNSolver::IterPreprocessing( unsigned /*idx_pseudotime*/ ) {
     // }
 
     // ------- Entropy closure Step ----------------
-
+    // std::cout << _sol.size() << "\n";
+    // std::cout << _sol[0].size() << "\n";
     _optimizer->SolveMultiCell( _alpha, _sol, _momentBasis );    // parallel
 
     // ------- Solution reconstruction step ----

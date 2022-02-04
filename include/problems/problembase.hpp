@@ -6,16 +6,14 @@
 // Forward Declaration
 
 class Config;
-class EPICS;
 class Mesh;
 
 class ProblemBase
 {
 
   protected:
-    Config* _settings;
-    Mesh* _mesh;
-    EPICS* _physics;
+    Config* _settings; /*!< @brief pointer to settings  */
+    Mesh* _mesh;       /*!< @brief pointer to mesh  */
 
     std::vector<double> _density;       /*!< @brief vector with patient densities */
     std::vector<double> _stoppingPower; /*!< @brief vector with stopping powers*/

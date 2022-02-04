@@ -1,11 +1,10 @@
 #include "problems/aircavity1d.hpp"
 #include "common/config.hpp"
 #include "common/mesh.hpp"
-#include "problems/epics.hpp"
 
-AirCavity1D::AirCavity1D( Config* settings, Mesh* mesh ) : ElectronRT( settings, mesh ) {}
+AirCavity1D::AirCavity1D( Config* settings, Mesh* mesh ) : ProblemBase( settings, mesh ) {}
 
-AirCavity1D::~AirCavity1D() { delete _physics; }
+AirCavity1D::~AirCavity1D() {}
 
 std::vector<VectorVector> AirCavity1D::GetExternalSource( const Vector& energies ) {
     return std::vector<VectorVector>( energies.size(), std::vector<Vector>( _mesh->GetNumCells(), Vector( _settings->GetNQuadPoints(), 0.0 ) ) );
@@ -34,4 +33,23 @@ std::vector<double> AirCavity1D::GetDensity( const VectorVector& cellMidPoints )
         if( cellMidPoints[j][0] > 1.5 - 2.5 && cellMidPoints[j][0] < 2.0 - 2.5 ) densities[j] = 0.01;
     }
     return densities;
+}
+
+VectorVector AirCavity1D::GetScatteringXS( const Vector& /*energies*/ ) {
+    // @TODO
+    // Specified in subclasses
+    return VectorVector( 1, Vector( 1, 0.0 ) );
+}
+
+std::vector<Matrix> AirCavity1D::GetScatteringXSE( const Vector& /*energies*/, const Matrix& /*angles*/ ) {
+    // @TODO
+    // Specified in subclasses
+    // return _physics->GetScatteringXS( energies, angles );
+    return std::vector<Matrix>( 1, Matrix( 1, 1 ) );
+}
+
+VectorVector AirCavity1D::GetTotalXS( const Vector& /*energies*/ ) {
+    // @TODO
+    // Specified in subclasses
+    return VectorVector( 1, Vector( 1, 0.0 ) );
 }

@@ -100,7 +100,7 @@ enum PROBLEM_NAME {
     PROBLEM_AirCavity,
     PROBLEM_MuscleBoneLung,
     PROBLEM_Phantom2D,
-    PROBLEM_IsotropicSource_2D
+    PROBLEM_LinesourceDualDenstiy
 };
 
 inline std::map<std::string, PROBLEM_NAME> Problem_Map{ { "LINESOURCE", PROBLEM_LineSource },
@@ -110,7 +110,7 @@ inline std::map<std::string, PROBLEM_NAME> Problem_Map{ { "LINESOURCE", PROBLEM_
                                                         { "AIRCAVITY", PROBLEM_AirCavity },
                                                         { "MUSCLEBONELUNG", PROBLEM_MuscleBoneLung },
                                                         { "PHANTOM2D", PROBLEM_Phantom2D },
-                                                        { "ISOTROPICPOINTSOURCE2D", PROBLEM_IsotropicSource_2D },
+                                                        { "LINSOURECE_DUAL_DENSITY", PROBLEM_LinesourceDualDenstiy },
                                                         { "LINESOURCE_PSEUDO_1D", PROBLEM_LineSource_Pseudo_1D },
                                                         { "LINESOURCE_PSEUDO_1D_PHYSICS", PROBLEM_LineSource_Pseudo_1D_Physics } };
 

@@ -1,4 +1,4 @@
-#include "problems/isotropicsource2d.hpp"
+#include "problems/starmapvalidation.hpp"
 #include "common/config.hpp"
 #include "common/io.hpp"
 #include "common/mesh.hpp"
@@ -11,67 +11,49 @@
 #include <fstream>
 #include <numeric>
 
-IsotropicSource2D::IsotropicSource2D( Config* settings, Mesh* mesh ) : ProblemBase( settings, mesh ) {}
+StarMapValidation_SN::StarMapValidation_SN( Config* settings, Mesh* mesh ) : ProblemBase( settings, mesh ) {}
 
-IsotropicSource2D::~IsotropicSource2D() {}
+StarMapValidation_SN::~StarMapValidation_SN() {}
 
-VectorVector IsotropicSource2D::GetScatteringXS( const Vector& energies ) {
+VectorVector StarMapValidation_SN::GetScatteringXS( const Vector& energies ) {
     // @TODO
     // Specified in subclasses
     return VectorVector( 1, Vector( 1, 0.0 ) );
 }
 
-VectorVector IsotropicSource2D::GetTotalXS( const Vector& /*energies*/ ) {
+VectorVector StarMapValidation_SN::GetTotalXS( const Vector& /*energies*/ ) {
     // @TODO
     // Specified in subclasses
     return VectorVector( 1, Vector( 1, 0.0 ) );
 }
 
-std::vector<Matrix> IsotropicSource2D::GetScatteringXSE( const Vector& /*energies*/, const Matrix& /*angles*/ ) {
+std::vector<Matrix> StarMapValidation_SN::GetScatteringXSE( const Vector& /*energies*/, const Matrix& /*angles*/ ) {
     // @TODO
     // Specified in subclasses
     // return _physics->GetScatteringXS( energies, angles );
     return std::vector<Matrix>( 1, Matrix( 1, 1 ) );
 }
 
-Vector IsotropicSource2D::GetTotalXSE( const Vector& /*energies*/ ) {
+Vector StarMapValidation_SN::GetTotalXSE( const Vector& /*energies*/ ) {
     // @TODO
     // Specified in subclasses
     // return _physics->GetTotalXSE( energies );
     return Vector( 1 );
 }
 
-std::vector<VectorVector> IsotropicSource2D::GetExternalSource( const Vector& energies ) {
+std::vector<VectorVector> StarMapValidation_SN::GetExternalSource( const Vector& energies ) {
     auto zeroVec = Vector( _settings->GetNQuadPoints(), 0.0 );
     auto uniform = std::vector<Vector>( _mesh->GetNumCells(), zeroVec );
     auto Q       = std::vector<VectorVector>( energies.size(), uniform );
     return Q;
 }
 
-VectorVector IsotropicSource2D::SetupIC() {
+VectorVector StarMapValidation_SN::SetupIC() {
     VectorVector psi( _mesh->GetNumCells(), Vector( _settings->GetNQuadPoints(), 1e-10 ) );
     auto cellMids         = _mesh->GetCellMidPoints();
     double enterPositionX = 0.5;    // 0.0;
     double enterPositionY = 0.5;
-    // auto boundaryCells    = _mesh->GetBoundaryTypes();
-    // Case 1: Ingoing radiation in just one cell
-    // find cell that best matches enter position
-    // double dist = 1000.0;
-    // unsigned indexSource = 0;
-    /*
-    for( unsigned j = 0; j < cellMids.size(); ++j ) {
-        // if( boundaryCells[j] == BOUNDARY_TYPE::DIRICHLET ) {
-        double x = cellMids[j][0];
-        double y = cellMids[j][1];
-        if( x >= 0.49 && x <= 0.5 && y >= 0.49 && y <= 0.5 ) {
-            psi[j] = Vector( _settings->GetNQuadPoints(), 1.0 );
-        }
-        //}
-    }*/
-    // psi[indexSource] = Vector( _settings->GetNQuadPoints(), 1.0 );
-
-    // Case 2: Ingoing radiation as Gauss curve
-    double t = 1e-5;    // pseudo time for gaussian smoothing
+    double t              = 1e-5;    // pseudo time for gaussian smoothing
     for( unsigned j = 0; j < cellMids.size(); ++j ) {
         double x = cellMids[j][0] - enterPositionX;
         double y = cellMids[j][1] - enterPositionY;
@@ -81,7 +63,7 @@ VectorVector IsotropicSource2D::SetupIC() {
     return psi;
 }
 
-std::vector<double> IsotropicSource2D::GetDensity( const VectorVector& /*cellMidPoints*/ ) {
+std::vector<double> StarMapValidation_SN::GetDensity( const VectorVector& /*cellMidPoints*/ ) {
     double rhoL = 1.0;
     double rhoR = 5.0;
     std::vector<double> rho( _settings->GetNCells(), rhoL );
@@ -98,11 +80,11 @@ std::vector<double> IsotropicSource2D::GetDensity( const VectorVector& /*cellMid
 }
 
 // Moment  version below
-IsotropicSource2D_Moment::IsotropicSource2D_Moment( Config* settings, Mesh* mesh ) : IsotropicSource2D( settings, mesh ) {}
+StarMapValidation_Moment::StarMapValidation_Moment( Config* settings, Mesh* mesh ) : StarMapValidation_SN( settings, mesh ) {}
 
-IsotropicSource2D_Moment::~IsotropicSource2D_Moment() {}
+StarMapValidation_Moment::~StarMapValidation_Moment() {}
 
-VectorVector IsotropicSource2D_Moment::SetupIC() {
+VectorVector StarMapValidation_Moment::SetupIC() {
 
     SphericalBase* tempBase  = SphericalBase::Create( _settings );
     unsigned ntotalEquations = tempBase->GetBasisSize();
@@ -126,6 +108,6 @@ VectorVector IsotropicSource2D_Moment::SetupIC() {
     return initialSolution;
 }
 
-double IsotropicSource2D_Moment::NormPDF( double x, double mu, double sigma ) {
+double StarMapValidation_Moment::NormPDF( double x, double mu, double sigma ) {
     return INV_SQRT_2PI / sigma * std::exp( -( ( x - mu ) * ( x - mu ) ) / ( 2.0 * sigma * sigma ) );
 }

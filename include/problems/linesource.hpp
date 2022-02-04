@@ -23,7 +23,7 @@ class LineSource : public ProblemBase
          @param sigma_s  scattering cross section of the exact solution
          @return exact solution at x,y,t,scatteringXS
     */
-    double GetAnalyticalSolution( double x, double y, double t, double sigma_s ) override;
+    virtual double GetAnalyticalSolution( double x, double y, double t, double sigma_s ) override;
 
   private:
     /*! @brief Helper Functions to compute the analytic solution for sigma != 0
@@ -66,24 +66,6 @@ class LineSource_SN_Pseudo1D : public LineSource_SN
     LineSource_SN_Pseudo1D( Config* settings, Mesh* mesh );
 
     VectorVector SetupIC() override;
-};
-
-class LineSource_SN_Pseudo1D_Physics : public LineSource_SN_Pseudo1D
-{
-  private:
-    LineSource_SN_Pseudo1D_Physics() = delete;
-
-  public:
-    LineSource_SN_Pseudo1D_Physics( Config* settings, Mesh* mesh );
-
-    std::vector<Matrix> GetScatteringXSE( const Vector& energies, const Matrix& angles ) override;
-
-    /**
-     * @brief GetTotalXSE gives back vector of total cross sections for
-     *        energies in vector energy
-     * @param energies is the energy the cross section is queried for
-     */
-    Vector GetTotalXSE( const Vector& energies ) override;
 };
 
 class LineSource_PN : public LineSource

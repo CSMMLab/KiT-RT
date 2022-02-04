@@ -1,4 +1,4 @@
-#include "problems/icru.hpp"
+#include "toolboxes/icru.hpp"
 #include "common/config.hpp"
 
 ICRU::ICRU( const Vector& mu, const Vector& energy, Config* settings ) : _NE( 96 ), _NA( 606 ), _E( 1e6 * energy ), _QMU( mu ) {

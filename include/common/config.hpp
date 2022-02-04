@@ -281,7 +281,7 @@ class Config
 
     // Mesh Structure
     unsigned GetNCells() { return _nCells; }
-    unsigned short GetDim() { return _dim; }
+    unsigned short GetDim() const { return _dim; }
 
     // Solver Structure
     double inline GetCFL() const { return _CFL; }

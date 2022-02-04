@@ -3,9 +3,8 @@
 #include "common/io.hpp"
 #include "fluxes/numericalflux.hpp"
 #include "kernels/scatteringkernelbase.hpp"
-#include "problems/icru.hpp"
 #include "problems/problembase.hpp"
-
+#include "toolboxes/icru.hpp"
 // externals
 #include "spdlog/spdlog.h"
 #include <mpi.h>
@@ -30,13 +29,6 @@ CSDSNSolver::CSDSNSolver( Config* settings ) : SNSolver( settings ) {
     }
 
     // --- Create Quadrature Points from Quad Rule
-    /* Legacy Code -- unused: Will be deleted
-    std::vector<double> buffer;
-    for( auto q : _quadPoints )
-        if( q[0] > 0.0 ) buffer.push_back( q[0] );
-    std::sort( buffer.begin(), buffer.end() );
-    Vector posMu( buffer.size(), buffer.data() );
-    */
 
     // create 1D quadrature
 

@@ -152,6 +152,9 @@ Mesh* LoadSU2MeshFromFile( const Config* settings ) {
         while( getline( ifs, line ) ) {
             if( line.find( "NDIME", 0 ) != std::string::npos ) {
                 dim = static_cast<unsigned>( TextProcessingToolbox::GetTrailingNumber( line ) );
+                // if( settings->GetDim() != dim ) {
+                //     log->info( "Warning: Mesh dimension does not coinside with problem dimension! Proceed with caution!" );
+                // }
                 break;
             }
         }

@@ -5,14 +5,14 @@
 
 class Config;
 
-class IsotropicSource2D : public ProblemBase
+class StarMapValidation_SN : public ProblemBase
 {
   private:
-    IsotropicSource2D() = delete;
+    StarMapValidation_SN() = delete;
 
   public:
-    IsotropicSource2D( Config* settings, Mesh* mesh );
-    ~IsotropicSource2D();
+    StarMapValidation_SN( Config* settings, Mesh* mesh );
+    ~StarMapValidation_SN();
 
     VectorVector GetScatteringXS( const Vector& energies ) override;
     VectorVector GetTotalXS( const Vector& energies ) override;
@@ -23,15 +23,15 @@ class IsotropicSource2D : public ProblemBase
     std::vector<double> GetDensity( const VectorVector& cellMidPoints ) override;
 };
 
-class IsotropicSource2D_Moment : public IsotropicSource2D
+class StarMapValidation_Moment : public StarMapValidation_SN
 {
   private:
-    IsotropicSource2D_Moment() = delete;
+    StarMapValidation_Moment() = delete;
     double NormPDF( double x, double mu, double sigma ); /*!< Creates an 1D normal distribution at x with mean mu and stddev sigma */
 
   public:
-    IsotropicSource2D_Moment( Config* settings, Mesh* mesh );
-    ~IsotropicSource2D_Moment();
+    StarMapValidation_Moment( Config* settings, Mesh* mesh );
+    ~StarMapValidation_Moment();
     VectorVector SetupIC() override;
 };
 

@@ -3,8 +3,8 @@
 #include "common/io.hpp"
 #include "fluxes/numericalflux.hpp"
 #include "kernels/scatteringkernelbase.hpp"
-#include "problems/icru.hpp"
 #include "problems/problembase.hpp"
+#include "toolboxes/icru.hpp"
 
 // externals
 #include "spdlog/spdlog.h"
