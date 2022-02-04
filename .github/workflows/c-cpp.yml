@@ -9,7 +9,7 @@ on:
 jobs:
   unit_tests:
       runs-on: ubuntu-latest
-      container: kitrt/test:latest
+      container: kitrt/test_ml:latest
       environment: coverage
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
