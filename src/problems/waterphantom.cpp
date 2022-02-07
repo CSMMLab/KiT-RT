@@ -1,6 +1,8 @@
 #include "problems/waterphantom.hpp"
 #include "common/config.hpp"
+#include "common/io.hpp"
 #include "common/mesh.hpp"
+#include "toolboxes/interpolation.hpp"
 
 WaterPhantom1D::WaterPhantom1D( Config* settings, Mesh* mesh ) : ProblemBase( settings, mesh ) {}
 
