@@ -133,21 +133,23 @@ VectorVector LineSource_SN::SetupIC() {
 
 // ---- LineSource_PN ----
 
-LineSource_PN::LineSource_PN( Config* settings, Mesh* mesh ) : LineSource( settings, mesh ) {}
+LineSource_Moment::LineSource_Moment( Config* settings, Mesh* mesh ) : LineSource( settings, mesh ) {}
 
-LineSource_PN::~LineSource_PN() {}
+LineSource_Moment::~LineSource_Moment() {}
 
-VectorVector LineSource_PN::GetScatteringXS( const Vector& energies ) {
+VectorVector LineSource_Moment::GetScatteringXS( const Vector& energies ) {
     return VectorVector( energies.size(), Vector( _mesh->GetNumCells(), _sigmaS ) );
 }
 
-VectorVector LineSource_PN::GetTotalXS( const Vector& energies ) { return VectorVector( energies.size(), Vector( _mesh->GetNumCells(), _sigmaS ) ); }
+VectorVector LineSource_Moment::GetTotalXS( const Vector& energies ) {
+    return VectorVector( energies.size(), Vector( _mesh->GetNumCells(), _sigmaS ) );
+}
 
-std::vector<VectorVector> LineSource_PN::GetExternalSource( const Vector& /*energies*/ ) {
+std::vector<VectorVector> LineSource_Moment::GetExternalSource( const Vector& /*energies*/ ) {
     return std::vector<VectorVector>( 1u, std::vector<Vector>( _mesh->GetNumCells(), Vector( 1u, 0.0 ) ) );
 }
 
-VectorVector LineSource_PN::SetupIC() {
+VectorVector LineSource_Moment::SetupIC() {
     // Compute number of equations in the system
 
     // In case of PN, spherical basis is per default SPHERICAL_HARMONICS
@@ -202,9 +204,9 @@ VectorVector LineSource_PN::SetupIC() {
 
 // ---- LineSource SN pseudo1D ----
 
-LineSource_SN_Pseudo1D::LineSource_SN_Pseudo1D( Config* settings, Mesh* mesh ) : LineSource_SN( settings, mesh ) {}
+LineSource_SN_1D::LineSource_SN_1D( Config* settings, Mesh* mesh ) : LineSource_SN( settings, mesh ) {}
 
-VectorVector LineSource_SN_Pseudo1D::SetupIC() {
+VectorVector LineSource_SN_1D::SetupIC() {
     VectorVector psi( _mesh->GetNumCells(), Vector( _settings->GetNQuadPoints(), 1e-10 ) );
     auto cellMids = _mesh->GetCellMidPoints();
     double t      = 3.2e-4;    // pseudo time for gaussian smoothing
@@ -212,5 +214,61 @@ VectorVector LineSource_SN_Pseudo1D::SetupIC() {
         double x = cellMids[j][0];
         psi[j]   = 1.0 / ( 4.0 * M_PI * t ) * std::exp( -( x * x ) / ( 4 * t ) );
     }
+    return psi;
+}
+
+// ---- LineSource Moment pseudo1D ----
+
+LineSource_Moment_1D::LineSource_Moment_1D( Config* settings, Mesh* mesh ) : LineSource_Moment( settings, mesh ) {}
+
+VectorVector LineSource_Moment_1D::SetupIC() {
+    // Compute number of equations in the system
+
+    // In case of PN, spherical basis is per default SPHERICAL_HARMONICS
+    SphericalBase* tempBase  = SphericalBase::Create( _settings );
+    unsigned ntotalEquations = tempBase->GetBasisSize();
+
+    VectorVector psi( _mesh->GetNumCells(), Vector( ntotalEquations, 0 ) );    // zero could lead to problems?
+    VectorVector cellMids = _mesh->GetCellMidPoints();
+
+    Vector uIC( ntotalEquations, 0 );
+
+    if( _settings->GetSphericalBasisName() == SPHERICAL_MONOMIALS ) {
+        QuadratureBase* quad          = QuadratureBase::Create( _settings );
+        VectorVector quadPointsSphere = quad->GetPointsSphere();
+        Vector w                      = quad->GetWeights();
+
+        double my, phi;
+        VectorVector moments = VectorVector( quad->GetNq(), Vector( tempBase->GetBasisSize(), 0.0 ) );
+
+        for( unsigned idx_quad = 0; idx_quad < quad->GetNq(); idx_quad++ ) {
+            my                = quadPointsSphere[idx_quad][0];
+            phi               = quadPointsSphere[idx_quad][1];
+            moments[idx_quad] = tempBase->ComputeSphericalBasis( my, phi );
+        }
+        // Integrate <1*m> to get factors for monomial basis in isotropic scattering
+        for( unsigned idx_quad = 0; idx_quad < quad->GetNq(); idx_quad++ ) {
+            uIC += w[idx_quad] * moments[idx_quad];
+        }
+        delete quad;
+    }
+
+    // Initial condition is dirac impulse at (x,y) = (0,0) ==> constant in angle ==> all moments - exept first - are zero.
+    double t       = 3.2e-4;    // pseudo time for gaussian smoothing (Approx to dirac impulse)
+    double epsilon = 1e-3;      // minimal value for first moment to avoid div by zero error
+
+    for( unsigned j = 0; j < cellMids.size(); ++j ) {
+        double x = cellMids[j][0];
+
+        double kinetic_density = std::max( 1.0 / ( 4.0 * M_PI * t ) * std::exp( -( x * x ) / ( 4 * t ) ), epsilon );
+
+        if( _settings->GetSphericalBasisName() == SPHERICAL_MONOMIALS ) {
+            psi[j] = kinetic_density * uIC / uIC[0];    // Remember scaling
+        }
+        if( _settings->GetSphericalBasisName() == SPHERICAL_HARMONICS ) {
+            psi[j][0] = kinetic_density;
+        }
+    }
+    delete tempBase;    // Only temporally needed
     return psi;
 }

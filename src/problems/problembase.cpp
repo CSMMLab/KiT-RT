@@ -23,10 +23,18 @@ ProblemBase* ProblemBase::Create( Config* settings, Mesh* mesh ) {
         case PROBLEM_LineSource: {
             if( settings->GetSolverName() == PN_SOLVER || settings->GetSolverName() == MN_SOLVER ||
                 settings->GetSolverName() == MN_SOLVER_NORMALIZED )
-                return new LineSource_PN( settings, mesh );
+                return new LineSource_Moment( settings, mesh );
             else
                 return new LineSource_SN( settings, mesh );    // default
-        }
+        } break;
+        case PROBLEM_LineSource_Pseudo_1D: {
+            if( settings->GetSolverName() == PN_SOLVER || settings->GetSolverName() == MN_SOLVER ||
+                settings->GetSolverName() == MN_SOLVER_NORMALIZED )
+                return new LineSource_Moment_1D( settings, mesh );
+            else
+                return new LineSource_SN_1D( settings, mesh );    // default
+        } break;
+
         case PROBLEM_Checkerboard: {
             if( settings->GetSolverName() == PN_SOLVER || settings->GetSolverName() == MN_SOLVER ||
                 settings->GetSolverName() == MN_SOLVER_NORMALIZED )
@@ -42,7 +50,6 @@ ProblemBase* ProblemBase::Create( Config* settings, Mesh* mesh ) {
                 return new AirCavity1D( settings, mesh );    // default
         case PROBLEM_WaterPhantom: return new WaterPhantom1D( settings, mesh );
         case PROBLEM_Phantom2D: return new WaterPhantom( settings, mesh );
-        case PROBLEM_LineSource_Pseudo_1D: return new LineSource_SN_Pseudo1D( settings, mesh );
         case PROBLEM_StarmapValidation:
             if( settings->GetSolverName() == CSD_PN_SOLVER || settings->GetSolverName() == CSD_MN_SOLVER )
                 return new StarMapValidation_Moment( settings, mesh );
