@@ -47,6 +47,44 @@ CSDPNSolver::CSDPNSolver( Config* settings ) : PNSolver( settings ) {
     Vector etmp = E_tab;
     Vector stmp = S_tab;
     Interpolation interpS( etmp, stmp );
+    _s = interpS( _energies );
+
+    // write initial condition
+    Vector pos_beam = Vector{ 0.5, 0.5};
+    _sol            = VectorVector( _nCells, Vector( _nSystem, 0.0 ) );
+
+    for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
+        double x            = _cellMidPoints[idx_cell][0];
+        double y            = _cellMidPoints[idx_cell][1];
+        const double stddev = .01;
+        double f            = NormPDF( x, pos_beam[0], stddev ) * NormPDF( y, pos_beam[1], stddev );
+
+        _sol[idx_cell][0] = f * StarMAPmoments[0];
+
+        for( unsigned idx_sys = 1; idx_sys < _nSystem; idx_sys++ ) {
+            _sol[idx_cell][idx_sys] = f * StarMAPmoments[idx_sys];    // must be VectorVector
+        }
+    }
+
+    //// check normpdf
+    // VectorVector testVec = VectorVector( 100, Vector( 2 + _nSystem, 0.0 ) );
+    // double dx            = 1.0 / 100.0;
+    // for( unsigned i = 0; i < 100; i++ ) {
+    //     const double stddev = .01;
+    //     testVec[i][0]       = dx * i;
+    //     testVec[i][1]       = dx * i;
+    //
+    //    for( unsigned idx_sys = 0; idx_sys < _nSystem; idx_sys++ ) {
+    //        testVec[i][idx_sys + 2] =
+    //            normpdf( testVec[i][0], pos_beam[0], stddev ) * normpdf( testVec[i][1], pos_beam[1], stddev ) * StarMAPmoments[idx_sys];
+    //    }
+    //}
+    // TextProcessingToolbox::PrintVectorVectorToFile( testVec, "IC_fullMoments.csv", 100, 2 + _nSystem );
+
+    _solNew = _sol;
+
+    _dose = std::vector<double>( _settings->GetNCells(), 0.0 );
+
     _sigmaTAtEnergy = Vector( _polyDegreeBasis + 1, 0.0 );
 
     // compute stopping power between energies for dose computation

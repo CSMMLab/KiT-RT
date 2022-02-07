@@ -22,7 +22,7 @@ def extract(image_name):
     else: # jpg or png
         img = Image.open(image_name).convert('L') #image data
         I = np.asarray(img) # image as greyscale
-        I = I/255; # rescale values to [0,1]
+        I = I/255*1.85; # rescale values to [0,1.85] (1.85 is the density of bone)
         J = deepcopy(np.flipud(I))
         dimensions = (1,1) # [cm]
         return J , dimensions

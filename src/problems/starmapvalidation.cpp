@@ -65,7 +65,7 @@ VectorVector StarMapValidation_SN::SetupIC() {
 
 std::vector<double> StarMapValidation_SN::GetDensity( const VectorVector& /*cellMidPoints*/ ) {
     double rhoL = 1.0;
-    double rhoR = 5.0;
+    double rhoR = 0.6;
     std::vector<double> rho( _settings->GetNCells(), rhoL );
 
     // use values rhoR on right third of domain
