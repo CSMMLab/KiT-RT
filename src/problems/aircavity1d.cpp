@@ -14,13 +14,20 @@ std::vector<VectorVector> AirCavity1D::GetExternalSource( const Vector& energies
 
 VectorVector AirCavity1D::SetupIC() {
     VectorVector psi( _mesh->GetNumCells(), Vector( _settings->GetNQuadPoints(), 1e-10 ) );
-    VectorVector cellMids = _mesh->GetCellMidPoints();
-    double s              = 0.1;
+    VectorVector cellMids         = _mesh->GetCellMidPoints();
+    double s                      = 0.1;
+    QuadratureBase* quad          = QuadratureBase::Create( _settings );
+    VectorVector quadPointsSphere = quad->GetPointsSphere();
     for( unsigned j = 0; j < cellMids.size(); ++j ) {
         double x = cellMids[j][0];
         // anisotropic inflow that concentrates all particles on the last quadrature point
-        psi[j][_settings->GetNQuadPoints() - 1] = 1.0 / ( s * sqrt( 2 * M_PI ) ) * std::exp( -x * x / ( 2 * s * s ) );
+        for( unsigned idx_quad = 0; idx_quad < _settings->GetNQuadPoints(); idx_quad++ ) {
+            if( quadPointsSphere[idx_quad][0] > 0.5 ) {    // if my >0
+                psi[j][idx_quad] = 1.0 / ( s * sqrt( 2 * M_PI ) ) * std::exp( -x * x / ( 2 * s * s ) );
+            }
+        }
     }
+    delete quad;
     return psi;
 }
 
@@ -80,8 +87,11 @@ VectorVector AirCavity1D_Moment::SetupIC() {
     for( unsigned idx_cell = 0; idx_cell < cellMids.size(); ++idx_cell ) {
         double x = cellMids[idx_cell][0];
         // anisotropic inflow that concentrates all particles on the last quadrature point
-        cellKineticDensity[_settings->GetNQuadPoints() - 1] =
-            std::max( 1.0 / ( s * sqrt( 2 * M_PI ) ) * std::exp( -x * x / ( 2 * s * s ) ), epsilon );
+        for( unsigned idx_quad = 0; idx_quad < _settings->GetNQuadPoints(); idx_quad++ ) {
+            if( quadPointsSphere[idx_quad][0] > 0.5 ) {    // if my >0
+                cellKineticDensity[idx_quad] = std::max( 1.0 / ( s * sqrt( 2 * M_PI ) ) * std::exp( -x * x / ( 2 * s * s ) ), epsilon );
+            }
+        }
         // Compute moments of this kinetic density
         for( unsigned idx_quad = 0; idx_quad < quad->GetNq(); idx_quad++ ) {
             initialSolution[idx_cell] += cellKineticDensity[idx_quad] * w[idx_quad] * moments[idx_quad];
