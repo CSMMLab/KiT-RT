@@ -1,8 +1,11 @@
 #include "problems/aircavity1d.hpp"
 #include "common/config.hpp"
 #include "common/mesh.hpp"
+#include "quadratures/qgausslegendretensorized.hpp"
 #include "quadratures/quadraturebase.hpp"
 #include "toolboxes/sphericalbase.hpp"
+#include "toolboxes/sphericalharmonics.hpp"
+#include "toolboxes/textprocessingtoolbox.hpp"
 
 AirCavity1D::AirCavity1D( Config* settings, Mesh* mesh ) : ProblemBase( settings, mesh ) { _sigmaS = settings->GetSigmaS(); }
 
@@ -60,47 +63,99 @@ std::vector<VectorVector> AirCavity1D_Moment::GetExternalSource( const Vector& /
 }
 
 VectorVector AirCavity1D_Moment::SetupIC() {
-    // In case of PN, spherical basis is per default SPHERICAL_HARMONICS
-    SphericalBase* tempBase  = SphericalBase::Create( _settings );
-    unsigned ntotalEquations = tempBase->GetBasisSize();
-    double epsilon           = 1e-3;
+    if( _settings->GetSolverName() == PN_SOLVER ) {
+        // In case of PN, spherical basis is per default SPHERICAL_HARMONICS in 3 velocity dimensions
 
-    Vector cellKineticDensity( _settings->GetNQuadPoints(), epsilon );
-    VectorVector initialSolution( _mesh->GetNumCells(), Vector( ntotalEquations, 0 ) );    // zero could lead to problems?
-    VectorVector cellMids = _mesh->GetCellMidPoints();
+        SphericalBase* tempBase  = new SphericalHarmonics( _settings->GetMaxMomentDegree(), 3 );
+        unsigned ntotalEquations = tempBase->GetBasisSize();
 
-    QuadratureBase* quad          = QuadratureBase::Create( _settings );
-    VectorVector quadPointsSphere = quad->GetPointsSphere();
-    Vector w                      = quad->GetWeights();
+        double epsilon = 1e-3;
 
-    // compute moment basis
-    VectorVector moments = VectorVector( quad->GetNq(), Vector( tempBase->GetBasisSize(), 0.0 ) );
-    double my, phi;    // quadpoints in spherical coordinates
-    for( unsigned idx_quad = 0; idx_quad < quad->GetNq(); idx_quad++ ) {
-        my                = quadPointsSphere[idx_quad][0];
-        phi               = quadPointsSphere[idx_quad][1];
-        moments[idx_quad] = tempBase->ComputeSphericalBasis( my, phi );
-    }
+        VectorVector initialSolution( _mesh->GetNumCells(), Vector( ntotalEquations, 0.0 ) );    // zero could lead to problems?
+        VectorVector cellMids = _mesh->GetCellMidPoints();
 
-    double s = 0.1;
-    // create kinetic density (SN initial condition)
-    for( unsigned idx_cell = 0; idx_cell < cellMids.size(); ++idx_cell ) {
-        double x = cellMids[idx_cell][0];
-        // anisotropic inflow that concentrates all particles on the last quadrature point
-        for( unsigned idx_quad = 0; idx_quad < _settings->GetNQuadPoints(); idx_quad++ ) {
-            if( quadPointsSphere[idx_quad][0] > 0.5 ) {    // if my >0
-                cellKineticDensity[idx_quad] = std::max( 1.0 / ( s * sqrt( 2 * M_PI ) ) * std::exp( -x * x / ( 2 * s * s ) ), epsilon );
+        QuadratureBase* quad          = new QGaussLegendreTensorized( _settings );
+        VectorVector quadPointsSphere = quad->GetPointsSphere();
+        Vector w                      = quad->GetWeights();
+        Vector cellKineticDensity( quad->GetNq(), epsilon );
+
+        // compute moment basis
+        VectorVector moments = VectorVector( quad->GetNq(), Vector( ntotalEquations, 0.0 ) );
+        double my, phi;    // quadpoints in spherical coordinates
+        for( unsigned idx_quad = 0; idx_quad < quad->GetNq(); idx_quad++ ) {
+            my                = quadPointsSphere[idx_quad][0];
+            phi               = quadPointsSphere[idx_quad][1];
+            moments[idx_quad] = tempBase->ComputeSphericalBasis( my, phi );
+        }
+        TextProcessingToolbox::PrintVectorVector( moments );
+        std::cout << w << "\n";
+
+        delete tempBase;
+
+        double s = 0.1;
+        // create kinetic density( SN initial condition )
+        for( unsigned idx_cell = 0; idx_cell < cellMids.size(); ++idx_cell ) {
+            double x = cellMids[idx_cell][0];
+            // anisotropic inflow that concentrates all particles on the last quadrature point
+            for( unsigned idx_quad = 0; idx_quad < _settings->GetNQuadPoints(); idx_quad++ ) {
+                if( quadPointsSphere[idx_quad][0] > 0.5 ) {    // if my >0
+                    cellKineticDensity[idx_quad] = std::max( 1.0 / ( s * sqrt( 2 * M_PI ) ) * std::exp( -x * x / ( 2 * s * s ) ), epsilon );
+                }
+            }
+            // Compute moments of this kinetic density
+            for( unsigned idx_quad = 0; idx_quad < quad->GetNq(); idx_quad++ ) {
+                auto t = cellKineticDensity[idx_quad] * w[idx_quad] * moments[idx_quad];
+                if( isnan( t ) ) {
+                    std::cout << "t is nan\n";
+                }
+                initialSolution[idx_cell] += cellKineticDensity[idx_quad] * w[idx_quad] * moments[idx_quad];
             }
         }
-        // Compute moments of this kinetic density
-        for( unsigned idx_quad = 0; idx_quad < quad->GetNq(); idx_quad++ ) {
-            initialSolution[idx_cell] += cellKineticDensity[idx_quad] * w[idx_quad] * moments[idx_quad];
-        }
+        delete quad;
+        return initialSolution;
     }
+    else {
+        SphericalBase* tempBase  = SphericalBase::Create( _settings );
+        unsigned ntotalEquations = tempBase->GetBasisSize();
 
-    delete tempBase;    // Only temporally needed
-    delete quad;
-    return initialSolution;
+        double epsilon = 1e-3;
+
+        Vector cellKineticDensity( _settings->GetNQuadPoints(), epsilon );
+        VectorVector initialSolution( _mesh->GetNumCells(), Vector( ntotalEquations, 0 ) );    // zero could lead to problems?
+        VectorVector cellMids = _mesh->GetCellMidPoints();
+
+        QuadratureBase* quad          = QuadratureBase::Create( _settings );
+        VectorVector quadPointsSphere = quad->GetPointsSphere();
+        Vector w                      = quad->GetWeights();
+
+        // compute moment basis
+        VectorVector moments = VectorVector( quad->GetNq(), Vector( ntotalEquations, 0.0 ) );
+        double my, phi;    // quadpoints in spherical coordinates
+        for( unsigned idx_quad = 0; idx_quad < quad->GetNq(); idx_quad++ ) {
+            my                = quadPointsSphere[idx_quad][0];
+            phi               = quadPointsSphere[idx_quad][1];
+            moments[idx_quad] = tempBase->ComputeSphericalBasis( my, phi );
+        }
+        delete tempBase;
+
+        double s = 0.1;
+        // create kinetic density( SN initial condition )
+        for( unsigned idx_cell = 0; idx_cell < cellMids.size(); ++idx_cell ) {
+            double x = cellMids[idx_cell][0];
+            // anisotropic inflow that concentrates all particles on the last quadrature point
+            for( unsigned idx_quad = 0; idx_quad < _settings->GetNQuadPoints(); idx_quad++ ) {
+                if( quadPointsSphere[idx_quad][0] > 0.5 ) {    // if my >0
+                    cellKineticDensity[idx_quad] = std::max( 1.0 / ( s * sqrt( 2 * M_PI ) ) * std::exp( -x * x / ( 2 * s * s ) ), epsilon );
+                }
+            }
+            // Compute moments of this kinetic density
+            for( unsigned idx_quad = 0; idx_quad < quad->GetNq(); idx_quad++ ) {
+                initialSolution[idx_cell] += cellKineticDensity[idx_quad] * w[idx_quad] * moments[idx_quad];
+            }
+        }
+        delete quad;
+        return initialSolution;
+    }
 }
 
 std::vector<double> AirCavity1D_Moment::GetDensity( const VectorVector& cellMidPoints ) {

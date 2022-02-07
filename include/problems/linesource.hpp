@@ -57,17 +57,6 @@ class LineSource_SN : public LineSource
     VectorVector SetupIC() override;
 };
 
-class LineSource_SN_Pseudo1D : public LineSource_SN
-{
-  private:
-    LineSource_SN_Pseudo1D() = delete;
-
-  public:
-    LineSource_SN_Pseudo1D( Config* settings, Mesh* mesh );
-
-    VectorVector SetupIC() override;
-};
-
 class LineSource_PN : public LineSource
 {
   private:
@@ -80,6 +69,28 @@ class LineSource_PN : public LineSource
     VectorVector GetScatteringXS( const Vector& energies ) override;
     VectorVector GetTotalXS( const Vector& energies ) override;
     std::vector<VectorVector> GetExternalSource( const Vector& energies ) override;
+    VectorVector SetupIC() override;
+};
+
+class LineSource_SN_Pseudo1D : public LineSource_SN
+{
+  private:
+    LineSource_SN_Pseudo1D() = delete;
+
+  public:
+    LineSource_SN_Pseudo1D( Config* settings, Mesh* mesh );
+
+    VectorVector SetupIC() override;
+};
+
+class LineSource_PN_Pseudo1D : public LineSource_SN
+{
+  private:
+    LineSource_PN_Pseudo1D() = delete;
+
+  public:
+    LineSource_PN_Pseudo1D( Config* settings, Mesh* mesh );
+
     VectorVector SetupIC() override;
 };
 

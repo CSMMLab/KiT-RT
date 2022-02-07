@@ -2,9 +2,6 @@
 #include "common/config.hpp"
 #include "problems/aircavity1d.hpp"
 #include "problems/checkerboard.hpp"
-#include "problems/electronrt.hpp"
-#include "problems/epics.hpp"
-#include "problems/isotropicsource2d.hpp"
 #include "problems/isotropicsource2d_ct.hpp"
 #include "problems/linesource.hpp"
 #include "problems/starmapvalidation.hpp"
@@ -46,18 +43,19 @@ ProblemBase* ProblemBase::Create( Config* settings, Mesh* mesh ) {
         case PROBLEM_WaterPhantom: return new WaterPhantom1D( settings, mesh );
         case PROBLEM_Phantom2D: return new WaterPhantom( settings, mesh );
         case PROBLEM_LineSource_Pseudo_1D: return new LineSource_SN_Pseudo1D( settings, mesh );
-        case PROBLEM_LinesourceDualDenstiy:
+        case PROBLEM_StarmapValidation:
             if( settings->GetSolverName() == CSD_PN_SOLVER || settings->GetSolverName() == CSD_MN_SOLVER )
-                return new IsotropicSource2D_Moment( settings, mesh );
-            else                                                   // CSD_SN_SOLVER
-                return new IsotropicSource2D( settings, mesh );    // default
-        case PROBLEM_IsotropicSource_2D_CT:
-            if( settings->GetSolverName() == CSD_PN_SOLVER_JL )
-                return new IsotropicSource2D_CT_Moment( settings, mesh );
-            else
-                return new IsotropicSource2D_CT( settings, mesh );    // default
+                return new StarMapValidation_Moment( settings, mesh );
+            else                                                      // CSD_SN_SOLVER
+                return new StarMapValidation_SN( settings, mesh );    // default
 
-        default: return new ElectronRT( settings, mesh );          // Use RadioTherapy as dummy
+            // case PROBLEM_IsotropicSource_2D_CT:    // Correct?
+            //     if( settings->GetSolverName() == CSD_PN_SOLVER )
+            //         return new IsotropicSource2D_CT_Moment( settings, mesh );
+            //     else
+            //         return new IsotropicSource2D_CT( settings, mesh );    // default
+
+        default: ErrorMessages::Error( "No valid physical problem chosen. Please check your config file", CURRENT_FUNCTION ); return nullptr;
     }
 }
 

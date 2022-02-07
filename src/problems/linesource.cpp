@@ -131,21 +131,6 @@ VectorVector LineSource_SN::SetupIC() {
     return psi;
 }
 
-// ---- LineSource_SN_peudo1D ----
-
-LineSource_SN_Pseudo1D::LineSource_SN_Pseudo1D( Config* settings, Mesh* mesh ) : LineSource_SN( settings, mesh ) {}
-
-VectorVector LineSource_SN_Pseudo1D::SetupIC() {
-    VectorVector psi( _mesh->GetNumCells(), Vector( _settings->GetNQuadPoints(), 1e-10 ) );
-    auto cellMids = _mesh->GetCellMidPoints();
-    double t      = 3.2e-4;    // pseudo time for gaussian smoothing
-    for( unsigned j = 0; j < cellMids.size(); ++j ) {
-        double x = cellMids[j][0];
-        psi[j]   = 1.0 / ( 4.0 * M_PI * t ) * std::exp( -( x * x ) / ( 4 * t ) );
-    }
-    return psi;
-}
-
 // ---- LineSource_PN ----
 
 LineSource_PN::LineSource_PN( Config* settings, Mesh* mesh ) : LineSource( settings, mesh ) {}
@@ -212,5 +197,20 @@ VectorVector LineSource_PN::SetupIC() {
         }
     }
     delete tempBase;    // Only temporally needed
+    return psi;
+}
+
+// ---- LineSource SN pseudo1D ----
+
+LineSource_SN_Pseudo1D::LineSource_SN_Pseudo1D( Config* settings, Mesh* mesh ) : LineSource_SN( settings, mesh ) {}
+
+VectorVector LineSource_SN_Pseudo1D::SetupIC() {
+    VectorVector psi( _mesh->GetNumCells(), Vector( _settings->GetNQuadPoints(), 1e-10 ) );
+    auto cellMids = _mesh->GetCellMidPoints();
+    double t      = 3.2e-4;    // pseudo time for gaussian smoothing
+    for( unsigned j = 0; j < cellMids.size(); ++j ) {
+        double x = cellMids[j][0];
+        psi[j]   = 1.0 / ( 4.0 * M_PI * t ) * std::exp( -( x * x ) / ( 4 * t ) );
+    }
     return psi;
 }

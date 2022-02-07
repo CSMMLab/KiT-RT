@@ -26,6 +26,14 @@ class SphericalHarmonics : public SphericalBase
      * */
     SphericalHarmonics( unsigned L_degree );
 
+    /*! @brief Sets up class for monomial basis on sphere up to degree L.
+     *         The basis then consists of N = L.
+     *  @param L_degree maximum degree of spherical harmonics basis, 0 <= L <= 1000 (upper bound
+     *                    due to numerical stability)
+     *  @param spatialDim spatial dimensioniality of the simulation
+     * */
+    SphericalHarmonics( unsigned L_degree, unsigned short spatialDim );
+
     /*! @brief  Computes all N = L² +2L basis functions at point (my, phi)
      *  @param  my = cos(theta) - spherical coordinate, -1 <= x <= 1
      *  @param  phi - spherical coordinate, 0 <= phi <= 2*pi
@@ -61,7 +69,7 @@ class SphericalHarmonics : public SphericalBase
      *  @param  k_order  - current order of basis function,  -l <= k <= l      */
     unsigned GetGlobalIndexBasis( int l_degree, int k_order ) override final;
 
-  private:
+  protected:
     /*! @brief maximal degree of the spherical harmonics basis (this is "L" in the comments)*/
     unsigned _LMaxDegree;
 
@@ -105,5 +113,9 @@ class SphericalHarmonics : public SphericalBase
      *  @param phi spherical coordinate
      */
     void ComputeYBasis( const double phi );
+
+    /*! @brief Returns length of the unprojected basis, i.e. number of elements of the basis in 3D */
+    unsigned GetBasisSizeUnprojected();
 };
+
 #endif    // SPHERICALHARMONICS_H

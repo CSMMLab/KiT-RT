@@ -62,9 +62,6 @@ class SphericalMonomials : public SphericalBase
     unsigned GetGlobalIndexBasis( int l_degree, int k_order ) override;
 
   private:
-    /*! @brief Spatial dimension of the unit sphere (1,2,3) */
-    unsigned _spatialDim;
-
     /*! @brief spherical monomial basis function vector of
      *         degree  0 <= l <= L
      *         length : COmputed with ComputeBasisSize

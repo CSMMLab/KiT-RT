@@ -7,7 +7,7 @@ class WaterPhantom1D : public ProblemBase
 {
   private:
     WaterPhantom1D() = delete;
-
+    double _sigmaS; /*!< @brief Scattering coefficient */
   public:
     WaterPhantom1D( Config* settings, Mesh* mesh );
     virtual ~WaterPhantom1D();
@@ -16,14 +16,13 @@ class WaterPhantom1D : public ProblemBase
     std::vector<double> GetDensity( const VectorVector& cellMidPoints ) override;
     VectorVector GetScatteringXS( const Vector& energies ) override;
     VectorVector GetTotalXS( const Vector& energies ) override;
-    std::vector<Matrix> GetScatteringXSE( const Vector& energies, const Matrix& angles ) override;
 };
 
 class WaterPhantom : public ProblemBase
 {
   private:
     WaterPhantom() = delete;
-
+    double _sigmaS; /*!< @brief Scattering coefficient */
   public:
     WaterPhantom( Config* settings, Mesh* mesh );
     virtual ~WaterPhantom();
@@ -32,7 +31,6 @@ class WaterPhantom : public ProblemBase
     std::vector<double> GetDensity( const VectorVector& cellMidPoints ) override;
     VectorVector GetScatteringXS( const Vector& energies ) override;
     VectorVector GetTotalXS( const Vector& energies ) override;
-    std::vector<Matrix> GetScatteringXSE( const Vector& energies, const Matrix& angles ) override;
 };
 
 #endif    // WATERPHANTOM_H

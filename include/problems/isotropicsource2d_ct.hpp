@@ -1,16 +1,9 @@
 #ifndef ISOTROPICSOURCE2D_CT_H
 #define ISOTROPICSOURCE2D_CT_H
 
-#include "common/config.hpp"
-#include "common/io.hpp"
-#include "common/mesh.hpp"
-#include "electronrt.hpp"
-#include "toolboxes/interpolation.hpp"
+#include "problems/problembase.hpp"
 
-#include <fstream>
-#include <numeric>
-
-class IsotropicSource2D_CT : public ElectronRT
+class IsotropicSource2D_CT : public ProblemBase
 {
   private:
     IsotropicSource2D_CT() = delete;
@@ -23,7 +16,7 @@ class IsotropicSource2D_CT : public ElectronRT
     std::vector<double> GetDensity( const VectorVector& cellMidPoints );
 };
 
-class IsotropicSource2D_CT_Moment : public ElectronRT
+class IsotropicSource2D_CT_Moment : public ProblemBase
 {
   private:
     IsotropicSource2D_CT_Moment() = delete;

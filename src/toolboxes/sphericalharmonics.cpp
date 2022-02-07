@@ -4,6 +4,7 @@
 
 SphericalHarmonics::SphericalHarmonics( unsigned L_degree ) {
     _LMaxDegree = L_degree;
+    _spatialDim = 3;    // Default no projection
 
     unsigned associatedLegendrePolySize = GlobalIdxAssLegendreP( _LMaxDegree, _LMaxDegree ) + 1;
 
@@ -13,10 +14,37 @@ SphericalHarmonics::SphericalHarmonics( unsigned L_degree ) {
 
     ComputeCoefficients();
 
-    _YBasis = Vector( GetBasisSize(), 0.0 );
+    _YBasis = Vector( GetBasisSizeUnprojected(), 0.0 );
 }
 
-unsigned SphericalHarmonics::GetBasisSize() { return GetGlobalIndexBasis( _LMaxDegree, _LMaxDegree ) + 1; /* +1, since globalIdx computes indices */ }
+SphericalHarmonics::SphericalHarmonics( unsigned L_degree, unsigned short spatialDim ) {
+    _LMaxDegree = L_degree;
+    _spatialDim = (unsigned)spatialDim;
+
+    unsigned associatedLegendrePolySize = GlobalIdxAssLegendreP( _LMaxDegree, _LMaxDegree ) + 1;
+
+    _aParam       = std::vector<double>( associatedLegendrePolySize, 0.0 );
+    _bParam       = std::vector<double>( associatedLegendrePolySize, 0.0 );
+    _assLegendreP = std::vector<double>( associatedLegendrePolySize, 0.0 );
+
+    ComputeCoefficients();
+
+    _YBasis = Vector( GetBasisSizeUnprojected(), 0.0 );
+}
+
+unsigned SphericalHarmonics::GetBasisSize() {
+    switch( _spatialDim ) {
+        case 1: return _LMaxDegree + 1; break;
+        case 2: return GetGlobalIndexBasis( _LMaxDegree, _LMaxDegree ) + 1 - _LMaxDegree; break;
+        default:
+            return GetGlobalIndexBasis( _LMaxDegree, _LMaxDegree ) + 1; /* +1, since globalIdx computes indices */
+            break;
+    }
+}
+
+unsigned SphericalHarmonics::GetBasisSizeUnprojected() {
+    return GetGlobalIndexBasis( _LMaxDegree, _LMaxDegree ) + 1; /* +1, since globalIdx computes indices */
+}
 
 unsigned SphericalHarmonics::GetCurrDegreeSize( unsigned currDegreeL ) { return 2 * currDegreeL + 1; }
 
@@ -34,7 +62,31 @@ Vector SphericalHarmonics::ComputeSphericalBasis( double my, double phi, double 
 
     ComputeAssLegendrePoly( my );
     ComputeYBasis( phi );
-    return _YBasis;
+
+    // For 1D, just use the terms of order k=0
+    if( _spatialDim == 1 ) {
+        Vector YBasis1D( GetBasisSize(), 0.0 );
+        for( unsigned idx_l = 0; idx_l <= _LMaxDegree; idx_l++ ) {
+            YBasis1D[idx_l] = _YBasis[GetGlobalIndexBasis( idx_l, 0 )];
+        }
+        return r * YBasis1D;
+    }
+    // For 2D, just use the terms k!=l, except for l=0
+    if( _spatialDim == 2 ) {
+        Vector YBasis2D( GetBasisSize(), 0.0 );
+        unsigned count = 0;
+        for( int idx_l = 0; idx_l <= (int)_LMaxDegree; idx_l++ ) {
+            for( int idx_k = -idx_l; idx_k <= idx_l; idx_k++ ) {
+                if( idx_l == 0 || idx_l != idx_k ) {
+                    YBasis2D[count] = _YBasis[GetGlobalIndexBasis( idx_l, idx_k )];
+                    count++;
+                }
+            }
+        }
+        return r * YBasis2D;
+    }
+    // Do nothing in the 3D case
+    return r * _YBasis;
 }
 
 Vector SphericalHarmonics::ComputeSphericalBasisKarthesian( double x, double y, double z ) {

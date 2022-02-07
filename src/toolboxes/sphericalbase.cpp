@@ -16,14 +16,8 @@ SphericalBase* SphericalBase::Create( Config* settings ) {
     unsigned short spatialDim = settings->GetDim();
 
     switch( name ) {
-        case SPHERICAL_HARMONICS:
-            if( spatialDim == 3 ) {
-                return new SphericalHarmonics( maxMomentDegree );
-            }
-            ErrorMessages::Error( "Spherical Harmonics basis is not yet equipped for 1D and 2D cases.", CURRENT_FUNCTION );
-            break;
-        case SPHERICAL_MONOMIALS: return new SphericalMonomials( maxMomentDegree, spatialDim );
-
+        case SPHERICAL_HARMONICS: return new SphericalHarmonics( maxMomentDegree, spatialDim ); break;
+        case SPHERICAL_MONOMIALS: return new SphericalMonomials( maxMomentDegree, spatialDim ); break;
         default: ErrorMessages::Error( "Creator for the chosen basis does not yet exist. This is is the fault of the coder!", CURRENT_FUNCTION );
     }
     return nullptr;

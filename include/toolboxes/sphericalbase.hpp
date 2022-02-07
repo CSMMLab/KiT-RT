@@ -52,6 +52,8 @@ class SphericalBase
   protected:
     /*! @brief maximal (polynomial) degree of the spherical basis (this is "L" in the comments)*/
     unsigned _LMaxDegree;
+    /*! @brief Spatial dimension of the unit sphere (projection) (1,2,3) */
+    unsigned _spatialDim;
 };
 
 #endif    // SPHERICALBASE_H

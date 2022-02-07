@@ -4,7 +4,7 @@
 #include "common/mesh.hpp"
 #include "toolboxes/interpolation.hpp"
 
-WaterPhantom1D::WaterPhantom1D( Config* settings, Mesh* mesh ) : ProblemBase( settings, mesh ) {}
+WaterPhantom1D::WaterPhantom1D( Config* settings, Mesh* mesh ) : ProblemBase( settings, mesh ) { _sigmaS = settings->GetSigmaS(); }
 
 WaterPhantom1D::~WaterPhantom1D() {}
 
@@ -20,24 +20,11 @@ VectorVector WaterPhantom1D::SetupIC() {
 // Density of water = 1 everywhere
 std::vector<double> WaterPhantom1D::GetDensity( const VectorVector& cellMidPoints ) { return std::vector<double>( cellMidPoints.size(), 1.0 ); }
 
-VectorVector WaterPhantom1D::GetScatteringXS( const Vector& /*energies*/ ) {
-    // @TODO
-    // Specified in subclasses
-    return VectorVector( 1, Vector( 1, 0.0 ) );
+VectorVector WaterPhantom1D::GetScatteringXS( const Vector& energies ) {
+    return VectorVector( energies.size(), Vector( _mesh->GetNumCells(), _sigmaS ) );
 }
 
-std::vector<Matrix> WaterPhantom1D::GetScatteringXSE( const Vector& /*energies*/, const Matrix& /*angles*/ ) {
-    // @TODO
-    // Specified in subclasses
-    // return _physics->GetScatteringXS( energies, angles );
-    return std::vector<Matrix>( 1, Matrix( 1, 1 ) );
-}
-
-VectorVector WaterPhantom1D::GetTotalXS( const Vector& /*energies*/ ) {
-    // @TODO
-    // Specified in subclasses
-    return VectorVector( 1, Vector( 1, 0.0 ) );
-}
+VectorVector WaterPhantom1D::GetTotalXS( const Vector& energies ) { return VectorVector( energies.size(), Vector( _mesh->GetNumCells(), _sigmaS ) ); }
 
 // ---- 2d test case
 
@@ -96,13 +83,6 @@ VectorVector WaterPhantom::GetScatteringXS( const Vector& /*energies*/ ) {
     // @TODO
     // Specified in subclasses
     return VectorVector( 1, Vector( 1, 0.0 ) );
-}
-
-std::vector<Matrix> WaterPhantom::GetScatteringXSE( const Vector& /*energies*/, const Matrix& /*angles*/ ) {
-    // @TODO
-    // Specified in subclasses
-    // return _physics->GetScatteringXS( energies, angles );
-    return std::vector<Matrix>( 1, Matrix( 1, 1 ) );
 }
 
 VectorVector WaterPhantom::GetTotalXS( const Vector& /*energies*/ ) {

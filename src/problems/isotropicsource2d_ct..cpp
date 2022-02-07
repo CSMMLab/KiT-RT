@@ -1,9 +1,13 @@
 #include "problems/isotropicsource2d_ct.hpp"
 #include "common/config.hpp"
+#include "common/io.hpp"
 #include "common/mesh.hpp"
 #include "toolboxes/errormessages.hpp"
+#include "toolboxes/interpolation.hpp"
+#include <fstream>
+#include <numeric>
 
-IsotropicSource2D_CT::IsotropicSource2D_CT( Config* settings, Mesh* mesh ) : ElectronRT( settings, mesh ) {}
+IsotropicSource2D_CT::IsotropicSource2D_CT( Config* settings, Mesh* mesh ) : ProblemBase( settings, mesh ) {}
 
 IsotropicSource2D_CT::~IsotropicSource2D_CT() {}
 
@@ -16,9 +20,9 @@ std::vector<VectorVector> IsotropicSource2D_CT::GetExternalSource( const Vector&
 
 VectorVector IsotropicSource2D_CT::SetupIC() {
     VectorVector psi( _mesh->GetNumCells(), Vector( _settings->GetNQuadPoints(), 1e-10 ) );
-    auto cellMids  =   _mesh->GetCellMidPoints();
-    double enterPositionX = 0.5*10;    // 0.0;
-    double enterPositionY = 0.5*10;
+    auto cellMids         = _mesh->GetCellMidPoints();
+    double enterPositionX = 0.5 * 10;    // 0.0;
+    double enterPositionY = 0.5 * 10;
     // auto boundaryCells    = _mesh->GetBoundaryTypes();
     // Case 1: Ingoing radiation in just one cell
     // find cell that best matches enter position
@@ -51,7 +55,7 @@ std::vector<double> IsotropicSource2D_CT::GetDensity( const VectorVector& /*cell
     std::string meshFile  = _settings->GetMeshFile();
     Matrix gsImage        = createSU2MeshFromImage( imageFile, meshFile );
     auto bounds           = _mesh->GetBounds();
-    auto cellMidPoints = _mesh->GetCellMidPoints();
+    auto cellMidPoints    = _mesh->GetCellMidPoints();
 
     double xMin = bounds[0].first;
     double xMax = bounds[0].second;
@@ -59,9 +63,9 @@ std::vector<double> IsotropicSource2D_CT::GetDensity( const VectorVector& /*cell
     double yMax = bounds[1].second;
 
     unsigned m = gsImage.rows();
-    std::cout << "Number rows: " <<m << std::endl;
+    std::cout << "Number rows: " << m << std::endl;
     unsigned n = gsImage.columns();
-    std::cout << "Number columns: " <<n << std::endl;
+    std::cout << "Number columns: " << n << std::endl;
 
     Vector x( m ), y( n );
     for( unsigned i = 0; i < m; ++i ) {
@@ -72,11 +76,11 @@ std::vector<double> IsotropicSource2D_CT::GetDensity( const VectorVector& /*cell
     Interpolation interp( x, y, gsImage );
     std::vector<double> result( _mesh->GetNumCells(), 0.0 );
     std::ofstream fout;
-    fout.open("density_test.txt");
+    fout.open( "density_test.txt" );
     std::ofstream fout1;
-    fout1.open("x_test.txt");
+    fout1.open( "x_test.txt" );
     std::ofstream fout2;
-    fout2.open("y_test.txt");
+    fout2.open( "y_test.txt" );
     for( unsigned i = 0; i < _mesh->GetNumCells(); ++i ) {
         result[i] = std::clamp( interp( cellMidPoints[i][0], cellMidPoints[i][1] ), 0.6, 1.85 );
         fout1 << cellMidPoints[i][0] << std::endl;
@@ -87,7 +91,7 @@ std::vector<double> IsotropicSource2D_CT::GetDensity( const VectorVector& /*cell
     return result;
 }
 
-IsotropicSource2D_CT_Moment::IsotropicSource2D_CT_Moment( Config* settings, Mesh* mesh ) : ElectronRT( settings, mesh ) {}
+IsotropicSource2D_CT_Moment::IsotropicSource2D_CT_Moment( Config* settings, Mesh* mesh ) : ProblemBase( settings, mesh ) {}
 
 IsotropicSource2D_CT_Moment::~IsotropicSource2D_CT_Moment() {}
 
@@ -102,8 +106,8 @@ std::vector<VectorVector> IsotropicSource2D_CT_Moment::GetExternalSource( const 
 VectorVector IsotropicSource2D_CT_Moment::SetupIC() {
     VectorVector psi( _mesh->GetNumCells(), Vector( _settings->GetNQuadPoints(), 1e-10 ) );
     auto cellMids         = _mesh->GetCellMidPoints();
-    double enterPositionX = 0.5*10;    // 0.0;
-    double enterPositionY = 0.5*10;
+    double enterPositionX = 0.5 * 10;    // 0.0;
+    double enterPositionY = 0.5 * 10;
 
     // Case 2: Ingoing radiation as Gauss curve
     double t = 1e-5;    // pseudo time for gaussian smoothing
@@ -117,11 +121,11 @@ VectorVector IsotropicSource2D_CT_Moment::SetupIC() {
 }
 
 std::vector<double> IsotropicSource2D_CT_Moment::GetDensity( const VectorVector& /*cellMidPoints*/ ) {
-   std::string imageFile = _settings->GetCTFile();
+    std::string imageFile = _settings->GetCTFile();
     std::string meshFile  = _settings->GetMeshFile();
     Matrix gsImage        = createSU2MeshFromImage( imageFile, meshFile );
     auto bounds           = _mesh->GetBounds();
-    auto cellMidPoints = _mesh->GetCellMidPoints();
+    auto cellMidPoints    = _mesh->GetCellMidPoints();
 
     double xMin = bounds[0].first;
     double xMax = bounds[0].second;
