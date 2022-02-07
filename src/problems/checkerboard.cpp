@@ -73,8 +73,6 @@ bool Checkerboard_SN::isSource( const Vector& pos ) const {
 // Constructor for checkerboard case with Pn
 Checkerboard_Moment::Checkerboard_Moment( Config* settings, Mesh* mesh ) : ProblemBase( settings, mesh ) {
 
-    _basis = SphericalBase::Create( _settings );
-
     // Initialise crosssections = 1 (scattering)
     _scatteringXS = Vector( _mesh->GetNumCells(), 1.0 );
     _totalXS      = Vector( _mesh->GetNumCells(), 1.0 );
@@ -89,7 +87,7 @@ Checkerboard_Moment::Checkerboard_Moment( Config* settings, Mesh* mesh ) : Probl
     }
 }
 
-Checkerboard_Moment::~Checkerboard_Moment() { delete _basis; }
+Checkerboard_Moment::~Checkerboard_Moment() {}
 
 VectorVector Checkerboard_Moment::GetScatteringXS( const Vector& energies ) { return VectorVector( energies.size(), _scatteringXS ); }
 
@@ -144,10 +142,10 @@ VectorVector Checkerboard_Moment::SetupIC() {
     SphericalBase* tempBase  = SphericalBase::Create( _settings );
     unsigned ntotalEquations = tempBase->GetBasisSize();
 
-    VectorVector psi( _mesh->GetNumCells(), Vector( ntotalEquations, 0 ) );    // zero could lead to problems?
+    VectorVector initialSolution( _mesh->GetNumCells(), Vector( ntotalEquations, 0 ) );    // zero could lead to problems?
     VectorVector cellMids = _mesh->GetCellMidPoints();
 
-    Vector uIC( ntotalEquations, 0 );
+    Vector tempIC( ntotalEquations, 0 );
 
     if( _settings->GetSphericalBasisName() == SPHERICAL_MONOMIALS ) {
         QuadratureBase* quad          = QuadratureBase::Create( _settings );
@@ -164,7 +162,7 @@ VectorVector Checkerboard_Moment::SetupIC() {
         }
         // Integrate <1*m> to get factors for monomial basis in isotropic scattering
         for( unsigned idx_quad = 0; idx_quad < quad->GetNq(); idx_quad++ ) {
-            uIC += w[idx_quad] * moments[idx_quad];
+            tempIC += w[idx_quad] * moments[idx_quad];
         }
         delete quad;
     }
@@ -172,14 +170,14 @@ VectorVector Checkerboard_Moment::SetupIC() {
     double kinetic_density = 1e-3;
     for( unsigned j = 0; j < cellMids.size(); ++j ) {
         if( _settings->GetSphericalBasisName() == SPHERICAL_MONOMIALS ) {
-            psi[j] = kinetic_density * uIC / uIC[0];    // Remember scaling
+            initialSolution[j] = kinetic_density * tempIC / tempIC[0];    // Remember scaling
         }
         if( _settings->GetSphericalBasisName() == SPHERICAL_HARMONICS ) {
-            psi[j][0] = kinetic_density;
+            initialSolution[j][0] = kinetic_density;
         }
     }
     delete tempBase;    // Only temporally needed
-    return psi;
+    return initialSolution;
 }
 
 bool Checkerboard_Moment::isAbsorption( const Vector& pos ) const {

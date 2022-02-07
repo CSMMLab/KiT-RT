@@ -29,9 +29,8 @@ class Checkerboard_SN : public ProblemBase
 class Checkerboard_Moment : public ProblemBase
 {
   private:
-    Vector _scatteringXS;  /*!< @brief Vector of scattering crosssections len: numCells  */
-    Vector _totalXS;       /*!< @brief Vector of total crosssections. len: numCells*/
-    SphericalBase* _basis; /*!< @brief Class to compute and store current spherical harmonics basis */
+    Vector _scatteringXS; /*!< @brief Vector of scattering crosssections len: numCells  */
+    Vector _totalXS;      /*!< @brief Vector of total crosssections. len: numCells*/
 
     Checkerboard_Moment() = delete;
 

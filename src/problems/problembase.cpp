@@ -33,7 +33,12 @@ ProblemBase* ProblemBase::Create( Config* settings, Mesh* mesh ) {
             else
                 return new Checkerboard_SN( settings, mesh );    // default
         }
-        case PROBLEM_AirCavity: return new AirCavity1D( settings, mesh );
+        case PROBLEM_AirCavity:
+            if( settings->GetSolverName() == PN_SOLVER || settings->GetSolverName() == MN_SOLVER ||
+                settings->GetSolverName() == MN_SOLVER_NORMALIZED )
+                return new AirCavity1D_Moment( settings, mesh );
+            else
+                return new AirCavity1D( settings, mesh );    // default
         case PROBLEM_WaterPhantom: return new WaterPhantom1D( settings, mesh );
         case PROBLEM_Phantom2D: return new WaterPhantom( settings, mesh );
         case PROBLEM_LineSource_Pseudo_1D: return new LineSource_SN_Pseudo1D( settings, mesh );
