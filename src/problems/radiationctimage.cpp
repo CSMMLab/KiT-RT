@@ -5,6 +5,8 @@
 #include "toolboxes/errormessages.hpp"
 #include "toolboxes/interpolation.hpp"
 
+#include <fstream>
+
 RadiationCTImage::RadiationCTImage( Config* settings, Mesh* mesh ) : ProblemBase( settings, mesh ) {}
 
 RadiationCTImage::~RadiationCTImage() {}
