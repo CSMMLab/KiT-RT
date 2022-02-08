@@ -4,39 +4,17 @@
 #include "common/mesh.hpp"
 #include "toolboxes/interpolation.hpp"
 
-WaterPhantom1D::WaterPhantom1D( Config* settings, Mesh* mesh ) : ProblemBase( settings, mesh ) { _sigmaS = settings->GetSigmaS(); }
-
-WaterPhantom1D::~WaterPhantom1D() {}
-
-std::vector<VectorVector> WaterPhantom1D::GetExternalSource( const Vector& energies ) {
-    return std::vector<VectorVector>( energies.size(), std::vector<Vector>( _mesh->GetNumCells(), Vector( _settings->GetNQuadPoints(), 0.0 ) ) );
-}
-
-VectorVector WaterPhantom1D::SetupIC() {
-    VectorVector psi( _mesh->GetNumCells(), Vector( _settings->GetNQuadPoints(), 0.0 ) );
-    return psi;
-}
-
-// Density of water = 1 everywhere
-std::vector<double> WaterPhantom1D::GetDensity( const VectorVector& cellMidPoints ) { return std::vector<double>( cellMidPoints.size(), 1.0 ); }
-
-VectorVector WaterPhantom1D::GetScatteringXS( const Vector& energies ) {
-    return VectorVector( energies.size(), Vector( _mesh->GetNumCells(), _sigmaS ) );
-}
-
-VectorVector WaterPhantom1D::GetTotalXS( const Vector& energies ) { return VectorVector( energies.size(), Vector( _mesh->GetNumCells(), _sigmaS ) ); }
-
 // ---- 2d test case
 
-WaterPhantom::WaterPhantom( Config* settings, Mesh* mesh ) : ProblemBase( settings, mesh ) {}
+PhantomImage::PhantomImage( Config* settings, Mesh* mesh ) : ProblemBase( settings, mesh ) {}
 
-WaterPhantom::~WaterPhantom() {}
+PhantomImage::~PhantomImage() {}
 
-std::vector<VectorVector> WaterPhantom::GetExternalSource( const Vector& energies ) {
+std::vector<VectorVector> PhantomImage::GetExternalSource( const Vector& energies ) {
     return std::vector<VectorVector>( energies.size(), std::vector<Vector>( _mesh->GetNumCells(), Vector( _settings->GetNQuadPoints(), 0.0 ) ) );
 }
 
-VectorVector WaterPhantom::SetupIC() {
+VectorVector PhantomImage::SetupIC() {
     VectorVector psi( _mesh->GetNumCells(), Vector( _settings->GetNQuadPoints(), 1e-10 ) );
     auto cellMids         = _mesh->GetCellMidPoints();
     double s              = 0.1;
@@ -50,7 +28,7 @@ VectorVector WaterPhantom::SetupIC() {
     return psi;
 }
 
-std::vector<double> WaterPhantom::GetDensity( const VectorVector& cellMidPoints ) {
+std::vector<double> PhantomImage::GetDensity( const VectorVector& cellMidPoints ) {
 
     std::string imageFile = _settings->GetCTFile();
     std::string meshFile  = _settings->GetMeshFile();
@@ -79,13 +57,13 @@ std::vector<double> WaterPhantom::GetDensity( const VectorVector& cellMidPoints 
     return result;
 }
 
-VectorVector WaterPhantom::GetScatteringXS( const Vector& /*energies*/ ) {
+VectorVector PhantomImage::GetScatteringXS( const Vector& /*energies*/ ) {
     // @TODO
     // Specified in subclasses
     return VectorVector( 1, Vector( 1, 0.0 ) );
 }
 
-VectorVector WaterPhantom::GetTotalXS( const Vector& /*energies*/ ) {
+VectorVector PhantomImage::GetTotalXS( const Vector& /*energies*/ ) {
     // @TODO
     // Specified in subclasses
     return VectorVector( 1, Vector( 1, 0.0 ) );

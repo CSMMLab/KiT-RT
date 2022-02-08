@@ -69,6 +69,7 @@ class Config
     unsigned short _maxMomentDegree; /*!< @brief Maximal Order of Moments for PN and MN Solver */
     unsigned short _reconsOrder;     /*!< @brief Spatial Order of Accuracy for Solver */
     bool _realizabilityRecons;       /*!< @brief Turns realizability reconstruction on/off for u sampling and MN solver */
+    bool _isMomentSolver;            /*!< @brief Flag for the moment base (PN and MN) solvers */
 
     /*!< @brief If true, very low entries (10^-10 or smaller) of the flux matrices will be set to zero,
      * to improve floating point accuracy */
@@ -352,6 +353,7 @@ class Config
     double inline GetMinimalSamplingTemperature() { return _minSamplingTemperature; }
     double inline GetMaximalSamplingTemperature() { return _maxSamplingTemperature; }
     unsigned short inline GetNSamplingTemperatures() { return _nTemperatures; }
+    bool inline GetIsMomentSolver() { return _isMomentSolver; }
 
     // ---- Setters for option structure
     // This section is dangerous

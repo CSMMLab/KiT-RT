@@ -91,30 +91,26 @@ inline std::map<std::string, QUAD_NAME> Quadrature_Map{ { "MONTE_CARLO", QUAD_Mo
 
 // Problem name
 enum PROBLEM_NAME {
-    PROBLEM_LineSource,
+    PROBLEM_Linesource,
+    PROBLEM_Linesource1D,
     PROBLEM_Checkerboard,
-    PROBLEM_ElectronRT,
-    PROBLEM_WaterPhantom,
-    PROBLEM_LineSource_Pseudo_1D,
-    PROBLEM_LineSource_Pseudo_1D_Physics,
-    PROBLEM_AirCavity,
-    PROBLEM_MuscleBoneLung,
-    PROBLEM_Phantom2D,
+    PROBLEM_Checkerboard1D,
+    PROBLEM_Phantomimage,
+    PROBLEM_Waterphantom1D,
+    PROBLEM_Aircavity1D,
     PROBLEM_StarmapValidation,
     PROBLEM_IsotropicSource_2D_CT
 };
 
-inline std::map<std::string, PROBLEM_NAME> Problem_Map{ { "LINESOURCE", PROBLEM_LineSource },
+inline std::map<std::string, PROBLEM_NAME> Problem_Map{ { "LINESOURCE", PROBLEM_Linesource },
+                                                        { "LINESOURCE_1D", PROBLEM_Linesource1D },
                                                         { "CHECKERBOARD", PROBLEM_Checkerboard },
-                                                        { "ELECTRONRT", PROBLEM_ElectronRT },
-                                                        { "WATERPHANTOM", PROBLEM_WaterPhantom },
-                                                        { "AIRCAVITY", PROBLEM_AirCavity },
-                                                        { "MUSCLEBONELUNG", PROBLEM_MuscleBoneLung },
-                                                        { "PHANTOM2D", PROBLEM_Phantom2D },
+                                                        { "CHECKERBOARD_1D", PROBLEM_Checkerboard1D },
                                                         { "STARMAP_VALIDATION", PROBLEM_StarmapValidation },
-                                                        { "ISOTROPICPOINTSOURCE2D_CT", PROBLEM_IsotropicSource_2D_CT },
-                                                        { "LINESOURCE_PSEUDO_1D", PROBLEM_LineSource_Pseudo_1D },
-                                                        { "LINESOURCE_PSEUDO_1D_PHYSICS", PROBLEM_LineSource_Pseudo_1D_Physics } };
+                                                        { "AIRCAVITY_1D", PROBLEM_Aircavity1D },
+                                                        { "WATERPHANTOM", PROBLEM_Phantomimage },
+                                                        { "WATERPHANTOM_1D", PROBLEM_Waterphantom1D },
+                                                        { "ISOTROPICPOINTSOURCE2D_CT", PROBLEM_IsotropicSource_2D_CT } };
 
 // Kernel name
 enum KERNEL_NAME { KERNEL_Isotropic, KERNEL_Isotropic1D };

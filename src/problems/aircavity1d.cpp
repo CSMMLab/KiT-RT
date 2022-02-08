@@ -87,11 +87,7 @@ VectorVector AirCavity1D_Moment::SetupIC() {
             phi               = quadPointsSphere[idx_quad][1];
             moments[idx_quad] = tempBase->ComputeSphericalBasis( my, phi );
         }
-        TextProcessingToolbox::PrintVectorVector( moments );
-        std::cout << w << "\n";
-
         delete tempBase;
-
         double s = 0.1;
         // create kinetic density( SN initial condition )
         for( unsigned idx_cell = 0; idx_cell < cellMids.size(); ++idx_cell ) {
@@ -104,10 +100,6 @@ VectorVector AirCavity1D_Moment::SetupIC() {
             }
             // Compute moments of this kinetic density
             for( unsigned idx_quad = 0; idx_quad < quad->GetNq(); idx_quad++ ) {
-                auto t = cellKineticDensity[idx_quad] * w[idx_quad] * moments[idx_quad];
-                if( isnan( t ) ) {
-                    std::cout << "t is nan\n";
-                }
                 initialSolution[idx_cell] += cellKineticDensity[idx_quad] * w[idx_quad] * moments[idx_quad];
             }
         }

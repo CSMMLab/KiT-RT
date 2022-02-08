@@ -3,27 +3,27 @@
 
 #include "problems/problembase.hpp"
 
-class IsotropicSource2D_CT : public ProblemBase
+class RadiationCTImage : public ProblemBase
 {
   private:
-    IsotropicSource2D_CT() = delete;
+    RadiationCTImage() = delete;
 
   public:
-    IsotropicSource2D_CT( Config* settings, Mesh* mesh );
-    virtual ~IsotropicSource2D_CT();
+    RadiationCTImage( Config* settings, Mesh* mesh );
+    virtual ~RadiationCTImage();
     virtual std::vector<VectorVector> GetExternalSource( const Vector& energies );
     virtual VectorVector SetupIC();
     std::vector<double> GetDensity( const VectorVector& cellMidPoints );
 };
 
-class IsotropicSource2D_CT_Moment : public ProblemBase
+class RadiationCTImage_Moment : public ProblemBase
 {
   private:
-    IsotropicSource2D_CT_Moment() = delete;
+    RadiationCTImage_Moment() = delete;
 
   public:
-    IsotropicSource2D_CT_Moment( Config* settings, Mesh* mesh );
-    virtual ~IsotropicSource2D_CT_Moment();
+    RadiationCTImage_Moment( Config* settings, Mesh* mesh );
+    virtual ~RadiationCTImage_Moment();
     virtual std::vector<VectorVector> GetExternalSource( const Vector& energies );
     virtual VectorVector SetupIC();
     std::vector<double> GetDensity( const VectorVector& cellMidPoints );

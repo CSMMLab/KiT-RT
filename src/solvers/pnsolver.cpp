@@ -83,6 +83,87 @@ void PNSolver::ComputeRadFlux() {
 void PNSolver::FluxUpdate() {
 
     // Loop over all spatial cells
+    if( _settings->GetProblemName() == PROBLEM_Aircavity1D || _settings->GetProblemName() == PROBLEM_Linesource1D ||
+        _settings->GetProblemName() == PROBLEM_Checkerboard1D ) {
+        FluxUpdatePseudo1D();
+    }
+    else {
+        FluxUpdatePseudo2D();
+    }
+}
+
+void PNSolver::FluxUpdatePseudo1D() {
+#pragma omp parallel for
+    for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
+        Vector solL( _nSystem, 0.0 );
+        Vector solR( _nSystem, 0.0 );
+        // Dirichlet cells stay at IC, farfield assumption
+        if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::DIRICHLET ) continue;
+
+        // Reset temporary variable psiNew
+        for( unsigned idx_sys = 0; idx_sys < _nSystem; idx_sys++ ) {
+            _solNew[idx_cell][idx_sys] = 0.0;
+        }
+
+        // Loop over all neighbor cells (edges) of cell j and compute numerical fluxes
+        for( unsigned idx_neighbor = 0; idx_neighbor < _neighbors[idx_cell].size(); idx_neighbor++ ) {
+
+            // Compute flux contribution and store in psiNew to save memory
+            if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::NEUMANN && _neighbors[idx_cell][idx_neighbor] == _nCells )
+                _solNew[idx_cell] += _g->Flux(
+                    _AxPlus, _AxMinus, _AyPlus, _AyMinus, _AzPlus, _AzMinus, _sol[idx_cell], _sol[idx_cell], _normals[idx_cell][idx_neighbor] );
+            else {
+                unsigned int nbr_glob = _neighbors[idx_cell][idx_neighbor];    // global idx of neighbor cell
+                switch( _reconsOrder ) {
+                    // first order solver
+                    case 1:
+                        _solNew[idx_cell] += _g->FluxXZ( _AxPlus,
+                                                         _AxMinus,
+                                                         _AyPlus,
+                                                         _AyMinus,
+                                                         _AzPlus,
+                                                         _AzMinus,
+                                                         _sol[idx_cell],
+                                                         _sol[_neighbors[idx_cell][idx_neighbor]],
+                                                         _normals[idx_cell][idx_neighbor] );
+                        break;
+                    // second order solver
+                    case 2:
+                        // left status of interface
+                        for( unsigned idx_sys = 0; idx_sys < _nSystem; idx_sys++ ) {
+                            solL[idx_sys] =
+                                _sol[idx_cell][idx_sys] +
+                                _limiter[idx_cell][idx_sys] *
+                                    ( _solDx[idx_cell][idx_sys] * ( _interfaceMidPoints[idx_cell][idx_neighbor][0] - _cellMidPoints[idx_cell][0] ) +
+                                      _solDy[idx_cell][idx_sys] * ( _interfaceMidPoints[idx_cell][idx_neighbor][1] - _cellMidPoints[idx_cell][1] ) );
+                            solR[idx_sys] =
+                                _sol[nbr_glob][idx_sys] +
+                                _limiter[nbr_glob][idx_sys] *
+                                    ( _solDx[nbr_glob][idx_sys] * ( _interfaceMidPoints[idx_cell][idx_neighbor][0] - _cellMidPoints[nbr_glob][0] ) +
+                                      _solDy[nbr_glob][idx_sys] * ( _interfaceMidPoints[idx_cell][idx_neighbor][1] - _cellMidPoints[nbr_glob][1] ) );
+                        }
+                        // flux evaluation
+                        _solNew[idx_cell] +=
+                            _g->FluxXZ( _AxPlus, _AxMinus, _AyPlus, _AyMinus, _AzPlus, _AzMinus, solL, solR, _normals[idx_cell][idx_neighbor] );
+                        break;
+                    // default: first order solver
+                    default:
+                        _solNew[idx_cell] += _g->FluxXZ( _AxPlus,
+                                                         _AxMinus,
+                                                         _AyPlus,
+                                                         _AyMinus,
+                                                         _AzPlus,
+                                                         _AzMinus,
+                                                         _sol[idx_cell],
+                                                         _sol[_neighbors[idx_cell][idx_neighbor]],
+                                                         _normals[idx_cell][idx_neighbor] );
+                }
+            }
+        }
+    }
+}
+
+void PNSolver::FluxUpdatePseudo2D() {
 #pragma omp parallel for
     for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
         Vector solL( _nSystem, 0.0 );

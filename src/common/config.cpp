@@ -232,7 +232,7 @@ void Config::SetConfigOptions() {
     /*! @brief TIME_FINAL \n DESCRIPTION: Final time for simulation \n DEFAULT 1.0 @ingroup Config.*/
     AddDoubleOption( "TIME_FINAL", _tEnd, 1.0 );
     /*! @brief Problem \n DESCRIPTION: Type of problem setting \n DEFAULT PROBLEM_ElectronRT @ingroup Config.*/
-    AddEnumOption( "PROBLEM", _problemName, Problem_Map, PROBLEM_ElectronRT );
+    AddEnumOption( "PROBLEM", _problemName, Problem_Map, PROBLEM_Linesource );
     /*! @brief Solver \n DESCRIPTION: Solver used for problem \n DEFAULT SN_SOLVER @ingroup Config. */
     AddEnumOption( "SOLVER", _solverName, Solver_Map, SN_SOLVER );
     /*! @brief RECONS_ORDER \n DESCRIPTION: Reconstruction order for solver (spatial flux) \n DEFAULT 1 \ingroup Config.*/
@@ -503,6 +503,16 @@ void Config::SetPostprocessing() {
         default: _csd = false;
     }
 
+    // Set option MomentSolver
+    switch( _solverName ) {
+        case MN_SOLVER:
+        case MN_SOLVER_NORMALIZED:
+        case CSD_MN_SOLVER:
+        case PN_SOLVER:
+        case CSD_PN_SOLVER: _isMomentSolver = true; break;
+        default: _isMomentSolver = false;
+    }
+
     // Check, if mesh file exists
     if( _solverName == CSD_SN_FOKKERPLANCK_TRAFO_SOLVER ) {    // Check if this is neccessary
         if( !std::filesystem::exists( this->GetHydrogenFile() ) ) {
@@ -548,9 +558,9 @@ void Config::SetPostprocessing() {
             auto log    = spdlog::get( "event" );
             auto logCSV = spdlog::get( "tabular" );
             log->info(
-                "| Spherical harmonics based solver  currently use  3D Spherical functions. This is hardcoded and will change in the future." );
+                "| Spherical harmonics based solver currently use 3D Spherical functions and a projection. Thus spatial dimension is set to 3." );
             logCSV->info(
-                "| Spherical harmonics based solver currently use 3D Spherical functions. This is hardcoded and will change in the future." );
+                "| Spherical harmonics based solver currently use 3D Spherical functions and a projection. Thus spatial dimension is set to 3." );
         }
     }
 
@@ -588,7 +598,7 @@ void Config::SetPostprocessing() {
                         ErrorMessages::Error( "SN_SOLVER only supports volume output MINIMAL and ANALYTIC.\nPlease check your .cfg file.",
                                               CURRENT_FUNCTION );
                     }
-                    if( _volumeOutput[idx_volOutput] == ANALYTIC && _problemName != PROBLEM_LineSource ) {
+                    if( _volumeOutput[idx_volOutput] == ANALYTIC && _problemName != PROBLEM_Linesource ) {
                         ErrorMessages::Error( "Analytical solution (VOLUME_OUTPUT=ANALYTIC) is only available for the PROBLEM=LINESOURCE.\nPlease "
                                               "check your .cfg file.",
                                               CURRENT_FUNCTION );
@@ -603,7 +613,7 @@ void Config::SetPostprocessing() {
                             "MN_SOLVER only supports volume output ANALYTIC, MINIMAL, MOMENTS and DUAL_MOMENTS.\nPlease check your .cfg file.",
                             CURRENT_FUNCTION );
                     }
-                    if( _volumeOutput[idx_volOutput] == ANALYTIC && _problemName != PROBLEM_LineSource ) {
+                    if( _volumeOutput[idx_volOutput] == ANALYTIC && _problemName != PROBLEM_Linesource ) {
                         ErrorMessages::Error( "Analytical solution (VOLUME_OUTPUT=ANALYTIC) is only available for the PROBLEM=LINESOURCE.\nPlease "
                                               "check your .cfg file.",
                                               CURRENT_FUNCTION );
@@ -616,7 +626,7 @@ void Config::SetPostprocessing() {
                         ErrorMessages::Error( "PN_SOLVER only supports volume output ANALYTIC, MINIMAL and MOMENTS.\nPlease check your .cfg file.",
                                               CURRENT_FUNCTION );
                     }
-                    if( _volumeOutput[idx_volOutput] == ANALYTIC && _problemName != PROBLEM_LineSource ) {
+                    if( _volumeOutput[idx_volOutput] == ANALYTIC && _problemName != PROBLEM_Linesource ) {
                         ErrorMessages::Error( "Analytical solution (VOLUME_OUTPUT=ANALYTIC) is only available for the PROBLEM=LINESOURCE.\nPlease "
                                               "check your .cfg file.",
                                               CURRENT_FUNCTION );

@@ -16,51 +16,46 @@ ProblemBase::ProblemBase( Config* settings, Mesh* mesh ) {
 ProblemBase::~ProblemBase() {}
 
 ProblemBase* ProblemBase::Create( Config* settings, Mesh* mesh ) {
-    auto name = settings->GetProblemName();
 
     // Choose problem type
-    switch( name ) {
-        case PROBLEM_LineSource: {
-            if( settings->GetSolverName() == PN_SOLVER || settings->GetSolverName() == MN_SOLVER ||
-                settings->GetSolverName() == MN_SOLVER_NORMALIZED )
+    switch( settings->GetProblemName() ) {
+        case PROBLEM_Linesource: {
+            if( settings->GetIsMomentSolver() )
                 return new LineSource_Moment( settings, mesh );
             else
-                return new LineSource_SN( settings, mesh );    // default
+                return new LineSource_SN( settings, mesh );
         } break;
-        case PROBLEM_LineSource_Pseudo_1D: {
-            if( settings->GetSolverName() == PN_SOLVER || settings->GetSolverName() == MN_SOLVER ||
-                settings->GetSolverName() == MN_SOLVER_NORMALIZED )
+        case PROBLEM_Linesource1D: {
+            if( settings->GetIsMomentSolver() )
                 return new LineSource_Moment_1D( settings, mesh );
             else
-                return new LineSource_SN_1D( settings, mesh );    // default
+                return new LineSource_SN_1D( settings, mesh );
         } break;
-
         case PROBLEM_Checkerboard: {
-            if( settings->GetSolverName() == PN_SOLVER || settings->GetSolverName() == MN_SOLVER ||
-                settings->GetSolverName() == MN_SOLVER_NORMALIZED )
+            if( settings->GetIsMomentSolver() )
                 return new Checkerboard_Moment( settings, mesh );
             else
-                return new Checkerboard_SN( settings, mesh );    // default
-        }
-        case PROBLEM_AirCavity:
-            if( settings->GetSolverName() == PN_SOLVER || settings->GetSolverName() == MN_SOLVER ||
-                settings->GetSolverName() == MN_SOLVER_NORMALIZED )
+                return new Checkerboard_SN( settings, mesh );
+        } break;
+        case PROBLEM_Checkerboard1D: {
+            if( settings->GetIsMomentSolver() )
+                return new Checkerboard_Moment_1D( settings, mesh );
+            else
+                return new Checkerboard_SN_1D( settings, mesh );
+        } break;
+        case PROBLEM_Aircavity1D: {
+            if( settings->GetIsMomentSolver() )
                 return new AirCavity1D_Moment( settings, mesh );
             else
-                return new AirCavity1D( settings, mesh );    // default
-        case PROBLEM_WaterPhantom: return new WaterPhantom1D( settings, mesh );
-        case PROBLEM_Phantom2D: return new WaterPhantom( settings, mesh );
-        case PROBLEM_StarmapValidation:
-            if( settings->GetSolverName() == CSD_PN_SOLVER || settings->GetSolverName() == CSD_MN_SOLVER )
+                return new AirCavity1D( settings, mesh );
+        } break;
+        case PROBLEM_StarmapValidation: {
+            if( settings->GetIsMomentSolver() )
                 return new StarMapValidation_Moment( settings, mesh );
-            else                                                      // CSD_SN_SOLVER
-                return new StarMapValidation_SN( settings, mesh );    // default
-
-            // case PROBLEM_IsotropicSource_2D_CT:    // Correct?
-            //     if( settings->GetSolverName() == CSD_PN_SOLVER )
-            //         return new IsotropicSource2D_CT_Moment( settings, mesh );
-            //     else
-            //         return new IsotropicSource2D_CT( settings, mesh );    // default
+            else
+                return new StarMapValidation_SN( settings, mesh );
+        } break;
+        case PROBLEM_Phantomimage: return new PhantomImage( settings, mesh );
 
         default: ErrorMessages::Error( "No valid physical problem chosen. Please check your config file", CURRENT_FUNCTION ); return nullptr;
     }

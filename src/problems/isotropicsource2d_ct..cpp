@@ -7,18 +7,18 @@
 #include <fstream>
 #include <numeric>
 
-IsotropicSource2D_CT::IsotropicSource2D_CT( Config* settings, Mesh* mesh ) : ProblemBase( settings, mesh ) {}
+RadiationCTImage::RadiationCTImage( Config* settings, Mesh* mesh ) : ProblemBase( settings, mesh ) {}
 
-IsotropicSource2D_CT::~IsotropicSource2D_CT() {}
+RadiationCTImage::~RadiationCTImage() {}
 
-std::vector<VectorVector> IsotropicSource2D_CT::GetExternalSource( const Vector& energies ) {
+std::vector<VectorVector> RadiationCTImage::GetExternalSource( const Vector& energies ) {
     auto zeroVec = Vector( _settings->GetNQuadPoints(), 0.0 );
     auto uniform = std::vector<Vector>( _mesh->GetNumCells(), zeroVec );
     auto Q       = std::vector<VectorVector>( energies.size(), uniform );
     return Q;
 }
 
-VectorVector IsotropicSource2D_CT::SetupIC() {
+VectorVector RadiationCTImage::SetupIC() {
     VectorVector psi( _mesh->GetNumCells(), Vector( _settings->GetNQuadPoints(), 1e-10 ) );
     auto cellMids         = _mesh->GetCellMidPoints();
     double enterPositionX = 0.5 * 10;    // 0.0;
@@ -50,7 +50,7 @@ VectorVector IsotropicSource2D_CT::SetupIC() {
     return psi;
 }
 
-std::vector<double> IsotropicSource2D_CT::GetDensity( const VectorVector& /*cellMidPoints*/ ) {
+std::vector<double> RadiationCTImage::GetDensity( const VectorVector& /*cellMidPoints*/ ) {
     std::string imageFile = _settings->GetCTFile();
     std::string meshFile  = _settings->GetMeshFile();
     Matrix gsImage        = createSU2MeshFromImage( imageFile, meshFile );
@@ -91,11 +91,11 @@ std::vector<double> IsotropicSource2D_CT::GetDensity( const VectorVector& /*cell
     return result;
 }
 
-IsotropicSource2D_CT_Moment::IsotropicSource2D_CT_Moment( Config* settings, Mesh* mesh ) : ProblemBase( settings, mesh ) {}
+RadiationCTImage_Moment::RadiationCTImage_Moment( Config* settings, Mesh* mesh ) : ProblemBase( settings, mesh ) {}
 
-IsotropicSource2D_CT_Moment::~IsotropicSource2D_CT_Moment() {}
+RadiationCTImage_Moment::~RadiationCTImage_Moment() {}
 
-std::vector<VectorVector> IsotropicSource2D_CT_Moment::GetExternalSource( const Vector& energies ) {
+std::vector<VectorVector> RadiationCTImage_Moment::GetExternalSource( const Vector& energies ) {
     auto zeroVec = Vector( _settings->GetNQuadPoints(), 0.0 );
     auto uniform = std::vector<Vector>( _mesh->GetNumCells(), zeroVec );
     auto Q       = std::vector<VectorVector>( energies.size(), uniform );
@@ -103,7 +103,7 @@ std::vector<VectorVector> IsotropicSource2D_CT_Moment::GetExternalSource( const 
     return Q;
 }
 
-VectorVector IsotropicSource2D_CT_Moment::SetupIC() {
+VectorVector RadiationCTImage_Moment::SetupIC() {
     VectorVector psi( _mesh->GetNumCells(), Vector( _settings->GetNQuadPoints(), 1e-10 ) );
     auto cellMids         = _mesh->GetCellMidPoints();
     double enterPositionX = 0.5 * 10;    // 0.0;
@@ -120,7 +120,7 @@ VectorVector IsotropicSource2D_CT_Moment::SetupIC() {
     return psi;
 }
 
-std::vector<double> IsotropicSource2D_CT_Moment::GetDensity( const VectorVector& /*cellMidPoints*/ ) {
+std::vector<double> RadiationCTImage_Moment::GetDensity( const VectorVector& /*cellMidPoints*/ ) {
     std::string imageFile = _settings->GetCTFile();
     std::string meshFile  = _settings->GetMeshFile();
     Matrix gsImage        = createSU2MeshFromImage( imageFile, meshFile );

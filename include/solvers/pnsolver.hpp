@@ -141,9 +141,13 @@ class PNSolver : public SolverBase
     double LegendrePoly( double x, int l );
 
     /*! @brief Sets Entries of FluxMatrices to zero, if they are below double precision,
-     *          to prevent floating point inaccuracies later in the solver
-     */
+     *          to prevent floating point inaccuracies later in the solver    */
     void CleanFluxMatrices();
+
+    /*! @brief  Flux update version for Pseudo1D */
+    void FluxUpdatePseudo1D();
+    /*! @brief  Flux update version for Pseudo2D  */
+    void FluxUpdatePseudo2D();
 };
 
 #endif    // PNSOLVER_H

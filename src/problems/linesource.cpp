@@ -230,7 +230,6 @@ VectorVector LineSource_Moment_1D::SetupIC() {
 
     VectorVector psi( _mesh->GetNumCells(), Vector( ntotalEquations, 0 ) );    // zero could lead to problems?
     VectorVector cellMids = _mesh->GetCellMidPoints();
-
     Vector uIC( ntotalEquations, 0 );
 
     if( _settings->GetSphericalBasisName() == SPHERICAL_MONOMIALS ) {
