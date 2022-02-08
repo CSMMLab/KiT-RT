@@ -34,6 +34,8 @@ class SNSolver : public SolverBase
 
     // Helper
     void ComputeRadFlux() override;
+    void FluxUpdatePseudo1D();    // Helper
+    void FluxUpdatePseudo2D();    // Helper
 
     // --- Member variables ---
 };

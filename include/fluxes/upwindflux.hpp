@@ -25,6 +25,15 @@ class UpwindFlux : public NumericalFlux
      * @return numerical flux value
      */
     double Flux( const Vector& Omega, double psiL, double psiR, const Vector& n ) const override;
+    /**
+     * @brief Flux computes flux on edge for fixed ordinate at a given edge for pseudo 1D case
+     * @param Omega fixed ordinate for flux computation
+     * @param psiL left solution state
+     * @param psiR right solution state
+     * @param n scaled normal vector of given edge
+     * @return numerical flux value
+     */
+    double Flux1D( const Vector& Omega, double psiL, double psiR, const Vector& n ) const override;
 
     /**
      * @brief Flux       Computes "Steger Warming" upwinding scheme for given flux jacobians of the PN Solver at a given edge and stores it in
@@ -40,6 +49,22 @@ class UpwindFlux : public NumericalFlux
      * @param n          Normal vector at the edge between left and right control volume
      * @return           Vector with resulting flux
      */
+    Vector Flux1D( const Matrix AxPlus, const Matrix AxMinus, const Vector psiL, const Vector psiR, const Vector n ) const override;
+    /**
+     * @brief Flux       Computes "Steger Warming" upwinding scheme for given flux jacobians of the PN Solver at a given edge and stores it in
+     *                   resultFlux
+     * @param AxPlus     Positive part of the flux jacobian in x direction
+     * @param AxMinus    Negative part of the flux jacobian in x direction
+     * @param AyPlus     Positive part of the flux jacobian in y direction
+     * @param AyMinus    Negative part of the flux jacobian in y direction
+     * @param AzPlus     Positive part of the flux jacobian in z direction
+     * @param AzMinus    Negative part of the flux jacobian in z direction
+     * @param psiL       Solution state of left hand side control volume
+     * @param psiR       Solution state of right hand side control volume
+     * @param n          Normal vector at the edge between left and right control volume
+     * @return           Vector with resulting flux
+     */
+
     Vector Flux( const Matrix AxPlus,
                  const Matrix AxMinus,
                  const Matrix AyPlus,

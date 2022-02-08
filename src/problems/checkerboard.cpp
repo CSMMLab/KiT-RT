@@ -286,8 +286,7 @@ std::vector<VectorVector> Checkerboard_Moment_1D::GetExternalSource( const Vecto
         SphericalBase* tempBase  = new SphericalHarmonics( _settings->GetMaxMomentDegree(), 3 );
         unsigned ntotalEquations = tempBase->GetBasisSize();
         delete tempBase;
-
-        VectorVector Q( _mesh->GetNumCells(), Vector( ntotalEquations, 0.0 ) );    // zero could lead to problems?
+        VectorVector Q( _mesh->GetNumCells(), Vector( ntotalEquations, 0.0 ) );
         double kinetic_density = _settings->GetSourceMagnitude();
         VectorVector cellMids  = _mesh->GetCellMidPoints();
         for( unsigned idx_cell = 0; idx_cell < cellMids.size(); ++idx_cell ) {
@@ -295,8 +294,6 @@ std::vector<VectorVector> Checkerboard_Moment_1D::GetExternalSource( const Vecto
                 Q[idx_cell][0] = kinetic_density / std::sqrt( 4 * M_PI );
             }
         }
-        TextProcessingToolbox::PrintVectorVector( cellMids );
-        TextProcessingToolbox::PrintVectorVector( Q );
         return std::vector<VectorVector>( 1u, Q );
     }
     else {
@@ -306,9 +303,7 @@ std::vector<VectorVector> Checkerboard_Moment_1D::GetExternalSource( const Vecto
 
         VectorVector Q( _mesh->GetNumCells(), Vector( ntotalEquations, 0.0 ) );    // zero could lead to problems?
         VectorVector cellMids = _mesh->GetCellMidPoints();
-
         Vector uIC( ntotalEquations, 0 );
-
         if( _settings->GetSphericalBasisName() == SPHERICAL_MONOMIALS ) {
             QuadratureBase* quad          = QuadratureBase::Create( _settings );
             VectorVector quadPointsSphere = quad->GetPointsSphere();
@@ -350,7 +345,7 @@ VectorVector Checkerboard_Moment_1D::SetupIC() {
         SphericalBase* tempBase  = new SphericalHarmonics( _settings->GetMaxMomentDegree(), 3 );
         unsigned ntotalEquations = tempBase->GetBasisSize();
         delete tempBase;
-        double epsilon = 1e-10;
+        double epsilon = 1e-3;
         VectorVector initialSolution( _mesh->GetNumCells(), Vector( ntotalEquations, 0.0 ) );    // zero could lead to problems?
         VectorVector cellMids = _mesh->GetCellMidPoints();
         for( unsigned idx_cell = 0; idx_cell < cellMids.size(); ++idx_cell ) {
@@ -364,9 +359,7 @@ VectorVector Checkerboard_Moment_1D::SetupIC() {
 
         VectorVector initialSolution( _mesh->GetNumCells(), Vector( ntotalEquations, 0 ) );    // zero could lead to problems?
         VectorVector cellMids = _mesh->GetCellMidPoints();
-
         Vector tempIC( ntotalEquations, 0 );
-
         if( _settings->GetSphericalBasisName() == SPHERICAL_MONOMIALS ) {
             QuadratureBase* quad          = QuadratureBase::Create( _settings );
             VectorVector quadPointsSphere = quad->GetPointsSphere();
@@ -387,7 +380,7 @@ VectorVector Checkerboard_Moment_1D::SetupIC() {
             delete quad;
         }
         // Initial condition is dirac impulse at (x,y) = (0,0) ==> constant in angle ==> all moments - exept first - are zero.
-        double kinetic_density = 1e-10;
+        double kinetic_density = 1e-4;
         for( unsigned j = 0; j < cellMids.size(); ++j ) {
             if( _settings->GetSphericalBasisName() == SPHERICAL_MONOMIALS ) {
                 initialSolution[j] = kinetic_density * tempIC / tempIC[0];    // Remember scaling

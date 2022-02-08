@@ -8,8 +8,8 @@ def add_block(x0,lengthX,char_length,geom):
     coords = np.array([
         [x0, 0.0, 0.0],
         [x0+lengthX, 0.0, 0.0],
-        [x0+lengthX, char_length*0.5, 0.0],
-        [x0, char_length*0.5, 0.0]
+        [x0+lengthX, 0.5*char_length, 0.0],
+        [x0, 0.5*char_length, 0.0]
     ])
     print(len(coords))
     print(len([char_length, 1]))

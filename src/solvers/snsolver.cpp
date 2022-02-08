@@ -52,7 +52,67 @@ void SNSolver::ComputeRadFlux() {
 }
 
 void SNSolver::FluxUpdate() {
+    // Loop over all spatial cells
+    if( _settings->GetProblemName() == PROBLEM_Aircavity1D || _settings->GetProblemName() == PROBLEM_Linesource1D ||
+        _settings->GetProblemName() == PROBLEM_Checkerboard1D ) {
+        FluxUpdatePseudo1D();
+    }
+    else {
+        FluxUpdatePseudo2D();
+    }
+}
 
+void SNSolver::FluxUpdatePseudo1D() {
+    double solL;
+    double solR;
+    // Loop over all spatial cells
+    for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
+        // Dirichlet cells stay at IC, farfield assumption
+        if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::DIRICHLET ) continue;
+        // Loop over all ordinates
+        for( unsigned idx_quad = 0; idx_quad < _nq; ++idx_quad ) {
+            // Reset temporary variable
+            _solNew[idx_cell][idx_quad] = 0.0;
+            // Loop over all neighbor cells (edges) of cell j and compute numerical fluxes
+            for( unsigned idx_nbr = 0; idx_nbr < _neighbors[idx_cell].size(); ++idx_nbr ) {
+                // store flux contribution on psiNew_sigmaS to save memory
+                if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::NEUMANN && _neighbors[idx_cell][idx_nbr] == _nCells )
+                    _solNew[idx_cell][idx_quad] +=
+                        _g->Flux1D( _quadPoints[idx_quad], _sol[idx_cell][idx_quad], _sol[idx_cell][idx_quad], _normals[idx_cell][idx_nbr] );
+                else {
+                    unsigned int nbr_glob = _neighbors[idx_cell][idx_nbr];    // global idx of neighbor cell
+
+                    switch( _reconsOrder ) {
+                        // first order solver
+                        case 1:
+                            _solNew[idx_cell][idx_quad] +=
+                                _g->Flux1D( _quadPoints[idx_quad], _sol[idx_cell][idx_quad], _sol[nbr_glob][idx_quad], _normals[idx_cell][idx_nbr] );
+                            break;
+                        // second order solver
+                        case 2:
+                            // left status of interface
+                            solL = _sol[idx_cell][idx_quad] +
+                                   _limiter[idx_cell][idx_quad] *
+                                       ( _solDx[idx_cell][idx_quad] * ( _interfaceMidPoints[idx_cell][idx_nbr][0] - _cellMidPoints[idx_cell][0] ) +
+                                         _solDy[idx_cell][idx_quad] * ( _interfaceMidPoints[idx_cell][idx_nbr][1] - _cellMidPoints[idx_cell][1] ) );
+                            solR = _sol[nbr_glob][idx_quad] +
+                                   _limiter[nbr_glob][idx_quad] *
+                                       ( _solDx[nbr_glob][idx_quad] * ( _interfaceMidPoints[idx_cell][idx_nbr][0] - _cellMidPoints[nbr_glob][0] ) +
+                                         _solDy[nbr_glob][idx_quad] * ( _interfaceMidPoints[idx_cell][idx_nbr][1] - _cellMidPoints[nbr_glob][1] ) );
+
+                            // flux evaluation
+                            _solNew[idx_cell][idx_quad] += _g->Flux1D( _quadPoints[idx_quad], solL, solR, _normals[idx_cell][idx_nbr] );
+                            break;
+                            // higher order solver
+                        default: ErrorMessages::Error( "Reconstruction order not supported.", CURRENT_FUNCTION ); break;
+                    }
+                }
+            }
+        }
+    }
+}
+
+void SNSolver::FluxUpdatePseudo2D() {
     double solL;
     double solR;
     // Loop over all spatial cells
@@ -93,16 +153,7 @@ void SNSolver::FluxUpdate() {
                             // flux evaluation
                             _solNew[idx_cell][idx_quad] += _g->Flux( _quadPoints[idx_quad], solL, solR, _normals[idx_cell][idx_nbr] );
                             break;
-                        // higher order solver
-                        case 3:
-                            std::cout << "higher order is WIP" << std::endl;
-                            break;
-                            // default: first order solver
-                        default:
-                            _solNew[idx_cell][idx_quad] += _g->Flux( _quadPoints[idx_quad],
-                                                                     _sol[idx_cell][idx_quad],
-                                                                     _sol[_neighbors[idx_cell][idx_nbr]][idx_quad],
-                                                                     _normals[idx_cell][idx_nbr] );
+                        default: ErrorMessages::Error( "Reconstruction order not supported.", CURRENT_FUNCTION ); break;
                     }
                 }
             }

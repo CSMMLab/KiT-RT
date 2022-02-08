@@ -110,22 +110,14 @@ void PNSolver::FluxUpdatePseudo1D() {
 
             // Compute flux contribution and store in psiNew to save memory
             if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::NEUMANN && _neighbors[idx_cell][idx_neighbor] == _nCells )
-                _solNew[idx_cell] += _g->Flux(
-                    _AxPlus, _AxMinus, _AyPlus, _AyMinus, _AzPlus, _AzMinus, _sol[idx_cell], _sol[idx_cell], _normals[idx_cell][idx_neighbor] );
+                _solNew[idx_cell] += _g->Flux1D( _AzPlus, _AzMinus, _sol[idx_cell], _sol[idx_cell], _normals[idx_cell][idx_neighbor] );
             else {
                 unsigned int nbr_glob = _neighbors[idx_cell][idx_neighbor];    // global idx of neighbor cell
                 switch( _reconsOrder ) {
                     // first order solver
                     case 1:
-                        _solNew[idx_cell] += _g->FluxXZ( _AxPlus,
-                                                         _AxMinus,
-                                                         _AyPlus,
-                                                         _AyMinus,
-                                                         _AzPlus,
-                                                         _AzMinus,
-                                                         _sol[idx_cell],
-                                                         _sol[_neighbors[idx_cell][idx_neighbor]],
-                                                         _normals[idx_cell][idx_neighbor] );
+                        _solNew[idx_cell] += _g->Flux1D(
+                            _AzPlus, _AzMinus, _sol[idx_cell], _sol[_neighbors[idx_cell][idx_neighbor]], _normals[idx_cell][idx_neighbor] );
                         break;
                     // second order solver
                     case 2:
@@ -143,20 +135,10 @@ void PNSolver::FluxUpdatePseudo1D() {
                                       _solDy[nbr_glob][idx_sys] * ( _interfaceMidPoints[idx_cell][idx_neighbor][1] - _cellMidPoints[nbr_glob][1] ) );
                         }
                         // flux evaluation
-                        _solNew[idx_cell] +=
-                            _g->FluxXZ( _AxPlus, _AxMinus, _AyPlus, _AyMinus, _AzPlus, _AzMinus, solL, solR, _normals[idx_cell][idx_neighbor] );
+                        _solNew[idx_cell] += _g->Flux1D( _AzPlus, _AzMinus, solL, solR, _normals[idx_cell][idx_neighbor] );
                         break;
                     // default: first order solver
-                    default:
-                        _solNew[idx_cell] += _g->FluxXZ( _AxPlus,
-                                                         _AxMinus,
-                                                         _AyPlus,
-                                                         _AyMinus,
-                                                         _AzPlus,
-                                                         _AzMinus,
-                                                         _sol[idx_cell],
-                                                         _sol[_neighbors[idx_cell][idx_neighbor]],
-                                                         _normals[idx_cell][idx_neighbor] );
+                    default: ErrorMessages::Error( "Reconstruction order not supported.", CURRENT_FUNCTION ); break;
                 }
             }
         }
@@ -217,17 +199,8 @@ void PNSolver::FluxUpdatePseudo2D() {
                         _solNew[idx_cell] +=
                             _g->Flux( _AxPlus, _AxMinus, _AyPlus, _AyMinus, _AzPlus, _AzMinus, solL, solR, _normals[idx_cell][idx_neighbor] );
                         break;
-                    // default: first order solver
-                    default:
-                        _solNew[idx_cell] += _g->Flux( _AxPlus,
-                                                       _AxMinus,
-                                                       _AyPlus,
-                                                       _AyMinus,
-                                                       _AzPlus,
-                                                       _AzMinus,
-                                                       _sol[idx_cell],
-                                                       _sol[_neighbors[idx_cell][idx_neighbor]],
-                                                       _normals[idx_cell][idx_neighbor] );
+                        // default: first order solver
+                    default: ErrorMessages::Error( "Reconstruction order not supported.", CURRENT_FUNCTION ); break;
                 }
             }
         }
