@@ -543,12 +543,14 @@ void Config::SetPostprocessing() {
             ErrorMessages::Error( "Solvers only work with 1st and 2nd order spatial fluxes.", CURRENT_FUNCTION );
         }
 
-        if( GetSolverName() == PN_SOLVER ) {
+        if( GetSolverName() == PN_SOLVER || GetSolverName() == CSD_PN_SOLVER ) {
             _dim        = 3;
             auto log    = spdlog::get( "event" );
             auto logCSV = spdlog::get( "tabular" );
-            log->info( "| Spherical Harmonics solver uses currently 3D Spherical functions. This is hardcoded and will change in the future." );
-            logCSV->info( "| Spherical Harmonics solver uses currently 3D Spherical functions. This is hardcoded and will change in the future." );
+            log->info(
+                "| Spherical harmonics based solver  currently use  3D Spherical functions. This is hardcoded and will change in the future." );
+            logCSV->info(
+                "| Spherical harmonics based solver currently use 3D Spherical functions. This is hardcoded and will change in the future." );
         }
     }
 
