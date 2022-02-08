@@ -242,7 +242,7 @@ VectorVector Checkerboard_SN_1D::SetupIC() {
 bool Checkerboard_SN_1D::isAbsorption( const Vector& pos ) const {
     // Check whether pos is inside absorbing squares
     // domain from 0 to 7, absorption block is between 1 and 2
-    if( ( pos[0] >= 1 && pos[0] <= 2 ) || ( pos[0] >= 6.5 && pos[0] <= 7 ) || ( pos[0] >= 3 && pos[0] <= 4 ) ) {
+    if( ( pos[0] >= 1 && pos[0] <= 2 ) || ( pos[0] >= 6.5 && pos[0] <= 7 ) ) {
         return true;
     }
     return false;
@@ -350,7 +350,7 @@ VectorVector Checkerboard_Moment_1D::SetupIC() {
         SphericalBase* tempBase  = new SphericalHarmonics( _settings->GetMaxMomentDegree(), 3 );
         unsigned ntotalEquations = tempBase->GetBasisSize();
         delete tempBase;
-        double epsilon = 1e-3;
+        double epsilon = 1e-10;
         VectorVector initialSolution( _mesh->GetNumCells(), Vector( ntotalEquations, 0.0 ) );    // zero could lead to problems?
         VectorVector cellMids = _mesh->GetCellMidPoints();
         for( unsigned idx_cell = 0; idx_cell < cellMids.size(); ++idx_cell ) {
@@ -387,7 +387,7 @@ VectorVector Checkerboard_Moment_1D::SetupIC() {
             delete quad;
         }
         // Initial condition is dirac impulse at (x,y) = (0,0) ==> constant in angle ==> all moments - exept first - are zero.
-        double kinetic_density = 1e-3;
+        double kinetic_density = 1e-10;
         for( unsigned j = 0; j < cellMids.size(); ++j ) {
             if( _settings->GetSphericalBasisName() == SPHERICAL_MONOMIALS ) {
                 initialSolution[j] = kinetic_density * tempIC / tempIC[0];    // Remember scaling
@@ -404,7 +404,7 @@ VectorVector Checkerboard_Moment_1D::SetupIC() {
 bool Checkerboard_Moment_1D::isAbsorption( const Vector& pos ) const {
     // Check whether pos is inside absorbing squares
     // domain from 0 to 7, absorption block is between 1 and 2
-    if( ( pos[0] >= 1 && pos[0] <= 2 ) || ( pos[0] >= 6.5 && pos[0] <= 7 ) || ( pos[0] >= 3 && pos[0] <= 4 ) ) {
+    if( ( pos[0] >= 1 && pos[0] <= 2 ) || ( pos[0] >= 6.5 && pos[0] <= 7 ) ) {
         return true;
     }
     return false;
