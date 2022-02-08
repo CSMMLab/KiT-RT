@@ -1,4 +1,4 @@
-#include "problems/waterphantom.hpp"
+#include "problems/phantomimage.hpp"
 #include "common/config.hpp"
 #include "common/io.hpp"
 #include "common/mesh.hpp"

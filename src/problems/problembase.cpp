@@ -2,10 +2,10 @@
 #include "common/config.hpp"
 #include "problems/aircavity1d.hpp"
 #include "problems/checkerboard.hpp"
-#include "problems/isotropicsource2d_ct.hpp"
 #include "problems/linesource.hpp"
+#include "problems/phantomimage.hpp"
+#include "problems/radiationctimage.hpp"
 #include "problems/starmapvalidation.hpp"
-#include "problems/waterphantom.hpp"
 #include "toolboxes/errormessages.hpp"
 
 ProblemBase::ProblemBase( Config* settings, Mesh* mesh ) {

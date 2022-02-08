@@ -1,11 +1,9 @@
-#include "problems/isotropicsource2d_ct.hpp"
+#include "problems/radiationctimage.hpp"
 #include "common/config.hpp"
 #include "common/io.hpp"
 #include "common/mesh.hpp"
 #include "toolboxes/errormessages.hpp"
 #include "toolboxes/interpolation.hpp"
-#include <fstream>
-#include <numeric>
 
 RadiationCTImage::RadiationCTImage( Config* settings, Mesh* mesh ) : ProblemBase( settings, mesh ) {}
 
