@@ -26,7 +26,7 @@ def main():
     parser.add_option("-c", "--char_length", dest="char_length", default= 0.01)
     parser.add_option("-s", "--start_pt", dest="start_pt", default= 0)
     parser.add_option("-l", "--x_length", dest="x_length", default= 1)
-    parser.add_option("-b", "--boundary", dest="b_type", default= "void")
+    parser.add_option("-b", "--boundary", dest="b_type", default= "dirichletNeumann")
     (options, args) = parser.parse_args()
 
     options.output_name = str(options.output_name)
