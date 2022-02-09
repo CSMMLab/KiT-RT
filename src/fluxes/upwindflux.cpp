@@ -42,6 +42,36 @@ Vector UpwindFlux::Flux( const Matrix AxPlus,
     return resultFlux;
 }
 
+Vector UpwindFlux::FluxXZ( const Matrix AxPlus,
+                           const Matrix AxMinus,
+                           const Matrix /*AyPlus*/,
+                           const Matrix /*AyMinus*/,
+                           const Matrix AzPlus,
+                           const Matrix AzMinus,
+                           const Vector psiL,
+                           const Vector psiR,
+                           const Vector n ) const {
+    // 2d only atm!!!
+
+    Vector resultFlux( psiR.size(), 0 );
+    // x dir
+    if( n[0] > 0 ) {
+        resultFlux += n[0] * AxPlus * psiL + n[0] * AxMinus * psiR;
+    }
+    else {
+        resultFlux += n[0] * AxPlus * psiR + n[0] * AxMinus * psiL;
+    }
+    // y dir
+    if( n[1] > 0 ) {
+        resultFlux += n[1] * AzPlus * psiL + n[1] * AzMinus * psiR;
+    }
+    else {
+        resultFlux += n[1] * AzPlus * psiR + n[1] * AzMinus * psiL;
+    }
+
+    return resultFlux;
+}
+
 void UpwindFlux::FluxVanLeer( const Matrix& Ax,
                               const Matrix& AxAbs,
                               const Matrix& /*Ay*/,

@@ -1,217 +1,128 @@
-#define PY_SSIZE_T_CLEAN
-#include <Python.h>
-#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
-#include <numpy/arrayobject.h>
+/*!
+ * @file newtonoptimizer.cpp
+ * @brief class for solving the minimal entropy optimization problem using a neural network
+ * @author S. Schotthöfer
+ */
 
-#include "common/config.hpp"
 #include "optimizers/mloptimizer.hpp"
+#include "common/config.hpp"
 #include "toolboxes/errormessages.hpp"
+
+// Only build optimizer, if tensorflow backend is enabled
+#ifdef BUILD_ML
+#include "entropies/entropybase.hpp"
+#include "quadratures/quadraturebase.hpp"
+#include "toolboxes/sphericalbase.hpp"
+#include "toolboxes/textprocessingtoolbox.hpp"
+
 #include <iostream>
 
 MLOptimizer::MLOptimizer( Config* settings ) : OptimizerBase( settings ) {
 
-    initializePython();
+    _quadrature = QuadratureBase::Create( settings );
+    _nq         = _quadrature->GetNq();
+    _weights    = _quadrature->GetWeights();
 
-    // initialize python script
-    std::string moduleName = "callNeuralClosure";
-
-    _pModule = PyImport_ImportModule( moduleName.c_str() );
-    if( !_pModule ) {
-        PyErr_Print();
-        Py_DecRef( _pModule );
-        ErrorMessages::Error( "'" + moduleName + "' can not be imported!", CURRENT_FUNCTION );
+    // construct support structures
+    SphericalBase* tempBase  = SphericalBase::Create( _settings );
+    _nSystem                 = tempBase->GetBasisSize();
+    VectorVector momentBasis = VectorVector( _nq, Vector( _nSystem, 0.0 ) );
+    double my, phi;
+    VectorVector quadPointsSphere = _quadrature->GetPointsSphere();
+    for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
+        my                    = quadPointsSphere[idx_quad][0];
+        phi                   = quadPointsSphere[idx_quad][1];
+        momentBasis[idx_quad] = tempBase->ComputeSphericalBasis( my, phi );
     }
+    _reducedMomentBasis = VectorVector( _nq, Vector( _nSystem - 1, 0.0 ) );
+    for( unsigned idx_nq = 0; idx_nq < _nq; idx_nq++ ) {    // copy (reduced) moments
+        for( unsigned idx_sys = 1; idx_sys < _nSystem; idx_sys++ ) {
+            _reducedMomentBasis[idx_nq][idx_sys - 1] = momentBasis[idx_nq][idx_sys];
+        }
+    }
+    delete tempBase;
 
-    // initialize Network
-    initializeNetwork();
+    // Choose the right model depending on spherical basis, basis degree and spatial dimension
+    std::string polyDegreeStr = std::to_string( _settings->GetMaxMomentDegree() );
+    std::string dimStr        = std::to_string( _settings->GetDim() );
+    std::string modelMkStr    = std::to_string( _settings->GetModelMK() );
+    std::string basisTypeStr;
+    switch( _settings->GetSphericalBasisName() ) {
+        case SPHERICAL_HARMONICS: basisTypeStr = "Harmonic"; break;
+        case SPHERICAL_MONOMIALS: basisTypeStr = "Monomial"; break;
+    }
+    std::string modelFolder = TENSORFLOW_MODEL_PATH;
+    std::string tfModelPath = modelFolder + "/" + basisTypeStr + "_Mk" + modelMkStr + "_M" + polyDegreeStr + "_" + dimStr + "D";
+    // std::cout << "Load Tensorflow model from:\n ";
+    // std::cout << tfModelPath << "\n";
+
+    // Load model
+    _tfModel = new cppflow::model( tfModelPath );                                // load model
+    _modelServingVectorU.resize( _settings->GetNCells() * ( _nSystem - 1 ) );    // reserve size for model servitor
 }
 
-MLOptimizer::~MLOptimizer() { finalizePython(); }
+MLOptimizer::~MLOptimizer() {}
 
-void MLOptimizer::Solve( Vector& alpha, Vector& u, const VectorVector& /*moments*/, unsigned /*idx_cell*/ ) {
-
-    // Convert Vector to array
-    const unsigned input_size = u.size();
-    double* nn_input          = new double[u.size()];
-
-    for( unsigned idx_sys = 0; idx_sys < input_size; idx_sys++ ) {
-        nn_input[idx_sys] = u[idx_sys];
-        // std::cout << nn_input[idx_sys] << ", ";
-    }
-
-    //  initialize_python();
-    double* nn_output = callNetwork( input_size, nn_input );    //  nn_input;
-
-    // std::cout << "Solution found in cell: " << idx_cell << "/8441 \n";
-
-    for( unsigned i = 0; i < input_size; i++ ) {
-        // std::cout << nn_output[i] << ", ";
-        alpha[i] = nn_output[i];
-    }
-    //  std::cout << std::endl;
-    delete[] nn_input;
-}
+void MLOptimizer::Solve( Vector& alpha, Vector& u, const VectorVector& /*moments*/, unsigned /*idx_cell*/ ) {}
 
 void MLOptimizer::SolveMultiCell( VectorVector& alpha, VectorVector& u, const VectorVector& /*moments*/ ) {
 
-    const unsigned batch_size = u.size();       // batch size = number of cells
-    const unsigned sol_dim    = u[0].size();    // dimension of input vector = nTotalEntries
-
-    const unsigned n_size = batch_size * sol_dim;    // length of input array
-
-    // Covert input to array
-    double* nn_input = new double[n_size];
-
-    unsigned idx_input = 0;
-    for( unsigned idx_cell = 0; idx_cell < batch_size; idx_cell++ ) {
-        for( unsigned idx_sys = 0; idx_sys < sol_dim; idx_sys++ ) {
-            nn_input[idx_input] = u[idx_cell][idx_sys];
-            idx_input++;
+#pragma omp parallel for
+    for( unsigned idx_cell = 0; idx_cell < _settings->GetNCells(); idx_cell++ ) {
+        if( abs( u[idx_cell][0] ) > 1e-9 ) {
+            for( unsigned idx_sys = 0; idx_sys < _nSystem - 1; idx_sys++ ) {
+                _modelServingVectorU[idx_cell * ( _nSystem - 1 ) + idx_sys] = (float)( u[idx_cell][idx_sys + 1] / u[idx_cell][0] );
+            }
+        }
+        else {
+            ErrorMessages::Error( "Particle Density is zero causing divide by zero error.", CURRENT_FUNCTION );
         }
     }
 
-    double* nn_output = callNetworkMultiCell( batch_size, sol_dim, nn_input );
+    // Create tensor from flattened vector
+    _modelInput = cppflow::tensor( _modelServingVectorU, { _settings->GetNCells(), _nSystem - 1 } );
 
-    unsigned idx_output = 0;
-    for( unsigned idx_cell = 0; idx_cell < batch_size; idx_cell++ ) {
-        for( unsigned idx_sys = 0; idx_sys < sol_dim; idx_sys++ ) {
-            alpha[idx_cell][idx_sys] = nn_output[idx_output];
-            idx_output++;
+    // Call Model (change call depending on model mk) // Specific for MK11 2D now
+    std::vector<cppflow::tensor> output = _tfModel->operator()(
+        { { "serving_default_input_1:0", _modelInput } }, { "StatefulPartitionedCall:0", "StatefulPartitionedCall:1", "StatefulPartitionedCall:2" } );
+
+    // reform output to vector<float>
+    _modelServingVectorAlpha = output[1].get_data<float>();
+#pragma omp parallel for
+    for( unsigned idx_cell = 0; idx_cell < _settings->GetNCells(); idx_cell++ ) {
+        Vector alphaRed = Vector( _nSystem - 1, 0.0 );    // local reduced alpha
+        for( unsigned idx_sys = 0; idx_sys < _nSystem - 1; idx_sys++ ) {
+            alphaRed[idx_sys]            = (double)_modelServingVectorAlpha[idx_cell * ( _nSystem - 1 ) + idx_sys];
+            alpha[idx_cell][idx_sys + 1] = alphaRed[idx_sys];
         }
-    }
-
-    delete[] nn_output;
-}
-
-void MLOptimizer::initNumpy() {
-    _import_array();    // Check, if this gives a mem Leak!
-}
-
-void MLOptimizer::initializePython() {
-    // Initialize the Python Interpreter
-    std::string pyPath = KITRT_PYTHON_PATH;
-    pyPath             = pyPath + "/../ext/neuralEntropy/python";
-    if( !Py_IsInitialized() ) {
-
-        Py_InitializeEx( 0 );
-        if( !Py_IsInitialized() ) {
-            ErrorMessages::Error( "Python init failed!", CURRENT_FUNCTION );
+        // Restore alpha_0
+        double integral = 0.0;
+        for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
+            integral += _entropy->EntropyPrimeDual( dot( alphaRed, _reducedMomentBasis[idx_quad] ) ) * _weights[idx_quad];
         }
-        PyRun_SimpleString( ( "import sys\nsys.path.append('" + pyPath + "')" ).c_str() );
+        alpha[idx_cell][0] = -log( integral );    // log trafo
+        // rescale alpha_0 ==> done by normalized MN Solver
+        // alpha[idx_cell][0] += log( u[idx_cell][0] );
     }
-
-    // std::cout << "Python working directory is: " << pyPath << " \n";
-    initNumpy();
-}
-
-void MLOptimizer::initializeNetwork() {
-    PyObject *pArgs, *pFunc;    // *pModule,
-    // PyArrayObject* np_ret;
-
-    pFunc = PyObject_GetAttrString( _pModule, "initModelCpp" );
-    if( !pFunc || !PyCallable_Check( pFunc ) ) {
-        PyErr_Print();
-        Py_DecRef( _pModule );
-        Py_DecRef( pFunc );
-        ErrorMessages::Error( "'initModelCpp' is null or not callable!", CURRENT_FUNCTION );
-    }
-
-    long int dims[1]     = { 2 };    // input: [modelNumber, maxDegree_N]
-    int* input           = new int[2];
-    input[0]             = (int)_settings->GetNeuralModel();
-    input[1]             = (int)_settings->GetMaxMomentDegree();
-    PyObject* inputArray = PyArray_SimpleNewFromData( 1, dims, NPY_INT, (void*)input );
-
-    pArgs = PyTuple_New( 1 );
-    PyTuple_SetItem( pArgs, 0, reinterpret_cast<PyObject*>( inputArray ) );
-
-    // Call Python function
-
-    PyObject_CallObject( pFunc, pArgs );    // PyObject
-
-    // np_ret = reinterpret_cast<PyArrayObject*>( pReturn );    // Cast from PyObject to PyArrayObject
-    //
-    // double* nn_output = reinterpret_cast<double*>( PyArray_DATA( np_ret ) );    // Get Output
-
-    // Finalizing
-    Py_DecRef( pFunc );
-    // Py_DECREF( np_ret );
-}
-
-void MLOptimizer::finalizePython() {
-    Py_DecRef( _pModule );
-    Py_Finalize();
-}
-
-double* MLOptimizer::callNetwork( const unsigned inputDim, double* nnInput ) {
-
-    PyObject *pArgs, *pReturn, *pFunc;    // *pModule,
-    PyArrayObject* np_ret;
-
-    pFunc = PyObject_GetAttrString( _pModule, "callNetwork" );
-    if( !pFunc || !PyCallable_Check( pFunc ) ) {
-        PyErr_Print();
-        Py_DecRef( _pModule );
-        Py_DecRef( pFunc );
-        ErrorMessages::Error( "'callNetwork' is null or not callable!", CURRENT_FUNCTION );
-    }
-
-    long int dims[1] = { inputDim };    // Why was this const?
-
-    PyObject* inputArray = PyArray_SimpleNewFromData( 1, dims, NPY_DOUBLE, (void*)nnInput );
-
-    pArgs = PyTuple_New( 1 );
-    PyTuple_SetItem( pArgs, 0, reinterpret_cast<PyObject*>( inputArray ) );
-
-    // Call Python function
-    pReturn = PyObject_CallObject( pFunc, pArgs );    // PyObject
-
-    np_ret = reinterpret_cast<PyArrayObject*>( pReturn );    // Cast from PyObject to PyArrayObject
-
-    double* nn_output = reinterpret_cast<double*>( PyArray_DATA( np_ret ) );    // Get Output
-
-    // Finalizing
-    Py_DecRef( pFunc );
-    Py_DECREF( np_ret );
-
-    return nn_output;
-}
-
-double* MLOptimizer::callNetworkMultiCell( const unsigned batchSize, const unsigned inputDim, double* nnInput ) {
-
-    PyObject *pArgs, *pReturn, *pFunc;
-    PyArrayObject* np_ret;
-
-    pFunc = PyObject_GetAttrString( _pModule, "callNetworkBatchwise" );
-    if( !pFunc || !PyCallable_Check( pFunc ) ) {
-        PyErr_Print();
-        Py_DecRef( _pModule );
-        Py_DecRef( pFunc );
-        ErrorMessages::Error( "'callNetworkBatchwise' is null or not callable!", CURRENT_FUNCTION );
-    }
-
-    long int dims[2] = { batchSize, inputDim };    // Why was this const?
-
-    PyObject* inputArray = PyArray_SimpleNewFromData( 2, dims, NPY_DOUBLE, (void*)nnInput );
-
-    pArgs = PyTuple_New( 1 );
-    PyTuple_SetItem( pArgs, 0, reinterpret_cast<PyObject*>( inputArray ) );
-
-    // Call Python function
-
-    pReturn = PyObject_CallObject( pFunc, pArgs );    // PyObject
-
-    np_ret = reinterpret_cast<PyArrayObject*>( pReturn );    // Cast from PyObject to PyArrayObject
-
-    double* nn_output = reinterpret_cast<double*>( PyArray_DATA( np_ret ) );    // Get Output
-
-    // Finalizing
-    Py_DecRef( pFunc );
-    Py_DECREF( np_ret );
-
-    return nn_output;
+    // postprocessing depending on model mk
+    // TextProcessingToolbox::PrintVectorVector( alpha );
 }
 
 void MLOptimizer::ReconstructMoments( Vector& sol, const Vector& alpha, const VectorVector& moments ) {
-    ErrorMessages::Error( "This function is not yet implemented.", CURRENT_FUNCTION );
+    double entropyReconstruction = 0.0;
+    for( unsigned idx_sys = 0; idx_sys < sol.size(); idx_sys++ ) {
+        sol[idx_sys] = 0.0;
+    }
+    for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
+        // Make entropyReconstruction a member vector, s.t. it does not have to be re-evaluated in ConstructFlux
+        entropyReconstruction = _entropy->EntropyPrimeDual( blaze::dot( alpha, moments[idx_quad] ) );
+        sol += moments[idx_quad] * ( _weights[idx_quad] * entropyReconstruction );
+    }
 }
+
+#else
+MLOptimizer::MLOptimizer( Config* settings ) : OptimizerBase( settings ) {
+    ErrorMessages::Error( "ML build not configured. Please activate cmake flage BUILD_ML.", CURRENT_FUNCTION );
+}
+MLOptimizer::~MLOptimizer() {}
+#endif

@@ -1,14 +1,11 @@
 #ifndef EPICS_H
 #define EPICS_H
 
+#include "common/typedef.hpp"
 #include <fstream>
 #include <list>
 #include <map>
-
-#include "common/globalconstants.hpp"
-#include "common/typedef.hpp"
-#include "toolboxes/errormessages.hpp"
-#include "toolboxes/interpolation.hpp"
+#include <vector>
 
 class EPICS
 {

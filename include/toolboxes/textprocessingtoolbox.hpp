@@ -7,6 +7,7 @@
 #define TEXTPROCESSINGTOOLBOX_H
 
 #include "common/typedef.hpp"
+#include <fstream>
 #include <iostream>
 #include <string>
 #include <vector>
@@ -54,6 +55,41 @@ inline void PrintVectorVector( const VectorVector vectorIn ) {
 }
 
 inline void PrintMatrix( const Matrix mat ) { std::cout << mat << std::endl; }
+
+inline void PrintMatrixToFile( const Matrix mat, std::string filename, unsigned matsize ) {
+    std::ofstream myfile;
+    myfile.open( filename );
+    for( unsigned i = 0; i < matsize; i++ ) {
+        for( unsigned j = 0; j < matsize - 1; j++ ) {
+            myfile << mat( i, j ) << ",";
+        }
+        myfile << mat( i, matsize - 1 );
+        myfile << "\n";
+    }
+    myfile.close();
+}
+
+inline void PrintVectorToFile( const Vector vec, std::string filename, unsigned vecsize ) {
+    std::ofstream myfile;
+    myfile.open( filename );
+    for( unsigned i = 0; i < vecsize; i++ ) {
+        myfile << vec[i] << "\n";
+    }
+    myfile.close();
+}
+
+inline void PrintVectorVectorToFile( const VectorVector vecvec, std::string filename, unsigned size_outer, unsigned size_inner ) {
+    std::ofstream myfile;
+    myfile.open( filename );
+    for( unsigned i = 0; i < size_outer; i++ ) {
+        for( unsigned j = 0; j < size_inner - 1; j++ ) {
+            myfile << vecvec[i][j] << ",";
+        }
+        myfile << vecvec[i][size_inner - 1];
+        myfile << ";\n";
+    }
+    myfile.close();
+}
 
 /*!
  * @brief utility function for returning the last number in a string

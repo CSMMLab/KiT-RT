@@ -9,6 +9,8 @@ class CSDSolverTrafoFP2D : public SNSolver
 {
   private:
     std::vector<double> _dose; /*!< @brief TODO */
+    Vector _sigmaTAtEnergy;
+    unsigned short _polyDegreeBasis; /*!< @brief Max polynomial degree of the basis */
 
     // Helper Variables
 
@@ -68,6 +70,7 @@ class CSDSolverTrafoFP2D : public SNSolver
     void IterPreprocessing( unsigned idx_pseudotime ) override final;
     void virtual IterPostprocessing( unsigned idx_pseudotime ) override final;
     void SolverPreprocessing() override final;
+    double NormPDF( double x, double mu, double sigma );
 };
 
 #endif    // CSDSOLVERTRAFOFP2D_H

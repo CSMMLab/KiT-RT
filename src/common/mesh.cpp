@@ -13,7 +13,6 @@ Mesh::Mesh( std::vector<Vector> nodes,
     else {
         ErrorMessages::Error( "Unsupported mesh dimension!", CURRENT_FUNCTION );
     }
-
     ComputeCellAreas();
     ComputeCellMidpoints();
     ComputeConnectivity();
@@ -58,7 +57,7 @@ void Mesh::ComputeConnectivity() {
         for( auto j : _cells[i] ) connMat.set( i, j, true );
     }
 
-// determine neighbor cells and normals with MPI and OpenMP
+    // determine neighbor cells and normals with MPI and OpenMP
 #pragma omp parallel for
     for( unsigned i = mpiCellStart; i < mpiCellEnd; ++i ) {
         std::vector<unsigned>* cellsI = &sortedCells[i];
@@ -251,11 +250,11 @@ Vector Mesh::ComputeOutwardFacingNormal( const Vector& nodeA, const Vector& node
 }
 
 void Mesh::ComputeSlopes( unsigned nq, VectorVector& psiDerX, VectorVector& psiDerY, const VectorVector& psi ) const {
-    for( unsigned idx_sys = 0; idx_sys < nq; ++idx_sys ) {
-        for( unsigned idx_cell = 0; idx_cell < _numCells; ++idx_cell ) {
+#pragma omp parallel for
+    for( unsigned idx_cell = 0; idx_cell < _numCells; ++idx_cell ) {
+        for( unsigned idx_sys = 0; idx_sys < nq; ++idx_sys ) {
             psiDerX[idx_cell][idx_sys] = 0.0;
             psiDerY[idx_cell][idx_sys] = 0.0;
-
             // if( cell->IsBoundaryCell() ) continue; // skip ghost cells
             if( _cellBoundaryTypes[idx_cell] != 2 ) continue;    // skip ghost cells
             // compute derivative by summing over cell boundary
@@ -273,10 +272,11 @@ void Mesh::ComputeSlopes( unsigned nq, VectorVector& psiDerX, VectorVector& psiD
 
 void Mesh::ComputeLimiter(
     unsigned nSys, const VectorVector& solDx, const VectorVector& solDy, const VectorVector& sol, VectorVector& limiter ) const {
-    double r   = 0.0;
-    double eps = 1e-10;
+    double const eps = 1e-10;
+#pragma omp parallel for
     for( unsigned idx_cell = 0; idx_cell < _numCells; idx_cell++ ) {
         for( unsigned idx_sys = 0; idx_sys < nSys; idx_sys++ ) {
+            double r = 0.0;
             if( _cellBoundaryTypes[idx_cell] != 2 ) {
                 limiter[idx_cell][idx_sys] = 0.0;    // turn to first order on boundaries
                 continue;                            // skip computation

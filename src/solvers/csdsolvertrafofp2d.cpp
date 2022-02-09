@@ -8,18 +8,20 @@
 #include "quadratures/qproduct.hpp"
 #include "quadratures/quadraturebase.hpp"
 #include "solvers/csdpn_starmap_constants.hpp"
+#include "solvers/solverbase.hpp"
 
 // externals
 #include "spdlog/spdlog.h"
 #include <mpi.h>
 
 CSDSolverTrafoFP2D::CSDSolverTrafoFP2D( Config* settings ) : SNSolver( settings ) {
-    _dose = std::vector<double>( _settings->GetNCells(), 0.0 );
+    _dose            = std::vector<double>( _settings->GetNCells(), 0.0 );
+    _polyDegreeBasis = settings->GetMaxMomentDegree();
 
-    // Set angle and energies
-    _energies  = Vector( _nEnergies, 0.0 );    // equidistant
-    _energyMin = 1e-4 * 0.511;
-    _energyMax = _settings->GetMaxEnergyCSD();    // 5e0;
+    // Limiter variables
+    _solDx   = VectorVector( _nCells, Vector( _nq, 0.0 ) );
+    _solDy   = VectorVector( _nCells, Vector( _nq, 0.0 ) );
+    _limiter = VectorVector( _nCells, Vector( _nq, 0.0 ) );
 
     // determine transformed energy grid for tabulated grid
     Vector E_transformed( E_trans.size(), 0.0 );
@@ -36,7 +38,7 @@ CSDSolverTrafoFP2D::CSDSolverTrafoFP2D( Config* settings ) : SNSolver( settings 
     double eMaxTrafo = interpEToTrafo( maxE );
     double eMinTrafo = interpEToTrafo( minE );
 
-    // Define intepolation back to original energy
+    // check what happens if we intepolate back
     Interpolation interpTrafoToE( E_transformed, E_tab );
 
     // define linear grid in fully transformed energy \tilde\tilde E (cf. Dissertation Kerstion Kuepper, Eq. 1.25)
@@ -46,6 +48,43 @@ CSDSolverTrafoFP2D::CSDSolverTrafoFP2D( Config* settings ) : SNSolver( settings 
     // compute Corresponding original energies
     for( unsigned n = 0; n < _nEnergies; ++n ) {
         _energies[n] = interpTrafoToE( eMaxTrafo - _eTrafo[n] );
+    }
+
+    // evaluate corresponding stopping powers and transport coefficients
+    // compute sigmaT is now done during computation in IterPreprocessing()
+
+    // compute stopping powers
+    Vector etmp = E_tab;
+    Vector stmp = S_tab;
+    Interpolation interpS( etmp, stmp );
+    _s = interpS( _energies );
+
+    // compute stopping power between energies for dose computation
+    double dE = _eTrafo[2] - _eTrafo[1];
+    Vector eTrafoMid( _nEnergies - 1 );
+    for( unsigned n = 0; n < _nEnergies - 1; ++n ) {
+        eTrafoMid[n] = _eTrafo[n] + dE / 2;
+    }
+    // compute Corresponding original energies at intermediate points
+    Vector eMid( _nEnergies - 1 );
+    for( unsigned n = 0; n < _nEnergies - 1; ++n ) {
+        eMid[n] = interpTrafoToE( eMaxTrafo - eTrafoMid[n] );
+    }
+    _sMid = interpS( eMid );
+
+    // write initial condition
+    Vector pos_beam = Vector{ 0.5, 0.5 };
+    _sol            = VectorVector( _nCells, Vector( _nq, 0.0 ) );
+
+    for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
+        double x            = _cellMidPoints[idx_cell][0];
+        double y            = _cellMidPoints[idx_cell][1];
+        const double stddev = .01;
+        double f            = NormPDF( x, pos_beam[0], stddev ) * NormPDF( y, pos_beam[1], stddev );
+
+        for( unsigned idx_sys = 1; idx_sys < _nq; idx_sys++ ) {
+            _sol[idx_cell][idx_sys] = f;    // must be VectorVector
+        }
     }
 
     // create quadrature
@@ -157,19 +196,14 @@ CSDSolverTrafoFP2D::CSDSolverTrafoFP2D( Config* settings ) : SNSolver( settings 
 
     // determine moments of Heney-Greenstein
     _xi = Matrix( 4, _nEnergies );
-
-    // initialize stopping power vector
-    _s = Vector( _nEnergies, 1.0 );
-
-    _RT = true;
-
-    // read in medical data if radiation therapy option selected
     ICRU database( _mu, _energies, _settings );
     database.GetTransportCoefficients( _xi );
-    database.GetStoppingPower( _s );
 
-    _density = std::vector<double>( _nCells, 1.0 );
-    _sol     = _problem->SetupIC();
+    _RT = true;
+}
+
+double CSDSolverTrafoFP2D::NormPDF( double x, double mu, double sigma ) {
+    return INV_SQRT_2PI / sigma * std::exp( -( ( x - mu ) * ( x - mu ) ) / ( 2.0 * sigma * sigma ) );
 }
 
 // IO
@@ -228,7 +262,7 @@ void CSDSolverTrafoFP2D::WriteVolumeOutput( unsigned idx_pseudoTime ) {
                 case MEDICAL:
                     // Compute Dose
                     for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
-                        _outputFields[idx_group][0][idx_cell] += _dose[idx_cell];
+                        _outputFields[idx_group][0][idx_cell] = _dose[idx_cell];
                     }
                     // Compute normalized dose
                     _outputFields[idx_group][1] = _outputFields[idx_group][0];
@@ -243,6 +277,16 @@ void CSDSolverTrafoFP2D::WriteVolumeOutput( unsigned idx_pseudoTime ) {
                 default: ErrorMessages::Error( "Volume Output Group not defined for CSD_SN_FP_TRAFO Solver!", CURRENT_FUNCTION ); break;
             }
         }
+    }
+    if( idx_pseudoTime == _nEnergies - 2 ) {
+        std::cout << _settings->GetOutputFile().append( ".txt" ) << std::endl;
+        std::ofstream out( _settings->GetOutputFile().append( ".txt" ) );
+        unsigned nx = _settings->GetNCells();
+
+        for( unsigned j = 0; j < nx; ++j ) {
+            out << _cellMidPoints[j][0] << " " << _cellMidPoints[j][1] << " " << _dose[j] << std::endl;
+        }
+        out.close();
     }
 }
 
@@ -327,13 +371,14 @@ void CSDSolverTrafoFP2D::IterPostprocessing( unsigned idx_pseudotime ) {
         _sol[j] = _solNew[j];
     }
 
+    // -- Compute Dose
     for( unsigned j = 0; j < _nCells; ++j ) {
         _fluxNew[j] = dot( _sol[j], _weights );
-        if( n > 0 ) {
-            _dose[j] += 0.5 * _dE * ( _fluxNew[j] * _s[n] + _flux[j] * _s[n] ) / _density[j];    // update dose with trapezoidal rule
+        if( n > 0 && n < _nEnergies - 1 ) {
+            _dose[j] += _dE * ( _fluxNew[j] * _sMid[n] ) / _density[j];    // update dose with trapezoidal rule // diss Kerstin
         }
         else {
-            _dose[j] += _dE * _fluxNew[j] * _s[n] / _density[j];
+            _dose[j] += 0.5 * _dE * ( _fluxNew[j] * _sMid[n] ) / _density[j];
         }
         _flux[j] = _fluxNew[j];
     }
@@ -347,7 +392,6 @@ void CSDSolverTrafoFP2D::SolverPreprocessing() {
 
     _densityMin = 0.1;
     for( unsigned j = 0; j < _nCells; ++j ) {
-        _density[j] = 1.0;
         if( _density[j] < _densityMin ) _density[j] = _densityMin;
     }
 

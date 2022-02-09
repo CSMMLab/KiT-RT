@@ -1,4 +1,8 @@
 #include "problems/epics.hpp"
+#include "common/globalconstants.hpp"
+#include "common/typedef.hpp"
+#include "toolboxes/errormessages.hpp"
+#include "toolboxes/interpolation.hpp"
 
 EPICS::EPICS( std::string fileName_H, std::string fileName_O, std::string fileName_stppower ) {
     _xsScatteringH2O.resize( 2 );

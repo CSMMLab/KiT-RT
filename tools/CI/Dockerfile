@@ -39,15 +39,21 @@ RUN cd /usr/local \
     && mv gmsh-4.7.0-Linux64-sdk gmsh \
     && rm gmsh-4.7.0-Linux64-sdk.tgz 
 
-RUN wget -nc --no-check-certificate --quiet https://www.vtk.org/files/release/8.2/VTK-8.2.0.tar.gz \
-    && tar xzf VTK-8.2.0.tar.gz \
-    && mkdir VTK-8.2.0/build \
-    && cd VTK-8.2.0/build \
+RUN wget -nc --no-check-certificate --quiet https://www.vtk.org/files/release/9.1/VTK-9.1.0.tar.gz \
+    && tar xzf VTK-9.1.0.tar.gz \
+    && mkdir VTK-9.1.0/build \
+    && cd VTK-9.1.0/build \
     && cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DBUILD_DOCUMENTATION=OFF -DBUILD_TESTING=OFF  ../ \
     && ninja \
     && ninja install > /dev/null \
     && cd - \
     && rm -rf VTK-*
+    
+RUN FILENAME=libtensorflow-gpu-linux-x86_64-2.7.0.tar.gz \
+    && wget -q --no-check-certificate https://storage.googleapis.com/tensorflow/libtensorflow/libtensorflow-gpu-linux-x86_64-2.7.0.tar.gz \
+    && tar -C /usr/local -xzf ${FILENAME} \
+    && ldconfig /usr/local/lib \
+    && rm ${FILENAME}
 
 RUN pip3 install numpy pygmsh==6.1.1 Pillow pydicom gcovr sphinx_rtd_theme breathe cpp-coveralls coveralls
 
