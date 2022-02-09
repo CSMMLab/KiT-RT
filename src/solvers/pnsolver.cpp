@@ -75,6 +75,11 @@ void PNSolver::IterPostprocessing( unsigned /*idx_iter*/ ) {
 
 void PNSolver::ComputeRadFlux() {
     double firstMomentScaleFactor = sqrt( 4 * M_PI );
+
+    if( _settings->GetProblemName() == PROBLEM_Aircavity1D || _settings->GetProblemName() == PROBLEM_Linesource1D ||
+        _settings->GetProblemName() == PROBLEM_Checkerboard1D ) {
+        firstMomentScaleFactor = 2.0;
+    }
     for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
         _fluxNew[idx_cell] = _sol[idx_cell][0] * firstMomentScaleFactor;
     }

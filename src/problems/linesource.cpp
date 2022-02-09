@@ -3,6 +3,7 @@
 #include "common/mesh.hpp"
 #include "quadratures/quadraturebase.hpp"
 #include "toolboxes/sphericalbase.hpp"
+#include "toolboxes/sphericalharmonics.hpp"
 #include <complex>
 
 // ---- Linesource ----
@@ -208,11 +209,14 @@ LineSource_SN_1D::LineSource_SN_1D( Config* settings, Mesh* mesh ) : LineSource_
 
 VectorVector LineSource_SN_1D::SetupIC() {
     VectorVector psi( _mesh->GetNumCells(), Vector( _settings->GetNQuadPoints(), 1e-10 ) );
-    auto cellMids = _mesh->GetCellMidPoints();
-    double t      = 3.2e-4;    // pseudo time for gaussian smoothing
+    auto cellMids  = _mesh->GetCellMidPoints();
+    double t       = 3.2e-4;    // pseudo time for gaussian smoothing
+    double epsilon = 1e-3;      // minimal value for first moment to avoid div by zero error
+
     for( unsigned j = 0; j < cellMids.size(); ++j ) {
-        double x = cellMids[j][0];
-        psi[j]   = 1.0 / ( 4.0 * M_PI * t ) * std::exp( -( x * x ) / ( 4 * t ) );
+        double x               = cellMids[j][0];
+        double kinetic_density = std::max( 1.0 / ( 4.0 * M_PI * t ) * std::exp( -( x * x ) / ( 4 * t ) ), epsilon );
+        psi[j]                 = kinetic_density;
     }
     return psi;
 }
@@ -222,52 +226,64 @@ VectorVector LineSource_SN_1D::SetupIC() {
 LineSource_Moment_1D::LineSource_Moment_1D( Config* settings, Mesh* mesh ) : LineSource_Moment( settings, mesh ) {}
 
 VectorVector LineSource_Moment_1D::SetupIC() {
-    // Compute number of equations in the system
-
-    // In case of PN, spherical basis is per default SPHERICAL_HARMONICS
-    SphericalBase* tempBase  = SphericalBase::Create( _settings );
-    unsigned ntotalEquations = tempBase->GetBasisSize();
-
-    VectorVector psi( _mesh->GetNumCells(), Vector( ntotalEquations, 0 ) );    // zero could lead to problems?
-    VectorVector cellMids = _mesh->GetCellMidPoints();
-    Vector uIC( ntotalEquations, 0 );
-
-    if( _settings->GetSphericalBasisName() == SPHERICAL_MONOMIALS ) {
-        QuadratureBase* quad          = QuadratureBase::Create( _settings );
-        VectorVector quadPointsSphere = quad->GetPointsSphere();
-        Vector w                      = quad->GetWeights();
-
-        double my, phi;
-        VectorVector moments = VectorVector( quad->GetNq(), Vector( tempBase->GetBasisSize(), 0.0 ) );
-
-        for( unsigned idx_quad = 0; idx_quad < quad->GetNq(); idx_quad++ ) {
-            my                = quadPointsSphere[idx_quad][0];
-            phi               = quadPointsSphere[idx_quad][1];
-            moments[idx_quad] = tempBase->ComputeSphericalBasis( my, phi );
-        }
-        // Integrate <1*m> to get factors for monomial basis in isotropic scattering
-        for( unsigned idx_quad = 0; idx_quad < quad->GetNq(); idx_quad++ ) {
-            uIC += w[idx_quad] * moments[idx_quad];
-        }
-        delete quad;
-    }
-
-    // Initial condition is dirac impulse at (x,y) = (0,0) ==> constant in angle ==> all moments - exept first - are zero.
     double t       = 3.2e-4;    // pseudo time for gaussian smoothing (Approx to dirac impulse)
     double epsilon = 1e-3;      // minimal value for first moment to avoid div by zero error
 
-    for( unsigned j = 0; j < cellMids.size(); ++j ) {
-        double x = cellMids[j][0];
+    // In case of PN, spherical basis is per default SPHERICAL_HARMONICS
+    if( _settings->GetSolverName() == PN_SOLVER || _settings->GetSolverName() == CSD_PN_SOLVER ) {
+        // In case of PN, spherical basis is per default SPHERICAL_HARMONICS in 3 velocity dimensions
+        SphericalHarmonics* tempBase = new SphericalHarmonics( _settings->GetMaxMomentDegree(), 3 );
+        unsigned ntotalEquations     = tempBase->GetBasisSize();
+        delete tempBase;
+        VectorVector initialSolution( _mesh->GetNumCells(), Vector( ntotalEquations, 0.0 ) );    // zero could lead to problems?
+        VectorVector cellMids = _mesh->GetCellMidPoints();
 
-        double kinetic_density = std::max( 1.0 / ( 4.0 * M_PI * t ) * std::exp( -( x * x ) / ( 4 * t ) ), epsilon );
+        for( unsigned idx_cell = 0; idx_cell < cellMids.size(); ++idx_cell ) {
+            double x                     = cellMids[idx_cell][0];
+            double kinetic_density       = std::max( 1.0 / ( 4.0 * M_PI * t ) * std::exp( -( x * x ) / ( 4 * t ) ), epsilon );
+            initialSolution[idx_cell][0] = kinetic_density;
+        }
+        return initialSolution;
+    }
+    else {
+        SphericalBase* tempBase  = SphericalBase::Create( _settings );
+        unsigned ntotalEquations = tempBase->GetBasisSize();
+
+        VectorVector initialSolution( _mesh->GetNumCells(), Vector( ntotalEquations, 0 ) );    // zero could lead to problems?
+        VectorVector cellMids = _mesh->GetCellMidPoints();
+        Vector uIC( ntotalEquations, 0 );
 
         if( _settings->GetSphericalBasisName() == SPHERICAL_MONOMIALS ) {
-            psi[j] = kinetic_density * uIC / uIC[0];    // Remember scaling
+            QuadratureBase* quad          = QuadratureBase::Create( _settings );
+            VectorVector quadPointsSphere = quad->GetPointsSphere();
+            Vector w                      = quad->GetWeights();
+
+            double my, phi;
+            VectorVector moments = VectorVector( quad->GetNq(), Vector( tempBase->GetBasisSize(), 0.0 ) );
+
+            for( unsigned idx_quad = 0; idx_quad < quad->GetNq(); idx_quad++ ) {
+                my                = quadPointsSphere[idx_quad][0];
+                phi               = quadPointsSphere[idx_quad][1];
+                moments[idx_quad] = tempBase->ComputeSphericalBasis( my, phi );
+            }
+            // Integrate <1*m> to get factors for monomial basis in isotropic scattering
+            for( unsigned idx_quad = 0; idx_quad < quad->GetNq(); idx_quad++ ) {
+                uIC += w[idx_quad] * moments[idx_quad];
+            }
+            delete quad;
         }
-        if( _settings->GetSphericalBasisName() == SPHERICAL_HARMONICS ) {
-            psi[j][0] = kinetic_density;
+        // Initial condition is dirac impulse at (x,y) = (0,0) ==> constant in angle ==> all moments - exept first - are zero.
+        for( unsigned j = 0; j < cellMids.size(); ++j ) {
+            double x               = cellMids[j][0];
+            double kinetic_density = std::max( 1.0 / ( 4.0 * M_PI * t ) * std::exp( -( x * x ) / ( 4 * t ) ), epsilon );
+            if( _settings->GetSphericalBasisName() == SPHERICAL_MONOMIALS ) {
+                initialSolution[j] = kinetic_density * uIC / uIC[0];    // Remember scaling
+            }
+            if( _settings->GetSphericalBasisName() == SPHERICAL_HARMONICS ) {
+                initialSolution[j][0] = kinetic_density;
+            }
         }
+        delete tempBase;    // Only temporally needed
+        return initialSolution;
     }
-    delete tempBase;    // Only temporally needed
-    return psi;
 }

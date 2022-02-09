@@ -4,6 +4,7 @@ import itertools
 import os
 from optparse import OptionParser
 
+
 def add_block(x0,lengthX,char_length,geom):
     coords = np.array([
         [x0, 0.0, 0.0],
@@ -23,6 +24,7 @@ def main():
     parser = OptionParser()
     parser.add_option("-o", "--output_name", dest="output_name", default="1dmesh")
     parser.add_option("-c", "--char_length", dest="char_length", default= 0.01)
+    parser.add_option("-s", "--start_pt", dest="start_pt", default= 0)
     parser.add_option("-l", "--x_length", dest="x_length", default= 1)
     parser.add_option("-b", "--boundary", dest="b_type", default= "void")
     (options, args) = parser.parse_args()
@@ -33,10 +35,10 @@ def main():
     options.x_length = float(options.x_length)
     char_length = options.char_length
     lengthX = options.x_length
-
+    start_pt = float(options.start_pt)
 
     geom = pg.opencascade.Geometry()
-    domain = add_block(0, lengthX, char_length, geom)
+    domain = add_block(start_pt, lengthX, char_length, geom)
 
     if options.b_type == "void":
         geom.add_physical(domain.lines, label="void")

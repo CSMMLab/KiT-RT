@@ -230,7 +230,7 @@ std::vector<VectorVector> Checkerboard_SN_1D::GetExternalSource( const Vector& /
     VectorVector Q( _mesh->GetNumCells(), Vector( 1u, 0.0 ) );
     auto cellMids = _mesh->GetCellMidPoints();
     for( unsigned j = 0; j < cellMids.size(); ++j ) {
-        if( isSource( cellMids[j] ) ) Q[j] = _settings->GetSourceMagnitude() / ( 4 * M_PI );    // isotropic source
+        if( isSource( cellMids[j] ) ) Q[j] = _settings->GetSourceMagnitude();    // isotropic source
     }
     return std::vector<VectorVector>( 1u, Q );
 }
@@ -284,21 +284,20 @@ VectorVector Checkerboard_Moment_1D::GetTotalXS( const Vector& energies ) { retu
 std::vector<VectorVector> Checkerboard_Moment_1D::GetExternalSource( const Vector& /*energies*/ ) {
     if( _settings->GetSolverName() == PN_SOLVER || _settings->GetSolverName() == CSD_PN_SOLVER ) {
         // In case of PN, spherical basis is per default SPHERICAL_HARMONICS in 3 velocity dimensions
-        SphericalBase* tempBase  = new SphericalHarmonics( _settings->GetMaxMomentDegree(), 3 );
-        unsigned ntotalEquations = tempBase->GetBasisSize();
+        SphericalHarmonics* tempBase = new SphericalHarmonics( _settings->GetMaxMomentDegree(), 3 );
+        unsigned ntotalEquations     = tempBase->GetBasisSize();
         delete tempBase;
         VectorVector Q( _mesh->GetNumCells(), Vector( ntotalEquations, 0.0 ) );
         double kinetic_density = _settings->GetSourceMagnitude();
         VectorVector cellMids  = _mesh->GetCellMidPoints();
         for( unsigned idx_cell = 0; idx_cell < cellMids.size(); ++idx_cell ) {
             if( isSource( cellMids[idx_cell] ) ) {
-                Q[idx_cell][0] = kinetic_density / std::sqrt( 4 * M_PI );
+                Q[idx_cell][0] = kinetic_density;
             }
         }
         return std::vector<VectorVector>( 1u, Q );
     }
     else {
-        // In case of PN, spherical basis is per default SPHERICAL_HARMONICS
         SphericalBase* tempBase  = SphericalBase::Create( _settings );
         unsigned ntotalEquations = tempBase->GetBasisSize();
 
@@ -331,7 +330,7 @@ std::vector<VectorVector> Checkerboard_Moment_1D::GetExternalSource( const Vecto
                     Q[j] = kinetic_density * uIC / uIC[0];    // Remember scaling
                 }
                 if( _settings->GetSphericalBasisName() == SPHERICAL_HARMONICS ) {
-                    Q[j][0] = kinetic_density / std::sqrt( 4 * M_PI );
+                    Q[j][0] = kinetic_density;
                 }
             }
         }

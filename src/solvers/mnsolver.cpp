@@ -77,14 +77,17 @@ void MNSolver::ComputeScatterMatrix() {
             for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
                 _scatterMatDiag[idx_sys] += _momentBasis[idx_quad][idx_sys] * _weights[idx_quad];
             }
-            if( _settings->GetDim() == 2 ) {
+            if( _settings->GetDim() == 1 ) {
+                _scatterMatDiag[idx_sys] /= 2;
+            }
+            else if( _settings->GetDim() == 2 ) {
                 _scatterMatDiag[idx_sys] /= M_PI;
             }
             else {    // 3D
                 _scatterMatDiag[idx_sys] /= 4.0 * M_PI;
             }
         }
-        // std::cout << _scatterMatDiag << "\n";
+        std::cout << _scatterMatDiag << "\n";
     }
 }
 
@@ -162,6 +165,10 @@ void MNSolver::IterPostprocessing( unsigned /*idx_iter*/ ) {
 
 void MNSolver::ComputeRadFlux() {
     double firstMomentScaleFactor = sqrt( 4 * M_PI );
+    if( _settings->GetProblemName() == PROBLEM_Aircavity1D || _settings->GetProblemName() == PROBLEM_Linesource1D ||
+        _settings->GetProblemName() == PROBLEM_Checkerboard1D ) {
+        firstMomentScaleFactor = 2.0;
+    }
 #pragma omp parallel for
     for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
         _fluxNew[idx_cell] = _sol[idx_cell][0] * firstMomentScaleFactor;
@@ -323,11 +330,32 @@ void MNSolver::PrepareVolumeOutput() {
                 _outputFieldNames[idx_group].resize( _nSystem );
 
                 if( _settings->GetSphericalBasisName() == SPHERICAL_HARMONICS ) {
-                    for( int idx_l = 0; idx_l <= (int)_polyDegreeBasis; idx_l++ ) {
-                        for( int idx_k = -idx_l; idx_k <= idx_l; idx_k++ ) {
-                            _outputFields[idx_group][_basis->GetGlobalIndexBasis( idx_l, idx_k )].resize( _nCells );
-                            _outputFieldNames[idx_group][_basis->GetGlobalIndexBasis( idx_l, idx_k )] =
-                                std::string( "u_" + std::to_string( idx_l ) + "^" + std::to_string( idx_k ) );
+                    if( _settings->GetDim() == 3 ) {
+                        for( int idx_l = 0; idx_l <= (int)_polyDegreeBasis; idx_l++ ) {    // 3D
+                            for( int idx_k = -idx_l; idx_k <= idx_l; idx_k++ ) {
+                                _outputFields[idx_group][_basis->GetGlobalIndexBasis( idx_l, idx_k )].resize( _nCells );
+                                _outputFieldNames[idx_group][_basis->GetGlobalIndexBasis( idx_l, idx_k )] =
+                                    std::string( "u_" + std::to_string( idx_l ) + "^" + std::to_string( idx_k ) );
+                            }
+                        }
+                    }
+                    else if( _settings->GetDim() == 2 ) {
+                        unsigned count = 0;
+                        for( int idx_l = 0; idx_l <= (int)_polyDegreeBasis; idx_l++ ) {
+                            for( int idx_k = -idx_l; idx_k <= idx_l; idx_k++ ) {
+                                if( idx_l == 0 || idx_l != idx_k ) {
+                                    _outputFields[idx_group][count].resize( _nCells );
+                                    _outputFieldNames[idx_group][count] =
+                                        std::string( "u_" + std::to_string( idx_l ) + "^" + std::to_string( idx_k ) );
+                                    count++;
+                                }
+                            }
+                        }
+                    }
+                    else if( _settings->GetDim() == 1 ) {
+                        for( int idx_l = 0; idx_l <= (int)_polyDegreeBasis; idx_l++ ) {
+                            _outputFields[idx_group][idx_l].resize( _nCells );
+                            _outputFieldNames[idx_group][idx_l] = std::string( "u_" + std::to_string( idx_l ) + "^0" );
                         }
                     }
                 }
@@ -347,13 +375,33 @@ void MNSolver::PrepareVolumeOutput() {
                 // As many entries as there are moments in the system
                 _outputFields[idx_group].resize( _nSystem );
                 _outputFieldNames[idx_group].resize( _nSystem );
-
-                if( _settings->GetSphericalBasisName() == SPHERICAL_HARMONICS ) {
-                    for( int idx_l = 0; idx_l <= (int)_polyDegreeBasis; idx_l++ ) {
-                        for( int idx_k = -idx_l; idx_k <= idx_l; idx_k++ ) {
-                            _outputFields[idx_group][_basis->GetGlobalIndexBasis( idx_l, idx_k )].resize( _nCells );
-                            _outputFieldNames[idx_group][_basis->GetGlobalIndexBasis( idx_l, idx_k )] =
-                                std::string( "alpha_" + std::to_string( idx_l ) + "^" + std::to_string( idx_k ) );
+                if( _settings->GetDim() == 3 ) {
+                    if( _settings->GetSphericalBasisName() == SPHERICAL_HARMONICS ) {
+                        for( int idx_l = 0; idx_l <= (int)_polyDegreeBasis; idx_l++ ) {
+                            for( int idx_k = -idx_l; idx_k <= idx_l; idx_k++ ) {
+                                _outputFields[idx_group][_basis->GetGlobalIndexBasis( idx_l, idx_k )].resize( _nCells );
+                                _outputFieldNames[idx_group][_basis->GetGlobalIndexBasis( idx_l, idx_k )] =
+                                    std::string( "alpha_" + std::to_string( idx_l ) + "^" + std::to_string( idx_k ) );
+                            }
+                        }
+                    }
+                    else if( _settings->GetDim() == 2 ) {
+                        unsigned count = 0;
+                        for( int idx_l = 0; idx_l <= (int)_polyDegreeBasis; idx_l++ ) {
+                            for( int idx_k = -idx_l; idx_k <= idx_l; idx_k++ ) {
+                                if( idx_l == 0 || idx_l != idx_k ) {
+                                    _outputFields[idx_group][count].resize( _nCells );
+                                    _outputFieldNames[idx_group][count] =
+                                        std::string( "alpha_" + std::to_string( idx_l ) + "^" + std::to_string( idx_k ) );
+                                    count++;
+                                }
+                            }
+                        }
+                    }
+                    else if( _settings->GetDim() == 1 ) {
+                        for( int idx_l = 0; idx_l <= (int)_polyDegreeBasis; idx_l++ ) {
+                            _outputFields[idx_group][idx_l].resize( _nCells );
+                            _outputFieldNames[idx_group][idx_l] = std::string( "alpha_" + std::to_string( idx_l ) + "^0" );
                         }
                     }
                 }
