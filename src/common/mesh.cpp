@@ -13,7 +13,6 @@ Mesh::Mesh( std::vector<Vector> nodes,
     else {
         ErrorMessages::Error( "Unsupported mesh dimension!", CURRENT_FUNCTION );
     }
-
     ComputeCellAreas();
     ComputeCellMidpoints();
     ComputeConnectivity();
@@ -58,7 +57,7 @@ void Mesh::ComputeConnectivity() {
         for( auto j : _cells[i] ) connMat.set( i, j, true );
     }
 
-// determine neighbor cells and normals with MPI and OpenMP
+    // determine neighbor cells and normals with MPI and OpenMP
 #pragma omp parallel for
     for( unsigned i = mpiCellStart; i < mpiCellEnd; ++i ) {
         std::vector<unsigned>* cellsI = &sortedCells[i];

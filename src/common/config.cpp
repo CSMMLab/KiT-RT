@@ -524,6 +524,7 @@ void Config::SetPostprocessing() {
                                   CURRENT_FUNCTION );
         }
     }
+
     // Quadrature Postprocessing
     {
         QuadratureBase* quad                      = QuadratureBase::Create( this );
@@ -551,6 +552,10 @@ void Config::SetPostprocessing() {
 
         if( GetReconsOrder() > 2 ) {
             ErrorMessages::Error( "Solvers only work with 1st and 2nd order spatial fluxes.", CURRENT_FUNCTION );
+        }
+
+        if( GetOptimizerName() == ML && GetSolverName() != MN_SOLVER_NORMALIZED ) {
+            ErrorMessages::Error( "ML Optimizer only works with normalized MN Solver.", CURRENT_FUNCTION );
         }
 
         if( GetSolverName() == PN_SOLVER || GetSolverName() == CSD_PN_SOLVER ) {

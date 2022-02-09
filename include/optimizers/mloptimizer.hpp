@@ -36,7 +36,8 @@ class MLOptimizer : public OptimizerBase
     std::vector<float> _modelServingVectorAlpha; /*!< @brief model output as a 1D vector. dims: _nCells*_nSys */
 
     // std::vector<cppflow::tensor> _modelOutput; /*!< @brief model input tensor. dims: _nModelOutputx_nCellsx_nSys*/
-    unsigned _nSystem; /*!< @brief  size of the moment system including zero order moment*/
+    unsigned _nSystem;                /*!< @brief  size of the moment system including zero order moment*/
+    VectorVector _reducedMomentBasis; /*!< @brief reduced basis functions (excluding order zero) */
 };
 #else
 // Dummy class

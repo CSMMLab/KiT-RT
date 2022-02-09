@@ -23,15 +23,26 @@ MLOptimizer::MLOptimizer( Config* settings ) : OptimizerBase( settings ) {
     _nq         = _quadrature->GetNq();
     _weights    = _quadrature->GetWeights();
 
-    // construct input tensor
-    SphericalBase* tempBase = SphericalBase::Create( _settings );
-    _nSystem                = tempBase->GetBasisSize();
+    // construct support structures
+    SphericalBase* tempBase  = SphericalBase::Create( _settings );
+    _nSystem                 = tempBase->GetBasisSize();
+    VectorVector momentBasis = VectorVector( _nq, Vector( _nSystem, 0.0 ) );
+    double my, phi;
+    VectorVector quadPointsSphere = _quadrature->GetPointsSphere();
+    for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
+        my                    = quadPointsSphere[idx_quad][0];
+        phi                   = quadPointsSphere[idx_quad][1];
+        momentBasis[idx_quad] = tempBase->ComputeSphericalBasis( my, phi );
+    }
+    _reducedMomentBasis = VectorVector( _nq, Vector( _nSystem - 1, 0.0 ) );
+    for( unsigned idx_nq = 0; idx_nq < _nq; idx_nq++ ) {    // copy (reduced) moments
+        for( unsigned idx_sys = 1; idx_sys < _nSystem; idx_sys++ ) {
+            _reducedMomentBasis[idx_nq][idx_sys - 1] = momentBasis[idx_nq][idx_sys];
+        }
+    }
     delete tempBase;
 
-    std::string modelFolder = TENSORFLOW_MODEL_PATH;
-
     // Choose the right model depending on spherical basis, basis degree and spatial dimension
-
     std::string polyDegreeStr = std::to_string( _settings->GetMaxMomentDegree() );
     std::string dimStr        = std::to_string( _settings->GetDim() );
     std::string modelMkStr    = std::to_string( _settings->GetModelMK() );
@@ -40,49 +51,25 @@ MLOptimizer::MLOptimizer( Config* settings ) : OptimizerBase( settings ) {
         case SPHERICAL_HARMONICS: basisTypeStr = "Harmonic"; break;
         case SPHERICAL_MONOMIALS: basisTypeStr = "Monomial"; break;
     }
-
+    std::string modelFolder = TENSORFLOW_MODEL_PATH;
     std::string tfModelPath = modelFolder + "/" + basisTypeStr + "_Mk" + modelMkStr + "_M" + polyDegreeStr + "_" + dimStr + "D";
     // std::cout << "Load Tensorflow model from:\n ";
     // std::cout << tfModelPath << "\n";
 
     // Load model
-    // std::cout << _settings->GetNCells() << "\n";
-
-    _tfModel = new cppflow::model( tfModelPath );
-
-    _modelServingVectorU.resize( _settings->GetNCells() * ( _nSystem - 1 ) );
-    //_modelInput = cppflow::fill( { int( _settings->GetNCells() ), int( _nSystem - 1 ) }, 1.0f );    //{ _settings->GetNCells(), _nSystem - 1 }
-
-    // VectorVector uTest      = VectorVector( _settings->GetNCells(), Vector( _nSystem, 1.0 ) );
-    // VectorVector alphaTest  = VectorVector( _settings->GetNCells(), Vector( _nSystem, 1.0 ) );
-    // VectorVector momentTest = VectorVector( _nq, Vector( _nSystem, 1.0 ) );
-    //
-    // SolveMultiCell( uTest, alphaTest, momentTest );
-
-    // ErrorMessages::Error( "ML build not configured. Please activate cmake flag BUILD_ML.", CURRENT_FUNCTION );
+    _tfModel = new cppflow::model( tfModelPath );                                // load model
+    _modelServingVectorU.resize( _settings->GetNCells() * ( _nSystem - 1 ) );    // reserve size for model servitor
 }
 
 MLOptimizer::~MLOptimizer() {}
 
 void MLOptimizer::Solve( Vector& alpha, Vector& u, const VectorVector& /*moments*/, unsigned /*idx_cell*/ ) {}
 
-void MLOptimizer::SolveMultiCell( VectorVector& alpha, VectorVector& u, const VectorVector& moments ) {
+void MLOptimizer::SolveMultiCell( VectorVector& alpha, VectorVector& u, const VectorVector& /*moments*/ ) {
 
-    // Only for debugging.... Needs to go to constructor
-    VectorVector momentsRed = VectorVector( _nq, Vector( _nSystem - 1, 0.0 ) );
-#pragma omp parallel for
-    for( unsigned idx_nq = 0; idx_nq < _nq; idx_nq++ ) {    // copy (reduced) moments
-        for( unsigned idx_sys = 1; idx_sys < _nSystem; idx_sys++ ) {
-            momentsRed[idx_nq][idx_sys - 1] = moments[idx_nq][idx_sys];
-        }
-    }
-
-    // Transform VectorVector to flattened vector<float> and normalize data
 #pragma omp parallel for
     for( unsigned idx_cell = 0; idx_cell < _settings->GetNCells(); idx_cell++ ) {
-        if( u[idx_cell][0] > 0 ) {
-            //_modelServingVectorU[idx_cell * ( _nSystem - 1 ) + 0] = 0.0;
-            //_modelServingVectorU[idx_cell * ( _nSystem - 1 ) + 1] = 0.5;
+        if( abs( u[idx_cell][0] ) > 1e-9 ) {
             for( unsigned idx_sys = 0; idx_sys < _nSystem - 1; idx_sys++ ) {
                 _modelServingVectorU[idx_cell * ( _nSystem - 1 ) + idx_sys] = (float)( u[idx_cell][idx_sys + 1] / u[idx_cell][0] );
             }
@@ -91,6 +78,7 @@ void MLOptimizer::SolveMultiCell( VectorVector& alpha, VectorVector& u, const Ve
             ErrorMessages::Error( "Particle Density is zero causing divide by zero error.", CURRENT_FUNCTION );
         }
     }
+
     // Create tensor from flattened vector
     _modelInput = cppflow::tensor( _modelServingVectorU, { _settings->GetNCells(), _nSystem - 1 } );
 
@@ -100,8 +88,6 @@ void MLOptimizer::SolveMultiCell( VectorVector& alpha, VectorVector& u, const Ve
 
     // reform output to vector<float>
     _modelServingVectorAlpha = output[1].get_data<float>();
-    // std::cout << output[1] << "\n";
-    //  Postprocessing
 #pragma omp parallel for
     for( unsigned idx_cell = 0; idx_cell < _settings->GetNCells(); idx_cell++ ) {
         Vector alphaRed = Vector( _nSystem - 1, 0.0 );    // local reduced alpha
@@ -112,11 +98,11 @@ void MLOptimizer::SolveMultiCell( VectorVector& alpha, VectorVector& u, const Ve
         // Restore alpha_0
         double integral = 0.0;
         for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
-            integral += _entropy->EntropyPrimeDual( dot( alphaRed, momentsRed[idx_quad] ) ) * _weights[idx_quad];
+            integral += _entropy->EntropyPrimeDual( dot( alphaRed, _reducedMomentBasis[idx_quad] ) ) * _weights[idx_quad];
         }
         alpha[idx_cell][0] = -log( integral );    // log trafo
-        // rescale alpha_0
-        alpha[idx_cell][0] += log( u[idx_cell][0] );
+        // rescale alpha_0 ==> done by normalized MN Solver
+        // alpha[idx_cell][0] += log( u[idx_cell][0] );
     }
     // postprocessing depending on model mk
     // TextProcessingToolbox::PrintVectorVector( alpha );

@@ -137,7 +137,7 @@ void ExportVTK( const std::string fileName,
 
 Mesh* LoadSU2MeshFromFile( const Config* settings ) {
     auto log = spdlog::get( "event" );
-
+    log->info( "| Importing mesh. This may take a while for large meshes." );
     unsigned dim;
     std::vector<Vector> nodes;
     std::vector<std::vector<unsigned>> cells;
@@ -296,6 +296,7 @@ Mesh* LoadSU2MeshFromFile( const Config* settings ) {
         ErrorMessages::Error( "Cannot open mesh file '" + settings->GetMeshFile() + "!", CURRENT_FUNCTION );
     }
     ifs.close();
+    log->info( "| Mesh imported." );
     return new Mesh( nodes, cells, boundaries );
 }
 
