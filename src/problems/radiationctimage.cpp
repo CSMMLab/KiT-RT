@@ -63,9 +63,7 @@ std::vector<double> RadiationCTImage::GetDensity( const VectorVector& /*cellMidP
     double yMax = bounds[1].second;
 
     unsigned m = gsImage.rows();
-    std::cout << "Number rows: " << m << std::endl;
     unsigned n = gsImage.columns();
-    std::cout << "Number columns: " << n << std::endl;
 
     Vector x( m ), y( n );
     for( unsigned i = 0; i < m; ++i ) {
@@ -75,19 +73,10 @@ std::vector<double> RadiationCTImage::GetDensity( const VectorVector& /*cellMidP
 
     Interpolation interp( x, y, gsImage );
     std::vector<double> result( _mesh->GetNumCells(), 0.0 );
-    std::ofstream fout;
-    fout.open( "density_test.txt" );
-    std::ofstream fout1;
-    fout1.open( "x_test.txt" );
-    std::ofstream fout2;
-    fout2.open( "y_test.txt" );
+    
     for( unsigned i = 0; i < _mesh->GetNumCells(); ++i ) {
-        result[i] = std::clamp( interp( cellMidPoints[i][0], cellMidPoints[i][1] ), 0.6, 1.85 );
-        fout1 << cellMidPoints[i][0] << std::endl;
-        fout2 << cellMidPoints[i][1] << std::endl;
-        fout << result[i] << std::endl;
+        result[i] = std::clamp( interp( cellMidPoints[i][0], cellMidPoints[i][1] )*1.85, 0.4, 1.85 ); //Scale densities for CT to be between 0 (air) and 1.85 (bone)
     }
-    fout.close();
     return result;
 }
 
@@ -144,8 +133,7 @@ std::vector<double> RadiationCTImage_Moment::GetDensity( const VectorVector& /*c
     Interpolation interp( x, y, gsImage );
     std::vector<double> result( _mesh->GetNumCells(), 0.0 );
     for( unsigned i = 0; i < _mesh->GetNumCells(); ++i ) {
-        result[i] = std::clamp( interp( cellMidPoints[i][0], cellMidPoints[i][1] ), 0.4, 1.85 );
+        result[i] = std::clamp( interp( cellMidPoints[i][0], cellMidPoints[i][1] )*1.85, 0.4, 1.85 ); //Scale densities for CT to be between 0 (air) and 1.85 (bone)
     }
-    std::cout << "**** Test 2 ****";
     return result;
 }
