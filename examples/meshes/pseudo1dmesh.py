@@ -47,6 +47,8 @@ def main():
             meshfile.write(
                 str(marker[0]) + " " + str(marker[1]) + " " + str(marker[2]) + "\n")
     print("| Mesh created with " + str(n_elem) + " elements and " + str(n_pts) + " nodes")
+    print("| Neumann marker has tag wall_neumann")
+    print("| Dirichlet marker has tag dirichlet")
     print("---------- Successfully created the mesh ------------")
 
 
@@ -57,14 +59,12 @@ def create_nodes(start, length, char_length) -> np.ndarray:
     x_coords = np.concatenate([x_coord, x_coord], axis=0)
     indices = np.asarray(list(range(n_pts * 2)))
     list_nodes = np.stack([x_coords, y_coords, indices], axis=1)
-
     return list_nodes
 
 
 def create_elements(length, char_length) -> np.ndarray:
     n_elems = int(length / char_length)
     n_pts = int(length / char_length) + 1
-
     list_elems = []
     for i in range(n_elems):
         list_elems.append([9, i, i + 1, i + n_pts, i + n_pts + 1, i])
@@ -79,10 +79,7 @@ def create_markers(length, char_length) -> tuple:
         list_neumann.append([3, i, i + 1])
     for i in range(n_elems):
         list_neumann.append([3, i + n_pts, i + n_pts + 1])
-
-    list_dirichlet = []
-    list_dirichlet.append([3, 0, n_pts])
-    list_dirichlet.append([3, n_pts - 1, 2 * n_pts - 1])
+    list_dirichlet = [[3, 0, n_pts], [3, n_pts - 1, 2 * n_pts - 1]]
 
     return np.asarray(list_dirichlet), np.asarray(list_neumann)
 
