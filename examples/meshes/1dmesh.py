@@ -6,11 +6,17 @@ from optparse import OptionParser
 
 
 def add_block(x0,lengthX,char_length,geom):
+    # coords = np.array([
+    #     [x0, 0.0, 0.0],
+    #     [x0+lengthX, 0.0, 0.0],
+    #     [x0+lengthX, 0.5*char_length, 0.0],
+    #     [x0, 0.5*char_length, 0.0]
+    # ])
     coords = np.array([
         [x0, 0.0, 0.0],
         [x0+lengthX, 0.0, 0.0],
-        [x0+lengthX, 0.5*char_length, 0.0],
-        [x0, 0.5*char_length, 0.0]
+        [x0+lengthX, 0.3, 0.0],
+        [x0, 0.3, 0.0]
     ])
     print(len(coords))
     print(len([char_length, 1]))
@@ -72,7 +78,11 @@ def main():
     else:
         print("Boundary condition not yet implemented")
 
-    geom.add_raw_code("Recombine Surface {%s};" % domain.surface.id)
+    geom.add_raw_code("Transfinite Curve {2,4} = 1 Using Progression 1;")
+    geom.add_raw_code("Transfinite Surface{:};")
+    geom.add_raw_code('Mesh.Algorithm= 3;')
+    geom.add_raw_code("Recombine Surface {:} = 0;")
+    
 
     mesh_code = geom.get_code()
     with open( options.output_name +".geo","w") as mesh_file:
