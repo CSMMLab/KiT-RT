@@ -160,18 +160,6 @@ void SolverBase::Solve() {
     }
 
     // --- Postprocessing ---
-    std::ofstream myfile;
-    std::string filestr;
-    filestr = _settings->GetOutputFile() + "_writeout.csv";
-    myfile.open( filestr );
-    myfile << "idx, x_coord, radflux\n";
-    myfile.precision( 8 );
-    for( unsigned i = 0; i < _nCells; i++ ) {
-        double t = _mesh->GetCellMidPoints()[i][0];
-        myfile << std::to_string( i ) << ", " << std::fixed << t << ", " << std::fixed << _outputFields[0][0][i]
-               << "\n";    // hardcode, if MINIMAL is first volume field
-    }
-    myfile.close();
     DrawPostSolverOutput();
 }
 
