@@ -87,7 +87,6 @@ void MNSolver::ComputeScatterMatrix() {
                 _scatterMatDiag[idx_sys] /= 4.0 * M_PI;
             }
         }
-        std::cout << _scatterMatDiag << "\n";
     }
 }
 
@@ -122,20 +121,7 @@ void MNSolver::ComputeRealizableSolution( unsigned idx_cell ) {
 
 void MNSolver::IterPreprocessing( unsigned /*idx_pseudotime*/ ) {
 
-    // if( _settings->GetOptimizerName() == NEWTON ) {
-    //     for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
-    //         if( _sol[idx_cell][0] < 0.0 ) {
-    //             std::string resString = "Negative moment at cell: " + std::to_string( idx_cell ) + "\nCoordinates " +
-    //                                     std::to_string( _mesh->GetCellMidPoints()[idx_cell][0] ) + "|" +
-    //                                     std::to_string( _mesh->GetCellMidPoints()[idx_cell][1] );
-    //             ErrorMessages::Error( resString, CURRENT_FUNCTION );
-    //         }
-    //     }
-    // }
-
     // ------- Entropy closure Step ----------------
-    // std::cout << _sol.size() << "\n";
-    // std::cout << _sol[0].size() << "\n";
     _optimizer->SolveMultiCell( _alpha, _sol, _momentBasis );    // parallel
 
     // ------- Solution reconstruction step ----
@@ -187,8 +173,8 @@ void MNSolver::FluxUpdate() {
 }
 
 void MNSolver::FluxUpdatePseudo1D() {
-    // Loop over the grid cells
-    //#pragma omp parallel for
+// Loop over the grid cells
+#pragma omp parallel for
     for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
         // Dirichlet Boundaries stayd
         if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::DIRICHLET ) continue;
@@ -235,6 +221,7 @@ void MNSolver::FluxUpdatePseudo1D() {
     }
     // TextProcessingToolbox::PrintVectorVector( _solNew );
 }
+
 void MNSolver::FluxUpdatePseudo2D() {
 // Loop over the grid cells
 #pragma omp parallel for

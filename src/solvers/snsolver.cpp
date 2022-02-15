@@ -32,17 +32,8 @@ SNSolver::SNSolver( Config* settings ) : SolverBase( settings ) {
 void SNSolver::IterPreprocessing( unsigned /*idx_iter*/ ) {
     // Slope Limiter computation
     if( _reconsOrder > 1 ) {
-        if( _settings->GetProblemName() == PROBLEM_Aircavity1D || _settings->GetProblemName() == PROBLEM_Linesource1D ||
-            _settings->GetProblemName() == PROBLEM_Checkerboard1D || _settings->GetProblemName() == PROBLEM_Meltingcube1D ) {
-            _mesh->ComputeLimiter1D( _nq, _sol, _limiter );
-            _mesh->ComputeSlopes1D( _nq, _solDx, _sol );
-
-            // TextProcessingToolbox::PrintVectorVector( _limiter );
-        }
-        else {
-            _mesh->ComputeSlopes( _nq, _solDx, _solDy, _sol );
-            _mesh->ComputeLimiter( _nq, _solDx, _solDy, _sol, _limiter );
-        }
+        _mesh->ComputeSlopes( _nq, _solDx, _solDy, _sol );
+        _mesh->ComputeLimiter( _nq, _solDx, _solDy, _sol, _limiter );
     }
 }
 
@@ -103,10 +94,12 @@ void SNSolver::FluxUpdatePseudo1D() {
                             // left status of interface
                             solL = _sol[idx_cell][idx_quad] +
                                    _limiter[idx_cell][idx_quad] *
-                                       ( _solDx[idx_cell][idx_quad] * ( _interfaceMidPoints[idx_cell][idx_nbr][0] - _cellMidPoints[idx_cell][0] ) );
+                                       ( _solDx[idx_cell][idx_quad] * ( _interfaceMidPoints[idx_cell][idx_nbr][0] - _cellMidPoints[idx_cell][0] ) +
+                                         _solDy[idx_cell][idx_quad] * ( _interfaceMidPoints[idx_cell][idx_nbr][1] - _cellMidPoints[idx_cell][1] ) );
                             solR = _sol[nbr_glob][idx_quad] +
                                    _limiter[nbr_glob][idx_quad] *
-                                       ( _solDx[nbr_glob][idx_quad] * ( _interfaceMidPoints[idx_cell][idx_nbr][0] - _cellMidPoints[nbr_glob][0] ) );
+                                       ( _solDx[nbr_glob][idx_quad] * ( _interfaceMidPoints[idx_cell][idx_nbr][0] - _cellMidPoints[nbr_glob][0] ) +
+                                         _solDy[nbr_glob][idx_quad] * ( _interfaceMidPoints[idx_cell][idx_nbr][1] - _cellMidPoints[nbr_glob][1] ) );
                             // flux evaluation
                             _solNew[idx_cell][idx_quad] += _g->Flux1D( _quadPoints[idx_quad], solL, solR, _normals[idx_cell][idx_nbr] );
                             break;
