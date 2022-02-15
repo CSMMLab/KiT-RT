@@ -77,7 +77,7 @@ void PNSolver::ComputeRadFlux() {
     double firstMomentScaleFactor = sqrt( 4 * M_PI );
 
     if( _settings->GetProblemName() == PROBLEM_Aircavity1D || _settings->GetProblemName() == PROBLEM_Linesource1D ||
-        _settings->GetProblemName() == PROBLEM_Checkerboard1D ) {
+        _settings->GetProblemName() == PROBLEM_Checkerboard1D || _settings->GetProblemName() == PROBLEM_Meltingcube1D ) {
         firstMomentScaleFactor = 2.0;
     }
     for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
@@ -89,7 +89,7 @@ void PNSolver::FluxUpdate() {
 
     // Loop over all spatial cells
     if( _settings->GetProblemName() == PROBLEM_Aircavity1D || _settings->GetProblemName() == PROBLEM_Linesource1D ||
-        _settings->GetProblemName() == PROBLEM_Checkerboard1D ) {
+        _settings->GetProblemName() == PROBLEM_Checkerboard1D || _settings->GetProblemName() == PROBLEM_Meltingcube1D ) {
         FluxUpdatePseudo1D();
     }
     else {

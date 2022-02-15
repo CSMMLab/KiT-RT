@@ -3,6 +3,7 @@
 #include "problems/aircavity1d.hpp"
 #include "problems/checkerboard.hpp"
 #include "problems/linesource.hpp"
+#include "problems/meltingcube.hpp"
 #include "problems/phantomimage.hpp"
 #include "problems/radiationctimage.hpp"
 #include "problems/starmapvalidation.hpp"
@@ -56,6 +57,18 @@ ProblemBase* ProblemBase::Create( Config* settings, Mesh* mesh ) {
                 return new StarMapValidation_SN( settings, mesh );
         } break;
         case PROBLEM_Phantomimage: return new PhantomImage( settings, mesh );
+        case PROBLEM_Meltingcube: {
+            if( settings->GetIsMomentSolver() )
+                return new MeltingCube_Moment( settings, mesh );
+            else
+                return new MeltingCube_SN( settings, mesh );
+        } break;
+        case PROBLEM_Meltingcube1D: {
+            if( settings->GetIsMomentSolver() )
+                return new MeltingCube_Moment_1D( settings, mesh );
+            else
+                return new MeltingCube_SN_1D( settings, mesh );
+        } break;
 
         default: ErrorMessages::Error( "No valid physical problem chosen. Please check your config file", CURRENT_FUNCTION ); return nullptr;
     }

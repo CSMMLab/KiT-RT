@@ -32,8 +32,17 @@ SNSolver::SNSolver( Config* settings ) : SolverBase( settings ) {
 void SNSolver::IterPreprocessing( unsigned /*idx_iter*/ ) {
     // Slope Limiter computation
     if( _reconsOrder > 1 ) {
-        _mesh->ComputeSlopes( _nq, _solDx, _solDy, _sol );
-        _mesh->ComputeLimiter( _nq, _solDx, _solDy, _sol, _limiter );
+        if( _settings->GetProblemName() == PROBLEM_Aircavity1D || _settings->GetProblemName() == PROBLEM_Linesource1D ||
+            _settings->GetProblemName() == PROBLEM_Checkerboard1D || _settings->GetProblemName() == PROBLEM_Meltingcube1D ) {
+            _mesh->ComputeLimiter1D( _nq, _sol, _limiter );
+            _mesh->ComputeSlopes1D( _nq, _solDx, _sol );
+
+            // TextProcessingToolbox::PrintVectorVector( _limiter );
+        }
+        else {
+            _mesh->ComputeSlopes( _nq, _solDx, _solDy, _sol );
+            _mesh->ComputeLimiter( _nq, _solDx, _solDy, _sol, _limiter );
+        }
     }
 }
 
@@ -46,15 +55,15 @@ void SNSolver::IterPostprocessing( unsigned /*idx_iter*/ ) {
 }
 
 void SNSolver::ComputeRadFlux() {
+#pragma omp parallel for
     for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
         _fluxNew[idx_cell] = blaze::dot( _sol[idx_cell], _weights );
     }
 }
 
 void SNSolver::FluxUpdate() {
-    // Loop over all spatial cells
     if( _settings->GetProblemName() == PROBLEM_Aircavity1D || _settings->GetProblemName() == PROBLEM_Linesource1D ||
-        _settings->GetProblemName() == PROBLEM_Checkerboard1D ) {
+        _settings->GetProblemName() == PROBLEM_Checkerboard1D || _settings->GetProblemName() == PROBLEM_Meltingcube1D ) {
         FluxUpdatePseudo1D();
     }
     else {
@@ -63,10 +72,11 @@ void SNSolver::FluxUpdate() {
 }
 
 void SNSolver::FluxUpdatePseudo1D() {
-    double solL;
-    double solR;
     // Loop over all spatial cells
+    //#pragma omp parallel for
     for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
+        double solL;
+        double solR;
         // Dirichlet cells stay at IC, farfield assumption
         if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::DIRICHLET ) continue;
         // Loop over all ordinates
@@ -93,13 +103,10 @@ void SNSolver::FluxUpdatePseudo1D() {
                             // left status of interface
                             solL = _sol[idx_cell][idx_quad] +
                                    _limiter[idx_cell][idx_quad] *
-                                       ( _solDx[idx_cell][idx_quad] * ( _interfaceMidPoints[idx_cell][idx_nbr][0] - _cellMidPoints[idx_cell][0] ) +
-                                         _solDy[idx_cell][idx_quad] * ( _interfaceMidPoints[idx_cell][idx_nbr][1] - _cellMidPoints[idx_cell][1] ) );
+                                       ( _solDx[idx_cell][idx_quad] * ( _interfaceMidPoints[idx_cell][idx_nbr][0] - _cellMidPoints[idx_cell][0] ) );
                             solR = _sol[nbr_glob][idx_quad] +
                                    _limiter[nbr_glob][idx_quad] *
-                                       ( _solDx[nbr_glob][idx_quad] * ( _interfaceMidPoints[idx_cell][idx_nbr][0] - _cellMidPoints[nbr_glob][0] ) +
-                                         _solDy[nbr_glob][idx_quad] * ( _interfaceMidPoints[idx_cell][idx_nbr][1] - _cellMidPoints[nbr_glob][1] ) );
-
+                                       ( _solDx[nbr_glob][idx_quad] * ( _interfaceMidPoints[idx_cell][idx_nbr][0] - _cellMidPoints[nbr_glob][0] ) );
                             // flux evaluation
                             _solNew[idx_cell][idx_quad] += _g->Flux1D( _quadPoints[idx_quad], solL, solR, _normals[idx_cell][idx_nbr] );
                             break;
@@ -113,10 +120,11 @@ void SNSolver::FluxUpdatePseudo1D() {
 }
 
 void SNSolver::FluxUpdatePseudo2D() {
-    double solL;
-    double solR;
     // Loop over all spatial cells
+#pragma omp parallel for
     for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
+        double solL;
+        double solR;
         // Dirichlet cells stay at IC, farfield assumption
         if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::DIRICHLET ) continue;
         // Loop over all ordinates
@@ -162,6 +170,7 @@ void SNSolver::FluxUpdatePseudo2D() {
 }
 
 void SNSolver::FVMUpdate( unsigned idx_energy ) {
+#pragma omp parallel for
     for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
         // Dirichlet cells stay at IC, farfield assumption
         if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::DIRICHLET ) continue;
@@ -226,10 +235,8 @@ void SNSolver::PrepareVolumeOutput() {
 
 void SNSolver::WriteVolumeOutput( unsigned idx_pseudoTime ) {
     unsigned nGroups = (unsigned)_settings->GetNVolumeOutput();
-
     if( ( _settings->GetVolumeOutputFrequency() != 0 && idx_pseudoTime % (unsigned)_settings->GetVolumeOutputFrequency() == 0 ) ||
         ( idx_pseudoTime == _nEnergies - 1 ) /* need sol at last iteration */ ) {
-
         for( unsigned idx_group = 0; idx_group < nGroups; idx_group++ ) {
             switch( _settings->GetVolumeOutput()[idx_group] ) {
                 case MINIMAL:
@@ -237,7 +244,6 @@ void SNSolver::WriteVolumeOutput( unsigned idx_pseudoTime ) {
                         _outputFields[idx_group][0][idx_cell] = _fluxNew[idx_cell];
                     }
                     break;
-
                 case ANALYTIC:
                     for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
                         double time                           = idx_pseudoTime * _dE;

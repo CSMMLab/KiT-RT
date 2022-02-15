@@ -18,6 +18,8 @@
 #include "solvers/snsolver.hpp"
 #include "toolboxes/textprocessingtoolbox.hpp"
 
+#include <fstream>
+#include <iostream>
 #include <mpi.h>
 
 SolverBase::SolverBase( Config* settings ) {
@@ -158,7 +160,18 @@ void SolverBase::Solve() {
     }
 
     // --- Postprocessing ---
-
+    std::ofstream myfile;
+    std::string filestr;
+    filestr = _settings->GetOutputFile() + "_writeout.csv";
+    myfile.open( filestr );
+    myfile << "idx, x_coord, radflux\n";
+    myfile.precision( 8 );
+    for( unsigned i = 0; i < _nCells; i++ ) {
+        double t = _mesh->GetCellMidPoints()[i][0];
+        myfile << std::to_string( i ) << ", " << std::fixed << t << ", " << std::fixed << _outputFields[0][0][i]
+               << "\n";    // hardcode, if MINIMAL is first volume field
+    }
+    myfile.close();
     DrawPostSolverOutput();
 }
 
@@ -175,6 +188,24 @@ void SolverBase::PrintVolumeOutput( int currEnergy ) const {
 
 // --- Helper ---
 double SolverBase::ComputeTimeStep( double cfl ) const {
+    // for pseudo 1D, set timestep to dx
+    double dx, dy;
+    switch( _settings->GetProblemName() ) {
+        case PROBLEM_Checkerboard1D:
+            dx = 7.0 / (double)_nCells;
+            dy = 0.3;
+            return cfl * ( dx * dy ) / ( dx + dy );
+            break;
+        case PROBLEM_Linesource1D:     // Fallthrough
+        case PROBLEM_Meltingcube1D:    // Fallthrough
+        case PROBLEM_Aircavity1D:
+            dx = 3.0 / (double)_nCells;
+            dy = 0.3;
+            return cfl * ( dx * dy ) / ( dx + dy );
+            break;
+        default: break;    // 2d as normal
+    }
+    // 2D case
     double maxEdge = -1.0;
     for( unsigned j = 0; j < _nCells; j++ ) {
         for( unsigned l = 0; l < _normals[j].size(); l++ ) {
