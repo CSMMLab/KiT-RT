@@ -72,21 +72,6 @@ CSDSolverTrafoFP2D::CSDSolverTrafoFP2D( Config* settings ) : SNSolver( settings 
     }
     _sMid = interpS( eMid );
 
-    // write initial condition
-    Vector pos_beam = Vector{ 0.5, 0.5 };
-    _sol            = VectorVector( _nCells, Vector( _nq, 0.0 ) );
-
-    for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
-        double x            = _cellMidPoints[idx_cell][0];
-        double y            = _cellMidPoints[idx_cell][1];
-        const double stddev = .01;
-        double f            = NormPDF( x, pos_beam[0], stddev ) * NormPDF( y, pos_beam[1], stddev );
-
-        for( unsigned idx_sys = 1; idx_sys < _nq; idx_sys++ ) {
-            _sol[idx_cell][idx_sys] = f;    // must be VectorVector
-        }
-    }
-
     // create quadrature
     unsigned order    = _quadrature->GetOrder();
     unsigned nq       = _settings->GetNQuadPoints();

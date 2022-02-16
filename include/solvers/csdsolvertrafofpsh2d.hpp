@@ -50,6 +50,9 @@ class CSDSolverTrafoFPSH2D : public SNSolver
     double _energyMin;
     double _energyMax;
 
+    double _E_cutoff;
+    Vector _eTrafo;
+
     // Helper variables
     Vector _energiesOrig; /*!< @brief original energy levels for CSD, lenght = _nEnergies */
     Matrix _identity;     /*!< @brief: identity matrix for FP scattering. Dim (_nq,_nq)*/
