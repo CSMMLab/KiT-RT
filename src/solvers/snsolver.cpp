@@ -63,8 +63,8 @@ void SNSolver::FluxUpdate() {
 }
 
 void SNSolver::FluxUpdatePseudo1D() {
-    // Loop over all spatial cells
-    //#pragma omp parallel for
+// Loop over all spatial cells
+#pragma omp parallel for
     for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
         double solL;
         double solR;
