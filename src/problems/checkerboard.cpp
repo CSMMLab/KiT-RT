@@ -34,7 +34,7 @@ std::vector<VectorVector> Checkerboard_SN::GetExternalSource( const Vector& /*en
     VectorVector Q( _mesh->GetNumCells(), Vector( 1u, 0.0 ) );
     auto cellMids = _mesh->GetCellMidPoints();
     for( unsigned j = 0; j < cellMids.size(); ++j ) {
-        if( isSource( cellMids[j] ) ) Q[j] = _settings->GetSourceMagnitude() / ( 4 * M_PI );    // isotropic source
+        if( isSource( cellMids[j] ) ) Q[j] = _settings->GetSourceMagnitude();    // isotropic source
     }
     return std::vector<VectorVector>( 1u, Q );
 }
@@ -94,6 +94,11 @@ VectorVector Checkerboard_Moment::GetTotalXS( const Vector& energies ) { return 
 
 std::vector<VectorVector> Checkerboard_Moment::GetExternalSource( const Vector& /*energies*/ ) {
     // In case of PN, spherical basis is per default SPHERICAL_HARMONICS
+
+    double integrationFactor = ( 4 * M_PI );
+    if( _settings->GetDim() == 2 ) {
+        integrationFactor = M_PI;
+    }
     SphericalBase* tempBase  = SphericalBase::Create( _settings );
     unsigned ntotalEquations = tempBase->GetBasisSize();
 
@@ -125,10 +130,10 @@ std::vector<VectorVector> Checkerboard_Moment::GetExternalSource( const Vector& 
     for( unsigned j = 0; j < cellMids.size(); ++j ) {
         if( isSource( cellMids[j] ) ) {
             if( _settings->GetSphericalBasisName() == SPHERICAL_MONOMIALS ) {
-                Q[j] = kinetic_density * uIC / uIC[0];    // Remember scaling
+                Q[j] = kinetic_density * uIC / uIC[0] / integrationFactor;    // Remember scaling
             }
             if( _settings->GetSphericalBasisName() == SPHERICAL_HARMONICS ) {
-                Q[j][0] = kinetic_density / std::sqrt( 4 * M_PI );
+                Q[j][0] = kinetic_density / integrationFactor;    // first bassis function is 1/ ( 4 * M_PI )
             }
         }
     }
@@ -137,6 +142,10 @@ std::vector<VectorVector> Checkerboard_Moment::GetExternalSource( const Vector& 
 }
 
 VectorVector Checkerboard_Moment::SetupIC() {
+    double integrationFactor = ( 4 * M_PI );
+    if( _settings->GetDim() == 2 ) {
+        integrationFactor = M_PI;
+    }
     // In case of PN, spherical basis is per default SPHERICAL_HARMONICS
     SphericalBase* tempBase  = SphericalBase::Create( _settings );
     unsigned ntotalEquations = tempBase->GetBasisSize();
@@ -166,13 +175,13 @@ VectorVector Checkerboard_Moment::SetupIC() {
         delete quad;
     }
     // Initial condition is dirac impulse at (x,y) = (0,0) ==> constant in angle ==> all moments - exept first - are zero.
-    double kinetic_density = 1e-3;
+    double kinetic_density = 1e-4;
     for( unsigned j = 0; j < cellMids.size(); ++j ) {
         if( _settings->GetSphericalBasisName() == SPHERICAL_MONOMIALS ) {
-            initialSolution[j] = kinetic_density * tempIC / tempIC[0];    // Remember scaling
+            initialSolution[j] = kinetic_density * tempIC / tempIC[0] / integrationFactor;    // Remember scaling
         }
         if( _settings->GetSphericalBasisName() == SPHERICAL_HARMONICS ) {
-            initialSolution[j][0] = kinetic_density;
+            initialSolution[j][0] = kinetic_density / integrationFactor;    // first bassis function is 1/ ( 4 * M_PI )
         }
     }
     delete tempBase;    // Only temporally needed

@@ -46,9 +46,14 @@ void SNSolver::IterPostprocessing( unsigned /*idx_iter*/ ) {
 }
 
 void SNSolver::ComputeRadFlux() {
+    double firstMomentScaleFactor = 4 * M_PI;
+    if( _settings->GetProblemName() == PROBLEM_Aircavity1D || _settings->GetProblemName() == PROBLEM_Linesource1D ||
+        _settings->GetProblemName() == PROBLEM_Checkerboard1D || _settings->GetProblemName() == PROBLEM_Meltingcube1D ) {
+        firstMomentScaleFactor = 2.0;
+    }
 #pragma omp parallel for
     for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
-        _fluxNew[idx_cell] = blaze::dot( _sol[idx_cell], _weights );
+        _fluxNew[idx_cell] = blaze::dot( _sol[idx_cell], _weights ) / firstMomentScaleFactor;
     }
 }
 
