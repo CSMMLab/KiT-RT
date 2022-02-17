@@ -227,7 +227,7 @@ void PNSolver::FVMUpdate( unsigned idx_energy ) {
             /* total xs influence  */    // Vorzeichenfehler!
         }
         // Source Term
-        _solNew[idx_cell][0] += _dE * _Q[0][idx_cell][0];
+        _solNew[idx_cell] += _dE * _Q[0][idx_cell];
     }
 }
 

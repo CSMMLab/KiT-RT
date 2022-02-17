@@ -147,7 +147,11 @@ VectorVector LineSource_Moment::GetTotalXS( const Vector& energies ) {
 }
 
 std::vector<VectorVector> LineSource_Moment::GetExternalSource( const Vector& /*energies*/ ) {
-    return std::vector<VectorVector>( 1u, std::vector<Vector>( _mesh->GetNumCells(), Vector( 1u, 0.0 ) ) );
+    SphericalBase* tempBase  = SphericalBase::Create( _settings );
+    unsigned ntotalEquations = tempBase->GetBasisSize();
+    delete tempBase;    // Only temporally needed
+
+    return std::vector<VectorVector>( 1u, std::vector<Vector>( _mesh->GetNumCells(), Vector( ntotalEquations, 0.0 ) ) );
 }
 
 VectorVector LineSource_Moment::SetupIC() {

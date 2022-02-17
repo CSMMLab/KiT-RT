@@ -22,8 +22,8 @@ class CSDPNSolver : public PNSolver
     Vector _sigmaTAtEnergy;    /*!< @brief Scattercoefficient at energy grid */
 
     void SolverPreprocessing() override;
-    void IterPreprocessing( unsigned /*idx_iter*/ ) override;
-    void IterPostprocessing( unsigned /*idx_iter*/ ) override;
+    void IterPreprocessing( unsigned idx_iter ) override;
+    void IterPostprocessing( unsigned idx_iter ) override;
     void FluxUpdate() override;
     void FVMUpdate( unsigned idx_energy ) override;
     void PrepareVolumeOutput() override;

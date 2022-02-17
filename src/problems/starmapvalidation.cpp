@@ -107,6 +107,16 @@ VectorVector StarMapValidation_Moment::SetupIC() {
     }
     return initialSolution;
 }
+std::vector<VectorVector> StarMapValidation_Moment::GetExternalSource( const Vector& energies ) {
+    SphericalBase* tempBase  = SphericalBase::Create( _settings );
+    unsigned ntotalEquations = tempBase->GetBasisSize();
+    delete tempBase;
+    // write initial condition
+    auto zeroVec = Vector( ntotalEquations, 0.0 );
+    auto uniform = std::vector<Vector>( _mesh->GetNumCells(), zeroVec );
+    auto Q       = std::vector<VectorVector>( energies.size(), uniform );
+    return Q;
+}
 
 double StarMapValidation_Moment::NormPDF( double x, double mu, double sigma ) {
     return INV_SQRT_2PI / sigma * std::exp( -( ( x - mu ) * ( x - mu ) ) / ( 2.0 * sigma * sigma ) );

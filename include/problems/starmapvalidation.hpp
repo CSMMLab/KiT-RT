@@ -33,6 +33,7 @@ class StarMapValidation_Moment : public StarMapValidation_SN
     StarMapValidation_Moment( Config* settings, Mesh* mesh );
     ~StarMapValidation_Moment();
     VectorVector SetupIC() override;
+    std::vector<VectorVector> GetExternalSource( const Vector& energies ) override;
 };
 
 #endif    // ISOTROPICSOURCE2D_H
