@@ -20,7 +20,7 @@ OptimizerBase* OptimizerBase::Create( Config* settings ) {
         case REGULARIZED_NEWTON: return new RegularizedNewtonOptimizer( settings );
         case PART_REGULARIZED_NEWTON: return new PartRegularizedNewtonOptimizer( settings );
         case ML:
-            return new MLOptimizer( settings );
+            return new NeuralNetworkOptimizer( settings );
             // extend to other optimizers
         default: ErrorMessages::Error( "Optimizer of choice not implemented.", CURRENT_FUNCTION ); return new NewtonOptimizer( settings );
     }
