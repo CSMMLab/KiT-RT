@@ -4,7 +4,7 @@
  * @author S. Schotthöfer
  */
 
-#include "optimizers/mloptimizer.hpp"
+#include "optimizers/neuralnetworkoptimizer.hpp"
 #include "common/config.hpp"
 #include "toolboxes/errormessages.hpp"
 

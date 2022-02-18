@@ -8,7 +8,7 @@
 #define SPHERICALMONOMIALS_H
 
 #include "common/typedef.hpp"
-#include "toolboxes/sphericalbase.hpp"
+#include "velocitybasis/sphericalbase.hpp"
 #include <vector>
 
 class SphericalMonomials : public SphericalBase

@@ -6,7 +6,7 @@
 #include "solvers/csdpn_starmap_constants.hpp"
 #include "toolboxes/errormessages.hpp"
 #include "toolboxes/interpolation.hpp"
-#include "toolboxes/sphericalbase.hpp"
+#include "velocitybasis/sphericalbase.hpp"
 
 #include <fstream>
 #include <numeric>

@@ -4,7 +4,7 @@
 #include "common/config.hpp"
 #include "optimizers/optimizerbase.hpp"
 #include "quadratures/quadraturebase.hpp"
-#include "toolboxes/sphericalharmonics.hpp"
+#include "velocitybasis/sphericalharmonics.hpp"
 
 TEST_CASE( "Test the Newton Optimizer", "[optimizers]" ) {
 

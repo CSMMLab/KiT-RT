@@ -3,9 +3,9 @@
 #include "common/mesh.hpp"
 #include "quadratures/qgausslegendretensorized.hpp"
 #include "quadratures/quadraturebase.hpp"
-#include "toolboxes/sphericalbase.hpp"
-#include "toolboxes/sphericalharmonics.hpp"
 #include "toolboxes/textprocessingtoolbox.hpp"
+#include "velocitybasis/sphericalbase.hpp"
+#include "velocitybasis/sphericalharmonics.hpp"
 
 AirCavity1D::AirCavity1D( Config* settings, Mesh* mesh ) : ProblemBase( settings, mesh ) { _sigmaS = settings->GetSigmaS(); }
 

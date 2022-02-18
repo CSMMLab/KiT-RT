@@ -6,8 +6,8 @@
 #include "optimizers/optimizerbase.hpp"
 #include "solvers/csdpn_starmap_constants.hpp"
 #include "toolboxes/interpolation.hpp"
-#include "toolboxes/sphericalbase.hpp"
 #include "toolboxes/textprocessingtoolbox.hpp"
+#include "velocitybasis/sphericalbase.hpp"
 
 // externals
 #include "spdlog/spdlog.h"

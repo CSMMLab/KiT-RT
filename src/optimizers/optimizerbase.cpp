@@ -1,7 +1,7 @@
 #include "optimizers/optimizerbase.hpp"
 #include "common/config.hpp"
 #include "entropies/entropybase.hpp"
-#include "optimizers/mloptimizer.hpp"
+#include "optimizers/neuralnetworkoptimizer.hpp"
 #include "optimizers/newtonoptimizer.hpp"
 #include "optimizers/partregularizednewtonoptimizer.hpp"
 #include "optimizers/regularizednewtonoptimizer.hpp"
