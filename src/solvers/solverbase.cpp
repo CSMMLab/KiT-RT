@@ -73,7 +73,7 @@ SolverBase::SolverBase( Config* settings ) {
     }
 
     // setup numerical flux
-    _g = NumericalFlux::Create();
+    _g = NumericalFluxBase::Create();
 
     // boundary type
     _boundaryCells = _mesh->GetBoundaryTypes();

@@ -2,9 +2,9 @@
 #include "common/globalconstants.hpp"
 #include "fluxes/upwindflux.hpp"
 
-NumericalFlux::NumericalFlux() {}
+NumericalFluxBase::NumericalFluxBase() {}
 
-NumericalFlux* NumericalFlux::Create() {
+NumericalFluxBase* NumericalFluxBase::Create() {
     // TODO: Add Flux options
     return new UpwindFlux();
 }
