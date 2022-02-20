@@ -270,8 +270,7 @@ void MNSolver::FVMUpdate( unsigned idx_iter ) {
             _solNew[idx_cell][idx_sys] = _sol[idx_cell][idx_sys]                                                            /* old solution */
                                          - ( _dE / _areas[idx_cell] ) * _solNew[idx_cell][idx_sys]                          /* cell averaged flux */
                                          + _dE * _sigmaS[idx_iter][idx_cell] * _sol[idx_cell][0] * _scatterMatDiag[idx_sys] /* scattering gain */
-                                         - _dE * ( _sigmaT[idx_iter][idx_cell] /*+ _sigmaS[idx_iter][idx_cell] */ ) *
-                                               _sol[idx_cell][idx_sys]; /* scattering and absorbtion loss */
+                                         - _dE * ( _sigmaT[idx_iter][idx_cell] ) * _sol[idx_cell][idx_sys]; /* scattering and absorbtion loss */
         }
         // Source Term
         _solNew[idx_cell] += _dE * _Q[0][idx_cell];
