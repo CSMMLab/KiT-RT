@@ -12,7 +12,7 @@
 #include "problems/problembase.hpp"
 #include "quadratures/quadraturebase.hpp"
 #include "solvers/snsolver.hpp"
-#include "toolboxes/sphericalharmonics.hpp"
+#include "velocitybasis/sphericalharmonics.hpp"
 
 class Physics;
 

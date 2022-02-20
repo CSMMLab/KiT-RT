@@ -8,12 +8,12 @@
 
 class QuadratureBase;
 
-class MLOptimizer : public OptimizerBase
+class NeuralNetworkOptimizer : public OptimizerBase
 {
   public:
-    MLOptimizer( Config* settings );
+    NeuralNetworkOptimizer( Config* settings );
 
-    inline ~MLOptimizer();
+    inline ~NeuralNetworkOptimizer();
 
     void Solve( Vector& alpha, Vector& u, const VectorVector& moments, unsigned idx_cell = 0 ) override;
 
@@ -41,12 +41,12 @@ class MLOptimizer : public OptimizerBase
 };
 #else
 // Dummy class
-class MLOptimizer : public OptimizerBase
+class NeuralNetworkOptimizer : public OptimizerBase
 {
   public:
-    MLOptimizer( Config* settings );
+    NeuralNetworkOptimizer( Config* settings );
 
-    inline ~MLOptimizer();
+    inline ~NeuralNetworkOptimizer();
 
     inline void Solve( Vector& alpha, Vector& u, const VectorVector& moments, unsigned idx_cell = 0 ) override{};
 

@@ -3,13 +3,13 @@
 
 #include "common/typedef.hpp"
 
-class NumericalFlux
+class NumericalFluxBase
 {
   public:
-    NumericalFlux();
-    virtual ~NumericalFlux() {}
+    NumericalFluxBase();
+    virtual ~NumericalFluxBase() {}
 
-    static NumericalFlux* Create();
+    static NumericalFluxBase* Create();
 
     /**
      * @brief Flux computes flux on edge for fixed ordinate at a given edge

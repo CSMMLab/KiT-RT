@@ -1,4 +1,4 @@
-#include "toolboxes/sphericalharmonics.hpp"
+#include "velocitybasis/sphericalharmonics.hpp"
 #include "toolboxes/errormessages.hpp"
 #include <math.h>
 

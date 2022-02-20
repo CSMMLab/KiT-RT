@@ -4,7 +4,7 @@
  * @author S. Schotthöfer
  */
 
-#include "optimizers/mloptimizer.hpp"
+#include "optimizers/neuralnetworkoptimizer.hpp"
 #include "common/config.hpp"
 #include "toolboxes/errormessages.hpp"
 
@@ -17,7 +17,7 @@
 
 #include <iostream>
 
-MLOptimizer::MLOptimizer( Config* settings ) : OptimizerBase( settings ) {
+NeuralNetworkOptimizer::NeuralNetworkOptimizer( Config* settings ) : OptimizerBase( settings ) {
 
     _quadrature = QuadratureBase::Create( settings );
     _nq         = _quadrature->GetNq();
@@ -61,11 +61,11 @@ MLOptimizer::MLOptimizer( Config* settings ) : OptimizerBase( settings ) {
     _modelServingVectorU.resize( _settings->GetNCells() * ( _nSystem - 1 ) );    // reserve size for model servitor
 }
 
-MLOptimizer::~MLOptimizer() {}
+NeuralNetworkOptimizer::~NeuralNetworkOptimizer() {}
 
-void MLOptimizer::Solve( Vector& alpha, Vector& u, const VectorVector& /*moments*/, unsigned /*idx_cell*/ ) {}
+void NeuralNetworkOptimizer::Solve( Vector& alpha, Vector& u, const VectorVector& /*moments*/, unsigned /*idx_cell*/ ) {}
 
-void MLOptimizer::SolveMultiCell( VectorVector& alpha, VectorVector& u, const VectorVector& /*moments*/ ) {
+void NeuralNetworkOptimizer::SolveMultiCell( VectorVector& alpha, VectorVector& u, const VectorVector& /*moments*/ ) {
 
 #pragma omp parallel for
     for( unsigned idx_cell = 0; idx_cell < _settings->GetNCells(); idx_cell++ ) {
@@ -108,7 +108,7 @@ void MLOptimizer::SolveMultiCell( VectorVector& alpha, VectorVector& u, const Ve
     // TextProcessingToolbox::PrintVectorVector( alpha );
 }
 
-void MLOptimizer::ReconstructMoments( Vector& sol, const Vector& alpha, const VectorVector& moments ) {
+void NeuralNetworkOptimizer::ReconstructMoments( Vector& sol, const Vector& alpha, const VectorVector& moments ) {
     double entropyReconstruction = 0.0;
     for( unsigned idx_sys = 0; idx_sys < sol.size(); idx_sys++ ) {
         sol[idx_sys] = 0.0;
@@ -121,8 +121,8 @@ void MLOptimizer::ReconstructMoments( Vector& sol, const Vector& alpha, const Ve
 }
 
 #else
-MLOptimizer::MLOptimizer( Config* settings ) : OptimizerBase( settings ) {
+NeuralNetworkOptimizer::NeuralNetworkOptimizer( Config* settings ) : OptimizerBase( settings ) {
     ErrorMessages::Error( "ML build not configured. Please activate cmake flage BUILD_ML.", CURRENT_FUNCTION );
 }
-MLOptimizer::~MLOptimizer() {}
+NeuralNetworkOptimizer::~NeuralNetworkOptimizer() {}
 #endif

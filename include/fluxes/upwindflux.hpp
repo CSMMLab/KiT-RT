@@ -3,7 +3,7 @@
 
 #include "numericalflux.hpp"
 
-class UpwindFlux : public NumericalFlux
+class UpwindFlux : public NumericalFluxBase
 {
   public:
     /**

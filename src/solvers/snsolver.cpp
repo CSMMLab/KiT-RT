@@ -20,6 +20,7 @@ SNSolver::SNSolver( Config* settings ) : SolverBase( settings ) {
 
     ScatteringKernel* k = ScatteringKernel::CreateScatteringKernel( settings->GetKernelName(), _quadrature );
     _scatteringKernel   = k->GetScatteringKernel();
+    delete k;
 
     // Limiter variables
     _solDx   = VectorVector( _nCells, Vector( _nq, 0.0 ) );

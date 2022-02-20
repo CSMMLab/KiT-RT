@@ -12,7 +12,7 @@
 #define SPHERICALHARMONICS_H
 
 #include "common/typedef.hpp"
-#include "toolboxes/sphericalbase.hpp"
+#include "velocitybasis/sphericalbase.hpp"
 #include <vector>
 
 class SphericalHarmonics : public SphericalBase

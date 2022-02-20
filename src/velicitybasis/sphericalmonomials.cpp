@@ -4,7 +4,7 @@
  * @author S. Schotthöfer
  */
 
-#include "toolboxes/sphericalmonomials.hpp"
+#include "velocitybasis/sphericalmonomials.hpp"
 #include "toolboxes/errormessages.hpp"
 
 SphericalMonomials::SphericalMonomials( unsigned L_degree ) {

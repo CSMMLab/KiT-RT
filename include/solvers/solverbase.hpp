@@ -9,7 +9,7 @@
 #include "spdlog/spdlog.h"
 
 // Forward Declarations
-class NumericalFlux;
+class NumericalFluxBase;
 class Mesh;
 class Config;
 class ProblemBase;
@@ -20,7 +20,7 @@ class Reconstructor;
 class SolverBase
 {
   protected:
-    NumericalFlux* _g;     /*!< @brief class for numerical flux */
+    NumericalFluxBase* _g; /*!< @brief class for numerical flux */
     Config* _settings;     /*!< @brief config class for global information */
     ProblemBase* _problem; /*!< @brief problem class for initial conditions */
 

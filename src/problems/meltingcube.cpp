@@ -2,8 +2,8 @@
 #include "common/config.hpp"
 #include "common/mesh.hpp"
 #include "quadratures/quadraturebase.hpp"
-#include "toolboxes/sphericalbase.hpp"
-#include "toolboxes/sphericalharmonics.hpp"
+#include "velocitybasis/sphericalbase.hpp"
+#include "velocitybasis/sphericalharmonics.hpp"
 #include <complex>
 
 // ---- Linesource ----
