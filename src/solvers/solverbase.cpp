@@ -135,32 +135,43 @@ void SolverBase::Solve() {
 
     // Preprocessing before first pseudo time step
     SolverPreprocessing();
+    unsigned rkStages = 2;
+    auto sol0         = _sol;
 
     // Loop over energies (pseudo-time of continuous slowing down approach)
     for( unsigned iter = 0; iter < _maxIter; iter++ ) {
+        sol0 = _sol;
+        for( unsigned rkStep = 0; rkStep < rkStages; ++rkStep ) {
+            // --- Prepare Boundaries and temp variables
+            IterPreprocessing( iter + rkStep );
 
-        // --- Prepare Boundaries and temp variables
-        IterPreprocessing( iter );
+            // --- Compute Fluxes ---
+            FluxUpdate();
 
-        // --- Compute Fluxes ---
-        FluxUpdate();
+            // --- Finite Volume Update ---
+            FVMUpdate( iter + rkStep );
 
-        // --- Finite Volume Update ---
-        FVMUpdate( iter );
+            // --- Iter Postprocessing ---
+            IterPostprocessing( iter + rkStep );
 
-        // --- Iter Postprocessing ---
-        IterPostprocessing( iter );
-
-        // --- Solver Output ---
-        WriteVolumeOutput( iter );
-        WriteScalarOutput( iter );
-        PrintScreenOutput( iter );
-        PrintHistoryOutput( iter );
-        PrintVolumeOutput( iter );
+            // --- Solver Output ---
+            WriteVolumeOutput( iter + rkStep );
+            WriteScalarOutput( iter + rkStep );
+            PrintScreenOutput( iter + rkStep );
+            PrintHistoryOutput( iter + rkStep );
+            PrintVolumeOutput( iter + rkStep );
+        }
+        RKUpdate( sol0, _sol );
     }
 
     // --- Postprocessing ---
     DrawPostSolverOutput();
+}
+
+void SolverBase::RKUpdate( VectorVector psi0, VectorVector psi1 ) {
+    for( unsigned i = 0; i < psi0.size(); ++i ) {
+        _sol[i] = 0.5 * ( psi0[i] + psi1[i] );
+    }
 }
 
 void SolverBase::PrintVolumeOutput() const { ExportVTK( _settings->GetOutputFile(), _outputFields, _outputFieldNames, _mesh ); }
