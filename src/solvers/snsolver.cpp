@@ -26,8 +26,6 @@ SNSolver::SNSolver( Config* settings ) : SolverBase( settings ) {
     _solDx   = VectorVector( _nCells, Vector( _nq, 0.0 ) );
     _solDy   = VectorVector( _nCells, Vector( _nq, 0.0 ) );
     _limiter = VectorVector( _nCells, Vector( _nq, 0.0 ) );
-
-    delete k;
 }
 
 void SNSolver::IterPreprocessing( unsigned /*idx_iter*/ ) {
