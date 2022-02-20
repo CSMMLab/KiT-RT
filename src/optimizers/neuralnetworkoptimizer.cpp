@@ -12,8 +12,8 @@
 #ifdef BUILD_ML
 #include "entropies/entropybase.hpp"
 #include "quadratures/quadraturebase.hpp"
-#include "toolboxes/sphericalbase.hpp"
 #include "toolboxes/textprocessingtoolbox.hpp"
+#include "velocitybasis/sphericalbase.hpp"
 
 #include <iostream>
 
