@@ -151,11 +151,13 @@ void SolverBase::Solve() {
             // --- Finite Volume Update ---
             FVMUpdate( iter + rkStep );
 
-            // --- Iter Postprocessing ---
-            IterPostprocessing( iter + rkStep );    // HAS TO BE CHANGED. RAD FLUX NEEDS TO BE UPDATED AFTER RK UPDATE
+            _sol = _solNew;
         }
 
         RKUpdate( sol0, _sol );
+
+        // --- Iter Postprocessing ---
+        IterPostprocessing( iter );    // HAS TO BE CHANGED. RAD FLUX NEEDS TO BE UPDATED AFTER RK UPDATE
 
         // --- Solver Output ---
         WriteVolumeOutput( iter );
