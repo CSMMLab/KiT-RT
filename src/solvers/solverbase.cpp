@@ -135,7 +135,7 @@ void SolverBase::Solve() {
 
     // Preprocessing before first pseudo time step
     SolverPreprocessing();
-    unsigned rkStages = 2;
+    unsigned rkStages = _settings->GetRKStages();
     auto sol0         = _sol;
 
     // Loop over energies (pseudo-time of continuous slowing down approach)
@@ -152,16 +152,17 @@ void SolverBase::Solve() {
             FVMUpdate( iter + rkStep );
 
             // --- Iter Postprocessing ---
-            IterPostprocessing( iter + rkStep );
-
-            // --- Solver Output ---
-            WriteVolumeOutput( iter + rkStep );
-            WriteScalarOutput( iter + rkStep );
-            PrintScreenOutput( iter + rkStep );
-            PrintHistoryOutput( iter + rkStep );
-            PrintVolumeOutput( iter + rkStep );
+            IterPostprocessing( iter + rkStep );    // HAS TO BE CHANGED. RAD FLUX NEEDS TO BE UPDATED AFTER RK UPDATE
         }
+
         RKUpdate( sol0, _sol );
+
+        // --- Solver Output ---
+        WriteVolumeOutput( iter );
+        WriteScalarOutput( iter );
+        PrintScreenOutput( iter );
+        PrintHistoryOutput( iter );
+        PrintVolumeOutput( iter );
     }
 
     // --- Postprocessing ---

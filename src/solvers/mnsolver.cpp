@@ -147,6 +147,9 @@ void MNSolver::ComputeRadFlux() {
         _settings->GetProblemName() == PROBLEM_Checkerboard1D ) {
         firstMomentScaleFactor = 2.0;
     }
+    if( _settings->GetDim() == 2 ) {
+        firstMomentScaleFactor = M_PI;
+    }
 #pragma omp parallel for
     for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
         _fluxNew[idx_cell] = _sol[idx_cell][0] * firstMomentScaleFactor;

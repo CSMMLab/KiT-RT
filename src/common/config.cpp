@@ -243,6 +243,8 @@ void Config::SetConfigOptions() {
     /*! @brief Realizability Step for MN solver \n DESCRIPTION: If true, MN solvers use a realizability reconstruction step in each time step. Also
      * applicable in regression sampling \n DEFAULT false \ingroup Config */
     AddBoolOption( "REALIZABILITY_RECONSTRUCTION", _realizabilityRecons, false );
+    /*! @brief Runge Kutta Staes  \n DESCRIPTION: Sets number of Runge Kutta Stages for time integration \n DEFAULT 1 \ingroup Config */
+    AddUnsignedShortOption( "RUNGE_KUTTA_STAGES", _rungeKuttaStages, 1 );
 
     // Problem Relateed Options
     /*! @brief MaterialDir \n DESCRIPTION: Relative Path to the data directory (used in the ICRU database class), starting from the directory of the
