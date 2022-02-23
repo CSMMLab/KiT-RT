@@ -91,9 +91,8 @@ void CSDPNSolver::IterPreprocessing( unsigned idx_iter ) {
 void CSDPNSolver::SolverPreprocessing() {}
 
 void CSDPNSolver::IterPostprocessing( unsigned idx_iter ) {
-    // std::cout << "Iter Postprocessing...";
     // --- Update Solution ---
-    _sol = _solNew;
+    //_sol = _solNew;
 
     // --- Compute Flux for solution and Screen Output ---
     ComputeRadFlux();

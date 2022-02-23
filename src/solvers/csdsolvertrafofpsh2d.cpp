@@ -294,10 +294,10 @@ void CSDSolverTrafoFPSH2D::IterPreprocessing( unsigned idx_pseudotime ) {
 void CSDSolverTrafoFPSH2D::IterPostprocessing( unsigned idx_pseudotime ) {
     unsigned n = idx_pseudotime;
     // --- Update Solution ---
-    for( unsigned j = 0; j < _nCells; ++j ) {
-        if( _boundaryCells[j] == BOUNDARY_TYPE::DIRICHLET ) continue;
-        _sol[j] = _solNew[j];
-    }
+    // for( unsigned j = 0; j < _nCells; ++j ) {
+    //    if( _boundaryCells[j] == BOUNDARY_TYPE::DIRICHLET ) continue;
+    //    _sol[j] = _solNew[j];
+    //}
 
     // -- Compute Dose
     for( unsigned j = 0; j < _nCells; ++j ) {

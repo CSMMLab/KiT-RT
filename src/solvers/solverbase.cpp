@@ -136,7 +136,8 @@ void SolverBase::Solve() {
     // Preprocessing before first pseudo time step
     SolverPreprocessing();
     unsigned rkStages = _settings->GetRKStages();
-    auto sol0         = _sol;
+    // Create Backup solution for Runge Kutta
+    VectorVector sol0 = _sol;
 
     // Loop over energies (pseudo-time of continuous slowing down approach)
     for( unsigned iter = 0; iter < _maxIter; iter++ ) {
@@ -151,13 +152,14 @@ void SolverBase::Solve() {
             // --- Finite Volume Update ---
             FVMUpdate( iter + rkStep );
 
+            // --- Update Solution within Runge Kutta Stages
             _sol = _solNew;
         }
 
         RKUpdate( sol0, _sol );
 
         // --- Iter Postprocessing ---
-        IterPostprocessing( iter );    // HAS TO BE CHANGED. RAD FLUX NEEDS TO BE UPDATED AFTER RK UPDATE
+        IterPostprocessing( iter );
 
         // --- Solver Output ---
         WriteVolumeOutput( iter );
@@ -171,9 +173,9 @@ void SolverBase::Solve() {
     DrawPostSolverOutput();
 }
 
-void SolverBase::RKUpdate( VectorVector psi0, VectorVector psi1 ) {
-    for( unsigned i = 0; i < psi0.size(); ++i ) {
-        _sol[i] = 0.5 * ( psi0[i] + psi1[i] );
+void SolverBase::RKUpdate( VectorVector sol_0, VectorVector sol_rk ) {
+    for( unsigned i = 0; i < sol_0.size(); ++i ) {
+        _sol[i] = 0.5 * ( sol_0[i] + sol_rk[i] );
     }
 }
 
