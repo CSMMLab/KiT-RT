@@ -1,6 +1,7 @@
 #include "solvers/csdsolvertrafofpsh2d.hpp"
 #include "common/config.hpp"
 #include "common/io.hpp"
+#include "common/mesh.hpp"
 #include "fluxes/numericalflux.hpp"
 #include "kernels/scatteringkernelbase.hpp"
 #include "problems/problembase.hpp"
@@ -16,10 +17,6 @@
 
 CSDSolverTrafoFPSH2D::CSDSolverTrafoFPSH2D( Config* settings ) : SNSolver( settings ) {
     _dose = std::vector<double>( _settings->GetNCells(), 0.0 );
-    // Limiter variables
-    _solDx   = VectorVector( _nCells, Vector( _nq, 0.0 ) );
-    _solDy   = VectorVector( _nCells, Vector( _nq, 0.0 ) );
-    _limiter = VectorVector( _nCells, Vector( _nq, 0.0 ) );
 
     // determine transformed energy grid for tabulated grid
     Vector E_transformed( E_trans.size(), 0.0 );
@@ -183,7 +180,6 @@ void CSDSolverTrafoFPSH2D::WriteVolumeOutput( unsigned idx_pseudoTime ) {
         }
     }
     if( idx_pseudoTime == _nEnergies - 2 ) {
-        std::cout << _settings->GetOutputFile().append( ".txt" ) << std::endl;
         std::ofstream out( _settings->GetOutputFile().append( ".txt" ) );
         unsigned nx = _settings->GetNCells();
 
@@ -212,6 +208,8 @@ void CSDSolverTrafoFPSH2D::FluxUpdate() {
 // loop over all spatial cells
 #pragma omp parallel for
     for( unsigned j = 0; j < _nCells; ++j ) {
+        double solL;
+        double solR;
         if( _boundaryCells[j] == BOUNDARY_TYPE::DIRICHLET ) continue;
         // loop over all ordinates
         for( unsigned i = 0; i < _nq; ++i ) {
@@ -221,18 +219,44 @@ void CSDSolverTrafoFPSH2D::FluxUpdate() {
                 // store flux contribution on psiNew_sigmaS to save memory
                 if( _boundaryCells[j] == BOUNDARY_TYPE::NEUMANN && _neighbors[j][idx_neighbor] == _nCells )
                     continue;    // adiabatic wall, add nothing
-                else
-                    _solNew[j][i] += _g->Flux( _quadPoints[i],
-                                               _sol[j][i] / _density[j],
-                                               _sol[_neighbors[j][idx_neighbor]][i] / _density[_neighbors[j][idx_neighbor]],
-                                               _normals[j][idx_neighbor] ) /
-                                     _areas[j];
+                else {
+                    unsigned int nbr_glob = _neighbors[j][idx_neighbor];    // global idx of neighbor cell
+
+                    switch( _reconsOrder ) {
+                        case 1: _solNew[j][i] += _g->Flux( _quadPoints[i], _sol[j][i], _sol[nbr_glob][i], _normals[j][idx_neighbor] ); break;
+                        // second order solver
+                        case 2:
+                            // left status of interface
+                            solL = _sol[j][i] / _density[j] +
+                                   _limiter[j][i] * ( _solDx[j][i] * ( _interfaceMidPoints[j][idx_neighbor][0] - _cellMidPoints[j][0] ) +
+                                                      _solDy[j][i] * ( _interfaceMidPoints[j][idx_neighbor][1] - _cellMidPoints[j][1] ) );
+                            solR = _sol[nbr_glob][i] / _density[nbr_glob] +
+                                   _limiter[nbr_glob][i] *
+                                       ( _solDx[nbr_glob][i] * ( _interfaceMidPoints[j][idx_neighbor][0] - _cellMidPoints[nbr_glob][0] ) +
+                                         _solDy[nbr_glob][i] * ( _interfaceMidPoints[j][idx_neighbor][1] - _cellMidPoints[nbr_glob][1] ) );
+
+                            // flux evaluation
+                            _solNew[j][i] += _g->Flux( _quadPoints[i], solL, solR, _normals[j][idx_neighbor] ) / _areas[j];
+                            break;
+                            // higher order solver
+                        default: ErrorMessages::Error( "Reconstruction order not supported.", CURRENT_FUNCTION ); break;
+                    }
+                }
             }
         }
     }
 }
 
 void CSDSolverTrafoFPSH2D::IterPreprocessing( unsigned idx_pseudotime ) {
+    if( _reconsOrder > 1 ) {
+        VectorVector solDivRho = _sol;
+        for( unsigned j = 0; j < _nCells; ++j ) {
+            solDivRho[j] = _sol[j] / _density[j];
+        }
+        _mesh->ComputeSlopes( _nq, _solDx, _solDy, solDivRho );
+        _mesh->ComputeLimiter( _nq, _solDx, _solDy, solDivRho, _limiter );
+    }
+
     unsigned n = idx_pseudotime;
     _dE        = _eTrafo[idx_pseudotime + 1] - _eTrafo[idx_pseudotime];
 

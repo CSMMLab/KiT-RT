@@ -9,6 +9,7 @@
 #include "toolboxes/textprocessingtoolbox.hpp"
 // externals
 #include "spdlog/spdlog.h"
+#include <iostream>
 #include <mpi.h>
 
 PNSolver::PNSolver( Config* settings ) : SolverBase( settings ) {
