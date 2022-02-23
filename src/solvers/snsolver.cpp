@@ -38,7 +38,7 @@ void SNSolver::IterPreprocessing( unsigned /*idx_iter*/ ) {
 
 void SNSolver::IterPostprocessing( unsigned /*idx_iter*/ ) {
     // --- Update Solution ---
-    _sol = _solNew;
+    //_sol = _solNew;
 
     // --- Compute Flux for solution and Screen Output ---
     ComputeRadFlux();

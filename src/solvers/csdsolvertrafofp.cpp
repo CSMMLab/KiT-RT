@@ -185,7 +185,7 @@ void CSDSolverTrafoFP::FVMUpdate( unsigned /*idx_energy*/ ) {
 
 void CSDSolverTrafoFP::IterPostprocessing( unsigned idx_pseudotime ) {
     // --- Update Solution ---
-    _sol = _solNew;
+    //_sol = _solNew;
 
     unsigned n = idx_pseudotime;
     // Compute Dose
