@@ -137,11 +137,11 @@ void SolverBase::Solve() {
     SolverPreprocessing();
     unsigned rkStages = _settings->GetRKStages();
     // Create Backup solution for Runge Kutta
-    VectorVector sol0 = _sol;
+    VectorVector solRK0 = _sol;
 
     // Loop over energies (pseudo-time of continuous slowing down approach)
     for( unsigned iter = 0; iter < _maxIter; iter++ ) {
-        sol0 = _sol;
+        if( rkStages == 2 ) solRK0 = _sol;
         for( unsigned rkStep = 0; rkStep < rkStages; ++rkStep ) {
             // --- Prepare Boundaries and temp variables
             IterPreprocessing( iter + rkStep );
@@ -155,11 +155,11 @@ void SolverBase::Solve() {
             // --- Update Solution within Runge Kutta Stages
             _sol = _solNew;
         }
-
-        RKUpdate( sol0, _sol );
-
         // --- Iter Postprocessing ---
         IterPostprocessing( iter );
+
+        // --- Runge Kutta Timestep ---
+        if( rkStages == 2 ) RKUpdate( solRK0, _sol );
 
         // --- Solver Output ---
         WriteVolumeOutput( iter );
