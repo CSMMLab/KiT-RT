@@ -174,7 +174,8 @@ void SolverBase::Solve() {
 }
 
 void SolverBase::RKUpdate( VectorVector sol_0, VectorVector sol_rk ) {
-    for( unsigned i = 0; i < sol_0.size(); ++i ) {
+#pragma omp parallel for
+    for( unsigned i = 0; i < _nCells; ++i ) {
         _sol[i] = 0.5 * ( sol_0[i] + sol_rk[i] );
     }
 }
