@@ -79,7 +79,17 @@ std::vector<double> RadiationCTImage::GetDensity( const VectorVector& /*cellMidP
     }
     return result;
 }
+VectorVector RadiationCTImage::GetScatteringXS( const Vector& /*energies*/ ) {
+    // @TODO
+    // Specified in subclasses
+    return VectorVector( 1, Vector( 1, 0.0 ) );
+}
 
+VectorVector RadiationCTImage::GetTotalXS( const Vector& /*energies*/ ) {
+    // @TODO
+    // Specified in subclasses
+    return VectorVector( 1, Vector( 1, 0.0 ) );
+}
 RadiationCTImage_Moment::RadiationCTImage_Moment( Config* settings, Mesh* mesh ) : ProblemBase( settings, mesh ) {}
 
 RadiationCTImage_Moment::~RadiationCTImage_Moment() {}
@@ -136,4 +146,15 @@ std::vector<double> RadiationCTImage_Moment::GetDensity( const VectorVector& /*c
         result[i] = std::clamp( interp( cellMidPoints[i][0], cellMidPoints[i][1] )*1.85, 0.4, 1.85 ); //Scale densities for CT to be between 0 (air) and 1.85 (bone)
     }
     return result;
+}
+VectorVector RadiationCTImage_Moment::GetScatteringXS( const Vector& /*energies*/ ) {
+    // @TODO
+    // Specified in subclasses
+    return VectorVector( 1, Vector( 1, 0.0 ) );
+}
+
+VectorVector RadiationCTImage_Moment::GetTotalXS( const Vector& /*energies*/ ) {
+    // @TODO
+    // Specified in subclasses
+    return VectorVector( 1, Vector( 1, 0.0 ) );
 }

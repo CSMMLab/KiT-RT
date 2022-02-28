@@ -14,6 +14,8 @@ class RadiationCTImage : public ProblemBase
     virtual std::vector<VectorVector> GetExternalSource( const Vector& energies );
     virtual VectorVector SetupIC();
     std::vector<double> GetDensity( const VectorVector& cellMidPoints );
+    VectorVector GetScatteringXS( const Vector& energies ) override;
+    VectorVector GetTotalXS( const Vector& energies ) override;
 };
 
 class RadiationCTImage_Moment : public ProblemBase
@@ -27,6 +29,8 @@ class RadiationCTImage_Moment : public ProblemBase
     virtual std::vector<VectorVector> GetExternalSource( const Vector& energies );
     virtual VectorVector SetupIC();
     std::vector<double> GetDensity( const VectorVector& cellMidPoints );
+    VectorVector GetScatteringXS( const Vector& energies ) override;
+    VectorVector GetTotalXS( const Vector& energies ) override;
 };
 
 #endif    // ISOTROPICSOURCE2D_CT_H

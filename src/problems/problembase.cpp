@@ -57,6 +57,12 @@ ProblemBase* ProblemBase::Create( Config* settings, Mesh* mesh ) {
                 return new StarMapValidation_SN( settings, mesh );
         } break;
         case PROBLEM_Phantomimage: return new PhantomImage( settings, mesh );
+        case PROBLEM_RadiationCT: {
+            if( settings->GetIsMomentSolver() )
+                return new RadiationCTImage_Moment( settings, mesh );
+            else
+                return new RadiationCTImage( settings, mesh );
+        } break;
         case PROBLEM_Meltingcube: {
             if( settings->GetIsMomentSolver() )
                 return new MeltingCube_Moment( settings, mesh );
