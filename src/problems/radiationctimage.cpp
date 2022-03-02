@@ -21,33 +21,20 @@ std::vector<VectorVector> RadiationCTImage::GetExternalSource( const Vector& ene
 
 VectorVector RadiationCTImage::SetupIC() {
     VectorVector psi( _mesh->GetNumCells(), Vector( _settings->GetNQuadPoints(), 1e-10 ) );
-    auto cellMids         = _mesh->GetCellMidPoints();
-    double enterPositionX = 0.5 * 10;    // 0.0;
-    double enterPositionY = 0.5 * 10;
-    // auto boundaryCells    = _mesh->GetBoundaryTypes();
-    // Case 1: Ingoing radiation in just one cell
-    // find cell that best matches enter position
-    // double dist = 1000.0;
-    // unsigned indexSource = 0;
-    /*
+    VectorVector cellMids         = _mesh->GetCellMidPoints();
+    double s                      = 0.1;
+    QuadratureBase* quad          = QuadratureBase::Create( _settings );
+    VectorVector quadPointsSphere = quad->GetPointsSphere();
     for( unsigned j = 0; j < cellMids.size(); ++j ) {
-        // if( boundaryCells[j] == BOUNDARY_TYPE::DIRICHLET ) {
         double x = cellMids[j][0];
-        double y = cellMids[j][1];
-        if( x >= 0.49 && x <= 0.5 && y >= 0.49 && y <= 0.5 ) {
-            psi[j] = Vector( _settings->GetNQuadPoints(), 1.0 );
+        // anisotropic inflow that concentrates all particles on the last quadrature point
+        for( unsigned idx_quad = 0; idx_quad < _settings->GetNQuadPoints(); idx_quad++ ) {
+            if( quadPointsSphere[idx_quad][0] > 0.5 ) {    // if my >0
+                psi[j][idx_quad] = 1.0 / ( s * sqrt( 2 * M_PI ) ) * std::exp( -x * x / ( 2 * s * s ) );
+            }
         }
-        //}
-    }*/
-    // psi[indexSource] = Vector( _settings->GetNQuadPoints(), 1.0 );
-
-    // Case 2: Ingoing radiation as Gauss curve
-    double t = 1e-5;    // pseudo time for gaussian smoothing
-    for( unsigned j = 0; j < cellMids.size(); ++j ) {
-        double x = cellMids[j][0] - enterPositionX;
-        double y = cellMids[j][1] - enterPositionY;
-        psi[j]   = Vector( _settings->GetNQuadPoints(), 1.0 / ( 4.0 * M_PI * t ) * std::exp( -( x * x + y * y ) / ( 4 * t ) ) );
     }
+    delete quad;
     return psi;
 }
 
@@ -107,57 +94,94 @@ std::vector<VectorVector> RadiationCTImage_Moment::GetExternalSource( const Vect
 }
 
 VectorVector RadiationCTImage_Moment::SetupIC() {
-    // Compute number of equations in the system
+    if( _settings->GetSphericalBasisName() == SPHERICAL_HARMONICS  ) {
+        // In case of PN, spherical basis is per default SPHERICAL_HARMONICS in 3 velocity dimensions
+        SphericalBase* tempBase  = new SphericalHarmonics( _settings->GetMaxMomentDegree(), 3 );
+        unsigned ntotalEquations = tempBase->GetBasisSize();
 
-    // In case of PN, spherical basis is per default SPHERICAL_HARMONICS
-    SphericalBase* tempBase  = SphericalBase::Create( _settings );
-    unsigned ntotalEquations = tempBase->GetBasisSize();
+        double epsilon = 1e-3;
 
-    VectorVector initial_sol( _mesh->GetNumCells(), Vector( ntotalEquations, 0 ) );    // zero could lead to problems?
-    VectorVector cellMids = _mesh->GetCellMidPoints();
+        VectorVector initialSolution( _mesh->GetNumCells(), Vector( ntotalEquations, 1e-4 ) );    // zero could lead to problems?
+        VectorVector cellMids = _mesh->GetCellMidPoints();
 
-    Vector uIC( ntotalEquations, 0 );
-
-    if( _settings->GetSphericalBasisName() == SPHERICAL_MONOMIALS ) {
         QuadratureBase* quad          = QuadratureBase::Create( _settings );
         VectorVector quadPointsSphere = quad->GetPointsSphere();
         Vector w                      = quad->GetWeights();
+        Vector cellKineticDensity( quad->GetNq(), epsilon );
 
-        double my, phi;
-        VectorVector moments = VectorVector( quad->GetNq(), Vector( tempBase->GetBasisSize(), 0.0 ) );
+        // compute moment basis
+        VectorVector moments = VectorVector( quad->GetNq(), Vector( ntotalEquations, 0.0 ) );
+        double my, phi;    // quadpoints in spherical coordinates
 
         for( unsigned idx_quad = 0; idx_quad < quad->GetNq(); idx_quad++ ) {
             my                = quadPointsSphere[idx_quad][0];
             phi               = quadPointsSphere[idx_quad][1];
             moments[idx_quad] = tempBase->ComputeSphericalBasis( my, phi );
         }
-        // Integrate <1*m> to get factors for monomial basis in isotropic scattering
-        for( unsigned idx_quad = 0; idx_quad < quad->GetNq(); idx_quad++ ) {
-            uIC += w[idx_quad] * moments[idx_quad];
+        delete tempBase;
+        double s = 0.05;
+        double enterPositionX = 0.1;    // 0.0;
+        double enterPositionY = 2;
+
+        for( unsigned idx_cell = 0; idx_cell < cellMids.size(); ++idx_cell ) {
+            double x = cellMids[idx_cell][0] - enterPositionX;
+            double y = cellMids[idx_cell][1] - enterPositionY;
+            // anisotropic, forward-directed particle inflow
+            for( unsigned idx_quad = 0; idx_quad < _settings->GetNQuadPoints(); idx_quad++ ) {
+                if( quadPointsSphere[idx_quad][0] > -0.1 && quadPointsSphere[idx_quad][0] < 0.1) {    // if my >0
+                    cellKineticDensity[idx_quad] = std::max( 1.0 / ( s * sqrt( 2 * M_PI ) )  * std::exp( -( x * x + y * y ) / ( 2 * s * s ) ), epsilon );
+                }
+            }
+            // Compute moments of this kinetic density
+            for( unsigned idx_quad = 0; idx_quad < quad->GetNq(); idx_quad++ ) {
+                initialSolution[idx_cell] += cellKineticDensity[idx_quad] * w[idx_quad] * moments[idx_quad];
+            }
         }
         delete quad;
+        return initialSolution;
     }
+    else {
+        SphericalBase* tempBase  = SphericalBase::Create( _settings );
+        unsigned ntotalEquations = tempBase->GetBasisSize();
 
-    // Initial condition is dirac impulse at (x,y) = (0,0) ==> constant in angle ==> all moments - exept first - are zero.
-    double t       = 3.2e-4;    // pseudo time for gaussian smoothing (Approx to dirac impulse)
-    double epsilon = 1e-4;      // minimal value for first moment to avoid div by zero error
+        double epsilon = 1e-3;
 
-    for( unsigned j = 0; j < cellMids.size(); ++j ) {
-        double x = cellMids[j][0];
-        double y = cellMids[j][1];    // (x- 0.5) * (x- 0.5)
+        Vector cellKineticDensity( _settings->GetNQuadPoints(), epsilon );
+        VectorVector initialSolution( _mesh->GetNumCells(), Vector( ntotalEquations, 0 ) );    // zero could lead to problems?
+        VectorVector cellMids = _mesh->GetCellMidPoints();
 
-        double kinetic_density = std::max( 1.0 / ( 4.0 * M_PI * t ) * std::exp( -( x * x + y * y ) / ( 4 * t ) ), epsilon );
+        QuadratureBase* quad          = QuadratureBase::Create( _settings );
+        VectorVector quadPointsSphere = quad->GetPointsSphere();
+        Vector w                      = quad->GetWeights();
 
-        if( _settings->GetSphericalBasisName() == SPHERICAL_MONOMIALS ) {
-            initial_sol[j] = kinetic_density * uIC / uIC[0];    // Remember scaling
+        // compute moment basis
+        VectorVector moments = VectorVector( quad->GetNq(), Vector( ntotalEquations, 0.0 ) );
+        double my, phi;    // quadpoints in spherical coordinates
+        for( unsigned idx_quad = 0; idx_quad < quad->GetNq(); idx_quad++ ) {
+            my                = quadPointsSphere[idx_quad][0];
+            phi               = quadPointsSphere[idx_quad][1];
+            moments[idx_quad] = tempBase->ComputeSphericalBasis( my, phi );
         }
-        if( _settings->GetSphericalBasisName() == SPHERICAL_HARMONICS ) {
-            initial_sol[j][0] = kinetic_density;
+        delete tempBase;
+
+        double s = 0.1;
+        // create kinetic density( SN initial condition )
+        for( unsigned idx_cell = 0; idx_cell < cellMids.size(); ++idx_cell ) {
+            double x = cellMids[idx_cell][0];
+            // anisotropic inflow that concentrates all particles on the last quadrature point
+            for( unsigned idx_quad = 0; idx_quad < _settings->GetNQuadPoints(); idx_quad++ ) {
+                if( quadPointsSphere[idx_quad][0] < 0.5 ) {    // if my >0
+                    cellKineticDensity[idx_quad] = std::max( 1.0 / ( s * sqrt( 2 * M_PI ) ) * std::exp( -x * x / ( 2 * s * s ) ), epsilon );
+                }
+            }
+            // Compute moments of this kinetic density
+            for( unsigned idx_quad = 0; idx_quad < quad->GetNq(); idx_quad++ ) {
+                initialSolution[idx_cell] += cellKineticDensity[idx_quad] * w[idx_quad] * moments[idx_quad];
+            }
         }
+        delete quad;
+        return initialSolution;
     }
-    delete tempBase;    // Only temporally needed
-    std::cout << "not correct iC. but gets overwritten in csdpn_jl constructor\n";
-    return initial_sol;
 }
 
 std::vector<double> RadiationCTImage_Moment::GetDensity( const VectorVector& /*cellMidPoints*/ ) {

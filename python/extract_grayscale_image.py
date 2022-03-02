@@ -24,6 +24,6 @@ def extract(image_name):
         I = np.asarray(img) # image as greyscale
         I = I/255; # rescale values to [0,1] (1.85 is the density of bone, but it is set in problem::Radioct)
         J = deepcopy(np.flipud(I))
-        dimensions = (1,1) # [cm]
+        dimensions = (4,4) # [cm]
         return J , dimensions
 
