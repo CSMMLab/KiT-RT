@@ -270,7 +270,7 @@ bool DataGeneratorBase::ComputeEVRejection( unsigned idx_set ) {
 }
 
 void DataGeneratorBase::ComputeRealizableSolution() {
-    //#pragma omp parallel for schedule( guided )
+#pragma omp parallel for schedule( guided )
     for( unsigned idx_sol = 0; idx_sol < _setSize; idx_sol++ ) {
         _optimizer->ReconstructMoments( _uSol[idx_sol], _alpha[idx_sol], _momentBasis );
     }
