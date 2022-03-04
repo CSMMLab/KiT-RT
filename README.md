@@ -108,7 +108,10 @@ docker run --rm -ti -v $(pwd):/home kitrt/test_ml:latest
 ```
 from the current folder will be mounted to the docker container and the code can be executed without any of the required dependencies.
 
-Bash scripts are provided in the folder tools/CI to get started with the docker environments.
+Bash scripts are provided in the folder tools/CI to get started with the docker environments. To start an interactive docker environment, execute
+```bash
+docker run -i -t --rm -v $(pwd)/../..:/mnt kitrt/test:latest /bin/bash
+```
 
 ## Tensorflow
 To use the neural network based entropy closure, one needs to install the tensorflow C++ backend. Just use the following commands:
