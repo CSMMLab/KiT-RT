@@ -100,4 +100,11 @@ By running
 docker run --rm -ti -v $(pwd):/home kitrt/test:latest
 ```
 
+
+To use the tensorflow backend for neural network based entropy closures,  please use the tensorflow equippend containter by running
+```bash
+docker run --rm -ti -v $(pwd):/home kitrt/test_ml:latest
+```
 from the current folder will be mounted to the docker container and the code can be executed without any of the required dependencies.
+
+Bash scripts are provided in the folder tools/CI to get started with the docker environments.
