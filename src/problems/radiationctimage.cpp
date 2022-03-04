@@ -5,6 +5,10 @@
 #include "toolboxes/errormessages.hpp"
 #include "toolboxes/interpolation.hpp"
 #include "velocitybasis/sphericalbase.hpp"
+#include "quadratures/quadraturebase.hpp"
+#include "velocitybasis/sphericalbase.hpp"
+#include "velocitybasis/sphericalharmonics.hpp"
+#include "quadratures/qgausslegendretensorized.hpp"
 
 #include <fstream>
 
@@ -63,7 +67,7 @@ std::vector<double> RadiationCTImage::GetDensity( const VectorVector& /*cellMidP
     std::vector<double> result( _mesh->GetNumCells(), 0.0 );
     
     for( unsigned i = 0; i < _mesh->GetNumCells(); ++i ) {
-        result[i] = std::clamp( interp( cellMidPoints[i][0], cellMidPoints[i][1] )*1.85, 0.4, 1.85 ); //Scale densities for CT to be between 0 (air) and 1.85 (bone)
+        result[i] = std::clamp( interp( cellMidPoints[i][0], cellMidPoints[i][1] )*1.85, 0.1, 1.85 ); //Scale densities for CT to be between 0 (air) and 1.85 (bone)
     }
     return result;
 }
@@ -119,16 +123,16 @@ VectorVector RadiationCTImage_Moment::SetupIC() {
             moments[idx_quad] = tempBase->ComputeSphericalBasis( my, phi );
         }
         delete tempBase;
-        double s = 0.05;
-        double enterPositionX = 0.1;    // 0.0;
-        double enterPositionY = 2;
+        double s = 0.1;
+        double enterPositionX = 3;    // 0.0;
+        double enterPositionY = 3;
 
         for( unsigned idx_cell = 0; idx_cell < cellMids.size(); ++idx_cell ) {
             double x = cellMids[idx_cell][0] - enterPositionX;
             double y = cellMids[idx_cell][1] - enterPositionY;
             // anisotropic, forward-directed particle inflow
             for( unsigned idx_quad = 0; idx_quad < _settings->GetNQuadPoints(); idx_quad++ ) {
-                if( quadPointsSphere[idx_quad][0] > -0.1 && quadPointsSphere[idx_quad][0] < 0.1) {    // if my >0
+                if( quadPointsSphere[idx_quad][1] > 0 && quadPointsSphere[idx_quad][1] < M_PI) {    // if my >0
                     cellKineticDensity[idx_quad] = std::max( 1.0 / ( s * sqrt( 2 * M_PI ) )  * std::exp( -( x * x + y * y ) / ( 2 * s * s ) ), epsilon );
                 }
             }
@@ -208,7 +212,7 @@ std::vector<double> RadiationCTImage_Moment::GetDensity( const VectorVector& /*c
     Interpolation interp( x, y, gsImage );
     std::vector<double> result( _mesh->GetNumCells(), 0.0 );
     for( unsigned i = 0; i < _mesh->GetNumCells(); ++i ) {
-        result[i] = std::clamp( interp( cellMidPoints[i][0], cellMidPoints[i][1] )*1.85, 0.4, 1.85 ); //Scale densities for CT to be between 0 (air) and 1.85 (bone)
+        result[i] = std::clamp( interp( cellMidPoints[i][0], cellMidPoints[i][1] )*1.85, 0.1, 5.0 ); //Scale densities for CT to be between 0 (air) and 1.85 (bone)
     }
     return result;
 }
