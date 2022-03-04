@@ -58,6 +58,8 @@ class CSDSolverTrafoFPSH2D : public SNSolver
     Matrix _identity;     /*!< @brief: identity matrix for FP scattering. Dim (_nq,_nq)*/
     double _densityMin;   /*!< @brief Minimal density of _density vector */
 
+    unsigned _polyDegreeBasis;
+
   public:
     /**
      * @brief CSDSolverTrafoFP2D constructor

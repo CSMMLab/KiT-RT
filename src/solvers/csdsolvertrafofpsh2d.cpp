@@ -67,21 +67,18 @@ CSDSolverTrafoFPSH2D::CSDSolverTrafoFPSH2D( Config* settings ) : SNSolver( setti
     }
     _sMid = interpS( eMid );
 
-    _quadPointsSphere = _quadrature->GetPointsSphere();
-    unsigned order    = _quadrature->GetOrder();
-    unsigned orderSph = 2 * order;
-    SphericalHarmonics sph( orderSph );
-    unsigned nSph = orderSph * orderSph + 2 * orderSph + 1;
-    std::cout << nSph << " " << _nq << std::endl;
-    Matrix Y = blaze::zero<double>( nSph, _nq );
+    _quadPointsSphere  = _quadrature->GetPointsSphere();    // (my,phi,r) gridpoints of the quadrature in spherical cordinates
+    SphericalBase* sph = SphericalBase::Create( _settings );
+    Matrix Y           = blaze::zero<double>( sph->GetBasisSize(), _nq );
 
     for( unsigned q = 0; q < _nq; q++ ) {
-        blaze::column( Y, q ) = sph.ComputeSphericalBasis( _quadPointsSphere[q][0], _quadPointsSphere[q][1] );
+        blaze::column( Y, q ) = sph->ComputeSphericalBasis( _quadPointsSphere[q][0], _quadPointsSphere[q][1] );
     }
 
     _O = blaze::trans( Y );
     _M = _O;    // transposed to simplify weight multiplication. We will transpose _M later again
 
+    unsigned nSph = _M.columns();
     for( unsigned j = 0; j < nSph; ++j ) {
         blaze::column( _M, j ) *= _weights;
     }
@@ -90,12 +87,13 @@ CSDSolverTrafoFPSH2D::CSDSolverTrafoFPSH2D( Config* settings ) : SNSolver( setti
 
     _S               = Matrix( nSph, nSph, 0.0 );
     unsigned counter = 0;
-    for( int l = 0; l <= (int)orderSph; ++l ) {
+    for( int l = 0; l <= settings->GetMaxMomentDegree(); ++l ) {
         for( int m = -l; m <= l; ++m ) {
             _S( counter, counter ) = double( -l * ( l + 1 ) );
             counter++;
         }
     }
+    _polyDegreeBasis = settings->GetMaxMomentDegree();
 
     _L = _O * _S * _M;
 
@@ -104,7 +102,11 @@ CSDSolverTrafoFPSH2D::CSDSolverTrafoFPSH2D( Config* settings ) : SNSolver( setti
     ICRU database( _mu, _energies, _settings );
     database.GetTransportCoefficients( _xi );
 
+    std::cout << "check I: " << _M * _O << std::endl;
+    // exit( 0 );
     _RT = true;
+
+    delete sph;
 }
 
 // IO
@@ -256,38 +258,78 @@ void CSDSolverTrafoFPSH2D::IterPreprocessing( unsigned idx_pseudotime ) {
         _mesh->ComputeSlopes( _nq, _solDx, _solDy, solDivRho );
         _mesh->ComputeLimiter( _nq, _solDx, _solDy, solDivRho, _limiter );
     }
+    bool old = true;
+    if( old ) {
+        unsigned n = idx_pseudotime;
+        _dE        = _eTrafo[idx_pseudotime + 1] - _eTrafo[idx_pseudotime];
 
-    unsigned n = idx_pseudotime;
-    _dE        = _eTrafo[idx_pseudotime + 1] - _eTrafo[idx_pseudotime];
+        double xi1 = _xi( 1, n );
+        double xi2 = _xi( 2, n );
+        double xi3 = _xi( 3, n );
 
-    double xi1 = _xi( 1, n );
-    double xi2 = _xi( 2, n );
-    double xi3 = _xi( 3, n );
+        // setup coefficients in FP step
+        if( _FPMethod == 1 ) {
+            _alpha  = 0.0;
+            _alpha2 = xi1 / 2.0;
+            _beta   = 0.0;
+        }
+        else if( _FPMethod == 2 ) {
+            _alpha  = xi1 / 2.0 + xi2 / 8.0;
+            _alpha2 = 0.0;
+            _beta   = xi2 / 8.0 / xi1;
+        }
+        else if( _FPMethod == 3 ) {
+            _alpha  = xi2 * ( 27.0 * xi2 * xi2 + 5.0 * xi3 * xi3 - 24.0 * xi2 * xi3 ) / ( 8.0 * xi3 * ( 3.0 * xi2 - 2.0 * xi3 ) );
+            _beta   = xi3 / ( 6.0 * ( 3.0 * xi2 - 2.0 * xi3 ) );
+            _alpha2 = xi1 / 2.0 - 9.0 / 8.0 * xi2 * xi2 / xi3 + 3.0 / 8.0 * xi2;
+        }
 
-    // setup coefficients in FP step
-    if( _FPMethod == 1 ) {
-        _alpha  = 0.0;
-        _alpha2 = xi1 / 2.0;
-        _beta   = 0.0;
-    }
-    else if( _FPMethod == 2 ) {
-        _alpha  = xi1 / 2.0 + xi2 / 8.0;
-        _alpha2 = 0.0;
-        _beta   = xi2 / 8.0 / xi1;
-    }
-    else if( _FPMethod == 3 ) {
-        _alpha  = xi2 * ( 27.0 * xi2 * xi2 + 5.0 * xi3 * xi3 - 24.0 * xi2 * xi3 ) / ( 8.0 * xi3 * ( 3.0 * xi2 - 2.0 * xi3 ) );
-        _beta   = xi3 / ( 6.0 * ( 3.0 * xi2 - 2.0 * xi3 ) );
-        _alpha2 = xi1 / 2.0 - 9.0 / 8.0 * xi2 * xi2 / xi3 + 3.0 / 8.0 * xi2;
-    }
-
-    _IL = _identity - _beta * _L;
+        _IL = _identity - _beta * _L;
 
 // add FP scattering term implicitly
 #pragma omp parallel for
-    for( unsigned j = 0; j < _nCells; ++j ) {
-        if( _boundaryCells[j] == BOUNDARY_TYPE::DIRICHLET ) continue;
-        _sol[j] = _IL * blaze::solve( _IL - _dE * _alpha * _L, _sol[j] );
+        for( unsigned j = 0; j < _nCells; ++j ) {
+            if( _boundaryCells[j] == BOUNDARY_TYPE::DIRICHLET ) continue;
+            _sol[j] = _IL * blaze::solve( _IL - _dE * _alpha * _L, _sol[j] );
+        }
+    }
+    else {
+        _dE = _eTrafo[idx_pseudotime + 1] - _eTrafo[idx_pseudotime];
+        Vector sigmaSAtEnergy( _polyDegreeBasis + 1, 0.0 );
+        Vector sigmaTAtEnergy( _polyDegreeBasis + 1, 0.0 );
+        // compute scattering cross section at current energy
+        for( unsigned idx_degree = 0; idx_degree <= _polyDegreeBasis; ++idx_degree ) {
+            // setup interpolation from E to sigma at degree idx_degree
+            Interpolation interp( E_ref, blaze::column( sigma_ref, idx_degree ) );
+            sigmaSAtEnergy[idx_degree] = interp( _energies[idx_pseudotime + 1] );
+        }
+        for( unsigned idx_degree = 0; idx_degree <= _polyDegreeBasis; ++idx_degree ) {
+            sigmaTAtEnergy[idx_degree] = ( sigmaSAtEnergy[0] - sigmaSAtEnergy[idx_degree] );
+        }
+
+        Matrix Sigma     = 0.0 * _S;
+        unsigned counter = 0;
+        for( int l = 0; l <= _polyDegreeBasis; ++l ) {
+            for( int m = -l; m <= l; ++m ) {
+                Sigma( counter, counter ) = sigmaTAtEnergy[l];
+                counter++;
+            }
+        }
+// add scattering term implicitly
+#pragma omp parallel for
+        for( unsigned j = 0; j < _nCells; ++j ) {
+            if( _boundaryCells[j] == BOUNDARY_TYPE::DIRICHLET ) continue;
+            Vector u = _M * _sol[j];
+            counter  = 0;
+            for( int l = 0; l <= _polyDegreeBasis; ++l ) {
+                for( int m = -l; m <= l; ++m ) {
+                    u[counter] = u[counter] / ( 1.0 + _dE * sigmaTAtEnergy[l] );
+                    counter++;
+                }
+            }
+            _sol[j] = _O * u;
+            //_sol[j] = blaze::solve( _identity + _dE * _O * Sigma * _M, _sol[j] );
+        }
     }
 }
 

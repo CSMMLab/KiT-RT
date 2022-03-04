@@ -108,7 +108,7 @@ CSDSolverTrafoFP2D::CSDSolverTrafoFP2D( Config* settings ) : SNSolver( settings 
     // setup Laplace Beltrami matrix L in slab geometry
     _L = Matrix( nq, nq, 0.0 );
 
-    _FPMethod = 2;
+    _FPMethod = 3;
 
     double betaMinus = 0.0;    // is beta_{n-1/2}
     double betaPlus  = 0.0;    // is beta_{n+1/2}
