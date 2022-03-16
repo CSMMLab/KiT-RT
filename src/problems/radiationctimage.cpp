@@ -9,6 +9,7 @@
 #include "velocitybasis/sphericalbase.hpp"
 #include "velocitybasis/sphericalharmonics.hpp"
 #include "quadratures/qgausslegendretensorized.hpp"
+#include "toolboxes/textprocessingtoolbox.hpp"
 
 #include <fstream>
 
@@ -98,17 +99,17 @@ std::vector<VectorVector> RadiationCTImage_Moment::GetExternalSource( const Vect
 }
 
 VectorVector RadiationCTImage_Moment::SetupIC() {
-    if( _settings->GetSphericalBasisName() == SPHERICAL_HARMONICS  ) {
+      if( _settings->GetSphericalBasisName() == SPHERICAL_HARMONICS  ) {
         // In case of PN, spherical basis is per default SPHERICAL_HARMONICS in 3 velocity dimensions
         SphericalBase* tempBase  = new SphericalHarmonics( _settings->GetMaxMomentDegree(), 3 );
         unsigned ntotalEquations = tempBase->GetBasisSize();
 
         double epsilon = 1e-3;
 
-        VectorVector initialSolution( _mesh->GetNumCells(), Vector( ntotalEquations, 1e-4 ) );    // zero could lead to problems?
+        VectorVector initialSolution( _mesh->GetNumCells(), Vector( ntotalEquations, 0) );    
         VectorVector cellMids = _mesh->GetCellMidPoints();
 
-        QuadratureBase* quad          = QuadratureBase::Create( _settings );
+        QuadratureBase* quad          = new QGaussLegendreTensorized( _settings );
         VectorVector quadPointsSphere = quad->GetPointsSphere();
         Vector w                      = quad->GetWeights();
         Vector cellKineticDensity( quad->GetNq(), epsilon );
@@ -124,15 +125,15 @@ VectorVector RadiationCTImage_Moment::SetupIC() {
         }
         delete tempBase;
         double s = 0.1;
-        double enterPositionX = 3;    // 0.0;
-        double enterPositionY = 3;
+        double enterPositionX = 2.5;    // 0.0;
+        double enterPositionY = 5.8;
 
         for( unsigned idx_cell = 0; idx_cell < cellMids.size(); ++idx_cell ) {
             double x = cellMids[idx_cell][0] - enterPositionX;
             double y = cellMids[idx_cell][1] - enterPositionY;
             // anisotropic, forward-directed particle inflow
             for( unsigned idx_quad = 0; idx_quad < _settings->GetNQuadPoints(); idx_quad++ ) {
-                if( quadPointsSphere[idx_quad][1] > 0 && quadPointsSphere[idx_quad][1] < M_PI) {    // if my >0
+                if( quadPointsSphere[idx_quad][1] > M_PI/3 && quadPointsSphere[idx_quad][1] < 2*M_PI/3) {    // if my >0 
                     cellKineticDensity[idx_quad] = std::max( 1.0 / ( s * sqrt( 2 * M_PI ) )  * std::exp( -( x * x + y * y ) / ( 2 * s * s ) ), epsilon );
                 }
             }
@@ -141,6 +142,8 @@ VectorVector RadiationCTImage_Moment::SetupIC() {
                 initialSolution[idx_cell] += cellKineticDensity[idx_quad] * w[idx_quad] * moments[idx_quad];
             }
         }
+        //TextProcessingToolbox::PrintVectorVector(initialSolution);
+        //exit(0);
         delete quad;
         return initialSolution;
     }
@@ -212,7 +215,7 @@ std::vector<double> RadiationCTImage_Moment::GetDensity( const VectorVector& /*c
     Interpolation interp( x, y, gsImage );
     std::vector<double> result( _mesh->GetNumCells(), 0.0 );
     for( unsigned i = 0; i < _mesh->GetNumCells(); ++i ) {
-        result[i] = std::clamp( interp( cellMidPoints[i][0], cellMidPoints[i][1] )*1.85, 0.1, 5.0 ); //Scale densities for CT to be between 0 (air) and 1.85 (bone)
+        result[i] = std::clamp( interp( cellMidPoints[i][0], cellMidPoints[i][1] )*1.85, 0.05, 1.85 ); //Scale densities for CT to be between 0 (air) and 1.85 (bone)
     }
     return result;
 }
