@@ -7,6 +7,8 @@
 #include "toolboxes/interpolation.hpp"
 
 // externals
+#include <fstream>
+
 #include "spdlog/spdlog.h"
 
 CSDPNSolver::CSDPNSolver( Config* settings ) : PNSolver( settings ) {
