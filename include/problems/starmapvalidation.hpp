@@ -10,6 +10,9 @@ class StarMapValidation_SN : public ProblemBase
   private:
     StarMapValidation_SN() = delete;
 
+  protected:
+    double NormPDF( double x, double mu, double sigma ); /*!< Creates an 1D normal distribution at x with mean mu and stddev sigma */
+
   public:
     StarMapValidation_SN( Config* settings, Mesh* mesh );
     ~StarMapValidation_SN();
@@ -27,7 +30,6 @@ class StarMapValidation_Moment : public StarMapValidation_SN
 {
   private:
     StarMapValidation_Moment() = delete;
-    double NormPDF( double x, double mu, double sigma ); /*!< Creates an 1D normal distribution at x with mean mu and stddev sigma */
 
   public:
     StarMapValidation_Moment( Config* settings, Mesh* mesh );
