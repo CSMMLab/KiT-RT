@@ -339,7 +339,7 @@ class Config
     SAMPLER_NAME inline GetSamplerName() { return _sampler; }
     unsigned long inline GetTrainingDataSetSize() { return _tainingSetSize; }
     bool inline GetSizeByDimension() { return _sizeByDimension; }
-    unsigned long inline GetMaxValFirstMoment() { return _maxValFirstMoment; }
+    unsigned long inline GetMaxValFirstMoment() { return _maxValFirstMoment; } // Deprecated
     double GetRealizableSetEpsilonU0() { return _RealizableSetEpsilonU0; }
     double GetRealizableSetEpsilonU1() { return _RealizableSetEpsilonU1; }
     bool inline GetNormalizedSampling() { return _normalizedSampling; }
