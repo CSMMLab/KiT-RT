@@ -310,15 +310,15 @@ void CSDPNSolver::WriteVolumeOutput( unsigned idx_pseudoTime ) {
             }
         }
     }
-    // if( idx_pseudoTime == _nEnergies - 2 ) {
-    //     std::ofstream out( _settings->GetOutputFile().append( ".txt" ) );
-    //     unsigned nx = _settings->GetNCells();
+    if( idx_pseudoTime == _nEnergies - 2 ) {
+        std::ofstream out( _settings->GetOutputFile().append( ".txt" ) );
+        unsigned nx = _settings->GetNCells();
 
-    //    for( unsigned j = 0; j < nx; ++j ) {
-    //        out << _cellMidPoints[j][0] << " " << _cellMidPoints[j][1] << " " << _dose[j] << std::endl;
-    //    }
-    //    out.close();
-    //}
+        for( unsigned j = 0; j < nx; ++j ) {
+            out << _cellMidPoints[j][0] << " " << _cellMidPoints[j][1] << " " << _dose[j] << std::endl;
+        }
+        out.close();
+    }
 }
 
 double CSDPNSolver::NormPDF( double x, double mu, double sigma ) {
