@@ -17,7 +17,6 @@ class CSDSolverTrafoFP2D : public SNSolver
     Matrix _L;  /*!<  @brief Laplace Beltrami Matrix */
     Matrix _IL; /*!<  @brief Laplace Beltrami Matrix */
 
-    VectorVector _quadPointsSphere;
     Vector _mu;
     Vector _phi;
     Vector _wp;

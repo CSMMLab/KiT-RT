@@ -26,7 +26,6 @@ CSDSolverTrafoFPSH2D::CSDSolverTrafoFPSH2D( Config* settings ) : SNSolver( setti
     // determine minimal and maximal energies
     double minE = 5e-5;
     double maxE = _settings->GetMaxEnergyCSD();
-    _E_cutoff   = maxE;
 
     // define interpolation from energies to corresponding transformed energies \tilde{E} (without substraction of eMaxTrafo)
     Interpolation interpEToTrafo( E_tab, E_transformed );
@@ -85,15 +84,6 @@ CSDSolverTrafoFPSH2D::CSDSolverTrafoFPSH2D( Config* settings ) : SNSolver( setti
     }
 
     _M.transpose();
-
-    _S               = Matrix( nSph, nSph, 0.0 );
-    unsigned counter = 0;
-    for( int l = 0; l <= settings->GetMaxMomentDegree(); ++l ) {
-        for( int m = -l; m <= l; ++m ) {
-            _S( counter, counter ) = double( -l * ( l + 1 ) );
-            counter++;
-        }
-    }
     _polyDegreeBasis = settings->GetMaxMomentDegree();
 }
 

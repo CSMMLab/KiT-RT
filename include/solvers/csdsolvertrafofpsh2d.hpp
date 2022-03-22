@@ -21,41 +21,13 @@ class CSDSolverTrafoFPSH2D : public SNSolver
   private:
     std::vector<double> _dose; /*!< @brief TODO */
 
-    // Helper Variables
-    // Matrix _L;  /*!<  @brief Laplace Beltrami Matrix */
-    Matrix _IL; /*!<  @brief Laplace Beltrami Matrix */
-
-    Matrix _O;
-    Matrix _S;
-    Matrix _M;
+    Matrix _O;    // Transformation Matrix from Moments to Ordinates
+    Matrix _M;    // Transformation Matrix from Ordinates to Moments
 
     VectorVector _quadPointsSphere;
-    Vector _mu;
-    Vector _phi;
-    Vector _wp;
-    Vector _wa;
-
-    double _alpha;
-    double _alpha2;
-    double _beta;
-
-    Vector _xi1;
-    Vector _xi2;
-    Matrix _xi;
-
-    unsigned _FPMethod;
-
-    double _energyMin;
-    double _energyMax;
-
-    double _E_cutoff;
     Vector _eTrafo;
 
     // Helper variables
-    Vector _energiesOrig; /*!< @brief original energy levels for CSD, lenght = _nEnergies */
-    Matrix _identity;     /*!< @brief: identity matrix for FP scattering. Dim (_nq,_nq)*/
-    double _densityMin;   /*!< @brief Minimal density of _density vector */
-
     unsigned _polyDegreeBasis;
 
   public:

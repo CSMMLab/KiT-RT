@@ -74,11 +74,10 @@ CSDSolverTrafoFP2D::CSDSolverTrafoFP2D( Config* settings ) : SNSolver( settings 
     _sMid = interpS( eMid );
 
     // create quadrature
-    unsigned order    = _quadrature->GetOrder();
-    unsigned nq       = _settings->GetNQuadPoints();
-    _quadPoints       = _quadrature->GetPoints();
-    _weights          = _quadrature->GetWeights();
-    _quadPointsSphere = _quadrature->GetPointsSphere();
+    unsigned order = _quadrature->GetOrder();
+    unsigned nq    = _settings->GetNQuadPoints();
+    _quadPoints    = _quadrature->GetPoints();
+    _weights       = _quadrature->GetWeights();
 
     unsigned orderMu;
     if( _settings->GetQuadName() == QUAD_GaussLegendreTensorized ) orderMu = order;
