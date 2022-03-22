@@ -236,6 +236,25 @@ void CSDSolverTrafoFPSH2D::SolverPreprocessing() {
     // cross sections do not need to be transformed to ETilde energy grid since e.g. TildeSigmaT(ETilde) = SigmaT(E(ETilde))
 }
 
+void CSDSolverTrafoFPSH2D::IterPostprocessing( unsigned idx_pseudotime ) {
+    unsigned n = idx_pseudotime;
+
+    // --- Compute Flux for solution and Screen Output ---
+    ComputeRadFlux();
+
+    // -- Compute Dose
+    for( unsigned j = 0; j < _nCells; ++j ) {
+        //_fluxNew[j] = dot( _sol[j], _weights );
+        if( n > 0 && n < _nEnergies - 1 ) {
+            _dose[j] += _dE * ( _fluxNew[j] * _sMid[n] ) / _density[j];    // update dose with trapezoidal rule // diss Kerstin
+        }
+        else {
+            _dose[j] += 0.5 * _dE * ( _fluxNew[j] * _sMid[n] ) / _density[j];
+        }
+        //_flux[j] = _fluxNew[j];
+    }
+}
+
 void CSDSolverTrafoFPSH2D::FluxUpdate() {
 // loop over all spatial cells
 #pragma omp parallel for
@@ -290,30 +309,6 @@ void CSDSolverTrafoFPSH2D::FVMUpdate( unsigned /*idx_energy*/ ) {
             _solNew[j][i] = _sol[j][i] - _dE * _solNew[j][i];
         }
     }
-}
-
-void CSDSolverTrafoFPSH2D::IterPostprocessing( unsigned idx_pseudotime ) {
-    unsigned n = idx_pseudotime;
-    // --- Update Solution ---
-    // for( unsigned j = 0; j < _nCells; ++j ) {
-    //    if( _boundaryCells[j] == BOUNDARY_TYPE::DIRICHLET ) continue;
-    //    _sol[j] = _solNew[j];
-    //}
-
-    // -- Compute Dose
-    for( unsigned j = 0; j < _nCells; ++j ) {
-        _fluxNew[j] = dot( _sol[j], _weights );
-        if( n > 0 && n < _nEnergies - 1 ) {
-            _dose[j] += _dE * ( _fluxNew[j] * _sMid[n] ) / _density[j];    // update dose with trapezoidal rule // diss Kerstin
-        }
-        else {
-            _dose[j] += 0.5 * _dE * ( _fluxNew[j] * _sMid[n] ) / _density[j];
-        }
-        _flux[j] = _fluxNew[j];
-    }
-
-    // --- Compute Flux for solution and Screen Output ---
-    ComputeRadFlux();
 }
 
 // IO
