@@ -105,7 +105,7 @@ VectorVector StarMapValidation_Moment::SetupIC() {
         f                            = NormPDF( x, pos_beam[0], stddev ) * NormPDF( y, pos_beam[1], stddev );
         initialSolution[idx_cell][0] = f * StarMAPmoments[0];
         for( unsigned idx_sys = 1; idx_sys < ntotalEquations; idx_sys++ ) {
-            initialSolution[idx_cell][idx_sys] = 0.0 * f * StarMAPmoments[idx_sys];    // must be VectorVector
+            initialSolution[idx_cell][idx_sys] = f * StarMAPmoments[idx_sys];    // must be VectorVector
         }
     }
     return initialSolution;
