@@ -2,7 +2,7 @@ import numpy as np
 import pygmsh as pg
 import os
 
-import extract_grayscale_image as egs
+import extract_grayscale_image_new as egs
 
 def add_rectangle(x0,y0,width,height,char_length,geom):
     coords = np.array([

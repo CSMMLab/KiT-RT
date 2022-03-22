@@ -125,8 +125,10 @@ VectorVector RadiationCTImage_Moment::SetupIC() {
         }
         delete tempBase;
         double s = 0.1;
-        double enterPositionX = 2.5;    // 0.0;
-        double enterPositionY = 5.8;
+        double enterPositionX = 3;    // 0.0;
+        double enterPositionY = 3;
+        double meanDir = M_PI/2;
+        double s_ang = M_PI *3;
 
         for( unsigned idx_cell = 0; idx_cell < cellMids.size(); ++idx_cell ) {
             double x = cellMids[idx_cell][0] - enterPositionX;
@@ -137,6 +139,14 @@ VectorVector RadiationCTImage_Moment::SetupIC() {
                     cellKineticDensity[idx_quad] = std::max( 1.0 / ( s * sqrt( 2 * M_PI ) )  * std::exp( -( x * x + y * y ) / ( 2 * s * s ) ), epsilon );
                 }
             }
+
+            // normal distribution also in angle
+           
+            // for( unsigned idx_quad = 0; idx_quad < _settings->GetNQuadPoints(); idx_quad++ ) {
+            //         double ang = quadPointsSphere[idx_quad][1] - meanDir;
+            //         cellKineticDensity[idx_quad] = std::max( 1.0 / ( s * s_ang * sqrt( 2 * M_PI )^3.0 )  * std::exp( -( x * x + y * y ) / ( 2 * s * s ) )* std::exp( -( ang * ang ) / (2* s_ang ) ), epsilon );
+            // }
+            
             // Compute moments of this kinetic density
             for( unsigned idx_quad = 0; idx_quad < quad->GetNq(); idx_quad++ ) {
                 initialSolution[idx_cell] += cellKineticDensity[idx_quad] * w[idx_quad] * moments[idx_quad];
@@ -172,15 +182,28 @@ VectorVector RadiationCTImage_Moment::SetupIC() {
         delete tempBase;
 
         double s = 0.1;
-        // create kinetic density( SN initial condition )
+        double enterPositionX = 3;    // 0.0;
+        double enterPositionY = 3;
+        double meanDir = M_PI/2;
+        double s_ang = M_PI *3;
+
+
         for( unsigned idx_cell = 0; idx_cell < cellMids.size(); ++idx_cell ) {
-            double x = cellMids[idx_cell][0];
-            // anisotropic inflow that concentrates all particles on the last quadrature point
+            double x = cellMids[idx_cell][0] - enterPositionX;
+            double y = cellMids[idx_cell][1] - enterPositionY;
+            
+            // anisotropic, forward-directed particle inflow
             for( unsigned idx_quad = 0; idx_quad < _settings->GetNQuadPoints(); idx_quad++ ) {
-                if( quadPointsSphere[idx_quad][0] < 0.5 ) {    // if my >0
-                    cellKineticDensity[idx_quad] = std::max( 1.0 / ( s * sqrt( 2 * M_PI ) ) * std::exp( -x * x / ( 2 * s * s ) ), epsilon );
+                if( quadPointsSphere[idx_quad][1] > M_PI/6 && quadPointsSphere[idx_quad][1] < 5*M_PI/6) {    // if my >0 
+                    cellKineticDensity[idx_quad] = std::max( 1.0 / ( s * sqrt( 2 * M_PI ) )  * std::exp( -( x * x + y * y ) / ( 2 * s * s ) ), epsilon );
                 }
             }
+            // normal distribution also in angle
+           
+            // for( unsigned idx_quad = 0; idx_quad < _settings->GetNQuadPoints(); idx_quad++ ) {
+            //         double ang = quadPointsSphere[idx_quad][1] - meanDir;
+            //         cellKineticDensity[idx_quad] = std::max( 1.0 / ( s * s_ang * sqrt( 2 * M_PI )^3.0 )  * std::exp( -( x * x + y * y ) / ( 2 * s * s ) )* std::exp( -( ang * ang ) / (2* s_ang ) ), epsilon );
+            // }
             // Compute moments of this kinetic density
             for( unsigned idx_quad = 0; idx_quad < quad->GetNq(); idx_quad++ ) {
                 initialSolution[idx_cell] += cellKineticDensity[idx_quad] * w[idx_quad] * moments[idx_quad];
@@ -215,7 +238,7 @@ std::vector<double> RadiationCTImage_Moment::GetDensity( const VectorVector& /*c
     Interpolation interp( x, y, gsImage );
     std::vector<double> result( _mesh->GetNumCells(), 0.0 );
     for( unsigned i = 0; i < _mesh->GetNumCells(); ++i ) {
-        result[i] = std::clamp( interp( cellMidPoints[i][0], cellMidPoints[i][1] )*1.85, 0.05, 1.85 ); //Scale densities for CT to be between 0 (air) and 1.85 (bone)
+        result[i] = std::clamp( interp( cellMidPoints[i][0], cellMidPoints[i][1] )*1.85, 0.1, 1.85 ); //Scale densities for CT to be between 0 (air) and 1.85 (bone)
     }
     return result;
 }
