@@ -321,9 +321,9 @@ void CSDPNSolver::WriteVolumeOutput( unsigned idx_pseudoTime ) {
     }
 }
 
-double CSDPNSolver::NormPDF( double x, double mu, double sigma ) {
-    return INV_SQRT_2PI / sigma * std::exp( -( ( x - mu ) * ( x - mu ) ) / ( 2.0 * sigma * sigma ) );
-}
+// double CSDPNSolver::NormPDF( double x, double mu, double sigma ) {
+//     return INV_SQRT_2PI / sigma * std::exp( -( ( x - mu ) * ( x - mu ) ) / ( 2.0 * sigma * sigma ) );
+// }
 
 // Vector CSDPNSolver::Time2Energy( const Vector& t, const double E_CutOff ) {
 //     Interpolation interp( E_trans, E_tab );

@@ -74,6 +74,7 @@ CSDSolverTrafoFPSH2D::CSDSolverTrafoFPSH2D( Config* settings ) : SNSolver( setti
     for( unsigned q = 0; q < _nq; q++ ) {
         blaze::column( Y, q ) = sph->ComputeSphericalBasis( _quadPointsSphere[q][0], _quadPointsSphere[q][1] );
     }
+    delete sph;
 
     _O = blaze::trans( Y );
     _M = _O;    // transposed to simplify weight multiplication. We will transpose _M later again
@@ -97,6 +98,7 @@ CSDSolverTrafoFPSH2D::CSDSolverTrafoFPSH2D( Config* settings ) : SNSolver( setti
 
     _L = _O * _S * _M;
 
+    // old method
     // determine moments of Heney-Greenstein
     _xi = Matrix( 4, _nEnergies );
     ICRU database( _mu, _energies, _settings );
@@ -109,8 +111,209 @@ CSDSolverTrafoFPSH2D::CSDSolverTrafoFPSH2D( Config* settings ) : SNSolver( setti
     std::cout << "check I=O*M*1: " << _O * _M * ones << std::endl;
     // exit( 0 );
     _RT = true;
+}
 
-    delete sph;
+// Solver
+
+void CSDSolverTrafoFPSH2D::IterPreprocessing( unsigned idx_pseudotime ) {
+    if( _reconsOrder > 1 ) {
+        VectorVector solDivRho = _sol;
+        for( unsigned j = 0; j < _nCells; ++j ) {
+            solDivRho[j] = _sol[j] / _density[j];
+        }
+        _mesh->ComputeSlopes( _nq, _solDx, _solDy, solDivRho );
+        _mesh->ComputeLimiter( _nq, _solDx, _solDy, solDivRho, _limiter );
+    }
+    bool old = false;
+    if( old ) {
+        //        unsigned n = idx_pseudotime;
+        //        _dE        = _eTrafo[idx_pseudotime + 1] - _eTrafo[idx_pseudotime];
+        //
+        //        double xi1 = _xi( 1, n );
+        //        double xi2 = _xi( 2, n );
+        //        double xi3 = _xi( 3, n );
+        //
+        //        // setup coefficients in FP step
+        //        if( _FPMethod == 1 ) {
+        //            _alpha  = 0.0;
+        //            _alpha2 = xi1 / 2.0;
+        //            _beta   = 0.0;
+        //        }
+        //        else if( _FPMethod == 2 ) {
+        //            _alpha  = xi1 / 2.0 + xi2 / 8.0;
+        //            _alpha2 = 0.0;
+        //            _beta   = xi2 / 8.0 / xi1;
+        //        }
+        //        else if( _FPMethod == 3 ) {
+        //            _alpha  = xi2 * ( 27.0 * xi2 * xi2 + 5.0 * xi3 * xi3 - 24.0 * xi2 * xi3 ) / ( 8.0 * xi3 * ( 3.0 * xi2 - 2.0 * xi3 ) );
+        //            _beta   = xi3 / ( 6.0 * ( 3.0 * xi2 - 2.0 * xi3 ) );
+        //            _alpha2 = xi1 / 2.0 - 9.0 / 8.0 * xi2 * xi2 / xi3 + 3.0 / 8.0 * xi2;
+        //        }
+        //
+        //        _IL = _identity - _beta * _L;
+        //
+        //// add FP scattering term implicitly
+        //#pragma omp parallel for
+        //        for( unsigned j = 0; j < _nCells; ++j ) {
+        //            if( _boundaryCells[j] == BOUNDARY_TYPE::DIRICHLET ) continue;
+        //            _sol[j] = _IL * blaze::solve( _IL - _dE * _alpha * _L, _sol[j] );
+        //        }
+    }
+    else {
+        _dE = fabs( _eTrafo[idx_pseudotime + 1] - _eTrafo[idx_pseudotime] );
+        //_dE = _eTrafo[idx_pseudotime + 1] - _eTrafo[idx_pseudotime];
+
+        Vector sigmaSAtEnergy( _polyDegreeBasis + 1, 0.0 );
+        Vector sigmaTAtEnergy( _polyDegreeBasis + 1, 0.0 );
+        // compute scattering cross section at current energy
+        for( unsigned idx_degree = 0; idx_degree <= _polyDegreeBasis; ++idx_degree ) {
+            // setup interpolation from E to sigma at degree idx_degree
+            Interpolation interp( E_ref, blaze::column( sigma_ref, idx_degree ) );
+            sigmaSAtEnergy[idx_degree] = interp( _energies[idx_pseudotime + 1] );
+        }
+        for( unsigned idx_degree = 0; idx_degree <= _polyDegreeBasis; ++idx_degree ) {
+            sigmaTAtEnergy[idx_degree] = ( sigmaSAtEnergy[0] - sigmaSAtEnergy[idx_degree] );
+        }
+
+        Matrix Sigma     = 0.0 * _S;
+        unsigned counter = 0;
+        for( int l = 0; l <= _polyDegreeBasis; ++l ) {
+            for( int m = -l; m <= l; ++m ) {
+                Sigma( counter, counter ) = sigmaTAtEnergy[l];
+                counter++;
+            }
+        }
+// add scattering term implicitly
+#pragma omp parallel for
+        for( unsigned j = 0; j < _nCells; ++j ) {
+            if( _boundaryCells[j] == BOUNDARY_TYPE::DIRICHLET ) continue;
+            Vector u = _M * _sol[j];
+            counter  = 0;
+            for( int l = 0; l <= _polyDegreeBasis; ++l ) {
+                for( int m = -l; m <= l; ++m ) {
+                    u[counter] = u[counter] / ( 1.0 + _dE * sigmaTAtEnergy[l] );
+                    counter++;
+                }
+            }
+            _sol[j] = _O * u;
+            //_sol[j] = blaze::solve( _identity + _dE * _O * Sigma * _M, _sol[j] );
+        }
+    }
+}
+
+void CSDSolverTrafoFPSH2D::SolverPreprocessing() {
+    // auto log = spdlog::get( "event" );
+
+    //_densityMin = 0.1;
+    // for( unsigned j = 0; j < _nCells; ++j ) {
+    //    if( _density[j] < _densityMin ) _density[j] = _densityMin;
+    //}
+
+    // save original energy field for boundary conditions
+    // _energiesOrig = _energies;
+
+    // setup identity matrix for FP scattering
+    // _identity = Matrix( _nq, _nq, 0.0 );
+
+    // for( unsigned k = 0; k < _nq; ++k ) _identity( k, k ) = 1.0;
+
+    // int rank;
+    // MPI_Comm_rank( MPI_COMM_WORLD, &rank );
+
+    // do substitution from psi to psiTildeHat (cf. Dissertation Kerstion Kuepper, Eq. 1.23)
+    //#pragma omp parallel for
+    //    for( unsigned j = 0; j < _nCells; ++j ) {
+    //        for( unsigned k = 0; k < _nq; ++k ) {
+    //            _sol[j][k] = _sol[j][k] * _density[j] * _s[0];    // note that _s[_nEnergies - 1] is stopping power at highest energy
+    //        }
+    //    }
+
+    // determine minimal density for CFL computation
+    //_densityMin = _density[0];
+    // for( unsigned j = 1; j < _nCells; ++j ) {
+    //    if( _densityMin > _density[j] ) _densityMin = _density[j];
+    //}
+    // cross sections do not need to be transformed to ETilde energy grid since e.g. TildeSigmaT(ETilde) = SigmaT(E(ETilde))
+}
+
+void CSDSolverTrafoFPSH2D::FluxUpdate() {
+// loop over all spatial cells
+#pragma omp parallel for
+    for( unsigned j = 0; j < _nCells; ++j ) {
+        double solL;
+        double solR;
+        if( _boundaryCells[j] == BOUNDARY_TYPE::DIRICHLET ) continue;
+        // loop over all ordinates
+        for( unsigned i = 0; i < _nq; ++i ) {
+            _solNew[j][i] = 0.0;
+            // loop over all neighbor cells (edges) of cell j and compute numerical fluxes
+            for( unsigned idx_neighbor = 0; idx_neighbor < _neighbors[j].size(); ++idx_neighbor ) {
+                // store flux contribution on psiNew_sigmaS to save memory
+                if( _boundaryCells[j] == BOUNDARY_TYPE::NEUMANN && _neighbors[j][idx_neighbor] == _nCells )
+                    continue;    // adiabatic wall, add nothing
+                else {
+                    unsigned int nbr_glob = _neighbors[j][idx_neighbor];    // global idx of neighbor cell
+
+                    switch( _reconsOrder ) {
+                        case 1: _solNew[j][i] += _g->Flux( _quadPoints[i], _sol[j][i], _sol[nbr_glob][i], _normals[j][idx_neighbor] ); break;
+                        // second order solver
+                        case 2:
+                            // left status of interface
+                            solL = _sol[j][i] / _density[j] +
+                                   _limiter[j][i] * ( _solDx[j][i] * ( _interfaceMidPoints[j][idx_neighbor][0] - _cellMidPoints[j][0] ) +
+                                                      _solDy[j][i] * ( _interfaceMidPoints[j][idx_neighbor][1] - _cellMidPoints[j][1] ) );
+                            solR = _sol[nbr_glob][i] / _density[nbr_glob] +
+                                   _limiter[nbr_glob][i] *
+                                       ( _solDx[nbr_glob][i] * ( _interfaceMidPoints[j][idx_neighbor][0] - _cellMidPoints[nbr_glob][0] ) +
+                                         _solDy[nbr_glob][i] * ( _interfaceMidPoints[j][idx_neighbor][1] - _cellMidPoints[nbr_glob][1] ) );
+
+                            // flux evaluation
+                            _solNew[j][i] += _g->Flux( _quadPoints[i], solL, solR, _normals[j][idx_neighbor] ) / _areas[j];
+                            break;
+                            // higher order solver
+                        default: ErrorMessages::Error( "Reconstruction order not supported.", CURRENT_FUNCTION ); break;
+                    }
+                }
+            }
+        }
+    }
+}
+
+void CSDSolverTrafoFPSH2D::FVMUpdate( unsigned /*idx_energy*/ ) {
+// loop over all spatial cells
+#pragma omp parallel for
+    for( unsigned j = 0; j < _nCells; ++j ) {
+        if( _boundaryCells[j] == BOUNDARY_TYPE::DIRICHLET ) continue;
+        // loop over all ordinates
+        for( unsigned i = 0; i < _nq; ++i ) {
+            // time update angular flux with numerical flux and total scattering cross section
+            _solNew[j][i] = _sol[j][i] - _dE * _solNew[j][i];
+        }
+    }
+}
+
+void CSDSolverTrafoFPSH2D::IterPostprocessing( unsigned idx_pseudotime ) {
+    unsigned n = idx_pseudotime;
+    // --- Update Solution ---
+    // for( unsigned j = 0; j < _nCells; ++j ) {
+    //    if( _boundaryCells[j] == BOUNDARY_TYPE::DIRICHLET ) continue;
+    //    _sol[j] = _solNew[j];
+    //}
+
+    // -- Compute Dose
+    for( unsigned j = 0; j < _nCells; ++j ) {
+        _fluxNew[j] = dot( _sol[j], _weights );
+        if( n > 0 && n < _nEnergies - 1 ) {
+            _dose[j] += _dE * ( _fluxNew[j] * _sMid[n] ) / _density[j];    // update dose with trapezoidal rule // diss Kerstin
+        }
+        else {
+            _dose[j] += 0.5 * _dE * ( _fluxNew[j] * _sMid[n] ) / _density[j];
+        }
+        _flux[j] = _fluxNew[j];
+    }
+
+    // --- Compute Flux for solution and Screen Output ---
+    ComputeRadFlux();
 }
 
 // IO
@@ -194,204 +397,4 @@ void CSDSolverTrafoFPSH2D::WriteVolumeOutput( unsigned idx_pseudoTime ) {
         }
         out.close();
     }
-}
-
-// Solver
-void CSDSolverTrafoFPSH2D::FVMUpdate( unsigned /*idx_energy*/ ) {
-// loop over all spatial cells
-#pragma omp parallel for
-    for( unsigned j = 0; j < _nCells; ++j ) {
-        if( _boundaryCells[j] == BOUNDARY_TYPE::DIRICHLET ) continue;
-        // loop over all ordinates
-        for( unsigned i = 0; i < _nq; ++i ) {
-            // time update angular flux with numerical flux and total scattering cross section
-            _solNew[j][i] = _sol[j][i] - _dE * _solNew[j][i];
-        }
-    }
-}
-
-void CSDSolverTrafoFPSH2D::FluxUpdate() {
-// loop over all spatial cells
-#pragma omp parallel for
-    for( unsigned j = 0; j < _nCells; ++j ) {
-        double solL;
-        double solR;
-        if( _boundaryCells[j] == BOUNDARY_TYPE::DIRICHLET ) continue;
-        // loop over all ordinates
-        for( unsigned i = 0; i < _nq; ++i ) {
-            _solNew[j][i] = 0.0;
-            // loop over all neighbor cells (edges) of cell j and compute numerical fluxes
-            for( unsigned idx_neighbor = 0; idx_neighbor < _neighbors[j].size(); ++idx_neighbor ) {
-                // store flux contribution on psiNew_sigmaS to save memory
-                if( _boundaryCells[j] == BOUNDARY_TYPE::NEUMANN && _neighbors[j][idx_neighbor] == _nCells )
-                    continue;    // adiabatic wall, add nothing
-                else {
-                    unsigned int nbr_glob = _neighbors[j][idx_neighbor];    // global idx of neighbor cell
-
-                    switch( _reconsOrder ) {
-                        case 1: _solNew[j][i] += _g->Flux( _quadPoints[i], _sol[j][i], _sol[nbr_glob][i], _normals[j][idx_neighbor] ); break;
-                        // second order solver
-                        case 2:
-                            // left status of interface
-                            solL = _sol[j][i] / _density[j] +
-                                   _limiter[j][i] * ( _solDx[j][i] * ( _interfaceMidPoints[j][idx_neighbor][0] - _cellMidPoints[j][0] ) +
-                                                      _solDy[j][i] * ( _interfaceMidPoints[j][idx_neighbor][1] - _cellMidPoints[j][1] ) );
-                            solR = _sol[nbr_glob][i] / _density[nbr_glob] +
-                                   _limiter[nbr_glob][i] *
-                                       ( _solDx[nbr_glob][i] * ( _interfaceMidPoints[j][idx_neighbor][0] - _cellMidPoints[nbr_glob][0] ) +
-                                         _solDy[nbr_glob][i] * ( _interfaceMidPoints[j][idx_neighbor][1] - _cellMidPoints[nbr_glob][1] ) );
-
-                            // flux evaluation
-                            _solNew[j][i] += _g->Flux( _quadPoints[i], solL, solR, _normals[j][idx_neighbor] ) / _areas[j];
-                            break;
-                            // higher order solver
-                        default: ErrorMessages::Error( "Reconstruction order not supported.", CURRENT_FUNCTION ); break;
-                    }
-                }
-            }
-        }
-    }
-}
-
-void CSDSolverTrafoFPSH2D::IterPreprocessing( unsigned idx_pseudotime ) {
-    if( _reconsOrder > 1 ) {
-        VectorVector solDivRho = _sol;
-        for( unsigned j = 0; j < _nCells; ++j ) {
-            solDivRho[j] = _sol[j] / _density[j];
-        }
-        _mesh->ComputeSlopes( _nq, _solDx, _solDy, solDivRho );
-        _mesh->ComputeLimiter( _nq, _solDx, _solDy, solDivRho, _limiter );
-    }
-    bool old = false;
-    if( old ) {
-        unsigned n = idx_pseudotime;
-        _dE        = _eTrafo[idx_pseudotime + 1] - _eTrafo[idx_pseudotime];
-
-        double xi1 = _xi( 1, n );
-        double xi2 = _xi( 2, n );
-        double xi3 = _xi( 3, n );
-
-        // setup coefficients in FP step
-        if( _FPMethod == 1 ) {
-            _alpha  = 0.0;
-            _alpha2 = xi1 / 2.0;
-            _beta   = 0.0;
-        }
-        else if( _FPMethod == 2 ) {
-            _alpha  = xi1 / 2.0 + xi2 / 8.0;
-            _alpha2 = 0.0;
-            _beta   = xi2 / 8.0 / xi1;
-        }
-        else if( _FPMethod == 3 ) {
-            _alpha  = xi2 * ( 27.0 * xi2 * xi2 + 5.0 * xi3 * xi3 - 24.0 * xi2 * xi3 ) / ( 8.0 * xi3 * ( 3.0 * xi2 - 2.0 * xi3 ) );
-            _beta   = xi3 / ( 6.0 * ( 3.0 * xi2 - 2.0 * xi3 ) );
-            _alpha2 = xi1 / 2.0 - 9.0 / 8.0 * xi2 * xi2 / xi3 + 3.0 / 8.0 * xi2;
-        }
-
-        _IL = _identity - _beta * _L;
-
-// add FP scattering term implicitly
-#pragma omp parallel for
-        for( unsigned j = 0; j < _nCells; ++j ) {
-            if( _boundaryCells[j] == BOUNDARY_TYPE::DIRICHLET ) continue;
-            _sol[j] = _IL * blaze::solve( _IL - _dE * _alpha * _L, _sol[j] );
-        }
-    }
-    else {
-        _dE = _eTrafo[idx_pseudotime + 1] - _eTrafo[idx_pseudotime];
-        Vector sigmaSAtEnergy( _polyDegreeBasis + 1, 0.0 );
-        Vector sigmaTAtEnergy( _polyDegreeBasis + 1, 0.0 );
-        // compute scattering cross section at current energy
-        for( unsigned idx_degree = 0; idx_degree <= _polyDegreeBasis; ++idx_degree ) {
-            // setup interpolation from E to sigma at degree idx_degree
-            Interpolation interp( E_ref, blaze::column( sigma_ref, idx_degree ) );
-            sigmaSAtEnergy[idx_degree] = interp( _energies[idx_pseudotime + 1] );
-        }
-        for( unsigned idx_degree = 0; idx_degree <= _polyDegreeBasis; ++idx_degree ) {
-            sigmaTAtEnergy[idx_degree] = ( sigmaSAtEnergy[0] - sigmaSAtEnergy[idx_degree] );
-        }
-
-        Matrix Sigma     = 0.0 * _S;
-        unsigned counter = 0;
-        for( int l = 0; l <= _polyDegreeBasis; ++l ) {
-            for( int m = -l; m <= l; ++m ) {
-                Sigma( counter, counter ) = sigmaTAtEnergy[l];
-                counter++;
-            }
-        }
-// add scattering term implicitly
-#pragma omp parallel for
-        for( unsigned j = 0; j < _nCells; ++j ) {
-            if( _boundaryCells[j] == BOUNDARY_TYPE::DIRICHLET ) continue;
-            Vector u = _M * _sol[j];
-            counter  = 0;
-            for( int l = 0; l <= _polyDegreeBasis; ++l ) {
-                for( int m = -l; m <= l; ++m ) {
-                    u[counter] = u[counter] / ( 1.0 + _dE * sigmaTAtEnergy[l] );
-                    counter++;
-                }
-            }
-            _sol[j] = _O * u;
-            //_sol[j] = blaze::solve( _identity + _dE * _O * Sigma * _M, _sol[j] );
-        }
-    }
-}
-
-void CSDSolverTrafoFPSH2D::IterPostprocessing( unsigned idx_pseudotime ) {
-    unsigned n = idx_pseudotime;
-    // --- Update Solution ---
-    // for( unsigned j = 0; j < _nCells; ++j ) {
-    //    if( _boundaryCells[j] == BOUNDARY_TYPE::DIRICHLET ) continue;
-    //    _sol[j] = _solNew[j];
-    //}
-
-    // -- Compute Dose
-    for( unsigned j = 0; j < _nCells; ++j ) {
-        _fluxNew[j] = dot( _sol[j], _weights );
-        if( n > 0 && n < _nEnergies - 1 ) {
-            _dose[j] += _dE * ( _fluxNew[j] * _sMid[n] ) / _density[j];    // update dose with trapezoidal rule // diss Kerstin
-        }
-        else {
-            _dose[j] += 0.5 * _dE * ( _fluxNew[j] * _sMid[n] ) / _density[j];
-        }
-        _flux[j] = _fluxNew[j];
-    }
-
-    // --- Compute Flux for solution and Screen Output ---
-    ComputeRadFlux();
-}
-
-void CSDSolverTrafoFPSH2D::SolverPreprocessing() {
-    auto log = spdlog::get( "event" );
-
-    _densityMin = 0.1;
-    for( unsigned j = 0; j < _nCells; ++j ) {
-        if( _density[j] < _densityMin ) _density[j] = _densityMin;
-    }
-
-    // save original energy field for boundary conditions
-    _energiesOrig = _energies;
-
-    // setup identity matrix for FP scattering
-    _identity = Matrix( _nq, _nq, 0.0 );
-
-    for( unsigned k = 0; k < _nq; ++k ) _identity( k, k ) = 1.0;
-
-    int rank;
-    MPI_Comm_rank( MPI_COMM_WORLD, &rank );
-
-// do substitution from psi to psiTildeHat (cf. Dissertation Kerstion Kuepper, Eq. 1.23)
-#pragma omp parallel for
-    for( unsigned j = 0; j < _nCells; ++j ) {
-        for( unsigned k = 0; k < _nq; ++k ) {
-            _sol[j][k] = _sol[j][k] * _density[j] * _s[0];    // note that _s[_nEnergies - 1] is stopping power at highest energy
-        }
-    }
-
-    // determine minimal density for CFL computation
-    _densityMin = _density[0];
-    for( unsigned j = 1; j < _nCells; ++j ) {
-        if( _densityMin > _density[j] ) _densityMin = _density[j];
-    }
-    // cross sections do not need to be transformed to ETilde energy grid since e.g. TildeSigmaT(ETilde) = SigmaT(E(ETilde))
 }
