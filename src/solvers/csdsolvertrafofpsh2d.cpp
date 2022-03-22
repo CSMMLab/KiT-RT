@@ -102,7 +102,11 @@ CSDSolverTrafoFPSH2D::CSDSolverTrafoFPSH2D( Config* settings ) : SNSolver( setti
     ICRU database( _mu, _energies, _settings );
     database.GetTransportCoefficients( _xi );
 
-    std::cout << "check I: " << _M * _O << std::endl;
+    std::cout << "check I=M*O: " << _M * _O << std::endl;
+    std::cout << "check I=O*M: " << _O * _M << std::endl;
+
+    Vector ones( _M.columns(), 1.0 );
+    std::cout << "check I=O*M*1: " << _O * _M * ones << std::endl;
     // exit( 0 );
     _RT = true;
 
@@ -258,7 +262,7 @@ void CSDSolverTrafoFPSH2D::IterPreprocessing( unsigned idx_pseudotime ) {
         _mesh->ComputeSlopes( _nq, _solDx, _solDy, solDivRho );
         _mesh->ComputeLimiter( _nq, _solDx, _solDy, solDivRho, _limiter );
     }
-    bool old = true;
+    bool old = false;
     if( old ) {
         unsigned n = idx_pseudotime;
         _dE        = _eTrafo[idx_pseudotime + 1] - _eTrafo[idx_pseudotime];
