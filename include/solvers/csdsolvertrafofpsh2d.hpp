@@ -22,7 +22,7 @@ class CSDSolverTrafoFPSH2D : public SNSolver
     std::vector<double> _dose; /*!< @brief TODO */
 
     // Helper Variables
-    Matrix _L;  /*!<  @brief Laplace Beltrami Matrix */
+    // Matrix _L;  /*!<  @brief Laplace Beltrami Matrix */
     Matrix _IL; /*!<  @brief Laplace Beltrami Matrix */
 
     Matrix _O;
@@ -44,8 +44,6 @@ class CSDSolverTrafoFPSH2D : public SNSolver
     Matrix _xi;
 
     unsigned _FPMethod;
-
-    bool _RT;
 
     double _energyMin;
     double _energyMax;
