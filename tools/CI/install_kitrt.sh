@@ -9,3 +9,4 @@ cmake -G Ninja -DCMAKE_BUILD_UNITY=True -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTI
 ninja
 cd ../examples
 ../build/KiT-RT checkerboard_MN_neural.cfg
+cp -r /home/kitrt/result /mnt/result
