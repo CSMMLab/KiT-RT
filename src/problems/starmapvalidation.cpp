@@ -50,16 +50,19 @@ std::vector<VectorVector> StarMapValidation_SN::GetExternalSource( const Vector&
 
 VectorVector StarMapValidation_SN::SetupIC() {
     VectorVector psi( _mesh->GetNumCells(), Vector( _settings->GetNQuadPoints(), 1e-10 ) );
-    auto cellMids         = _mesh->GetCellMidPoints();
-    double enterPositionX = 0.5;    // 0.0;
-    double enterPositionY = 0.5;
-    double t              = 1e-5;    // pseudo time for gaussian smoothing
-    for( unsigned j = 0; j < cellMids.size(); ++j ) {
-        double x = cellMids[j][0] - enterPositionX;
-        double y = cellMids[j][1] - enterPositionY;
-        psi[j]   = Vector( _settings->GetNQuadPoints(), 1.0 / ( 4.0 * M_PI * t ) * std::exp( -( x * x + y * y ) / ( 4 * t ) ) );
-    }
+    auto cellMids = _mesh->GetCellMidPoints();
+    // double enterPositionX = 0.5;    // 0.0;
+    // double enterPositionY = 0.5;
+    // double t              = 1e-5;    // pseudo time for gaussian smoothing
+    const double stddev = .01;
+    Vector pos_beam     = Vector{ 0.5, 0.5 };
 
+    for( unsigned j = 0; j < cellMids.size(); ++j ) {
+        double x = cellMids[j][0];
+        double y = cellMids[j][1];
+        double f = NormPDF( x, pos_beam[0], stddev ) * NormPDF( y, pos_beam[1], stddev ) / ( 4 * M_PI );
+        psi[j]   = Vector( _settings->GetNQuadPoints(), f * StarMAPmoments[0] );
+    }
     return psi;
 }
 
@@ -118,6 +121,6 @@ std::vector<VectorVector> StarMapValidation_Moment::GetExternalSource( const Vec
     return Q;
 }
 
-double StarMapValidation_Moment::NormPDF( double x, double mu, double sigma ) {
+double StarMapValidation_SN::NormPDF( double x, double mu, double sigma ) {
     return INV_SQRT_2PI / sigma * std::exp( -( ( x - mu ) * ( x - mu ) ) / ( 2.0 * sigma * sigma ) );
 }

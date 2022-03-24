@@ -9,9 +9,6 @@
 #include "solvers/csdmnsolver.hpp"
 #include "solvers/csdpnsolver.hpp"
 #include "solvers/csdsnsolver.hpp"
-#include "solvers/csdsolvertrafofp.hpp"
-#include "solvers/csdsolvertrafofp2d.hpp"
-#include "solvers/csdsolvertrafofpsh2d.hpp"
 #include "solvers/mnsolver.hpp"
 #include "solvers/mnsolver_normalized.hpp"
 #include "solvers/pnsolver.hpp"
@@ -107,12 +104,8 @@ SolverBase* SolverBase::Create( Config* settings ) {
         case MN_SOLVER: return new MNSolver( settings );
         case MN_SOLVER_NORMALIZED: return new MNSolverNormalized( settings );
         case CSD_SN_SOLVER: return new CSDSNSolver( settings );
-        case CSD_SN_FOKKERPLANCK_TRAFO_SOLVER: return new CSDSolverTrafoFP( settings );
-        case CSD_SN_FOKKERPLANCK_TRAFO_SOLVER_2D: return new CSDSolverTrafoFP2D( settings );
-        case CSD_SN_FOKKERPLANCK_TRAFO_SH_SOLVER_2D: return new CSDSolverTrafoFPSH2D( settings );
         case CSD_PN_SOLVER: return new CSDPNSolver( settings );
         case CSD_MN_SOLVER: return new CSDMNSolver( settings );
-
         default: ErrorMessages::Error( "Creator for the chosen solver does not yet exist. This is is the fault of the coder!", CURRENT_FUNCTION );
     }
     ErrorMessages::Error( "Creator for the chosen solver does not yet exist. This is is the fault of the coder!", CURRENT_FUNCTION );

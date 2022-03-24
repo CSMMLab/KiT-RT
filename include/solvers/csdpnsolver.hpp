@@ -30,7 +30,7 @@ class CSDPNSolver : public PNSolver
     void WriteVolumeOutput( unsigned idx_pseudoTime ) override;
 
     // Helper Functions for CSD
-    double NormPDF( double x, double mu, double sigma );
+    // double NormPDF( double x, double mu, double sigma );
 };
 
 #endif    // CSDPNSOLVER_H

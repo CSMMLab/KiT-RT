@@ -432,7 +432,6 @@ void MNSolver::WriteVolumeOutput( unsigned idx_iter ) {
                             _mesh->GetCellMidPoints()[idx_cell][0], _mesh->GetCellMidPoints()[idx_cell][1], time, _sigmaS[idx_iter][idx_cell] );
                     }
                     break;
-
                 default: ErrorMessages::Error( "Volume Output Group not defined for MN Solver!", CURRENT_FUNCTION ); break;
             }
         }
