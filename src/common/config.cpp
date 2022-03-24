@@ -294,6 +294,8 @@ void Config::SetConfigOptions() {
     AddBoolOption( "NEWTON_FAST_MODE", _newtonFastMode, false );
     // Neural Entropy Closure options
     AddUnsignedShortOption( "NEURAL_MODEL_MK", _neuralModel, 11 );
+    // Neural Entropy Closure Gamma (regularized 1e-Gamma) value
+    AddUnsignedShortOption( "NEURAL_MODEL_GAMMA", _neuralGamma, 0 );
 
     // Mesh related options
     // Boundary Markers

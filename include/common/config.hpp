@@ -109,6 +109,7 @@ class Config
     double _regularizerGamma;             /*!< @brief Regularization parameter for the regularized closure */
     // NeuralModel
     unsigned short _neuralModel; /*!< @brief  Version number of the employed neural model */
+    unsigned short _neuralGamma; /*!< @brief  Gamma value (regularization parameter) of the employed neural model */
     // Output Options
     unsigned short _nVolumeOutput;            /*!< @brief Number of volume outputs */
     std::vector<VOLUME_OUTPUT> _volumeOutput; /*!< @brief Output groups for volume output*/
@@ -312,6 +313,7 @@ class Config
     double inline GetRegularizerGamma() const { return _regularizerGamma; }
     // Neural Closure
     unsigned short inline GetModelMK() { return _neuralModel; }
+    unsigned short inline GetNeuralModelGamma() { return _neuralGamma; }
 
     // Boundary Conditions
     BOUNDARY_TYPE GetBoundaryType( std::string nameMarker ) const; /*!< @brief Get Boundary Type of given marker */

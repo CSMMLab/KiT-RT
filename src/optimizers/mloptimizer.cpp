@@ -51,14 +51,34 @@ MLOptimizer::MLOptimizer( Config* settings ) : OptimizerBase( settings ) {
         case SPHERICAL_HARMONICS: basisTypeStr = "Harmonic"; break;
         case SPHERICAL_MONOMIALS: basisTypeStr = "Monomial"; break;
     }
-    std::string modelFolder = TENSORFLOW_MODEL_PATH;
-    std::string tfModelPath = modelFolder + "/" + basisTypeStr + "_Mk" + modelMkStr + "_M" + polyDegreeStr + "_" + dimStr + "D";
-    // std::cout << "Load Tensorflow model from:\n ";
-    // std::cout << tfModelPath << "\n";
+    // std::string modelFolder = TENSORFLOW_MODEL_PATH;
+    std::string tfModelName = basisTypeStr + "_Mk" + modelMkStr + "_M" + polyDegreeStr + "_" + dimStr + "D";
+    if( _settings->GetNeuralModelGamma() > 0 ) {
+        tfModelName += +"_gamma" + std::to_string( _settings->GetNeuralModelGamma() );
+    }
+    std::string tfModelPath = TENSORFLOW_MODEL_PATH;
+    tfModelPath += "/" + tfModelName;
+    std::cout << "Load Tensorflow model from:\n ";
+    std::cout << tfModelPath << "\n";
 
     // Load model
     _tfModel = new cppflow::model( tfModelPath );                                // load model
     _modelServingVectorU.resize( _settings->GetNCells() * ( _nSystem - 1 ) );    // reserve size for model servitor
+
+    // Specify model input name
+    // Call Model (change call depending on model mk) (Seems to be randomly assigned by tensorflow)
+    _tfModelInputName = "";
+    // std::cout << _tfModelName << "\n";
+    if( tfModelName.compare( "Monomial_Mk11_M1_2D" ) == 0 || tfModelName.compare( "Monomial_Mk12_M1_2D" ) == 0 ||
+        tfModelName.compare( "Monomial_Mk12_M1_2D_gamma3" ) == 0 ) {
+        _tfModelInputName = "serving_default_input_1:0";
+    }
+    else if( tfModelName.compare( "Monomial_Mk12_M1_2D_gamma1" ) == 0 || tfModelName.compare( "Monomial_Mk12_M1_2D_gamma2" ) == 0 ) {
+        _tfModelInputName = "serving_default_x:0";
+    }
+    else {
+        ErrorMessages::Error( "Model input name unknown. Use Tensorflow CLI to determine input name and add it to source code", CURRENT_FUNCTION );
+    }
 }
 
 MLOptimizer::~MLOptimizer() {}
@@ -82,9 +102,9 @@ void MLOptimizer::SolveMultiCell( VectorVector& alpha, VectorVector& u, const Ve
     // Create tensor from flattened vector
     _modelInput = cppflow::tensor( _modelServingVectorU, { _settings->GetNCells(), _nSystem - 1 } );
 
-    // Call Model (change call depending on model mk) // Specific for MK11 2D now
+    // Call model
     std::vector<cppflow::tensor> output = _tfModel->operator()(
-        { { "serving_default_input_1:0", _modelInput } }, { "StatefulPartitionedCall:0", "StatefulPartitionedCall:1", "StatefulPartitionedCall:2" } );
+        { { _tfModelInputName, _modelInput } }, { "StatefulPartitionedCall:0", "StatefulPartitionedCall:1", "StatefulPartitionedCall:2" } );
 
     // reform output to vector<float>
     _modelServingVectorAlpha = output[1].get_data<float>();
