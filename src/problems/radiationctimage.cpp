@@ -28,16 +28,19 @@ VectorVector RadiationCTImage::SetupIC() {
     VectorVector psi( _mesh->GetNumCells(), Vector( _settings->GetNQuadPoints(), 1e-10 ) );
     VectorVector cellMids         = _mesh->GetCellMidPoints();
     double s                      = 0.1;
+    double enterPositionX = 2.5;    // 0.0;
+    double enterPositionY = 5.8;
     QuadratureBase* quad          = QuadratureBase::Create( _settings );
     VectorVector quadPointsSphere = quad->GetPointsSphere();
+
     for( unsigned j = 0; j < cellMids.size(); ++j ) {
         double x = cellMids[j][0];
         // anisotropic inflow that concentrates all particles on the last quadrature point
-        for( unsigned idx_quad = 0; idx_quad < _settings->GetNQuadPoints(); idx_quad++ ) {
-            if( quadPointsSphere[idx_quad][0] > 0.5 ) {    // if my >0
-                psi[j][idx_quad] = 1.0 / ( s * sqrt( 2 * M_PI ) ) * std::exp( -x * x / ( 2 * s * s ) );
+       for( unsigned idx_quad = 0; idx_quad < _settings->GetNQuadPoints(); idx_quad++ ) {
+                if( quadPointsSphere[idx_quad][1] > M_PI/3 && quadPointsSphere[idx_quad][1] < 2*M_PI/3) {    // if my >0 
+                    cellKineticDensity[idx_quad] = std::max( 1.0 / ( s * sqrt( 2 * M_PI ) )  * std::exp( -( x * x + y * y ) / ( 2 * s * s ) ), epsilon );
+                }
             }
-        }
     }
     delete quad;
     return psi;
@@ -125,8 +128,8 @@ VectorVector RadiationCTImage_Moment::SetupIC() {
         }
         delete tempBase;
         double s = 0.1;
-        double enterPositionX = 3;    // 0.0;
-        double enterPositionY = 3;
+        double enterPositionX = 2.5;    // 0.0;
+        double enterPositionY = 5.8;
         double meanDir = M_PI/2;
         double s_ang = M_PI *3;
 
@@ -144,7 +147,7 @@ VectorVector RadiationCTImage_Moment::SetupIC() {
            
             // for( unsigned idx_quad = 0; idx_quad < _settings->GetNQuadPoints(); idx_quad++ ) {
             //         double ang = quadPointsSphere[idx_quad][1] - meanDir;
-            //         cellKineticDensity[idx_quad] = std::max( 1.0 / ( s * s_ang * sqrt( 2 * M_PI )^3.0 )  * std::exp( -( x * x + y * y ) / ( 2 * s * s ) )* std::exp( -( ang * ang ) / (2* s_ang ) ), epsilon );
+            //         cellKineticDensity[idx_quad] = std::max( 1.0 / ( s * s *s_ang * sqrt( 8 * M_PI * M_PI * M_PI))  * std::exp( -( x * x + y * y ) / ( 2 * s * s ) )* std::exp( -( ang * ang ) / (2* s_ang ) ), epsilon );
             // }
             
             // Compute moments of this kinetic density
@@ -194,7 +197,7 @@ VectorVector RadiationCTImage_Moment::SetupIC() {
             
             // anisotropic, forward-directed particle inflow
             for( unsigned idx_quad = 0; idx_quad < _settings->GetNQuadPoints(); idx_quad++ ) {
-                if( quadPointsSphere[idx_quad][1] > M_PI/6 && quadPointsSphere[idx_quad][1] < 5*M_PI/6) {    // if my >0 
+                if( quadPointsSphere[idx_quad][1] > M_PI/3 && quadPointsSphere[idx_quad][1] < 2*M_PI/3) {    // if my >0 
                     cellKineticDensity[idx_quad] = std::max( 1.0 / ( s * sqrt( 2 * M_PI ) )  * std::exp( -( x * x + y * y ) / ( 2 * s * s ) ), epsilon );
                 }
             }
