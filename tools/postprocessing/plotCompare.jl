@@ -40,25 +40,16 @@ nx2 = Int(floor(sqrt(length(x))))
 xGrid2 = y[1:nx2]
 dose2 = Vec2Mat(nx2,nx2,result2[:,3]);
 
+println("maximums are: left ",maximum(dose1),"; right ",maximum(dose2))
+
 X2 = (xGrid2'.*ones(nx2))
 Y2 = (xGrid2'.*ones(nx2))'
-
-fig = figure("Dose, KiT-RT",figsize=(10,10),dpi=100)
-ax = gca()
-pcolormesh(Y1,X1,dose1,vmin=0.0)
-ax.tick_params("both",labelsize=20) 
-#colorbar()
-plt.xlabel("x", fontsize=20)
-plt.ylabel("y", fontsize=20)
-plt.title(L"dose, $S_N$", fontsize=25)
-tight_layout()
-savefig("$(input1).png")
 
 fig, (ax1, ax2,ax3) = plt.subplots(1, 3,figsize=(30,10),dpi=100)
 ax1.pcolormesh(Y1,X1,dose1,vmin=0.0,cmap="magma")
 ax2.pcolormesh(Y2,X2,dose2,vmin=0.0,cmap="magma")
-ax3.plot(xGrid1,dose1[:,Int(floor(length(xGrid1)/2))]./maximum(dose1[:,Int(floor(length(xGrid1)/2))]), "b--", linewidth=2, label="1", alpha=0.8)
-ax3.plot(xGrid2,dose2[:,Int(floor(length(xGrid2)/2))]./maximum(dose2[:,Int(floor(length(xGrid2)/2))]), "r-", linewidth=2, label="2", alpha=0.8)
+ax3.plot(xGrid1,dose1[:,Int(floor(length(xGrid1)/2))]./maximum(dose1[:,Int(floor(length(xGrid1)/2))]), "b--", linewidth=2, label="left, $(input1)", alpha=0.8)
+ax3.plot(xGrid2,dose2[:,Int(floor(length(xGrid2)/2))]./maximum(dose2[:,Int(floor(length(xGrid2)/2))]), "r-", linewidth=2, label="right, $(input2)", alpha=0.8)
 ax3.legend(loc="upper left")
 ax3.set_xlim([xGrid1[1],xGrid1[end]])
 #ax.set_ylim([0,1.05])
@@ -67,16 +58,3 @@ ax2.tick_params("both",labelsize=20)
 ax3.tick_params("both",labelsize=20) 
 tight_layout()
 savefig("comparison.png")
-
-# line plot dose
-fig = figure("Dose cut, KiT-RT",figsize=(10,10),dpi=100)
-ax = gca()
-#ax.plot(xRef,doseRef[:,Int(floor(s.NCellsY/2))]./maximum(doseRef[:,Int(floor(s.NCellsY/2))]), "r--", linewidth=2, label="CSD", alpha=0.8)
-ax.plot(xGrid1,dose1[:,Int(floor(length(xGrid1)/2))]./maximum(dose1[:,Int(floor(length(xGrid1)/2))]), "b--", linewidth=2, label="1", alpha=0.8)
-ax.plot(xGrid2,dose2[:,Int(floor(length(xGrid2)/2))]./maximum(dose2[:,Int(floor(length(xGrid2)/2))]), "r-", linewidth=2, label="2", alpha=0.8)
-ax.legend(loc="upper left")
-ax.set_xlim([xGrid1[1],xGrid1[end]])
-#ax.set_ylim([0,1.05])
-ax.tick_params("both",labelsize=20) 
-tight_layout()
-savefig("DoseCutYNx.png")

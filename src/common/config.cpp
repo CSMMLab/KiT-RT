@@ -492,14 +492,9 @@ void Config::SetPostprocessing() {
 
     // Set option ISCSD
     switch( _solverName ) {
-        case CSD_SN_NOTRAFO_SOLVER:                     // Fallthrough
-        case CSD_SN_FOKKERPLANCK_SOLVER:                // Fallthrough
-        case CSD_SN_FOKKERPLANCK_TRAFO_SOLVER:          // Fallthrough
-        case CSD_SN_FOKKERPLANCK_TRAFO_SOLVER_2D:       // Fallthrough
-        case CSD_SN_FOKKERPLANCK_TRAFO_SH_SOLVER_2D:    // Fallthrough
-        case CSD_SN_SOLVER:                             // Fallthrough
-        case CSD_PN_SOLVER:                             // Fallthrough
-        case CSD_MN_SOLVER:                             // Fallthrough
+        case CSD_SN_SOLVER:    // Fallthrough
+        case CSD_PN_SOLVER:    // Fallthrough
+        case CSD_MN_SOLVER:    // Fallthrough
             _csd = true;
             break;
         default: _csd = false;
@@ -516,16 +511,16 @@ void Config::SetPostprocessing() {
     }
 
     // Check, if mesh file exists
-    if( _solverName == CSD_SN_FOKKERPLANCK_TRAFO_SOLVER ) {    // Check if this is neccessary
-        if( !std::filesystem::exists( this->GetHydrogenFile() ) ) {
-            ErrorMessages::Error( "Path to mesh file <" + this->GetHydrogenFile() + "> does not exist. Please check your config file.",
-                                  CURRENT_FUNCTION );
-        }
-        if( !std::filesystem::exists( this->GetOxygenFile() ) ) {
-            ErrorMessages::Error( "Path to mesh file <" + this->GetOxygenFile() + "> does not exist. Please check your config file.",
-                                  CURRENT_FUNCTION );
-        }
-    }
+    // if( _solverName == CSD_SN_FOKKERPLANCK_TRAFO_SOLVER ) {    // Check if this is neccessary
+    //    if( !std::filesystem::exists( this->GetHydrogenFile() ) ) {
+    //        ErrorMessages::Error( "Path to mesh file <" + this->GetHydrogenFile() + "> does not exist. Please check your config file.",
+    //                              CURRENT_FUNCTION );
+    //    }
+    //    if( !std::filesystem::exists( this->GetOxygenFile() ) ) {
+    //        ErrorMessages::Error( "Path to mesh file <" + this->GetOxygenFile() + "> does not exist. Please check your config file.",
+    //                              CURRENT_FUNCTION );
+    //    }
+    //}
 
     // Quadrature Postprocessing
     {
@@ -639,12 +634,7 @@ void Config::SetPostprocessing() {
                                               CURRENT_FUNCTION );
                     }
                     break;
-                case CSD_SN_NOTRAFO_SOLVER:                     // Fallthrough
-                case CSD_SN_FOKKERPLANCK_SOLVER:                // Fallthrough
-                case CSD_SN_FOKKERPLANCK_TRAFO_SOLVER:          // Fallthrough
-                case CSD_SN_FOKKERPLANCK_TRAFO_SOLVER_2D:       // Fallthrough
-                case CSD_SN_FOKKERPLANCK_TRAFO_SH_SOLVER_2D:    // Fallthrough
-                case CSD_SN_SOLVER:                             // Fallthrough
+                case CSD_SN_SOLVER:    // Fallthrough
                     supportedGroups = { MINIMAL, MEDICAL };
                     if( supportedGroups.end() == std::find( supportedGroups.begin(), supportedGroups.end(), _volumeOutput[idx_volOutput] ) ) {
 
