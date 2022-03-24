@@ -28,20 +28,23 @@ VectorVector RadiationCTImage::SetupIC() {
     VectorVector psi( _mesh->GetNumCells(), Vector( _settings->GetNQuadPoints(), 1e-10 ) );
     VectorVector cellMids         = _mesh->GetCellMidPoints();
     double s                      = 0.1;
-    double enterPositionX = 2.5;    // 0.0;
-    double enterPositionY = 5.8;
+    double enterPositionX = 3;    // 0.0;
+    double enterPositionY = 3;
+    double epsilon = 1e-3;
     QuadratureBase* quad          = QuadratureBase::Create( _settings );
     VectorVector quadPointsSphere = quad->GetPointsSphere();
 
     for( unsigned j = 0; j < cellMids.size(); ++j ) {
-        double x = cellMids[j][0];
+            double x = cellMids[j][0] - enterPositionX;
+            double y = cellMids[j][1] - enterPositionY;
         // anisotropic inflow that concentrates all particles on the last quadrature point
        for( unsigned idx_quad = 0; idx_quad < _settings->GetNQuadPoints(); idx_quad++ ) {
                 if( quadPointsSphere[idx_quad][1] > M_PI/3 && quadPointsSphere[idx_quad][1] < 2*M_PI/3) {    // if my >0 
-                    cellKineticDensity[idx_quad] = std::max( 1.0 / ( s * sqrt( 2 * M_PI ) )  * std::exp( -( x * x + y * y ) / ( 2 * s * s ) ), epsilon );
+                    psi[j][idx_quad] = std::max( 1.0 / ( s * sqrt( 2 * M_PI ) )  * std::exp( -( x * x + y * y ) / ( 2 * s * s ) ), epsilon );
                 }
             }
     }
+
     delete quad;
     return psi;
 }
@@ -69,12 +72,12 @@ std::vector<double> RadiationCTImage::GetDensity( const VectorVector& /*cellMidP
 
     Interpolation interp( x, y, gsImage );
     std::vector<double> result( _mesh->GetNumCells(), 0.0 );
-    
     for( unsigned i = 0; i < _mesh->GetNumCells(); ++i ) {
-        result[i] = std::clamp( interp( cellMidPoints[i][0], cellMidPoints[i][1] )*1.85, 0.1, 1.85 ); //Scale densities for CT to be between 0 (air) and 1.85 (bone)
+        result[i] = std::clamp( interp( cellMidPoints[i][0], cellMidPoints[i][1] )*1.85, 0.05, 1.85 ); //Scale densities for CT to be between 0 (air) and 1.85 (bone)
     }
     return result;
 }
+
 VectorVector RadiationCTImage::GetScatteringXS( const Vector& /*energies*/ ) {
     // @TODO
     // Specified in subclasses
@@ -141,7 +144,7 @@ VectorVector RadiationCTImage_Moment::SetupIC() {
                 if( quadPointsSphere[idx_quad][1] > M_PI/3 && quadPointsSphere[idx_quad][1] < 2*M_PI/3) {    // if my >0 
                     cellKineticDensity[idx_quad] = std::max( 1.0 / ( s * sqrt( 2 * M_PI ) )  * std::exp( -( x * x + y * y ) / ( 2 * s * s ) ), epsilon );
                 }
-            }
+             }
 
             // normal distribution also in angle
            
@@ -185,8 +188,8 @@ VectorVector RadiationCTImage_Moment::SetupIC() {
         delete tempBase;
 
         double s = 0.1;
-        double enterPositionX = 3;    // 0.0;
-        double enterPositionY = 3;
+        double enterPositionX = 2.5;    // 0.0;
+        double enterPositionY = 5.8;
         double meanDir = M_PI/2;
         double s_ang = M_PI *3;
 
