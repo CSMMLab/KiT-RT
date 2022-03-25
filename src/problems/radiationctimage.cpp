@@ -10,6 +10,7 @@
 #include "velocitybasis/sphericalharmonics.hpp"
 #include "quadratures/qgausslegendretensorized.hpp"
 #include "toolboxes/textprocessingtoolbox.hpp"
+#include "solvers/csdpn_starmap_constants.hpp"
 
 #include <fstream>
 
@@ -28,8 +29,10 @@ VectorVector RadiationCTImage::SetupIC() {
     VectorVector psi( _mesh->GetNumCells(), Vector( _settings->GetNQuadPoints(), 1e-10 ) );
     VectorVector cellMids         = _mesh->GetCellMidPoints();
     double s                      = 0.1;
-    double enterPositionX = 3;    // 0.0;
-    double enterPositionY = 3;
+    double enterPositionX = 2.5;    // 0.0;
+    double enterPositionY = 5.8;
+    double meanDir = 3*M_PI/2;
+    double s_ang = 0.1;
     double epsilon = 1e-3;
     QuadratureBase* quad          = QuadratureBase::Create( _settings );
     VectorVector quadPointsSphere = quad->GetPointsSphere();
@@ -38,12 +41,19 @@ VectorVector RadiationCTImage::SetupIC() {
             double x = cellMids[j][0] - enterPositionX;
             double y = cellMids[j][1] - enterPositionY;
         // anisotropic inflow that concentrates all particles on the last quadrature point
-       for( unsigned idx_quad = 0; idx_quad < _settings->GetNQuadPoints(); idx_quad++ ) {
-                if( quadPointsSphere[idx_quad][1] > M_PI/3 && quadPointsSphere[idx_quad][1] < 2*M_PI/3) {    // if my >0 
-                    psi[j][idx_quad] = std::max( 1.0 / ( s * sqrt( 2 * M_PI ) )  * std::exp( -( x * x + y * y ) / ( 2 * s * s ) ), epsilon );
-                }
-            }
+    //    for( unsigned idx_quad = 0; idx_quad < _settings->GetNQuadPoints(); idx_quad++ ) {
+    //           if( quadPointsSphere[idx_quad][1] > 4*M_PI/3 && quadPointsSphere[idx_quad][1] < 5*M_PI/3) {    // if my >0 
+    //                 psi[j][idx_quad] = std::max( 1.0 / ( s * sqrt( 2 * M_PI ) )  * std::exp( -( x * x + y * y ) / ( 2 * s * s ) ), epsilon );
+    //         }
+    //         }
+ // normal distribution also in angle
+            
+        for( unsigned idx_quad = 0; idx_quad < _settings->GetNQuadPoints(); idx_quad++ ) {
+                double ang = quadPointsSphere[idx_quad][1] - meanDir;
+                psi[j][idx_quad]= std::max( 1.0 / ( s * s_ang * sqrt( 8 * M_PI * M_PI * M_PI))  * std::exp( -( x * x + y * y ) / ( 2 * s * s ) )* std::exp( -( ang * ang ) / (2* s_ang ) ), epsilon );
+        }
     }
+
 
     delete quad;
     return psi;
@@ -134,24 +144,24 @@ VectorVector RadiationCTImage_Moment::SetupIC() {
         double enterPositionX = 2.5;    // 0.0;
         double enterPositionY = 5.8;
         double meanDir = M_PI/2;
-        double s_ang = M_PI *3;
+        double s_ang = 0.1;
 
         for( unsigned idx_cell = 0; idx_cell < cellMids.size(); ++idx_cell ) {
             double x = cellMids[idx_cell][0] - enterPositionX;
             double y = cellMids[idx_cell][1] - enterPositionY;
             // anisotropic, forward-directed particle inflow
-            for( unsigned idx_quad = 0; idx_quad < _settings->GetNQuadPoints(); idx_quad++ ) {
-                if( quadPointsSphere[idx_quad][1] > M_PI/3 && quadPointsSphere[idx_quad][1] < 2*M_PI/3) {    // if my >0 
-                    cellKineticDensity[idx_quad] = std::max( 1.0 / ( s * sqrt( 2 * M_PI ) )  * std::exp( -( x * x + y * y ) / ( 2 * s * s ) ), epsilon );
-                }
-             }
+            // for( unsigned idx_quad = 0; idx_quad < _settings->GetNQuadPoints(); idx_quad++ ) {
+            //     if( quadPointsSphere[idx_quad][1] > M_PI/3 && quadPointsSphere[idx_quad][1] < 2*M_PI/3) {    // if my >0 
+            //         cellKineticDensity[idx_quad] = std::max( 1.0 / ( s * sqrt( 2 * M_PI ) )  * std::exp( -( x * x + y * y ) / ( 2 * s * s ) ), epsilon );
+            //     }
+            //  }
 
             // normal distribution also in angle
            
-            // for( unsigned idx_quad = 0; idx_quad < _settings->GetNQuadPoints(); idx_quad++ ) {
-            //         double ang = quadPointsSphere[idx_quad][1] - meanDir;
-            //         cellKineticDensity[idx_quad] = std::max( 1.0 / ( s * s *s_ang * sqrt( 8 * M_PI * M_PI * M_PI))  * std::exp( -( x * x + y * y ) / ( 2 * s * s ) )* std::exp( -( ang * ang ) / (2* s_ang ) ), epsilon );
-            // }
+            for( unsigned idx_quad = 0; idx_quad < _settings->GetNQuadPoints(); idx_quad++ ) {
+                    double ang = quadPointsSphere[idx_quad][1] - meanDir;
+                    cellKineticDensity[idx_quad] = std::max( 1.0 / ( s * s *s_ang * sqrt( 8 * M_PI * M_PI * M_PI))  * std::exp( -( x * x + y * y ) / ( 2 * s * s ) )* std::exp( -( ang * ang ) / (2* s_ang ) ), epsilon );
+            }
             
             // Compute moments of this kinetic density
             for( unsigned idx_quad = 0; idx_quad < quad->GetNq(); idx_quad++ ) {
@@ -208,7 +218,7 @@ VectorVector RadiationCTImage_Moment::SetupIC() {
            
             // for( unsigned idx_quad = 0; idx_quad < _settings->GetNQuadPoints(); idx_quad++ ) {
             //         double ang = quadPointsSphere[idx_quad][1] - meanDir;
-            //         cellKineticDensity[idx_quad] = std::max( 1.0 / ( s * s_ang * sqrt( 2 * M_PI )^3.0 )  * std::exp( -( x * x + y * y ) / ( 2 * s * s ) )* std::exp( -( ang * ang ) / (2* s_ang ) ), epsilon );
+            //         cellKineticDensity[idx_quad] = std::max( 1.0 / ( s * s*  s_ang * sqrt(  8 * M_PI * M_PI * M_PI ) )  * std::exp( -( x * x + y * y ) / ( 2 * s * s ) )* std::exp( -( ang * ang ) / (2* s_ang ) ), epsilon );
             // }
             // Compute moments of this kinetic density
             for( unsigned idx_quad = 0; idx_quad < quad->GetNq(); idx_quad++ ) {
@@ -244,7 +254,7 @@ std::vector<double> RadiationCTImage_Moment::GetDensity( const VectorVector& /*c
     Interpolation interp( x, y, gsImage );
     std::vector<double> result( _mesh->GetNumCells(), 0.0 );
     for( unsigned i = 0; i < _mesh->GetNumCells(); ++i ) {
-        result[i] = std::clamp( interp( cellMidPoints[i][0], cellMidPoints[i][1] )*1.85, 0.1, 1.85 ); //Scale densities for CT to be between 0 (air) and 1.85 (bone)
+        result[i] = std::clamp( interp( cellMidPoints[i][0], cellMidPoints[i][1] )*1.85, 0.05, 1.85 ); //Scale densities for CT to be between 0 (air) and 1.85 (bone)
     }
     return result;
 }
@@ -258,4 +268,7 @@ VectorVector RadiationCTImage_Moment::GetTotalXS( const Vector& /*energies*/ ) {
     // @TODO
     // Specified in subclasses
     return VectorVector( 1, Vector( 1, 0.0 ) );
+}
+double RadiationCTImage::NormPDF( double x, double mu, double sigma ) {
+    return INV_SQRT_2PI / sigma * std::exp( -( ( x - mu ) * ( x - mu ) ) / ( 2.0 * sigma * sigma ) );
 }

@@ -4,7 +4,10 @@
 #include "problems/problembase.hpp"
 
 class RadiationCTImage : public ProblemBase
-{
+{ 
+  protected:
+  double NormPDF( double x, double mu, double sigma ); /*!< Creates an 1D normal distribution at x with mean mu and stddev sigma */
+  
   private:
     RadiationCTImage() = delete;
 
