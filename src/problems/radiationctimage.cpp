@@ -31,7 +31,7 @@ VectorVector RadiationCTImage::SetupIC() {
     double s                      = 0.1;
     double enterPositionX = 2.5;    // 0.0;
     double enterPositionY = 5.8;
-    double meanDir = 3*M_PI/2;
+    double meanDir = M_PI/2;
     double s_ang = 0.1;
     double epsilon = 1e-3;
     QuadratureBase* quad          = QuadratureBase::Create( _settings );
