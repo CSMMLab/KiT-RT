@@ -70,7 +70,7 @@ MLOptimizer::MLOptimizer( Config* settings ) : OptimizerBase( settings ) {
     _tfModelInputName = "";
     // std::cout << _tfModelName << "\n";
     if( tfModelName.compare( "Monomial_Mk11_M1_2D" ) == 0 || tfModelName.compare( "Monomial_Mk12_M1_2D" ) == 0 ||
-        tfModelName.compare( "Monomial_Mk12_M1_2D_gamma3" ) == 0 ) {
+        tfModelName.compare( "Monomial_Mk12_M1_2D_gamma3" ) == 0 || tfModelName.compare( "Monomial_Mk13_M3_2D" ) == 0 ) {
         _tfModelInputName = "serving_default_input_1:0";
     }
     else if( tfModelName.compare( "Monomial_Mk12_M1_2D_gamma1" ) == 0 || tfModelName.compare( "Monomial_Mk12_M1_2D_gamma2" ) == 0 ) {
