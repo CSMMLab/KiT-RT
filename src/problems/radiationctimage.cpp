@@ -36,21 +36,25 @@ VectorVector RadiationCTImage::SetupIC() {
     double epsilon = 1e-3;
     QuadratureBase* quad          = QuadratureBase::Create( _settings );
     VectorVector quadPointsSphere = quad->GetPointsSphere();
-
+   
     for( unsigned j = 0; j < cellMids.size(); ++j ) {
             double x = cellMids[j][0] - enterPositionX;
             double y = cellMids[j][1] - enterPositionY;
         // anisotropic inflow that concentrates all particles on the last quadrature point
     //    for( unsigned idx_quad = 0; idx_quad < _settings->GetNQuadPoints(); idx_quad++ ) {
-    //           if( quadPointsSphere[idx_quad][1] > 4*M_PI/3 && quadPointsSphere[idx_quad][1] < 5*M_PI/3) {    // if my >0 
+    //         double theta = acos(sqrt(1-quadPointsSphere[idx_quad][0]*quadPointsSphere[idx_quad][0])*cos(quadPointsSphere[idx_quad][1]));
+    //           if(theta > M_PI/3 && theta < 2*M_PI/3&&quadPointsSphere[idx_quad][0]<0) {    
     //                 psi[j][idx_quad] = std::max( 1.0 / ( s * sqrt( 2 * M_PI ) )  * std::exp( -( x * x + y * y ) / ( 2 * s * s ) ), epsilon );
     //         }
     //         }
  // normal distribution also in angle
-            
+  
         for( unsigned idx_quad = 0; idx_quad < _settings->GetNQuadPoints(); idx_quad++ ) {
-                double ang = quadPointsSphere[idx_quad][1] - meanDir;
+            if(quadPointsSphere[idx_quad][0]<0) { 
+                double theta = acos(sqrt(1-quadPointsSphere[idx_quad][0]*quadPointsSphere[idx_quad][0])*cos(quadPointsSphere[idx_quad][1]));
+                double ang = theta - meanDir;
                 psi[j][idx_quad]= std::max( 1.0 / ( s * s_ang * sqrt( 8 * M_PI * M_PI * M_PI))  * std::exp( -( x * x + y * y ) / ( 2 * s * s ) )* std::exp( -( ang * ang ) / (2* s_ang ) ), epsilon );
+            }
         }
     }
 
@@ -151,16 +155,20 @@ VectorVector RadiationCTImage_Moment::SetupIC() {
             double y = cellMids[idx_cell][1] - enterPositionY;
             // anisotropic, forward-directed particle inflow
             // for( unsigned idx_quad = 0; idx_quad < _settings->GetNQuadPoints(); idx_quad++ ) {
-            //     if( quadPointsSphere[idx_quad][1] > M_PI/3 && quadPointsSphere[idx_quad][1] < 2*M_PI/3) {    // if my >0 
-            //         cellKineticDensity[idx_quad] = std::max( 1.0 / ( s * sqrt( 2 * M_PI ) )  * std::exp( -( x * x + y * y ) / ( 2 * s * s ) ), epsilon );
-            //     }
+            //     double theta = acos(sqrt(1-quadPointsSphere[idx_quad][0]*quadPointsSphere[idx_quad][0])*cos(quadPointsSphere[idx_quad][1]));
+            //     if(theta > M_PI/3 && theta < 2*M_PI/3&&quadPointsSphere[idx_quad][0]<0) {    
+            //              cellKineticDensity[idx_quad] = std::max( 1.0 / ( s * sqrt( 2 * M_PI ) )  * std::exp( -( x * x + y * y ) / ( 2 * s * s ) ), epsilon );
+            //      }
             //  }
 
             // normal distribution also in angle
            
             for( unsigned idx_quad = 0; idx_quad < _settings->GetNQuadPoints(); idx_quad++ ) {
-                    double ang = quadPointsSphere[idx_quad][1] - meanDir;
-                    cellKineticDensity[idx_quad] = std::max( 1.0 / ( s * s *s_ang * sqrt( 8 * M_PI * M_PI * M_PI))  * std::exp( -( x * x + y * y ) / ( 2 * s * s ) )* std::exp( -( ang * ang ) / (2* s_ang ) ), epsilon );
+                if(quadPointsSphere[idx_quad][0]<0) { 
+                    double theta = acos(sqrt(1-quadPointsSphere[idx_quad][0]*quadPointsSphere[idx_quad][0])*cos(quadPointsSphere[idx_quad][1]));
+                    double ang = theta - meanDir;
+                    cellKineticDensity[idx_quad] = std::max( 1.0 / ( s * s_ang * sqrt( 8 * M_PI * M_PI * M_PI))  * std::exp( -( x * x + y * y ) / ( 2 * s * s ) )* std::exp( -( ang * ang ) / (2* s_ang ) ), epsilon );
+            }
             }
             
             // Compute moments of this kinetic density
@@ -201,25 +209,29 @@ VectorVector RadiationCTImage_Moment::SetupIC() {
         double enterPositionX = 2.5;    // 0.0;
         double enterPositionY = 5.8;
         double meanDir = M_PI/2;
-        double s_ang = M_PI *3;
-
+        double s_ang = 0.1;
 
         for( unsigned idx_cell = 0; idx_cell < cellMids.size(); ++idx_cell ) {
             double x = cellMids[idx_cell][0] - enterPositionX;
             double y = cellMids[idx_cell][1] - enterPositionY;
-            
             // anisotropic, forward-directed particle inflow
-            for( unsigned idx_quad = 0; idx_quad < _settings->GetNQuadPoints(); idx_quad++ ) {
-                if( quadPointsSphere[idx_quad][1] > M_PI/3 && quadPointsSphere[idx_quad][1] < 2*M_PI/3) {    // if my >0 
-                    cellKineticDensity[idx_quad] = std::max( 1.0 / ( s * sqrt( 2 * M_PI ) )  * std::exp( -( x * x + y * y ) / ( 2 * s * s ) ), epsilon );
-                }
-            }
+            // for( unsigned idx_quad = 0; idx_quad < _settings->GetNQuadPoints(); idx_quad++ ) {
+            //     double theta = acos(sqrt(1-quadPointsSphere[idx_quad][0]*quadPointsSphere[idx_quad][0])*cos(quadPointsSphere[idx_quad][1]));
+            //     if(theta > M_PI/3 && theta < 2*M_PI/3&&quadPointsSphere[idx_quad][0]<0) {    
+            //              cellKineticDensity[idx_quad] = std::max( 1.0 / ( s * sqrt( 2 * M_PI ) )  * std::exp( -( x * x + y * y ) / ( 2 * s * s ) ), epsilon );
+            //      }
+            //  }
+
             // normal distribution also in angle
            
-            // for( unsigned idx_quad = 0; idx_quad < _settings->GetNQuadPoints(); idx_quad++ ) {
-            //         double ang = quadPointsSphere[idx_quad][1] - meanDir;
-            //         cellKineticDensity[idx_quad] = std::max( 1.0 / ( s * s*  s_ang * sqrt(  8 * M_PI * M_PI * M_PI ) )  * std::exp( -( x * x + y * y ) / ( 2 * s * s ) )* std::exp( -( ang * ang ) / (2* s_ang ) ), epsilon );
-            // }
+            for( unsigned idx_quad = 0; idx_quad < _settings->GetNQuadPoints(); idx_quad++ ) {
+                if(quadPointsSphere[idx_quad][0]<0) { 
+                    double theta = acos(sqrt(1-quadPointsSphere[idx_quad][0]*quadPointsSphere[idx_quad][0])*cos(quadPointsSphere[idx_quad][1]));
+                    double ang = theta - meanDir;
+                    cellKineticDensity[idx_quad] = std::max( 1.0 / ( s * s_ang * sqrt( 8 * M_PI * M_PI * M_PI))  * std::exp( -( x * x + y * y ) / ( 2 * s * s ) )* std::exp( -( ang * ang ) / (2* s_ang ) ), epsilon );
+            }
+            }
+            
             // Compute moments of this kinetic density
             for( unsigned idx_quad = 0; idx_quad < quad->GetNq(); idx_quad++ ) {
                 initialSolution[idx_cell] += cellKineticDensity[idx_quad] * w[idx_quad] * moments[idx_quad];

@@ -129,7 +129,7 @@ void CSDPNSolver::FluxUpdate() {
 
             // Compute flux contribution and store in psiNew to save memory
             if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::NEUMANN && _neighbors[idx_cell][idx_neighbor] == _nCells )
-                _solNew[idx_cell] += _g->Flux( _AxPlus,
+                _solNew[idx_cell] += _g->FluxXZ( _AxPlus,
                                                  _AxMinus,
                                                  _AyPlus,
                                                  _AyMinus,
@@ -144,7 +144,7 @@ void CSDPNSolver::FluxUpdate() {
                     // first order solver
                     case 1:
                         _solNew[idx_cell] +=
-                            _g->Flux( _AxPlus,
+                            _g->FluxXZ( _AxPlus,
                                         _AxMinus,
                                         _AyPlus,
                                         _AyMinus,
@@ -171,11 +171,11 @@ void CSDPNSolver::FluxUpdate() {
                         }
                         // flux evaluation
                         _solNew[idx_cell] +=
-                            _g->Flux( _AxPlus, _AxMinus, _AyPlus, _AyMinus, _AzPlus, _AzMinus, solL, solR, _normals[idx_cell][idx_neighbor] );
+                            _g->FluxXZ( _AxPlus, _AxMinus, _AyPlus, _AyMinus, _AzPlus, _AzMinus, solL, solR, _normals[idx_cell][idx_neighbor] );
                         break;
                     // default: first order solver
                     default:
-                        _solNew[idx_cell] += _g->Flux( _AxPlus,
+                        _solNew[idx_cell] += _g->FluxXZ( _AxPlus,
                                                          _AxMinus,
                                                          _AyPlus,
                                                          _AyMinus,

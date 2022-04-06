@@ -22,7 +22,7 @@ def extract(image_name):
 
     else: # jpg or png
         img = cv2.imread(image_name, cv2.IMREAD_UNCHANGED)
-        scale_percent = 25
+        scale_percent = 15
         print(img.shape)
         width = int(img.shape[1] * scale_percent / 100)
         height = int(img.shape[0] * scale_percent / 100)
