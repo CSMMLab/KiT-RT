@@ -2,7 +2,7 @@ import numpy as np
 import pygmsh as pg
 import os
 
-import extract_grayscale_image_new as egs
+import extract_grayscale_image as egs
 
 def add_rectangle(x0,y0,width,height,char_length,geom):
     coords = np.array([
@@ -13,10 +13,10 @@ def add_rectangle(x0,y0,width,height,char_length,geom):
     ])
     return geom.add_polygon(coords, char_length)
 
-def generate(image_name, mesh_name):
+def generate(image_name, mesh_name, ratio = 1):
     if mesh_name.endswith('.su2'):
         mesh_name = os.path.splitext(mesh_name)[0]
-    gsImage, dimensions = egs.extract(image_name)
+    gsImage, dimensions = egs.extract(image_name, ratio)
 
     width, height = gsImage.shape
     xRes = dimensions[0]/width
@@ -31,6 +31,4 @@ def generate(image_name, mesh_name):
         mesh_file.write(mesh_code,)
     os.system('gmsh '+mesh_name+'.geo -2 -format su2 -save_all > /dev/null') # call gmsh
     os.system('rm '+mesh_name+'.geo > /dev/null')
-    print(gsImage.shape)
-    print(geom)
     return gsImage
