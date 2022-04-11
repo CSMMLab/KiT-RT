@@ -28,7 +28,6 @@ void MNSolverNormalized::IterPreprocessing( unsigned /*idx_pseudotime*/ ) {
         _u0[idx_cell] = _sol[idx_cell][0];
         _sol[idx_cell] /= _u0[idx_cell];    // assume _u0 > 0 always!!
     }
-    TextProcessingToolbox::PrintVectorVectorToFile( _sol, "solution", _nCells, _nSystem );
 
     // TextProcessingToolbox::PrintVectorVector( _sol );
     _optimizer->SolveMultiCell( _alpha, _sol, _momentBasis );
@@ -41,8 +40,8 @@ void MNSolverNormalized::IterPreprocessing( unsigned /*idx_pseudotime*/ ) {
             _kineticDensity[idx_cell][idx_quad] =
                 _u0[idx_cell] * _entropy->EntropyPrimeDual( blaze::dot( _alpha[idx_cell], _momentBasis[idx_quad] ) );
         }
-        _sol[idx_cell] *= _u0[idx_cell];
         if( _settings->GetRealizabilityReconstruction() ) ComputeRealizableSolution( idx_cell );
+        _sol[idx_cell] *= _u0[idx_cell];
     }
 
     // ------ Compute slope limiters and cell gradients ---

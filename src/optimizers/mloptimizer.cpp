@@ -68,7 +68,7 @@ MLOptimizer::MLOptimizer( Config* settings ) : OptimizerBase( settings ) {
     // Specify model input name
     // Call Model (change call depending on model mk) (Seems to be randomly assigned by tensorflow)
     _tfModelInputName = "";
-    // std::cout << _tfModelName << "\n";
+    // std::cout << tfModelName << "\n";
     // if( tfModelName.compare( "Monomial_Mk11_M1_2D" ) == 0 || tfModelName.compare( "Monomial_Mk12_M1_2D" ) == 0 ||
     //    tfModelName.compare( "Monomial_Mk12_M1_2D_gamma3" ) == 0 || tfModelName.compare( "Monomial_Mk13_M3_2D" ) == 0 ) {
     //    _tfModelInputName = "serving_default_input_1:0";
@@ -84,10 +84,18 @@ MLOptimizer::MLOptimizer( Config* settings ) : OptimizerBase( settings ) {
     std::vector<std::string> input_name_1_models = { "Monomial_Mk11_M1_2D",
                                                      "Monomial_Mk12_M1_2D",
                                                      "Monomial_Mk12_M1_2D_gamma3",
-                                                     "Monomial_Mk13_M3_2D",
-                                                     "Monomial_Mk13_M3_2D_gamma1",
-                                                     "Monomial_Mk13_M3_2D_gamma2",
-                                                     "Monomial_Mk13_M3_2D_gamma3",
+                                                     "Monomial_Mk11_M2_2D",
+                                                     "Monomial_Mk11_M2_2D_gamma1",
+                                                     "Monomial_Mk11_M2_2D_gamma2",
+                                                     "Monomial_Mk11_M2_2D_gamma3",
+                                                     "Monomial_Mk12_M2_2D",
+                                                     "Monomial_Mk12_M2_2D_gamma1",
+                                                     "Monomial_Mk12_M2_2D_gamma2",
+                                                     "Monomial_Mk12_M2_2D_gamma3",
+                                                     "Monomial_Mk11_M3_2D",
+                                                     "Monomial_Mk11_M3_2D_gamma1",
+                                                     "Monomial_Mk11_M3_2D_gamma2",
+                                                     "Monomial_Mk11_M3_2D_gamma3",
                                                      "Monomial_Mk12_M3_2D",
                                                      "Monomial_Mk12_M3_2D_gamma1",
                                                      "Monomial_Mk12_M3_2D_gamma2",
@@ -95,8 +103,16 @@ MLOptimizer::MLOptimizer( Config* settings ) : OptimizerBase( settings ) {
                                                      "Monomial_Mk13_M3_2D",
                                                      "Monomial_Mk13_M3_2D_gamma1",
                                                      "Monomial_Mk13_M3_2D_gamma2",
-                                                     "Monomial_Mk13_M3_2D_gamma3" };
-    for( std::vector<int>::iterator it = input_name_1_models.begin(); it != input_name_1_models.end(); ++it ) {
+                                                     "Monomial_Mk13_M3_2D_gamma3",
+                                                     "Monomial_Mk11_M4_2D",
+                                                     "Monomial_Mk11_M4_2D_gamma1",
+                                                     "Monomial_Mk11_M4_2D_gamma2",
+                                                     "Monomial_Mk11_M4_2D_gamma3",
+                                                     "Monomial_Mk12_M4_2D",
+                                                     "Monomial_Mk12_M4_2D_gamma1",
+                                                     "Monomial_Mk12_M4_2D_gamma2",
+                                                     "Monomial_Mk12_M4_2D_gamma3"};
+    for( std::vector<std::string>::iterator it = input_name_1_models.begin(); it != input_name_1_models.end(); ++it ) {
         if( tfModelName.compare( *it ) == 0 ) {
             model_found       = true;
             _tfModelInputName = "serving_default_input_1:0";
@@ -104,7 +120,7 @@ MLOptimizer::MLOptimizer( Config* settings ) : OptimizerBase( settings ) {
         }
     }
     std::vector<std::string> input_name_2_models = { "Monomial_Mk12_M1_2D_gamma1", "Monomial_Mk12_M1_2D_gamma2" };
-    for( std::vector<int>::iterator it = input_name_2_models.begin(); it != input_name_2_models.end(); ++it ) {
+    for( std::vector<std::string>::iterator it = input_name_2_models.begin(); it != input_name_2_models.end(); ++it ) {
         if( tfModelName.compare( *it ) == 0 ) {
             model_found       = true;
             _tfModelInputName = "serving_default_x:0";
@@ -115,6 +131,7 @@ MLOptimizer::MLOptimizer( Config* settings ) : OptimizerBase( settings ) {
     if( !model_found ) {
         ErrorMessages::Error( "Model input name unknown. Use Tensorflow CLI to determine input name and add it to source code", CURRENT_FUNCTION );
     }
+}
 
 MLOptimizer::~MLOptimizer() {}
 
