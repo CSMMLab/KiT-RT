@@ -166,7 +166,7 @@ Vector CSDMNSolver::ConstructFlux( unsigned idx_cell ) {
                 }
             }
             // Kinetic flux
-            kineticFlux += _g->Flux( _quadPoints[idx_quad], solL, solR, _normals[idx_cell][idx_nbr] );
+            kineticFlux += _g->FluxXZ( _quadPoints[idx_quad], solL, solR, _normals[idx_cell][idx_nbr] );
         }
         // Solution flux
         flux += _momentBasis[idx_quad] * ( _weights[idx_quad] * kineticFlux );
