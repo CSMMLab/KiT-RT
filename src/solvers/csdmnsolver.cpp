@@ -88,10 +88,10 @@ void CSDMNSolver::IterPreprocessing( unsigned idx_iter ) {
     if( _reconsOrder > 1 ) {
         VectorVector solDivRho = _sol;
         for( unsigned j = 0; j < _nCells; ++j ) {
-            solDivRho[j] = _sol[j] / _density[j];
+            solDivRho[j] = _kineticDensity[j] / _density[j];
         }
-        _mesh->ComputeSlopes( _nq, _solDx, _solDy, _kineticDensity );
-        _mesh->ComputeLimiter( _nq, _solDx, _solDy, _kineticDensity, _limiter );
+        _mesh->ComputeSlopes( _nq, _solDx, _solDy, solDivRho );
+        _mesh->ComputeLimiter( _nq, _solDx, _solDy, solDivRho, _limiter );
     }
 
     // ------ evaluate scatter coefficient at current energy level
