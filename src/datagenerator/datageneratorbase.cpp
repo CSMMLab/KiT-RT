@@ -52,9 +52,9 @@ DataGeneratorBase::DataGeneratorBase( Config* settings ) {
     _quadPointsSphere = _quadrature->GetPointsSphere();
 
     // Spherical Harmonics
-    if( _settings->GetSphericalBasisName() == SPHERICAL_HARMONICS && _maxPolyDegree > 0 ) {
-        ErrorMessages::Error( "No sampling algorithm for spherical harmonics basis with degree higher than 0 implemented", CURRENT_FUNCTION );
-    }
+    //if( _settings->GetSphericalBasisName() == SPHERICAL_HARMONICS && _maxPolyDegree > 0 ) {
+    //    ErrorMessages::Error( "No sampling algorithm for spherical harmonics basis with degree higher than 0 implemented", CURRENT_FUNCTION );
+    //}
     _basisGenerator = SphericalBase::Create( _settings );
 
     _nTotalEntries = _basisGenerator->GetBasisSize();
@@ -143,7 +143,7 @@ void DataGeneratorBase::SampleMultiplierAlpha() {
                 for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
                     integral += _entropy->EntropyPrimeDual( dot( alphaRed, momentsRed[idx_quad] ) ) * _weights[idx_quad];
                 }
-                _alpha[idx_set][0] = -log( integral );    // log trafo
+                _alpha[idx_set][0] = -1/_momentBasis[0][0]*(log(_momentBasis[0][0])+log( integral ));    // log trafo (assuming zero order basis element is isotropic)
 
                 // Assemble complete alpha (normalized)
                 for( unsigned idx_sys = 1; idx_sys < _nTotalEntries; idx_sys++ ) {
@@ -152,6 +152,8 @@ void DataGeneratorBase::SampleMultiplierAlpha() {
 
                 // Compute rejection criteria
                 accepted = ComputeEVRejection( idx_set );
+                //accepted=false;
+                //if (norm(alphaRed)<maxAlphaValue) accepted=true;
             }
         }
     }

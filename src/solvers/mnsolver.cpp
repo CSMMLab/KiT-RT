@@ -101,6 +101,7 @@ void MNSolver::ComputeMoments() {
 Vector MNSolver::ConstructFlux( unsigned idx_cell ) {
     //--- Integration of moments of flux ---
     // Delete here and in csdmn solver
+    return Vector(1,1);
 }
 
 void MNSolver::ComputeRealizableSolution( unsigned idx_cell ) {
