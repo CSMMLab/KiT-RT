@@ -20,6 +20,17 @@ class NumericalFluxBase
      * @return numerical flux value
      */
     virtual double Flux( const Vector& Omega, double psiL, double psiR, const Vector& n ) const = 0;
+
+     /**
+     * @brief Flux computes flux on edge for fixed ordinate at a given edge (in XZ plane)
+     * @param Omega fixed ordinate for flux computation
+     * @param psiL left solution state
+     * @param psiR right solution state
+     * @param n scaled normal vector of given edge
+     * @return numerical flux value
+     */
+    virtual double FluxXZ( const Vector& Omega, double psiL, double psiR, const Vector& n ) const = 0;
+
     /**
      * @brief Flux computes flux on edge for fixed ordinate at a given edge for pseudo 1D case
      * @param Omega fixed ordinate for flux computation
