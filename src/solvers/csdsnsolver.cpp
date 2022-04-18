@@ -180,7 +180,7 @@ void CSDSNSolver::FluxUpdate() {
                     unsigned int nbr_glob = _neighbors[j][idx_neighbor];    // global idx of neighbor cell
 
                     switch( _reconsOrder ) {
-                        case 1: _solNew[j][i] += _g->Flux( _quadPoints[i], _sol[j][i], _sol[nbr_glob][i], _normals[j][idx_neighbor] ); break;
+                        case 1: _solNew[j][i] += _g->FluxXZ( _quadPoints[i], _sol[j][i], _sol[nbr_glob][i], _normals[j][idx_neighbor] ); break;
                         // second order solver
                         case 2:
                             // left status of interface
@@ -193,7 +193,7 @@ void CSDSNSolver::FluxUpdate() {
                                          _solDy[nbr_glob][i] * ( _interfaceMidPoints[j][idx_neighbor][1] - _cellMidPoints[nbr_glob][1] ) );
 
                             // flux evaluation
-                            _solNew[j][i] += _g->Flux( _quadPoints[i], solL, solR, _normals[j][idx_neighbor] ) / _areas[j];
+                            _solNew[j][i] += _g->FluxXZ( _quadPoints[i], solL, solR, _normals[j][idx_neighbor] ) / _areas[j];
                             break;
                             // higher order solver
                         default: ErrorMessages::Error( "Reconstruction order not supported.", CURRENT_FUNCTION ); break;

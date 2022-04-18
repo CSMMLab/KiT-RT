@@ -17,7 +17,7 @@ class UpwindFlux : public NumericalFluxBase
     virtual ~UpwindFlux() {}
 
     /**
-     * @brief Flux computes flux on edge for fixed ordinate at a given edge
+     * @brief Flux computes flux on edge for fixed ordinate at a given edge using x and y axis
      * @param Omega fixed ordinate for flux computation
      * @param psiL left solution state
      * @param psiR right solution state
@@ -26,13 +26,23 @@ class UpwindFlux : public NumericalFluxBase
      */
     double Flux( const Vector& Omega, double psiL, double psiR, const Vector& n ) const override;
     /**
-     * @brief Flux computes flux on edge for fixed ordinate at a given edge for pseudo 1D case
+     * @brief FluxXZ computes flux on edge for fixed ordinate at a given edge using x and z axis
      * @param Omega fixed ordinate for flux computation
      * @param psiL left solution state
      * @param psiR right solution state
      * @param n scaled normal vector of given edge
      * @return numerical flux value
      */
+     double FluxXZ( const Vector& Omega, double psiL, double psiR, const Vector& n ) const override;
+    /**
+     * @brief Flux1D computes flux on edge for fixed ordinate at a given edge for pseudo 1D case
+     * @param Omega fixed ordinate for flux computation
+     * @param psiL left solution state
+     * @param psiR right solution state
+     * @param n scaled normal vector of given edge
+     * @return numerical flux value
+     */
+
     double Flux1D( const Vector& Omega, double psiL, double psiR, const Vector& n ) const override;
 
     /**

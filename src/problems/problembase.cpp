@@ -57,6 +57,12 @@ ProblemBase* ProblemBase::Create( Config* settings, Mesh* mesh ) {
                 return new StarMapValidation_SN( settings, mesh );
         } break;
         case PROBLEM_Phantomimage: return new PhantomImage( settings, mesh );
+        case PROBLEM_RadiationCT: {
+            if( settings->GetIsMomentSolver() )
+                return new RadiationCTImage_Moment( settings, mesh );
+            else
+                return new RadiationCTImage( settings, mesh );
+        } break;
         case PROBLEM_Meltingcube: {
             if( settings->GetIsMomentSolver() )
                 return new MeltingCube_Moment( settings, mesh );
@@ -78,12 +84,13 @@ ProblemBase* ProblemBase::Create( Config* settings, Mesh* mesh ) {
 std::vector<double> ProblemBase::GetDensity( const VectorVector& cellMidPoints ) { return std::vector<double>( cellMidPoints.size(), 1.0 ); }
 
 // Legacy code: Scattering crossection loaded from database ENDF with physics class -> later overwritten with ICRU data
-VectorVector ProblemBase::GetScatteringXSE( const Vector& energies, const Vector& angles ) {
+VectorVector ProblemBase::GetScatteringXSE( const Vector& /*energies*/, const Vector& /*angles*/ ) {
     ErrorMessages::Error( "Not yet implemented", CURRENT_FUNCTION );
+    return VectorVector( 1, Vector( 1, 0 ) );
 }
 
 // Stopping powers from phyics class or default = -1
-Vector ProblemBase::GetStoppingPower( const Vector& energies ) {
+Vector ProblemBase::GetStoppingPower( const Vector& /* energies */ ) {
     ErrorMessages::Error( "Not yet implemented", CURRENT_FUNCTION );
     return Vector( 1, -1.0 );
 }

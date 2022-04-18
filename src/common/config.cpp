@@ -214,7 +214,7 @@ void Config::SetConfigOptions() {
     /*! @brief MESH_FILE \n DESCRIPTION: Name of mesh file \n DEFAULT "" \ingroup Config.*/
     AddStringOption( "MESH_FILE", _meshFile, string( "mesh.su2" ) );
     /*! @brief MESH_FILE \n DESCRIPTION: Name of mesh file \n DEFAULT "" \ingroup Config.*/
-    AddStringOption( "CT_FILE", _ctFile, string( "../tests/input/phantom.png" ) );
+    AddStringOption( "CT_FILE", _ctFile, string( "/home/pia/kitrt/examples/meshes/phantom.png" ) );
 
     // Quadrature relatated options
     /*! @brief QUAD_TYPE \n DESCRIPTION: Type of Quadrature rule \n Options: see @link QUAD_NAME \endlink \n DEFAULT: QUAD_MonteCarlo

@@ -64,6 +64,7 @@ std::vector<VectorVector> AirCavity1D_Moment::GetExternalSource( const Vector& /
 
 VectorVector AirCavity1D_Moment::SetupIC() {
     if( _settings->GetSolverName() == PN_SOLVER ) {
+        
         // In case of PN, spherical basis is per default SPHERICAL_HARMONICS in 3 velocity dimensions
 
         SphericalBase* tempBase  = new SphericalHarmonics( _settings->GetMaxMomentDegree(), 3 );
