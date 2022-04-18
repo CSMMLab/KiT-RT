@@ -149,6 +149,7 @@ void CSDSNSolver::IterPostprocessing( unsigned idx_pseudotime ) {
     // ComputeRadFlux(); // do not scale radflux here
 
     // -- Compute Dose
+#pragma omp parallel for
     for( unsigned j = 0; j < _nCells; ++j ) {
         _fluxNew[j] = dot( _sol[j], _weights );    // unscaled rad flux
         if( n > 0 && n < _nEnergies - 1 ) {
