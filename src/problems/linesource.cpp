@@ -161,7 +161,7 @@ VectorVector LineSource_Moment::SetupIC() {
     SphericalBase* tempBase  = SphericalBase::Create( _settings );
     unsigned ntotalEquations = tempBase->GetBasisSize();
 
-    VectorVector psi( _mesh->GetNumCells(), Vector( ntotalEquations, 0 ) );    // zero could lead to problems?
+    VectorVector initial_sol( _mesh->GetNumCells(), Vector( ntotalEquations, 0 ) );    // zero could lead to problems?
     VectorVector cellMids = _mesh->GetCellMidPoints();
 
     Vector uIC( ntotalEquations, 0 );
@@ -197,14 +197,14 @@ VectorVector LineSource_Moment::SetupIC() {
         double kinetic_density = std::max( 1.0 / ( 4.0 * M_PI * t ) * std::exp( -( x * x + y * y ) / ( 4 * t ) ), epsilon );
 
         if( _settings->GetSphericalBasisName() == SPHERICAL_MONOMIALS ) {
-            psi[j] = kinetic_density * uIC / uIC[0];    // Remember scaling
+            initial_sol[j] = kinetic_density * uIC / uIC[0];    // Remember scaling
         }
         if( _settings->GetSphericalBasisName() == SPHERICAL_HARMONICS ) {
-            psi[j][0] = kinetic_density;
+            initial_sol[j][0] = kinetic_density;
         }
     }
     delete tempBase;    // Only temporally needed
-    return psi;
+    return initial_sol;
 }
 
 // ---- LineSource SN pseudo1D ----

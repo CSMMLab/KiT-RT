@@ -1,9 +1,20 @@
 #include "fluxes/upwindflux.hpp"
+#include <iostream>
 
 UpwindFlux::UpwindFlux() : NumericalFluxBase() {}
 
 double UpwindFlux::Flux( const Vector& Omega, double psiL, double psiR, const Vector& n ) const {
-    double inner = Omega[0] * n[0] + Omega[1] * n[1];    // Only use x and y axis in 2d case
+    double inner = Omega[0] * n[0] + Omega[1] * n[1];    // Only use x and y axis in 2d case, minus because y axis is flipped for some reason
+    if( inner > 0 ) {
+        return inner * psiL;
+    }
+    else {
+        return inner * psiR;
+    }
+}
+
+double UpwindFlux::FluxXZ( const Vector& Omega, double psiL, double psiR, const Vector& n ) const {
+    double inner = Omega[0] * n[0] + Omega[2] * n[1];    // Only use x and z axis in 2d case
     if( inner > 0 ) {
         return inner * psiL;
     }
