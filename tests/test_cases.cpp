@@ -31,6 +31,7 @@ std::vector<double> readVTKFile( std::string filename ) {
     return data;
 }
 
+
 TEST_CASE( "SN_SOLVER", "[validation_tests]" ) {
     std::string sn_fileDir = "input/validation_tests/SN_solver/";
     SECTION( "checkerboard" ) {

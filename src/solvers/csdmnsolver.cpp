@@ -88,10 +88,10 @@ void CSDMNSolver::IterPreprocessing( unsigned idx_iter ) {
     if( _reconsOrder > 1 ) {
         VectorVector solDivRho = _sol;
         for( unsigned j = 0; j < _nCells; ++j ) {
-            solDivRho[j] = _sol[j] / _density[j];
+            solDivRho[j] = _kineticDensity[j] / _density[j];
         }
-        _mesh->ComputeSlopes( _nq, _solDx, _solDy, _kineticDensity );
-        _mesh->ComputeLimiter( _nq, _solDx, _solDy, _kineticDensity, _limiter );
+        _mesh->ComputeSlopes( _nq, _solDx, _solDy, solDivRho );
+        _mesh->ComputeLimiter( _nq, _solDx, _solDy, solDivRho, _limiter );
     }
 
     // ------ evaluate scatter coefficient at current energy level
@@ -346,6 +346,15 @@ void CSDMNSolver::WriteVolumeOutput( unsigned idx_pseudoTime ) {
                 default: ErrorMessages::Error( "Volume Output Group not defined for CSD MN Solver!", CURRENT_FUNCTION ); break;
             }
         }
+    }
+    if( idx_pseudoTime == _nEnergies - 2 ) {
+        std::ofstream out( _settings->GetOutputFile().append( ".txt" ) );
+        unsigned nx = _settings->GetNCells();
+
+        for( unsigned j = 0; j < nx; ++j ) {
+            out << _cellMidPoints[j][0] << " " << _cellMidPoints[j][1] << " " << _dose[j] << std::endl;
+        }
+        out.close();
     }
 }
 
