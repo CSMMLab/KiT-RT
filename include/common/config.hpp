@@ -110,7 +110,7 @@ class Config
     // NeuralModel
     unsigned short _neuralModel; /*!< @brief  Version number of the employed neural model */
     unsigned short _neuralGamma; /*!< @brief  Gamma value (regularization parameter) of the employed neural model */
-    bool _neuralRotationalSymmetry; /*!< @brief  Flag if rotational symmtry of model is enforced */
+    bool _enforceNeuralRotationalSymmetry; /*!< @brief  Flag if rotational symmtry of model is enforced */
     // Output Options
     unsigned short _nVolumeOutput;            /*!< @brief Number of volume outputs */
     std::vector<VOLUME_OUTPUT> _volumeOutput; /*!< @brief Output groups for volume output*/
@@ -315,6 +315,7 @@ class Config
     // Neural Closure
     unsigned short inline GetModelMK() { return _neuralModel; }
     unsigned short inline GetNeuralModelGamma() { return _neuralGamma; }
+    bool inline GetEnforceNeuralRotationalSymmetry(){return _enforceNeuralRotationalSymmetry;}
 
     // Boundary Conditions
     BOUNDARY_TYPE GetBoundaryType( std::string nameMarker ) const; /*!< @brief Get Boundary Type of given marker */

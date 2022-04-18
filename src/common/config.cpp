@@ -301,7 +301,7 @@ void Config::SetConfigOptions() {
     AddUnsignedShortOption( "NEURAL_MODEL_GAMMA", _neuralGamma, 0 );
     /*! @brief Neural Model Gamma \n DESCRIPTION:  Specifies regularization parameter for neural networks \n DEFAULT 0 (values: 0,1,2,3)
     \ingroup Config */
-    AddBoolOption( "NEURAL_MODEL_ENFORCE_ROTATION_SYMMETRY", _neuralRotationalSymmetry, false );
+    AddBoolOption( "NEURAL_MODEL_ENFORCE_ROTATION_SYMMETRY", _enforceNeuralRotationalSymmetry, false );
 
     // Mesh related options
     // Boundary Markers
