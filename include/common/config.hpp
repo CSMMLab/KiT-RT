@@ -110,6 +110,7 @@ class Config
     // NeuralModel
     unsigned short _neuralModel; /*!< @brief  Version number of the employed neural model */
     unsigned short _neuralGamma; /*!< @brief  Gamma value (regularization parameter) of the employed neural model */
+    bool _neuralRotationalSymmetry; /*!< @brief  Flag if rotational symmtry of model is enforced */
     // Output Options
     unsigned short _nVolumeOutput;            /*!< @brief Number of volume outputs */
     std::vector<VOLUME_OUTPUT> _volumeOutput; /*!< @brief Output groups for volume output*/
