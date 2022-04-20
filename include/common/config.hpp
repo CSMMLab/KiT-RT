@@ -108,8 +108,8 @@ class Config
     bool _newtonFastMode;                 /*!< @brief If true, we skip the NewtonOptimizer for quadratic entropy and assign alpha = u */
     double _regularizerGamma;             /*!< @brief Regularization parameter for the regularized closure */
     // NeuralModel
-    unsigned short _neuralModel; /*!< @brief  Version number of the employed neural model */
-    unsigned short _neuralGamma; /*!< @brief  Gamma value (regularization parameter) of the employed neural model */
+    unsigned short _neuralModel;           /*!< @brief  Version number of the employed neural model */
+    unsigned short _neuralGamma;           /*!< @brief  Gamma value (regularization parameter) of the employed neural model */
     bool _enforceNeuralRotationalSymmetry; /*!< @brief  Flag if rotational symmtry of model is enforced */
     // Output Options
     unsigned short _nVolumeOutput;            /*!< @brief Number of volume outputs */
@@ -315,7 +315,7 @@ class Config
     // Neural Closure
     unsigned short inline GetModelMK() { return _neuralModel; }
     unsigned short inline GetNeuralModelGamma() { return _neuralGamma; }
-    bool inline GetEnforceNeuralRotationalSymmetry(){return _enforceNeuralRotationalSymmetry;}
+    bool inline GetEnforceNeuralRotationalSymmetry() { return _enforceNeuralRotationalSymmetry; }
 
     // Boundary Conditions
     BOUNDARY_TYPE GetBoundaryType( std::string nameMarker ) const; /*!< @brief Get Boundary Type of given marker */
@@ -343,7 +343,7 @@ class Config
     SAMPLER_NAME inline GetSamplerName() { return _sampler; }
     unsigned long inline GetTrainingDataSetSize() { return _tainingSetSize; }
     bool inline GetSizeByDimension() { return _sizeByDimension; }
-    unsigned long inline GetMaxValFirstMoment() { return _maxValFirstMoment; } // Deprecated
+    unsigned long inline GetMaxValFirstMoment() { return _maxValFirstMoment; }    // Deprecated
     double GetRealizableSetEpsilonU0() { return _RealizableSetEpsilonU0; }
     double GetRealizableSetEpsilonU1() { return _RealizableSetEpsilonU1; }
     bool inline GetNormalizedSampling() { return _normalizedSampling; }

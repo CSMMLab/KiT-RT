@@ -136,7 +136,6 @@ void SolverBase::Solve() {
 
     // Loop over energies (pseudo-time of continuous slowing down approach)
     for( unsigned iter = 0; iter < _maxIter; iter++ ) {
-
         // --- Prepare Boundaries and temp variables
         IterPreprocessing( iter );
 

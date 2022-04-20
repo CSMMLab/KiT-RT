@@ -40,10 +40,13 @@ class MLOptimizer : public OptimizerBase
     unsigned _nSystem;                /*!< @brief  size of the moment system including zero order moment*/
     VectorVector _reducedMomentBasis; /*!< @brief reduced basis functions (excluding order zero) */
 
-    vector<Matrix> _rotationMats;                       /*!< @brief vector of Rotation matrices for symmetry enforcing */
+    vector<Matrix> _rotationMats;  /*!< @brief vector of Rotation matrices for symmetry enforcing */
+    vector<Matrix> _rotationMatsT; /*!< @brief vector of transpose Rotation matrices for symmetry enforcing */
+
     Matrix CreateRotator( const Vector& uFirstMoment ); /*!< @brief Creates a rotation matrix R using the first moment of a momnet vector */
-    void RotateM1( Vector& vec, Matrix& R );            /*!< @brief Rotates the M1 part of a 2D moment vector using a rotation matrix R */
-    void RotateM2( Matrix& vec, Matrix& R );            /*!< @brief Rotates the tensorized M2 part of a 2D moment vector using a rotation matrix R */
+    Vector RotateM1( Vector& vec, Matrix& R );          /*!< @brief Rotates the M1 part of a 2D moment vector using a rotation matrix R */
+    /*!< @brief Rotates the tensorized M2 part of a 2D moment vector using a rotation matrix R */
+    Matrix RotateM2( Matrix& vec, Matrix& R, Matrix& Rt );
 };
 #else
 // Dummy class
