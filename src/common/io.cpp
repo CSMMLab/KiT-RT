@@ -336,11 +336,13 @@ void PrintLogHeader( std::string inputFile ) {
         log->info( "|    _  _____ _____     ____ _____                                     |" );
         log->info( "|   | |/ /_ _|_   _|   |  _ \\_   _|                                    |" );
         log->info( "|   | ' / | |  | |_____| |_) || |            Version                   |" );
-        log->info( "|   | . \\ | |  | |_____|  _ < | |             0.1.0                    |" );
+        log->info( "|   | . \\ | |  | |_____|  _ < | |             1.0.0                    |" );
         log->info( "|   |_|\\_\\___| |_|     |_| \\_\\|_|                                      |" );
         log->info( "|                                                                      |" );
         log->info( "------------------------------------------------------------------------" );
-        log->info( "|    Copyright statement goes here                                     |" );
+        log->info( "|  Copyright: MIT Licence                                              |" );
+        // log->info( "|  Authors: S. Schotthöfer, J. Kusch, J. Wolters, P. Stammer ad T. Xiao |" );
+        log->info( "|  Date: 21th April 2022                                               |" );
         log->info( "------------------------------------------------------------------------" );
         log->info( "|" );
         log->info( "| Git commit :\t{0}", GIT_HASH );
