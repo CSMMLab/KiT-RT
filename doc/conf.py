@@ -20,7 +20,7 @@ exclude_patterns = []
 html_theme = 'sphinx_rtd_theme'
 html_theme_options = {
     'logo_only': True,
-    'display_version': True,
+    'display_version': False
 }
 html_logo = 'images/KiT-RT_logo_small.png'
 html_static_path = ['_static']

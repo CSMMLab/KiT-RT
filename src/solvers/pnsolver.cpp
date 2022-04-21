@@ -9,6 +9,8 @@
 #include "toolboxes/textprocessingtoolbox.hpp"
 // externals
 #include "spdlog/spdlog.h"
+
+#include <iostream>
 #include <mpi.h>
 
 PNSolver::PNSolver( Config* settings ) : SolverBase( settings ) {
@@ -67,14 +69,19 @@ void PNSolver::IterPreprocessing( unsigned /*idx_iter*/ ) {
 
 void PNSolver::IterPostprocessing( unsigned /*idx_iter*/ ) {
     // --- Update Solution ---
-    _sol = _solNew;
+    //_sol = _solNew;
 
     // --- Compute Flux for solution and Screen Output ---
     ComputeRadFlux();
 }
 
 void PNSolver::ComputeRadFlux() {
-    double firstMomentScaleFactor = sqrt( 4 * M_PI );
+    double firstMomentScaleFactor = 4 * M_PI;
+    if( _settings->GetProblemName() == PROBLEM_Aircavity1D || _settings->GetProblemName() == PROBLEM_Linesource1D ||
+        _settings->GetProblemName() == PROBLEM_Checkerboard1D || _settings->GetProblemName() == PROBLEM_Meltingcube1D ) {
+        firstMomentScaleFactor = 2.0;
+    }
+#pragma omp parallel for
     for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
         _fluxNew[idx_cell] = _sol[idx_cell][0] * firstMomentScaleFactor;
     }
@@ -83,6 +90,69 @@ void PNSolver::ComputeRadFlux() {
 void PNSolver::FluxUpdate() {
 
     // Loop over all spatial cells
+    if( _settings->GetProblemName() == PROBLEM_Aircavity1D || _settings->GetProblemName() == PROBLEM_Linesource1D ||
+        _settings->GetProblemName() == PROBLEM_Checkerboard1D || _settings->GetProblemName() == PROBLEM_Meltingcube1D ) {
+        FluxUpdatePseudo1D();
+    }
+    else {
+        FluxUpdatePseudo2D();
+    }
+}
+
+void PNSolver::FluxUpdatePseudo1D() {
+#pragma omp parallel for
+    for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
+        Vector solL( _nSystem, 0.0 );
+        Vector solR( _nSystem, 0.0 );
+        // Dirichlet cells stay at IC, farfield assumption
+        if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::DIRICHLET ) continue;
+
+        // Reset temporary variable psiNew
+        for( unsigned idx_sys = 0; idx_sys < _nSystem; idx_sys++ ) {
+            _solNew[idx_cell][idx_sys] = 0.0;
+        }
+
+        // Loop over all neighbor cells (edges) of cell j and compute numerical fluxes
+        for( unsigned idx_neighbor = 0; idx_neighbor < _neighbors[idx_cell].size(); idx_neighbor++ ) {
+
+            // Compute flux contribution and store in psiNew to save memory
+            if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::NEUMANN && _neighbors[idx_cell][idx_neighbor] == _nCells )
+                _solNew[idx_cell] += _g->Flux1D( _AzPlus, _AzMinus, _sol[idx_cell], _sol[idx_cell], _normals[idx_cell][idx_neighbor] );
+            else {
+                unsigned int nbr_glob = _neighbors[idx_cell][idx_neighbor];    // global idx of neighbor cell
+                switch( _reconsOrder ) {
+                    // first order solver
+                    case 1:
+                        _solNew[idx_cell] += _g->Flux1D(
+                            _AzPlus, _AzMinus, _sol[idx_cell], _sol[_neighbors[idx_cell][idx_neighbor]], _normals[idx_cell][idx_neighbor] );
+                        break;
+                    // second order solver
+                    case 2:
+                        // left status of interface
+                        for( unsigned idx_sys = 0; idx_sys < _nSystem; idx_sys++ ) {
+                            solL[idx_sys] =
+                                _sol[idx_cell][idx_sys] +
+                                _limiter[idx_cell][idx_sys] *
+                                    ( _solDx[idx_cell][idx_sys] * ( _interfaceMidPoints[idx_cell][idx_neighbor][0] - _cellMidPoints[idx_cell][0] ) +
+                                      _solDy[idx_cell][idx_sys] * ( _interfaceMidPoints[idx_cell][idx_neighbor][1] - _cellMidPoints[idx_cell][1] ) );
+                            solR[idx_sys] =
+                                _sol[nbr_glob][idx_sys] +
+                                _limiter[nbr_glob][idx_sys] *
+                                    ( _solDx[nbr_glob][idx_sys] * ( _interfaceMidPoints[idx_cell][idx_neighbor][0] - _cellMidPoints[nbr_glob][0] ) +
+                                      _solDy[nbr_glob][idx_sys] * ( _interfaceMidPoints[idx_cell][idx_neighbor][1] - _cellMidPoints[nbr_glob][1] ) );
+                        }
+                        // flux evaluation
+                        _solNew[idx_cell] += _g->Flux1D( _AzPlus, _AzMinus, solL, solR, _normals[idx_cell][idx_neighbor] );
+                        break;
+                    // default: first order solver
+                    default: ErrorMessages::Error( "Reconstruction order not supported.", CURRENT_FUNCTION ); break;
+                }
+            }
+        }
+    }
+}
+
+void PNSolver::FluxUpdatePseudo2D() {
 #pragma omp parallel for
     for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
         Vector solL( _nSystem, 0.0 );
@@ -136,17 +206,8 @@ void PNSolver::FluxUpdate() {
                         _solNew[idx_cell] +=
                             _g->Flux( _AxPlus, _AxMinus, _AyPlus, _AyMinus, _AzPlus, _AzMinus, solL, solR, _normals[idx_cell][idx_neighbor] );
                         break;
-                    // default: first order solver
-                    default:
-                        _solNew[idx_cell] += _g->Flux( _AxPlus,
-                                                       _AxMinus,
-                                                       _AyPlus,
-                                                       _AyMinus,
-                                                       _AzPlus,
-                                                       _AzMinus,
-                                                       _sol[idx_cell],
-                                                       _sol[_neighbors[idx_cell][idx_neighbor]],
-                                                       _normals[idx_cell][idx_neighbor] );
+                        // default: first order solver
+                    default: ErrorMessages::Error( "Reconstruction order not supported.", CURRENT_FUNCTION ); break;
                 }
             }
         }
@@ -168,7 +229,7 @@ void PNSolver::FVMUpdate( unsigned idx_energy ) {
             /* total xs influence  */    // Vorzeichenfehler!
         }
         // Source Term
-        _solNew[idx_cell][0] += _dE * _Q[0][idx_cell][0];
+        _solNew[idx_cell] += _dE * _Q[0][idx_cell];
     }
 }
 

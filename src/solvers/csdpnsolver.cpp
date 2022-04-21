@@ -7,6 +7,8 @@
 #include "toolboxes/interpolation.hpp"
 
 // externals
+#include <fstream>
+
 #include "spdlog/spdlog.h"
 
 CSDPNSolver::CSDPNSolver( Config* settings ) : PNSolver( settings ) {
@@ -47,6 +49,7 @@ CSDPNSolver::CSDPNSolver( Config* settings ) : PNSolver( settings ) {
     Vector etmp = E_tab;
     Vector stmp = S_tab;
     Interpolation interpS( etmp, stmp );
+
     _sigmaTAtEnergy = Vector( _polyDegreeBasis + 1, 0.0 );
 
     // compute stopping power between energies for dose computation
@@ -90,9 +93,8 @@ void CSDPNSolver::IterPreprocessing( unsigned idx_iter ) {
 void CSDPNSolver::SolverPreprocessing() {}
 
 void CSDPNSolver::IterPostprocessing( unsigned idx_iter ) {
-    // std::cout << "Iter Postprocessing...";
     // --- Update Solution ---
-    _sol = _solNew;
+    //_sol = _solNew;
 
     // --- Compute Flux for solution and Screen Output ---
     ComputeRadFlux();
@@ -310,11 +312,20 @@ void CSDPNSolver::WriteVolumeOutput( unsigned idx_pseudoTime ) {
             }
         }
     }
+    if( idx_pseudoTime == _nEnergies - 2 ) {
+        std::ofstream out( _settings->GetOutputFile().append( ".txt" ) );
+        unsigned nx = _settings->GetNCells();
+
+        for( unsigned j = 0; j < nx; ++j ) {
+            out << _cellMidPoints[j][0] << " " << _cellMidPoints[j][1] << " " << _dose[j] << std::endl;
+        }
+        out.close();
+    }
 }
 
-double CSDPNSolver::NormPDF( double x, double mu, double sigma ) {
-    return INV_SQRT_2PI / sigma * std::exp( -( ( x - mu ) * ( x - mu ) ) / ( 2.0 * sigma * sigma ) );
-}
+// double CSDPNSolver::NormPDF( double x, double mu, double sigma ) {
+//     return INV_SQRT_2PI / sigma * std::exp( -( ( x - mu ) * ( x - mu ) ) / ( 2.0 * sigma * sigma ) );
+// }
 
 // Vector CSDPNSolver::Time2Energy( const Vector& t, const double E_CutOff ) {
 //     Interpolation interp( E_trans, E_tab );

@@ -10,8 +10,8 @@
 #include "optimizers/newtonoptimizer.hpp"
 #include "quadratures/quadraturebase.hpp"
 #include "toolboxes/errormessages.hpp"
-#include "toolboxes/sphericalbase.hpp"
 #include "toolboxes/textprocessingtoolbox.hpp"
+#include "velocitybasis/sphericalbase.hpp"
 
 #include "spdlog/spdlog.h"
 #include <iostream>

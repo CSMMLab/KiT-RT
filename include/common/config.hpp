@@ -61,14 +61,16 @@ class Config
     std::vector<std::string> _MarkerNeumann;   /*!< @brief Neumann BC markers. */
 
     // Solver
-    double _CFL;                     /*!< @brief CFL Number for Solver*/
-    double _tEnd;                    /*!< @brief Final Time for Simulation */
-    PROBLEM_NAME _problemName;       /*!< @brief Name of predefined Problem   */
-    SOLVER_NAME _solverName;         /*!< @brief Name of the used Solver */
-    ENTROPY_NAME _entropyName;       /*!< @brief Name of the used Entropy Functional */
-    unsigned short _maxMomentDegree; /*!< @brief Maximal Order of Moments for PN and MN Solver */
-    unsigned short _reconsOrder;     /*!< @brief Spatial Order of Accuracy for Solver */
-    bool _realizabilityRecons;       /*!< @brief Turns realizability reconstruction on/off for u sampling and MN solver */
+    double _CFL;                      /*!< @brief CFL Number for Solver*/
+    double _tEnd;                     /*!< @brief Final Time for Simulation */
+    PROBLEM_NAME _problemName;        /*!< @brief Name of predefined Problem   */
+    SOLVER_NAME _solverName;          /*!< @brief Name of the used Solver */
+    ENTROPY_NAME _entropyName;        /*!< @brief Name of the used Entropy Functional */
+    unsigned short _maxMomentDegree;  /*!< @brief Maximal Order of Moments for PN and MN Solver */
+    unsigned short _reconsOrder;      /*!< @brief Spatial Order of Accuracy for Solver */
+    bool _realizabilityRecons;        /*!< @brief Turns realizability reconstruction on/off for u sampling and MN solver */
+    bool _isMomentSolver;             /*!< @brief Flag for the moment base (PN and MN) solvers */
+    unsigned short _rungeKuttaStages; /*!< @brief Specify the number of Runge Kutta time integration stages */
 
     /*!< @brief If true, very low entries (10^-10 or smaller) of the flux matrices will be set to zero,
      * to improve floating point accuracy */
@@ -141,7 +143,6 @@ class Config
     double _maxSamplingTemperature; /*!< @brief The lower bound for the interval to draw temperatures for the 1D classification sampler */
     double _minSamplingTemperature; /*!< @brief The upper bound for the interval to draw temperatures for the 1D classification sampler */
     unsigned short _nTemperatures;  /*!< @brief The number of sampling temperatures for the kinetic density sampler */
-
     // --- Parsing Functionality and Initializing of Options ---
     /*!
      * @brief Set default values for all options not yet set.
@@ -281,7 +282,7 @@ class Config
 
     // Mesh Structure
     unsigned GetNCells() { return _nCells; }
-    unsigned short GetDim() { return _dim; }
+    unsigned short GetDim() const { return _dim; }
 
     // Solver Structure
     double inline GetCFL() const { return _CFL; }
@@ -339,7 +340,7 @@ class Config
     SAMPLER_NAME inline GetSamplerName() { return _sampler; }
     unsigned long inline GetTrainingDataSetSize() { return _tainingSetSize; }
     bool inline GetSizeByDimension() { return _sizeByDimension; }
-    unsigned long inline GetMaxValFirstMoment() { return _maxValFirstMoment; }
+    unsigned long inline GetMaxValFirstMoment() { return _maxValFirstMoment; } // Deprecated
     double GetRealizableSetEpsilonU0() { return _RealizableSetEpsilonU0; }
     double GetRealizableSetEpsilonU1() { return _RealizableSetEpsilonU1; }
     bool inline GetNormalizedSampling() { return _normalizedSampling; }
@@ -352,6 +353,8 @@ class Config
     double inline GetMinimalSamplingTemperature() { return _minSamplingTemperature; }
     double inline GetMaximalSamplingTemperature() { return _maxSamplingTemperature; }
     unsigned short inline GetNSamplingTemperatures() { return _nTemperatures; }
+    bool inline GetIsMomentSolver() { return _isMomentSolver; }
+    unsigned short inline GetRKStages() { return _rungeKuttaStages; }
 
     // ---- Setters for option structure
     // This section is dangerous

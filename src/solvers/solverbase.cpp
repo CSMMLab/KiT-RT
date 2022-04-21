@@ -9,15 +9,14 @@
 #include "solvers/csdmnsolver.hpp"
 #include "solvers/csdpnsolver.hpp"
 #include "solvers/csdsnsolver.hpp"
-#include "solvers/csdsolvertrafofp.hpp"
-#include "solvers/csdsolvertrafofp2d.hpp"
-#include "solvers/csdsolvertrafofpsh2d.hpp"
 #include "solvers/mnsolver.hpp"
 #include "solvers/mnsolver_normalized.hpp"
 #include "solvers/pnsolver.hpp"
 #include "solvers/snsolver.hpp"
 #include "toolboxes/textprocessingtoolbox.hpp"
 
+#include <fstream>
+#include <iostream>
 #include <mpi.h>
 
 SolverBase::SolverBase( Config* settings ) {
@@ -71,7 +70,7 @@ SolverBase::SolverBase( Config* settings ) {
     }
 
     // setup numerical flux
-    _g = NumericalFlux::Create();
+    _g = NumericalFluxBase::Create();
 
     // boundary type
     _boundaryCells = _mesh->GetBoundaryTypes();
@@ -105,12 +104,8 @@ SolverBase* SolverBase::Create( Config* settings ) {
         case MN_SOLVER: return new MNSolver( settings );
         case MN_SOLVER_NORMALIZED: return new MNSolverNormalized( settings );
         case CSD_SN_SOLVER: return new CSDSNSolver( settings );
-        case CSD_SN_FOKKERPLANCK_TRAFO_SOLVER: return new CSDSolverTrafoFP( settings );
-        case CSD_SN_FOKKERPLANCK_TRAFO_SOLVER_2D: return new CSDSolverTrafoFP2D( settings );
-        case CSD_SN_FOKKERPLANCK_TRAFO_SH_SOLVER_2D: return new CSDSolverTrafoFPSH2D( settings );
         case CSD_PN_SOLVER: return new CSDPNSolver( settings );
         case CSD_MN_SOLVER: return new CSDMNSolver( settings );
-
         default: ErrorMessages::Error( "Creator for the chosen solver does not yet exist. This is is the fault of the coder!", CURRENT_FUNCTION );
     }
     ErrorMessages::Error( "Creator for the chosen solver does not yet exist. This is is the fault of the coder!", CURRENT_FUNCTION );
@@ -133,21 +128,31 @@ void SolverBase::Solve() {
 
     // Preprocessing before first pseudo time step
     SolverPreprocessing();
+    unsigned rkStages = _settings->GetRKStages();
+    // Create Backup solution for Runge Kutta
+    VectorVector solRK0 = _sol;
 
     // Loop over energies (pseudo-time of continuous slowing down approach)
     for( unsigned iter = 0; iter < _maxIter; iter++ ) {
+        if( rkStages == 2 ) solRK0 = _sol;
+        for( unsigned rkStep = 0; rkStep < rkStages; ++rkStep ) {
+            // --- Prepare Boundaries and temp variables
+            IterPreprocessing( iter + rkStep );
 
-        // --- Prepare Boundaries and temp variables
-        IterPreprocessing( iter );
+            // --- Compute Fluxes ---
+            FluxUpdate();
 
-        // --- Compute Fluxes ---
-        FluxUpdate();
+            // --- Finite Volume Update ---
+            FVMUpdate( iter + rkStep );
 
-        // --- Finite Volume Update ---
-        FVMUpdate( iter );
-
+            // --- Update Solution within Runge Kutta Stages
+            _sol = _solNew;
+        }
         // --- Iter Postprocessing ---
         IterPostprocessing( iter );
+
+        // --- Runge Kutta Timestep ---
+        if( rkStages == 2 ) RKUpdate( solRK0, _sol );
 
         // --- Solver Output ---
         WriteVolumeOutput( iter );
@@ -158,8 +163,14 @@ void SolverBase::Solve() {
     }
 
     // --- Postprocessing ---
-
     DrawPostSolverOutput();
+}
+
+void SolverBase::RKUpdate( VectorVector sol_0, VectorVector sol_rk ) {
+#pragma omp parallel for
+    for( unsigned i = 0; i < _nCells; ++i ) {
+        _sol[i] = 0.5 * ( sol_0[i] + sol_rk[i] );
+    }
 }
 
 void SolverBase::PrintVolumeOutput() const { ExportVTK( _settings->GetOutputFile(), _outputFields, _outputFieldNames, _mesh ); }
@@ -175,6 +186,24 @@ void SolverBase::PrintVolumeOutput( int currEnergy ) const {
 
 // --- Helper ---
 double SolverBase::ComputeTimeStep( double cfl ) const {
+    // for pseudo 1D, set timestep to dx
+    double dx, dy;
+    switch( _settings->GetProblemName() ) {
+        case PROBLEM_Checkerboard1D:
+            dx = 7.0 / (double)_nCells;
+            dy = 0.3;
+            return cfl * ( dx * dy ) / ( dx + dy );
+            break;
+        case PROBLEM_Linesource1D:     // Fallthrough
+        case PROBLEM_Meltingcube1D:    // Fallthrough
+        case PROBLEM_Aircavity1D:
+            dx = 3.0 / (double)_nCells;
+            dy = 0.3;
+            return cfl * ( dx * dy ) / ( dx + dy );
+            break;
+        default: break;    // 2d as normal
+    }
+    // 2D case
     double maxEdge = -1.0;
     for( unsigned j = 0; j < _nCells; j++ ) {
         for( unsigned l = 0; l < _normals[j].size(); l++ ) {

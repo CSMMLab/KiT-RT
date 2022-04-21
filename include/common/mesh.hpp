@@ -129,6 +129,19 @@ class Mesh
      *  @param psiDerY is slope in y direction (gets computed. Slope is stored here)
      *  @param psi is solution for which slope is computed */
     void ComputeLimiter( unsigned nSys, const VectorVector& solDx, const VectorVector& solDy, const VectorVector& sol, VectorVector& limiter ) const;
+
+    /*! @brief Use gauss theorem and limiters. For unstructured mesh *
+     *  @param nq is number of quadrature points
+     *  @param psiDerX is slope in x direction (gets computed. Slope is stored here)
+     *  @param psiDerY is slope in y direction (gets computed. Slope is stored here)
+     *  @param psi is solution for which slope is computed */
+    void ComputeLimiter1D( unsigned nSys, const VectorVector& sol, VectorVector& limiter ) const;
+
+    /*! @brief ComputeSlopes calculates for 1D meshes using finite difference formula in x direction
+     *  @param nq is number of quadrature points
+     *  @param psiDerX is slope in x direction (gets computed. Slope is stored here)
+     *  @param psi is solution for which slope is computed */
+    void ComputeSlopes1D( unsigned nq, VectorVector& psiDerX, const VectorVector& psi ) const;
 };
 
 #endif    // MESH_H
