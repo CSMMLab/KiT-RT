@@ -3,7 +3,7 @@
 
 #include "numericalflux.hpp"
 
-class LaxFriedrichsFlux : public NumericalFlux
+class LaxFriedrichsFlux : public NumericalFluxBase
 {
     // double _dt;
 

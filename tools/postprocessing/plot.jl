@@ -1,6 +1,17 @@
 using DelimitedFiles
 using PyPlot
 
+# command is julia plot.jl inputfilename outputfilename
+
+println(ARGS)
+
+if length(ARGS) > 1
+    input = ARGS[1];
+    output = ARGS[2];
+else
+    println("ERROR: need to specify input and output file in command line")
+end
+
 function Vec2Mat(nx,ny,v)
     m = zeros(nx,ny);
     for i = 1:nx
@@ -12,7 +23,7 @@ function Vec2Mat(nx,ny,v)
 end
 
 
-result = readdlm("../../result/CSD_1STOrder_HighDensity.txt", Float64)
+result = readdlm("../../result/$(input)", Float64)
 x = result[:,1];
 y = result[:,2];
 nx = Int(floor(sqrt(length(x))))
@@ -31,4 +42,4 @@ plt.xlabel("x", fontsize=20)
 plt.ylabel("y", fontsize=20)
 plt.title(L"dose, $S_N$", fontsize=25)
 tight_layout()
-savefig("dose.png")
+savefig("$(output).png")

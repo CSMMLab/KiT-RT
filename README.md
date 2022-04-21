@@ -15,6 +15,7 @@ The documentation can be found [here](https://kit-rt.readthedocs.io/en/develop/i
 * [Run](#run)
 * [Unit Tests](#unit-tests)
 * [Docker](#docker)
+* [Tensorflow](#tensorflow)
 
 ## What KiT-RT is capable of
 ### Theory
@@ -109,4 +110,30 @@ By running
 docker run --rm -ti -v $(pwd):/home kitrt/test:latest
 ```
 
+
+To use the tensorflow backend for neural network based entropy closures,  please use the tensorflow equippend containter by running
+```bash
+docker run --rm -ti -v $(pwd):/home kitrt/test_ml:latest
+```
 from the current folder will be mounted to the docker container and the code can be executed without any of the required dependencies.
+
+Bash scripts are provided in the folder tools/CI to get started with the docker environments. To start an interactive docker environment, execute
+```bash
+docker run -i -t --rm -v $(pwd)/../..:/mnt kitrt/test:latest /bin/bash
+```
+
+## Tensorflow
+To use the neural network based entropy closure, one needs to install the tensorflow C++ backend. Just use the following commands:
+```
+FILENAME=libtensorflow-cpu-linux-x86_64-2.7.0.tar.gz
+wget -q --no-check-certificate https://storage.googleapis.com/tensorflow/libtensorflow/${FILENAME}
+tar -C /usr/local -xzf ${FILENAME}
+ldconfig /usr/local/lib
+```
+and for a gpu based version (you need supported hardware and gpu drivers, see [here](https://www.tensorflow.org/install/gpu) ):
+```
+FILENAME=libtensorflow-gpu-linux-x86_64-2.7.0.tar.gz
+wget -q --no-check-certificate https://storage.googleapis.com/tensorflow/libtensorflow/${FILENAME}
+tar -C /usr/local -xzf ${FILENAME}
+ldconfig /usr/local/lib
+```

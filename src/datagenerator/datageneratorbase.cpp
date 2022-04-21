@@ -17,8 +17,8 @@
 #include "optimizers/regularizednewtonoptimizer.hpp"
 #include "quadratures/quadraturebase.hpp"
 #include "toolboxes/errormessages.hpp"
-#include "toolboxes/sphericalbase.hpp"
 #include "toolboxes/textprocessingtoolbox.hpp"
+#include "velocitybasis/sphericalbase.hpp"
 
 //#include <chrono>
 #include "spdlog/spdlog.h"

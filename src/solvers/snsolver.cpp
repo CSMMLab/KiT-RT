@@ -20,13 +20,12 @@ SNSolver::SNSolver( Config* settings ) : SolverBase( settings ) {
 
     ScatteringKernel* k = ScatteringKernel::CreateScatteringKernel( settings->GetKernelName(), _quadrature );
     _scatteringKernel   = k->GetScatteringKernel();
+    delete k;
 
     // Limiter variables
     _solDx   = VectorVector( _nCells, Vector( _nq, 0.0 ) );
     _solDy   = VectorVector( _nCells, Vector( _nq, 0.0 ) );
     _limiter = VectorVector( _nCells, Vector( _nq, 0.0 ) );
-
-    delete k;
 }
 
 void SNSolver::IterPreprocessing( unsigned /*idx_iter*/ ) {
@@ -39,24 +38,90 @@ void SNSolver::IterPreprocessing( unsigned /*idx_iter*/ ) {
 
 void SNSolver::IterPostprocessing( unsigned /*idx_iter*/ ) {
     // --- Update Solution ---
-    _sol = _solNew;
+    //_sol = _solNew;
 
     // --- Compute Flux for solution and Screen Output ---
     ComputeRadFlux();
 }
 
 void SNSolver::ComputeRadFlux() {
+    double firstMomentScaleFactor = 4 * M_PI;
+    if( _settings->GetProblemName() == PROBLEM_Aircavity1D || _settings->GetProblemName() == PROBLEM_Linesource1D ||
+        _settings->GetProblemName() == PROBLEM_Checkerboard1D || _settings->GetProblemName() == PROBLEM_Meltingcube1D ) {
+        firstMomentScaleFactor = 2.0;
+    }
+#pragma omp parallel for
     for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
-        _fluxNew[idx_cell] = blaze::dot( _sol[idx_cell], _weights );
+        _fluxNew[idx_cell] = blaze::dot( _sol[idx_cell], _weights ) / firstMomentScaleFactor;
     }
 }
 
 void SNSolver::FluxUpdate() {
+    if( _settings->GetProblemName() == PROBLEM_Aircavity1D || _settings->GetProblemName() == PROBLEM_Linesource1D ||
+        _settings->GetProblemName() == PROBLEM_Checkerboard1D || _settings->GetProblemName() == PROBLEM_Meltingcube1D ) {
+        FluxUpdatePseudo1D();
+    }
+    else {
+        FluxUpdatePseudo2D();
+    }
+}
 
-    double solL;
-    double solR;
-    // Loop over all spatial cells
+void SNSolver::FluxUpdatePseudo1D() {
+// Loop over all spatial cells
+#pragma omp parallel for
     for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
+        double solL;
+        double solR;
+        // Dirichlet cells stay at IC, farfield assumption
+        if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::DIRICHLET ) continue;
+        // Loop over all ordinates
+        for( unsigned idx_quad = 0; idx_quad < _nq; ++idx_quad ) {
+            // Reset temporary variable
+            _solNew[idx_cell][idx_quad] = 0.0;
+            // Loop over all neighbor cells (edges) of cell j and compute numerical fluxes
+            for( unsigned idx_nbr = 0; idx_nbr < _neighbors[idx_cell].size(); ++idx_nbr ) {
+                // store flux contribution on psiNew_sigmaS to save memory
+                if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::NEUMANN && _neighbors[idx_cell][idx_nbr] == _nCells )
+                    _solNew[idx_cell][idx_quad] +=
+                        _g->Flux1D( _quadPoints[idx_quad], _sol[idx_cell][idx_quad], _sol[idx_cell][idx_quad], _normals[idx_cell][idx_nbr] );
+                else {
+                    unsigned int nbr_glob = _neighbors[idx_cell][idx_nbr];    // global idx of neighbor cell
+
+                    switch( _reconsOrder ) {
+                        // first order solver
+                        case 1:
+                            _solNew[idx_cell][idx_quad] +=
+                                _g->Flux1D( _quadPoints[idx_quad], _sol[idx_cell][idx_quad], _sol[nbr_glob][idx_quad], _normals[idx_cell][idx_nbr] );
+                            break;
+                        // second order solver
+                        case 2:
+                            // left status of interface
+                            solL = _sol[idx_cell][idx_quad] +
+                                   _limiter[idx_cell][idx_quad] *
+                                       ( _solDx[idx_cell][idx_quad] * ( _interfaceMidPoints[idx_cell][idx_nbr][0] - _cellMidPoints[idx_cell][0] ) +
+                                         _solDy[idx_cell][idx_quad] * ( _interfaceMidPoints[idx_cell][idx_nbr][1] - _cellMidPoints[idx_cell][1] ) );
+                            solR = _sol[nbr_glob][idx_quad] +
+                                   _limiter[nbr_glob][idx_quad] *
+                                       ( _solDx[nbr_glob][idx_quad] * ( _interfaceMidPoints[idx_cell][idx_nbr][0] - _cellMidPoints[nbr_glob][0] ) +
+                                         _solDy[nbr_glob][idx_quad] * ( _interfaceMidPoints[idx_cell][idx_nbr][1] - _cellMidPoints[nbr_glob][1] ) );
+                            // flux evaluation
+                            _solNew[idx_cell][idx_quad] += _g->Flux1D( _quadPoints[idx_quad], solL, solR, _normals[idx_cell][idx_nbr] );
+                            break;
+                            // higher order solver
+                        default: ErrorMessages::Error( "Reconstruction order not supported.", CURRENT_FUNCTION ); break;
+                    }
+                }
+            }
+        }
+    }
+}
+
+void SNSolver::FluxUpdatePseudo2D() {
+    // Loop over all spatial cells
+#pragma omp parallel for
+    for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
+        double solL;
+        double solR;
         // Dirichlet cells stay at IC, farfield assumption
         if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::DIRICHLET ) continue;
         // Loop over all ordinates
@@ -93,16 +158,7 @@ void SNSolver::FluxUpdate() {
                             // flux evaluation
                             _solNew[idx_cell][idx_quad] += _g->Flux( _quadPoints[idx_quad], solL, solR, _normals[idx_cell][idx_nbr] );
                             break;
-                        // higher order solver
-                        case 3:
-                            std::cout << "higher order is WIP" << std::endl;
-                            break;
-                            // default: first order solver
-                        default:
-                            _solNew[idx_cell][idx_quad] += _g->Flux( _quadPoints[idx_quad],
-                                                                     _sol[idx_cell][idx_quad],
-                                                                     _sol[_neighbors[idx_cell][idx_nbr]][idx_quad],
-                                                                     _normals[idx_cell][idx_nbr] );
+                        default: ErrorMessages::Error( "Reconstruction order not supported.", CURRENT_FUNCTION ); break;
                     }
                 }
             }
@@ -111,6 +167,7 @@ void SNSolver::FluxUpdate() {
 }
 
 void SNSolver::FVMUpdate( unsigned idx_energy ) {
+#pragma omp parallel for
     for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
         // Dirichlet cells stay at IC, farfield assumption
         if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::DIRICHLET ) continue;
@@ -175,10 +232,8 @@ void SNSolver::PrepareVolumeOutput() {
 
 void SNSolver::WriteVolumeOutput( unsigned idx_pseudoTime ) {
     unsigned nGroups = (unsigned)_settings->GetNVolumeOutput();
-
     if( ( _settings->GetVolumeOutputFrequency() != 0 && idx_pseudoTime % (unsigned)_settings->GetVolumeOutputFrequency() == 0 ) ||
         ( idx_pseudoTime == _nEnergies - 1 ) /* need sol at last iteration */ ) {
-
         for( unsigned idx_group = 0; idx_group < nGroups; idx_group++ ) {
             switch( _settings->GetVolumeOutput()[idx_group] ) {
                 case MINIMAL:
@@ -186,7 +241,6 @@ void SNSolver::WriteVolumeOutput( unsigned idx_pseudoTime ) {
                         _outputFields[idx_group][0][idx_cell] = _fluxNew[idx_cell];
                     }
                     break;
-
                 case ANALYTIC:
                     for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
                         double time                           = idx_pseudoTime * _dE;

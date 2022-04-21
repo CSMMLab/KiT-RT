@@ -58,6 +58,10 @@ class MNSolver : public SolverBase
      *  @param  idx_cell  current cell id
      *  @returns  sum over all neighbors of flux for all moments at interface of idx_cell, idx_neighbor */
     virtual Vector ConstructFlux( unsigned idx_cell );
+
+    void FluxUpdatePseudo1D();    // Helper
+    void FluxUpdatePseudo2D();    // Helper
+
     /*! @brief Corrects the solution _sol[idx_cell] to be realizable w.r.t. the reconstructed entropy (eta'(alpha*m))
         @param idx_cell  cell where the correction happens*/
     void ComputeRealizableSolution( unsigned idx_cell );
