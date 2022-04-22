@@ -137,7 +137,7 @@ void ExportVTK( const std::string fileName,
 
 Mesh* LoadSU2MeshFromFile( const Config* settings ) {
     auto log = spdlog::get( "event" );
-
+    log->info( "| Importing mesh. This may take a while for large meshes." );
     unsigned dim;
     std::vector<Vector> nodes;
     std::vector<std::vector<unsigned>> cells;
@@ -152,6 +152,9 @@ Mesh* LoadSU2MeshFromFile( const Config* settings ) {
         while( getline( ifs, line ) ) {
             if( line.find( "NDIME", 0 ) != std::string::npos ) {
                 dim = static_cast<unsigned>( TextProcessingToolbox::GetTrailingNumber( line ) );
+                // if( settings->GetDim() != dim ) {
+                //     log->info( "Warning: Mesh dimension does not coinside with problem dimension! Proceed with caution!" );
+                // }
                 break;
             }
         }
@@ -293,6 +296,7 @@ Mesh* LoadSU2MeshFromFile( const Config* settings ) {
         ErrorMessages::Error( "Cannot open mesh file '" + settings->GetMeshFile() + "!", CURRENT_FUNCTION );
     }
     ifs.close();
+    // log->info( "| Mesh imported." );
     return new Mesh( nodes, cells, boundaries );
 }
 
@@ -335,11 +339,13 @@ void PrintLogHeader( std::string inputFile ) {
         log->info( "|    _  _____ _____     ____ _____                                     |" );
         log->info( "|   | |/ /_ _|_   _|   |  _ \\_   _|                                    |" );
         log->info( "|   | ' / | |  | |_____| |_) || |            Version                   |" );
-        log->info( "|   | . \\ | |  | |_____|  _ < | |             0.1.0                    |" );
+        log->info( "|   | . \\ | |  | |_____|  _ < | |             1.0.0                    |" );
         log->info( "|   |_|\\_\\___| |_|     |_| \\_\\|_|                                      |" );
         log->info( "|                                                                      |" );
         log->info( "------------------------------------------------------------------------" );
-        log->info( "|    Copyright statement goes here                                     |" );
+        log->info( "|  Copyright: MIT Licence                                              |" );
+        // log->info( "|  Authors: S. Schotthöfer, J. Kusch, J. Wolters, P. Stammer ad T. Xiao |" );
+        log->info( "|  Date: 21th April 2022                                               |" );
         log->info( "------------------------------------------------------------------------" );
         log->info( "|" );
         log->info( "| Git commit :\t{0}", GIT_HASH );

@@ -19,15 +19,15 @@ class MNSolver : public SolverBase
     /*! @brief MNSolver destructor */
     virtual ~MNSolver();
 
-  private:
+  protected:
     // --- Private member variables ---
     unsigned _nSystem;               /*!< @brief Total number of equations in the system */
     unsigned short _polyDegreeBasis; /*!< @brief Max polynomial degree of the basis */
     VectorVector _kineticDensity;    /*!< @brief Kinetic density at the grid cells. dim: _nCells x _nq */
 
     // Moment basis
-    SphericalBase* _basis; /*!< @brief Class to compute and store current spherical harmonics basis */
-    VectorVector _moments; /*!< @brief Moment Vector pre-computed at each quadrature point: dim= _nq x _nTotalEntries */
+    SphericalBase* _basis;     /*!< @brief Class to compute and store current spherical harmonics basis */
+    VectorVector _momentBasis; /*!< @brief Moment Vector pre-computed at each quadrature point: dim= _nq x _nTotalEntries */
 
     // Scattering
     Vector _scatterMatDiag; /*!< @brief Diagonal of the scattering matrix (its a diagonal matrix by construction) */
@@ -50,14 +50,18 @@ class MNSolver : public SolverBase
     void WriteVolumeOutput( unsigned idx_iter ) override;
 
     // Solver
-    void FVMUpdate( unsigned idx_iter ) override;
-    void FluxUpdate() override;
-    void IterPreprocessing( unsigned /*idx_iter*/ ) override;
-    void IterPostprocessing( unsigned /*idx_iter*/ ) override;
+    virtual void FVMUpdate( unsigned idx_iter ) override;
+    virtual void FluxUpdate() override;
+    virtual void IterPreprocessing( unsigned /*idx_iter*/ ) override;
+    virtual void IterPostprocessing( unsigned /*idx_iter*/ ) override;
     /*! @brief  Construct flux by computing the Moment of the  sum of FVM discretization at the interface of cell
      *  @param  idx_cell  current cell id
      *  @returns  sum over all neighbors of flux for all moments at interface of idx_cell, idx_neighbor */
-    Vector ConstructFlux( unsigned idx_cell );
+    virtual Vector ConstructFlux( unsigned idx_cell );
+
+    void FluxUpdatePseudo1D();    // Helper
+    void FluxUpdatePseudo2D();    // Helper
+
     /*! @brief Corrects the solution _sol[idx_cell] to be realizable w.r.t. the reconstructed entropy (eta'(alpha*m))
         @param idx_cell  cell where the correction happens*/
     void ComputeRealizableSolution( unsigned idx_cell );

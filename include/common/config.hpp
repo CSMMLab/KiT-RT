@@ -41,7 +41,6 @@ class Config
     std::string _logFileName; /*!< @brief Name of log file*/
     std::string _meshFile;    /*!< @brief Name of mesh file*/
     std::string _ctFile;      /*!< @brief Name of CT file*/
-
     // Quadrature
     QUAD_NAME _quadName;       /*!< @brief Quadrature Name*/
     unsigned short _quadOrder; /*!< @brief Quadrature Order*/
@@ -62,13 +61,16 @@ class Config
     std::vector<std::string> _MarkerNeumann;   /*!< @brief Neumann BC markers. */
 
     // Solver
-    double _CFL;                     /*!< @brief CFL Number for Solver*/
-    double _tEnd;                    /*!< @brief Final Time for Simulation */
-    PROBLEM_NAME _problemName;       /*!< @brief Name of predefined Problem   */
-    SOLVER_NAME _solverName;         /*!< @brief Name of the used Solver */
-    ENTROPY_NAME _entropyName;       /*!< @brief Name of the used Entropy Functional */
-    unsigned short _maxMomentDegree; /*!< @brief Maximal Order of Moments for PN and MN Solver */
-    unsigned short _reconsOrder;     /*!< @brief Spatial Order of Accuracy for Solver */
+    double _CFL;                      /*!< @brief CFL Number for Solver*/
+    double _tEnd;                     /*!< @brief Final Time for Simulation */
+    PROBLEM_NAME _problemName;        /*!< @brief Name of predefined Problem   */
+    SOLVER_NAME _solverName;          /*!< @brief Name of the used Solver */
+    ENTROPY_NAME _entropyName;        /*!< @brief Name of the used Entropy Functional */
+    unsigned short _maxMomentDegree;  /*!< @brief Maximal Order of Moments for PN and MN Solver */
+    unsigned short _reconsOrder;      /*!< @brief Spatial Order of Accuracy for Solver */
+    bool _realizabilityRecons;        /*!< @brief Turns realizability reconstruction on/off for u sampling and MN solver */
+    bool _isMomentSolver;             /*!< @brief Flag for the moment base (PN and MN) solvers */
+    unsigned short _rungeKuttaStages; /*!< @brief Specify the number of Runge Kutta time integration stages */
 
     /*!< @brief If true, very low entries (10^-10 or smaller) of the flux matrices will be set to zero,
      * to improve floating point accuracy */
@@ -80,7 +82,8 @@ class Config
 
     // Linesource
     double _sigmaS; /*!< @brief Scattering coeffient for Linesource test case */
-
+    // Checkerboard
+    double _magQ; /*!< @brief Magnitude of Source */
     // Database ICRU
     std::string _dataDir; /*!< @brief material directory */
     // ElectronRT
@@ -105,7 +108,7 @@ class Config
     double _newtonStepSize;               /*!< @brief Stepsize factor for newton optimizer */
     unsigned long _newtonLineSearchIter;  /*!< @brief Maximal Number of line search iterations for newton optimizer */
     bool _newtonFastMode;                 /*!< @brief If true, we skip the NewtonOptimizer for quadratic entropy and assign alpha = u */
-
+    double _regularizerGamma;             /*!< @brief Regularization parameter for the regularized closure */
     // NeuralModel
     unsigned short _neuralModel; /*!< @brief  Version number of the employed neural model */
     // Output Options
@@ -132,10 +135,14 @@ class Config
     double _RealizableSetEpsilonU1;   /*!< @brief norm(u_1)/u_0 !< _RealizableSetEpsilonU1 */
     bool _normalizedSampling;         /*!< @brief Flag for sampling of normalized moments, i.e. u_0 =1 */
     bool _alphaSampling;              /*!< @brief Flag for sampling alpha instead of u */
-    bool _realizabilityRecons;        /*!< @brief Turns realizability reconstruction on/off for u sampling */
     double _alphaBound;               /*!< @brief The norm boundary for the sampling range of alpha*/
     double _minEVAlphaSampling;       /*!< @brief Rejection sampling criterion is a minimal eigenvalue threshold */
     bool _sampleUniform;              /*!< @brief If true, samples uniform, if false, sampleswith cutoff normal distribution */
+    double _maxSamplingVelocity;      /*!< @brief The lower bound for the velocity space in the 1D classification sampler */
+    // double _minSamplingVelocity;      /*!< @brief The upper bound for the velocity space in the 1D classification sampler */
+    double _maxSamplingTemperature; /*!< @brief The lower bound for the interval to draw temperatures for the 1D classification sampler */
+    double _minSamplingTemperature; /*!< @brief The upper bound for the interval to draw temperatures for the 1D classification sampler */
+    unsigned short _nTemperatures;  /*!< @brief The number of sampling temperatures for the kinetic density sampler */
     // --- Parsing Functionality and Initializing of Options ---
     /*!
      * @brief Set default values for all options not yet set.
@@ -275,7 +282,7 @@ class Config
 
     // Mesh Structure
     unsigned GetNCells() { return _nCells; }
-    unsigned short GetDim() { return _dim; }
+    unsigned short GetDim() const { return _dim; }
 
     // Solver Structure
     double inline GetCFL() const { return _CFL; }
@@ -288,10 +295,12 @@ class Config
     double inline GetTEnd() const { return _tEnd; }
     bool inline GetSNAllGaussPts() const { return _allGaussPts; }
     bool inline GetIsCSD() const { return _csd; }
+    bool inline GetRealizabilityReconstruction() { return _realizabilityRecons; }
 
     // Linesource
     double inline GetSigmaS() const { return _sigmaS; }
-
+    // Checkerboard
+    double inline GetSourceMagnitude() const { return _magQ; }
     // CSD
     double inline GetMaxEnergyCSD() const { return _maxEnergyCSD; }
     //  Optimizer
@@ -301,9 +310,9 @@ class Config
     unsigned long inline GetNewtonMaxLineSearches() const { return _newtonLineSearchIter; }
     bool inline GetNewtonFastMode() const { return _newtonFastMode; }
     OPTIMIZER_NAME inline GetOptimizerName() const { return _entropyOptimizerName; }
-
+    double inline GetRegularizerGamma() const { return _regularizerGamma; }
     // Neural Closure
-    unsigned short inline GetNeuralModel() { return _neuralModel; }
+    unsigned short inline GetModelMK() { return _neuralModel; }
 
     // Boundary Conditions
     BOUNDARY_TYPE GetBoundaryType( std::string nameMarker ) const; /*!< @brief Get Boundary Type of given marker */
@@ -331,15 +340,21 @@ class Config
     SAMPLER_NAME inline GetSamplerName() { return _sampler; }
     unsigned long inline GetTrainingDataSetSize() { return _tainingSetSize; }
     bool inline GetSizeByDimension() { return _sizeByDimension; }
-    unsigned long inline GetMaxValFirstMoment() { return _maxValFirstMoment; }
+    unsigned long inline GetMaxValFirstMoment() { return _maxValFirstMoment; } // Deprecated
     double GetRealizableSetEpsilonU0() { return _RealizableSetEpsilonU0; }
     double GetRealizableSetEpsilonU1() { return _RealizableSetEpsilonU1; }
     bool inline GetNormalizedSampling() { return _normalizedSampling; }
     bool inline GetAlphaSampling() { return _alphaSampling; }
     bool inline GetUniformSamlping() { return _sampleUniform; }
-    bool inline GetRelizabilityReconsU() { return _realizabilityRecons; }
     double inline GetAlphaSamplingBound() { return _alphaBound; }
     double inline GetMinimalEVBound() { return _minEVAlphaSampling; }
+    // double inline GetMinimalSamplingVelocity() { return _minSamplingVelocity; }
+    double inline GetMaximalSamplingVelocity() { return _maxSamplingVelocity; }
+    double inline GetMinimalSamplingTemperature() { return _minSamplingTemperature; }
+    double inline GetMaximalSamplingTemperature() { return _maxSamplingTemperature; }
+    unsigned short inline GetNSamplingTemperatures() { return _nTemperatures; }
+    bool inline GetIsMomentSolver() { return _isMomentSolver; }
+    unsigned short inline GetRKStages() { return _rungeKuttaStages; }
 
     // ---- Setters for option structure
     // This section is dangerous

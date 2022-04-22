@@ -1,17 +1,15 @@
 #include "problems/linesource.hpp"
 #include "common/config.hpp"
 #include "common/mesh.hpp"
-#include "problems/epics.hpp"
 #include "quadratures/quadraturebase.hpp"
-#include "toolboxes/sphericalbase.hpp"
+#include "velocitybasis/sphericalbase.hpp"
+#include "velocitybasis/sphericalharmonics.hpp"
 #include <complex>
 
 // ---- Linesource ----
 
-LineSource::LineSource( Config* settings, Mesh* mesh ) : ProblemBase( settings, mesh ) {
-    _physics = nullptr;
-    _sigmaS  = settings->GetSigmaS();
-}
+LineSource::LineSource( Config* settings, Mesh* mesh ) : ProblemBase( settings, mesh ) { _sigmaS = settings->GetSigmaS(); }
+
 LineSource::~LineSource() {}
 
 double LineSource::GetAnalyticalSolution( double x, double y, double t, double /*sigma_s*/ ) {
@@ -129,62 +127,41 @@ VectorVector LineSource_SN::SetupIC() {
     for( unsigned j = 0; j < cellMids.size(); ++j ) {
         double x = cellMids[j][0];
         double y = cellMids[j][1];
-        psi[j]   = 1.0 / ( 4.0 * M_PI * t ) * std::exp( -( x * x + y * y ) / ( 4 * t ) );
+        psi[j]   = Vector( _settings->GetNQuadPoints(), 1.0 / ( 4.0 * M_PI * t ) * std::exp( -( x * x + y * y ) / ( 4 * t ) ) ) / ( 4 * M_PI );
     }
     return psi;
 }
-
-// ---- LineSource_SN_peudo1D ----
-
-LineSource_SN_Pseudo1D::LineSource_SN_Pseudo1D( Config* settings, Mesh* mesh ) : LineSource_SN( settings, mesh ) {}
-
-VectorVector LineSource_SN_Pseudo1D::SetupIC() {
-    VectorVector psi( _mesh->GetNumCells(), Vector( _settings->GetNQuadPoints(), 1e-10 ) );
-    auto cellMids = _mesh->GetCellMidPoints();
-    double t      = 3.2e-4;    // pseudo time for gaussian smoothing
-    for( unsigned j = 0; j < cellMids.size(); ++j ) {
-        double x = cellMids[j][0];
-        psi[j]   = 1.0 / ( 4.0 * M_PI * t ) * std::exp( -( x * x ) / ( 4 * t ) );
-    }
-    return psi;
-}
-
-// ---- LineSource_SN_Pseudo1D_Physics ----
-
-LineSource_SN_Pseudo1D_Physics::LineSource_SN_Pseudo1D_Physics( Config* settings, Mesh* mesh ) : LineSource_SN_Pseudo1D( settings, mesh ) {
-    _physics = new EPICS( settings->GetHydrogenFile(), settings->GetOxygenFile(), "../input/stopping_power.txt" );
-}
-
-std::vector<Matrix> LineSource_SN_Pseudo1D_Physics::GetScatteringXSE( const Vector& energies, const Matrix& angles ) {
-    return _physics->GetScatteringXS( energies, angles );
-}
-
-Vector LineSource_SN_Pseudo1D_Physics::GetTotalXSE( const Vector& energies ) { return _physics->GetTotalXSE( energies ); }
 
 // ---- LineSource_PN ----
 
-LineSource_PN::LineSource_PN( Config* settings, Mesh* mesh ) : LineSource( settings, mesh ) {}
+LineSource_Moment::LineSource_Moment( Config* settings, Mesh* mesh ) : LineSource( settings, mesh ) {}
 
-LineSource_PN::~LineSource_PN() {}
+LineSource_Moment::~LineSource_Moment() {}
 
-VectorVector LineSource_PN::GetScatteringXS( const Vector& energies ) {
+VectorVector LineSource_Moment::GetScatteringXS( const Vector& energies ) {
     return VectorVector( energies.size(), Vector( _mesh->GetNumCells(), _sigmaS ) );
 }
 
-VectorVector LineSource_PN::GetTotalXS( const Vector& energies ) { return VectorVector( energies.size(), Vector( _mesh->GetNumCells(), _sigmaS ) ); }
-
-std::vector<VectorVector> LineSource_PN::GetExternalSource( const Vector& /*energies*/ ) {
-    return std::vector<VectorVector>( 1u, std::vector<Vector>( _mesh->GetNumCells(), Vector( 1u, 0.0 ) ) );
+VectorVector LineSource_Moment::GetTotalXS( const Vector& energies ) {
+    return VectorVector( energies.size(), Vector( _mesh->GetNumCells(), _sigmaS ) );
 }
 
-VectorVector LineSource_PN::SetupIC() {
+std::vector<VectorVector> LineSource_Moment::GetExternalSource( const Vector& /*energies*/ ) {
+    SphericalBase* tempBase  = SphericalBase::Create( _settings );
+    unsigned ntotalEquations = tempBase->GetBasisSize();
+    delete tempBase;    // Only temporally needed
+
+    return std::vector<VectorVector>( 1u, std::vector<Vector>( _mesh->GetNumCells(), Vector( ntotalEquations, 0.0 ) ) );
+}
+
+VectorVector LineSource_Moment::SetupIC() {
     // Compute number of equations in the system
 
     // In case of PN, spherical basis is per default SPHERICAL_HARMONICS
     SphericalBase* tempBase  = SphericalBase::Create( _settings );
     unsigned ntotalEquations = tempBase->GetBasisSize();
 
-    VectorVector psi( _mesh->GetNumCells(), Vector( ntotalEquations, 0 ) );    // zero could lead to problems?
+    VectorVector initial_sol( _mesh->GetNumCells(), Vector( ntotalEquations, 0 ) );    // zero could lead to problems?
     VectorVector cellMids = _mesh->GetCellMidPoints();
 
     Vector uIC( ntotalEquations, 0 );
@@ -210,21 +187,107 @@ VectorVector LineSource_PN::SetupIC() {
     }
 
     // Initial condition is dirac impulse at (x,y) = (0,0) ==> constant in angle ==> all moments - exept first - are zero.
-    double t = 3.2e-4;    // pseudo time for gaussian smoothing (Approx to dirac impulse)
+    double t       = 3.2e-4;    // pseudo time for gaussian smoothing (Approx to dirac impulse)
+    double epsilon = 1e-4;      // minimal value for first moment to avoid div by zero error
 
     for( unsigned j = 0; j < cellMids.size(); ++j ) {
         double x = cellMids[j][0];
         double y = cellMids[j][1];    // (x- 0.5) * (x- 0.5)
 
-        double c = 1.0 / ( 4.0 * M_PI * t ) * std::exp( -( x * x + y * y ) / ( 4 * t ) );
+        double kinetic_density = std::max( 1.0 / ( 4.0 * M_PI * t ) * std::exp( -( x * x + y * y ) / ( 4 * t ) ), epsilon );
 
         if( _settings->GetSphericalBasisName() == SPHERICAL_MONOMIALS ) {
-            psi[j] = c * uIC / uIC[0];    // Remember scaling
+            initial_sol[j] = kinetic_density * uIC / uIC[0];    // Remember scaling
         }
         if( _settings->GetSphericalBasisName() == SPHERICAL_HARMONICS ) {
-            psi[j][0] = c;
+            initial_sol[j][0] = kinetic_density;
         }
     }
     delete tempBase;    // Only temporally needed
+    return initial_sol;
+}
+
+// ---- LineSource SN pseudo1D ----
+
+LineSource_SN_1D::LineSource_SN_1D( Config* settings, Mesh* mesh ) : LineSource_SN( settings, mesh ) {}
+
+VectorVector LineSource_SN_1D::SetupIC() {
+    VectorVector psi( _mesh->GetNumCells(), Vector( _settings->GetNQuadPoints(), 1e-10 ) );
+    auto cellMids  = _mesh->GetCellMidPoints();
+    double t       = 3.2e-4;    // pseudo time for gaussian smoothing
+    double epsilon = 1e-3;      // minimal value for first moment to avoid div by zero error
+
+    for( unsigned j = 0; j < cellMids.size(); ++j ) {
+        double x               = cellMids[j][0];
+        double kinetic_density = std::max( 1.0 / ( 4.0 * M_PI * t ) * std::exp( -( x * x ) / ( 4 * t ) ), epsilon );
+        psi[j]                 = kinetic_density;
+    }
     return psi;
+}
+
+// ---- LineSource Moment pseudo1D ----
+
+LineSource_Moment_1D::LineSource_Moment_1D( Config* settings, Mesh* mesh ) : LineSource_Moment( settings, mesh ) {}
+
+VectorVector LineSource_Moment_1D::SetupIC() {
+    double t       = 3.2e-4;    // pseudo time for gaussian smoothing (Approx to dirac impulse)
+    double epsilon = 1e-3;      // minimal value for first moment to avoid div by zero error
+
+    // In case of PN, spherical basis is per default SPHERICAL_HARMONICS
+    if( _settings->GetSolverName() == PN_SOLVER || _settings->GetSolverName() == CSD_PN_SOLVER ) {
+        // In case of PN, spherical basis is per default SPHERICAL_HARMONICS in 3 velocity dimensions
+        SphericalHarmonics* tempBase = new SphericalHarmonics( _settings->GetMaxMomentDegree(), 3 );
+        unsigned ntotalEquations     = tempBase->GetBasisSize();
+        delete tempBase;
+        VectorVector initialSolution( _mesh->GetNumCells(), Vector( ntotalEquations, 0.0 ) );    // zero could lead to problems?
+        VectorVector cellMids = _mesh->GetCellMidPoints();
+
+        for( unsigned idx_cell = 0; idx_cell < cellMids.size(); ++idx_cell ) {
+            double x                     = cellMids[idx_cell][0];
+            double kinetic_density       = std::max( 1.0 / ( 4.0 * M_PI * t ) * std::exp( -( x * x ) / ( 4 * t ) ), epsilon );
+            initialSolution[idx_cell][0] = kinetic_density;
+        }
+        return initialSolution;
+    }
+    else {
+        SphericalBase* tempBase  = SphericalBase::Create( _settings );
+        unsigned ntotalEquations = tempBase->GetBasisSize();
+
+        VectorVector initialSolution( _mesh->GetNumCells(), Vector( ntotalEquations, 0 ) );    // zero could lead to problems?
+        VectorVector cellMids = _mesh->GetCellMidPoints();
+        Vector uIC( ntotalEquations, 0 );
+
+        if( _settings->GetSphericalBasisName() == SPHERICAL_MONOMIALS ) {
+            QuadratureBase* quad          = QuadratureBase::Create( _settings );
+            VectorVector quadPointsSphere = quad->GetPointsSphere();
+            Vector w                      = quad->GetWeights();
+
+            double my, phi;
+            VectorVector moments = VectorVector( quad->GetNq(), Vector( tempBase->GetBasisSize(), 0.0 ) );
+
+            for( unsigned idx_quad = 0; idx_quad < quad->GetNq(); idx_quad++ ) {
+                my                = quadPointsSphere[idx_quad][0];
+                phi               = quadPointsSphere[idx_quad][1];
+                moments[idx_quad] = tempBase->ComputeSphericalBasis( my, phi );
+            }
+            // Integrate <1*m> to get factors for monomial basis in isotropic scattering
+            for( unsigned idx_quad = 0; idx_quad < quad->GetNq(); idx_quad++ ) {
+                uIC += w[idx_quad] * moments[idx_quad];
+            }
+            delete quad;
+        }
+        // Initial condition is dirac impulse at (x,y) = (0,0) ==> constant in angle ==> all moments - exept first - are zero.
+        for( unsigned j = 0; j < cellMids.size(); ++j ) {
+            double x               = cellMids[j][0];
+            double kinetic_density = std::max( 1.0 / ( 4.0 * M_PI * t ) * std::exp( -( x * x ) / ( 4 * t ) ), epsilon );
+            if( _settings->GetSphericalBasisName() == SPHERICAL_MONOMIALS ) {
+                initialSolution[j] = kinetic_density * uIC / uIC[0];    // Remember scaling
+            }
+            if( _settings->GetSphericalBasisName() == SPHERICAL_HARMONICS ) {
+                initialSolution[j][0] = kinetic_density;
+            }
+        }
+        delete tempBase;    // Only temporally needed
+        return initialSolution;
+    }
 }

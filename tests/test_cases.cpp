@@ -31,6 +31,7 @@ std::vector<double> readVTKFile( std::string filename ) {
     return data;
 }
 
+
 TEST_CASE( "SN_SOLVER", "[validation_tests]" ) {
     std::string sn_fileDir = "input/validation_tests/SN_solver/";
     SECTION( "checkerboard" ) {
@@ -52,6 +53,8 @@ TEST_CASE( "SN_SOLVER", "[validation_tests]" ) {
             if( std::fabs( test[i] - reference[i] ) > eps ) errorWithinBounds = false;
         }
         REQUIRE( errorWithinBounds );
+        delete solver;
+        delete config;
     }
 
     SECTION( "linesource" ) {
@@ -72,6 +75,8 @@ TEST_CASE( "SN_SOLVER", "[validation_tests]" ) {
             if( std::fabs( test[i] - reference[i] ) > eps ) errorWithinBounds = false;
         }
         REQUIRE( errorWithinBounds );
+        delete solver;
+        delete config;
     }
 }
 
@@ -95,6 +100,8 @@ TEST_CASE( "PN_SOLVER", "[validation_tests]" ) {
             if( std::fabs( test[i] - reference[i] ) > eps ) errorWithinBounds = false;
         }
         REQUIRE( errorWithinBounds );
+        delete solver;
+        delete config;
     }
 
     SECTION( "linesource" ) {
@@ -116,6 +123,8 @@ TEST_CASE( "PN_SOLVER", "[validation_tests]" ) {
             if( std::fabs( test[i] - reference[i] ) > eps ) errorWithinBounds = false;
         }
         REQUIRE( errorWithinBounds );
+        delete solver;
+        delete config;
     }
 }
 
@@ -141,10 +150,10 @@ TEST_CASE( "MN_SOLVER", "[validation_tests]" ) {
             if( std::fabs( test[i] - reference[i] ) > eps ) errorWithinBounds = false;
         }
         REQUIRE( errorWithinBounds );
+        delete solver;
+        delete config;
     }
-
     SECTION( "linesource" ) {
-
         // --- Quadratic Entropy
         {
             std::string config_file_name = std::string( TESTS_PATH ) + mn_fileDir + "linesource_MN_Quad.cfg";
@@ -162,10 +171,17 @@ TEST_CASE( "MN_SOLVER", "[validation_tests]" ) {
 
             REQUIRE( test.size() == reference.size() );
             for( unsigned i = 0; i < test.size(); ++i ) {
-                if( std::fabs( test[i] - reference[i] ) > eps ) errorWithinBounds = false;
+                if( std::fabs( test[i] - reference[i] ) > eps ) {
+                    errorWithinBounds = false;
+                    std::cout << "Error:" << std::fabs( test[i] - reference[i] ) << "\n";
+                }
             }
             REQUIRE( errorWithinBounds );
+            delete solver;
+            delete config;
         }
+    }
+    SECTION( "linesource Maxwell Boltzmann" ) {
 
         {    // ---  Maxwell Boltzmann Entropy ---
             std::string config_file_name = std::string( TESTS_PATH ) + mn_fileDir + "linesource_MN_MB.cfg";
@@ -183,25 +199,99 @@ TEST_CASE( "MN_SOLVER", "[validation_tests]" ) {
 
             REQUIRE( test.size() == reference.size() );
             for( unsigned i = 0; i < test.size(); ++i ) {
-                if( std::fabs( test[i] - reference[i] ) > eps ) errorWithinBounds = false;
+                if( std::fabs( test[i] - reference[i] ) > eps ) {
+                    errorWithinBounds = false;
+                    std::cout << "Error:" << std::fabs( test[i] - reference[i] ) << "\n";
+                }
             }
             REQUIRE( errorWithinBounds );
+            delete solver;
+            delete config;
         }
     }
+    SECTION( "linesource Maxwell Boltzmann regularized" ) {
+
+        {    // --- Regularized Maxwell Boltzmann Entropy ---
+            std::string config_file_name = std::string( TESTS_PATH ) + mn_fileDir + "linesource_MN_MB_regularized.cfg";
+
+            Config* config     = new Config( config_file_name );
+            SolverBase* solver = SolverBase::Create( config );
+            solver->Solve();
+            solver->PrintVolumeOutput();
+
+            auto test      = readVTKFile( std::string( TESTS_PATH ) + "result/rtsn_test_linesource_MN_MB_regularized.vtk" );
+            auto reference = readVTKFile( std::string( TESTS_PATH ) + mn_fileDir + "linesource_MN_MB_regularized_reference.vtk" );
+
+            double eps             = 1e-3;
+            bool errorWithinBounds = true;
+
+            REQUIRE( test.size() == reference.size() );
+            for( unsigned i = 0; i < test.size(); ++i ) {
+                if( std::fabs( test[i] - reference[i] ) > eps ) {
+                    errorWithinBounds = false;
+                    std::cout << "Error:" << std::fabs( test[i] - reference[i] ) << "\n";
+                }
+            }
+            REQUIRE( errorWithinBounds );
+            delete solver;
+            delete config;
+        }
+    }
+    // SECTION( "checkerboard neural network" ) {
+    //     std::string config_file_name = std::string( TESTS_PATH ) + mn_fileDir + "checkerboard_MN_neural.cfg";
+    //
+    //    Config* config     = new Config( config_file_name );
+    //    SolverBase* solver = SolverBase::Create( config );
+    //    solver->Solve();
+    //    solver->PrintVolumeOutput();
+    //
+    //    auto test      = readVTKFile( std::string( TESTS_PATH ) + "result/rtsn_test_checkerboard_MN_neural.vtk" );
+    //    auto reference = readVTKFile( std::string( TESTS_PATH ) + mn_fileDir + "checkerboard_MN_reference_neural.vtk" );
+    //
+    //    double eps             = 1e-3;
+    //    bool errorWithinBounds = true;
+    //
+    //    REQUIRE( test.size() == reference.size() );
+    //    for( unsigned i = 0; i < test.size(); ++i ) {
+    //        if( std::fabs( test[i] - reference[i] ) > eps ) errorWithinBounds = false;
+    //    }
+    //    REQUIRE( errorWithinBounds );
+    //    delete solver;
+    //    delete config;
+    //}
 }
-/*
-TEST_CASE( "CSD_SN_FP_SOLVER", "[validation_tests]" ) {
-    std::string csd_sn_fileDir = "input/validation_tests/CSD_SN_FP_solver/";
-    SECTION( "waterphantom 1D" ) {
 
-        std::string config_file_name = std::string( TESTS_PATH ) + csd_sn_fileDir + "waterphantom_1D.cfg";
+TEST_CASE( "CSD_PN_SOLVER", "[validation_tests]" ) {
+    std::string csd_sn_fileDir = "input/validation_tests/CSD_PN_solver/";
+    SECTION( "starmap validation" ) {
 
-        Config* config = new Config( config_file_name );
+        std::string config_file_name = std::string( TESTS_PATH ) + csd_sn_fileDir + "starmap_validation.cfg";
+
+        Config* config     = new Config( config_file_name );
         SolverBase* solver = SolverBase::Create( config );
         solver->Solve();
         solver->PrintVolumeOutput();
-        auto test      = readVTKFile( std::string( TESTS_PATH ) + "result/rtsn_test_waterphantom_1D_CSD_FP.vtk" );
-        auto reference = readVTKFile( std::string( TESTS_PATH ) + csd_sn_fileDir + "waterphantom_1D_CSD_SN_FP_reference.vtk" );
+        auto test      = readVTKFile( std::string( TESTS_PATH ) + "result/starmap_validation.vtk" );
+        auto reference = readVTKFile( std::string( TESTS_PATH ) + csd_sn_fileDir + "starmap_validation_reference.vtk" );
+
+        double eps = 1e-3;
+        REQUIRE( test.size() == reference.size() );
+        bool errorWithinBounds = true;
+        for( unsigned i = 0; i < test.size(); ++i ) {
+            if( std::fabs( test[i] - reference[i] ) > eps ) errorWithinBounds = false;
+        }
+        REQUIRE( errorWithinBounds );
+    }
+    SECTION( "starmap validation 2nd order" ) {
+
+        std::string config_file_name = std::string( TESTS_PATH ) + csd_sn_fileDir + "starmap_validation_2nd_order.cfg";
+
+        Config* config     = new Config( config_file_name );
+        SolverBase* solver = SolverBase::Create( config );
+        solver->Solve();
+        solver->PrintVolumeOutput();
+        auto test      = readVTKFile( std::string( TESTS_PATH ) + "result/starmap_validation_2nd.vtk" );
+        auto reference = readVTKFile( std::string( TESTS_PATH ) + csd_sn_fileDir + "starmap_validation_reference_2nd.vtk" );
 
         double eps = 1e-3;
         REQUIRE( test.size() == reference.size() );
@@ -213,18 +303,17 @@ TEST_CASE( "CSD_SN_FP_SOLVER", "[validation_tests]" ) {
     }
 }
 
-TEST_CASE( "CSD_SN_FP_2D_SOLVER", "[validation_tests]" ) {
-    std::string csd_sn_fileDir = "input/validation_tests/CSD_SN_FP_2D_solver/";
-    SECTION( "waterphantom 2D" ) {
+TEST_CASE( "CSD_MN_SOLVER", "[validation_tests]" ) {
+    std::string csd_mn_fileDir = "input/validation_tests/CSD_MN_solver/";
+    /*SECTION( "point source dual density" ) {
 
-        std::string config_file_name = std::string( TESTS_PATH ) + csd_sn_fileDir + "waterphantom_2D.cfg";
-
-        Config* config = new Config( config_file_name );
-        SolverBase* solver = SolverBase::Create( config );
+        std::string config_file_name = std::string( TESTS_PATH ) + csd_mn_fileDir + "point_source_dual_density.cfg";
+        Config* config               = new Config( config_file_name );
+        SolverBase* solver           = SolverBase::Create( config );
         solver->Solve();
         solver->PrintVolumeOutput();
-        auto test      = readVTKFile( std::string( TESTS_PATH ) + "result/rtsn_test_waterphantom_2D_CSD_FP.vtk" );
-        auto reference = readVTKFile( std::string( TESTS_PATH ) + csd_sn_fileDir + "waterphantom_2D_CSD_SN_FP_reference.vtk" );
+        auto test      = readVTKFile( std::string( TESTS_PATH ) + "result/test_pointsource_dual_density_MN.vtk" );
+        auto reference = readVTKFile( std::string( TESTS_PATH ) + csd_mn_fileDir + "point_source_dual_density_reference_MN.vtk" );
 
         double eps = 1e-3;
         REQUIRE( test.size() == reference.size() );
@@ -233,22 +322,18 @@ TEST_CASE( "CSD_SN_FP_2D_SOLVER", "[validation_tests]" ) {
             if( std::fabs( test[i] - reference[i] ) > eps ) errorWithinBounds = false;
         }
         REQUIRE( errorWithinBounds );
-    }
-}
+    }*/
+    /*
+    SECTION( "point source dual density 2nd order" ) {
 
-TEST_CASE( "CSD_SN_FP_SH_2D_SOLVER", "[validation_tests]" ) {
-    std::string csd_sn_fileDir = "input/validation_tests/CSD_SN_FP_2D_solver/";
-    SECTION( "waterphantom 2D" ) {
+        std::string config_file_name = std::string( TESTS_PATH ) + csd_mn_fileDir + "point_source_dual_density_2nd_order.cfg";
 
-        std::string config_file_name = std::string( TESTS_PATH ) + csd_sn_fileDir + "waterphantom_2D_sh.cfg";
-
-        Config* config = new Config( config_file_name );
+        Config* config     = new Config( config_file_name );
         SolverBase* solver = SolverBase::Create( config );
         solver->Solve();
         solver->PrintVolumeOutput();
-        // solver->Save();
-        auto test      = readVTKFile( std::string( TESTS_PATH ) + "result/waterphantom_2D_CSD_SN_FP_SH.vtk" );
-        auto reference = readVTKFile( std::string( TESTS_PATH ) + csd_sn_fileDir + "waterphantom_2D_CSD_SN_FP_SH_reference.vtk" );
+        auto test      = readVTKFile( std::string( TESTS_PATH ) + "result/test_pointsource_dual_density_MN_2nd.vtk" );
+        auto reference = readVTKFile( std::string( TESTS_PATH ) + csd_mn_fileDir + "point_source_dual_density_reference_2nd_MN.vtk" );
 
         double eps = 1e-3;
         REQUIRE( test.size() == reference.size() );
@@ -257,9 +342,9 @@ TEST_CASE( "CSD_SN_FP_SH_2D_SOLVER", "[validation_tests]" ) {
             if( std::fabs( test[i] - reference[i] ) > eps ) errorWithinBounds = false;
         }
         REQUIRE( errorWithinBounds );
-    }
+    }*/
 }
-*/
+
 // --- Validation Tests Output ---
 void tokenize( std::string const& str, const char delim, std::vector<std::string>& out ) {
     size_t start;
@@ -279,7 +364,7 @@ TEST_CASE( "screen_output", "[output]" ) {
     std::string screenLoggerReference  = std::string( TESTS_PATH ) + out_fileDir + "validate_logger_reference";
     std::string screenLogger           = std::string( TESTS_PATH ) + "result/logs/validate_logger_output";
     std::string historyLoggerReference = std::string( TESTS_PATH ) + out_fileDir + "validate_logger_csv_reference";
-    std::string historyLogger          = std::string( TESTS_PATH ) + "result/logs/validate_logger_output_csv";
+    std::string historyLogger          = std::string( TESTS_PATH ) + "result/logs/validate_logger_output.csv";
 
     Config* config     = new Config( config_file_name );
     SolverBase* solver = SolverBase::Create( config );
@@ -358,13 +443,13 @@ TEST_CASE( "screen_output", "[output]" ) {
     REQUIRE( eqLen );    // Files must be of same length
 }
 
-TEST_CASE( "Test the Data Generator", "[dataGen]" ) {
+TEST_CASE( "Data Generator Regression", "[dataGen]" ) {
     std::string out_fileDir = "input/validation_tests/dataGenerator/";
     spdlog::drop_all();    // Make sure to write in own logging file
 
-    std::string config_file_name       = std::string( TESTS_PATH ) + out_fileDir + "validate_dataGen.cfg";
-    std::string historyLoggerReference = std::string( TESTS_PATH ) + out_fileDir + "validate_dataGen_csv_reference";
-    std::string historyLogger          = std::string( TESTS_PATH ) + "result/logs/validate_dataGen_csv";
+    std::string config_file_name       = std::string( TESTS_PATH ) + out_fileDir + "validate_dataGen_regression.cfg";
+    std::string historyLoggerReference = std::string( TESTS_PATH ) + out_fileDir + "validate_dataGen_regression_csv_reference";
+    std::string historyLogger          = std::string( TESTS_PATH ) + "result/logs/validate_dataGen.csv";
 
     // --- Generate Data ---
     // Load Settings from File
@@ -418,5 +503,137 @@ TEST_CASE( "Test the Data Generator", "[dataGen]" ) {
     }
     REQUIRE( testPassed );
 
+    delete datagen;
+}
+
+TEST_CASE( "Data Generator Classification", "[dataGen]" ) {
+    std::string out_fileDir = "input/validation_tests/dataGenerator/";
+    spdlog::drop_all();    // Make sure to write in own logging file
+
+    std::string config_file_name       = std::string( TESTS_PATH ) + out_fileDir + "validate_dataGen_classification.cfg";
+    std::string historyLoggerReference = std::string( TESTS_PATH ) + out_fileDir + "validate_dataGen_csv_classification_reference";
+    std::string historyLogger          = std::string( TESTS_PATH ) + "result/logs/validate_dataGen_classification.csv";
+
+    // --- Generate Data ---
+    // Load Settings from File
+    Config* config = new Config( config_file_name );
+    // Build Data generator
+    DataGeneratorBase* datagen = DataGeneratorBase::Create( config );
+    // Generate Data and export
+    datagen->ComputeTrainingData();
+
+    // --- Force Logger to flush
+    auto log    = spdlog::get( "event" );
+    auto logCSV = spdlog::get( "tabular" );
+    log->flush();
+    logCSV->flush();
+
+    // --- Read and validate logger ---
+    std::ifstream historyLoggerReferenceStream( historyLoggerReference );
+    std::ifstream historyLoggerStream( historyLogger );
+
+    std::string line, lineRef;
+    bool lineValid;
+    const char delimHist = ',';
+
+    bool testPassed = true;
+    // --- History Logger
+    unsigned count = 0;
+    while( !historyLoggerReferenceStream.eof() && !historyLoggerStream.eof() && count < 3 ) {
+        std::getline( historyLoggerReferenceStream, lineRef );
+        std::getline( historyLoggerStream, line );
+        // ignore date (before first "|")
+        std::vector<std::string> out;
+        std::vector<std::string> outRef;
+        tokenize( line, delimHist, out );
+        tokenize( lineRef, delimHist, outRef );
+
+        if( out.size() != outRef.size() ) {
+            std::cout << out.size() << "here\n";
+            std::cout << outRef.size() << "here\n";
+            std::cout << "here\n";
+            std::cout << lineRef << "\n" << line << "\n";
+            std::cout << "here\n";
+            std::cout << historyLoggerReference;
+            testPassed = false;
+            break;
+        }
+
+        for( unsigned idx_token = 1; idx_token < out.size(); idx_token++ ) {    // Skip date  ==> start from 1
+            lineValid = outRef[idx_token].compare( out[idx_token] ) == 0;
+            if( !lineValid ) {
+                std::cout << lineRef << "\n" << line << "\n";
+                testPassed = false;
+                break;
+            }
+        }
+        count++;
+    }
+    REQUIRE( testPassed );
+
+    delete datagen;
+}
+
+TEST_CASE( "Data Generator Regularized Regression", "[dataGen]" ) {
+    std::string out_fileDir = "input/validation_tests/dataGenerator/";
+    spdlog::drop_all();    // Make sure to write in own logging file
+
+    std::string config_file_name       = std::string( TESTS_PATH ) + out_fileDir + "validate_dataGen_regularized_regression.cfg";
+    std::string historyLoggerReference = std::string( TESTS_PATH ) + out_fileDir + "validate_dataGen_csv_regularized_reference";
+    std::string historyLogger          = std::string( TESTS_PATH ) + "result/logs/validate_dataGen_regularized_regression.csv";
+
+    // --- Generate Data ---
+    // Load Settings from File
+    Config* config = new Config( config_file_name );
+    // Build Data generator
+    DataGeneratorBase* datagen = DataGeneratorBase::Create( config );
+    // Generate Data and export
+    datagen->ComputeTrainingData();
+
+    // --- Force Logger to flush
+    auto log    = spdlog::get( "event" );
+    auto logCSV = spdlog::get( "tabular" );
+    log->flush();
+    logCSV->flush();
+
+    // --- Read and validate logger ---
+    std::ifstream historyLoggerReferenceStream( historyLoggerReference );
+    std::ifstream historyLoggerStream( historyLogger );
+
+    std::string line, lineRef;
+    bool lineValid;
+    const char delimHist = ',';
+
+    bool testPassed = true;
+    // --- History Logger
+    unsigned count = 0;
+    while( !historyLoggerReferenceStream.eof() && !historyLoggerStream.eof() && count < 3 ) {
+        std::getline( historyLoggerReferenceStream, lineRef );
+        std::getline( historyLoggerStream, line );
+        // ignore date (before first "|")
+        std::vector<std::string> out;
+        std::vector<std::string> outRef;
+        tokenize( line, delimHist, out );
+        tokenize( lineRef, delimHist, outRef );
+
+        if( out.size() != outRef.size() ) {
+            std::cout << out.size() << "\n";
+            std::cout << outRef.size() << "\n";
+            std::cout << "---------\n";
+            testPassed = false;
+            break;
+        }
+
+        for( unsigned idx_token = 1; idx_token < out.size(); idx_token++ ) {    // Skip date  ==> start from 1
+            lineValid = outRef[idx_token].compare( out[idx_token] ) == 0;
+            if( !lineValid ) {
+                std::cout << lineRef << "\n" << line << "\n------\n";
+                testPassed = false;
+                break;
+            }
+        }
+        count++;
+    }
+    REQUIRE( testPassed );
     delete datagen;
 }

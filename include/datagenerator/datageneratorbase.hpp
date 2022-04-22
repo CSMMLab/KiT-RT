@@ -59,8 +59,8 @@ class DataGeneratorBase
     EntropyBase* _entropy;       /*!< @brief Class to handle entropy functional evaluations */
 
     // Main methods
-    void SampleMultiplierAlpha();     /*!< @brief Sample Lagrange multipliers alpha */
-    void ComputeRealizableSolution(); /*!< @brief make u the realizable moment to alpha, since Newton has roundoff errors. */
+    virtual void SampleMultiplierAlpha(); /*!< @brief Sample Lagrange multipliers alpha */
+    void ComputeRealizableSolution();     /*!< @brief make u the realizable moment to alpha, since Newton has roundoff errors. */
 
     // IO routines
     virtual void PrintTrainingData() = 0; /*!< @brief : Print computed training data to csv file and screen */

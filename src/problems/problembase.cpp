@@ -1,14 +1,13 @@
+#include "problems/problembase.hpp"
 #include "common/config.hpp"
-
 #include "problems/aircavity1d.hpp"
 #include "problems/checkerboard.hpp"
-#include "problems/electronrt.hpp"
-#include "problems/isotropicsource2d.hpp"
 #include "problems/linesource.hpp"
-#include "problems/musclebonelung.hpp"
-#include "problems/phantom2d.hpp"
-#include "problems/problembase.hpp"
-#include "problems/waterphantom.hpp"
+#include "problems/meltingcube.hpp"
+#include "problems/phantomimage.hpp"
+#include "problems/radiationctimage.hpp"
+#include "problems/starmapvalidation.hpp"
+#include "toolboxes/errormessages.hpp"
 
 ProblemBase::ProblemBase( Config* settings, Mesh* mesh ) {
     _settings = settings;
@@ -18,31 +17,66 @@ ProblemBase::ProblemBase( Config* settings, Mesh* mesh ) {
 ProblemBase::~ProblemBase() {}
 
 ProblemBase* ProblemBase::Create( Config* settings, Mesh* mesh ) {
-    auto name = settings->GetProblemName();
 
     // Choose problem type
-    switch( name ) {
-        case PROBLEM_LineSource: {
-            if( settings->GetSolverName() == PN_SOLVER || settings->GetSolverName() == MN_SOLVER )
-                return new LineSource_PN( settings, mesh );
+    switch( settings->GetProblemName() ) {
+        case PROBLEM_Linesource: {
+            if( settings->GetIsMomentSolver() )
+                return new LineSource_Moment( settings, mesh );
             else
-                return new LineSource_SN( settings, mesh );    // default
-        }
+                return new LineSource_SN( settings, mesh );
+        } break;
+        case PROBLEM_Linesource1D: {
+            if( settings->GetIsMomentSolver() )
+                return new LineSource_Moment_1D( settings, mesh );
+            else
+                return new LineSource_SN_1D( settings, mesh );
+        } break;
         case PROBLEM_Checkerboard: {
-            if( settings->GetSolverName() == PN_SOLVER || settings->GetSolverName() == MN_SOLVER )
+            if( settings->GetIsMomentSolver() )
                 return new Checkerboard_Moment( settings, mesh );
             else
-                return new Checkerboard_SN( settings, mesh );    // default
-        }
-        case PROBLEM_ElectronRT: return new ElectronRT( settings, mesh );
-        case PROBLEM_AirCavity: return new AirCavity1D( settings, mesh );
-        case PROBLEM_MuscleBoneLung: return new MuscleBoneLung( settings, mesh );
-        case PROBLEM_WaterPhantom: return new WaterPhantom( settings, mesh );
-        case PROBLEM_Phantom2D: return new Phantom2D( settings, mesh );
-        case PROBLEM_LineSource_Pseudo_1D: return new LineSource_SN_Pseudo1D( settings, mesh );
-        case PROBLEM_LineSource_Pseudo_1D_Physics: return new LineSource_SN_Pseudo1D_Physics( settings, mesh );
-        case PROBLEM_IsotropicSource_2D: return new IsotropicSource2D( settings, mesh );
-        default: return new ElectronRT( settings, mesh );    // Use RadioTherapy as dummy
+                return new Checkerboard_SN( settings, mesh );
+        } break;
+        case PROBLEM_Checkerboard1D: {
+            if( settings->GetIsMomentSolver() )
+                return new Checkerboard_Moment_1D( settings, mesh );
+            else
+                return new Checkerboard_SN_1D( settings, mesh );
+        } break;
+        case PROBLEM_Aircavity1D: {
+            if( settings->GetIsMomentSolver() )
+                return new AirCavity1D_Moment( settings, mesh );
+            else
+                return new AirCavity1D( settings, mesh );
+        } break;
+        case PROBLEM_StarmapValidation: {
+            if( settings->GetIsMomentSolver() )
+                return new StarMapValidation_Moment( settings, mesh );
+            else
+                return new StarMapValidation_SN( settings, mesh );
+        } break;
+        case PROBLEM_Phantomimage: return new PhantomImage( settings, mesh );
+        case PROBLEM_RadiationCT: {
+            if( settings->GetIsMomentSolver() )
+                return new RadiationCTImage_Moment( settings, mesh );
+            else
+                return new RadiationCTImage( settings, mesh );
+        } break;
+        case PROBLEM_Meltingcube: {
+            if( settings->GetIsMomentSolver() )
+                return new MeltingCube_Moment( settings, mesh );
+            else
+                return new MeltingCube_SN( settings, mesh );
+        } break;
+        case PROBLEM_Meltingcube1D: {
+            if( settings->GetIsMomentSolver() )
+                return new MeltingCube_Moment_1D( settings, mesh );
+            else
+                return new MeltingCube_SN_1D( settings, mesh );
+        } break;
+
+        default: ErrorMessages::Error( "No valid physical problem chosen. Please check your config file", CURRENT_FUNCTION ); return nullptr;
     }
 }
 
@@ -50,15 +84,13 @@ ProblemBase* ProblemBase::Create( Config* settings, Mesh* mesh ) {
 std::vector<double> ProblemBase::GetDensity( const VectorVector& cellMidPoints ) { return std::vector<double>( cellMidPoints.size(), 1.0 ); }
 
 // Legacy code: Scattering crossection loaded from database ENDF with physics class -> later overwritten with ICRU data
-VectorVector ProblemBase::GetScatteringXSE( const Vector& energies, const Vector& angles ) { return _physics->GetScatteringXS( energies, angles ); }
+VectorVector ProblemBase::GetScatteringXSE( const Vector& /*energies*/, const Vector& /*angles*/ ) {
+    ErrorMessages::Error( "Not yet implemented", CURRENT_FUNCTION );
+    return VectorVector( 1, Vector( 1, 0 ) );
+}
 
 // Stopping powers from phyics class or default = -1
-Vector ProblemBase::GetStoppingPower( const Vector& energies ) {
-    if( _physics ) {
-        return _physics->GetStoppingPower( energies );
-    }
-    else {
-        ErrorMessages::Error( "Problem child class has not initialized a 'Physics' object!", CURRENT_FUNCTION );
-        return Vector( 1, -1.0 );
-    }
+Vector ProblemBase::GetStoppingPower( const Vector& /* energies */ ) {
+    ErrorMessages::Error( "Not yet implemented", CURRENT_FUNCTION );
+    return Vector( 1, -1.0 );
 }

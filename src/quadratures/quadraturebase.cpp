@@ -6,9 +6,12 @@
 #include "quadratures/qldfesa.hpp"
 #include "quadratures/qlebedev.hpp"
 #include "quadratures/qlevelsymmetric.hpp"
+#include "quadratures/qmidpointtensorized.hpp"
 #include "quadratures/qmontecarlo.hpp"
 #include "quadratures/qproduct.hpp"
+#include "quadratures/qrectangular.hpp"
 #include "toolboxes/errormessages.hpp"
+#include "toolboxes/textprocessingtoolbox.hpp"
 
 QuadratureBase::QuadratureBase( Config* settings ) {
     _settings = settings;
@@ -25,12 +28,17 @@ QuadratureBase* QuadratureBase::Create( Config* settings ) {
         case QUAD_GaussLegendreTensorized: return new QGaussLegendreTensorized( settings );
         case QUAD_GaussLegendre1D: return new QGaussLegendre1D( settings );
         case QUAD_GaussLegendreTensorized2D: return new QGaussLegendreTensorized2D( settings );
-
         case QUAD_GaussChebyshev1D: return new QGaussChebyshev1D( settings );
         case QUAD_LevelSymmetric: return new QLevelSymmetric( settings );
         case QUAD_LDFESA: return new QLDFESA( settings );
         case QUAD_Lebedev: return new QLebedev( settings );
         case QUAD_Product: return new QProduct( settings );
+        // case QUAD_Midpoint1D: return new QMidpoint1D( settings );
+        // case QUAD_Midpoint2D: return new QMidpointTensorized2D( settings );
+        // case QUAD_Midpoint3D: return new QMidpointTensorized( settings );
+        case QUAD_Rectangular1D: return new QRectangular1D( settings );
+        case QUAD_Rectangular2D: return new QRectangular2D( settings );
+        case QUAD_Rectangular3D: return new QRectangular( settings );
         default: ErrorMessages::Error( "Creator for the chosen quadrature does not yet exist. This is the fault of the coder!", CURRENT_FUNCTION );
     }
     return nullptr;
@@ -41,6 +49,9 @@ QuadratureBase* QuadratureBase::Create( QUAD_NAME name, unsigned quadOrder ) {
     switch( name ) {
         case QUAD_MonteCarlo: return new QMonteCarlo( quadOrder );
         case QUAD_GaussLegendreTensorized:
+            ErrorMessages::Error( "This quadrature must be initialized with a settings constructor!", CURRENT_FUNCTION );
+            break;
+        case QUAD_GaussLegendreTensorized2D:
             ErrorMessages::Error( "This quadrature must be initialized with a settings constructor!", CURRENT_FUNCTION );
             break;
         case QUAD_GaussLegendre1D: return new QGaussLegendre1D( quadOrder );
@@ -57,7 +68,7 @@ QuadratureBase* QuadratureBase::Create( QUAD_NAME name, unsigned quadOrder ) {
 double QuadratureBase::Integrate( double ( *f )( double, double, double ) ) {
     double result = 0.0;
     for( unsigned i = 0; i < _nq; i++ ) {
-        result += _weights[i] * f( _points[i][0], _points[i][1], _points[i][2] );
+        result += _weights[i] * f( _pointsKarth[i][0], _pointsKarth[i][1], _pointsKarth[i][2] );
     }
     return result;
 }
@@ -75,7 +86,7 @@ std::vector<double> QuadratureBase::Integrate( std::vector<double> ( *f )( doubl
     std::vector<double> funcEval( len, 0.0 );
 
     for( unsigned i = 0; i < _nq; i++ ) {
-        funcEval = f( _points[i][0], _points[i][1], _points[i][2] );
+        funcEval = f( _pointsKarth[i][0], _pointsKarth[i][1], _pointsKarth[i][2] );
         for( unsigned idx_len = 0; idx_len < len; idx_len++ ) {
             result[idx_len] += _weights[i] * funcEval[idx_len];
         }
@@ -95,23 +106,36 @@ void QuadratureBase::PrintWeights() {
 void QuadratureBase::PrintPoints() {
     auto log = spdlog::get( "event" );
     for( unsigned i = 0; i < _nq; i++ ) {
-        log->info( "{0}, {1}, {2}", _points[i][0], _points[i][1], _points[i][2] );
+        log->info( "{0}, {1}, {2}", _pointsKarth[i][0], _pointsKarth[i][1], _pointsKarth[i][2] );
     }
 }
 void QuadratureBase::PrintPointsAndWeights() {
     auto log = spdlog::get( "event" );
     for( unsigned i = 0; i < _nq; i++ ) {
-        log->info( "{0}, {1}, {2}, {3}", _points[i][0], _points[i][1], _points[i][2], _weights[i] );
+        log->info( "{0}, {1}, {2}, {3}", _pointsKarth[i][0], _pointsKarth[i][1], _pointsKarth[i][2], _weights[i] );
     }
 }
 
-void QuadratureBase::ScaleWeights( double leftBound, double rightBound ) {
+void QuadratureBase::ScalePointsAndWeights( double velocityScaling ) {
+    // Scale from [-1,1] to [-velocityScaling,velocityScaling] in 1D
+    // Scale radius of velocity sphere with velocityScaling in 2D and 3D
     if( !_settings ) {
         ErrorMessages::Error( "This function is only available with an active settings file.", CURRENT_FUNCTION );
     }
-    if( _settings->GetDim() != 1 ) {
-        ErrorMessages::Error( "This function is only available in 1 spatial dimension.", CURRENT_FUNCTION );
+    if( _settings->GetDim() == 1 ) {
+        _weights = _weights * velocityScaling;
+        for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
+            _pointsKarth[idx_quad][0]  = _pointsKarth[idx_quad][0] * velocityScaling;
+            _pointsSphere[idx_quad][0] = _pointsSphere[idx_quad][0] * velocityScaling;    // scale radius
+        }
     }
-
-    _weights = _weights * ( ( rightBound - leftBound ) / 2.0 );
+    else {    // 2D and 3D get same scaling with increasing radius
+        _weights = _weights * velocityScaling * velocityScaling;
+        for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
+            for( unsigned idx_dim = 0; idx_dim < _settings->GetDim(); idx_dim++ ) {    // Karthesian
+                _pointsKarth[idx_quad][idx_dim] = _pointsKarth[idx_quad][idx_dim] * velocityScaling;
+            }
+            _pointsSphere[idx_quad][2] = _pointsSphere[idx_quad][2] * velocityScaling;    // scale radius
+        }
+    }
 }

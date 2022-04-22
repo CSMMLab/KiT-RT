@@ -1,9 +1,9 @@
 #include "catch.hpp"
 #include "common/config.hpp"
 #include "common/globalconstants.hpp"
-#include "problems/epics.hpp"
-#include "problems/icru.hpp"
 #include "quadratures/qgausslegendre1D.hpp"
+#include "toolboxes/epics.hpp"
+#include "toolboxes/icru.hpp"
 
 TEST_CASE( "ENDL: checking angular integral of scattering cross sections to be unity", "[physics]" ) {
 

@@ -9,7 +9,7 @@
 #include "spdlog/spdlog.h"
 
 // Forward Declarations
-class NumericalFlux;
+class NumericalFluxBase;
 class Mesh;
 class Config;
 class ProblemBase;
@@ -20,7 +20,7 @@ class Reconstructor;
 class SolverBase
 {
   protected:
-    NumericalFlux* _g;     /*!< @brief class for numerical flux */
+    NumericalFluxBase* _g; /*!< @brief class for numerical flux */
     Config* _settings;     /*!< @brief config class for global information */
     ProblemBase* _problem; /*!< @brief problem class for initial conditions */
 
@@ -49,6 +49,7 @@ class SolverBase
 
     std::vector<double> _density; /*!< @brief patient density, dim(_density) = _nCells (only for csdsolver) */
     Vector _s;                    /*!< @brief stopping power, dim(_s) = _maxIter (only for csdsolver) */
+    Vector _sMid;                 /*!< @brief stopping power at intermediate time steps, dim(_s) = _maxIter (only for csdsolver) */
 
     std::vector<VectorVector> _Q; /*!< @brief external source term. Dim(_Q) = _maxIter x (_nCells x _nSystem) */
     VectorVector _sigmaS;         /*!< @brief scattering cross section for all energies. len: _nEnergies x _nCells */
@@ -99,6 +100,9 @@ class SolverBase
     /*! @brief Computes the finite Volume update step for the current iteration
          @param idx_iter  current (peudo) time iteration */
     virtual void FVMUpdate( unsigned idx_iter ) = 0;
+    /*! @brief Computes the finite Volume update step for the current iteration
+         @param idx_iter  current (peudo) time iteration */
+    virtual void RKUpdate( VectorVector sol0, VectorVector sol_rk );
 
     // Helper
     /*! @brief ComputeTimeStep calculates the maximal stable time step using the cfl number

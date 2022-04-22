@@ -13,7 +13,6 @@ Mesh::Mesh( std::vector<Vector> nodes,
     else {
         ErrorMessages::Error( "Unsupported mesh dimension!", CURRENT_FUNCTION );
     }
-
     ComputeCellAreas();
     ComputeCellMidpoints();
     ComputeConnectivity();
@@ -58,8 +57,8 @@ void Mesh::ComputeConnectivity() {
         for( auto j : _cells[i] ) connMat.set( i, j, true );
     }
 
-// determine neighbor cells and normals with MPI and OpenMP
-#pragma omp parallel for
+    // determine neighbor cells and normals with MPI and OpenMP
+    //#pragma omp parallel for
     for( unsigned i = mpiCellStart; i < mpiCellEnd; ++i ) {
         std::vector<unsigned>* cellsI = &sortedCells[i];
         unsigned ctr                  = 0;
@@ -251,12 +250,11 @@ Vector Mesh::ComputeOutwardFacingNormal( const Vector& nodeA, const Vector& node
 }
 
 void Mesh::ComputeSlopes( unsigned nq, VectorVector& psiDerX, VectorVector& psiDerY, const VectorVector& psi ) const {
-    for( unsigned idx_sys = 0; idx_sys < nq; ++idx_sys ) {
-        for( unsigned idx_cell = 0; idx_cell < _numCells; ++idx_cell ) {
+#pragma omp parallel for
+    for( unsigned idx_cell = 0; idx_cell < _numCells; ++idx_cell ) {
+        for( unsigned idx_sys = 0; idx_sys < nq; ++idx_sys ) {
             psiDerX[idx_cell][idx_sys] = 0.0;
             psiDerY[idx_cell][idx_sys] = 0.0;
-
-            // if( cell->IsBoundaryCell() ) continue; // skip ghost cells
             if( _cellBoundaryTypes[idx_cell] != 2 ) continue;    // skip ghost cells
             // compute derivative by summing over cell boundary
             for( unsigned idx_nbr = 0; idx_nbr < _cellNeighbors[idx_cell].size(); ++idx_nbr ) {
@@ -271,12 +269,30 @@ void Mesh::ComputeSlopes( unsigned nq, VectorVector& psiDerX, VectorVector& psiD
     }
 }
 
+void Mesh::ComputeSlopes1D( unsigned nq, VectorVector& psiDerX, const VectorVector& psi ) const {
+    // assume equidistant ordered mesh
+    double dx = _cellMidPoints[2][0] - _cellMidPoints[1][0];
+
+#pragma omp parallel for
+    for( unsigned idx_cell = 0; idx_cell < _numCells; ++idx_cell ) {
+        for( unsigned idx_sys = 0; idx_sys < nq; ++idx_sys ) {
+            psiDerX[idx_cell][idx_sys] = 0.0;
+            if( _cellNeighbors[idx_cell].size() <= 2 ) {    // right neighbor + ghostcell ==> its a boundary cell
+                continue;                                   // skip computation
+            }
+            // compute derivative by second order difference
+            psiDerX[idx_cell][idx_sys] = ( psi[idx_cell + 1][idx_sys] - 2 * psi[idx_cell][idx_sys] + psi[idx_cell - 1][idx_sys] ) / ( dx * dx );
+        }
+    }
+}
+
 void Mesh::ComputeLimiter(
     unsigned nSys, const VectorVector& solDx, const VectorVector& solDy, const VectorVector& sol, VectorVector& limiter ) const {
-    double r   = 0.0;
-    double eps = 1e-10;
+    double const eps = 1e-10;
+#pragma omp parallel for
     for( unsigned idx_cell = 0; idx_cell < _numCells; idx_cell++ ) {
         for( unsigned idx_sys = 0; idx_sys < nSys; idx_sys++ ) {
+            double r = 0.0;
             if( _cellBoundaryTypes[idx_cell] != 2 ) {
                 limiter[idx_cell][idx_sys] = 0.0;    // turn to first order on boundaries
                 continue;                            // skip computation
@@ -300,8 +316,8 @@ void Mesh::ComputeLimiter(
                 // gauss point is at cell vertex
                 gaussPt = solDx[idx_cell][idx_sys] * ( _nodes[_cells[idx_cell][idx_nbr]][0] - _cellMidPoints[idx_cell][0] ) +
                           solDy[idx_cell][idx_sys] * ( _nodes[_cells[idx_cell][idx_nbr]][1] - _cellMidPoints[idx_cell][1] );
-                // Compute limiter input
 
+                // Compute limiter input
                 if( std::abs( gaussPt ) > eps ) {
                     if( gaussPt > 0.0 ) {
                         r = ( maxSol - sol[idx_cell][idx_sys] ) / gaussPt;
@@ -314,7 +330,7 @@ void Mesh::ComputeLimiter(
                     r = 1.0;
                 }
                 if( r < 0.0 ) {
-                    std::cout << "r <0.0 \n";
+                    std::cout << "r <0.0 \n";    // if this happens there is a bug or a deformend mesh
                 }
                 localLimiter[idx_nbr] = std::min( r, 1.0 );    // LimiterBarthJespersen( r );
                 // double epsVenka = ( 1 * sqrt( _cellAreas[idx_cell] ) );
@@ -340,40 +356,62 @@ void Mesh::ComputeLimiter(
                 if( localLimiter[idx_nbr] < limiter[idx_cell][idx_sys] ) limiter[idx_cell][idx_sys] = localLimiter[idx_nbr];
             }
             // check maximum principle
-            for( unsigned idx_nbr = 0; idx_nbr < _cellNeighbors[idx_cell].size(); idx_nbr++ ) {
-                double currLim = limiter[idx_cell][idx_sys];
-                // double dy      = solDy[idx_cell][idx_sys];
-                // double dx      = solDx[idx_cell][idx_sys];
-                // double rijx    = _cellInterfaceMidPoints[idx_cell][idx_nbr][0];
-                // double rijy    = _cellInterfaceMidPoints[idx_cell][idx_nbr][1];
-                // double cmx     = _cellMidPoints[idx_cell][0];
-                // double cmy     = _cellMidPoints[idx_cell][1];
-                // double curSol  = sol[idx_cell][idx_sys];
-                double gaussPt = solDx[idx_cell][idx_sys] * ( _cellInterfaceMidPoints[idx_cell][idx_nbr][0] - _cellMidPoints[idx_cell][0] ) +
-                                 solDy[idx_cell][idx_sys] * ( _cellInterfaceMidPoints[idx_cell][idx_nbr][1] - _cellMidPoints[idx_cell][1] );
+            // for( unsigned idx_nbr = 0; idx_nbr < _cellNeighbors[idx_cell].size(); idx_nbr++ ) {
+            //    double currLim = limiter[idx_cell][idx_sys];
+            //    // double dy      = solDy[idx_cell][idx_sys];
+            //    // double dx      = solDx[idx_cell][idx_sys];
+            //    // double rijx    = _cellInterfaceMidPoints[idx_cell][idx_nbr][0];
+            //    // double rijy    = _cellInterfaceMidPoints[idx_cell][idx_nbr][1];
+            //    // double cmx     = _cellMidPoints[idx_cell][0];
+            //    // double cmy     = _cellMidPoints[idx_cell][1];
+            //    // double curSol  = sol[idx_cell][idx_sys];
+            //    double gaussPt = solDx[idx_cell][idx_sys] * ( _cellInterfaceMidPoints[idx_cell][idx_nbr][0] - _cellMidPoints[idx_cell][0] ) +
+            //                     solDy[idx_cell][idx_sys] * ( _cellInterfaceMidPoints[idx_cell][idx_nbr][1] - _cellMidPoints[idx_cell][1] );
 
-                double psiL = sol[idx_cell][idx_sys] + currLim * gaussPt;
-                // double psiL2 = curSol + currLim * ( dx * ( rijx - cmx ) + dy * ( rijy - cmy ) );
+            //    double psiL = sol[idx_cell][idx_sys] + currLim * gaussPt;
+            //    // double psiL2 = curSol + currLim * ( dx * ( rijx - cmx ) + dy * ( rijy - cmy ) );
 
-                if( psiL > maxSol ) {
-                    // std::cout << "max principle hurt\n";
-                    // gaussPt = solDx[idx_cell][idx_sys] * ( _nodes[_cells[idx_cell][idx_nbr]][0] - _cellMidPoints[idx_cell][0] ) +
-                    //           solDy[idx_cell][idx_sys] * ( _nodes[_cells[idx_cell][idx_nbr]][1] - _cellMidPoints[idx_cell][1] );
-                    // std::cout << "gaussPt" << gaussPt << "\n";
-                    // std::cout << "enumMax" << maxSol - sol[idx_cell][idx_sys] << "\n";
-                    // std::cout << "enumMin" << minSol - sol[idx_cell][idx_sys] << "\n";
-                    // std::cout << "minSol" << minSol << "psiL" << psiL << "maxSol" << maxSol << "\n";
-                    // limiter[idx_cell][idx_sys] = 0.0;
-                }
-                if( psiL < minSol ) {
-                    // std::cout << "min principle hurt\n";
-                    // std::cout << "gaussPt" << gaussPt << "\n";
-                    // std::cout << "enumMax" << maxSol - sol[idx_cell][idx_sys] << "\n";
-                    // std::cout << "enumMin" << minSol - sol[idx_cell][idx_sys] << "\n";
-                    // std::cout << "minSol" << minSol << "psiL" << psiL << "maxSol" << maxSol << "\n";
-                    // limiter[idx_cell][idx_sys] = 0.0;
-                }
+            //    if( psiL > maxSol ) {
+            //        // std::cout << "max principle hurt\n";
+            //        // gaussPt = solDx[idx_cell][idx_sys] * ( _nodes[_cells[idx_cell][idx_nbr]][0] - _cellMidPoints[idx_cell][0] ) +
+            //        //           solDy[idx_cell][idx_sys] * ( _nodes[_cells[idx_cell][idx_nbr]][1] - _cellMidPoints[idx_cell][1] );
+            //        // std::cout << "gaussPt" << gaussPt << "\n";
+            //        // std::cout << "enumMax" << maxSol - sol[idx_cell][idx_sys] << "\n";
+            //        // std::cout << "enumMin" << minSol - sol[idx_cell][idx_sys] << "\n";
+            //        // std::cout << "minSol" << minSol << "psiL" << psiL << "maxSol" << maxSol << "\n";
+            //        // limiter[idx_cell][idx_sys] = 0.0;
+            //    }
+            //    if( psiL < minSol ) {
+            //        // std::cout << "min principle hurt\n";
+            //        // std::cout << "gaussPt" << gaussPt << "\n";
+            //        // std::cout << "enumMax" << maxSol - sol[idx_cell][idx_sys] << "\n";
+            //        // std::cout << "enumMin" << minSol - sol[idx_cell][idx_sys] << "\n";
+            //        // std::cout << "minSol" << minSol << "psiL" << psiL << "maxSol" << maxSol << "\n";
+            //        // limiter[idx_cell][idx_sys] = 0.0;
+            //    }
+            //}
+        }
+    }
+}
+
+void Mesh::ComputeLimiter1D( unsigned nSys, const VectorVector& sol, VectorVector& limiter ) const {
+    //#pragma omp parallel for
+    double const eps = 1e-10;
+    for( unsigned idx_cell = 0; idx_cell < _numCells; idx_cell++ ) {
+        for( unsigned idx_sys = 0; idx_sys < nSys; idx_sys++ ) {
+            double r = 0.0;
+            if( _cellNeighbors[idx_cell].size() <= 2 ) {    // right neighbor + ghostcell ==> its a boundary cell
+                limiter[idx_cell][idx_sys] = 0.0;           // turn to first order on boundaries
+                continue;                                   // skip computation
             }
+            double up   = sol[idx_cell][idx_sys] - sol[_cellNeighbors[idx_cell][0]][idx_sys];
+            double down = sol[_cellNeighbors[idx_cell][1]][idx_sys] - sol[idx_cell][idx_sys];
+
+            up > 0 ? up += eps : up -= eps;          // to prevent divbyzero
+            down > 0 ? down += eps : down -= eps;    // to prevent divbyzero
+
+            r                          = up / down;
+            limiter[idx_cell][idx_sys] = std::max( std::min( r, 1.0 ), 0.0 );    // minmod limiter
         }
     }
 }

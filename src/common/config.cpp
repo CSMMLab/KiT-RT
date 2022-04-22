@@ -214,7 +214,7 @@ void Config::SetConfigOptions() {
     /*! @brief MESH_FILE \n DESCRIPTION: Name of mesh file \n DEFAULT "" \ingroup Config.*/
     AddStringOption( "MESH_FILE", _meshFile, string( "mesh.su2" ) );
     /*! @brief MESH_FILE \n DESCRIPTION: Name of mesh file \n DEFAULT "" \ingroup Config.*/
-    AddStringOption( "CT_FILE", _ctFile, string( "../tests/input/phantom.png" ) );
+    AddStringOption( "CT_FILE", _ctFile, string( "/home/pia/kitrt/examples/meshes/phantom.png" ) );
 
     // Quadrature relatated options
     /*! @brief QUAD_TYPE \n DESCRIPTION: Type of Quadrature rule \n Options: see @link QUAD_NAME \endlink \n DEFAULT: QUAD_MonteCarlo
@@ -232,7 +232,7 @@ void Config::SetConfigOptions() {
     /*! @brief TIME_FINAL \n DESCRIPTION: Final time for simulation \n DEFAULT 1.0 @ingroup Config.*/
     AddDoubleOption( "TIME_FINAL", _tEnd, 1.0 );
     /*! @brief Problem \n DESCRIPTION: Type of problem setting \n DEFAULT PROBLEM_ElectronRT @ingroup Config.*/
-    AddEnumOption( "PROBLEM", _problemName, Problem_Map, PROBLEM_ElectronRT );
+    AddEnumOption( "PROBLEM", _problemName, Problem_Map, PROBLEM_Linesource );
     /*! @brief Solver \n DESCRIPTION: Solver used for problem \n DEFAULT SN_SOLVER @ingroup Config. */
     AddEnumOption( "SOLVER", _solverName, Solver_Map, SN_SOLVER );
     /*! @brief RECONS_ORDER \n DESCRIPTION: Reconstruction order for solver (spatial flux) \n DEFAULT 1 \ingroup Config.*/
@@ -240,9 +240,11 @@ void Config::SetConfigOptions() {
     /*! @brief CleanFluxMatrices \n DESCRIPTION:  If true, very low entries (10^-10 or smaller) of the flux matrices will be set to zero,
      * to improve floating point accuracy \n DEFAULT false \ingroup Config */
     AddBoolOption( "CLEAN_FLUX_MATRICES", _cleanFluxMat, false );
-    /*! @brief ContinuousSlowingDown \n DESCRIPTION: If true, the program uses the continuous slowing down approximation to treat energy dependent
-     * problems. \n DEFAULT false \ingroup Config */
-    // AddBoolOption( "CONTINUOUS_SLOWING_DOWN", _csd, false );
+    /*! @brief Realizability Step for MN solver \n DESCRIPTION: If true, MN solvers use a realizability reconstruction step in each time step. Also
+     * applicable in regression sampling \n DEFAULT false \ingroup Config */
+    AddBoolOption( "REALIZABILITY_RECONSTRUCTION", _realizabilityRecons, false );
+    /*! @brief Runge Kutta Staes  \n DESCRIPTION: Sets number of Runge Kutta Stages for time integration \n DEFAULT 1 \ingroup Config */
+    AddUnsignedShortOption( "RUNGE_KUTTA_STAGES", _rungeKuttaStages, 1 );
 
     // Problem Relateed Options
     /*! @brief MaterialDir \n DESCRIPTION: Relative Path to the data directory (used in the ICRU database class), starting from the directory of the
@@ -260,8 +262,12 @@ void Config::SetConfigOptions() {
     AddBoolOption( "SN_ALL_GAUSS_PTS", _allGaussPts, false );
 
     // Linesource Testcase Options
-    /*! @brief SCATTER_COEFF \n DESCRIPTION: Sets the scattering coefficient for the Linesource test case. \n DEFAULT 0.0 \ingroup Config */
+    /*! @brief SCATTER_COEFF \n DESCRIPTION: Sets the scattering coefficient for the Linesource test case. \n DEFAULT 1.0 \ingroup Config */
     AddDoubleOption( "SCATTER_COEFF", _sigmaS, 1.0 );
+
+    // Checkerboard Testcase Options
+    /*! @brief SCATTER_COEFF \n DESCRIPTION: Sets the Source magnitude for the checkerboard testcase. \n DEFAULT 1.0 \ingroup Config */
+    AddDoubleOption( "SOURCE_MAGNITUDE", _magQ, 1.0 );
 
     // CSD related options
     /*! @brief MAX_ENERGY_CSD \n DESCRIPTION: Sets maximum energy for the CSD simulation.\n DEFAULT \ingroup Config */
@@ -272,8 +278,10 @@ void Config::SetConfigOptions() {
     AddEnumOption( "ENTROPY_FUNCTIONAL", _entropyName, Entropy_Map, QUADRATIC );
     /*! @brief Optimizer Name \n DESCRIPTION:  Optimizer used to determine the minimal Entropy reconstruction \n DEFAULT NEWTON \ingroup Config */
     AddEnumOption( "ENTROPY_OPTIMIZER", _entropyOptimizerName, Optimizer_Map, NEWTON );
-
     // Newton optimizer related options
+    /*! @brief Regularization Parameter \n DESCRIPTION:  Regularization Parameter for the regularized entropy closure. Must not be negative \n DEFAULT
+     * 1e-2 \ingroup Config */
+    AddDoubleOption( "REGULARIZER_GAMMA", _regularizerGamma, 1e-2 );
     /*! @brief Newton Optimizer Epsilon \n DESCRIPTION:  Convergencce Epsilon for Newton Optimizer \n DEFAULT 1e-3 \ingroup Config */
     AddDoubleOption( "NEWTON_EPSILON", _optimizerEpsilon, 0.001 );
     /*! @brief Max Iter Newton Optmizers \n DESCRIPTION: Max number of newton iterations \n DEFAULT 10 \ingroup Config */
@@ -286,9 +294,8 @@ void Config::SetConfigOptions() {
     /*! @brief Newton Fast mode \n DESCRIPTION:  If true, we skip the Newton optimizer for Quadratic entropy and set alpha = u \n DEFAULT false
      * \ingroup Config */
     AddBoolOption( "NEWTON_FAST_MODE", _newtonFastMode, false );
-
     // Neural Entropy Closure options
-    AddUnsignedShortOption( "NEURAL_MODEL", _neuralModel, 4 );
+    AddUnsignedShortOption( "NEURAL_MODEL_MK", _neuralModel, 11 );
 
     // Mesh related options
     // Boundary Markers
@@ -346,15 +353,22 @@ void Config::SetConfigOptions() {
     /*! @brief Switch for sampling distribution  \n DESCRIPTION: Uniform (true) or trunctaded normal (false) \n DEFAULT true
      * \ingroup Config */
     AddBoolOption( "UNIFORM_SAMPLING", _sampleUniform, true );
-    /*! @brief Flag for sampling the space of Legendre multipliers instead of the moments  \n DESCRIPTION: Sample alpha instead of u \n DEFAULT False
-     * \ingroup Config */
-    AddBoolOption( "REALIZABILITY_RECONS_U", _realizabilityRecons, true );
     /*! @brief Boundary for the sampling region of the Lagrange multipliers  \n DESCRIPTION: Norm sampling boundary for alpha \n DEFAULT 20.0
      * \ingroup Config */
     AddDoubleOption( "ALPHA_SAMPLING_BOUND", _alphaBound, 20.0 );
     /*! @brief Rejection sampling threshold based on the minimal Eigenvalue of the Hessian of the entropy functions  \n DESCRIPTION: Rejection
      * sampling threshold \n DEFAULT 1e-8 \ingroup Config */
     AddDoubleOption( "MIN_EIGENVALUE_THRESHOLD", _minEVAlphaSampling, 1e-8 );
+    /*! @brief Boundary for the velocity integral  \n DESCRIPTION: Upper boundary for the velocity integral \n DEFAULT 5.0  * \ingroup Config */
+    AddDoubleOption( "MAX_VELOCITY", _maxSamplingVelocity, 5.0 );
+    ///*! @brief Boundary for the velocity integral  \n DESCRIPTION: Lower boundary for the velocity integral \n DEFAULT 5.0  * \ingroup Config */
+    // AddDoubleOption( "MIN_VELOCITY", _minSamplingVelocity, -5.0 );
+    /*! @brief Boundary for the sampling temperature  \n DESCRIPTION: Upper boundary for the sampling temperature \n DEFAULT 1.0  * \ingroup Config */
+    AddDoubleOption( "MAX_TEMPERATURE", _maxSamplingTemperature, 1 );
+    /*! @brief Boundary for the sampling temperature  \n DESCRIPTION: Lower boundary for the sampling temperature \n DEFAULT 0.1  * \ingroup Config */
+    AddDoubleOption( "MIN_TEMPERATURE", _minSamplingTemperature, 0.1 );
+    /*! @brief Number of temperature samples  \n DESCRIPTION: Number of temperature samples for the sampler \n DEFAULT 10  * \ingroup Config */
+    AddUnsignedShortOption( "N_TEMPERATURES", _nTemperatures, 10 );
 }
 
 void Config::SetConfigParsing( string case_filename ) {
@@ -478,29 +492,36 @@ void Config::SetPostprocessing() {
 
     // Set option ISCSD
     switch( _solverName ) {
-        case CSD_SN_NOTRAFO_SOLVER:                     // Fallthrough
-        case CSD_SN_FOKKERPLANCK_SOLVER:                // Fallthrough
-        case CSD_SN_FOKKERPLANCK_TRAFO_SOLVER:          // Fallthrough
-        case CSD_SN_FOKKERPLANCK_TRAFO_SOLVER_2D:       // Fallthrough
-        case CSD_SN_FOKKERPLANCK_TRAFO_SH_SOLVER_2D:    // Fallthrough
-        case CSD_SN_SOLVER:                             // Fallthrough
-        case CSD_PN_SOLVER:                             // Fallthrough
+        case CSD_SN_SOLVER:    // Fallthrough
+        case CSD_PN_SOLVER:    // Fallthrough
+        case CSD_MN_SOLVER:    // Fallthrough
             _csd = true;
             break;
         default: _csd = false;
     }
 
-    // Check, if mesh file exists
-    if( _solverName == CSD_SN_FOKKERPLANCK_TRAFO_SOLVER ) {    // Check if this is neccessary
-        if( !std::filesystem::exists( this->GetHydrogenFile() ) ) {
-            ErrorMessages::Error( "Path to mesh file <" + this->GetHydrogenFile() + "> does not exist. Please check your config file.",
-                                  CURRENT_FUNCTION );
-        }
-        if( !std::filesystem::exists( this->GetOxygenFile() ) ) {
-            ErrorMessages::Error( "Path to mesh file <" + this->GetOxygenFile() + "> does not exist. Please check your config file.",
-                                  CURRENT_FUNCTION );
-        }
+    // Set option MomentSolver
+    switch( _solverName ) {
+        case MN_SOLVER:
+        case MN_SOLVER_NORMALIZED:
+        case CSD_MN_SOLVER:
+        case PN_SOLVER:
+        case CSD_PN_SOLVER: _isMomentSolver = true; break;
+        default: _isMomentSolver = false;
     }
+
+    // Check, if mesh file exists
+    // if( _solverName == CSD_SN_FOKKERPLANCK_TRAFO_SOLVER ) {    // Check if this is neccessary
+    //    if( !std::filesystem::exists( this->GetHydrogenFile() ) ) {
+    //        ErrorMessages::Error( "Path to mesh file <" + this->GetHydrogenFile() + "> does not exist. Please check your config file.",
+    //                              CURRENT_FUNCTION );
+    //    }
+    //    if( !std::filesystem::exists( this->GetOxygenFile() ) ) {
+    //        ErrorMessages::Error( "Path to mesh file <" + this->GetOxygenFile() + "> does not exist. Please check your config file.",
+    //                              CURRENT_FUNCTION );
+    //    }
+    //}
+
     // Quadrature Postprocessing
     {
         QuadratureBase* quad                      = QuadratureBase::Create( this );
@@ -522,8 +543,26 @@ void Config::SetPostprocessing() {
                 CURRENT_FUNCTION );
         }
 
-        if( GetSolverName() == MN_SOLVER && GetSphericalBasisName() == SPHERICAL_MONOMIALS && GetMaxMomentDegree() > 1 ) {
-            ErrorMessages::Error( "MN Solver only with monomial basis only stable up to degree 1. This is a TODO.", CURRENT_FUNCTION );
+        if( GetSolverName() == CSD_MN_SOLVER && GetSphericalBasisName() != SPHERICAL_HARMONICS ) {
+            ErrorMessages::Error( "CSD_MN_SOLVER only works with Spherical Harmonics currently.", CURRENT_FUNCTION );
+        }
+
+        if( GetReconsOrder() > 2 ) {
+            ErrorMessages::Error( "Solvers only work with 1st and 2nd order spatial fluxes.", CURRENT_FUNCTION );
+        }
+
+        if( GetOptimizerName() == ML && GetSolverName() != MN_SOLVER_NORMALIZED ) {
+            ErrorMessages::Error( "ML Optimizer only works with normalized MN Solver.", CURRENT_FUNCTION );
+        }
+
+        if( GetSolverName() == PN_SOLVER || GetSolverName() == CSD_PN_SOLVER ) {
+            _dim        = 3;
+            auto log    = spdlog::get( "event" );
+            auto logCSV = spdlog::get( "tabular" );
+            log->info(
+                "| Spherical harmonics based solver currently use 3D Spherical functions and a projection. Thus spatial dimension is set to 3." );
+            logCSV->info(
+                "| Spherical harmonics based solver currently use 3D Spherical functions and a projection. Thus spatial dimension is set to 3." );
         }
     }
 
@@ -561,13 +600,14 @@ void Config::SetPostprocessing() {
                         ErrorMessages::Error( "SN_SOLVER only supports volume output MINIMAL and ANALYTIC.\nPlease check your .cfg file.",
                                               CURRENT_FUNCTION );
                     }
-                    if( _volumeOutput[idx_volOutput] == ANALYTIC && _problemName != PROBLEM_LineSource ) {
+                    if( _volumeOutput[idx_volOutput] == ANALYTIC && _problemName != PROBLEM_Linesource ) {
                         ErrorMessages::Error( "Analytical solution (VOLUME_OUTPUT=ANALYTIC) is only available for the PROBLEM=LINESOURCE.\nPlease "
                                               "check your .cfg file.",
                                               CURRENT_FUNCTION );
                     }
                     break;
-                case MN_SOLVER:
+                case MN_SOLVER:    // Fallthrough
+                case MN_SOLVER_NORMALIZED:
                     supportedGroups = { MINIMAL, MOMENTS, DUAL_MOMENTS, ANALYTIC };
                     if( supportedGroups.end() == std::find( supportedGroups.begin(), supportedGroups.end(), _volumeOutput[idx_volOutput] ) ) {
 
@@ -575,7 +615,7 @@ void Config::SetPostprocessing() {
                             "MN_SOLVER only supports volume output ANALYTIC, MINIMAL, MOMENTS and DUAL_MOMENTS.\nPlease check your .cfg file.",
                             CURRENT_FUNCTION );
                     }
-                    if( _volumeOutput[idx_volOutput] == ANALYTIC && _problemName != PROBLEM_LineSource ) {
+                    if( _volumeOutput[idx_volOutput] == ANALYTIC && _problemName != PROBLEM_Linesource ) {
                         ErrorMessages::Error( "Analytical solution (VOLUME_OUTPUT=ANALYTIC) is only available for the PROBLEM=LINESOURCE.\nPlease "
                                               "check your .cfg file.",
                                               CURRENT_FUNCTION );
@@ -588,18 +628,13 @@ void Config::SetPostprocessing() {
                         ErrorMessages::Error( "PN_SOLVER only supports volume output ANALYTIC, MINIMAL and MOMENTS.\nPlease check your .cfg file.",
                                               CURRENT_FUNCTION );
                     }
-                    if( _volumeOutput[idx_volOutput] == ANALYTIC && _problemName != PROBLEM_LineSource ) {
+                    if( _volumeOutput[idx_volOutput] == ANALYTIC && _problemName != PROBLEM_Linesource ) {
                         ErrorMessages::Error( "Analytical solution (VOLUME_OUTPUT=ANALYTIC) is only available for the PROBLEM=LINESOURCE.\nPlease "
                                               "check your .cfg file.",
                                               CURRENT_FUNCTION );
                     }
                     break;
-                case CSD_SN_NOTRAFO_SOLVER:                     // Fallthrough
-                case CSD_SN_FOKKERPLANCK_SOLVER:                // Fallthrough
-                case CSD_SN_FOKKERPLANCK_TRAFO_SOLVER:          // Fallthrough
-                case CSD_SN_FOKKERPLANCK_TRAFO_SOLVER_2D:       // Fallthrough
-                case CSD_SN_FOKKERPLANCK_TRAFO_SH_SOLVER_2D:    // Fallthrough
-                case CSD_SN_SOLVER:                             // Fallthrough
+                case CSD_SN_SOLVER:    // Fallthrough
                     supportedGroups = { MINIMAL, MEDICAL };
                     if( supportedGroups.end() == std::find( supportedGroups.begin(), supportedGroups.end(), _volumeOutput[idx_volOutput] ) ) {
 
@@ -614,6 +649,15 @@ void Config::SetPostprocessing() {
                         ErrorMessages::Error(
                             "CSD_PN_SOLVER types only supports volume output MEDICAL, MOMENTS and MINIMAL.\nPlease check your .cfg file.",
                             CURRENT_FUNCTION );
+                    }
+                    break;
+                case CSD_MN_SOLVER:
+                    supportedGroups = { MINIMAL, MEDICAL, MOMENTS, DUAL_MOMENTS };
+                    if( supportedGroups.end() == std::find( supportedGroups.begin(), supportedGroups.end(), _volumeOutput[idx_volOutput] ) ) {
+
+                        ErrorMessages::Error( "CSD_MN_SOLVER types only supports volume output MEDICAL, MOMENTS, DUAL_MOMENTS and MINIMAL.\nPlease "
+                                              "check your .cfg file.",
+                                              CURRENT_FUNCTION );
                     }
                     break;
                 default:
@@ -724,6 +768,13 @@ void Config::SetPostprocessing() {
                 "Minimal Eigenvalue threshold of the entropy hession must be positive.\n Current choice: " + std::to_string( _alphaSampling ) +
                 ". Check choice of MIN_EIGENVALUE_THRESHOLD.";
             ErrorMessages::Error( msg, CURRENT_FUNCTION );
+        }
+    }
+
+    // Optimizer postprocessing
+    {
+        if( _regularizerGamma <= 0.0 ) {
+            ErrorMessages::Error( "REGULARIZER_GAMMA must be positive.", CURRENT_FUNCTION );
         }
     }
 }
@@ -958,14 +1009,14 @@ void Config::InitLogger() {
                 struct tm tstruct;
                 char buf[80];
                 tstruct = *localtime( &now );
-                strftime( buf, sizeof( buf ), "%Y-%m-%d_%X_csv", &tstruct );
+                strftime( buf, sizeof( buf ), "%Y-%m-%d_%X.csv", &tstruct );
 
                 // set filename
                 std::string filename;
                 if( _logFileName.compare( "use_date" ) == 0 )
                     filename = buf;    // set filename to date and time
                 else
-                    filename = _logFileName + "_csv";
+                    filename = _logFileName + ".csv";
 
                 // in case of existing files append '_#'
                 int ctr = 0;

@@ -23,7 +23,7 @@ class LineSource : public ProblemBase
          @param sigma_s  scattering cross section of the exact solution
          @return exact solution at x,y,t,scatteringXS
     */
-    double GetAnalyticalSolution( double x, double y, double t, double sigma_s ) override;
+    virtual double GetAnalyticalSolution( double x, double y, double t, double sigma_s ) override;
 
   private:
     /*! @brief Helper Functions to compute the analytic solution for sigma != 0
@@ -51,54 +51,47 @@ class LineSource_SN : public LineSource
     LineSource_SN( Config* settings, Mesh* mesh );
     ~LineSource_SN();
 
-    virtual VectorVector GetScatteringXS( const Vector& energies ) override;
-    virtual VectorVector GetTotalXS( const Vector& energies ) override;
-    virtual std::vector<VectorVector> GetExternalSource( const Vector& energies ) override;
-    virtual VectorVector SetupIC() override;
+    VectorVector GetScatteringXS( const Vector& energies ) override;
+    VectorVector GetTotalXS( const Vector& energies ) override;
+    std::vector<VectorVector> GetExternalSource( const Vector& energies ) override;
+    VectorVector SetupIC() override;
 };
 
-class LineSource_SN_Pseudo1D : public LineSource_SN
+class LineSource_Moment : public LineSource
 {
   private:
-    LineSource_SN_Pseudo1D() = delete;
+    LineSource_Moment() = delete;
 
   public:
-    LineSource_SN_Pseudo1D( Config* settings, Mesh* mesh );
+    LineSource_Moment( Config* settings, Mesh* mesh );
+    ~LineSource_Moment();
+
+    VectorVector GetScatteringXS( const Vector& energies ) override;
+    VectorVector GetTotalXS( const Vector& energies ) override;
+    std::vector<VectorVector> GetExternalSource( const Vector& energies ) override;
+    VectorVector SetupIC() override;
+};
+
+class LineSource_SN_1D : public LineSource_SN
+{
+  private:
+    LineSource_SN_1D() = delete;
+
+  public:
+    LineSource_SN_1D( Config* settings, Mesh* mesh );
 
     VectorVector SetupIC() override;
 };
 
-class LineSource_SN_Pseudo1D_Physics : public LineSource_SN_Pseudo1D
+class LineSource_Moment_1D : public LineSource_Moment
 {
   private:
-    LineSource_SN_Pseudo1D_Physics() = delete;
+    LineSource_Moment_1D() = delete;
 
   public:
-    LineSource_SN_Pseudo1D_Physics( Config* settings, Mesh* mesh );
+    LineSource_Moment_1D( Config* settings, Mesh* mesh );
 
-    std::vector<Matrix> GetScatteringXSE( const Vector& energies, const Matrix& angles ) override;
-
-    /**
-     * @brief GetTotalXSE gives back vector of total cross sections for
-     *        energies in vector energy
-     * @param energies is the energy the cross section is queried for
-     */
-    Vector GetTotalXSE( const Vector& energies ) override;
-};
-
-class LineSource_PN : public LineSource
-{
-  private:
-    LineSource_PN() = delete;
-
-  public:
-    LineSource_PN( Config* settings, Mesh* mesh );
-    ~LineSource_PN();
-
-    virtual VectorVector GetScatteringXS( const Vector& energies ) override;
-    virtual VectorVector GetTotalXS( const Vector& energies ) override;
-    virtual std::vector<VectorVector> GetExternalSource( const Vector& energies ) override;
-    virtual VectorVector SetupIC() override;
+    VectorVector SetupIC() override;
 };
 
 #endif    // LINESOURCE_H

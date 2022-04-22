@@ -63,7 +63,13 @@ enum QUAD_NAME {
     QUAD_Lebedev,
     QUAD_LDFESA,
     QUAD_Product,
-    QUAD_GaussChebyshev1D
+    QUAD_Rectangular1D,
+    QUAD_Rectangular2D,
+    QUAD_Rectangular3D,
+    QUAD_GaussChebyshev1D,
+    QUAD_Midpoint1D,
+    QUAD_Midpoint2D,
+    QUAD_Midpoint3D,
 };
 
 /*! @brief Conversion Map String to enum
@@ -75,32 +81,40 @@ inline std::map<std::string, QUAD_NAME> Quadrature_Map{ { "MONTE_CARLO", QUAD_Mo
                                                         { "GAUSS_LEGENDRE_1D", QUAD_GaussLegendre1D },
                                                         { "LEVEL_SYMMETRIC", QUAD_LevelSymmetric },
                                                         { "LEBEDEV", QUAD_Lebedev },
-                                                        { "LDFESA", QUAD_LDFESA } };
+                                                        { "LDFESA", QUAD_LDFESA },
+                                                        { "MIDPOINT_1D", QUAD_Midpoint1D },
+                                                        { "MIDPOINT_2D", QUAD_Midpoint2D },
+                                                        { "MIDPOINT_3D", QUAD_Midpoint3D },
+                                                        { "RECTANGULAR_1D", QUAD_Rectangular1D },
+                                                        { "RECTANGULAR_2D", QUAD_Rectangular2D },
+                                                        { "RECTANGULAR_3D", QUAD_Rectangular3D } };
 
 // Problem name
 enum PROBLEM_NAME {
-    PROBLEM_LineSource,
+    PROBLEM_Linesource,
+    PROBLEM_Linesource1D,
     PROBLEM_Checkerboard,
-    PROBLEM_ElectronRT,
-    PROBLEM_WaterPhantom,
-    PROBLEM_LineSource_Pseudo_1D,
-    PROBLEM_LineSource_Pseudo_1D_Physics,
-    PROBLEM_AirCavity,
-    PROBLEM_MuscleBoneLung,
-    PROBLEM_Phantom2D,
-    PROBLEM_IsotropicSource_2D
+    PROBLEM_Checkerboard1D,
+    PROBLEM_Phantomimage,
+    PROBLEM_Waterphantom1D,
+    PROBLEM_Aircavity1D,
+    PROBLEM_StarmapValidation,
+    PROBLEM_RadiationCT,
+    PROBLEM_Meltingcube,
+    PROBLEM_Meltingcube1D
 };
 
-inline std::map<std::string, PROBLEM_NAME> Problem_Map{ { "LINESOURCE", PROBLEM_LineSource },
+inline std::map<std::string, PROBLEM_NAME> Problem_Map{ { "LINESOURCE", PROBLEM_Linesource },
+                                                        { "LINESOURCE_1D", PROBLEM_Linesource1D },
                                                         { "CHECKERBOARD", PROBLEM_Checkerboard },
-                                                        { "ELECTRONRT", PROBLEM_ElectronRT },
-                                                        { "WATERPHANTOM", PROBLEM_WaterPhantom },
-                                                        { "AIRCAVITY", PROBLEM_AirCavity },
-                                                        { "MUSCLEBONELUNG", PROBLEM_MuscleBoneLung },
-                                                        { "PHANTOM2D", PROBLEM_Phantom2D },
-                                                        { "ISOTROPICPOINTSOURCE2D", PROBLEM_IsotropicSource_2D },
-                                                        { "LINESOURCE_PSEUDO_1D", PROBLEM_LineSource_Pseudo_1D },
-                                                        { "LINESOURCE_PSEUDO_1D_PHYSICS", PROBLEM_LineSource_Pseudo_1D_Physics } };
+                                                        { "CHECKERBOARD_1D", PROBLEM_Checkerboard1D },
+                                                        { "STARMAP_VALIDATION", PROBLEM_StarmapValidation },
+                                                        { "AIRCAVITY_1D", PROBLEM_Aircavity1D },
+                                                        { "WATERPHANTOM", PROBLEM_Phantomimage },
+                                                        { "WATERPHANTOM_1D", PROBLEM_Waterphantom1D },
+                                                        { "RADIATIONCT", PROBLEM_RadiationCT },
+                                                        { "MELTINGCUBE", PROBLEM_Meltingcube },
+                                                        { "MELTINGCUBE_1D", PROBLEM_Meltingcube1D } };
 
 // Kernel name
 enum KERNEL_NAME { KERNEL_Isotropic, KERNEL_Isotropic1D };
@@ -110,27 +124,21 @@ inline std::map<std::string, KERNEL_NAME> Kernel_Map{ { "ISOTROPIC", KERNEL_Isot
 // Solver name
 enum SOLVER_NAME {
     SN_SOLVER,
-    CSD_SN_SOLVER,
-    CSD_SN_NOTRAFO_SOLVER,
-    CSD_SN_FOKKERPLANCK_SOLVER,
-    CSD_SN_FOKKERPLANCK_TRAFO_SOLVER,
-    CSD_SN_FOKKERPLANCK_TRAFO_SOLVER_2D,
-    CSD_SN_FOKKERPLANCK_TRAFO_SH_SOLVER_2D,
-    CSD_PN_SOLVER,
     PN_SOLVER,
-    MN_SOLVER
+    MN_SOLVER,
+    MN_SOLVER_NORMALIZED,
+    CSD_SN_SOLVER,
+    CSD_PN_SOLVER,
+    CSD_MN_SOLVER,
 };
 
 inline std::map<std::string, SOLVER_NAME> Solver_Map{ { "SN_SOLVER", SN_SOLVER },
-                                                      { "CSD_SN_SOLVER", CSD_SN_SOLVER },
-                                                      { "CSD_SN_NOTRAFO_SOLVER", CSD_SN_NOTRAFO_SOLVER },
-                                                      { "CSD_SN_FOKKERPLANCK_SOLVER", CSD_SN_FOKKERPLANCK_SOLVER },
-                                                      { "CSD_SN_FOKKERPLANCK_TRAFO_SOLVER", CSD_SN_FOKKERPLANCK_TRAFO_SOLVER },
-                                                      { "CSD_SN_FOKKERPLANCK_TRAFO_SOLVER_2D", CSD_SN_FOKKERPLANCK_TRAFO_SOLVER_2D },
-                                                      { "CSD_SN_FOKKERPLANCK_TRAFO_SH_SOLVER_2D", CSD_SN_FOKKERPLANCK_TRAFO_SH_SOLVER_2D },
-                                                      { "CSD_PN", CSD_PN_SOLVER },
                                                       { "PN_SOLVER", PN_SOLVER },
-                                                      { "MN_SOLVER", MN_SOLVER } };
+                                                      { "MN_SOLVER", MN_SOLVER },
+                                                      { "MN_SOLVER_NORMALIZED", MN_SOLVER_NORMALIZED },
+                                                      { "CSD_SN_SOLVER", CSD_SN_SOLVER },
+                                                      { "CSD_PN", CSD_PN_SOLVER },
+                                                      { "CSD_MN", CSD_MN_SOLVER } };
 
 // Entropy functional
 enum ENTROPY_NAME { QUADRATIC, MAXWELL_BOLTZMANN, BOSE_EINSTEIN, FERMI_DIRAC };
@@ -139,9 +147,10 @@ inline std::map<std::string, ENTROPY_NAME> Entropy_Map{
     { "QUADRATIC", QUADRATIC }, { "MAXWELL_BOLTZMANN", MAXWELL_BOLTZMANN }, { "BOSE_EINSTEIN", BOSE_EINSTEIN }, { "FERMI_DIRAC", FERMI_DIRAC } };
 
 // Optimizer
-enum OPTIMIZER_NAME { NEWTON, ML };
+enum OPTIMIZER_NAME { NEWTON, REGULARIZED_NEWTON, PART_REGULARIZED_NEWTON, ML };
 
-inline std::map<std::string, OPTIMIZER_NAME> Optimizer_Map{ { "NEWTON", NEWTON }, { "ML", ML } };
+inline std::map<std::string, OPTIMIZER_NAME> Optimizer_Map{
+    { "NEWTON", NEWTON }, { "REGULARIZED_NEWTON", REGULARIZED_NEWTON }, { "PART_REGULARIZED_NEWTON", PART_REGULARIZED_NEWTON }, { "ML", ML } };
 
 // Volume output
 enum VOLUME_OUTPUT { ANALYTIC, MINIMAL, MOMENTS, DUAL_MOMENTS, MEDICAL };

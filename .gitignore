@@ -2,7 +2,7 @@
 *.cfg
 bin/*
 *.su2
-
+build_debug/*
 ### C++ ###
 # Prerequisites
 *.d
