@@ -214,7 +214,7 @@ void Config::SetConfigOptions() {
     /*! @brief MESH_FILE \n DESCRIPTION: Name of mesh file \n DEFAULT "" \ingroup Config.*/
     AddStringOption( "MESH_FILE", _meshFile, string( "mesh.su2" ) );
     /*! @brief MESH_FILE \n DESCRIPTION: Name of mesh file \n DEFAULT "" \ingroup Config.*/
-    AddStringOption( "CT_FILE", _ctFile, string( "../tests/input/phantom.png" ) );
+    AddStringOption( "CT_FILE", _ctFile, string( "/home/pia/kitrt/examples/meshes/phantom.png" ) );
 
     // Quadrature relatated options
     /*! @brief QUAD_TYPE \n DESCRIPTION: Type of Quadrature rule \n Options: see @link QUAD_NAME \endlink \n DEFAULT: QUAD_MonteCarlo
@@ -232,7 +232,7 @@ void Config::SetConfigOptions() {
     /*! @brief TIME_FINAL \n DESCRIPTION: Final time for simulation \n DEFAULT 1.0 @ingroup Config.*/
     AddDoubleOption( "TIME_FINAL", _tEnd, 1.0 );
     /*! @brief Problem \n DESCRIPTION: Type of problem setting \n DEFAULT PROBLEM_ElectronRT @ingroup Config.*/
-    AddEnumOption( "PROBLEM", _problemName, Problem_Map, PROBLEM_ElectronRT );
+    AddEnumOption( "PROBLEM", _problemName, Problem_Map, PROBLEM_Linesource );
     /*! @brief Solver \n DESCRIPTION: Solver used for problem \n DEFAULT SN_SOLVER @ingroup Config. */
     AddEnumOption( "SOLVER", _solverName, Solver_Map, SN_SOLVER );
     /*! @brief RECONS_ORDER \n DESCRIPTION: Reconstruction order for solver (spatial flux) \n DEFAULT 1 \ingroup Config.*/
@@ -243,6 +243,8 @@ void Config::SetConfigOptions() {
     /*! @brief Realizability Step for MN solver \n DESCRIPTION: If true, MN solvers use a realizability reconstruction step in each time step. Also
      * applicable in regression sampling \n DEFAULT false \ingroup Config */
     AddBoolOption( "REALIZABILITY_RECONSTRUCTION", _realizabilityRecons, false );
+    /*! @brief Runge Kutta Staes  \n DESCRIPTION: Sets number of Runge Kutta Stages for time integration \n DEFAULT 1 \ingroup Config */
+    AddUnsignedShortOption( "RUNGE_KUTTA_STAGES", _rungeKuttaStages, 1 );
 
     // Problem Relateed Options
     /*! @brief MaterialDir \n DESCRIPTION: Relative Path to the data directory (used in the ICRU database class), starting from the directory of the
@@ -498,30 +500,36 @@ void Config::SetPostprocessing() {
 
     // Set option ISCSD
     switch( _solverName ) {
-        case CSD_SN_NOTRAFO_SOLVER:                     // Fallthrough
-        case CSD_SN_FOKKERPLANCK_SOLVER:                // Fallthrough
-        case CSD_SN_FOKKERPLANCK_TRAFO_SOLVER:          // Fallthrough
-        case CSD_SN_FOKKERPLANCK_TRAFO_SOLVER_2D:       // Fallthrough
-        case CSD_SN_FOKKERPLANCK_TRAFO_SH_SOLVER_2D:    // Fallthrough
-        case CSD_SN_SOLVER:                             // Fallthrough
-        case CSD_PN_SOLVER:                             // Fallthrough
-        case CSD_MN_SOLVER:                             // Fallthrough
+        case CSD_SN_SOLVER:    // Fallthrough
+        case CSD_PN_SOLVER:    // Fallthrough
+        case CSD_MN_SOLVER:    // Fallthrough
             _csd = true;
             break;
         default: _csd = false;
     }
 
-    // Check, if mesh file exists
-    if( _solverName == CSD_SN_FOKKERPLANCK_TRAFO_SOLVER ) {    // Check if this is neccessary
-        if( !std::filesystem::exists( this->GetHydrogenFile() ) ) {
-            ErrorMessages::Error( "Path to mesh file <" + this->GetHydrogenFile() + "> does not exist. Please check your config file.",
-                                  CURRENT_FUNCTION );
-        }
-        if( !std::filesystem::exists( this->GetOxygenFile() ) ) {
-            ErrorMessages::Error( "Path to mesh file <" + this->GetOxygenFile() + "> does not exist. Please check your config file.",
-                                  CURRENT_FUNCTION );
-        }
+    // Set option MomentSolver
+    switch( _solverName ) {
+        case MN_SOLVER:
+        case MN_SOLVER_NORMALIZED:
+        case CSD_MN_SOLVER:
+        case PN_SOLVER:
+        case CSD_PN_SOLVER: _isMomentSolver = true; break;
+        default: _isMomentSolver = false;
     }
+
+    // Check, if mesh file exists
+    // if( _solverName == CSD_SN_FOKKERPLANCK_TRAFO_SOLVER ) {    // Check if this is neccessary
+    //    if( !std::filesystem::exists( this->GetHydrogenFile() ) ) {
+    //        ErrorMessages::Error( "Path to mesh file <" + this->GetHydrogenFile() + "> does not exist. Please check your config file.",
+    //                              CURRENT_FUNCTION );
+    //    }
+    //    if( !std::filesystem::exists( this->GetOxygenFile() ) ) {
+    //        ErrorMessages::Error( "Path to mesh file <" + this->GetOxygenFile() + "> does not exist. Please check your config file.",
+    //                              CURRENT_FUNCTION );
+    //    }
+    //}
+
     // Quadrature Postprocessing
     {
         QuadratureBase* quad                      = QuadratureBase::Create( this );
@@ -550,8 +558,19 @@ void Config::SetPostprocessing() {
         if( GetReconsOrder() > 2 ) {
             ErrorMessages::Error( "Solvers only work with 1st and 2nd order spatial fluxes.", CURRENT_FUNCTION );
         }
+
         if( GetOptimizerName() == ML && GetSolverName() != MN_SOLVER_NORMALIZED ) {
             ErrorMessages::Error( "ML Optimizer only works with normalized MN Solver.", CURRENT_FUNCTION );
+        }
+
+        if( GetSolverName() == PN_SOLVER || GetSolverName() == CSD_PN_SOLVER ) {
+            _dim        = 3;
+            auto log    = spdlog::get( "event" );
+            auto logCSV = spdlog::get( "tabular" );
+            log->info(
+                "| Spherical harmonics based solver currently use 3D Spherical functions and a projection. Thus spatial dimension is set to 3." );
+            logCSV->info(
+                "| Spherical harmonics based solver currently use 3D Spherical functions and a projection. Thus spatial dimension is set to 3." );
         }
     }
 
@@ -589,7 +608,7 @@ void Config::SetPostprocessing() {
                         ErrorMessages::Error( "SN_SOLVER only supports volume output MINIMAL and ANALYTIC.\nPlease check your .cfg file.",
                                               CURRENT_FUNCTION );
                     }
-                    if( _volumeOutput[idx_volOutput] == ANALYTIC && _problemName != PROBLEM_LineSource ) {
+                    if( _volumeOutput[idx_volOutput] == ANALYTIC && _problemName != PROBLEM_Linesource ) {
                         ErrorMessages::Error( "Analytical solution (VOLUME_OUTPUT=ANALYTIC) is only available for the PROBLEM=LINESOURCE.\nPlease "
                                               "check your .cfg file.",
                                               CURRENT_FUNCTION );
@@ -604,7 +623,7 @@ void Config::SetPostprocessing() {
                             "MN_SOLVER only supports volume output ANALYTIC, MINIMAL, MOMENTS and DUAL_MOMENTS.\nPlease check your .cfg file.",
                             CURRENT_FUNCTION );
                     }
-                    if( _volumeOutput[idx_volOutput] == ANALYTIC && _problemName != PROBLEM_LineSource ) {
+                    if( _volumeOutput[idx_volOutput] == ANALYTIC && _problemName != PROBLEM_Linesource ) {
                         ErrorMessages::Error( "Analytical solution (VOLUME_OUTPUT=ANALYTIC) is only available for the PROBLEM=LINESOURCE.\nPlease "
                                               "check your .cfg file.",
                                               CURRENT_FUNCTION );
@@ -617,18 +636,13 @@ void Config::SetPostprocessing() {
                         ErrorMessages::Error( "PN_SOLVER only supports volume output ANALYTIC, MINIMAL and MOMENTS.\nPlease check your .cfg file.",
                                               CURRENT_FUNCTION );
                     }
-                    if( _volumeOutput[idx_volOutput] == ANALYTIC && _problemName != PROBLEM_LineSource ) {
+                    if( _volumeOutput[idx_volOutput] == ANALYTIC && _problemName != PROBLEM_Linesource ) {
                         ErrorMessages::Error( "Analytical solution (VOLUME_OUTPUT=ANALYTIC) is only available for the PROBLEM=LINESOURCE.\nPlease "
                                               "check your .cfg file.",
                                               CURRENT_FUNCTION );
                     }
                     break;
-                case CSD_SN_NOTRAFO_SOLVER:                     // Fallthrough
-                case CSD_SN_FOKKERPLANCK_SOLVER:                // Fallthrough
-                case CSD_SN_FOKKERPLANCK_TRAFO_SOLVER:          // Fallthrough
-                case CSD_SN_FOKKERPLANCK_TRAFO_SOLVER_2D:       // Fallthrough
-                case CSD_SN_FOKKERPLANCK_TRAFO_SH_SOLVER_2D:    // Fallthrough
-                case CSD_SN_SOLVER:                             // Fallthrough
+                case CSD_SN_SOLVER:    // Fallthrough
                     supportedGroups = { MINIMAL, MEDICAL };
                     if( supportedGroups.end() == std::find( supportedGroups.begin(), supportedGroups.end(), _volumeOutput[idx_volOutput] ) ) {
 

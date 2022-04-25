@@ -13,7 +13,7 @@ TEST_CASE( "Read in Config Template" ) {
     if( config->GetCFL() != 0.4 ) allSatisfied = false;
     if( config->GetTEnd() != 0.3 ) allSatisfied = false;
 
-    if( config->GetProblemName() != PROBLEM_LineSource ) allSatisfied = false;
+    if( config->GetProblemName() != PROBLEM_Linesource ) allSatisfied = false;
     if( config->GetKernelName() != KERNEL_Isotropic ) allSatisfied = false;
     if( config->GetQuadName() != QUAD_MonteCarlo ) allSatisfied = false;
 

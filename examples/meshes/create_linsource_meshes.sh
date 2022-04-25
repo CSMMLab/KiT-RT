@@ -1,0 +1,15 @@
+python create_1dmesh.py -b dirichletNeumann -o linesource1D_l01 -s -1.5 -l 3 -c 0.1
+python create_1dmesh.py -b dirichletNeumann -o linesource1D_l02 -s -1.5 -l 3 -c 0.05
+python create_1dmesh.py -b dirichletNeumann -o linesource1D_l03 -s -1.5 -l 3 -c 0.025
+python create_1dmesh.py -b dirichletNeumann -o linesource1D_l04 -s -1.5 -l 3 -c 0.0125
+python create_1dmesh.py -b dirichletNeumann -o linesource1D_l05 -s -1.5 -l 3 -c 0.00625
+python create_1dmesh.py -b dirichletNeumann -o linesource1D_l06 -s -1.5 -l 3 -c 0.003125
+python create_1dmesh.py -b dirichletNeumann -o linesource1D_l07 -s -1.5 -l 3 -c 0.0015625
+python create_1dmesh.py -b dirichletNeumann -o linesource1D_l08 -s -1.5 -l 3 -c 0.00078125
+python create_1dmesh.py -b dirichletNeumann -o linesource1D_l09 -s -1.5 -l 3 -c 0.000390625
+python create_1dmesh.py -b dirichletNeumann -o linesource1D_l10 -s -1.5 -l 3 -c 0.0001953125
+python create_1dmesh.py -b dirichletNeumann -o linesource1D_l11 -s -1.5 -l 3 -c 9.765625e-05
+python create_1dmesh.py -b dirichletNeumann -o linesource1D_l12 -s -1.5 -l 3 -c 4.8828125e-05
+python create_1dmesh.py -b dirichletNeumann -o linesource1D_l13 -s -1.5 -l 3 -c 2.44140625e-05
+python create_1dmesh.py -b dirichletNeumann -o linesource1D_l14 -s -1.5 -l 3 -c 1.220703125e-05
+python create_1dmesh.py -b dirichletNeumann -o linesource1D_l15 -s -1.5 -l 3 -c 6.103515625e-06

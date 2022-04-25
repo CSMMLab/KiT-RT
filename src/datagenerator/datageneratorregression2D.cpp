@@ -8,7 +8,7 @@
 #include "common/config.hpp"
 #include "quadratures/quadraturebase.hpp"
 #include "toolboxes/errormessages.hpp"
-#include "toolboxes/sphericalbase.hpp"
+#include "velocitybasis/sphericalbase.hpp"
 
 #include <iostream>
 #include <omp.h>

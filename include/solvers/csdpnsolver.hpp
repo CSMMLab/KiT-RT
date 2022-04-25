@@ -22,15 +22,15 @@ class CSDPNSolver : public PNSolver
     Vector _sigmaTAtEnergy;    /*!< @brief Scattercoefficient at energy grid */
 
     void SolverPreprocessing() override;
-    void IterPreprocessing( unsigned /*idx_iter*/ ) override;
-    void IterPostprocessing( unsigned /*idx_iter*/ ) override;
+    void IterPreprocessing( unsigned idx_iter ) override;
+    void IterPostprocessing( unsigned idx_iter ) override;
     void FluxUpdate() override;
     void FVMUpdate( unsigned idx_energy ) override;
     void PrepareVolumeOutput() override;
     void WriteVolumeOutput( unsigned idx_pseudoTime ) override;
 
     // Helper Functions for CSD
-    double NormPDF( double x, double mu, double sigma );
+    // double NormPDF( double x, double mu, double sigma );
 };
 
 #endif    // CSDPNSOLVER_H

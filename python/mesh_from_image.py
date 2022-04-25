@@ -13,15 +13,15 @@ def add_rectangle(x0,y0,width,height,char_length,geom):
     ])
     return geom.add_polygon(coords, char_length)
 
-def generate(image_name, mesh_name):
+def generate(image_name, mesh_name, ratio = 1):
     if mesh_name.endswith('.su2'):
         mesh_name = os.path.splitext(mesh_name)[0]
-    gsImage, dimensions = egs.extract(image_name)
+    gsImage, dimensions = egs.extract(image_name, ratio)
 
     width, height = gsImage.shape
     xRes = dimensions[0]/width
     yRes = dimensions[1]/height
-    char_length = min(xRes,yRes)*10 #arbitrary
+    char_length = min(xRes,yRes)*4 #arbitrary
     geom = pg.opencascade.Geometry()
     domain = add_rectangle(0.0, 0.0, dimensions[0], dimensions[1], char_length, geom)
     geom.add_physical(domain.lines, label="void")
@@ -31,5 +31,4 @@ def generate(image_name, mesh_name):
         mesh_file.write(mesh_code,)
     os.system('gmsh '+mesh_name+'.geo -2 -format su2 -save_all > /dev/null') # call gmsh
     os.system('rm '+mesh_name+'.geo > /dev/null')
-
     return gsImage

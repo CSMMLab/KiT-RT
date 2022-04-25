@@ -9,8 +9,8 @@
 #include "quadratures/quadraturebase.hpp"
 #include "solvers/mnsolver.hpp"
 #include "toolboxes/errormessages.hpp"
-#include "toolboxes/sphericalbase.hpp"
 #include "toolboxes/textprocessingtoolbox.hpp"
+#include "velocitybasis/sphericalbase.hpp"
 
 // externals
 #include "spdlog/spdlog.h"
