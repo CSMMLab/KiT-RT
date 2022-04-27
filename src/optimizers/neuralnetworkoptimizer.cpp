@@ -4,7 +4,7 @@
  * @author S. Schotthöfer
  */
 
-#include "optimizers/mloptimizer.hpp"
+#include "optimizers/neuralnetworkoptimizer.hpp"
 #include "common/config.hpp"
 #include "toolboxes/errormessages.hpp"
 
@@ -12,12 +12,12 @@
 #ifdef BUILD_ML
 #include "entropies/entropybase.hpp"
 #include "quadratures/quadraturebase.hpp"
-#include "toolboxes/sphericalbase.hpp"
 #include "toolboxes/textprocessingtoolbox.hpp"
+#include "velocitybasis/sphericalbase.hpp"
 
 #include <iostream>
 
-MLOptimizer::MLOptimizer( Config* settings ) : OptimizerBase( settings ) {
+NeuralNetworkOptimizer::NeuralNetworkOptimizer( Config* settings ) : OptimizerBase( settings ) {
 
     _quadrature = QuadratureBase::Create( settings );
     _nq         = _quadrature->GetNq();
@@ -110,11 +110,11 @@ MLOptimizer::MLOptimizer( Config* settings ) : OptimizerBase( settings ) {
     }
 }
 
-MLOptimizer::~MLOptimizer() {}
+NeuralNetworkOptimizer::~NeuralNetworkOptimizer() {}
 
-void MLOptimizer::Solve( Vector& alpha, Vector& u, const VectorVector& /*moments*/, unsigned /*idx_cell*/ ) {}
+void NeuralNetworkOptimizer::Solve( Vector& alpha, Vector& u, const VectorVector& /*moments*/, unsigned /*idx_cell*/ ) {}
 
-Matrix MLOptimizer::CreateRotator( const Vector& uFirstMoment ) {
+Matrix NeuralNetworkOptimizer::CreateRotator( const Vector& uFirstMoment ) {
     double a = uFirstMoment[0];
     double b = uFirstMoment[1];
     double c, s, r;
@@ -126,11 +126,11 @@ Matrix MLOptimizer::CreateRotator( const Vector& uFirstMoment ) {
     return Matrix{ { c, -s }, { s, c } };    // Rotation Matrix
 }
 
-Vector MLOptimizer::RotateM1( Vector& vec, Matrix& R ) { return R * vec; }
+Vector NeuralNetworkOptimizer::RotateM1( Vector& vec, Matrix& R ) { return R * vec; }
 
-Matrix MLOptimizer::RotateM2( Matrix& vec, Matrix& R, Matrix& Rt ) { return R * vec * Rt; }
+Matrix NeuralNetworkOptimizer::RotateM2( Matrix& vec, Matrix& R, Matrix& Rt ) { return R * vec * Rt; }
 
-void MLOptimizer::SolveMultiCell( VectorVector& alpha, VectorVector& u, const VectorVector& /*moments*/ ) {
+void NeuralNetworkOptimizer::SolveMultiCell( VectorVector& alpha, VectorVector& u, const VectorVector& /*moments*/ ) {
 
     unsigned servingSize = _settings->GetNCells();
     Matrix rot180{ { -1.0, 0.0 }, { 0.0, -1.0 } };
@@ -300,7 +300,7 @@ void MLOptimizer::SolveMultiCell( VectorVector& alpha, VectorVector& u, const Ve
     _modelServingVectorAlpha.clear();
 }
 
-void MLOptimizer::ReconstructMoments( Vector& sol, const Vector& alpha, const VectorVector& moments ) {
+void NeuralNetworkOptimizer::ReconstructMoments( Vector& sol, const Vector& alpha, const VectorVector& moments ) {
     double entropyReconstruction = 0.0;
     for( unsigned idx_sys = 0; idx_sys < sol.size(); idx_sys++ ) {
         sol[idx_sys] = 0.0;
@@ -313,8 +313,8 @@ void MLOptimizer::ReconstructMoments( Vector& sol, const Vector& alpha, const Ve
 }
 
 #else
-MLOptimizer::MLOptimizer( Config* settings ) : OptimizerBase( settings ) {
+NeuralNetworkOptimizer::NeuralNetworkOptimizer( Config* settings ) : OptimizerBase( settings ) {
     ErrorMessages::Error( "ML build not configured. Please activate cmake flage BUILD_ML.", CURRENT_FUNCTION );
 }
-MLOptimizer::~MLOptimizer() {}
+NeuralNetworkOptimizer::~NeuralNetworkOptimizer() {}
 #endif
