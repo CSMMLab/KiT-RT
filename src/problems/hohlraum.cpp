@@ -61,7 +61,7 @@ std::vector<VectorVector> Hohlraum::GetExternalSource( const Vector& energies ) 
     for( unsigned j = 0; j < cellMids.size(); ++j ) {
         // isotropic source at lef boundary region
         if( cellMids[j][0] < 0.05 ) {
-            Q[j] = _settings->GetSourceMagnitude();
+            Q[j] = 0.0;    //_settings->GetSourceMagnitude();
         }
     }
     return std::vector<VectorVector>( 1u, Q );
@@ -69,6 +69,17 @@ std::vector<VectorVector> Hohlraum::GetExternalSource( const Vector& energies ) 
 
 VectorVector Hohlraum::SetupIC() {
     VectorVector psi( _mesh->GetNumCells(), Vector( _settings->GetNQuadPoints(), 1e-10 ) );
+    VectorVector cellMids = _mesh->GetCellMidPoints();
+
+    for( unsigned j = 0; j < cellMids.size(); ++j ) {
+        // boundary condition: Source on left side
+        if( cellMids[j][0] < 0.0 ) {    // test case uses ghost cells
+            psi[j] = _settings->GetSourceMagnitude();
+        }
+        else {
+            psi[j] = 1e-4;
+        }
+    }
     return psi;
 }
 
@@ -114,7 +125,7 @@ std::vector<VectorVector> Hohlraum_Moment::GetExternalSource( const Vector& ener
         }
         delete quad;
     }
-    double kinetic_density = _settings->GetSourceMagnitude();
+    double kinetic_density = 0.0;    //_settings->GetSourceMagnitude();
     for( unsigned j = 0; j < cellMids.size(); ++j ) {
         if( cellMids[j][0] < 0.05 ) {
             if( _settings->GetSphericalBasisName() == SPHERICAL_MONOMIALS ) {
@@ -164,7 +175,17 @@ VectorVector Hohlraum_Moment::SetupIC() {
     }
     // Initial condition is dirac impulse at (x,y) = (0,0) ==> constant in angle ==> all moments - exept first - are zero.
     double kinetic_density = 1e-4;
+    // std::vector<BOUNDARY_TYPE> _boundaryCells;
     for( unsigned j = 0; j < cellMids.size(); ++j ) {
+
+        // boundary condition: Source on left side
+        if( cellMids[j][0] < 0.0 ) {    // test case uses ghost cells
+            kinetic_density = _settings->GetSourceMagnitude();
+        }
+        else {
+            kinetic_density = 1e-4;
+        }
+
         if( _settings->GetSphericalBasisName() == SPHERICAL_MONOMIALS ) {
             initialSolution[j] = kinetic_density * tempIC / tempIC[0] / integrationFactor;    // Remember scaling
         }
