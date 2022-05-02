@@ -73,8 +73,9 @@ VectorVector Hohlraum::SetupIC() {
 
     for( unsigned j = 0; j < cellMids.size(); ++j ) {
         // boundary condition: Source on left side
-        if( cellMids[j][0] < 0.0 ) {    // test case uses ghost cells
+        if( cellMids[j][0] < 0.0 && ( cellMids[j][1] > 0.0 && cellMids[j][1] < 1.3 ) ) {    // test case uses ghost cells
             psi[j] = _settings->GetSourceMagnitude();
+            _mesh->SetBoundaryType( j, DIRICHLET );
         }
         else {
             psi[j] = 1e-4;
@@ -179,8 +180,9 @@ VectorVector Hohlraum_Moment::SetupIC() {
     for( unsigned j = 0; j < cellMids.size(); ++j ) {
 
         // boundary condition: Source on left side
-        if( cellMids[j][0] < 0.0 ) {    // test case uses ghost cells
+        if( cellMids[j][0] < 0.0 && ( cellMids[j][1] > 0.0 && cellMids[j][1] < 1.3 ) ) {    // test case uses ghost cells
             kinetic_density = _settings->GetSourceMagnitude();
+            _mesh->SetBoundaryType( j, DIRICHLET );
         }
         else {
             kinetic_density = 1e-4;

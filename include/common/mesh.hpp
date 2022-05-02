@@ -104,6 +104,12 @@ class Mesh
      *  @return dimension: numCells */
     const std::vector<BOUNDARY_TYPE>& GetBoundaryTypes() const;
 
+    /*! @brief Set a boundary type for a cell. Use with caution!
+     *  @param idx_cell: cell index
+     *  @param boundary_type: boundary_type to change the cell to
+     *  @return void */
+    void SetBoundaryType( int idx_cell, BOUNDARY_TYPE boundary_type );
+
     /*! @brief Returns the minimal and maximal coordinates of all nodes for each dimension
      *  @return dimension: dim */
     const std::vector<std::pair<double, double>> GetBounds() const;
