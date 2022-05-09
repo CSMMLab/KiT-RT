@@ -29,7 +29,7 @@ def main():
     char_length = options.char_length
     geom = pg.opencascade.Geometry()
     domain = add_block(-1, -1, 2,2, char_length, geom)
-    geom.add_raw_code('psource = newp;\nPoint(psource) = {0.0, 0.0, 0.0, '+str(char_length)+'};\nPoint{psource} In Surface{'+domain.id+'};')
+    #geom.add_raw_code('psource = newp;\nPoint(psource) = {0.0, 0.0, 0.0, '+str(char_length)+'};\nPoint{psource} In Surface{'+domain.id+'};')
     geom.add_physical(domain.lines, label="void")
 
 
@@ -37,7 +37,7 @@ def main():
     with open( options.output_name +".geo","w") as mesh_file:
         mesh_file.write(mesh_code)
     os.system('gmsh ' + options.output_name +'.geo -2 -format su2 -save_all')
-    os.system('rm ' + options.output_name +'.geo')
+    #os.system('rm ' + options.output_name +'.geo')
     print("---------- Successfully created the mesh ------------")
 
 if __name__ == '__main__':
