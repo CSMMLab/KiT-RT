@@ -7,7 +7,7 @@
 The KiT-RT (Kinetic Transport Solver for Radiation Therapy) framework is a high-performance open source platform for radiation transport. Its main focus is on radiotherapy planning in cancer treatment. To enable problem-specific method selection, the framework provides different deterministic solver types. This not only facilitates treatment planning, but also provides tools to investigate various research questions in the field of radiative transfer. This goal is supported by an easily extendable code structure that allows for straightforward implementation of additional methods and techniques.
 
 The documentation can be found [here](https://kit-rt.readthedocs.io/en/develop/index.html). 
-
+The preprint for the KiT-RT journal paper is available [here](https://arxiv.org/abs/2205.08417).
 ## Contents
 
 * [Capability](#what-kit-rt-is-capable-of)
