@@ -78,6 +78,15 @@ inline void PrintVectorToFile( const Vector vec, std::string filename, unsigned 
     myfile.close();
 }
 
+inline void PrintCppVectorToFile( const std::vector<float> vec, std::string filename, unsigned vecsize ) {
+    std::ofstream myfile;
+    myfile.open( filename );
+    for( unsigned i = 0; i < vecsize; i++ ) {
+        myfile << vec[i] << "\n";
+    }
+    myfile.close();
+}
+
 inline void PrintVectorVectorToFile( const VectorVector vecvec, std::string filename, unsigned size_outer, unsigned size_inner ) {
     std::ofstream myfile;
     myfile.open( filename );
@@ -86,7 +95,7 @@ inline void PrintVectorVectorToFile( const VectorVector vecvec, std::string file
             myfile << vecvec[i][j] << ",";
         }
         myfile << vecvec[i][size_inner - 1];
-        myfile << ";\n";
+        myfile << "\n";
     }
     myfile.close();
 }

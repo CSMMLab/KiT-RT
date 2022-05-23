@@ -26,7 +26,6 @@ class CSDMNSolver : public MNSolver
     void FVMUpdate( unsigned idx_energy ) override;
     void PrepareVolumeOutput() override;
     void WriteVolumeOutput( unsigned idx_pseudoTime ) override;
-    Vector ConstructFlux( unsigned idx_cell ) override;
 
     // Helper Functions for CSD
     double NormPDF( double x, double mu, double sigma );

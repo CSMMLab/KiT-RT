@@ -36,6 +36,11 @@ class DataGeneratorRegression : public DataGeneratorBase
     virtual void CheckRealizability() = 0; /*!< @brief Debugging helper. Will be removed */
     virtual void ComputeSetSizeU()    = 0; /*!< @brief Computes the size of the training set, depending on the chosen settings.*/
     void ComputeSetSizeAlpha();            /*!< @brief Computes the seSize for alphasampling */
+
+    // Debugging
+    Matrix CreateRotator( const Vector& uFirstMoment );
+    Vector RotateM1( Vector& vec, Matrix& R );
+    Matrix RotateM2( Matrix& vec, Matrix& R, Matrix& Rt );
 };
 
 #endif    // DATAGENERATORREGRESSION_H

@@ -15,8 +15,6 @@
 #include "solvers/snsolver.hpp"
 #include "toolboxes/textprocessingtoolbox.hpp"
 
-#include <fstream>
-#include <iostream>
 #include <mpi.h>
 
 SolverBase::SolverBase( Config* settings ) {
@@ -106,6 +104,7 @@ SolverBase* SolverBase::Create( Config* settings ) {
         case CSD_SN_SOLVER: return new CSDSNSolver( settings );
         case CSD_PN_SOLVER: return new CSDPNSolver( settings );
         case CSD_MN_SOLVER: return new CSDMNSolver( settings );
+
         default: ErrorMessages::Error( "Creator for the chosen solver does not yet exist. This is is the fault of the coder!", CURRENT_FUNCTION );
     }
     ErrorMessages::Error( "Creator for the chosen solver does not yet exist. This is is the fault of the coder!", CURRENT_FUNCTION );
@@ -163,6 +162,7 @@ void SolverBase::Solve() {
     }
 
     // --- Postprocessing ---
+
     DrawPostSolverOutput();
 }
 

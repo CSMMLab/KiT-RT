@@ -40,8 +40,8 @@ void MNSolverNormalized::IterPreprocessing( unsigned /*idx_pseudotime*/ ) {
             _kineticDensity[idx_cell][idx_quad] =
                 _u0[idx_cell] * _entropy->EntropyPrimeDual( blaze::dot( _alpha[idx_cell], _momentBasis[idx_quad] ) );
         }
-        _sol[idx_cell] *= _u0[idx_cell];
         if( _settings->GetRealizabilityReconstruction() ) ComputeRealizableSolution( idx_cell );
+        _sol[idx_cell] *= _u0[idx_cell];
     }
 
     // ------ Compute slope limiters and cell gradients ---

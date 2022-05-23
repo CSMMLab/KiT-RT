@@ -130,57 +130,55 @@ void CSDMNSolver::IterPostprocessing( unsigned idx_iter ) {
     }
 }
 
-Vector CSDMNSolver::ConstructFlux( unsigned idx_cell ) {
-    //--- Integration of moments of flux ---
-    double solL, solR, kineticFlux;
-    Vector flux( _nSystem, 0.0 );
-
-    for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
-        kineticFlux = 0.0;    // reset temorary flux
-
-        for( unsigned idx_nbr = 0; idx_nbr < _neighbors[idx_cell].size(); idx_nbr++ ) {
-            if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::NEUMANN && _neighbors[idx_cell][idx_nbr] == _nCells ) {
-                // Boundary cells are first order and mirror ghost cells
-                solL = _kineticDensity[idx_cell][idx_quad] / _density[idx_cell];
-                solR = solL;
-            }
-            else {
-                // interior cell
-                unsigned int nbr_glob = _neighbors[idx_cell][idx_nbr];    // global idx of neighbor cell
-                if( _reconsOrder == 1 ) {
-                    solL = _kineticDensity[idx_cell][idx_quad] / _density[idx_cell];
-                    solR = _kineticDensity[nbr_glob][idx_quad] / _density[nbr_glob];
-                }
-                else if( _reconsOrder == 2 ) {
-                    solL = _kineticDensity[idx_cell][idx_quad] / _density[idx_cell] +
-                           _limiter[idx_cell][idx_quad] *
-                               ( _solDx[idx_cell][idx_quad] * ( _interfaceMidPoints[idx_cell][idx_nbr][0] - _cellMidPoints[idx_cell][0] ) +
-                                 _solDy[idx_cell][idx_quad] * ( _interfaceMidPoints[idx_cell][idx_nbr][1] - _cellMidPoints[idx_cell][1] ) );
-                    solR = _kineticDensity[nbr_glob][idx_quad] / _density[nbr_glob] +
-                           _limiter[nbr_glob][idx_quad] *
-                               ( _solDx[nbr_glob][idx_quad] * ( _interfaceMidPoints[idx_cell][idx_nbr][0] - _cellMidPoints[nbr_glob][0] ) +
-                                 _solDy[nbr_glob][idx_quad] * ( _interfaceMidPoints[idx_cell][idx_nbr][1] - _cellMidPoints[nbr_glob][1] ) );
-                }
-                else {
-                    ErrorMessages::Error( "Reconstruction order not supported.", CURRENT_FUNCTION );
-                }
-            }
-            // Kinetic flux
-            kineticFlux += _g->FluxXZ( _quadPoints[idx_quad], solL, solR, _normals[idx_cell][idx_nbr] );
-        }
-        // Solution flux
-        flux += _momentBasis[idx_quad] * ( _weights[idx_quad] * kineticFlux );
-    }
-    return flux;
-}
-
 void CSDMNSolver::FluxUpdate() {
 // Loop over the grid cells
 #pragma omp parallel for
     for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
         // Dirichlet Boundaries stayd
         if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::DIRICHLET ) continue;
-        _solNew[idx_cell] = ConstructFlux( idx_cell );
+
+        //--- Integration of moments of flux ---
+        double solL, solR, kineticFlux;
+        Vector flux( _nSystem, 0.0 );
+
+        for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
+            kineticFlux = 0.0;    // reset temorary flux
+
+            for( unsigned idx_nbr = 0; idx_nbr < _neighbors[idx_cell].size(); idx_nbr++ ) {
+                if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::NEUMANN && _neighbors[idx_cell][idx_nbr] == _nCells ) {
+                    // Boundary cells are first order and mirror ghost cells
+                    solL = _kineticDensity[idx_cell][idx_quad] / _density[idx_cell];
+                    solR = solL;
+                }
+                else {
+                    // interior cell
+                    unsigned int nbr_glob = _neighbors[idx_cell][idx_nbr];    // global idx of neighbor cell
+                    if( _reconsOrder == 1 ) {
+                        solL = _kineticDensity[idx_cell][idx_quad] / _density[idx_cell];
+                        solR = _kineticDensity[nbr_glob][idx_quad] / _density[nbr_glob];
+                    }
+                    else if( _reconsOrder == 2 ) {
+                        solL = _kineticDensity[idx_cell][idx_quad] / _density[idx_cell] +
+                               _limiter[idx_cell][idx_quad] *
+                                   ( _solDx[idx_cell][idx_quad] * ( _interfaceMidPoints[idx_cell][idx_nbr][0] - _cellMidPoints[idx_cell][0] ) +
+                                     _solDy[idx_cell][idx_quad] * ( _interfaceMidPoints[idx_cell][idx_nbr][1] - _cellMidPoints[idx_cell][1] ) );
+                        solR = _kineticDensity[nbr_glob][idx_quad] / _density[nbr_glob] +
+                               _limiter[nbr_glob][idx_quad] *
+                                   ( _solDx[nbr_glob][idx_quad] * ( _interfaceMidPoints[idx_cell][idx_nbr][0] - _cellMidPoints[nbr_glob][0] ) +
+                                     _solDy[nbr_glob][idx_quad] * ( _interfaceMidPoints[idx_cell][idx_nbr][1] - _cellMidPoints[nbr_glob][1] ) );
+                    }
+                    else {
+                        ErrorMessages::Error( "Reconstruction order not supported.", CURRENT_FUNCTION );
+                    }
+                }
+                // Kinetic flux
+                kineticFlux += _g->FluxXZ( _quadPoints[idx_quad], solL, solR, _normals[idx_cell][idx_nbr] );
+            }
+            // Solution flux
+            flux += _momentBasis[idx_quad] * ( _weights[idx_quad] * kineticFlux );
+        }
+
+        _solNew[idx_cell] = flux;    // ConstructFlux( idx_cell );
     }
 }
 

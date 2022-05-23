@@ -10,6 +10,8 @@
 #include "optimizers/newtonoptimizer.hpp"
 #include "toolboxes/errormessages.hpp"
 
+#include "toolboxes/textprocessingtoolbox.hpp"
+
 #include <math.h>
 
 DataGeneratorRegression::DataGeneratorRegression( Config* settings ) : DataGeneratorBase( settings ) {
@@ -32,6 +34,47 @@ void DataGeneratorRegression::ComputeTrainingData() {
 
         // --- Postprocessing
         ComputeRealizableSolution();
+
+        // debugging purposes for rotation
+        TextProcessingToolbox::PrintVectorVector( _uSol );
+        TextProcessingToolbox::PrintVectorVector( _alpha );
+
+        std::cout << "here\n";
+
+        VectorVector rot_uSol       = VectorVector( _setSize, Vector( _nTotalEntries, 0.0 ) );
+        VectorVector rot_alpha_comp = VectorVector( _setSize, Vector( _nTotalEntries, 0.0 ) );
+        VectorVector rot_alpha      = VectorVector( _setSize, Vector( _nTotalEntries, 0.0 ) );
+
+        for( unsigned i = 0; i < _setSize; i++ ) {
+            Vector u1{ _uSol[i][1], _uSol[i][2] };
+            Matrix u2{ { _uSol[i][3], _uSol[i][4] }, { _uSol[i][4], _uSol[i][5] } };
+
+            Vector alpha1{ _alpha[i][1], _alpha[i][2] };
+            Matrix alpha2{ { _alpha[i][3], _alpha[i][4] }, { _alpha[i][4], _alpha[i][5] } };
+
+            Matrix rotationMat  = CreateRotator( u1 );
+            Matrix rotationMatT = blaze::trans( rotationMat );
+
+            u1 = RotateM1( u1, rotationMat );
+            u2 = RotateM2( u2, rotationMat, rotationMatT );
+
+            rot_uSol[i][0] = (float)( u1[0] );
+            rot_uSol[i][1] = (float)( u1[1] );    // should be zero
+            rot_uSol[i][2] = (float)( u2( 0, 0 ) );
+            rot_uSol[i][3] = (float)( u2( 0, 1 ) );
+            rot_uSol[i][4] = (float)( u2( 1, 1 ) );
+
+            rot_alpha[i][0] = (float)( alpha1[0] );
+            rot_alpha[i][1] = (float)( alpha1[1] );    // should be zero
+            rot_alpha[i][2] = (float)( alpha2( 0, 0 ) );
+            rot_alpha[i][3] = (float)( alpha2( 0, 1 ) );
+            rot_alpha[i][4] = (float)( alpha2( 1, 1 ) );
+        }
+        _optimizer->SolveMultiCell( rot_alpha_comp, rot_uSol, _momentBasis );
+
+        TextProcessingToolbox::PrintVectorVector( rot_alpha );
+        TextProcessingToolbox::PrintVectorVector( rot_alpha_comp );
+        std::cout << "here\n";
     }
     else {
         // --- sample u ---
@@ -127,6 +170,22 @@ void DataGeneratorRegression::ComputeTrainingData() {
     // --- Print everything ----
     PrintTrainingData();
 }
+
+Matrix DataGeneratorRegression::CreateRotator( const Vector& uFirstMoment ) {
+    double a = uFirstMoment[0];
+    double b = uFirstMoment[1];
+    double c, s, r;
+
+    r = norm( uFirstMoment );    // sqrt( a * a + b * b );
+    c = a / r;
+    s = -b / r;
+
+    return Matrix{ { c, -s }, { s, c } };    // Rotation Matrix
+}
+
+Vector DataGeneratorRegression::RotateM1( Vector& vec, Matrix& R ) { return R * vec; }
+
+Matrix DataGeneratorRegression::RotateM2( Matrix& vec, Matrix& R, Matrix& Rt ) { return R * vec * Rt; }
 
 void DataGeneratorRegression::ComputeEntropyH_dual() {
 #pragma omp parallel for schedule( guided )

@@ -54,10 +54,6 @@ class MNSolver : public SolverBase
     virtual void FluxUpdate() override;
     virtual void IterPreprocessing( unsigned /*idx_iter*/ ) override;
     virtual void IterPostprocessing( unsigned /*idx_iter*/ ) override;
-    /*! @brief  Construct flux by computing the Moment of the  sum of FVM discretization at the interface of cell
-     *  @param  idx_cell  current cell id
-     *  @returns  sum over all neighbors of flux for all moments at interface of idx_cell, idx_neighbor */
-    virtual Vector ConstructFlux( unsigned idx_cell );
 
     void FluxUpdatePseudo1D();    // Helper
     void FluxUpdatePseudo2D();    // Helper

@@ -438,6 +438,8 @@ const std::vector<BOUNDARY_TYPE>& Mesh::GetBoundaryTypes() const { return _cellB
 const std::vector<std::pair<double, double>> Mesh::GetBounds() const { return _bounds; }
 const std::vector<std::vector<Vector>> Mesh::GetInterfaceMidPoints() const { return _cellInterfaceMidPoints; }
 
+void Mesh::SetBoundaryType( int idx_cell, BOUNDARY_TYPE boundary_type ) { _cellBoundaryTypes[idx_cell] = boundary_type; }
+
 double Mesh::GetDistanceToOrigin( unsigned idx_cell ) const {
     double distance = 0.0;
     for( unsigned idx_dim = 0; idx_dim < _dim; idx_dim++ ) {
