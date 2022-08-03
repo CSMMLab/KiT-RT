@@ -1,7 +1,7 @@
 import subprocess, os
 
 project = 'KiT-RT'
-copyright = '2021, Karlsruhe Institute of Technology'
+copyright = '2022, Karlsruhe Institute of Technology'
 author = 'Jonas Kusch, Steffen Schotthöfer, Pia Stammer, Jannick Wolters, Tianbai Xiao'
 
 version = 'v0.1'
