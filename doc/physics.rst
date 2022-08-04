@@ -197,18 +197,26 @@ For the radiation therapy, the main goal is to compute the radiation dose accura
 
     D(x)=\frac{1}{\rho(x)}\int_0^{\infty}\int_{\mathbb{S}^2}S(E,x)\psi(E,x,\Omega)\,d\Omega dE.
 
-where :math:`\rho(x)` is the background material density.
-The angular flux :math:`\psi` can be approximated by a further approximation equation, i.e. the continuous slowing down (CSD) equation which reads
+Here, :math:`E\in\mathbb{R}_+` is the energy, :math:`\mathbf{x}\in \mathbf{X}\subset\mathbb{R}^3` denotes the spatial domain, 
+and :math:`\mathbf{\Omega}\in\mathbb{S}^2` is the flight direction of particles. 
+Moreover, :math:`\psi:\mathbb{R}_+\times\mathbb{R}^3\times\mathbb{S}^2\rightarrow\mathbb{R}` denotes the radiation flux density and 
+:math:`\rho:\mathbb{R}^3\rightarrow\mathbb{R}` is the patient tissue density. 
+The stopping power :math:`S:\mathbb{R}_+\times\mathbb{R}^3 \rightarrow \mathbb{R}` models the continuous energy loss of particles due to scattering with tissue and is defined as
+
+.. math::
+    S(E,x) = \int_0^{\infty} E'\int_{-1}^1\Sigma(E,E',x,\mu)d\mu dE'.
+
+with the scattering cross section :math:`\Sigma:\mathbb{R}_+\times \mathbb{R}_+\times \mathbb{R}^3\times[-1,1]\rightarrow \mathbb{R}`.
+The radiation flux density, which describes the probability of finding a particle at a certain region in phase space, can be computed from the continuous slowing down (CSD) approximation of the energy dependent linear Boltzmann equation
 
 .. math::
     &-\partial_E\left(S(E,x)\psi(E,x,\Omega)\right)+\Omega\cdot\nabla_x\psi(E,x,\Omega)+\Sigma_t(E,x)\psi(E,x,\Omega) \\
     &= \int_{\mathbb{S}^2}\Sigma_s(E,x,\Omega\cdot\Omega')\psi(E,x,\Omega')d\Omega'.
 
 Here :math:`E\in\mathbb{R}_+` is energy, :math:`x\in D\subset \mathbb{R}^3` is the spatial domain and :math:`\Omega\in\mathbb{S}^2` is the direction of travel. 
-The stopping power :math:`S` is given by
-
-.. math::
-    S(E,x) = \int_0^{\infty} E'\int_{-1}^1\Sigma(E,E',x,\mu)d\mu dE'.
+This model assumes a continuous energy loss of particles traveling through a background material, which is modeled using the stopping power :math:`S`. 
+The scattering cross section :math:`\Sigma_s(E,\mathbf x,\mathbf \Omega\cdot\mathbf \Omega')` denotes the probability of particles at position :math:`\mathbf x` with energy :math:`E` changing their flight direction from :math:`\mathbf \Omega'` 
+to :math:`\mathbf\Omega` due to a collision with the patient tissue. The total cross section :math:`\Sigma_t` is given by
 
 Let us assume there are no absorption effects, and thus the total cross section is given by
 
@@ -216,7 +224,8 @@ Let us assume there are no absorption effects, and thus the total cross section 
 
     \Sigma_t(E,x) = \Sigma_{s,0}(E,x)=2\pi \int_{-1}^1\Sigma_s(E,x,\mu)d\mu.
 
-With a given :math:`\rho(x)`, we now make the following assumptions
+To simplify the evaluation of material properties, we follow the common assumption that all materials are
+water-equivalent and differ only in density, i.e.,
 
 .. math::
     &S(E,x) = S^{H_2O}(E)\rho(x), \\
