@@ -337,3 +337,11 @@ which gives
 .. math::
     D(x) =& -\int_{\infty}^{0} \int_{\mathbb{S}^2} \frac{1}{\rho(x)}\bar \psi(\bar E,x,\Omega)\frac{1}{S(E(\bar E))}\,d\Omega d\bar E\\
     =& \int_{0}^{\infty} \frac{1}{\rho(x)S(E(\bar E))}\int_{\mathbb{S}^2} \bar \psi(\bar E,x,\Omega)\,d\Omega d\bar E.
+    
+    
+Macroscopic Models
+-----------------------------------------
+This section discusses macroscopic models to :eq:`CSDBoltzmann`. These models are derived from nodal and modal discretizations of the directional domain. 
+
+Modal discretizations
+**************************
