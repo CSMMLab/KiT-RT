@@ -345,3 +345,55 @@ This section discusses macroscopic models to :eq:`CSDBoltzmann`. These models ar
 
 Modal discretizations
 **************************
+Modal discretizations of \eqref{eq:BoltzmannCSDTrafo} can be interpreted as a closure problem~\cite{Levermore,Levermore1996MomentCH}. To present the derivation of different closures, we first formulate the moment equations which are not closed. Second, we close these equations with the $P_N$ closure and third, we derive the $M_N$ closure.
+
+Moment equations
++++++++++++++++++++++++++
+Let us derive an evolution equation to describe the moments of the radiation flux with respect to the real-valued spherical harmonics basis functions. These are defined as the real parts of the spherical harmonics
+
+.. math::
+Y_{\ell}^k(\mathbf{\Omega}) = \sqrt{\frac{2\ell +1}{4\pi}\frac{(\ell-k)!}{(\ell+k)!}}\ e^{ik\varphi}P_{\ell}^k(\mu) ,
+
+
+where :math:`P_{\ell}^k` are the associated Legendre polynomials. Then, the real spherical harmonics are given as
+
+.. math::
+    m_{\ell}^k(\mathbf{\Omega}) = 
+    \begin{cases}
+        \frac{(-1)^k}{\sqrt{2}}\left( Y_{\ell}^k(\mathbf{\Omega}) + (-1)^k Y_{\ell}^{-k}(\mathbf{\Omega}) \right), & k > 0\;, \\
+        Y_{\ell}^0(\mathbf{\Omega}) & k = 0 \;, \\
+        -\frac{(-1)^k i}{\sqrt{2}}\left( Y_{\ell}^{-k}(\mathbf{\Omega}) - (-1)^k Y_{\ell}^{k}(\mathbf{\Omega}) \right), & k < 0\;,
+    \end{cases}
+
+where :math:`i` is the imaginary unit. Collecting all basis functions up to degree :math:`N` in a vector
+
+.. math::
+    \mathbf m = \left(m_0^0, m_1^{-1}, m_1^{0}, m_1^{1},\cdots, m_N^{N}\right)^T\in\mathbb{R}^{(N+1)^2}
+
+yields the so-called moments
+
+.. math::
+    u_{\ell}^k(t,\mathbf x) := \int_{\mathbb{S}^2} \psi(t,\mathbf x,\mathbf\Omega) m_{\ell}^k(\mathbf \Omega) \intD \mathbf\Omega\;.
+
+Evolution equations for the moments can be derived by testing :eq:`CSDBoltzmann` against :math:`\mathbf{m}_{\ell} = (m_{\ell}^{-\ell},\cdots,m_{\ell}^{\ell})`, which gives
+
+.. math::
+    \partial_{t}\mathbf u_{\ell}(t,\mathbf x)+&\nabla_x\cdot\int_{ \mathbb{S}^2}\mathbf\Omega\mathbf m_{\ell}(\mathbf\Omega)\frac{\psi(t,\mathbf x,\mathbf\Omega)}{\rho(\mathbf x)}\intD \mathbf{\Omega}+\Sigma_t(t)\mathbf u_{\ell}(t,\mathbf x)\nonumber\\
+    &= \int_{\mathbb{S}^2}\int_{\mathbb{S}^2}\mathbf m_{\ell}(\mathbf\Omega)\Sigma_s(t,\mathbf\Omega\cdot\mathbf\Omega')\psi(t,\mathbf x,\mathbf\Omega')\intD \mathbf\Omega'\intD \mathbf\Omega\;.
+
+To rewrite this equation, we use the spherical harmonics recursion relation
+.. math::
+    \Omega_i \mathbf{m}_{\ell} = \mathbf{a}_{\ell}^i\mathbf m_{\ell-1} + \mathbf{a}_{\ell+1}^i\mathbf m_{\ell+1} \enskip \text{ with } \mathbf{a}_{\ell}^i\in\mathbb{R}^{(2\ell-1)\times (2\ell+1)}
+
+as well as the fact that there exists a diagonal matrix :math:`\bm{\Sigma}_{\ell}(t)$ with entries $\Sigma_{\ell,kk} = \Sigma_{\ell}^k := 2\pi\int_{[-1,1]}P_{\ell}(\mu)\Sigma_s(t,\mu)\intD \mu` such that
+.. math::
+    \int_{\mathbb{S}^2}\int_{\mathbb{S}^2}\mathbf m_{\ell}(\mathbf\Omega)\Sigma_s(t,\mathbf\Omega\cdot\mathbf\Omega')\psi(t,\mathbf x,\mathbf\Omega')\intD \mathbf\Omega'd\mathbf\Omega = \bm{\Sigma}_{\ell}(t) \mathbf u_{\ell}(t,\mathbf x)\;.
+
+Then, the moment equations at degree :math:`\ell` become
+.. math::
+    \partial_{t}\mathbf u_{\ell}(t,\mathbf x)+&\sum_{i=1}^3\partial_{x_i}\left(\mathbf{a}_{\ell}^i\mathbf u_{\ell-1}(t,\mathbf x) + \mathbf{a}_{\ell+1}^i\mathbf u_{\ell+1}(t,\mathbf x)\right)/\rho(\mathbf{x})+\Sigma_t(t)\mathbf u_{\ell}(t,\mathbf x)\nonumber\\
+    &= \bm{\Sigma}_{\ell}(t) \mathbf u_{\ell}(t,\mathbf x)\;.
+
+Note that the equations for degree :math:`\ell` depend on the moments of degree :math:`\ell+1`. Hence, to obtain a closed system of moments up to a fixed degree :math:`N`, we need to define a closure relation 
+.. math::
+    \mathbf u_{N+1}(t,\mathbf x)\simeq \mathcal{U}(\mathbf u_{0}(t,\mathbf x),\cdots,\mathbf u_{N}(t,\mathbf x))\;.
