@@ -1,0 +1,19 @@
+python callNeuralClosure.py \
+--sampling=2 \
+--batch=256 \
+--curriculum=1 \
+--degree=4 \
+--epoch=10 \
+--folder=mk11_m4_2d_g0 \
+--loadModel=1 \
+--model=11 \
+--normalized=1 \
+--scaledOutput=0 \
+--decorrInput=1 \
+--objective=1 \
+--processingmode=0 \
+--spatialDimension=2 \
+--training=1 \
+--verbosity=2 \
+--networkwidth=600 \
+--networkdepth=6

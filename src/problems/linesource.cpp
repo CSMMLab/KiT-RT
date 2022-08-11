@@ -35,7 +35,7 @@ double LineSource::GetAnalyticalSolution( double x, double y, double t, double /
         }
     }
 
-    return ( 2 * M_PI ) * solution;    // Scaling of soolution ( 4 * M_PI ) *
+    return M_PI * solution;    // Scaling of soolution ( 4 * M_PI ) *
 }
 
 double LineSource::HelperIntRho_ptc( double R, double t ) {

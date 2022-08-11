@@ -98,11 +98,6 @@ void MNSolver::ComputeMoments() {
     }
 }
 
-Vector MNSolver::ConstructFlux( unsigned idx_cell ) {
-    //--- Integration of moments of flux ---
-    // Delete here and in csdmn solver
-}
-
 void MNSolver::ComputeRealizableSolution( unsigned idx_cell ) {
     // double entropyReconstruction = 0.0;
 

@@ -2,6 +2,7 @@
 #include "common/config.hpp"
 #include "problems/aircavity1d.hpp"
 #include "problems/checkerboard.hpp"
+#include "problems/hohlraum.hpp"
 #include "problems/linesource.hpp"
 #include "problems/meltingcube.hpp"
 #include "problems/phantomimage.hpp"
@@ -74,6 +75,12 @@ ProblemBase* ProblemBase::Create( Config* settings, Mesh* mesh ) {
                 return new MeltingCube_Moment_1D( settings, mesh );
             else
                 return new MeltingCube_SN_1D( settings, mesh );
+        } break;
+        case PROBLEM_Hohlraum: {
+            if( settings->GetIsMomentSolver() )
+                return new Hohlraum_Moment( settings, mesh );
+            else
+                return new Hohlraum( settings, mesh );
         } break;
 
         default: ErrorMessages::Error( "No valid physical problem chosen. Please check your config file", CURRENT_FUNCTION ); return nullptr;
