@@ -563,15 +563,15 @@ void Config::SetPostprocessing() {
             ErrorMessages::Error( "ML Optimizer only works with normalized MN Solver.", CURRENT_FUNCTION );
         }
 
-        if( GetSolverName() == PN_SOLVER || GetSolverName() == CSD_PN_SOLVER ) {
-            _dim        = 3;
-            auto log    = spdlog::get( "event" );
-            auto logCSV = spdlog::get( "tabular" );
-            log->info(
-                "| Spherical harmonics based solver currently use 3D Spherical functions and a projection. Thus spatial dimension is set to 3." );
-            logCSV->info(
-                "| Spherical harmonics based solver currently use 3D Spherical functions and a projection. Thus spatial dimension is set to 3." );
-        }
+        // if( GetSolverName() == PN_SOLVER || GetSolverName() == CSD_PN_SOLVER ) {
+        //    _dim        = 3;
+        //    auto log    = spdlog::get( "event" );
+        //    auto logCSV = spdlog::get( "tabular" );
+        //    log->info(
+        //        "| Spherical harmonics based solver currently use 3D Spherical functions and a projection. Thus spatial dimension is set to 3." );
+        //    logCSV->info(
+        //        "| Spherical harmonics based solver currently use 3D Spherical functions and a projection. Thus spatial dimension is set to 3." );
+        //}
     }
 
     // --- Output Postprocessing ---

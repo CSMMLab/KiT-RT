@@ -5,8 +5,11 @@
 #include "common/mesh.hpp"
 #include "fluxes/numericalflux.hpp"
 #include "problems/problembase.hpp"
+#include "quadratures/quadraturebase.hpp"
 #include "toolboxes/errormessages.hpp"
 #include "toolboxes/textprocessingtoolbox.hpp"
+#include "velocitybasis/sphericalharmonics.hpp"
+
 // externals
 #include "spdlog/spdlog.h"
 
@@ -15,7 +18,11 @@
 
 PNSolver::PNSolver( Config* settings ) : SolverBase( settings ) {
     _polyDegreeBasis = settings->GetMaxMomentDegree();
-    _nSystem         = GlobalIndex( int( _polyDegreeBasis ), int( _polyDegreeBasis ) ) + 1;
+    // Depending on spatial dimension:
+    _nSystem = GlobalIndex( int( _polyDegreeBasis ), int( _polyDegreeBasis ) ) + 1;
+    if( _settings->GetDim() == 2 ) {
+        _nSystem = ( _polyDegreeBasis + 1 ) * ( _polyDegreeBasis + 2 ) / 2;
+    }
 
     // Initialize System Matrices
     _Ax = SymMatrix( _nSystem );
@@ -234,75 +241,105 @@ void PNSolver::FVMUpdate( unsigned idx_energy ) {
 }
 
 void PNSolver::ComputeSystemMatrices() {
-    int idx_col      = 0;
-    unsigned idx_row = 0;
+    if( _settings->GetDim() == 2 ) {
+        SphericalHarmonics* basis        = new SphericalHarmonics( _polyDegreeBasis, _settings->GetDim() );
+        QuadratureBase* quad             = new QGaussLegendreTensorized( _settings );
+        VectorVector quadPointsSphere    = quad->GetPointsSphere();
+        VectorVector quadPointsCart      = quad->GetPoints();
+        Vector w                         = quad->GetWeights();
 
-    // loop over columns of A
-    for( int idx_lOrder = 0; idx_lOrder <= int( _polyDegreeBasis ); idx_lOrder++ ) {     // index of legendre polynom
-        for( int idx_kOrder = -idx_lOrder; idx_kOrder <= idx_lOrder; idx_kOrder++ ) {    // second index of legendre function
-            idx_row = unsigned( GlobalIndex( idx_lOrder, idx_kOrder ) );
-
-            // flux matrix in direction x
-            {
-                if( idx_kOrder != -1 ) {
-
-                    if( CheckIndex( idx_lOrder - 1, kMinus( idx_kOrder ) ) ) {
-                        idx_col                             = GlobalIndex( idx_lOrder - 1, kMinus( idx_kOrder ) );
-                        _Ax( idx_row, unsigned( idx_col ) ) = 0.5 * CTilde( idx_lOrder - 1, std::abs( idx_kOrder ) - 1 );
-                    }
-
-                    if( CheckIndex( idx_lOrder + 1, kMinus( idx_kOrder ) ) ) {
-                        idx_col                             = GlobalIndex( idx_lOrder + 1, kMinus( idx_kOrder ) );
-                        _Ax( idx_row, unsigned( idx_col ) ) = -0.5 * DTilde( idx_lOrder + 1, std::abs( idx_kOrder ) - 1 );
-                    }
-                }
-
-                if( CheckIndex( idx_lOrder - 1, kPlus( idx_kOrder ) ) ) {
-                    idx_col                             = GlobalIndex( idx_lOrder - 1, kPlus( idx_kOrder ) );
-                    _Ax( idx_row, unsigned( idx_col ) ) = -0.5 * ETilde( idx_lOrder - 1, std::abs( idx_kOrder ) + 1 );
-                }
-
-                if( CheckIndex( idx_lOrder + 1, kPlus( idx_kOrder ) ) ) {
-                    idx_col                             = GlobalIndex( idx_lOrder + 1, kPlus( idx_kOrder ) );
-                    _Ax( idx_row, unsigned( idx_col ) ) = 0.5 * FTilde( idx_lOrder + 1, std::abs( idx_kOrder ) + 1 );
+        //#pragma omp parallel for
+        std::cout << _Ax << "\n";
+        std::cout << _Ay << "\n";
+        std::cout << _Az << "\n";
+        for( unsigned idx_quad = 0; idx_quad < quad->GetNq(); idx_quad++ ) {
+            Vector momentAtQuadPt = basis->ComputeSphericalBasis( quadPointsSphere[idx_quad][0], quadPointsSphere[idx_quad][1] );
+            std::cout << momentAtQuadPt << "\n";
+            for( unsigned i = 0; i < _nSystem; i++ ) {
+                for( unsigned j = 0; j < _nSystem; j++ ) {
+                    _Ax( i, j ) += w[idx_quad] * quadPointsCart[idx_quad][0] * momentAtQuadPt[i] * momentAtQuadPt[j];
+                    _Ay( i, j ) += w[idx_quad] * quadPointsCart[idx_quad][1] * momentAtQuadPt[i] * momentAtQuadPt[j];
+                    _Az( i, j ) += w[idx_quad] * quadPointsCart[idx_quad][2] * momentAtQuadPt[i] * momentAtQuadPt[j];
                 }
             }
+        }
+        std::cout << _Ax << "\n";
+        std::cout << _Ay << "\n";
+        std::cout << _Az << "\n";
+        delete basis;
+        delete quad;
+    }
+    else {
+        int idx_col      = 0;
+        unsigned idx_row = 0;
 
-            // flux matrix in direction y
-            {
-                if( idx_kOrder != 1 ) {
-                    if( CheckIndex( idx_lOrder - 1, -kMinus( idx_kOrder ) ) ) {
-                        idx_col                             = GlobalIndex( idx_lOrder - 1, -kMinus( idx_kOrder ) );
-                        _Ay( idx_row, unsigned( idx_col ) ) = -0.5 * Sgn( idx_kOrder ) * CTilde( idx_lOrder - 1, std::abs( idx_kOrder ) - 1 );
+        // loop over columns of A
+        for( int idx_lOrder = 0; idx_lOrder <= int( _polyDegreeBasis ); idx_lOrder++ ) {     // index of legendre polynom
+            for( int idx_kOrder = -idx_lOrder; idx_kOrder <= idx_lOrder; idx_kOrder++ ) {    // second index of legendre function
+                idx_row = unsigned( GlobalIndex( idx_lOrder, idx_kOrder ) );
+
+                // flux matrix in direction x
+                {
+                    if( idx_kOrder != -1 ) {
+
+                        if( CheckIndex( idx_lOrder - 1, kMinus( idx_kOrder ) ) ) {
+                            idx_col                             = GlobalIndex( idx_lOrder - 1, kMinus( idx_kOrder ) );
+                            _Ax( idx_row, unsigned( idx_col ) ) = 0.5 * CTilde( idx_lOrder - 1, std::abs( idx_kOrder ) - 1 );
+                        }
+
+                        if( CheckIndex( idx_lOrder + 1, kMinus( idx_kOrder ) ) ) {
+                            idx_col                             = GlobalIndex( idx_lOrder + 1, kMinus( idx_kOrder ) );
+                            _Ax( idx_row, unsigned( idx_col ) ) = -0.5 * DTilde( idx_lOrder + 1, std::abs( idx_kOrder ) - 1 );
+                        }
                     }
 
-                    if( CheckIndex( idx_lOrder + 1, -kMinus( idx_kOrder ) ) ) {
-                        idx_col                             = GlobalIndex( idx_lOrder + 1, -kMinus( idx_kOrder ) );
-                        _Ay( idx_row, unsigned( idx_col ) ) = 0.5 * Sgn( idx_kOrder ) * DTilde( idx_lOrder + 1, std::abs( idx_kOrder ) - 1 );
+                    if( CheckIndex( idx_lOrder - 1, kPlus( idx_kOrder ) ) ) {
+                        idx_col                             = GlobalIndex( idx_lOrder - 1, kPlus( idx_kOrder ) );
+                        _Ax( idx_row, unsigned( idx_col ) ) = -0.5 * ETilde( idx_lOrder - 1, std::abs( idx_kOrder ) + 1 );
+                    }
+
+                    if( CheckIndex( idx_lOrder + 1, kPlus( idx_kOrder ) ) ) {
+                        idx_col                             = GlobalIndex( idx_lOrder + 1, kPlus( idx_kOrder ) );
+                        _Ax( idx_row, unsigned( idx_col ) ) = 0.5 * FTilde( idx_lOrder + 1, std::abs( idx_kOrder ) + 1 );
                     }
                 }
 
-                if( CheckIndex( idx_lOrder - 1, -kPlus( idx_kOrder ) ) ) {
-                    idx_col                             = GlobalIndex( idx_lOrder - 1, -kPlus( idx_kOrder ) );
-                    _Ay( idx_row, unsigned( idx_col ) ) = -0.5 * Sgn( idx_kOrder ) * ETilde( idx_lOrder - 1, std::abs( idx_kOrder ) + 1 );
+                // flux matrix in direction y
+                {
+                    if( idx_kOrder != 1 ) {
+                        if( CheckIndex( idx_lOrder - 1, -kMinus( idx_kOrder ) ) ) {
+                            idx_col                             = GlobalIndex( idx_lOrder - 1, -kMinus( idx_kOrder ) );
+                            _Ay( idx_row, unsigned( idx_col ) ) = -0.5 * Sgn( idx_kOrder ) * CTilde( idx_lOrder - 1, std::abs( idx_kOrder ) - 1 );
+                        }
+
+                        if( CheckIndex( idx_lOrder + 1, -kMinus( idx_kOrder ) ) ) {
+                            idx_col                             = GlobalIndex( idx_lOrder + 1, -kMinus( idx_kOrder ) );
+                            _Ay( idx_row, unsigned( idx_col ) ) = 0.5 * Sgn( idx_kOrder ) * DTilde( idx_lOrder + 1, std::abs( idx_kOrder ) - 1 );
+                        }
+                    }
+
+                    if( CheckIndex( idx_lOrder - 1, -kPlus( idx_kOrder ) ) ) {
+                        idx_col                             = GlobalIndex( idx_lOrder - 1, -kPlus( idx_kOrder ) );
+                        _Ay( idx_row, unsigned( idx_col ) ) = -0.5 * Sgn( idx_kOrder ) * ETilde( idx_lOrder - 1, std::abs( idx_kOrder ) + 1 );
+                    }
+
+                    if( CheckIndex( idx_lOrder + 1, -kPlus( idx_kOrder ) ) ) {
+                        idx_col                             = GlobalIndex( idx_lOrder + 1, -kPlus( idx_kOrder ) );
+                        _Ay( idx_row, unsigned( idx_col ) ) = 0.5 * Sgn( idx_kOrder ) * FTilde( idx_lOrder + 1, std::abs( idx_kOrder ) + 1 );
+                    }
                 }
 
-                if( CheckIndex( idx_lOrder + 1, -kPlus( idx_kOrder ) ) ) {
-                    idx_col                             = GlobalIndex( idx_lOrder + 1, -kPlus( idx_kOrder ) );
-                    _Ay( idx_row, unsigned( idx_col ) ) = 0.5 * Sgn( idx_kOrder ) * FTilde( idx_lOrder + 1, std::abs( idx_kOrder ) + 1 );
-                }
-            }
+                // flux matrix in direction z
+                {
+                    if( CheckIndex( idx_lOrder - 1, idx_kOrder ) ) {
+                        idx_col                             = GlobalIndex( idx_lOrder - 1, idx_kOrder );
+                        _Az( idx_row, unsigned( idx_col ) ) = AParam( idx_lOrder - 1, idx_kOrder );
+                    }
 
-            // flux matrix in direction z
-            {
-                if( CheckIndex( idx_lOrder - 1, idx_kOrder ) ) {
-                    idx_col                             = GlobalIndex( idx_lOrder - 1, idx_kOrder );
-                    _Az( idx_row, unsigned( idx_col ) ) = AParam( idx_lOrder - 1, idx_kOrder );
-                }
-
-                if( CheckIndex( idx_lOrder + 1, idx_kOrder ) ) {
-                    idx_col                             = GlobalIndex( idx_lOrder + 1, idx_kOrder );
-                    _Az( idx_row, unsigned( idx_col ) ) = BParam( idx_lOrder + 1, idx_kOrder );
+                    if( CheckIndex( idx_lOrder + 1, idx_kOrder ) ) {
+                        idx_col                             = GlobalIndex( idx_lOrder + 1, idx_kOrder );
+                        _Az( idx_row, unsigned( idx_col ) ) = BParam( idx_lOrder + 1, idx_kOrder );
+                    }
                 }
             }
         }
@@ -393,13 +430,13 @@ void PNSolver::ComputeFluxComponents() {
     }
 
     // Compute Spectral Radius
-    // std::cout << "Eigenvalues x direction " << eigenValuesX << "\n";
-    // std::cout << "Eigenvalues y direction " << eigenValuesY << "\n";
-    // std::cout << "Eigenvalues z direction " << eigenValues << "\n";
-    //
-    // std::cout << "Spectral Radius X " << blaze::max( blaze::abs( eigenValuesX ) ) << "\n";
-    // std::cout << "Spectral Radius Y " << blaze::max( blaze::abs( eigenValuesY ) ) << "\n";
-    // std::cout << "Spectral Radius Z " << blaze::max( blaze::abs( eigenValues ) ) << "\n";
+    std::cout << "Eigenvalues x direction " << eigenValuesX << "\n";
+    std::cout << "Eigenvalues y direction " << eigenValuesY << "\n";
+    std::cout << "Eigenvalues z direction " << eigenValues << "\n";
+
+    std::cout << "Spectral Radius X " << blaze::max( blaze::abs( eigenValuesX ) ) << "\n";
+    std::cout << "Spectral Radius Y " << blaze::max( blaze::abs( eigenValuesY ) ) << "\n";
+    std::cout << "Spectral Radius Z " << blaze::max( blaze::abs( eigenValues ) ) << "\n";
 
     //_combinedSpectralRadius = blaze::max( blaze::abs( eigenValues + eigenValuesX + eigenValuesY ) );
     // std::cout << "Spectral Radius combined " << blaze::max( blaze::abs( eigenValues + eigenValuesX + eigenValuesY ) ) << "\n";
@@ -459,12 +496,37 @@ void PNSolver::PrepareVolumeOutput() {
                 _outputFields[idx_group].resize( _nSystem );
                 _outputFieldNames[idx_group].resize( _nSystem );
 
-                for( int idx_l = 0; idx_l <= (int)_polyDegreeBasis; idx_l++ ) {
-                    for( int idx_k = -idx_l; idx_k <= idx_l; idx_k++ ) {
-                        _outputFields[idx_group][GlobalIndex( idx_l, idx_k )].resize( _nCells );
+                if( _settings->GetDim() == 2 ) {
+                    unsigned count = 0;
+                    for( int idx_l = 0; idx_l <= (int)_polyDegreeBasis; idx_l++ ) {
+                        for( int idx_k = -idx_l; idx_k <= idx_l; idx_k++ ) {
+                            if( idx_l % 2 == 0 ) {
+                                if( idx_k % 2 == 0 ) {
+                                    _outputFields[idx_group][count].resize( _nCells );
+                                    _outputFieldNames[idx_group][count] =
+                                        std::string( "u_" + std::to_string( idx_l ) + "^" + std::to_string( idx_k ) );
+                                    count++;
+                                }
+                            }
+                            else {
+                                if( idx_k % 2 != 0 ) {
+                                    _outputFields[idx_group][count].resize( _nCells );
+                                    _outputFieldNames[idx_group][count] =
+                                        std::string( "u_" + std::to_string( idx_l ) + "^" + std::to_string( idx_k ) );
+                                    count++;
+                                }
+                            }
+                        }
+                    }
+                }
+                else {
+                    for( int idx_l = 0; idx_l <= (int)_polyDegreeBasis; idx_l++ ) {
+                        for( int idx_k = -idx_l; idx_k <= idx_l; idx_k++ ) {
+                            _outputFields[idx_group][GlobalIndex( idx_l, idx_k )].resize( _nCells );
 
-                        _outputFieldNames[idx_group][GlobalIndex( idx_l, idx_k )] =
-                            std::string( "u_" + std::to_string( idx_l ) + "^" + std::to_string( idx_k ) );
+                            _outputFieldNames[idx_group][GlobalIndex( idx_l, idx_k )] =
+                                std::string( "u_" + std::to_string( idx_l ) + "^" + std::to_string( idx_k ) );
+                        }
                     }
                 }
                 break;

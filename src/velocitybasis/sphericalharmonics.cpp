@@ -35,7 +35,7 @@ SphericalHarmonics::SphericalHarmonics( unsigned L_degree, unsigned short spatia
 unsigned SphericalHarmonics::GetBasisSize() {
     switch( _spatialDim ) {
         case 1: return _LMaxDegree + 1; break;
-        case 2: return GetGlobalIndexBasis( _LMaxDegree, _LMaxDegree ) + 1 - _LMaxDegree; break;
+        case 2: return ( _LMaxDegree + 1 ) * ( _LMaxDegree + 2 ) / 2; break;
         default:
             return GetGlobalIndexBasis( _LMaxDegree, _LMaxDegree ) + 1; /* +1, since globalIdx computes indices */
             break;
@@ -77,9 +77,17 @@ Vector SphericalHarmonics::ComputeSphericalBasis( double my, double phi, double 
         unsigned count = 0;
         for( int idx_l = 0; idx_l <= (int)_LMaxDegree; idx_l++ ) {
             for( int idx_k = -idx_l; idx_k <= idx_l; idx_k++ ) {
-                if( idx_l == 0 || idx_l != idx_k ) {
-                    YBasis2D[count] = _YBasis[GetGlobalIndexBasis( idx_l, idx_k )];
-                    count++;
+                if( idx_l % 2 == 0 ) {
+                    if( idx_k % 2 == 0 ) {
+                        YBasis2D[count] = _YBasis[GetGlobalIndexBasis( idx_l, idx_k )];
+                        count++;
+                    }
+                }
+                else {
+                    if( idx_k % 2 != 0 ) {
+                        YBasis2D[count] = _YBasis[GetGlobalIndexBasis( idx_l, idx_k )];
+                        count++;
+                    }
                 }
             }
         }
