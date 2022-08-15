@@ -345,7 +345,7 @@ This section discusses macroscopic models to :eq:`CSDBoltzmann`. These models ar
 
 Modal discretizations
 **************************
-Modal discretizations of \eqref{eq:BoltzmannCSDTrafo} can be interpreted as a closure problem~\cite{Levermore,Levermore1996MomentCH}. To present the derivation of different closures, we first formulate the moment equations which are not closed. Second, we close these equations with the $P_N$ closure and third, we derive the $M_N$ closure.
+Modal discretizations of \eqref{eq:BoltzmannCSDTrafo} can be interpreted as a closure problem [Levermore1996Moment]_ , [Levermore1996Entropy]_. To present the derivation of different closures, we first formulate the moment equations which are not closed. Second, we close these equations with the $P_N$ closure and third, we derive the $M_N$ closure.
 
 Moment equations
 +++++++++++++++++++++++++
@@ -355,7 +355,7 @@ Let us derive an evolution equation to describe the moments of the radiation flu
 Y_{\ell}^k(\mathbf{\Omega}) = \sqrt{\frac{2\ell +1}{4\pi}\frac{(\ell-k)!}{(\ell+k)!}}\ e^{ik\varphi}P_{\ell}^k(\mu) ,
 
 
-where :math:`P_{\ell}^k` are the associated Legendre polynomials. Then, the real spherical harmonics are given as
+where $P_{\ell}^k$ are the associated Legendre polynomials. Then, the real spherical harmonics are given as
 
 .. math::
     m_{\ell}^k(\mathbf{\Omega}) = 
@@ -365,7 +365,7 @@ where :math:`P_{\ell}^k` are the associated Legendre polynomials. Then, the real
         -\frac{(-1)^k i}{\sqrt{2}}\left( Y_{\ell}^{-k}(\mathbf{\Omega}) - (-1)^k Y_{\ell}^{k}(\mathbf{\Omega}) \right), & k < 0\;,
     \end{cases}
 
-where :math:`i` is the imaginary unit. Collecting all basis functions up to degree :math:`N` in a vector
+where $i$ is the imaginary unit. Collecting all basis functions up to degree $N$ in a vector
 
 .. math::
     \mathbf m = \left(m_0^0, m_1^{-1}, m_1^{0}, m_1^{1},\cdots, m_N^{N}\right)^T\in\mathbb{R}^{(N+1)^2}
@@ -389,75 +389,75 @@ as well as the fact that there exists a diagonal matrix :math:`\bm{\Sigma}_{\ell
 .. math::
     \int_{\mathbb{S}^2}\int_{\mathbb{S}^2}\mathbf m_{\ell}(\mathbf\Omega)\Sigma_s(t,\mathbf\Omega\cdot\mathbf\Omega')\psi(t,\mathbf x,\mathbf\Omega')\intD \mathbf\Omega'd\mathbf\Omega = \bm{\Sigma}_{\ell}(t) \mathbf u_{\ell}(t,\mathbf x)\;.
 
-Then, the moment equations at degree :math:`\ell` become
+Then, the moment equations at degree $\ell$ become
 .. math::
     \partial_{t}\mathbf u_{\ell}(t,\mathbf x)+&\sum_{i=1}^3\partial_{x_i}\left(\mathbf{a}_{\ell}^i\mathbf u_{\ell-1}(t,\mathbf x) + \mathbf{a}_{\ell+1}^i\mathbf u_{\ell+1}(t,\mathbf x)\right)/\rho(\mathbf{x})+\Sigma_t(t)\mathbf u_{\ell}(t,\mathbf x)\nonumber\\
     &= \bm{\Sigma}_{\ell}(t) \mathbf u_{\ell}(t,\mathbf x)\;.
 
-Note that the equations for degree :math:`\ell` depend on the moments of degree :math:`\ell+1`. Hence, to obtain a closed system of moments up to a fixed degree :math:`N`, we need to define a closure relation 
+Note that the equations for degree $\ell$ depend on the moments of degree $\ell+1$. Hence, to obtain a closed system of moments up to a fixed degree $N$, we need to define a closure relation 
 .. math::
     \mathbf u_{N+1}(t,\mathbf x)\simeq \mathcal{U}(\mathbf u_{0}(t,\mathbf x),\cdots,\mathbf u_{N}(t,\mathbf x)) .
     
 
-:math:`P_N` closure
+$P_N$ closure
 ++++++++++++++++++++++++++++
 
-The most commonly used closure is the :math:`P_N` closure which leads to the spherical harmonics (:math:`P_N`) method \cite{case1967linear}. It expands the solution by spherical harmonics, i.e.,
+The most commonly used closure is the $P_N$ closure which leads to the spherical harmonics ($P_N$) method [Case1967linear]_. It expands the solution by spherical harmonics, i.e.,
 .. math::
     \psi(t,\mathbf{x},\mathbf{\Omega}) \approx \psi_{\mathrm{P}_N}(t,\mathbf{x},\mathbf{\Omega}) := \mathbf{u}(t,\mathbf x)^T\mathbf{m}(\mathbf{\Omega}),
 
 where :math:`\mathbf{u}\in\mathbb{R}^{(N+1)^2}` collects all moments according to :math:`\mathbf u = \left(u_0^0, u_1^{-1}, u_1^{0}, u_1^{1},\cdots, u_N^{N}\right)^T\in\mathbb{R}^{(N+1)^2}`.
-Hence, the :math:`P_N` closure is simply given as :math:`\mathcal{U}_{\mathrm{P}_N}\equiv \mathbf 0`. In this case, the moment equations read
+Hence, the $P_N$ closure is simply given as $\mathcal{U}_{\mathrm{P}_N}\equiv \mathbf 0$. In this case, the moment equations read
 .. math::
     \partial_t \mathbf u (t,\mathbf x) =-\mathbf A\cdot\nabla_{\mathbf{x}} \frac{\mathbf u(t,\mathbf x)}{\rho(\mathbf x)}-\Sigma_t(t)\mathbf u (t,\mathbf x)+\bm{\Sigma}\mathbf u (t,\mathbf x),
 
-where :math:`\mathbf A\cdot\nabla_{\mathbf{x}} := \mathbf A_1\partial_{x} + \mathbf A_2\partial_y+ \mathbf A_3\partial_z` with :math:`\mathbf A_i := \int_{\mathbb{S}^2}\mathbf m\mathbf m^T \Omega_i \intD \mathbf{\Omega}` and :math:`\bm \Sigma = \mathrm{diag}\left(\Sigma_0^0, \Sigma_1^{-1}, \Sigma_1^{0}, \Sigma_1^{1},\cdots, \Sigma_N^{N}\right)`. While :math:`P_N` is a computationally efficient method (especially for scattering terms), it does not preserve positivity of the radiation flux approximation and can lead to spurious oscillations. A closure which mitigates oscillations and preserves positivity at significantly increased computational costs is the :math:`M_N` closure.
+where :math:`\mathbf A\cdot\nabla_{\mathbf{x}} := \mathbf A_1\partial_{x} + \mathbf A_2\partial_y+ \mathbf A_3\partial_z` with :math:`\mathbf A_i := \int_{\mathbb{S}^2}\mathbf m\mathbf m^T \Omega_i \intD \mathbf{\Omega}` and :math:`\bm \Sigma = \mathrm{diag}\left(\Sigma_0^0, \Sigma_1^{-1}, \Sigma_1^{0}, \Sigma_1^{1},\cdots, \Sigma_N^{N}\right)`. While $P_N$ is a computationally efficient method (especially for scattering terms), it does not preserve positivity of the radiation flux approximation and can lead to spurious oscillations. A closure which mitigates oscillations and preserves positivity at significantly increased computational costs is the $M_N$ closure.
 
-:math:`M_N` closure
+$M_N$ closure
 +++++++++++++++++++++++++++++
 
-The :math:`M_N` closure~\cite{Levermore1996MomentCH,Levermore} employs the principle of minimal mathematical, i.e., maximal physical entropy to close the moment system.
-To this end, we define the twice differentiable, strictly convex kinetic entropy density :math:`\eta:\mathbb{R}_+\rightarrow\mathbb{R}`. Different, problem specific entropy densities can be defined, e.g. the Maxwell-Boltzmann entropy :math:`\eta(g)=g\log(g)-g`, or a quadratic entropy :math:`\eta(g)=g^2`, which recovers the :math:`P_N` method.
+The $M_N$ closure [Levermore1996Moment]_ , [Levermore1996Entropy]_ employs the principle of minimal mathematical, i.e., maximal physical entropy to close the moment system.
+To this end, we define the twice differentiable, strictly convex kinetic entropy density :math:`\eta:\mathbb{R}_+\rightarrow\mathbb{R}`. Different, problem specific entropy densities can be defined, e.g. the Maxwell-Boltzmann entropy :math:`\eta(g)=g\log(g)-g`, or a quadratic entropy :math:`\eta(g)=g^2`, which recovers the $P_N$ method.
 Thus, one can close the system by choosing the reconstructed radiation flux density :math:`\psi_{\mathbf u}` out of the set of all possible functions 
 .. math::
     F_{\mathbf m}=\menge{g(t,x,\mathbf{\Omega})>0 : u=\int_{\mathbb{S}^2}{\mathbf m g}\intD \mathbf{\Omega}<\infty},
 
-that fulfill the moment condition :math:`\mathbf u(t,\mathbf{x})=\inner{\mathbf m g}` as the one with minimal entropy. The modal basis :math:`\mathbf m` can be chosen arbitrarily. Common choices consist of spherical harmonics or other polynomial basis functions. The minimal entropy closure can be formulated as a constrained optimization problem for a given vector of moments :math:`\mathbf u`,
+that fulfill the moment condition :math:`\mathbf u(t,\mathbf{x})=\inner{\mathbf m g}` as the one with minimal entropy. The modal basis $\mathbf m$ can be chosen arbitrarily. Common choices consist of spherical harmonics or other polynomial basis functions. The minimal entropy closure can be formulated as a constrained optimization problem for a given vector of moments $\mathbf u$,
 .. math::
 :label: EntropyOCP 
 \min_{g\in F_{\mathbf m}} \int_{\mathbb{S}^2}\eta(g)\intD \mathbf{\Omega} \quad  \text{ s.t. }  \mathbf u=\int_{\mathbb{S}^2}{\mathbf m g}\intD \mathbf{\Omega}.
 
-The minimal value of the objective function is denoted by :math:`h(u)=\inner{\eta(\psi_{\mathbf u})}` and describes the systems minimal entropy depending on time and space. :math:`\psi_{\mathbf u}` is the minimizer of Eq.~\eqref{eq_entropyOCP}, which we use to close the moment system
+The minimal value of the objective function is denoted by :math:`h(u)=\inner{\eta(\psi_{\mathbf u})}` and describes the systems minimal entropy depending on time and space. :math:`\psi_{\mathbf u}` is the minimizer of :eq: `EntropyOCP`, which we use to close the moment system
 .. math::
     \partial_{t}\mathbf u_{\ell}(t,\mathbf x)+&\nabla_x\cdot\int_{ \mathbb{S}^2}\mathbf\Omega\mathbf m_{\ell}(\mathbf\Omega)\frac{\psi_u(t,\mathbf x,\mathbf\Omega)}{\rho(\mathbf x)}\intD \mathbf{\Omega}+\Sigma_t(t)\mathbf u_{\ell}(t,\mathbf x)= \Sigma_{\ell}\mathbf u_{\ell} (t,\mathbf x);.
 
-The minimal entropy method preserves important properties of the underlying equation~\cite{Levermore,alldredge2018regularized}, i.e., positivity of the solution, hyperbolicity of the moment system, dissipation of mathematical entropy and the H-Theorem. The minimal entropy closed moment system is invariant under Galilean transforms. Lastly, if collision invariants of the Boltzmann equations are used as modal basis functions, then the moment system yields a local conservation law. 
+The minimal entropy method preserves important properties of the underlying equation  [Alldredge2018regularized]_ , [Levermore1996Moment]_ , i.e., positivity of the solution, hyperbolicity of the moment system, dissipation of mathematical entropy and the H-Theorem. The minimal entropy closed moment system is invariant under Galilean transforms. Lastly, if collision invariants of the Boltzmann equations are used as modal basis functions, then the moment system yields a local conservation law. 
 
 The set of all moments corresponding to a radiation flux density :math:`\psi_{\mathbf u}>0` is called the realizable set 
 .. math::
     \mathcal{R}=\menge{\mathbf u: \int_{\mathbb{S}^2}{\mathbf m g}\intD \mathbf{\Omega}=\mathbf u,\, g\in F_{\mathbf m}}.
 
-Outside :math:`\mathcal{R}` the minimal entropy closure problem has no solution.  At the boundary :math:`\partial \mathcal{R}`, the optimization problem becomes singular and :math:`\psi_{\mathbf u}` consists of a linear combination of dirac distributions. Near :math:`\partial \mathcal{R}` the entropy closure becomes ill conditioned and thus, a numerical optimizer requires a large amount of iterations to compute a solution.
+Outside $\mathcal{R}$ the minimal entropy closure problem has no solution.  At the boundary $\partial \mathcal{R}$, the optimization problem becomes singular and :math:`\psi_{\mathbf u}` consists of a linear combination of dirac distributions. Near $\partial \mathcal{R}$ the entropy closure becomes ill conditioned and thus, a numerical optimizer requires a large amount of iterations to compute a solution.
 
-To mitigate this issue, a regularized version of the entropy closure problem has been proposed by~\cite{alldredge2018regularized},
+To mitigate this issue, a regularized version of the entropy closure problem has been proposed by  [Alldredge2018regularized]_ ,
 .. math::
 :label: EntropyOCP_reg 
 \inf_{g\in F_{\mathbf m}}  \int_{\mathbb{S}^2}\eta(g)\intD \mathbf{\Omega}+
 \frac{1}{2\gamma}\norm{ \int_{\mathbb{S}^2}{\mathbf m g}\intD \mathbf{\Omega} - \mathbf u}^2_2,
 
-where :math:`\gamma` is the regularization parameter. Generally, moments of the regularized reconstructed radiation flux density :math:`\int_{\mathbb{S}^2}\mathbf m\psi_{\mathbf u}\intD \mathbf{\Omega}` deviate from the non-regularized moments. 
-For :math:`\gamma\rightarrow 0`, we recover the original entropy closure of Eq.~\eqref{eq_entropyOCP} and the moments coincide again. The regularized entropy closure is solvable for any :math:`\mathbf u\in\mathbb{R}^{(N+1)^2}` and preserves all structural properties of the non-regularized entropy closure~\cite{alldredge2018regularized}. One can also choose to regularize only parts of the entropy closure, e.g. to preserve moments of specific interest. Then the partially regularized entropy closure reads
+where $\gamma$ is the regularization parameter. Generally, moments of the regularized reconstructed radiation flux density :math:`\int_{\mathbb{S}^2}\mathbf m\psi_{\mathbf u}\intD \mathbf{\Omega}` deviate from the non-regularized moments. 
+For :math:`\gamma\rightarrow 0`, we recover the original entropy closure of :eq: `EntropyOCP` and the moments coincide again. The regularized entropy closure is solvable for any :math:`\mathbf u\in\mathbb{R}^{(N+1)^2}` and preserves all structural properties of the non-regularized entropy closure [Alldredge2018regularized]_. One can also choose to regularize only parts of the entropy closure, e.g. to preserve moments of specific interest. Then the partially regularized entropy closure reads
 .. math::
 :label: EntropyOCP_part_reg 
 \inf_{g\in F_m}  \int_{\mathbb{S}^2}\eta(g)\intD \mathbf{\Omega} + \frac{1}{2\gamma}\norm{\int_{\mathbb{S}^2}{\mathbf m^r g} \intD \mathbf{\Omega} - u^r}^2_2\quad  \text{ s.t. }  \mathbf u^{nr}=\int_{\mathbb{S}^2}{\mathbf m^{nr}g}\intD \mathbf{\Omega},
 
 where :math:`\mathbf u^{nr}` denotes non-regularized moment elements and :math:`\mathbf u^{r}` denotes regularized elements of the moment vector.
 
-Recently, structure preserving deep neural networks have been successfully employed to approximate the entropy closure~\cite{schotthoefer2021structurepreserving} to accelerate the :math:`M_N` method. The authors leverage convexity of the optimization problem and use corresponding input convex neural networks~\cite{amosICNN} to preserve structural properties of the closure in the neural network based approximation.
+Recently, structure preserving deep neural networks have been successfully employed to approximate the entropy closure [Schotthoefer2021structurepreserving]_ to accelerate the $M_N$ method. The authors leverage convexity of the optimization problem and use corresponding input convex neural networks [AmosICNN]_ to preserve structural properties of the closure in the neural network based approximation.
 
 Nodal discretizations
 **********************************
-The :math:`S_N` method \cite{lewis1984computational} employs a nodal discretization for the directional domain. To facilitate the computation of integral terms that arise due to scattering, the nodal point sets are commonly chosen according to a quadrature rule.
+The $S_N$ method [Lewis1984computational]_ employs a nodal discretization for the directional domain. To facilitate the computation of integral terms that arise due to scattering, the nodal point sets are commonly chosen according to a quadrature rule.
 
 In the application case of radiative transport, the directional domain is assumed to be the unit sphere :math:`\mathbb{S}^2\subset\mathbb{R}^3`, thus a suitable parametrization is given by spherical coordinates
 .. math::
@@ -469,7 +469,7 @@ In the application case of radiative transport, the directional domain is assume
      : \mu\in\left[-1,1\right],\, \varphi\in\left[0,2\pi\right)}.
 
 Note, that we can allow different particle velocities by scaling the unit sphere with a given maximum velocity.
-The implementation assumes a slab geometry setting, i.e., lower dimensional velocity spaces are described by a projection of $\mathbb{S}^2$ onto $\mathbb{R}^2$ and :math:`\mathbb{R}`, respectively. Thus, the parametrization of the two-dimensional slab geometry is given by
+The implementation assumes a slab geometry setting, i.e., lower dimensional velocity spaces are described by a projection of $\mathbb{S}^2$ onto $\mathbb{R}^2$ and $\mathbb{R}$, respectively. Thus, the parametrization of the two-dimensional slab geometry is given by
 .. math::
     P_{\mathbb{R}^2}(\mathbb{S}^2) =  \menge{ \begin{pmatrix}
            \sqrt{1-\mu^2}\sin(\varphi) \\
@@ -482,7 +482,7 @@ and the one dimensional case is described by
     P_{\mathbb{R}}(\mathbb{S}^2) =  \menge{ \mu     : \mu\in\left[-1,1\right]}
 
 Hence the task is to derive a quadrature formula for the direction of travel. The perhaps most common approach is the product quadrature rule. Here. a Gauss quadrature is used for 
-:math:`\mu` and equally weighted and spaced points for :math:`\varphi`, i.e., when using :math:`N_q` points, we have
+$\mu$ and equally weighted and spaced points for $\varphi$, i.e., when using $N_q$ points, we have
 .. math::
 \varphi_i = i \Delta\varphi \quad \text{for} \quad i=1,\ldots,N_q \quad \text{and} 
 \quad \Delta\varphi = \frac{2\pi}{N_q}\;.
@@ -499,21 +499,46 @@ and points
            \sqrt{1-\mu_k^2}\cos(\varphi_{\ell})
          \end{pmatrix} \;.
 
-Other implemented quadrature methods include spherical Monte Carlo, Levelsymmetric~\cite{2004PhDT}, LEBEDEV~\cite{osti_7057084} and LDFESA~\cite{jarrel_adams}. A comparison of different quadrature sets and their approximation behaviour for :math:`S_N` methods can be found in \cite{camminady2021highly}.
+Other implemented quadrature methods include spherical Monte Carlo, Levelsymmetric [Longoni2004PhDT]_, LEBEDEV [Lebedev1986numerical]_ and LDFESA [Jarrel2011discrete]_ . A comparison of different quadrature sets and their approximation behaviour for $S_N$ methods can be found in [Camminady2021highly]_.
 
 The evolution equations for :math:`\psi_q(t,\mathbf x):= \psi(t,\mathbf x,\mathbf \Omega_q)` are then given by
 .. math::
 :label: SNEqns
     \partial_{t}\psi_q(t,\mathbf x)+&\mathbf \Omega_q\cdot\nabla_x \frac{\psi_q(t,\mathbf x)}{\rho(\mathbf{x})}+\Sigma_t(t)\psi_q(t,\mathbf x) = \sum_{p=1}^{Q}w_p\Sigma_s(t,\mathbf \Omega_q\cdot\mathbf \Omega_p)\psi_p(t,\mathbf x)\;.
 
-A main disadvantage of :math:`S_N` methods are so called ray-effects \cite{lathrop1968ray,morel2003analysis,mathews1999propagation}, which are spurious artifacts that stem from the limited number of directions in which particles can travel. Moreover, radiation therapy applications exhibit forward-peaked scattering, 
+A main disadvantage of $S_N$ methods are so called ray-effects [Lathrop1968ray]_ , [Morel2003analysis]_ , [Mathews1999propagation]_ , which are spurious artifacts that stem from the limited number of directions in which particles can travel. Moreover, radiation therapy applications exhibit forward-peaked scattering, 
 which cannot be well-captured by classical quadrature rules. 
 
-To allow for moderate computational costs when computing scattering terms and to efficiently treat forward-peaked scattering, we transform the nodal solution to a modal description and apply the more efficient :math:`P_N` methodology for scattering terms. For this, we define a truncation order $N$ and construct the matrices :math:`\mathbf{O}\in\mathbb{R}^{Q \times (N+1)^2}` which maps the modal onto its nodal representation and :math:`\mathbf{M}\in\mathbb{R}^{(N+1)^2\times Q}` which maps the nodal onto its modal representation. Such matrices can be constructed by
+To allow for moderate computational costs when computing scattering terms and to efficiently treat forward-peaked scattering, we transform the nodal solution to a modal description and apply the more efficient $P_N$ methodology for scattering terms. For this, we define a truncation order $N$ and construct the matrices :math:`\mathbf{O}\in\mathbb{R}^{Q \times (N+1)^2}` which maps the modal onto its nodal representation and :math:`\mathbf{M}\in\mathbb{R}^{(N+1)^2\times Q}` which maps the nodal onto its modal representation. Such matrices can be constructed by
 .. math::
     \mathbf O = \left(\mathbf{m}(\Omega_k)\right)_{k=1}^{Q}\, , \text{ and } \enskip \mathbf M = \left(w_k\mathbf{m}(\Omega_k)\right)_{k=1}^{Q}.
 
-In this case, we can replace the scattering term on the right-hand side of :eq: SNEqns by its :math:`P_N` counterpart. Collecting the nodal solution in the vector :math:`\bm\psi` then gives
+In this case, we can replace the scattering term on the right-hand side of :eq: SNEqns by its $P_N$ counterpart. Collecting the nodal solution in the vector $\bm\psi$ then gives
 .. math:: 
 :label: SNEqns2
     \partial_{t}\bm\psi(t,\mathbf x)+&\mathbf \Omega_q\cdot\nabla_x \frac{\bm\psi(t,\mathbf x)}{\rho(\mathbf{x})}+\Sigma_t(t)\bm{\psi}(t,\mathbf x) = \mathbf{O}\bm{\Sigma}\mathbf{M}\bm{\psi}\;.
+
+References
+--------------------------------------
+
+.. [Alldredge2018regularized] Graham W. Alldredge, Martin Frank, and Cory D. Hauck. 2018. A regularized entropy-based moment method for kinetic equations.
+arXiv:1804.05447 [math.NA]
+.. [AmosICNN] Brandon Amos, Lei Xu, and J. Zico Kolter. 2016. Input Convex Neural Networks. CoRR abs/1609.07152 (2016). arXiv:1609.07152
+http://arxiv.org/abs/1609.07152
+.. [Camminady2021highly] Thomas Camminady, Martin Frank, and Jonas Kusch. 2021. Highly uniform quadrature sets for the discrete ordinates method. Nuclear
+Science and Engineering (2021).
+.. [Case1967linear] Kenneth M Case and Paul Frederick Zweifel. 1967. Linear transport theory. (1967)
+.. [Jarrel2011discrete] J.J. Jarrel and M.L. Adams. 2011. Discrete-ordinates quadrature sets based on linear discontinuous finite elements. Proc. International
+Conference on Mathematics and Computational Methods applied to Nuclear Science and Engineering (2011)
+.. [Lathrop1968ray] Kaye D Lathrop. 1968. Ray effects in discrete ordinates equations. Nuclear Science and Engineering 32, 3 (1968), 357–369.
+.. [Lebedev1986numerical] G Marchuk and V I Lebedev. 1986. Numerical methods in the theory of neutron transport. (1986). https://www.osti.gov/biblio/7057084
+.. [Levermore1996Moment] Levermore. 1996. Moment closure hierarchies for kinetic theories. Journal of Statistical Physics 83 (1996), 1021–1065.
+.. [Levermore1996Entropy] C. David Levermore. 1997. Entropy-based moment closures for kinetic equations. Transport Theory and Statistical Physics 26, 4-5 (1997),
+591–606
+.. [Lewis1984computational] Elmer Eugene Lewis and Warren F Miller. 1984. Computational methods of neutron transport. (1984).
+.. [Longoni2004PhDT] Gianluca Longoni. 2004. Advanced quadrature sets and acceleration and preconditioning techniques for the discrete ordinates method in
+parallel computing environments. Ph. D. Dissertation. University of Florida.
+.. [Mathews1999propagation] Kirk A Mathews. 1999. On the propagation of rays in discrete ordinates. Nuclear science and engineering 132, 2 (1999), 155–180.
+.. [Morel2003analysis] JE Morel, TA Wareing, RB Lowrie, and DK Parsons. 2003. Analysis of ray-effect mitigation techniques. Nuclear science and engineering
+144, 1 (2003), 1–22.
+.. [Schotthoefer2021structurepreserving] Steffen Schotthöfer, Tianbai Xiao, Martin Frank, and Cory D. Hauck. 2022. Neural network-based, structure-preserving entropy closures for the Boltzmann moment system. https://doi.org/10.48550/ARXIV.2201.10364
