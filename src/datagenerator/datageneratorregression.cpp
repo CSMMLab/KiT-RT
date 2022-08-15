@@ -34,7 +34,7 @@ void DataGeneratorRegression::ComputeTrainingData() {
 
         // --- Postprocessing
         ComputeRealizableSolution();
-
+        /*
         // debugging purposes for rotation
         TextProcessingToolbox::PrintVectorVector( _uSol );
         TextProcessingToolbox::PrintVectorVector( _alpha );
@@ -75,6 +75,7 @@ void DataGeneratorRegression::ComputeTrainingData() {
         TextProcessingToolbox::PrintVectorVector( rot_alpha );
         TextProcessingToolbox::PrintVectorVector( rot_alpha_comp );
         std::cout << "here\n";
+*/
     }
     else {
         // --- sample u ---

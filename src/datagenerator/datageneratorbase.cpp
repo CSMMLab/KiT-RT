@@ -257,8 +257,14 @@ bool DataGeneratorBase::ComputeEVRejection( unsigned idx_set ) {
     //  TextProcessingToolbox::PrintVectorVector( _momentBasis );
     _optimizer->ComputeHessian( _alpha[idx_set], _momentBasis, hessian );
     // TextProcessingToolbox::PrintMatrix( hessian );
-    SymMatrix hessianSym( hessian );    // Bad solution, rewrite with less memory need
-    Vector ew = Vector( _nTotalEntries, 0.0 );
+    Matrix subHessian = Matrix( _nTotalEntries - 1, _nTotalEntries - 1, 0.0 );
+    for( unsigned i = 1; i < _nTotalEntries; i++ ) {
+        for( unsigned j = 1; j < _nTotalEntries; j++ ) {
+            subHessian( i - 1, j - 1 ) = hessian( i, j );
+        }
+    }
+    SymMatrix hessianSym( subHessian );    // Bad solution, rewrite with less memory need
+    Vector ew = Vector( _nTotalEntries - 1, 0.0 );
     eigen( hessianSym, ew );
     if( min( ew ) < _settings->GetMinimalEVBound() ) {
         // std::cout << "Sampling not accepted with EV:" << min( ew ) << std::endl;
