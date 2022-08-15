@@ -382,19 +382,23 @@ Evolution equations for the moments can be derived by testing :eq:`CSDBoltzmann`
     &= \int_{\mathbb{S}^2}\int_{\mathbb{S}^2}\mathbf m_{\ell}(\mathbf\Omega)\Sigma_s(t,\mathbf\Omega\cdot\mathbf\Omega')\psi(t,\mathbf x,\mathbf\Omega')\intD \mathbf\Omega'\intD \mathbf\Omega\;.
 
 To rewrite this equation, we use the spherical harmonics recursion relation
+
 .. math::
     \Omega_i \mathbf{m}_{\ell} = \mathbf{a}_{\ell}^i\mathbf m_{\ell-1} + \mathbf{a}_{\ell+1}^i\mathbf m_{\ell+1} \enskip \text{ with } \mathbf{a}_{\ell}^i\in\mathbb{R}^{(2\ell-1)\times (2\ell+1)}
 
-as well as the fact that there exists a diagonal matrix :math:`\bm{\Sigma}_{\ell}(t)$ with entries $\Sigma_{\ell,kk} = \Sigma_{\ell}^k := 2\pi\int_{[-1,1]}P_{\ell}(\mu)\Sigma_s(t,\mu)\intD \mu` such that
+as well as the fact that there exists a diagonal matrix :math:`\bm{\Sigma}_{\ell}(t)` with entries :math:`\Sigma_{\ell,kk} = \Sigma_{\ell}^k := 2\pi\int_{[-1,1]}P_{\ell}(\mu)\Sigma_s(t,\mu)\intD \mu` such that
+
 .. math::
     \int_{\mathbb{S}^2}\int_{\mathbb{S}^2}\mathbf m_{\ell}(\mathbf\Omega)\Sigma_s(t,\mathbf\Omega\cdot\mathbf\Omega')\psi(t,\mathbf x,\mathbf\Omega')\intD \mathbf\Omega'd\mathbf\Omega = \bm{\Sigma}_{\ell}(t) \mathbf u_{\ell}(t,\mathbf x)\;.
 
-Then, the moment equations at degree $\ell$ become
+Then, the moment equations at degree :math:`\ell` become
+
 .. math::
     \partial_{t}\mathbf u_{\ell}(t,\mathbf x)+&\sum_{i=1}^3\partial_{x_i}\left(\mathbf{a}_{\ell}^i\mathbf u_{\ell-1}(t,\mathbf x) + \mathbf{a}_{\ell+1}^i\mathbf u_{\ell+1}(t,\mathbf x)\right)/\rho(\mathbf{x})+\Sigma_t(t)\mathbf u_{\ell}(t,\mathbf x)\nonumber\\
     &= \bm{\Sigma}_{\ell}(t) \mathbf u_{\ell}(t,\mathbf x)\;.
 
-Note that the equations for degree $\ell$ depend on the moments of degree $\ell+1$. Hence, to obtain a closed system of moments up to a fixed degree $N$, we need to define a closure relation 
+Note that the equations for degree :math:`\ell` depend on the moments of degree :math:`\ell+1`. Hence, to obtain a closed system of moments up to a fixed degree $N$, we need to define a closure relation 
+
 .. math::
     \mathbf u_{N+1}(t,\mathbf x)\simeq \mathcal{U}(\mathbf u_{0}(t,\mathbf x),\cdots,\mathbf u_{N}(t,\mathbf x)) .
     
@@ -403,11 +407,13 @@ $P_N$ closure
 ++++++++++++++++++++++++++++
 
 The most commonly used closure is the $P_N$ closure which leads to the spherical harmonics ($P_N$) method [Case1967linear]_. It expands the solution by spherical harmonics, i.e.,
+
 .. math::
     \psi(t,\mathbf{x},\mathbf{\Omega}) \approx \psi_{\mathrm{P}_N}(t,\mathbf{x},\mathbf{\Omega}) := \mathbf{u}(t,\mathbf x)^T\mathbf{m}(\mathbf{\Omega}),
 
 where :math:`\mathbf{u}\in\mathbb{R}^{(N+1)^2}` collects all moments according to :math:`\mathbf u = \left(u_0^0, u_1^{-1}, u_1^{0}, u_1^{1},\cdots, u_N^{N}\right)^T\in\mathbb{R}^{(N+1)^2}`.
-Hence, the $P_N$ closure is simply given as $\mathcal{U}_{\mathrm{P}_N}\equiv \mathbf 0$. In this case, the moment equations read
+Hence, the $P_N$ closure is simply given as :math:`\mathcal{U}_{\mathrm{P}_N}\equiv \mathbf 0`. In this case, the moment equations read
+
 .. math::
     \partial_t \mathbf u (t,\mathbf x) =-\mathbf A\cdot\nabla_{\mathbf{x}} \frac{\mathbf u(t,\mathbf x)}{\rho(\mathbf x)}-\Sigma_t(t)\mathbf u (t,\mathbf x)+\bm{\Sigma}\mathbf u (t,\mathbf x),
 
@@ -419,34 +425,40 @@ $M_N$ closure
 The $M_N$ closure [Levermore1996Moment]_ , [Levermore1996Entropy]_ employs the principle of minimal mathematical, i.e., maximal physical entropy to close the moment system.
 To this end, we define the twice differentiable, strictly convex kinetic entropy density :math:`\eta:\mathbb{R}_+\rightarrow\mathbb{R}`. Different, problem specific entropy densities can be defined, e.g. the Maxwell-Boltzmann entropy :math:`\eta(g)=g\log(g)-g`, or a quadratic entropy :math:`\eta(g)=g^2`, which recovers the $P_N$ method.
 Thus, one can close the system by choosing the reconstructed radiation flux density :math:`\psi_{\mathbf u}` out of the set of all possible functions 
+
 .. math::
     F_{\mathbf m}=\menge{g(t,x,\mathbf{\Omega})>0 : u=\int_{\mathbb{S}^2}{\mathbf m g}\intD \mathbf{\Omega}<\infty},
 
-that fulfill the moment condition :math:`\mathbf u(t,\mathbf{x})=\inner{\mathbf m g}` as the one with minimal entropy. The modal basis $\mathbf m$ can be chosen arbitrarily. Common choices consist of spherical harmonics or other polynomial basis functions. The minimal entropy closure can be formulated as a constrained optimization problem for a given vector of moments $\mathbf u$,
+that fulfill the moment condition :math:`\mathbf u(t,\mathbf{x})=\inner{\mathbf m g}` as the one with minimal entropy. The modal basis :math:`\mathbf m` can be chosen arbitrarily. Common choices consist of spherical harmonics or other polynomial basis functions. The minimal entropy closure can be formulated as a constrained optimization problem for a given vector of moments :math:`\mathbf u`,
+
 .. math::
 :label: EntropyOCP 
 \min_{g\in F_{\mathbf m}} \int_{\mathbb{S}^2}\eta(g)\intD \mathbf{\Omega} \quad  \text{ s.t. }  \mathbf u=\int_{\mathbb{S}^2}{\mathbf m g}\intD \mathbf{\Omega}.
 
 The minimal value of the objective function is denoted by :math:`h(u)=\inner{\eta(\psi_{\mathbf u})}` and describes the systems minimal entropy depending on time and space. :math:`\psi_{\mathbf u}` is the minimizer of :eq: `EntropyOCP`, which we use to close the moment system
+
 .. math::
     \partial_{t}\mathbf u_{\ell}(t,\mathbf x)+&\nabla_x\cdot\int_{ \mathbb{S}^2}\mathbf\Omega\mathbf m_{\ell}(\mathbf\Omega)\frac{\psi_u(t,\mathbf x,\mathbf\Omega)}{\rho(\mathbf x)}\intD \mathbf{\Omega}+\Sigma_t(t)\mathbf u_{\ell}(t,\mathbf x)= \Sigma_{\ell}\mathbf u_{\ell} (t,\mathbf x);.
 
 The minimal entropy method preserves important properties of the underlying equation  [Alldredge2018regularized]_ , [Levermore1996Moment]_ , i.e., positivity of the solution, hyperbolicity of the moment system, dissipation of mathematical entropy and the H-Theorem. The minimal entropy closed moment system is invariant under Galilean transforms. Lastly, if collision invariants of the Boltzmann equations are used as modal basis functions, then the moment system yields a local conservation law. 
 
 The set of all moments corresponding to a radiation flux density :math:`\psi_{\mathbf u}>0` is called the realizable set 
+
 .. math::
     \mathcal{R}=\menge{\mathbf u: \int_{\mathbb{S}^2}{\mathbf m g}\intD \mathbf{\Omega}=\mathbf u,\, g\in F_{\mathbf m}}.
 
-Outside $\mathcal{R}$ the minimal entropy closure problem has no solution.  At the boundary $\partial \mathcal{R}$, the optimization problem becomes singular and :math:`\psi_{\mathbf u}` consists of a linear combination of dirac distributions. Near $\partial \mathcal{R}$ the entropy closure becomes ill conditioned and thus, a numerical optimizer requires a large amount of iterations to compute a solution.
+Outside :math:`\mathcal{R}:math:` the minimal entropy closure problem has no solution.  At the boundary :math:`\partial \mathcal{R}`, the optimization problem becomes singular and :math:`\psi_{\mathbf u}` consists of a linear combination of dirac distributions. Near :math:`\partial \mathcal{R}` the entropy closure becomes ill conditioned and thus, a numerical optimizer requires a large amount of iterations to compute a solution.
 
 To mitigate this issue, a regularized version of the entropy closure problem has been proposed by  [Alldredge2018regularized]_ ,
+
 .. math::
 :label: EntropyOCP_reg 
 \inf_{g\in F_{\mathbf m}}  \int_{\mathbb{S}^2}\eta(g)\intD \mathbf{\Omega}+
 \frac{1}{2\gamma}\norm{ \int_{\mathbb{S}^2}{\mathbf m g}\intD \mathbf{\Omega} - \mathbf u}^2_2,
 
-where $\gamma$ is the regularization parameter. Generally, moments of the regularized reconstructed radiation flux density :math:`\int_{\mathbb{S}^2}\mathbf m\psi_{\mathbf u}\intD \mathbf{\Omega}` deviate from the non-regularized moments. 
+where :math:`\gamma` is the regularization parameter. Generally, moments of the regularized reconstructed radiation flux density :math:`\int_{\mathbb{S}^2}\mathbf m\psi_{\mathbf u}\intD \mathbf{\Omega}` deviate from the non-regularized moments. 
 For :math:`\gamma\rightarrow 0`, we recover the original entropy closure of :eq: `EntropyOCP` and the moments coincide again. The regularized entropy closure is solvable for any :math:`\mathbf u\in\mathbb{R}^{(N+1)^2}` and preserves all structural properties of the non-regularized entropy closure [Alldredge2018regularized]_. One can also choose to regularize only parts of the entropy closure, e.g. to preserve moments of specific interest. Then the partially regularized entropy closure reads
+
 .. math::
 :label: EntropyOCP_part_reg 
 \inf_{g\in F_m}  \int_{\mathbb{S}^2}\eta(g)\intD \mathbf{\Omega} + \frac{1}{2\gamma}\norm{\int_{\mathbb{S}^2}{\mathbf m^r g} \intD \mathbf{\Omega} - u^r}^2_2\quad  \text{ s.t. }  \mathbf u^{nr}=\int_{\mathbb{S}^2}{\mathbf m^{nr}g}\intD \mathbf{\Omega},
@@ -460,6 +472,7 @@ Nodal discretizations
 The $S_N$ method [Lewis1984computational]_ employs a nodal discretization for the directional domain. To facilitate the computation of integral terms that arise due to scattering, the nodal point sets are commonly chosen according to a quadrature rule.
 
 In the application case of radiative transport, the directional domain is assumed to be the unit sphere :math:`\mathbb{S}^2\subset\mathbb{R}^3`, thus a suitable parametrization is given by spherical coordinates
+
 .. math::
     \mathbb{S}^2 =  \menge{ \begin{pmatrix}
            \sqrt{1-\mu^2}\sin(\varphi) \\
@@ -469,7 +482,8 @@ In the application case of radiative transport, the directional domain is assume
      : \mu\in\left[-1,1\right],\, \varphi\in\left[0,2\pi\right)}.
 
 Note, that we can allow different particle velocities by scaling the unit sphere with a given maximum velocity.
-The implementation assumes a slab geometry setting, i.e., lower dimensional velocity spaces are described by a projection of $\mathbb{S}^2$ onto $\mathbb{R}^2$ and $\mathbb{R}$, respectively. Thus, the parametrization of the two-dimensional slab geometry is given by
+The implementation assumes a slab geometry setting, i.e., lower dimensional velocity spaces are described by a projection of :math:`\mathbb{S}^2` onto :math:`\mathbb{R}^2` and :math:`\mathbb{R}`, respectively. Thus, the parametrization of the two-dimensional slab geometry is given by
+
 .. math::
     P_{\mathbb{R}^2}(\mathbb{S}^2) =  \menge{ \begin{pmatrix}
            \sqrt{1-\mu^2}\sin(\varphi) \\
@@ -478,20 +492,25 @@ The implementation assumes a slab geometry setting, i.e., lower dimensional velo
      : \mu\in\left[-1,1\right],\, \varphi\in\left[0,2\pi\right)}
 
 and the one dimensional case is described by
+
 .. math::
     P_{\mathbb{R}}(\mathbb{S}^2) =  \menge{ \mu     : \mu\in\left[-1,1\right]}
 
 Hence the task is to derive a quadrature formula for the direction of travel. The perhaps most common approach is the product quadrature rule. Here. a Gauss quadrature is used for 
-$\mu$ and equally weighted and spaced points for $\varphi$, i.e., when using $N_q$ points, we have
+
+:math:`\mu` and equally weighted and spaced points for :math:`\varphi`, i.e., when using $N_q$ points, we have
+
 .. math::
 \varphi_i = i \Delta\varphi \quad \text{for} \quad i=1,\ldots,N_q \quad \text{and} 
 \quad \Delta\varphi = \frac{2\pi}{N_q}\;.
 
 If the Gauss quadrature for :math:`\mu` uses :math:`N_q` points, then we obtain a total of :math:`Q = N_q^2` possible directions. Denoting the Gauss weights as :math:`w^G_k` with :math:`k = 1,\cdots,N_q`, we obtain the product quadrature weights 
+
 .. math::
     w_{k\cdot N_q +\ell} = \frac{2\pi w^G_k}{N_q}
 
 and points
+
 .. math:: 
 :label: SphericalCoordinatesProduct
  \mathbf \Omega_{k\cdot N_q +\ell}  = \begin{pmatrix}
@@ -502,6 +521,7 @@ and points
 Other implemented quadrature methods include spherical Monte Carlo, Levelsymmetric [Longoni2004PhDT]_, LEBEDEV [Lebedev1986numerical]_ and LDFESA [Jarrel2011discrete]_ . A comparison of different quadrature sets and their approximation behaviour for $S_N$ methods can be found in [Camminady2021highly]_.
 
 The evolution equations for :math:`\psi_q(t,\mathbf x):= \psi(t,\mathbf x,\mathbf \Omega_q)` are then given by
+
 .. math::
 :label: SNEqns
     \partial_{t}\psi_q(t,\mathbf x)+&\mathbf \Omega_q\cdot\nabla_x \frac{\psi_q(t,\mathbf x)}{\rho(\mathbf{x})}+\Sigma_t(t)\psi_q(t,\mathbf x) = \sum_{p=1}^{Q}w_p\Sigma_s(t,\mathbf \Omega_q\cdot\mathbf \Omega_p)\psi_p(t,\mathbf x)\;.
@@ -513,10 +533,12 @@ To allow for moderate computational costs when computing scattering terms and to
 .. math::
     \mathbf O = \left(\mathbf{m}(\Omega_k)\right)_{k=1}^{Q}\, , \text{ and } \enskip \mathbf M = \left(w_k\mathbf{m}(\Omega_k)\right)_{k=1}^{Q}.
 
-In this case, we can replace the scattering term on the right-hand side of :eq: SNEqns by its $P_N$ counterpart. Collecting the nodal solution in the vector $\bm\psi$ then gives
+In this case, we can replace the scattering term on the right-hand side of :eq: SNEqns by its $P_N$ counterpart. Collecting the nodal solution in the vector :math:`\bm\psi` then gives
+
 .. math:: 
 :label: SNEqns2
     \partial_{t}\bm\psi(t,\mathbf x)+&\mathbf \Omega_q\cdot\nabla_x \frac{\bm\psi(t,\mathbf x)}{\rho(\mathbf{x})}+\Sigma_t(t)\bm{\psi}(t,\mathbf x) = \mathbf{O}\bm{\Sigma}\mathbf{M}\bm{\psi}\;.
+    
 
 References
 --------------------------------------
