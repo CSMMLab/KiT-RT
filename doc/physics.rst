@@ -521,19 +521,15 @@ In this case, we can replace the scattering term on the right-hand side of :eq: 
 References
 --------------------------------------
 
-.. [Alldredge2018regularized] Graham W. Alldredge, Martin Frank, and Cory D. Hauck. 2018. A regularized entropy-based moment method for kinetic equations.
-arXiv:1804.05447 [math.NA]
+.. [Alldredge2018regularized] Graham W. Alldredge, Martin Frank, and Cory D. Hauck. 2018. A regularized entropy-based moment method for kinetic equations. arXiv:1804.05447 [math.NA]
 
-.. [AmosICNN] Brandon Amos, Lei Xu, and J. Zico Kolter. 2016. Input Convex Neural Networks. CoRR abs/1609.07152 (2016). arXiv:1609.07152
-http://arxiv.org/abs/1609.07152
+.. [AmosICNN] Brandon Amos, Lei Xu, and J. Zico Kolter. 2016. Input Convex Neural Networks. CoRR abs/1609.07152 (2016). arXiv:1609.07152 http://arxiv.org/abs/1609.07152
 
-.. [Camminady2021highly] Thomas Camminady, Martin Frank, and Jonas Kusch. 2021. Highly uniform quadrature sets for the discrete ordinates method. Nuclear
-Science and Engineering (2021).
+.. [Camminady2021highly] Thomas Camminady, Martin Frank, and Jonas Kusch. 2021. Highly uniform quadrature sets for the discrete ordinates method. Nuclear Science and Engineering (2021).
 
 .. [Case1967linear] Kenneth M Case and Paul Frederick Zweifel. 1967. Linear transport theory. (1967)
 
-.. [Jarrel2011discrete] J.J. Jarrel and M.L. Adams. 2011. Discrete-ordinates quadrature sets based on linear discontinuous finite elements. Proc. International
-Conference on Mathematics and Computational Methods applied to Nuclear Science and Engineering (2011)
+.. [Jarrel2011discrete] J.J. Jarrel and M.L. Adams. 2011. Discrete-ordinates quadrature sets based on linear discontinuous finite elements. Proc. International Conference on Mathematics and Computational Methods applied to Nuclear Science and Engineering (2011)
 
 .. [Lathrop1968ray] Kaye D Lathrop. 1968. Ray effects in discrete ordinates equations. Nuclear Science and Engineering 32, 3 (1968), 357–369.
 
@@ -541,17 +537,14 @@ Conference on Mathematics and Computational Methods applied to Nuclear Science a
 
 .. [Levermore1996Moment] Levermore. 1996. Moment closure hierarchies for kinetic theories. Journal of Statistical Physics 83 (1996), 1021–1065.
 
-.. [Levermore1996Entropy] C. David Levermore. 1997. Entropy-based moment closures for kinetic equations. Transport Theory and Statistical Physics 26, 4-5 (1997),
-591–606
+.. [Levermore1996Entropy] C. David Levermore. 1997. Entropy-based moment closures for kinetic equations. Transport Theory and Statistical Physics 26, 4-5 (1997), 591–606
 
 .. [Lewis1984computational] Elmer Eugene Lewis and Warren F Miller. 1984. Computational methods of neutron transport. (1984).
 
-.. [Longoni2004PhDT] Gianluca Longoni. 2004. Advanced quadrature sets and acceleration and preconditioning techniques for the discrete ordinates method in
-parallel computing environments. Ph. D. Dissertation. University of Florida.
+.. [Longoni2004PhDT] Gianluca Longoni. 2004. Advanced quadrature sets and acceleration and preconditioning techniques for the discrete ordinates method in parallel computing environments. Ph. D. Dissertation. University of Florida.
 
 .. [Mathews1999propagation] Kirk A Mathews. 1999. On the propagation of rays in discrete ordinates. Nuclear science and engineering 132, 2 (1999), 155–180.
 
-.. [Morel2003analysis] JE Morel, TA Wareing, RB Lowrie, and DK Parsons. 2003. Analysis of ray-effect mitigation techniques. Nuclear science and engineering
-144, 1 (2003), 1–22.
+.. [Morel2003analysis] JE Morel, TA Wareing, RB Lowrie, and DK Parsons. 2003. Analysis of ray-effect mitigation techniques. Nuclear science and engineering 144, 1 (2003), 1–22.
 
 .. [Schotthoefer2021structurepreserving] Steffen Schotthöfer, Tianbai Xiao, Martin Frank, and Cory D. Hauck. 2022. Neural network-based, structure-preserving entropy closures for the Boltzmann moment system. https://doi.org/10.48550/ARXIV.2201.10364
