@@ -5,9 +5,9 @@ Theory
 The Boltzmann equation
 ----------------------
 
-The particle transport phenomena enjoy rich academic research value and application prospects.
+Particle transport phenomena enjoy rich academic research value and application prospects.
 A many-particle system can exhibit different behaviors at characteristic different scales.
-Down to the finest scale of a many-particle system, the Newton’s second law depicts particle motions via
+Down to the finest scale of a many-particle system, Newton’s second law depicts particle motions via
 
 .. math::
 
@@ -19,19 +19,19 @@ which leads
 
    \frac{d x}{dt} = v, \ \frac{d v}{dt} = \frac{F}{m}.
 
-An intuitive numerical solution algorithm is to get the numerous particles on board and track the trajectories of them. 
+An intuitive numerical solution algorithm is to simulate interactions and track the trajectories of a system of particles. 
 A typical example is the molecular dynamics (MD) method.
-This is not going to be efficient since there are more than :math:`2\times 10^{25}` molecules per cubic meter in normal atmosphere, 
-and things get extremely complicated if the N-body interactions are counted all the time. 
+This is however very computationally expensive since there are more than :math:`2\times 10^{25}` molecules per cubic meter in normal atmosphere, 
+and things get extremely complicated if the N-body interactions need to be constantly counted. 
 
-Simplifications can be conducted to accelerate the numerical computation.
-As an example, the Monte Carlo method employs certain particle models and conduct the interactions in a stochastic manner. 
-It significantly reduces the computational cost, while the trade-off is the artificial fluctuations.
-Many realizations must be simulated successively to average the solutions and reduce the errors.
+Different simplifications have been developed to accelerate numerical computations.
+As an example, the Monte Carlo method employs certain particle models and conducts the interactions in a stochastic manner. 
+This significantly reduces the computational cost, while the trade-off are artificial fluctuations.
+Still, many particle realizations have to be simulated successively to average the solutions and reduce the statistical error.
 
-An alternative strategy can be made from ensemble averaging, where the
+An alternative strategy is derived from ensemble averaging, where the
 coarse-grained modeling is used to provide a bottom-up view. 
-At the mean free path and collision time scale of particles. Such dynamics can be described with kinetic theory.
+At the mean free path and collision time scale of particles. Such dynamics can be described using kinetic theory.
 The Boltzmann equation can be formulated via an operator splitting approach, i.e.
 
 .. math::
@@ -39,12 +39,13 @@ The Boltzmann equation can be formulated via an operator splitting approach, i.e
    \partial_{t} f(v)+v \cdot \nabla_{x} f(v)=\int_{\mathcal R^3} \int_{\mathcal S^2} k\left(v, v^{\prime}\right) \left(f\left(v^{\prime}\right)f\left(v_*^{\prime}\right)-f(v)f(v_*)\right) d\Omega d v_*,
 
 where the left and right hand sides model particle transports and collisions correspondingly. 
-The distribution function :math:`f` is the probability of finding a particle with certain location, and :math:`\{v, v_*\}` denotes the velocities of two classes of colliding particles. 
+The distribution function :math:`f` is the probability of finding a particle with a certain location, and :math:`\{v, v_*\}` denotes the velocities of two classes of colliding particles. 
 The collision kernel :math:`k` models the strength of collisions at different velocities.
 
 Different collision models can be inserted into the Boltzmann equation.
-In the KiT-RT solver, we are interested in the linear Boltzmann equation, where the particles don't interact with one another but scatter with the background material.
-Therefore, the Boltzmann can be simplified as the linear equation with respect to :math:`f`
+
+In the KiT-RT solver, we are interested in the linear Boltzmann equation, where the particles don't interact with one another, only with the background material.
+Therefore, the Boltzmann equation can be simplified to a linear equation with respect to :math:`f`
 
 .. math::
 
@@ -57,141 +58,13 @@ For convenience, it is often reformulated with polar coordinates :math:`\{r, \ph
     &\left[\frac{1}{v(E)} \partial_{t} +\Omega \cdot \nabla+\Sigma_t (t, r, E)\right] \psi(t, r, \Omega, E) \\
     &=\int_{0}^{\infty} d E^{\prime} \int_{\mathcal R^2} d \Omega^{\prime} \Sigma_{s}\left(r, \Omega^{\prime} \bullet \Omega, E^{\prime} \rightarrow E\right) \psi\left(t, r, \Omega^{\prime}, E^{\prime}\right) + Q(t, r, \Omega, E).
 
-The particle distribution :math:`\psi(r, \Omega, E, t)` here is often named as angular flux, :math:`\{\Sigma_s, \Sigma_t \}` are the scattering and total cross sections correspondingly, and :math:`Q` denotes a source term.
-
-
-The spherical harmonics moment equations
-----------------------------------------
-
-The spherical harmonics (:math:`P_N`) method (cf. Brunner and Holloway [2005]) is one of several ways to solve the equation of radiative transfer. 
-It serves as an approximate method, i.e. the method of moments, to reduce the high dimensionality when the original kinetic equation of radiative transfer, which is formulated on a seven-dimensional domain.
-Let us consider the radiative transfer equation in one-dimensional physical space with only one energy group, i.e.
-
-.. math::
-
-   \partial_{t} \psi(t, z, \mu) &+\mu \nabla_{z} \psi(t, z, \mu)+\Sigma_{t}(t, z) \psi(t, z, \mu) \\
-   &=\int_{\mathcal S^{2}} \Sigma_{s}\left(t, z, \mu \cdot \Omega^{\prime}\right) \psi\left(t, z, \mu^{\prime}\right) d \mu^{\prime}+q(t, z, \mu),
-
-where :math:`\mu` is the projected angular variable on :math:`z` axis.
-
-To obtain the :math:`P_N` equations, we express the angular dependence of the distribution function in terms of a Fourier series,
-
-.. math::
-
-   \psi(t, z, \mu)=\sum_{\ell=0}^{\infty} \psi_{\ell}(t, z) \frac{2 \ell+1}{2} P_{\ell}(\mu),
-
-where :math:`P_{\ell}` are the Legendre polynomials.
-These form an orthogonal basis of the space
-of polynomials with respect to the standard scalar product on :math:`[−1, 1]`.
-We can then obtain
-
-.. math::
-
-   \partial_{t} \psi_{\ell}+\partial_{z} \int_{=1}^{1} \mu P_{\ell} \psi \mathrm{d} \mu+\Sigma_{t \ell} \psi_{\ell}=q_{\ell},
-
-where 
-
-.. math::
-
-   \Sigma_{t \ell}=\Sigma_{t}-\Sigma_{s \ell}=\Sigma_{a}+\Sigma_{s 0}-\Sigma_{s \ell},  \quad \Sigma_{s \ell}=2 \pi \int_{-1}^{1} P_{\ell}(\mu) \Sigma_{s}(\mu) \mathrm{d} \mu.
-
-Two properties of the spherical harmonics are crucial for our method. These appear here as properties of the Legendre polynomials. First, we observe that, by this
-procedure, we have diagonalized the scattering operator on the right-hand side (the
-Legendre polynomials are the eigenfunctions of scattering operator). 
-Second, a general property of orthogonal polynomials is that they satisfy a recursion relation. In
-particular, the Legendre polynomials satisfy
-
-.. math::
-
-   \mu P_{\ell}(\mu)=\frac{\ell}{2 \ell+1} P_{\ell-1}(\mu)+\frac{\ell+1}{2 \ell+1} P_{\ell+1}(\mu).
-
-Using this fact and truncating the expansion at :math:`\ell = N`, we arrive at the slab-geometry
-:math:`P_N` equations,
-
-.. math::
-
-   \partial_{t} \psi_{\ell}+\partial_{z}\left(\frac{\ell+1}{2 \ell+1} \psi_{\ell+1}+\frac{\ell}{2 \ell+1} \psi_{\ell-1}\right)+\Sigma_{t \ell} \psi_{\ell}=q_{\ell}.
-
-The above method can be extended to multi-dimensional case with the help of spherical harmonics, which are defined as
-
-.. math::
-
-   Y_{\ell}^{m}(\mu, \phi)=(-1)^{m} \sqrt{\frac{2 \ell+1}{4 \pi} \frac{(\ell-m) !}{(\ell+m) !}} e^{i m \phi} P_{\ell}^{m}(\mu),
-
-where :math:`\ell \leq 0` and :math:`\ell \leq m \leq -\ell`.
-
-
-The entropy closure moment equations
-------------------------------------
-
-Another method of moments comes from the minimal principle of a convex entropy to close the moment system.
-Derivation of such moment system begins with the choice of a vector-valued function
-:math:`m: \mathbb{S}^{2} \rightarrow \mathbb{R}^{n}, \Omega \mapsto\left[m_{0}(\Omega), \ldots, m_{n-1}(\Omega)\right]^{T}`,
-whose n components are linearly independent functions of :math:`\Omega`.
-Evolution equations for the moments u(x, t) :=
-hmψ(x, ·, t)i are found by multiplying the transport equation by m and integrating
-over all angles to give
-
-.. math::
-
-   \frac{1}{v} \partial_{t} u+\nabla_{x} \cdot\langle\Omega m \psi\rangle=\langle m \mathcal{C}(\psi)\rangle.
-
-The system above is not closed; a recipe, or closure, must be prescribed to express
-unknown quantities in terms of the given moments. Often this is done via an
-approximation for :math:`\psi` that depends on :math:`u`,
-
-.. math::
-
-   \psi(x, \Omega, t) \simeq \mathcal{E}(u(x, t))(\Omega).
-
-A general strategy for prescribing a closure is to
-use the solution of a constrained optimization problem
-
-.. math::
-   :label: closure
-
-   \min_{g \in \operatorname{Dom}(\mathcal{H})} & \mathcal{H}(g) \\
-   \quad \text { s.t. } & \langle\mathbf{m} g\rangle=\langle\mathbf{m} \psi\rangle=u,
-
-where :math:`\mathcal H(g)=\langle \eta(g) \rangle` and :math:`\eta: \mathbb R \rightarrow \mathbb R`
-is a convex function that is related to
-the entropy of the system. For photons, the physically relevant entropy comes from
-Bose-Einstein statistics
-
-.. math::
-
-   \eta(g)=\frac{2 k \nu^{2}}{v^{3}}\left[n_{g} \log \left(n_{g}\right)-\left(n_{g}+1\right) \log \left(n_{g}+1\right)\right],
-
-where :math:`n_g` is the occupation number associated with g,
-
-.. math::
-
-   n_{g}:=\frac{v^{2}}{2 h \nu^{3}} g.
-
-The solution of :eq:`closure` is expressed in terms of the Legendre dual
-
-.. math::
-
-   \eta_{*}(f)=-\frac{2 k \nu^{2}}{v^{3}} \log \left(1-\exp \left(-\frac{h \nu c}{k} f\right)\right).
-
-Let
-
-.. math::
-
-   \mathcal{B}(\boldsymbol{\alpha}):=\eta_{*}^{\prime}\left(\boldsymbol{\alpha}^{T} \mathbf{m}\right)=\frac{2 h \nu^{3}}{v^{2}} \frac{1}{\exp \left(-\frac{h \nu c}{k} \boldsymbol{\alpha}^{T} \mathbf{m}\right)-1},
-
-then the solution of :eq:`closure` is given by :math:`\mathcal B(\hat \alpha)`, where :math:`\hat \alpha= \hat \alpha(u)` solves the
-dual problem
-
-.. math::
-
-   \min _{\boldsymbol{\alpha} \in \mathbb{R}^{n}}\left\{\left\langle\eta_{*}\left(\boldsymbol{\alpha}^{T} \mathbf{m}\right)\right\rangle-\boldsymbol{\alpha}^{T} \mathbf{u}\right\}.
+The particle distribution :math:`\psi(r, \Omega, E, t)` here is often called angular flux, :math:`\{\Sigma_s, \Sigma_t \}` are the differential and total scattering cross sections correspondingly, and :math:`Q` denotes a source term.
 
 
 The continuous slowing down approximation
 -----------------------------------------
 
-For the radiation therapy, the main goal is to compute the radiation dose accurately, which is defined as
+In radiation therapy, the main goal is to compute the radiation dose for a pre-defined set-up accurately. The dose is defined as
 
 .. math::
 
@@ -419,7 +292,7 @@ Hence, the :math:`P_N` closure is simply given as :math:`\mathcal{U}_{\mathrm{P}
 
 where :math:`\mathbf A\cdot\nabla_{\mathbf{x}} := \mathbf A_1\partial_{x} + \mathbf A_2\partial_y+ \mathbf A_3\partial_z` with :math:`\mathbf A_i := \int_{\mathbb{S}^2}\mathbf m\mathbf m^T \Omega_i \mathrm{d} \mathbf{\Omega}` and :math:`\boldsymbol \Sigma = \mathrm{diag}\left(\Sigma_0^0, \Sigma_1^{-1}, \Sigma_1^{0}, \Sigma_1^{1},\cdots, \Sigma_N^{N}\right)`. While :math:`P_N` is a computationally efficient method (especially for scattering terms), it does not preserve positivity of the radiation flux approximation and can lead to spurious oscillations. A closure which mitigates oscillations and preserves positivity at significantly increased computational costs is the :math:`M_N` closure.
 
-:math:`M_N`closure
+:math:`M_N` closure
 +++++++++++++++++++++++++++++
 
 The :math:`M_N` closure [Levermore1996Moment]_ , [Levermore1996Entropy]_ employs the principle of minimal mathematical, i.e., maximal physical entropy to close the moment system.
@@ -456,7 +329,7 @@ To mitigate this issue, a regularized version of the entropy closure problem has
     :label: EntropyOCP_reg 
 
     \inf_{g\in F_{\mathbf m}}  \int_{\mathbb{S}^2}\eta(g)\mathrm{d} \mathbf{\Omega}+
-    \frac{1}{2\gamma}\norm{ \int_{\mathbb{S}^2}{\mathbf m g}\mathrm{d} \mathbf{\Omega} - \mathbf u}^2_2,
+    \frac{1}{2\gamma}\left\lVert \int_{\mathbb{S}^2}{\mathbf m g}\mathrm{d} \mathbf{\Omega} - \mathbf u \right\rVert}^2_2,
 
 where :math:`\gamma` is the regularization parameter. Generally, moments of the regularized reconstructed radiation flux density :math:`\int_{\mathbb{S}^2}\mathbf m\psi_{\mathbf u}\mathrm{d} \mathbf{\Omega}` deviate from the non-regularized moments. 
 For :math:`\gamma\rightarrow 0`, we recover the original entropy closure of :eq:`EntropyOCP` and the moments coincide again. The regularized entropy closure is solvable for any :math:`\mathbf u\in\mathbb{R}^{(N+1)^2}` and preserves all structural properties of the non-regularized entropy closure [Alldredge2018regularized]_. One can also choose to regularize only parts of the entropy closure, e.g. to preserve moments of specific interest. Then the partially regularized entropy closure reads
@@ -464,7 +337,7 @@ For :math:`\gamma\rightarrow 0`, we recover the original entropy closure of :eq:
 .. math::
     :label: EntropyOCP_part_reg 
 
-    \inf_{g\in F_m}  \int_{\mathbb{S}^2}\eta(g)\mathrm{d} \mathbf{\Omega} + \frac{1}{2\gamma}\norm{\int_{\mathbb{S}^2}{\mathbf m^r g} \mathrm{d} \mathbf{\Omega} - u^r}^2_2\quad  \text{ s.t. }  \mathbf u^{nr}=\int_{\mathbb{S}^2}{\mathbf m^{nr}g}\mathrm{d} \mathbf{\Omega},
+    \inf_{g\in F_m}  \int_{\mathbb{S}^2}\eta(g)\mathrm{d} \mathbf{\Omega} + \frac{1}{2\gamma}{\left\lVert \int_{\mathbb{S}^2}{\mathbf m^r g} \mathrm{d} \mathbf{\Omega} - u^r\right\rVert}^2_2\quad  \text{ s.t. }  \mathbf u^{nr}=\int_{\mathbb{S}^2}{\mathbf m^{nr}g}\mathrm{d} \mathbf{\Omega},
 
 where :math:`\mathbf u^{nr}` denotes non-regularized moment elements and :math:`\mathbf u^{r}` denotes regularized elements of the moment vector.
 
