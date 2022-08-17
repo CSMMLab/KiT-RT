@@ -268,8 +268,7 @@ Then, the moment equations at degree :math:`\ell` become
 
 .. math::
 
-    \partial_{t}\mathbf u_{\ell}(t,\mathbf x)\\
-    &+\sum_{i=1}^3\partial_{x_i}\left(\mathbf{a}_{\ell}^i\mathbf u_{\ell-1}(t,\mathbf x) + \mathbf{a}_{\ell+1}^i\mathbf u_{\ell+1}(t,\mathbf x)\right)/\rho(\mathbf{x})+\Sigma_t(t)\mathbf u_{\ell}(t,\mathbf x)\\
+    \partial_{t}\mathbf u_{\ell}(t,\mathbf x) +\sum_{i=1}^3\partial_{x_i}\left(\mathbf{a}_{\ell}^i\mathbf u_{\ell-1}(t,\mathbf x) + \mathbf{a}_{\ell+1}^i\mathbf u_{\ell+1}(t,\mathbf x)\right)/\rho(\mathbf{x})+\Sigma_t(t)\mathbf u_{\ell}(t,\mathbf x)\\
     &= \boldsymbol{\Sigma}_{\ell}(t) \mathbf u_{\ell}(t,\mathbf x)\;.
 
 Note that the equations for degree :math:`\ell` depend on the moments of degree :math:`\ell+1`. Hence, to obtain a closed system of moments up to a fixed degree :math:`N`, we need to define a closure relation 
@@ -401,8 +400,7 @@ The evolution equations for :math:`\psi_q(t,\mathbf x):= \psi(t,\mathbf x,\mathb
 .. math::
     :label: SNEqns
 
-    \partial_{t}\psi_q(t,\mathbf x) \\
-    &+\mathbf \Omega_q\cdot\nabla_x \frac{\psi_q(t,\mathbf x)}{\rho(\mathbf{x})}+\Sigma_t(t)\psi_q(t,\mathbf x) \\
+    \partial_{t}\psi_q(t,\mathbf x) +\mathbf \Omega_q\cdot\nabla_x \frac{\psi_q(t,\mathbf x)}{\rho(\mathbf{x})}+\Sigma_t(t)\psi_q(t,\mathbf x) \\
     &= \sum_{p=1}^{Q}w_p\Sigma_s(t,\mathbf \Omega_q\cdot\mathbf \Omega_p)\psi_p(t,\mathbf x)\;. 
 
 A main disadvantage of :math:`S_N` methods are so called ray-effects [Lathrop1968ray]_ , [Morel2003analysis]_ , [Mathews1999propagation]_ , which are spurious artifacts that stem from the limited number of directions in which particles can travel. Moreover, radiation therapy applications exhibit forward-peaked scattering, 
