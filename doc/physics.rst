@@ -314,8 +314,7 @@ that fulfill the moment condition :math:`\mathbf u(t,\mathbf{x})=\left<\mathbf m
 The minimal value of the objective function is denoted by :math:`h(u)=\left<\eta(\psi_{\mathbf u})\right>` and describes the systems minimal entropy depending on time and space. :math:`\psi_{\mathbf u}` is the minimizer of :eq:`EntropyOCP`, which we use to close the moment system
 
 .. math::
-    \partial_{t}\mathbf u_{\ell}(t,\mathbf x)\\
-    +&\nabla_x\cdot\int_{ \mathbb{S}^2}\mathbf\Omega\mathbf m_{\ell}(\mathbf\Omega)\frac{\psi_u(t,\mathbf x,\mathbf\Omega)}{\rho(\mathbf x)}\mathrm{d} \mathbf{\Omega}+\Sigma_t(t)\mathbf u_{\ell}(t,\mathbf x)= \Sigma_{\ell}\mathbf u_{\ell} (t,\mathbf x);.
+    \partial_{t}\mathbf u_{\ell}(t,\mathbf x) + \nabla_x\cdot\int_{ \mathbb{S}^2}\mathbf\Omega\mathbf m_{\ell}(\mathbf\Omega)\frac{\psi_u(t,\mathbf x,\mathbf\Omega)}{\rho(\mathbf x)}\mathrm{d} \mathbf{\Omega}+\Sigma_t(t)\mathbf u_{\ell}(t,\mathbf x)= \Sigma_{\ell}\mathbf u_{\ell} (t,\mathbf x);.
 
 The minimal entropy method preserves important properties of the underlying equation  [Alldredge2018regularized]_ , [Levermore1996Moment]_ , i.e., positivity of the solution, hyperbolicity of the moment system, dissipation of mathematical entropy and the H-Theorem. The minimal entropy closed moment system is invariant under Galilean transforms. Lastly, if collision invariants of the Boltzmann equations are used as modal basis functions, then the moment system yields a local conservation law. 
 
@@ -331,8 +330,8 @@ To mitigate this issue, a regularized version of the entropy closure problem has
 .. math::
     :label: EntropyOCP_reg 
 
-    \inf_{g\in F_{\mathbf m}}  \int_{\mathbb{S}^2}\eta(g)\mathrm{d} \mathbf{\Omega} \\
-    &+ \frac{1}{2 \gamma} \left\lVert \int_{\mathbb{S}^2}{\mathbf m g}\mathrm{d} \mathbf{\Omega} - \mathbf u \right\rVert}^2_2,
+    \inf_{g\in F_{\mathbf m}}  \int_{\mathbb{S}^2}\eta(g)\mathrm{d} \mathbf{\Omega}
+    +\frac{1}{2 \gamma} \left\lVert \int_{\mathbb{S}^2}{\mathbf m g}\mathrm{d} \mathbf{\Omega} - \mathbf u \right\rVert^2_2,
 
 where :math:`\gamma` is the regularization parameter. Generally, moments of the regularized reconstructed radiation flux density :math:`\int_{\mathbb{S}^2}\mathbf m\psi_{\mathbf u}\mathrm{d} \mathbf{\Omega}` deviate from the non-regularized moments. 
 For :math:`\gamma\rightarrow 0`, we recover the original entropy closure of :eq:`EntropyOCP` and the moments coincide again. The regularized entropy closure is solvable for any :math:`\mathbf u\in\mathbb{R}^{(N+1)^2}` and preserves all structural properties of the non-regularized entropy closure [Alldredge2018regularized]_. One can also choose to regularize only parts of the entropy closure, e.g. to preserve moments of specific interest. Then the partially regularized entropy closure reads
