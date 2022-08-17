@@ -218,7 +218,7 @@ This section discusses macroscopic models to :eq:`CSDBoltzmann`. These models ar
 
 Modal discretizations
 **************************
-Modal discretizations of \eqref{eq:BoltzmannCSDTrafo} can be interpreted as a closure problem [Levermore1996Moment]_ , [Levermore1996Entropy]_. To present the derivation of different closures, we first formulate the moment equations which are not closed. Second, we close these equations with the :math:`P_N` closure and third, we derive the :math:`M_N` closure.
+Modal discretizations of :eq:`BoltzmannCSDTrafo` can be interpreted as a closure problem [Levermore1996Moment]_ , [Levermore1996Entropy]_. To present the derivation of different closures, we first formulate the moment equations which are not closed. Second, we close these equations with the :math:`P_N` closure and third, we derive the :math:`M_N` closure.
 
 Moment equations
 +++++++++++++++++++++++++
@@ -267,8 +267,10 @@ as well as the fact that there exists a diagonal matrix :math:`\boldsymbol{\Sigm
 Then, the moment equations at degree :math:`\ell` become
 
 .. math::
-    \partial_{t}\mathbf u_{\ell}(t,\mathbf x)+&\sum_{i=1}^3\partial_{x_i}\left(\mathbf{a}_{\ell}^i\mathbf u_{\ell-1}(t,\mathbf x) + \mathbf{a}_{\ell+1}^i\mathbf u_{\ell+1}(t,\mathbf x)\right)/\rho(\mathbf{x})+\Sigma_t(t)\mathbf u_{\ell}(t,\mathbf x)\nonumber\\
+   \begin{align}
+    \partial_{t}\mathbf u_{\ell}(t,\mathbf x)+&\sum_{i=1}^3\partial_{x_i}\left(\mathbf{a}_{\ell}^i\mathbf u_{\ell-1}(t,\mathbf x) + \mathbf{a}_{\ell+1}^i\mathbf           u_{\ell+1}(t,\mathbf x)\right)/\rho(\mathbf{x})+\Sigma_t(t)\mathbf u_{\ell}(t,\mathbf x)\nonumber\\
     &= \boldsymbol{\Sigma}_{\ell}(t) \mathbf u_{\ell}(t,\mathbf x)\;.
+    \end{align}
 
 Note that the equations for degree :math:`\ell` depend on the moments of degree :math:`\ell+1`. Hence, to obtain a closed system of moments up to a fixed degree :math:`N`, we need to define a closure relation 
 
@@ -312,7 +314,7 @@ that fulfill the moment condition :math:`\mathbf u(t,\mathbf{x})=\left<\mathbf m
 The minimal value of the objective function is denoted by :math:`h(u)=\left<\eta(\psi_{\mathbf u})\right>` and describes the systems minimal entropy depending on time and space. :math:`\psi_{\mathbf u}` is the minimizer of :eq:`EntropyOCP`, which we use to close the moment system
 
 .. math::
-    \partial_{t}\mathbf u_{\ell}(t,\mathbf x)+&\nabla_x\cdot\int_{ \mathbb{S}^2}\mathbf\Omega\mathbf m_{\ell}(\mathbf\Omega)\frac{\psi_u(t,\mathbf x,\mathbf\Omega)}{\rho(\mathbf x)}\mathrm{d} \mathbf{\Omega}+\Sigma_t(t)\mathbf u_{\ell}(t,\mathbf x)= \Sigma_{\ell}\mathbf u_{\ell} (t,\mathbf x);.
+    \partial_{t}\mathbf u_{\ell}(t,\mathbf x)+&\nabla_x\cdot\int_{ \mathbb{S}^2}\mathbf\Omega\mathbf m_{\ell}(\mathbf\Omega)\frac{\psi_u(t,\mathbf x,\mathbf\Omega)}       {\rho(\mathbf x)}\mathrm{d} \mathbf{\Omega}+\Sigma_t(t)\mathbf u_{\ell}(t,\mathbf x)= \Sigma_{\ell}\mathbf u_{\ell} (t,\mathbf x);.
 
 The minimal entropy method preserves important properties of the underlying equation  [Alldredge2018regularized]_ , [Levermore1996Moment]_ , i.e., positivity of the solution, hyperbolicity of the moment system, dissipation of mathematical entropy and the H-Theorem. The minimal entropy closed moment system is invariant under Galilean transforms. Lastly, if collision invariants of the Boltzmann equations are used as modal basis functions, then the moment system yields a local conservation law. 
 
