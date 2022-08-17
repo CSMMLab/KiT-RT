@@ -331,7 +331,8 @@ To mitigate this issue, a regularized version of the entropy closure problem has
 .. math::
     :label: EntropyOCP_reg 
 
-    \inf_{g\in F_{\mathbf m}}  \int_{\mathbb{S}^2}\eta(g)\mathrm{d} \mathbf{\Omega} + \frac{1}{2 \gamma} \left\lVert \int_{\mathbb{S}^2}{\mathbf m g}\mathrm{d} \mathbf{\Omega} - \mathbf u \right\rVert}^2_2,
+    \inf_{g\in F_{\mathbf m}}  \int_{\mathbb{S}^2}\eta(g)\mathrm{d} \mathbf{\Omega} \\
+    &+ \frac{1}{2 \gamma} \left\lVert \int_{\mathbb{S}^2}{\mathbf m g}\mathrm{d} \mathbf{\Omega} - \mathbf u \right\rVert}^2_2,
 
 where :math:`\gamma` is the regularization parameter. Generally, moments of the regularized reconstructed radiation flux density :math:`\int_{\mathbb{S}^2}\mathbf m\psi_{\mathbf u}\mathrm{d} \mathbf{\Omega}` deviate from the non-regularized moments. 
 For :math:`\gamma\rightarrow 0`, we recover the original entropy closure of :eq:`EntropyOCP` and the moments coincide again. The regularized entropy closure is solvable for any :math:`\mathbf u\in\mathbb{R}^{(N+1)^2}` and preserves all structural properties of the non-regularized entropy closure [Alldredge2018regularized]_. One can also choose to regularize only parts of the entropy closure, e.g. to preserve moments of specific interest. Then the partially regularized entropy closure reads
@@ -418,8 +419,7 @@ In this case, we can replace the scattering term on the right-hand side of :eq:`
 .. math:: 
     :label: SNEqns2
 
-    \partial_{t}\boldsymbol\psi(t,\mathbf x) \\
-    +&\mathbf \Omega_q\cdot\nabla_x \frac{\boldsymbol\psi(t,\mathbf x)}{\rho(\mathbf{x})}+\Sigma_t(t)\boldsymbol{\psi}(t,\mathbf x) = \mathbf{O}\boldsymbol{\Sigma}\mathbf{M}\boldsymbol{\psi}\;.
+    \partial_{t}\boldsymbol\psi(t,\mathbf x) +\mathbf \Omega_q\cdot\nabla_x \frac{\boldsymbol\psi(t,\mathbf x)}{\rho(\mathbf{x})}+\Sigma_t(t)\boldsymbol{\psi}(t,\mathbf x) = \mathbf{O}\boldsymbol{\Sigma}\mathbf{M}\boldsymbol{\psi}\;.
     
 
 References
