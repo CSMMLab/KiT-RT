@@ -323,7 +323,7 @@ The set of all moments corresponding to a radiation flux density :math:`\psi_{\m
 .. math::
     \mathcal{R}=\left\lbrace\mathbf u: \int_{\mathbb{S}^2}{\mathbf m g}\mathrm{d}\mathbf{\Omega}=\mathbf u,\, g\in F_{\mathbf m}\right\rbrace.
 
-Outside :math:`\mathcal{R}:math:` the minimal entropy closure problem has no solution.  At the boundary :math:`\partial \mathcal{R}`, the optimization problem becomes singular and :math:`\psi_{\mathbf u}` consists of a linear combination of dirac distributions. Near :math:`\partial \mathcal{R}` the entropy closure becomes ill conditioned and thus, a numerical optimizer requires a large amount of iterations to compute a solution.
+Outside :math:`\mathcal{R}` the minimal entropy closure problem has no solution.  At the boundary :math:`\partial \mathcal{R}`, the optimization problem becomes singular and :math:`\psi_{\mathbf u}` consists of a linear combination of dirac distributions. Near :math:`\partial \mathcal{R}` the entropy closure becomes ill conditioned and thus, a numerical optimizer requires a large amount of iterations to compute a solution.
 
 To mitigate this issue, a regularized version of the entropy closure problem has been proposed by  [Alldredge2018regularized]_ ,
 
