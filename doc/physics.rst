@@ -267,10 +267,10 @@ as well as the fact that there exists a diagonal matrix :math:`\boldsymbol{\Sigm
 Then, the moment equations at degree :math:`\ell` become
 
 .. math::
-   \begin{align}
-    \partial_{t}\mathbf u_{\ell}(t,\mathbf x)+&\sum_{i=1}^3\partial_{x_i}\left(\mathbf{a}_{\ell}^i\mathbf u_{\ell-1}(t,\mathbf x) + \mathbf{a}_{\ell+1}^i\mathbf           u_{\ell+1}(t,\mathbf x)\right)/\rho(\mathbf{x})+\Sigma_t(t)\mathbf u_{\ell}(t,\mathbf x)\nonumber\\
+
+    \partial_{t}\mathbf u_{\ell}(t,\mathbf x)\\
+    &+\sum_{i=1}^3\partial_{x_i}\left(\mathbf{a}_{\ell}^i\mathbf u_{\ell-1}(t,\mathbf x) + \mathbf{a}_{\ell+1}^i\mathbf u_{\ell+1}(t,\mathbf x)\right)/\rho(\mathbf{x})+\Sigma_t(t)\mathbf u_{\ell}(t,\mathbf x)\\
     &= \boldsymbol{\Sigma}_{\ell}(t) \mathbf u_{\ell}(t,\mathbf x)\;.
-    \end{align}
 
 Note that the equations for degree :math:`\ell` depend on the moments of degree :math:`\ell+1`. Hence, to obtain a closed system of moments up to a fixed degree :math:`N`, we need to define a closure relation 
 
@@ -314,7 +314,8 @@ that fulfill the moment condition :math:`\mathbf u(t,\mathbf{x})=\left<\mathbf m
 The minimal value of the objective function is denoted by :math:`h(u)=\left<\eta(\psi_{\mathbf u})\right>` and describes the systems minimal entropy depending on time and space. :math:`\psi_{\mathbf u}` is the minimizer of :eq:`EntropyOCP`, which we use to close the moment system
 
 .. math::
-    \partial_{t}\mathbf u_{\ell}(t,\mathbf x)+&\nabla_x\cdot\int_{ \mathbb{S}^2}\mathbf\Omega\mathbf m_{\ell}(\mathbf\Omega)\frac{\psi_u(t,\mathbf x,\mathbf\Omega)}       {\rho(\mathbf x)}\mathrm{d} \mathbf{\Omega}+\Sigma_t(t)\mathbf u_{\ell}(t,\mathbf x)= \Sigma_{\ell}\mathbf u_{\ell} (t,\mathbf x);.
+    \partial_{t}\mathbf u_{\ell}(t,\mathbf x)\\
+    +&\nabla_x\cdot\int_{ \mathbb{S}^2}\mathbf\Omega\mathbf m_{\ell}(\mathbf\Omega)\frac{\psi_u(t,\mathbf x,\mathbf\Omega)}{\rho(\mathbf x)}\mathrm{d} \mathbf{\Omega}+\Sigma_t(t)\mathbf u_{\ell}(t,\mathbf x)= \Sigma_{\ell}\mathbf u_{\ell} (t,\mathbf x);.
 
 The minimal entropy method preserves important properties of the underlying equation  [Alldredge2018regularized]_ , [Levermore1996Moment]_ , i.e., positivity of the solution, hyperbolicity of the moment system, dissipation of mathematical entropy and the H-Theorem. The minimal entropy closed moment system is invariant under Galilean transforms. Lastly, if collision invariants of the Boltzmann equations are used as modal basis functions, then the moment system yields a local conservation law. 
 
@@ -330,8 +331,7 @@ To mitigate this issue, a regularized version of the entropy closure problem has
 .. math::
     :label: EntropyOCP_reg 
 
-    \inf_{g\in F_{\mathbf m}}  \int_{\mathbb{S}^2}\eta(g)\mathrm{d} \mathbf{\Omega}+
-    \frac{1}{2\gamma}\left\lVert \int_{\mathbb{S}^2}{\mathbf m g}\mathrm{d} \mathbf{\Omega} - \mathbf u \right\rVert}^2_2,
+    \inf_{g\in F_{\mathbf m}}  \int_{\mathbb{S}^2}\eta(g)\mathrm{d} \mathbf{\Omega} + \frac{1}{2 \gamma} \left\lVert \int_{\mathbb{S}^2}{\mathbf m g}\mathrm{d} \mathbf{\Omega} - \mathbf u \right\rVert}^2_2,
 
 where :math:`\gamma` is the regularization parameter. Generally, moments of the regularized reconstructed radiation flux density :math:`\int_{\mathbb{S}^2}\mathbf m\psi_{\mathbf u}\mathrm{d} \mathbf{\Omega}` deviate from the non-regularized moments. 
 For :math:`\gamma\rightarrow 0`, we recover the original entropy closure of :eq:`EntropyOCP` and the moments coincide again. The regularized entropy closure is solvable for any :math:`\mathbf u\in\mathbb{R}^{(N+1)^2}` and preserves all structural properties of the non-regularized entropy closure [Alldredge2018regularized]_. One can also choose to regularize only parts of the entropy closure, e.g. to preserve moments of specific interest. Then the partially regularized entropy closure reads
@@ -374,13 +374,10 @@ and the one dimensional case is described by
 .. math::
     P_{\mathbb{R}}(\mathbb{S}^2) =  \left\lbrace \mu     : \mu\in\left[-1,1\right]\right\rbrace
 
-Hence the task is to derive a quadrature formula for the direction of travel. The perhaps most common approach is the product quadrature rule. Here. a Gauss quadrature is used for 
-
-:math:`\mu` and equally weighted and spaced points for :math:`\varphi`, i.e., when using :math:`N_q` points, we have
+Hence the task is to derive a quadrature formula for the direction of travel. The perhaps most common approach is the product quadrature rule. Here, a Gauss quadrature is used for :math:`\mu` and equally weighted and spaced points for :math:`\varphi`, i.e., when using :math:`N_q` points, we have
 
 .. math::
-\varphi_i = i \Delta\varphi \quad \text{for} \quad i=1,\ldots,N_q \quad \text{and} 
-\quad \Delta\varphi = \frac{2\pi}{N_q}\;.
+   \varphi_i = i \Delta\varphi \quad \text{for} \quad i=1,\ldots,N_q \quad \text{and} \;\;\; \Delta\varphi = \frac{2\pi}{N_q}\;.
 
 If the Gauss quadrature for :math:`\mu` uses :math:`N_q` points, then we obtain a total of :math:`Q = N_q^2` possible directions. Denoting the Gauss weights as :math:`w^G_k` with :math:`k = 1,\cdots,N_q`, we obtain the product quadrature weights 
 
@@ -404,12 +401,15 @@ The evolution equations for :math:`\psi_q(t,\mathbf x):= \psi(t,\mathbf x,\mathb
 .. math::
     :label: SNEqns
 
-    \partial_{t}\psi_q(t,\mathbf x)+&\mathbf \Omega_q\cdot\nabla_x \frac{\psi_q(t,\mathbf x)}{\rho(\mathbf{x})}+\Sigma_t(t)\psi_q(t,\mathbf x) = \sum_{p=1}^{Q}w_p\Sigma_s(t,\mathbf \Omega_q\cdot\mathbf \Omega_p)\psi_p(t,\mathbf x)\;.
+    \partial_{t}\psi_q(t,\mathbf x) \\
+    &+\mathbf \Omega_q\cdot\nabla_x \frac{\psi_q(t,\mathbf x)}{\rho(\mathbf{x})}+\Sigma_t(t)\psi_q(t,\mathbf x) \\
+    &= \sum_{p=1}^{Q}w_p\Sigma_s(t,\mathbf \Omega_q\cdot\mathbf \Omega_p)\psi_p(t,\mathbf x)\;. 
 
 A main disadvantage of :math:`S_N` methods are so called ray-effects [Lathrop1968ray]_ , [Morel2003analysis]_ , [Mathews1999propagation]_ , which are spurious artifacts that stem from the limited number of directions in which particles can travel. Moreover, radiation therapy applications exhibit forward-peaked scattering, 
 which cannot be well-captured by classical quadrature rules. 
 
 To allow for moderate computational costs when computing scattering terms and to efficiently treat forward-peaked scattering, we transform the nodal solution to a modal description and apply the more efficient :math:`P_N` methodology for scattering terms. For this, we define a truncation order :math:`N` and construct the matrices :math:`\mathbf{O}\in\mathbb{R}^{Q \times (N+1)^2}` which maps the modal onto its nodal representation and :math:`\mathbf{M}\in\mathbb{R}^{(N+1)^2\times Q}` which maps the nodal onto its modal representation. Such matrices can be constructed by
+
 .. math::
     \mathbf O = \left(\mathbf{m}(\Omega_k)\right)_{k=1}^{Q}\, , \text{ and } \;\;\; \mathbf M = \left(w_k\mathbf{m}(\Omega_k)\right)_{k=1}^{Q}.
 
@@ -418,7 +418,8 @@ In this case, we can replace the scattering term on the right-hand side of :eq:`
 .. math:: 
     :label: SNEqns2
 
-    \partial_{t}\boldsymbol\psi(t,\mathbf x)+&\mathbf \Omega_q\cdot\nabla_x \frac{\boldsymbol\psi(t,\mathbf x)}{\rho(\mathbf{x})}+\Sigma_t(t)\boldsymbol{\psi}(t,\mathbf x) = \mathbf{O}\boldsymbol{\Sigma}\mathbf{M}\boldsymbol{\psi}\;.
+    \partial_{t}\boldsymbol\psi(t,\mathbf x) \\
+    +&\mathbf \Omega_q\cdot\nabla_x \frac{\boldsymbol\psi(t,\mathbf x)}{\rho(\mathbf{x})}+\Sigma_t(t)\boldsymbol{\psi}(t,\mathbf x) = \mathbf{O}\boldsymbol{\Sigma}\mathbf{M}\boldsymbol{\psi}\;.
     
 
 References
