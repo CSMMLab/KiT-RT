@@ -218,7 +218,7 @@ This section discusses macroscopic models to :eq:`CSDBoltzmann`. These models ar
 
 Modal discretizations
 **************************
-Modal discretizations of :eq:`BoltzmannCSDTrafo` can be interpreted as a closure problem [Levermore1996Moment]_ , [Levermore1996Entropy]_. To present the derivation of different closures, we first formulate the moment equations which are not closed. Second, we close these equations with the :math:`P_N` closure and third, we derive the :math:`M_N` closure.
+Modal discretizations of :eq:`CSDBoltzmann` can be interpreted as a closure problem [Levermore1996Moment]_ , [Levermore1996Entropy]_. To present the derivation of different closures, we first formulate the moment equations which are not closed. Second, we close these equations with the :math:`P_N` closure and third, we derive the :math:`M_N` closure.
 
 Moment equations
 +++++++++++++++++++++++++
