@@ -7,7 +7,7 @@
 The KiT-RT (Kinetic Transport Solver for Radiation Therapy) framework is a high-performance open source platform for radiation transport. Its main focus is on radiotherapy planning in cancer treatment. To enable problem-specific method selection, the framework provides different deterministic solver types. This not only facilitates treatment planning, but also provides tools to investigate various research questions in the field of radiative transfer. This goal is supported by an easily extendable code structure that allows for straightforward implementation of additional methods and techniques.
 
 The documentation can be found [here](https://kit-rt.readthedocs.io/en/develop/index.html). 
-
+The preprint for the KiT-RT journal paper is available [here](https://arxiv.org/abs/2205.08417).
 ## Contents
 
 * [Capability](#what-kit-rt-is-capable-of)
@@ -16,6 +16,7 @@ The documentation can be found [here](https://kit-rt.readthedocs.io/en/develop/i
 * [Unit Tests](#unit-tests)
 * [Docker](#docker)
 * [Tensorflow](#tensorflow)
+* [Citation Info](#Cite)
 
 ## What KiT-RT is capable of
 ### Theory
@@ -136,4 +137,16 @@ FILENAME=libtensorflow-gpu-linux-x86_64-2.7.0.tar.gz
 wget -q --no-check-certificate https://storage.googleapis.com/tensorflow/libtensorflow/${FILENAME}
 tar -C /usr/local -xzf ${FILENAME}
 ldconfig /usr/local/lib
+```
+## Cite
+```
+@article{kitrt,
+  author = {Schotthöfer, Steffen and Kusch, Jonas and Stammer, Pia and Wolters, Jannick and Xiao, Tianbai },
+  title = {KiT-RT: Kinetic Transport for Radio Therapy Solver},
+  year = {2022},
+  publisher = {GitHub},
+  journal = {GitHub repository},
+  howpublished = {\url{https://github.com/CSMMLab/KiT-RT}},
+  commit = {b9943e1aae6a54c2c3d2033d168de1ab7912ae75}
+}
 ```
