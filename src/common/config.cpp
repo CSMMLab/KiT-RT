@@ -295,7 +295,15 @@ void Config::SetConfigOptions() {
      * \ingroup Config */
     AddBoolOption( "NEWTON_FAST_MODE", _newtonFastMode, false );
     // Neural Entropy Closure options
+    /*! @brief Neural Model \n DESCRIPTION:  Specifies the neural netwok architecture \n DEFAULT 11 (values: 11=input convex, 12 non-convex)
+     * \ingroup Config */
     AddUnsignedShortOption( "NEURAL_MODEL_MK", _neuralModel, 11 );
+    /*! @brief Neural Model Gamma \n DESCRIPTION:  Specifies regularization parameter for neural networks \n DEFAULT 0 (values: 0,1,2,3)
+    \ingroup Config */
+    AddUnsignedShortOption( "NEURAL_MODEL_GAMMA", _neuralGamma, 0 );
+    /*! @brief Neural Model Gamma \n DESCRIPTION:  Specifies regularization parameter for neural networks \n DEFAULT 0 (values: 0,1,2,3)
+    \ingroup Config */
+    AddBoolOption( "NEURAL_MODEL_ENFORCE_ROTATION_SYMMETRY", _enforceNeuralRotationalSymmetry, false );
 
     // Mesh related options
     // Boundary Markers

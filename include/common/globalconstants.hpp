@@ -101,7 +101,8 @@ enum PROBLEM_NAME {
     PROBLEM_StarmapValidation,
     PROBLEM_RadiationCT,
     PROBLEM_Meltingcube,
-    PROBLEM_Meltingcube1D
+    PROBLEM_Meltingcube1D,
+    PROBLEM_Hohlraum
 };
 
 inline std::map<std::string, PROBLEM_NAME> Problem_Map{ { "LINESOURCE", PROBLEM_Linesource },
@@ -114,7 +115,8 @@ inline std::map<std::string, PROBLEM_NAME> Problem_Map{ { "LINESOURCE", PROBLEM_
                                                         { "WATERPHANTOM_1D", PROBLEM_Waterphantom1D },
                                                         { "RADIATIONCT", PROBLEM_RadiationCT },
                                                         { "MELTINGCUBE", PROBLEM_Meltingcube },
-                                                        { "MELTINGCUBE_1D", PROBLEM_Meltingcube1D } };
+                                                        { "MELTINGCUBE_1D", PROBLEM_Meltingcube1D },
+                                                        { "HOHLRAUM", PROBLEM_Hohlraum } };
 
 // Kernel name
 enum KERNEL_NAME { KERNEL_Isotropic, KERNEL_Isotropic1D };
