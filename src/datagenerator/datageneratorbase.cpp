@@ -184,87 +184,6 @@ void DataGeneratorBase::SampleMultiplierAlpha() {
         // TODO
         ErrorMessages::Error( "Non-Normalized Alpha Sampling is not yet implemented.", CURRENT_FUNCTION );
     }
-
-    // Cubeoid
-    /*
-    double minAlphaValue = -1 * maxAlphaValue;
-    // double maxAlphaValue = maxAlphaValue;
-    if( _settings->GetNormalizedSampling() ) {
-        // compute reduced version of alpha and m
-        if( _maxPolyDegree == 0 ) {
-            ErrorMessages::Error( "Normalized sampling not meaningful for M0 closure", CURRENT_FUNCTION );
-        }
-
-        VectorVector alphaRed   = VectorVector( _setSize, Vector( _nTotalEntries - 1, 0.0 ) );
-        VectorVector momentsRed = VectorVector( _nq, Vector( _nTotalEntries - 1, 0.0 ) );
-
-        for( unsigned idx_nq = 0; idx_nq < _nq; idx_nq++ ) {    // copy (reduced) moments
-            for( unsigned idx_sys = 1; idx_sys < _nTotalEntries; idx_sys++ ) {
-                momentsRed[idx_nq][idx_sys - 1] = _momentBasis[idx_nq][idx_sys];
-            }
-        }
-
-        // Sample alphaRed as uniform grid from [minAlphaValue, maxAlphaValue], then compute alpha_0 s.t. u_0 = 1
-        double _gridSize = floor( pow( (double)_setSize, 1 / (double)( _nTotalEntries - 1 ) ) );
-        double dalpha    = ( maxAlphaValue - minAlphaValue ) / (double)_gridSize;
-        unsigned count   = 0;
-
-        switch( _nTotalEntries - 1 ) {
-            case 1:
-                for( unsigned idx_set = 0; idx_set < _gridSize; idx_set++ ) {
-                    alphaRed[idx_set][0] = minAlphaValue + idx_set * dalpha;
-                }
-                break;
-            case 2:
-                count = 0;
-                for( unsigned i1 = 0; i1 < _gridSize; i1++ ) {
-                    double alpha0 = minAlphaValue + i1 * dalpha;
-                    for( unsigned i2 = 0; i2 < _gridSize; i2++ ) {
-                        alphaRed[count][0] = alpha0;
-                        alphaRed[count][1] = minAlphaValue + i2 * dalpha;
-                        count++;
-                    }
-                }
-                break;
-            case 3:
-                count = 0;
-                for( unsigned i1 = 0; i1 < _gridSize; i1++ ) {
-                    double alpha0 = minAlphaValue + i1 * dalpha;
-                    for( unsigned i2 = 0; i2 < _gridSize; i2++ ) {
-                        double alpha1 = minAlphaValue + i2 * dalpha;
-                        for( unsigned i3 = 0; i3 < _gridSize; i3++ ) {
-                            alphaRed[count][0] = alpha0;
-                            alphaRed[count][1] = alpha1;
-                            alphaRed[count][2] = minAlphaValue + i3 * dalpha;
-                            count++;
-                        }
-                    }
-                }
-                break;
-            default: ErrorMessages::Error( "Not yet implemented!", CURRENT_FUNCTION );
-        }
-
-        // Compute alpha_0 = log(<exp(alpha m )>) // for maxwell boltzmann! only
-        for( unsigned idx_set = 0; idx_set < _setSize; idx_set++ ) {
-            double integral = 0.0;
-            // Integrate (eta(eta'_*(alpha*m))
-            for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
-                integral += _entropy->EntropyPrimeDual( dot( alphaRed[idx_set], momentsRed[idx_quad] ) ) * _weights[idx_quad];
-            }
-            _alpha[idx_set][0] = -log( integral );    // log trafo
-
-            // copy all other alphas to the member
-            for( unsigned idx_sys = 1; idx_sys < _nTotalEntries; idx_sys++ ) {
-                _alpha[idx_set][idx_sys] = alphaRed[idx_set][idx_sys - 1];
-            }
-        }
-    }
-    else {
-        // non normalized sampling
-        // TODO
-        ErrorMessages::Error( "Not yet implemented!", CURRENT_FUNCTION );
-    }
-    */
 }
 
 void DataGeneratorBase::PrintLoadScreen() {
@@ -314,10 +233,7 @@ void DataGeneratorBase::ComputeRealizableSolution() {
             for( unsigned idx_sys = 1; idx_sys < _nTotalEntries; idx_sys++ ) {
                 alphaRed[idx_sys - 1] = _alpha[idx_sol][idx_sys];
             }
-            // std::cout << alphaRed << std::endl;
-            // std::cout << _alpha[idx_sol] << std::endl;
             _optimizer->ReconstructMoments( uSolRed, alphaRed, momentsRed );
-            // std::cout << uSolRed << std::endl;
 
             for( unsigned idx_sys = 1; idx_sys < _nTotalEntries; idx_sys++ ) {
                 _uSol[idx_sol][idx_sys] = uSolRed[idx_sys - 1];
@@ -331,6 +247,4 @@ void DataGeneratorBase::ComputeRealizableSolution() {
             _optimizer->ReconstructMoments( _uSol[idx_sol], _alpha[idx_sol], _momentBasis );
         }
     }
-
-    // TextProcessingToolbox::PrintVectorVector( _uSol );
 }
