@@ -14,6 +14,8 @@
 #include "entropies/entropybase.hpp"
 #include "optimizers/newtonoptimizer.hpp"
 #include "optimizers/partregularizednewtonoptimizer.hpp"
+#include "optimizers/reducednewtonoptimizer.hpp"
+#include "optimizers/reducedpartregularizednewtonoptimizer.hpp"
 #include "optimizers/regularizednewtonoptimizer.hpp"
 #include "quadratures/quadraturebase.hpp"
 #include "toolboxes/errormessages.hpp"
@@ -62,10 +64,19 @@ DataGeneratorBase::DataGeneratorBase( Config* settings ) {
     _momentBasis = VectorVector( _nq, Vector( _nTotalEntries, 0.0 ) );
 
     // Optimizer
+    _reducedSampling = false;
     switch( settings->GetOptimizerName() ) {
         case NEWTON: _optimizer = new NewtonOptimizer( settings ); break;
         case REGULARIZED_NEWTON: _optimizer = new RegularizedNewtonOptimizer( settings ); break;
         case PART_REGULARIZED_NEWTON: _optimizer = new PartRegularizedNewtonOptimizer( settings ); break;
+        case REDUCED_NEWTON:
+            _optimizer       = new ReducedNewtonOptimizer( settings );
+            _reducedSampling = true;
+            break;
+        case REDUCED_PART_REGULARIZED_NEWTON:
+            _optimizer       = new ReducedPartRegularizedNewtonOptimizer( settings );
+            _reducedSampling = true;
+            break;
         default: ErrorMessages::Error( "Optimizer choice not feasible for datagenerator.", CURRENT_FUNCTION ); break;
     }
     // Entropy
@@ -126,6 +137,7 @@ void DataGeneratorBase::SampleMultiplierAlpha() {
             Vector alphaRed = Vector( _nTotalEntries - 1, 0.0 );    // local reduced alpha
 
             bool accepted = false;
+            bool normAccepted = false;
             while( !accepted ) {
                 // Sample random multivariate uniformly distributed alpha between minAlpha and MaxAlpha.
                 for( unsigned idx_sys = 1; idx_sys < _nTotalEntries; idx_sys++ ) {
@@ -136,6 +148,10 @@ void DataGeneratorBase::SampleMultiplierAlpha() {
                         if( alphaRed[idx_sys - 1] > maxAlphaValue ) alphaRed[idx_sys - 1] = maxAlphaValue;
                         if( alphaRed[idx_sys - 1] < -1 * maxAlphaValue ) alphaRed[idx_sys - 1] = -1 * maxAlphaValue;
                     }
+                }
+                normAccepted = true;
+                if( _settings->GetUniformSamlping() ) {
+                    if( norm( alphaRed ) > maxAlphaValue ) normAccepted = false;
                 }
                 // Compute alpha_0 = log(<exp(alpha m )>) // for maxwell boltzmann! only
                 double integral = 0.0;
@@ -151,7 +167,15 @@ void DataGeneratorBase::SampleMultiplierAlpha() {
                 }
 
                 // Compute rejection criteria
-                accepted = ComputeEVRejection( idx_set );
+                accepted = normAccepted;
+                if( normAccepted ) {
+                    if( _reducedSampling ) {
+                        accepted = ComputeReducedEVRejection( momentsRed, alphaRed );
+                    }
+                    else {
+                        accepted = ComputeEVRejection( idx_set );
+                    }
+                }
             }
         }
     }
@@ -250,28 +274,63 @@ void DataGeneratorBase::PrintLoadScreen() {
 }
 
 bool DataGeneratorBase::ComputeEVRejection( unsigned idx_set ) {
-
     Matrix hessian = Matrix( _nTotalEntries, _nTotalEntries, 0.0 );
-    // std::cout << idx_set << "\n";
-    //  std::cout << _alpha[idx_set] << "\n";
-    //  TextProcessingToolbox::PrintVectorVector( _momentBasis );
     _optimizer->ComputeHessian( _alpha[idx_set], _momentBasis, hessian );
-    // TextProcessingToolbox::PrintMatrix( hessian );
     SymMatrix hessianSym( hessian );    // Bad solution, rewrite with less memory need
     Vector ew = Vector( _nTotalEntries, 0.0 );
     eigen( hessianSym, ew );
     if( min( ew ) < _settings->GetMinimalEVBound() ) {
-        // std::cout << "Sampling not accepted with EV:" << min( ew ) << std::endl;
-        // std::cout << hessianSym << std::endl;
-        // std::cout << "Current minimal accepted EV:" << _settings->GetMinimalEVBound() << std::endl;
+        return false;
+    }
+    return true;
+}
+
+bool DataGeneratorBase::ComputeReducedEVRejection( VectorVector& redMomentBasis, Vector& redAlpha ) {
+    Matrix hessian = Matrix( _nTotalEntries - 1, _nTotalEntries - 1, 0.0 );
+    _optimizer->ComputeHessian( redAlpha, redMomentBasis, hessian );
+    SymMatrix hessianSym( hessian );    // Bad solution, rewrite with less memory need
+    Vector ew = Vector( _nTotalEntries - 1, 0.0 );
+    eigen( hessianSym, ew );
+    if( min( ew ) < _settings->GetMinimalEVBound() ) {
         return false;
     }
     return true;
 }
 
 void DataGeneratorBase::ComputeRealizableSolution() {
+
+    if( _reducedSampling ) {
+        VectorVector momentsRed = VectorVector( _nq, Vector( _nTotalEntries - 1, 0.0 ) );
+
+        for( unsigned idx_nq = 0; idx_nq < _nq; idx_nq++ ) {    // copy (reduced) moments
+            for( unsigned idx_sys = 1; idx_sys < _nTotalEntries; idx_sys++ ) {
+                momentsRed[idx_nq][idx_sys - 1] = _momentBasis[idx_nq][idx_sys];
+            }
+        }
 #pragma omp parallel for schedule( guided )
-    for( unsigned idx_sol = 0; idx_sol < _setSize; idx_sol++ ) {
-        _optimizer->ReconstructMoments( _uSol[idx_sol], _alpha[idx_sol], _momentBasis );
+        for( unsigned idx_sol = 0; idx_sol < _setSize; idx_sol++ ) {
+            Vector uSolRed( _nTotalEntries - 1, 0.0 );
+            Vector alphaRed( _nTotalEntries - 1, 0.0 );
+            for( unsigned idx_sys = 1; idx_sys < _nTotalEntries; idx_sys++ ) {
+                alphaRed[idx_sys - 1] = _alpha[idx_sol][idx_sys];
+            }
+            // std::cout << alphaRed << std::endl;
+            // std::cout << _alpha[idx_sol] << std::endl;
+            _optimizer->ReconstructMoments( uSolRed, alphaRed, momentsRed );
+            // std::cout << uSolRed << std::endl;
+
+            for( unsigned idx_sys = 1; idx_sys < _nTotalEntries; idx_sys++ ) {
+                _uSol[idx_sol][idx_sys] = uSolRed[idx_sys - 1];
+            }
+            _uSol[idx_sol][0] = 1.0;
+        }
     }
+    else {
+#pragma omp parallel for schedule( guided )
+        for( unsigned idx_sol = 0; idx_sol < _setSize; idx_sol++ ) {
+            _optimizer->ReconstructMoments( _uSol[idx_sol], _alpha[idx_sol], _momentBasis );
+        }
+    }
+
+    // TextProcessingToolbox::PrintVectorVector( _uSol );
 }

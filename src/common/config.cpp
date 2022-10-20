@@ -543,6 +543,15 @@ void Config::SetPostprocessing() {
         delete quad;
     }
 
+    // Optimizer Postprocessing
+    {
+        if( ( _entropyOptimizerName == REDUCED_NEWTON || _entropyOptimizerName == REDUCED_PART_REGULARIZED_NEWTON ) &&
+            _entropyName != MAXWELL_BOLTZMANN ) {
+            std::string msg = "Reduction of the optimization problen only possible with Maxwell Boltzmann Entropy" + std::to_string( _dim ) + ".";
+            ErrorMessages::Error( msg, CURRENT_FUNCTION );
+        }
+    }
+
     // --- Solver setup ---
     {
         if( GetSolverName() == PN_SOLVER && GetSphericalBasisName() != SPHERICAL_HARMONICS ) {

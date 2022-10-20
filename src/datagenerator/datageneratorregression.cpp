@@ -36,6 +36,7 @@ void DataGeneratorRegression::ComputeTrainingData() {
         ComputeRealizableSolution();
 
         // debugging purposes for rotation
+        /*
         TextProcessingToolbox::PrintVectorVector( _uSol );
         TextProcessingToolbox::PrintVectorVector( _alpha );
 
@@ -75,6 +76,7 @@ void DataGeneratorRegression::ComputeTrainingData() {
         TextProcessingToolbox::PrintVectorVector( rot_alpha );
         TextProcessingToolbox::PrintVectorVector( rot_alpha_comp );
         std::cout << "here\n";
+        */
     }
     else {
         // --- sample u ---
@@ -195,27 +197,48 @@ void DataGeneratorRegression::ComputeEntropyH_dual() {
 }
 
 void DataGeneratorRegression::ComputeEntropyH_primal() {
-#pragma omp parallel for schedule( guided )
-    for( unsigned idx_set = 0; idx_set < _setSize; idx_set++ ) {
-        _hEntropy[idx_set] = -1 * _optimizer->ComputeObjFunc( _alpha[idx_set], _uSol[idx_set], _momentBasis );
-    }
+    if( _reducedSampling ) {
+        VectorVector momentsRed = VectorVector( _nq, Vector( _nTotalEntries - 1, 0.0 ) );
 
-    for( unsigned idx_set = 0; idx_set < _setSize; idx_set++ ) {
-        if( isnan( _hEntropy[idx_set] ) ) {
-            std::string msgU     = "(";
-            std::string msgAlpha = "(";
-            for( unsigned idx_basis = 0; idx_basis < _nTotalEntries - 1; idx_basis++ ) {
-                msgU += std::to_string( _uSol[idx_set][idx_basis] ) + "|";
-                msgAlpha += std::to_string( _alpha[idx_set][idx_basis] ) + "|";
+        for( unsigned idx_nq = 0; idx_nq < _nq; idx_nq++ ) {    // copy (reduced) moments
+            for( unsigned idx_sys = 1; idx_sys < _nTotalEntries; idx_sys++ ) {
+                momentsRed[idx_nq][idx_sys - 1] = _momentBasis[idx_nq][idx_sys];
             }
-            msgU += std::to_string( _uSol[idx_set][_nTotalEntries - 1] ) + ")";
-            msgAlpha += std::to_string( _uSol[idx_set][_nTotalEntries - 1] ) + ")";
+        }
+#pragma omp parallel for schedule( guided )
+        for( unsigned idx_set = 0; idx_set < _setSize; idx_set++ ) {
+            Vector uSolRed( _nTotalEntries - 1, 0.0 );
+            Vector alphaRed( _nTotalEntries - 1, 0.0 );
+            for( unsigned idx_sys = 1; idx_sys < _nTotalEntries; idx_sys++ ) {
+                alphaRed[idx_sys - 1] = _alpha[idx_set][idx_sys];
+                uSolRed[idx_sys - 1]  = _uSol[idx_set][idx_sys];
+            }
+            _hEntropy[idx_set] = -1 * _optimizer->ComputeObjFunc( alphaRed, uSolRed, momentsRed );
+        }
+    }
+    else {
+#pragma omp parallel for schedule( guided )
+        for( unsigned idx_set = 0; idx_set < _setSize; idx_set++ ) {
+            _hEntropy[idx_set] = -1 * _optimizer->ComputeObjFunc( _alpha[idx_set], _uSol[idx_set], _momentBasis );
+        }
 
-            ErrorMessages::Error( "Value for h is NaN. This can happen near the boundary of the realizable set.\nu= " + msgU +
-                                      "\nalpha= " + msgAlpha +
-                                      "\nPlease adjust the Options "
-                                      "REALIZABLE_SET_EPSILON_U0 and REALIZABLE_SET_EPSILON_U1.",
-                                  CURRENT_FUNCTION );
+        for( unsigned idx_set = 0; idx_set < _setSize; idx_set++ ) {
+            if( isnan( _hEntropy[idx_set] ) ) {
+                std::string msgU     = "(";
+                std::string msgAlpha = "(";
+                for( unsigned idx_basis = 0; idx_basis < _nTotalEntries - 1; idx_basis++ ) {
+                    msgU += std::to_string( _uSol[idx_set][idx_basis] ) + "|";
+                    msgAlpha += std::to_string( _alpha[idx_set][idx_basis] ) + "|";
+                }
+                msgU += std::to_string( _uSol[idx_set][_nTotalEntries - 1] ) + ")";
+                msgAlpha += std::to_string( _uSol[idx_set][_nTotalEntries - 1] ) + ")";
+
+                ErrorMessages::Error( "Value for h is NaN. This can happen near the boundary of the realizable set.\nu= " + msgU +
+                                          "\nalpha= " + msgAlpha +
+                                          "\nPlease adjust the Options "
+                                          "REALIZABLE_SET_EPSILON_U0 and REALIZABLE_SET_EPSILON_U1.",
+                                      CURRENT_FUNCTION );
+            }
         }
     }
 }

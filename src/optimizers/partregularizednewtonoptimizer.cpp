@@ -8,12 +8,9 @@
 #include "optimizers/partregularizednewtonoptimizer.hpp"
 #include "common/config.hpp"
 #include "entropies/entropybase.hpp"
-#include "optimizers/newtonoptimizer.hpp"
 #include "quadratures/quadraturebase.hpp"
 #include "toolboxes/errormessages.hpp"
 #include "toolboxes/textprocessingtoolbox.hpp"
-
-#include <omp.h>
 
 PartRegularizedNewtonOptimizer::PartRegularizedNewtonOptimizer( Config* settings ) : NewtonOptimizer( settings ) {
     _gamma = settings->GetRegularizerGamma();    // Regularization parameter (to be included in settings)

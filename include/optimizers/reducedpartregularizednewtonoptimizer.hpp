@@ -5,19 +5,17 @@
  * @author S. Schotthöfer
  */
 
-#ifndef PARTREGULARIZEDNEWTONOPTIMIZER_H
-#define PARTREGULARIZEDNEWTONOPTIMIZER_H
+#ifndef REDUCEDPARTREGULARIZEDNEWTONOPTIMIZER_H
+#define REDUCEDPARTREGULARIZEDNEWTONOPTIMIZER_H
 
-#include "newtonoptimizer.hpp"
+#include "reducednewtonoptimizer.hpp"
 
-class QuadratureBase;
-
-class PartRegularizedNewtonOptimizer : public NewtonOptimizer
+class ReducedPartRegularizedNewtonOptimizer : public ReducedNewtonOptimizer
 {
   public:
-    PartRegularizedNewtonOptimizer( Config* settings );
+    ReducedPartRegularizedNewtonOptimizer( Config* settings );
 
-    ~PartRegularizedNewtonOptimizer();
+    ~ReducedPartRegularizedNewtonOptimizer();
 
     /*! @brief Computes the objective function
                 grad = <eta(alpha*m)> - alpha*sol  + gamma/2*norm(alpha)*/
@@ -47,4 +45,4 @@ class PartRegularizedNewtonOptimizer : public NewtonOptimizer
     double _gamma; /*!<  @brief Regularization Parameter*/
 };
 
-#endif    // PARTREGULARIZEDNEWTONOPTIMIZER_H
+#endif    // REDUCEDPARTREGULARIZEDNEWTONOPTIMIZER_H
