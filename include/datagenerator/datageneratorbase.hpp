@@ -58,6 +58,8 @@ class DataGeneratorBase
     NewtonOptimizer* _optimizer; /*!< @brief Class to solve minimal entropy problem */
     EntropyBase* _entropy;       /*!< @brief Class to handle entropy functional evaluations */
 
+    bool _reducedSampling; /*!< @brief Flag to show if the reduced optimizer is used */
+
     // Main methods
     virtual void SampleMultiplierAlpha(); /*!< @brief Sample Lagrange multipliers alpha */
     void ComputeRealizableSolution();     /*!< @brief make u the realizable moment to alpha, since Newton has roundoff errors. */
@@ -70,5 +72,7 @@ class DataGeneratorBase
     virtual void ComputeMoments() = 0;           /*!< @brief Pre-Compute Moments at all quadrature points. */
     bool ComputeEVRejection( unsigned idx_set ); /*!< @brief Evalute rejection criterion based on  the smallest Eigenvalue of the Hessian
                                                     corresponding to alpha[idx_set]. */
+    bool ComputeReducedEVRejection( VectorVector& redMomentBasis, Vector& redAlpha ); /*!< @brief Evalute rejection criterion based on  the smallest
+                                                     Eigenvalue of the reduced Hessian corresponding to alpha[idx_set]. */
 };
 #endif    // DATAGENERATOR_H

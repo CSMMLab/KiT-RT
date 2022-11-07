@@ -24,7 +24,6 @@ DataGeneratorClassification::DataGeneratorClassification( Config* settings ) : D
     _quadrature->ScalePointsAndWeights( _maxVelocity );
     _optimizer->ScaleQuadWeights( _maxVelocity );
     _weights = _quadrature->GetWeights();
-    // std::cout << "sum of weights: " << _quadrature->SumUpWeights() << "\n";
     _quadPointsSphere = _quadrature->GetPointsSphere();
     _quadPoints       = _quadrature->GetPoints();
 
@@ -99,12 +98,6 @@ Vector DataGeneratorClassification::ComputeMaxwellian( double rho, double u, dou
     Vector maxwellianAlpha = Vector( _nTotalEntries, 0.0 );
     _optimizer->Solve( maxwellianAlpha, maxwellianMoment, _momentBasis );
 
-    // std::cout << "Maxwellian Moment:\n";
-    // std::cout << maxwellianMoment << std::endl;
-    //  std::cout << moment0 << std::endl;
-    //  std::cout << "Maxwellian Alpha:\n";
-    // std::cout << maxwellianAlpha << std::endl;
-
     maxwellianAlpha[1] *= 2;
     // For debugging, reconstruct the moments from Maxwellian alpha
     double entropyReconstruction = 0.0;
@@ -113,8 +106,6 @@ Vector DataGeneratorClassification::ComputeMaxwellian( double rho, double u, dou
         entropyReconstruction = _entropy->EntropyPrimeDual( blaze::dot( maxwellianAlpha, _momentBasis[idx_quad] ) );
         maxwellianMoment += _momentBasis[idx_quad] * ( _weights[idx_quad] * entropyReconstruction );
     }
-    // std::cout << "Reconstructed Maxwellian Moment:\n";
-    // std::cout << maxwellianMoment << std::endl;
 
     return maxwellian;
 }
@@ -124,6 +115,5 @@ double DataGeneratorClassification::ComputeKLDivergence( Vector& f1, Vector& f2 
     for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
         sum += f1[idx_quad] * log( f1[idx_quad] / f2[idx_quad] );
     }
-    // std::cout << "KL-Divergence:" << sum << std::endl;
     return sum;
 }
