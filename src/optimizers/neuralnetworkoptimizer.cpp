@@ -65,7 +65,7 @@ NeuralNetworkOptimizer::NeuralNetworkOptimizer( Config* settings ) : OptimizerBa
     _tfModel             = new cppflow::model( tfModelPath );    // load model
     unsigned servingSize = _settings->GetNCells();
     if( _settings->GetEnforceNeuralRotationalSymmetry() ) {
-        if( _settings->GetMaxMomentDegree() > 2 ) {
+        if( _settings->GetMaxMomentDegree() > 3 ) {
             ErrorMessages::Error( "This postprocessing step is currently only for M1 and M2 models available.", CURRENT_FUNCTION );
         }
         servingSize *= 2;    // Double number of vectors, since we mirror the rotated vector
