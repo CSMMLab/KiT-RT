@@ -252,10 +252,17 @@ void NeuralNetworkOptimizer::SolveMultiCell( VectorVector& alpha, VectorVector& 
                 _modelServingVectorU[idx_cell * ( _nSystem - 1 ) + 7] = (float)( u3[1][1][0] );
                 _modelServingVectorU[idx_cell * ( _nSystem - 1 ) + 8] = (float)( u3[1][1][1] );
 
+                // std::cout << u1[0] << "," << u1[2] << "," << u2( 0, 0 ) << "," << u2( 0, 1 ) << "," << u2( 1, 1 ) << "," << u3[0][0][0] << ","
+                //          << u3[1][0][0] << "," << u3[1][1][0] << "," << u3[1][1][1] << "\n";
+
                 // Rotate Moment by 180 degrees and save mirrored moment
                 u1 = RotateM1( u1, rot180 );
                 u2 = RotateM2( u2, rot180, rot180 );
                 u3 = RotateM3( u3, rot180 );
+                // std::cout << u1[0] << "," << u1[2] << "," << u2( 0, 0 ) << "," << u2( 0, 1 ) << "," << u2( 1, 1 ) << "," << u3[0][0][0] << ","
+                //<< u3[1][0][0] << "," << u3[1][1][0] << "," << u3[1][1][1] << "\n";
+                // std::cout << "-----\n";
+
                 // mirror matrix is symmetric
                 _modelServingVectorU[( _settings->GetNCells() + idx_cell ) * ( _nSystem - 1 )] = (float)( u1[0] );    // Only first moment is mirrored
                 _modelServingVectorU[( _settings->GetNCells() + idx_cell ) * ( _nSystem - 1 ) + 1] = (float)( u1[1] );    // should be zero
@@ -339,6 +346,7 @@ void NeuralNetworkOptimizer::SolveMultiCell( VectorVector& alpha, VectorVector& 
                     }
                     alphaRed[idx_sys] = ( alphaRed[idx_sys] + alphaRedMirror[idx_sys] ) / 2;    // average (and store in alphaRed)
                 }
+                // std::cout << alphaRed - alphaRedMirror << "-----\n";
 
                 // Rotate Back
                 Vector alpha1{ alphaRed[0], alphaRed[1] };
@@ -367,7 +375,7 @@ void NeuralNetworkOptimizer::SolveMultiCell( VectorVector& alpha, VectorVector& 
             }
         }
         else {    // Degree 3
-                  //#pragma omp parallel for
+#pragma omp parallel for
             for( unsigned idx_cell = 0; idx_cell < _settings->GetNCells(); idx_cell++ ) {
                 Vector alphaRed       = Vector( _nSystem - 1, 0.0 );    // local reduced alpha
                 Vector alphaRedMirror = Vector( _nSystem - 1, 0.0 );    // local reduced mirrored alpha
@@ -375,21 +383,19 @@ void NeuralNetworkOptimizer::SolveMultiCell( VectorVector& alpha, VectorVector& 
                     alphaRed[idx_sys]       = (double)_modelServingVectorAlpha[idx_cell * ( _nSystem - 1 ) + idx_sys];
                     alphaRedMirror[idx_sys] = (double)_modelServingVectorAlpha[( _settings->GetNCells() + idx_cell ) * ( _nSystem - 1 ) + idx_sys];
                     if( idx_sys < 2 || idx_sys > 4 ) {    // Miror order 1 moments back and  Miror order 3 moments back
-                        alphaRedMirror[idx_sys] =
-                            -1 * (double)_modelServingVectorAlpha[( _settings->GetNCells() + idx_cell ) * ( _nSystem - 1 ) + idx_sys];
+                        alphaRedMirror[idx_sys] *= -1;
                     }
-
-                    std::cout << alphaRed[idx_sys] << ":" << alphaRedMirror[idx_sys] << "\n ----------\n";
                     alphaRed[idx_sys] = ( alphaRed[idx_sys] + alphaRedMirror[idx_sys] ) / 2;    // average (and store in alphaRed)
                 }
+                // std::cout << alphaRed - alphaRedMirror << "-----\n";
 
                 // Rotate Back
                 Vector alpha1{ alphaRed[0], alphaRed[1] };
                 Matrix alpha2{ { alphaRed[2], alphaRed[3] * 0.5 }, { alphaRed[3] * 0.5, alphaRed[4] } };
                 std::vector<VectorVector> alpha3( 2, VectorVector( 2, Vector( 2, 0.0 ) ) );
                 // fill u3 tensor
-                alpha3[0] = { { u[idx_cell][5], u[idx_cell][6] }, { u[idx_cell][6], u[idx_cell][7] } };
-                alpha3[1] = { { u[idx_cell][6], u[idx_cell][7] }, { u[idx_cell][7], u[idx_cell][8] } };
+                alpha3[0] = { { u[idx_cell][5], u[idx_cell][6] / 3.0 }, { u[idx_cell][6] / 3.0, u[idx_cell][7] / 3.0 } };
+                alpha3[1] = { { u[idx_cell][6] / 3.0, u[idx_cell][7] / 3.0 }, { u[idx_cell][7] / 3.0, u[idx_cell][8] } };
 
                 alpha1 = RotateM1( alpha1, _rotationMatsT[idx_cell] );                             // Rotate Back
                 alpha2 = RotateM2( alpha2, _rotationMatsT[idx_cell], _rotationMats[idx_cell] );    // Rotate Back
