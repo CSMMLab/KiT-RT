@@ -378,6 +378,8 @@ void NeuralNetworkOptimizer::SolveMultiCell( VectorVector& alpha, VectorVector& 
                         alphaRedMirror[idx_sys] =
                             -1 * (double)_modelServingVectorAlpha[( _settings->GetNCells() + idx_cell ) * ( _nSystem - 1 ) + idx_sys];
                     }
+
+                    std::cout << alphaRed[idx_sys] << ":" << alphaRedMirror[idx_sys] << "\n ----------\n";
                     alphaRed[idx_sys] = ( alphaRed[idx_sys] + alphaRedMirror[idx_sys] ) / 2;    // average (and store in alphaRed)
                 }
 
