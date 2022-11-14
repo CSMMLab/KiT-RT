@@ -47,6 +47,8 @@ class NeuralNetworkOptimizer : public OptimizerBase
     Vector RotateM1( Vector& vec, Matrix& R );          /*!< @brief Rotates the M1 part of a 2D moment vector using a rotation matrix R */
     /*!< @brief Rotates the tensorized M2 part of a 2D moment vector using a rotation matrix R */
     Matrix RotateM2( Matrix& vec, Matrix& R, Matrix& Rt );
+    /*!< @brief Rotates the tensorized M3 part of a 2D moment vector using a rotation matrix R */
+    std::vector<VectorVector> RotateM3( std::vector<VectorVector>& vec, Matrix& R );
 };
 #else
 // Dummy class
