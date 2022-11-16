@@ -195,7 +195,6 @@ void NeuralNetworkOptimizer::SolveMultiCell( VectorVector& alpha, VectorVector& 
             }
         }
         else if( _settings->GetMaxMomentDegree() == 2 ) {
-// Rotate everything to x-Axis of first moment tensor
 #pragma omp parallel for
             for( unsigned idx_cell = 0; idx_cell < _settings->GetNCells(); idx_cell++ ) {
                 Vector u1{ u[idx_cell][1], u[idx_cell][2] };
@@ -252,16 +251,10 @@ void NeuralNetworkOptimizer::SolveMultiCell( VectorVector& alpha, VectorVector& 
                 _modelServingVectorU[idx_cell * ( _nSystem - 1 ) + 7] = (float)( u3[1][1][0] );
                 _modelServingVectorU[idx_cell * ( _nSystem - 1 ) + 8] = (float)( u3[1][1][1] );
 
-                // std::cout << u1[0] << "," << u1[2] << "," << u2( 0, 0 ) << "," << u2( 0, 1 ) << "," << u2( 1, 1 ) << "," << u3[0][0][0] << ","
-                //          << u3[1][0][0] << "," << u3[1][1][0] << "," << u3[1][1][1] << "\n";
-
                 // Rotate Moment by 180 degrees and save mirrored moment
                 u1 = RotateM1( u1, rot180 );
                 u2 = RotateM2( u2, rot180, rot180 );
                 u3 = RotateM3( u3, rot180 );
-                // std::cout << u1[0] << "," << u1[2] << "," << u2( 0, 0 ) << "," << u2( 0, 1 ) << "," << u2( 1, 1 ) << "," << u3[0][0][0] << ","
-                //<< u3[1][0][0] << "," << u3[1][1][0] << "," << u3[1][1][1] << "\n";
-                // std::cout << "-----\n";
 
                 // mirror matrix is symmetric
                 _modelServingVectorU[( _settings->GetNCells() + idx_cell ) * ( _nSystem - 1 )] = (float)( u1[0] );    // Only first moment is mirrored
@@ -346,7 +339,6 @@ void NeuralNetworkOptimizer::SolveMultiCell( VectorVector& alpha, VectorVector& 
                     }
                     alphaRed[idx_sys] = ( alphaRed[idx_sys] + alphaRedMirror[idx_sys] ) / 2;    // average (and store in alphaRed)
                 }
-                // std::cout << alphaRed - alphaRedMirror << "-----\n";
 
                 // Rotate Back
                 Vector alpha1{ alphaRed[0], alphaRed[1] };
@@ -387,7 +379,6 @@ void NeuralNetworkOptimizer::SolveMultiCell( VectorVector& alpha, VectorVector& 
                     }
                     alphaRed[idx_sys] = ( alphaRed[idx_sys] + alphaRedMirror[idx_sys] ) / 2;    // average (and store in alphaRed)
                 }
-                // std::cout << alphaRed - alphaRedMirror << "-----\n";
 
                 // Rotate Back
                 Vector alpha1{ alphaRed[0], alphaRed[1] };
