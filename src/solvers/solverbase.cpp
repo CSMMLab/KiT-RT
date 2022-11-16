@@ -16,6 +16,7 @@
 #include "toolboxes/textprocessingtoolbox.hpp"
 
 #include <mpi.h>
+#include <chrono>
 
 SolverBase::SolverBase( Config* settings ) {
     _settings = settings;
@@ -134,31 +135,40 @@ void SolverBase::Solve() {
     // Loop over energies (pseudo-time of continuous slowing down approach)
     for( unsigned iter = 0; iter < _maxIter; iter++ ) {
         if( rkStages == 2 ) solRK0 = _sol;
-        for( unsigned rkStep = 0; rkStep < rkStages; ++rkStep ) {
+        //for( unsigned rkStep = 0; rkStep < rkStages; ++rkStep ) {
+            std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
             // --- Prepare Boundaries and temp variables
-            IterPreprocessing( iter + rkStep );
-
+            IterPreprocessing( iter );
+            std::chrono::steady_clock::time_point end_preproc = std::chrono::steady_clock::now();
             // --- Compute Fluxes ---
             FluxUpdate();
+            std::chrono::steady_clock::time_point end_flux = std::chrono::steady_clock::now();
 
             // --- Finite Volume Update ---
-            FVMUpdate( iter + rkStep );
+            FVMUpdate( iter );
+            std::chrono::steady_clock::time_point end_FVM = std::chrono::steady_clock::now();
+
 
             // --- Update Solution within Runge Kutta Stages
             _sol = _solNew;
-        }
+        //}
         // --- Iter Postprocessing ---
         IterPostprocessing( iter );
+        std::chrono::steady_clock::time_point end_postproc = std::chrono::steady_clock::now();
 
+        std::cout << -1./1000.0*std::chrono::duration_cast<std::chrono::microseconds>(begin-end_preproc).count()
+                  << "," <<-1./1000.0*std::chrono::duration_cast<std::chrono::microseconds>(end_preproc-end_flux).count()
+                  << "," <<-1./1000.0*std::chrono::duration_cast<std::chrono::microseconds>(end_flux-end_FVM).count()
+                  << "," <<-1./1000.0*std::chrono::duration_cast<std::chrono::microseconds>(end_FVM-end_postproc).count()<< "\n";
         // --- Runge Kutta Timestep ---
         if( rkStages == 2 ) RKUpdate( solRK0, _sol );
 
         // --- Solver Output ---
-        WriteVolumeOutput( iter );
-        WriteScalarOutput( iter );
-        PrintScreenOutput( iter );
-        PrintHistoryOutput( iter );
-        PrintVolumeOutput( iter );
+        //WriteVolumeOutput( iter );
+        //WriteScalarOutput( iter );
+        //PrintScreenOutput( iter );
+        //PrintHistoryOutput( iter );
+        //PrintVolumeOutput( iter );
     }
 
     // --- Postprocessing ---
