@@ -39,7 +39,8 @@ void MNSolverNormalized::IterPreprocessing( unsigned /*idx_pseudotime*/ ) {
         for( unsigned idx_sys = 1; idx_sys < _nSystem; idx_sys++ ) {
             alpha_reduced_norm += _alpha[idx_cell][idx_sys] * _alpha[idx_cell][idx_sys];
         }
-        alpha_reduced_norm *= _settings->GetRegularizerGamma() / 2.0;
+        alpha_reduced_norm *= _settings->GetRegularizerGamma() / 2.0 * 0.01;
+        std::cout << alpha_reduced_norm << "|" << _momentBasis[0][0] << "\n";
         for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
             // compute the kinetic density at all grid cells
             _kineticDensity[idx_cell][idx_quad] = _u0[idx_cell] * _entropy->EntropyPrimeDual( blaze::dot( _alpha[idx_cell], _momentBasis[idx_quad] ) -
