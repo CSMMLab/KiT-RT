@@ -35,10 +35,16 @@ void MNSolverNormalized::IterPreprocessing( unsigned /*idx_pseudotime*/ ) {
     // ------- Solution reconstruction step ----
 #pragma omp parallel for
     for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
+        double alpha_norm = 0.0;
+        for( unsigned idx_sys = 1; idx_sys < _nSystem; idx_sys++ ) {
+            alpha_norm+= _alpha[idx_cell][idx_sys]*_alpha[idx_cell][idx_sys];
+        }
+        alpha_norm*=_momentBasis[0][0]*0.5*_settings->GetRegularizerGamma()*0.1;//is constant
         for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
+
             // compute the kinetic density at all grid cells
             _kineticDensity[idx_cell][idx_quad] =
-                _u0[idx_cell] * _entropy->EntropyPrimeDual( blaze::dot( _alpha[idx_cell], _momentBasis[idx_quad] ) );
+                _u0[idx_cell] * _entropy->EntropyPrimeDual( blaze::dot( _alpha[idx_cell], _momentBasis[idx_quad] )- alpha_norm ); //
         }
         if( _settings->GetRealizabilityReconstruction() ) ComputeRealizableSolution( idx_cell );
         _sol[idx_cell] *= _u0[idx_cell];
