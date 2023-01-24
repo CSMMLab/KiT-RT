@@ -156,7 +156,8 @@ void NeuralNetworkOptimizer::SolveMultiCell( VectorVector& alpha, VectorVector& 
         }
         else {
             // Rotate everything to x-Axis of first moment tensor
-            //#pragma omp parallel for
+            //std::cout << "rotation_active\n";
+#pragma omp parallel for
             for( unsigned idx_cell = 0; idx_cell < _settings->GetNCells(); idx_cell++ ) {
                 Vector u1{ u[idx_cell][1], u[idx_cell][2] };
                 Matrix u2{ { u[idx_cell][3], u[idx_cell][4] }, { u[idx_cell][4], u[idx_cell][5] } };

@@ -802,6 +802,9 @@ void Config::SetPostprocessing() {
                 case 3: _regularizerGamma = 0.001; break;
             }
         }
+        if( _entropyOptimizerName == NEWTON ) {
+            _regularizerGamma = 0.0;
+        }
     }
 }
 

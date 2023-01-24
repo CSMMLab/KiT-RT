@@ -39,7 +39,7 @@ void MNSolverNormalized::IterPreprocessing( unsigned /*idx_pseudotime*/ ) {
         for( unsigned idx_sys = 1; idx_sys < _nSystem; idx_sys++ ) {
             alpha_norm += _alpha[idx_cell][idx_sys] * _alpha[idx_cell][idx_sys];
         }
-        alpha_norm *= _momentBasis[0][0] * 0.5 * _settings->GetRegularizerGamma();    // is constant
+        alpha_norm *= _momentBasis[0][0] * 0.5* _settings->GetRegularizerGamma();    // is constant
         // std::cout << alpha_norm << "|" << _momentBasis[0][0] << "\n";
         for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
             // compute the kinetic density at all grid cells
