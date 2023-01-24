@@ -71,8 +71,9 @@ CSDMNSolver::~CSDMNSolver() {}
 void CSDMNSolver::IterPreprocessing( unsigned idx_iter ) {
 
     // ------- Entropy closure Step ----------------
+    Vector alpha_norm_dummy( _nCells, 0 );    // ONLY FOR DEBUGGING! THIS SLOWS DOWN THE CODE
 
-    _optimizer->SolveMultiCell( _alpha, _sol, _momentBasis );
+    _optimizer->SolveMultiCell( _alpha, _sol, _momentBasis, alpha_norm_dummy );
 
     // ------- Solution reconstruction step ----
     //#pragma omp parallel for

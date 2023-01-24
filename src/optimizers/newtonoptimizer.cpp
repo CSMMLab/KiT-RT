@@ -67,7 +67,7 @@ void NewtonOptimizer::ComputeHessian( Vector& alpha, const VectorVector& moments
     }
 }
 
-void NewtonOptimizer::SolveMultiCell( VectorVector& alpha, VectorVector& sol, const VectorVector& moments ) {
+void NewtonOptimizer::SolveMultiCell( VectorVector& alpha, VectorVector& sol, const VectorVector& moments, Vector& alpha_norms ) {
 
     unsigned nCells = alpha.size();
 
@@ -158,7 +158,7 @@ void NewtonOptimizer::Solve( Vector& alpha, Vector& sol, const VectorVector& mom
             alphaNew = alpha - stepSize * _delta * H * grad;
             ComputeGradient( alphaNew, sol, moments, dalphaNew );
 
-            // Check if FONC is fullfilled
+            // Check if FONC is locally fullfilled
             if( norm( dalphaNew ) < _epsilon ) {
                 alpha = alphaNew;
                 return;

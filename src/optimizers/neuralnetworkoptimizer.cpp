@@ -130,7 +130,7 @@ Vector NeuralNetworkOptimizer::RotateM1( Vector& vec, Matrix& R ) { return R * v
 
 Matrix NeuralNetworkOptimizer::RotateM2( Matrix& vec, Matrix& R, Matrix& Rt ) { return R * vec * Rt; }
 
-void NeuralNetworkOptimizer::SolveMultiCell( VectorVector& alpha, VectorVector& u, const VectorVector& /*moments*/ ) {
+void NeuralNetworkOptimizer::SolveMultiCell( VectorVector& alpha, VectorVector& u, const VectorVector& /*moments*/, Vector& alpha_norms ) {
 
     unsigned servingSize = _settings->GetNCells();
     Matrix rot180{ { -1.0, 0.0 }, { 0.0, -1.0 } };
@@ -254,6 +254,7 @@ void NeuralNetworkOptimizer::SolveMultiCell( VectorVector& alpha, VectorVector& 
                     }
                     alphaRed[idx_sys] = ( alphaRed[idx_sys] + alphaRedMirror[idx_sys] ) / 2;    // average (and store in alphaRed)
                 }
+                alpha_norms[idx_cell] = norm( alphaRed ) * norm( alphaRed );
 
                 // Rotate Back
                 Vector alpha1{ alphaRed[0], alphaRed[1] };
