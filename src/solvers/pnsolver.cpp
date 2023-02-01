@@ -55,6 +55,8 @@ PNSolver::PNSolver( Config* settings ) : SolverBase( settings ) {
 
     // Compute moments of initial condition
     // TODO
+    std::cout << "System size = " << _nSystem << "\n";
+    std::cout << "Spatial cells = " << _nCells << "\n";
 }
 
 void PNSolver::IterPreprocessing( unsigned /*idx_iter*/ ) {

@@ -52,6 +52,8 @@ MNSolver::MNSolver( Config* settings ) : SolverBase( settings ) {
     // Initialize Scatter Matrix --
     _scatterMatDiag = Vector( _nSystem, 0.0 );
     ComputeScatterMatrix();
+    std::cout << "System size = " << _nSystem << "\n";
+    std::cout << "Spatial cells = " << _nCells << "\n";
 }
 
 MNSolver::~MNSolver() {

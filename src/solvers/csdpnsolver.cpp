@@ -23,7 +23,7 @@ CSDPNSolver::CSDPNSolver( Config* settings ) : PNSolver( settings ) {
         E_transformed[i] = E_transformed[i - 1] + ( E_tab[i] - E_tab[i - 1] ) / 2 * ( 1.0 / S_tab[i] + 1.0 / S_tab[i - 1] );
 
     // determine minimal and maximal energies
-    double minE = 5e-5;
+    double minE = 5e-5 + 0.52;
     double maxE = _settings->GetMaxEnergyCSD();
 
     // define interpolation from energies to corresponding transformed energies \tilde{E} (without substraction of eMaxTrafo)
@@ -46,7 +46,7 @@ CSDPNSolver::CSDPNSolver( Config* settings ) : PNSolver( settings ) {
     // --- evaluate corresponding stopping powers and transport coefficients
 
     // compute stopping powers
-    Vector etmp = E_tab;
+    Vector etmp = E_tab; 
     Vector stmp = S_tab;
     Interpolation interpS( etmp, stmp );
 
@@ -63,7 +63,7 @@ CSDPNSolver::CSDPNSolver( Config* settings ) : PNSolver( settings ) {
     for( unsigned n = 0; n < _nEnergies - 1; ++n ) {
         eMid[n] = interpTrafoToE( eMaxTrafo - eTrafoMid[n] );
     }
-    _sMid = interpS( eMid );
+    _sMid = interpS( eMid ); 
 }
 
 CSDPNSolver::~CSDPNSolver() {}
