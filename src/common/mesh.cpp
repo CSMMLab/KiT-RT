@@ -58,7 +58,7 @@ void Mesh::ComputeConnectivity() {
     }
 
     // determine neighbor cells and normals with MPI and OpenMP
-    //#pragma omp parallel for
+#pragma omp parallel for
     for( unsigned i = mpiCellStart; i < mpiCellEnd; ++i ) {
         std::vector<unsigned>* cellsI = &sortedCells[i];
         unsigned ctr                  = 0;
