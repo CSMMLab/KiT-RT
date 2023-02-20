@@ -88,6 +88,7 @@ StarMapValidation_Moment::StarMapValidation_Moment( Config* settings, Mesh* mesh
 StarMapValidation_Moment::~StarMapValidation_Moment() {}
 
 VectorVector StarMapValidation_Moment::SetupIC() {
+    double epsilon = 1e-3;    // minimal value for first moment to avoid div by zero error
 
     SphericalBase* tempBase  = SphericalBase::Create( _settings );
     unsigned ntotalEquations = tempBase->GetBasisSize();
@@ -103,6 +104,8 @@ VectorVector StarMapValidation_Moment::SetupIC() {
         x                            = cellMidpoints[idx_cell][0];
         y                            = cellMidpoints[idx_cell][1];
         f                            = NormPDF( x, pos_beam[0], stddev ) * NormPDF( y, pos_beam[1], stddev );
+        f                            = std::max( f, epsilon );
+
         initialSolution[idx_cell][0] = f * StarMAPmoments[0];
         for( unsigned idx_sys = 1; idx_sys < ntotalEquations; idx_sys++ ) {
             initialSolution[idx_cell][idx_sys] = f * StarMAPmoments[idx_sys];    // must be VectorVector

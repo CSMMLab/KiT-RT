@@ -17,7 +17,6 @@ Mesh::Mesh( std::vector<Vector> nodes,
     ComputeCellMidpoints();
     ComputeConnectivity();
     ComputeBounds();
-    // ComputeCellInterfaceMidpoints();
 }
 
 Mesh::~Mesh() {}
