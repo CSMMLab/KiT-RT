@@ -54,8 +54,8 @@ DataGeneratorBase::DataGeneratorBase( Config* settings ) {
     _quadPointsSphere = _quadrature->GetPointsSphere();
 
     // Spherical Harmonics
-    if( _settings->GetSphericalBasisName() == SPHERICAL_HARMONICS && _maxPolyDegree > 0 ) {
-        ErrorMessages::Error( "No sampling algorithm for spherical harmonics basis with degree higher than 0 implemented", CURRENT_FUNCTION );
+    if( _settings->GetSphericalBasisName() == SPHERICAL_HARMONICS && _maxPolyDegree > 0 && _settings->GetAlphaSampling() == false) {
+        ErrorMessages::Error( "No direct moment sampling algorithm for spherical harmonics basis with degree higher than 0 implemented", CURRENT_FUNCTION );
     }
     _basisGenerator = SphericalBase::Create( _settings );
 
@@ -159,7 +159,7 @@ void DataGeneratorBase::SampleMultiplierAlpha() {
                 for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
                     integral += _entropy->EntropyPrimeDual( dot( alphaRed, momentsRed[idx_quad] ) ) * _weights[idx_quad];
                 }
-                _alpha[idx_set][0] = -log( integral );    // log trafo
+                _alpha[idx_set][0] = -(log( integral )+ log(_momentBasis[0][0]) )/_momentBasis[0][0]; //  normalization
 
                 // Assemble complete alpha (normalized)
                 for( unsigned idx_sys = 1; idx_sys < _nTotalEntries; idx_sys++ ) {
@@ -217,7 +217,6 @@ bool DataGeneratorBase::ComputeReducedEVRejection( VectorVector& redMomentBasis,
 }
 
 void DataGeneratorBase::ComputeRealizableSolution() {
-
     if( _reducedSampling ) {
         VectorVector momentsRed = VectorVector( _nq, Vector( _nTotalEntries - 1, 0.0 ) );
 
