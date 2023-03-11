@@ -133,6 +133,7 @@ void DataGeneratorBase::SampleMultiplierAlpha() {
         std::normal_distribution<double> distribution_normal( mean, stddev );
 
         // Can be parallelized, but check if there is a race condition with datagenerator
+#pragma omp parallel for schedule( guided )
         for( unsigned idx_set = 0; idx_set < _setSize; idx_set++ ) {
             Vector alphaRed = Vector( _nTotalEntries - 1, 0.0 );    // local reduced alpha
 
