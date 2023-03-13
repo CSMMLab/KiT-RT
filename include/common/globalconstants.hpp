@@ -171,10 +171,11 @@ inline std::map<std::string, SCALAR_OUTPUT> ScalarOutput_Map{
     { "ITER", ITER }, { "MASS", MASS }, { "RMS_FLUX", RMS_FLUX }, { "VTK_OUTPUT", VTK_OUTPUT }, { "CSV_OUTPUT", CSV_OUTPUT } };
 
 // Spherical Basis Name
-enum SPHERICAL_BASIS_NAME { SPHERICAL_HARMONICS, SPHERICAL_MONOMIALS };
+enum SPHERICAL_BASIS_NAME { SPHERICAL_HARMONICS, SPHERICAL_MONOMIALS, SPHERICAL_MONOMIALS_ROTATED };
 
 inline std::map<std::string, SPHERICAL_BASIS_NAME> SphericalBasis_Map{ { "SPHERICAL_HARMONICS", SPHERICAL_HARMONICS },
-                                                                       { "SPHERICAL_MONOMIALS", SPHERICAL_MONOMIALS } };
+                                                                       { "SPHERICAL_MONOMIALS", SPHERICAL_MONOMIALS },
+                                                                       { "SPHERICAL_MONOMIALS_ROTATED", SPHERICAL_MONOMIALS_ROTATED } };
 
 // Datasampler Name
 enum SAMPLER_NAME { CLASSIFICATION_SAMPLER, REGRESSION_SAMPLER };
