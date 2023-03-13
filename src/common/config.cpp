@@ -278,6 +278,10 @@ void Config::SetConfigOptions() {
     AddEnumOption( "ENTROPY_FUNCTIONAL", _entropyName, Entropy_Map, QUADRATIC );
     /*! @brief Optimizer Name \n DESCRIPTION:  Optimizer used to determine the minimal Entropy reconstruction \n DEFAULT NEWTON \ingroup Config */
     AddEnumOption( "ENTROPY_OPTIMIZER", _entropyOptimizerName, Optimizer_Map, NEWTON );
+    /*! @brief Sets Flag for dynamic ansatz for normalized mn entropy closure \n DESCRIPTION:  True = enable ansatz, False = disable ansatz \n DEFAULT
+     * false \ingroup Config */
+    AddBoolOption( "ENTROPY_DYNAMIC_CLOSURE", _entropyDynamicClosure, true );
+
     // Newton optimizer related options
     /*! @brief Regularization Parameter \n DESCRIPTION:  Regularization Parameter for the regularized entropy closure. Must not be negative \n DEFAULT
      * 1e-2 \ingroup Config */

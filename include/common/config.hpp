@@ -103,6 +103,7 @@ class Config
 
     // Optimizer
     OPTIMIZER_NAME _entropyOptimizerName; /*!< @brief Choice of optimizer */
+    bool _entropyDynamicClosure;          /*!< @brief Flag for dynamic closure ansatz for normalized mn solver */
     double _optimizerEpsilon;             /*!< @brief termination criterion epsilon for Newton Optmizer */
     unsigned long _newtonIter;            /*!< @brief Maximal Number of newton iterations */
     double _newtonStepSize;               /*!< @brief Stepsize factor for newton optimizer */
@@ -313,6 +314,8 @@ class Config
     bool inline GetNewtonFastMode() const { return _newtonFastMode; }
     OPTIMIZER_NAME inline GetOptimizerName() const { return _entropyOptimizerName; }
     double inline GetRegularizerGamma() const { return _regularizerGamma; }
+    double inline GetEntropyDynamicAnsatz() const { return _entropyDynamicClosure; }
+
     // Neural Closure
     unsigned short inline GetModelMK() { return _neuralModel; }
     unsigned short inline GetNeuralModelGamma() { return _neuralGamma; }
