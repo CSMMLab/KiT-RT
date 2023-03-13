@@ -19,8 +19,8 @@ SphericalMonomialsRotated::SphericalMonomialsRotated( unsigned L_degree, unsigne
     _LMaxDegree = L_degree;
     _spatialDim = (unsigned)spatialDim;
 
-    if( _spatialDim != 2 ) ErrorMessages::Error( "Spatial dimension other than 2 not supported for rotated basis." );
-    if( _LMaxDegree > 2 ) ErrorMessages::Error( "Basis degree higher than 2 not supported for rotated basis." );
+    if( _spatialDim != 2 ) ErrorMessages::Error( "Spatial dimension other than 2 not supported for rotated basis." , CURRENT_FUNCTION );
+    if( _LMaxDegree > 2 ) ErrorMessages::Error( "Basis degree higher than 2 not supported for rotated basis." , CURRENT_FUNCTION );
 
     _YBasis = Vector( GetBasisSize() );
 }
@@ -61,6 +61,7 @@ Vector SphericalMonomialsRotated::ComputeSphericalBasis2D( double my, double phi
 
     Vector omegaXY{ omegaX, omegaY };
     Matrix rotationMatrix = CreateRotator( omegaXY );
+    Matrix rotationMatrixTrans  = blaze::trans( rotationMatrix );
 
     omegaXY = RotateM1( omegaXY, rotationMatrix );    // Rotate velocity frame to x-axis
 
@@ -77,12 +78,12 @@ Vector SphericalMonomialsRotated::ComputeSphericalBasis2D( double my, double phi
             idx_vector++;
         }
     }
-    Vector m1{ _YBasis[idx_cell][1], _YBasis[idx_cell][2] };
-    Matrix m2{ { _YBasis[idx_cell][3], _YBasis[idx_cell][4] }, { _YBasis[idx_cell][4], _YBasis[idx_cell][5] } };
+    Vector m1{ _YBasis[1], _YBasis[2] };
+    Matrix m2{ { _YBasis[3], _YBasis[4] }, { _YBasis[4], _YBasis[5] } };
 
     // Rotate basis back
-    m1 = RotateM1( m1, blaze::trans( rotationMatrix ) );
-    m2 = RotateM2( m2, blaze::trans( rotationMatrix ), rotationMatrix );
+    m1 = RotateM1( m1, rotationMatrixTrans );
+    m2 = RotateM2( m2, rotationMatrixTrans, rotationMatrix );
 
     _YBasis[0] = m1[0];
     _YBasis[1] = m1[1];
