@@ -78,18 +78,30 @@ Vector SphericalMonomialsRotated::ComputeSphericalBasis2D( double my, double phi
             idx_vector++;
         }
     }
+
     Vector m1{ _YBasis[1], _YBasis[2] };
-    Matrix m2{ { _YBasis[3], _YBasis[4] }, { _YBasis[4], _YBasis[5] } };
+    Matrix m2{ { _YBasis[3], 0.5 * _YBasis[4] }, { 0.5 * _YBasis[4], _YBasis[5] } };
 
     // Rotate basis back
     m1 = RotateM1( m1, rotationMatrixTrans );
     m2 = RotateM2( m2, rotationMatrixTrans, rotationMatrix );
 
-    _YBasis[0] = m1[0];
-    _YBasis[1] = m1[1];
-    _YBasis[2] = m2( 0, 0 );
-    _YBasis[3] = m2( 1, 0 );
-    _YBasis[4] = m2( 1, 1 );
+    _YBasis[1] = m1[0];
+    _YBasis[2] = m1[1];
+    _YBasis[3] = m2( 0, 0 );
+    _YBasis[4] = 2 * m2( 1, 0 );
+    _YBasis[5] = m2( 1, 1 );
+
+    //for( unsigned idx_degree = 0; idx_degree <= _LMaxDegree; idx_degree++ ) {
+    //    // elem = Omega_x^a+ Omega_y^b  : a+b = idx_degree
+    //    omegaX = Omega_x( my, phi, r );
+    //    omegaY = Omega_y( my, phi, r );
+    //    for( a = 0; a <= idx_degree; a++ ) {
+    //        b                   = idx_degree - a;    // b uniquely defined
+    //        _YBasis[idx_vector] = Power( omegaX, a ) * Power( omegaY, b );
+    //        idx_vector++;
+    //    }
+    //}
 
     return _YBasis;
 }

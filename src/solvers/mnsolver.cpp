@@ -21,6 +21,7 @@ MNSolver::MNSolver( Config* settings ) : SolverBase( settings ) {
     _basis           = SphericalBase::Create( _settings );
     _nSystem         = _basis->GetBasisSize();
 
+
     // build quadrature object and store quadrature points and weights
     _quadPoints = _quadrature->GetPoints();
     _weights    = _quadrature->GetWeights();

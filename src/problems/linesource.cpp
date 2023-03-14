@@ -166,7 +166,7 @@ VectorVector LineSource_Moment::SetupIC() {
 
     Vector uIC( ntotalEquations, 0 );
 
-    if( _settings->GetSphericalBasisName() == SPHERICAL_MONOMIALS ) {
+    if( _settings->GetSphericalBasisName() == SPHERICAL_MONOMIALS || _settings->GetSphericalBasisName() == SPHERICAL_MONOMIALS_ROTATED ) {
         QuadratureBase* quad          = QuadratureBase::Create( _settings );
         VectorVector quadPointsSphere = quad->GetPointsSphere();
         Vector w                      = quad->GetWeights();
@@ -196,7 +196,7 @@ VectorVector LineSource_Moment::SetupIC() {
 
         double kinetic_density = std::max( 1.0 / ( 4.0 * M_PI * t ) * std::exp( -( x * x + y * y ) / ( 4 * t ) ), epsilon );
 
-        if( _settings->GetSphericalBasisName() == SPHERICAL_MONOMIALS ) {
+        if( _settings->GetSphericalBasisName() == SPHERICAL_MONOMIALS || _settings->GetSphericalBasisName() == SPHERICAL_MONOMIALS_ROTATED ) {
             initial_sol[j] = kinetic_density * uIC / uIC[0];    // Remember scaling
         }
         if( _settings->GetSphericalBasisName() == SPHERICAL_HARMONICS ) {
@@ -257,7 +257,7 @@ VectorVector LineSource_Moment_1D::SetupIC() {
         VectorVector cellMids = _mesh->GetCellMidPoints();
         Vector uIC( ntotalEquations, 0 );
 
-        if( _settings->GetSphericalBasisName() == SPHERICAL_MONOMIALS ) {
+        if( _settings->GetSphericalBasisName() == SPHERICAL_MONOMIALS || _settings->GetSphericalBasisName() == SPHERICAL_MONOMIALS_ROTATED ) {
             QuadratureBase* quad          = QuadratureBase::Create( _settings );
             VectorVector quadPointsSphere = quad->GetPointsSphere();
             Vector w                      = quad->GetWeights();
@@ -280,7 +280,7 @@ VectorVector LineSource_Moment_1D::SetupIC() {
         for( unsigned j = 0; j < cellMids.size(); ++j ) {
             double x               = cellMids[j][0];
             double kinetic_density = std::max( 1.0 / ( 4.0 * M_PI * t ) * std::exp( -( x * x ) / ( 4 * t ) ), epsilon );
-            if( _settings->GetSphericalBasisName() == SPHERICAL_MONOMIALS ) {
+            if( _settings->GetSphericalBasisName() == SPHERICAL_MONOMIALS  || _settings->GetSphericalBasisName() == SPHERICAL_MONOMIALS_ROTATED) {
                 initialSolution[j] = kinetic_density * uIC / uIC[0];    // Remember scaling
             }
             if( _settings->GetSphericalBasisName() == SPHERICAL_HARMONICS ) {
