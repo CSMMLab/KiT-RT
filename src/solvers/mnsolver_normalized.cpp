@@ -24,20 +24,17 @@ MNSolverNormalized::~MNSolverNormalized() {}
 void MNSolverNormalized::IterPreprocessing( unsigned /*idx_pseudotime*/ ) {
 
     // ------- Entropy closure Step ----------------
+#pragma omp parallel for
     for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
         _u0[idx_cell] = _sol[idx_cell][0];
         _sol[idx_cell] /= _u0[idx_cell];    // assume _u0 > 0 always!!
     }
-
-    // TextProcessingToolbox::PrintVectorVector( _sol );
     Vector alpha_norm_per_cell( _nCells, 0 );    // ONLY FOR DEBUGGING! THIS SLOWS DOWN THE CODE
-
     _optimizer->SolveMultiCell( _alpha, _sol, _momentBasis, alpha_norm_per_cell );
 
     // ------- Solution reconstruction step ----
 #pragma omp parallel for
     for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
-
         alpha_norm_per_cell[idx_cell] *= _momentBasis[0][0] * 0.5 * _settings->GetRegularizerGamma();    // is constant
         // std::cout << alpha_norm << "|" << _momentBasis[0][0] << "\n";
         if( _settings->GetEntropyDynamicAnsatz() ) {

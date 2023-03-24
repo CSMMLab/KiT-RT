@@ -9,6 +9,7 @@
 #include "toolboxes/errormessages.hpp"
 #include "velocitybasis/sphericalharmonics.hpp"
 #include "velocitybasis/sphericalmonomials.hpp"
+#include "velocitybasis/sphericalmonomialsrotated.hpp"
 
 SphericalBase* SphericalBase::Create( Config* settings ) {
     SPHERICAL_BASIS_NAME name = settings->GetSphericalBasisName();
