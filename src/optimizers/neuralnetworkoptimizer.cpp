@@ -79,16 +79,17 @@ NeuralNetworkOptimizer::NeuralNetworkOptimizer( Config* settings ) : OptimizerBa
     _tfModelInputName                            = "";
     bool model_found                             = false;
     std::vector<std::string> input_name_1_models = {
-        "Monomial_Mk11_M1_2D",        "Monomial_Mk12_M1_2D",        "Monomial_Mk12_M1_2D_gamma3", "Monomial_Mk11_M2_2D",
-        "Monomial_Mk11_M2_2D_gamma1", "Monomial_Mk11_M2_2D_gamma2", "Monomial_Mk11_M2_2D_gamma3", "Monomial_Mk12_M2_2D",
-        "Monomial_Mk12_M2_2D_gamma1", "Monomial_Mk12_M2_2D_gamma2", "Monomial_Mk12_M2_2D_gamma3", "Monomial_Mk11_M3_2D",
-        "Monomial_Mk11_M3_2D_gamma1", "Monomial_Mk11_M3_2D_gamma2", "Monomial_Mk11_M3_2D_gamma3", "Monomial_Mk12_M3_2D",
-        "Monomial_Mk12_M3_2D_gamma1", "Monomial_Mk12_M3_2D_gamma2", "Monomial_Mk12_M3_2D_gamma3", "Monomial_Mk13_M3_2D",
-        "Monomial_Mk13_M3_2D_gamma1", "Monomial_Mk13_M3_2D_gamma2", "Monomial_Mk13_M3_2D_gamma3", "Monomial_Mk11_M4_2D",
-        "Monomial_Mk11_M4_2D_gamma1", "Monomial_Mk11_M4_2D_gamma2", "Monomial_Mk11_M4_2D_gamma3", "Monomial_Mk12_M4_2D",
-        "Monomial_Mk12_M4_2D_gamma1", "Monomial_Mk12_M4_2D_gamma2", "Monomial_Mk12_M4_2D_gamma3", "Monomial_Mk11_M5_2D",
-        "Monomial_Mk11_M5_2D_gamma1", "Monomial_Mk11_M5_2D_gamma2", "Monomial_Mk11_M5_2D_gamma3", "Monomial_Mk12_M5_2D",
-        "Monomial_Mk12_M5_2D_gamma1", "Monomial_Mk12_M5_2D_gamma2", "Monomial_Mk12_M5_2D_gamma3" };
+        "Monomial_Mk11_M1_2D",        "Monomial_Mk11_M1_2D_gamma1", "Monomial_Mk11_M1_2D_gamma2", "Monomial_Mk11_M1_2D_gamma3",
+        "Monomial_Mk12_M1_2D",        "Monomial_Mk12_M1_2D_gamma3", "Monomial_Mk11_M2_2D",        "Monomial_Mk11_M2_2D_gamma1",
+        "Monomial_Mk11_M2_2D_gamma2", "Monomial_Mk11_M2_2D_gamma3", "Monomial_Mk12_M2_2D",        "Monomial_Mk12_M2_2D_gamma1",
+        "Monomial_Mk12_M2_2D_gamma2", "Monomial_Mk12_M2_2D_gamma3", "Monomial_Mk11_M3_2D",        "Monomial_Mk11_M3_2D_gamma1",
+        "Monomial_Mk11_M3_2D_gamma2", "Monomial_Mk11_M3_2D_gamma3", "Monomial_Mk12_M3_2D",        "Monomial_Mk12_M3_2D_gamma1",
+        "Monomial_Mk12_M3_2D_gamma2", "Monomial_Mk12_M3_2D_gamma3", "Monomial_Mk13_M3_2D",        "Monomial_Mk13_M3_2D_gamma1",
+        "Monomial_Mk13_M3_2D_gamma2", "Monomial_Mk13_M3_2D_gamma3", "Monomial_Mk11_M4_2D",        "Monomial_Mk11_M4_2D_gamma1",
+        "Monomial_Mk11_M4_2D_gamma2", "Monomial_Mk11_M4_2D_gamma3", "Monomial_Mk12_M4_2D",        "Monomial_Mk12_M4_2D_gamma1",
+        "Monomial_Mk12_M4_2D_gamma2", "Monomial_Mk12_M4_2D_gamma3", "Monomial_Mk11_M5_2D",        "Monomial_Mk11_M5_2D_gamma1",
+        "Monomial_Mk11_M5_2D_gamma2", "Monomial_Mk11_M5_2D_gamma3", "Monomial_Mk12_M5_2D",        "Monomial_Mk12_M5_2D_gamma1",
+        "Monomial_Mk12_M5_2D_gamma2", "Monomial_Mk12_M5_2D_gamma3" };
     for( std::vector<std::string>::iterator it = input_name_1_models.begin(); it != input_name_1_models.end(); ++it ) {
         if( tfModelName.compare( *it ) == 0 ) {
             model_found       = true;
