@@ -40,10 +40,12 @@ class NeuralNetworkOptimizer : public OptimizerBase
     unsigned _nSystem;                /*!< @brief  size of the moment system including zero order moment*/
     VectorVector _reducedMomentBasis; /*!< @brief reduced basis functions (excluding order zero) */
 
-    vector<Matrix> _rotationMats;  /*!< @brief vector of Rotation matrices for symmetry enforcing */
-    vector<Matrix> _rotationMatsT; /*!< @brief vector of transpose Rotation matrices for symmetry enforcing */
+    std::vector<Matrix> _rotationMats;  /*!< @brief vector of Rotation matrices for symmetry enforcing */
+    std::vector<Matrix> _rotationMatsT; /*!< @brief vector of transpose Rotation matrices for symmetry enforcing */
 
-    Matrix CreateRotator( const Vector& uFirstMoment ); /*!< @brief Creates a rotation matrix R using the first moment of a momnet vector */
+    Matrix CreateRotator( const Vector& uFirstMoment ); /*!< @brief Creates a rotation matrix R for the tensorized monomial basis using the first moment of a momnet vector */
+    Matrix CreateRotatorSphericalHarmonics( double theta ); /*!< @brief Creates a rotation matrix R for the spherical harmonics basisusing the first moment of a momnet vector */
+
     Vector RotateM1( Vector& vec, Matrix& R );          /*!< @brief Rotates the M1 part of a 2D moment vector using a rotation matrix R */
     /*!< @brief Rotates the tensorized M2 part of a 2D moment vector using a rotation matrix R */
     Matrix RotateM2( Matrix& vec, Matrix& R, Matrix& Rt );
@@ -51,7 +53,7 @@ class NeuralNetworkOptimizer : public OptimizerBase
     /*!< @brief Computes the neural network inference and rotation for monomial basis */
     void InferenceMonomial( VectorVector& alpha, VectorVector& u, Vector& alpha_norms );
     /*!< @brief Computes the neural network inference and rotation for spherical harmonics basis */
-    void InferenceSphericalHarmonics( VectorVector& alpha, VectorVector& u, Vector& alpha_norms );
+    void InferenceSphericalHarmonics( VectorVector& alpha, VectorVector& u,const VectorVector& moments, Vector& alpha_norms );
 };
 #else
 // Dummy class
