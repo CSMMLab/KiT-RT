@@ -47,6 +47,11 @@ class NeuralNetworkOptimizer : public OptimizerBase
     Vector RotateM1( Vector& vec, Matrix& R );          /*!< @brief Rotates the M1 part of a 2D moment vector using a rotation matrix R */
     /*!< @brief Rotates the tensorized M2 part of a 2D moment vector using a rotation matrix R */
     Matrix RotateM2( Matrix& vec, Matrix& R, Matrix& Rt );
+
+    /*!< @brief Computes the neural network inference and rotation for monomial basis */
+    void InferenceMonomial( VectorVector& alpha, VectorVector& u, Vector& alpha_norms );
+    /*!< @brief Computes the neural network inference and rotation for spherical harmonics basis */
+    void InferenceSphericalHarmonics( VectorVector& alpha, VectorVector& u, Vector& alpha_norms );
 };
 #else
 // Dummy class

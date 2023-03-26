@@ -1,0 +1,20 @@
+date;2023-03-23
+git_version;a4d5021f78a60c6c7382207ee24abdf797231516
+sampling;2
+batch;256
+curriculum;1
+degree;1
+epoch;10
+folder;mk11_M1_2D_g0
+loadModel;0
+model;11
+normalized moments;True
+decorrelate inputs;True
+scaled outputs;False
+objective;1
+processingmode;1
+spatial Dimension;2
+verbosity;2
+training;1
+network width;100
+network depth;3
