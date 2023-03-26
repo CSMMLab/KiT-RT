@@ -89,7 +89,9 @@ NeuralNetworkOptimizer::NeuralNetworkOptimizer( Config* settings ) : OptimizerBa
         "Monomial_Mk11_M4_2D_gamma1", "Monomial_Mk11_M4_2D_gamma2", "Monomial_Mk11_M4_2D_gamma3", "Monomial_Mk12_M4_2D",
         "Monomial_Mk12_M4_2D_gamma1", "Monomial_Mk12_M4_2D_gamma2", "Monomial_Mk12_M4_2D_gamma3", "Monomial_Mk11_M5_2D",
         "Monomial_Mk11_M5_2D_gamma1", "Monomial_Mk11_M5_2D_gamma2", "Monomial_Mk11_M5_2D_gamma3", "Monomial_Mk12_M5_2D",
-        "Monomial_Mk12_M5_2D_gamma1", "Monomial_Mk12_M5_2D_gamma2", "Monomial_Mk12_M5_2D_gamma3" };
+        "Monomial_Mk12_M5_2D_gamma1", "Monomial_Mk12_M5_2D_gamma2", "Monomial_Mk12_M5_2D_gamma3",
+        "Harmonic_Mk11_M2_3D", "Harmonic_Mk11_M2_3D_gamma1","Harmonic_Mk11_M2_3D_gamma2","Harmonic_Mk11_M2_3D_gamma3"};
+
     for( std::vector<std::string>::iterator it = input_name_1_models.begin(); it != input_name_1_models.end(); ++it ) {
         if( tfModelName.compare( *it ) == 0 ) {
             model_found       = true;
