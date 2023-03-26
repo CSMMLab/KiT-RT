@@ -133,8 +133,9 @@ Matrix NeuralNetworkOptimizer::CreateRotatorSphericalHarmonics(double theta ) {
     // Assumes that spherical harmonics degree is > 1
 
     double c = cos(theta);
-    double s = sin(theta);
-    double c2 = cos(2*theta);
+    double s = sin( theta );
+
+    double c2 = cos( 2 * theta );
     double s2 = sin(2*theta);
 
     Matrix R = Matrix(_nSystem,_nSystem,0.0);
@@ -345,9 +346,6 @@ void NeuralNetworkOptimizer::InferenceMonomial( VectorVector& alpha, VectorVecto
 void NeuralNetworkOptimizer::InferenceSphericalHarmonics( VectorVector& alpha, VectorVector& u,const VectorVector& moments, Vector& alpha_norms ) {
     unsigned servingSize = _settings->GetNCells();
 
-
-
-
     Matrix rot180 = CreateRotatorSphericalHarmonics( M_PI );
 
     if( _settings->GetEnforceNeuralRotationalSymmetry() ) {    // Rotation Preprocessing
@@ -423,9 +421,7 @@ void NeuralNetworkOptimizer::InferenceSphericalHarmonics( VectorVector& alpha, V
                 for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
                     integral += _entropy->EntropyPrimeDual( dot( alpha_P_Red, _reducedMomentBasis[idx_quad] ) ) * _weights[idx_quad];
                 }
-                alpha[idx_cell][0] = -(log( integral )+ log(moments[0][0]) )/moments[0][0];    // log trafo
-
-
+                alpha[idx_cell][0] = -( log( integral ) + log( moments[0][0] ) ) / moments[0][0];    // log trafo
             }
         }
 
