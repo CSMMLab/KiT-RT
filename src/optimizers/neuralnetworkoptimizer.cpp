@@ -51,7 +51,6 @@ NeuralNetworkOptimizer::NeuralNetworkOptimizer( Config* settings ) : OptimizerBa
     switch( _settings->GetSphericalBasisName() ) {
         case SPHERICAL_HARMONICS: basisTypeStr = "Harmonic"; break;
         case SPHERICAL_MONOMIALS: basisTypeStr = "Monomial"; break;
-        case SPHERICAL_MONOMIALS_ROTATED: basisTypeStr = "Monomial"; break;
     }
     // std::string modelFolder = TENSORFLOW_MODEL_PATH;
     std::string tfModelName = basisTypeStr + "_Mk" + modelMkStr + "_M" + polyDegreeStr + "_" + dimStr + "D";

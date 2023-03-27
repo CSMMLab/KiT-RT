@@ -36,6 +36,8 @@ void DataGeneratorRegression::ComputeTrainingData() {
         ComputeRealizableSolution();
 
         // debugging purposes for rotation
+        TextProcessingToolbox::PrintVectorVector( _uSol );
+        TextProcessingToolbox::PrintVectorVector( _alpha );
 
         //TextProcessingToolbox::PrintVectorVector( _uSol );
         //TextProcessingToolbox::PrintVectorVector( _alpha );
