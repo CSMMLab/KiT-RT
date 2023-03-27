@@ -34,7 +34,7 @@ class OptimizerBase
      *  @param   alpha vector where the solution Lagrange multipliers are saved to.
      *  @param   u  moment vector
      *  @param   moments  VectorVector to the moment basis evaluated at all quadpoints    */
-    virtual void SolveMultiCell( VectorVector& alpha, VectorVector& u, const VectorVector& moments ) = 0;
+    virtual void SolveMultiCell( VectorVector& alpha, VectorVector& u, const VectorVector& moments, Vector& alpha_norms ) = 0;
 
     /*! @brief Reconstruct the moment sol from the Lagrange multiplier alpha
      *  @param sol moment vector

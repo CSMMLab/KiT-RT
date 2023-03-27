@@ -44,6 +44,7 @@ void DataGeneratorRegression::ComputeTrainingData() {
         VectorVector rot_uSol       = VectorVector( _setSize, Vector( _nTotalEntries, 0.0 ) );
         VectorVector rot_alpha_comp = VectorVector( _setSize, Vector( _nTotalEntries, 0.0 ) );
         VectorVector rot_alpha      = VectorVector( _setSize, Vector( _nTotalEntries, 0.0 ) );
+        Vector alpha_norm_dummy( _setSize, 0 );
 
         for( unsigned i = 0; i < _setSize; i++ ) {
             Vector u1{ _uSol[i][1], _uSol[i][2] };
@@ -70,7 +71,7 @@ void DataGeneratorRegression::ComputeTrainingData() {
             rot_alpha[i][3] = (float)( alpha2( 0, 1 ) );
             rot_alpha[i][4] = (float)( alpha2( 1, 1 ) );
         }
-        _optimizer->SolveMultiCell( rot_alpha_comp, rot_uSol, _momentBasis );
+        _optimizer->SolveMultiCell( rot_alpha_comp, rot_uSol, _momentBasis, alpha_norm_dummy );
 
         TextProcessingToolbox::PrintVectorVector( rot_alpha );
         TextProcessingToolbox::PrintVectorVector( rot_alpha_comp );
@@ -86,7 +87,9 @@ void DataGeneratorRegression::ComputeTrainingData() {
         // CheckRealizability();
 
         // --- compute alphas ---
-        _optimizer->SolveMultiCell( _alpha, _uSol, _momentBasis );
+        Vector alpha_norm_dummy( _setSize, 0 );
+
+        _optimizer->SolveMultiCell( _alpha, _uSol, _momentBasis, alpha_norm_dummy );
         // --- Postprocessing
         if( _settings->GetRealizabilityReconstruction() ) {
             log->info( "| Compute realizable problems." );

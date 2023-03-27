@@ -301,8 +301,7 @@ void Config::SetConfigOptions() {
     /*! @brief Neural Model Gamma \n DESCRIPTION:  Specifies regularization parameter for neural networks \n DEFAULT 0 (values: 0,1,2,3)
     \ingroup Config */
     AddUnsignedShortOption( "NEURAL_MODEL_GAMMA", _neuralGamma, 0 );
-    /*! @brief Neural Model Gamma \n DESCRIPTION:  Specifies regularization parameter for neural networks \n DEFAULT 0 (values: 0,1,2,3)
-    \ingroup Config */
+    /*! @brief NEURAL_MODEL_ENFORCE_ROTATION_SYMMETRY \n DESCRIPTION:  Flag to enforce rotational symmetry \n DEFAULT false \ingroup Config */
     AddBoolOption( "NEURAL_MODEL_ENFORCE_ROTATION_SYMMETRY", _enforceNeuralRotationalSymmetry, false );
 
     // Mesh related options
@@ -792,6 +791,19 @@ void Config::SetPostprocessing() {
     {
         if( _regularizerGamma <= 0.0 ) {
             ErrorMessages::Error( "REGULARIZER_GAMMA must be positive.", CURRENT_FUNCTION );
+        }
+
+        if( _entropyOptimizerName == ML ) {
+            // set regularizer gamma to the correct value
+            switch( _neuralGamma ) {
+                case 0: _regularizerGamma = 0; break;
+                case 1: _regularizerGamma = 0.1; break;
+                case 2: _regularizerGamma = 0.01; break;
+                case 3: _regularizerGamma = 0.001; break;
+            }
+        }
+        if( _entropyOptimizerName == NEWTON ) {
+            _regularizerGamma = 0.0;
         }
     }
 }

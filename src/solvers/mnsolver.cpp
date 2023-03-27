@@ -110,7 +110,9 @@ void MNSolver::ComputeRealizableSolution( unsigned idx_cell ) {
 void MNSolver::IterPreprocessing( unsigned /*idx_pseudotime*/ ) {
 
     // ------- Entropy closure Step ----------------
-    _optimizer->SolveMultiCell( _alpha, _sol, _momentBasis );    // parallel
+    Vector alpha_norm_dummy( _nCells, 0 );    // ONLY FOR DEBUGGING! THIS SLOWS DOWN THE CODE
+
+    _optimizer->SolveMultiCell( _alpha, _sol, _momentBasis, alpha_norm_dummy );    // parallel
 
     // ------- Solution reconstruction step ----
 #pragma omp parallel for
