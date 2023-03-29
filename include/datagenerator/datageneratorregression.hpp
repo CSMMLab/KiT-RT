@@ -41,6 +41,7 @@ class DataGeneratorRegression : public DataGeneratorBase
     Matrix CreateRotator( const Vector& uFirstMoment );
     Vector RotateM1( Vector& vec, Matrix& R );
     Matrix RotateM2( Matrix& vec, Matrix& R, Matrix& Rt );
+    Matrix CreateRotatorSphericalHarmonics(double theta ,double x, double y);
 };
 
 #endif    // DATAGENERATORREGRESSION_H

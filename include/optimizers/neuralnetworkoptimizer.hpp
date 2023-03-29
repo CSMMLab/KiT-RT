@@ -44,7 +44,8 @@ class NeuralNetworkOptimizer : public OptimizerBase
     std::vector<Matrix> _rotationMatsT; /*!< @brief vector of transpose Rotation matrices for symmetry enforcing */
 
     Matrix CreateRotator( const Vector& uFirstMoment ); /*!< @brief Creates a rotation matrix R for the tensorized monomial basis using the first moment of a momnet vector */
-    Matrix CreateRotatorSphericalHarmonics( double theta ); /*!< @brief Creates a rotation matrix R for the spherical harmonics basisusing the first moment of a momnet vector */
+    Matrix CreateRotatorSphericalHarmonics( double theta, double x, double y ); /*!< @brief Creates a rotation matrix R for the spherical harmonics basisusing the first moment of a momnet vector */
+    Matrix CreateRotatorSphericalHarmonics2D( double theta, double x, double y ); /*!< @brief Creates a rotation matrix R for the spherical harmonics basisusing the first moment of a momnet vector */
 
     Vector RotateM1( Vector& vec, Matrix& R );          /*!< @brief Rotates the M1 part of a 2D moment vector using a rotation matrix R */
     /*!< @brief Rotates the tensorized M2 part of a 2D moment vector using a rotation matrix R */
@@ -54,6 +55,7 @@ class NeuralNetworkOptimizer : public OptimizerBase
     void InferenceMonomial( VectorVector& alpha, VectorVector& u, Vector& alpha_norms );
     /*!< @brief Computes the neural network inference and rotation for spherical harmonics basis */
     void InferenceSphericalHarmonics( VectorVector& alpha, VectorVector& u,const VectorVector& moments, Vector& alpha_norms );
+    void InferenceSphericalHarmonics2D( VectorVector& alpha, VectorVector& u,const VectorVector& moments, Vector& alpha_norms );
 };
 #else
 // Dummy class

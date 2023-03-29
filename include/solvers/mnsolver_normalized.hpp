@@ -26,5 +26,8 @@ class MNSolverNormalized : public MNSolver
 
     // Solver
     void IterPreprocessing( unsigned /*idx_iter*/ ) override;
+
+    // Debugging purposes
+    OptimizerBase* _optimizer2;
 };
 #endif    // MNSOLVER_NORMALIZED_H

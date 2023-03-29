@@ -37,6 +37,7 @@ void DataGeneratorRegression2D::ComputeMoments() {
         phi                    = _quadPointsSphere[idx_quad][1];
         _momentBasis[idx_quad] = _basisGenerator->ComputeSphericalBasis( my, phi );
     }
+
 }
 
 void DataGeneratorRegression2D::SampleSolutionU() {
