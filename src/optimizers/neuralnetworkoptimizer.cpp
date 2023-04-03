@@ -351,7 +351,6 @@ void NeuralNetworkOptimizer::InferenceMonomial( VectorVector& alpha, VectorVecto
                     }
                     alphaRed[idx_sys] = ( alphaRed[idx_sys] + alphaRedMirror[idx_sys] ) / 2;    // average (and store in alphaRed)
                 }
-                alpha_norms[idx_cell] = norm( alphaRed ) * norm( alphaRed );
 
                 // Rotate Back
                 Vector alpha1{ alphaRed[0], alphaRed[1] };
@@ -365,6 +364,9 @@ void NeuralNetworkOptimizer::InferenceMonomial( VectorVector& alpha, VectorVecto
                 alphaRed[2] = alpha2( 0, 0 );
                 alphaRed[3] = 2 * alpha2( 1, 0 );
                 alphaRed[4] = alpha2( 1, 1 );
+
+                alpha_norms[idx_cell] = norm( alphaRed ) * norm( alphaRed );
+
 
                 // Restore alpha_0
                 double integral = 0.0;
