@@ -317,7 +317,7 @@ void NeuralNetworkOptimizer::InferenceMonomial( VectorVector& alpha, VectorVecto
                     // Mirror order 1 Moments
                     alphaRedMirror[idx_sys] =
                         -1 * (double)_modelServingVectorAlpha[( _settings->GetNCells() + idx_cell ) * ( _nSystem - 1 ) + idx_sys];
-                   // alphaRed[idx_sys] = ( alphaRed[idx_sys] + alphaRedMirror[idx_sys] ) / 2;    // average (and store in alphaRed)
+                    alphaRed[idx_sys] = ( alphaRed[idx_sys] + alphaRedMirror[idx_sys] ) / 2;    // average (and store in alphaRed)
                 }
 
                 // Rotate Back
