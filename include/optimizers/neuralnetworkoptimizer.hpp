@@ -52,7 +52,7 @@ class NeuralNetworkOptimizer : public OptimizerBase
     Matrix RotateM2( Matrix& vec, Matrix& R, Matrix& Rt );
 
     /*!< @brief Computes the neural network inference and rotation for monomial basis */
-    void InferenceMonomial( VectorVector& alpha, VectorVector& u, Vector& alpha_norms );
+    void InferenceMonomial( VectorVector& alpha, VectorVector& u,const VectorVector& moments, Vector& alpha_norms );
     /*!< @brief Computes the neural network inference and rotation for spherical harmonics basis */
     void InferenceSphericalHarmonics( VectorVector& alpha, VectorVector& u,const VectorVector& moments, Vector& alpha_norms );
     void InferenceSphericalHarmonics2D( VectorVector& alpha, VectorVector& u,const VectorVector& moments, Vector& alpha_norms );
