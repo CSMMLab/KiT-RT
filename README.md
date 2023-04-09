@@ -140,13 +140,12 @@ ldconfig /usr/local/lib
 ```
 ## Cite
 ```
-@article{kitrt,
-  author = {Schotthöfer, Steffen and Kusch, Jonas and Stammer, Pia and Wolters, Jannick and Xiao, Tianbai },
-  title = {KiT-RT: Kinetic Transport for Radio Therapy Solver},
-  year = {2022},
-  publisher = {GitHub},
-  journal = {GitHub repository},
-  howpublished = {\url{https://github.com/CSMMLab/KiT-RT}},
-  commit = {b9943e1aae6a54c2c3d2033d168de1ab7912ae75}
+@misc{kitrt2022,
+      title={KiT-RT: An extendable framework for radiative transfer and therapy}, 
+      author={Jonas Kusch and Steffen Schotthöfer and Pia Stammer and Jannick Wolters and Tianbai Xiao},
+      year={2022},
+      eprint={2205.08417},
+      archivePrefix={arXiv},
+      primaryClass={physics.med-ph}
 }
 ```
