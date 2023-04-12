@@ -52,8 +52,7 @@ DataGeneratorBase::DataGeneratorBase( Config* settings ) {
     _quadPoints       = _quadrature->GetPoints();
     _weights          = _quadrature->GetWeights();
     _quadPointsSphere = _quadrature->GetPointsSphere();
-    TextProcessingToolbox::PrintVectorVector( _quadPointsSphere );
-    std::cout << _weights << "\n";
+
     // Spherical Harmonics
     if( _settings->GetSphericalBasisName() == SPHERICAL_HARMONICS && _maxPolyDegree > 0 && _settings->GetAlphaSampling() == false) {
         ErrorMessages::Error( "No direct moment sampling algorithm for spherical harmonics basis with degree higher than 0 implemented", CURRENT_FUNCTION );
@@ -125,7 +124,6 @@ void DataGeneratorBase::SampleMultiplierAlpha() {
                 momentsRed[idx_nq][idx_sys - 1] = _momentBasis[idx_nq][idx_sys];
             }
         }
-        TextProcessingToolbox::PrintVectorVector( _momentBasis );
 
         // Create generator
         std::default_random_engine generator;
@@ -202,6 +200,8 @@ bool DataGeneratorBase::ComputeEVRejection( unsigned idx_set ) {
     Vector ew = Vector( _nTotalEntries, 0.0 );
     eigen( hessianSym, ew );
     if( min( ew ) < _settings->GetMinimalEVBound() ) {
+        std::cout << "ew: " <<  min( ew ) << "\n";
+
         return false;
     }
     return true;
@@ -214,6 +214,8 @@ bool DataGeneratorBase::ComputeReducedEVRejection( VectorVector& redMomentBasis,
     Vector ew = Vector( _nTotalEntries - 1, 0.0 );
     eigen( hessianSym, ew );
     if( min( ew ) < _settings->GetMinimalEVBound() ) {
+        std::cout << "ew: " <<  min( ew ) << "\n";
+
         return false;
     }
     return true;

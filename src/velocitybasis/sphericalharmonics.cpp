@@ -71,7 +71,7 @@ Vector SphericalHarmonics::ComputeSphericalBasis( double my, double phi, double 
         }
         return r * YBasis1D;
     }
-    // For 2D, just use the terms idx_l + idx_k % 2 == 1
+    // For 2D, just use the terms k!=l, except for l=0
     if( _spatialDim == 2 ) {
         Vector YBasis2D( GetBasisSize(), 0.0 );
         unsigned count = 0;

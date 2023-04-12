@@ -366,14 +366,16 @@ class Config
     // ---- Setters for option structure
     // This section is dangerous
     // Quadrature Structure
-    void SetNQuadPoints( unsigned nq ) { _nQuadPoints = nq; }        /*!< @brief Never change the nq! This is only for the test framework. */
-    void SetQuadName( QUAD_NAME quadName ) { _quadName = quadName; } /*!< @brief Never change the quadName! This is only for the test framework. */
-    void SetQuadOrder( unsigned quadOrder ) {
+    void inline SetNQuadPoints( unsigned nq ) { _nQuadPoints = nq; }        /*!< @brief Never change the nq! This is only for the test framework. */
+    void inline SetQuadName( QUAD_NAME quadName ) { _quadName = quadName; } /*!< @brief Never change the quadName! This is only for the test framework. */
+    void inline SetQuadOrder( unsigned quadOrder ) {
         _quadOrder = quadOrder;
     }                                                               /*!< @brief Never change the quadOrder! This is only for the test framework. */
-    void SetSNAllGaussPts( bool useall ) { _allGaussPts = useall; } /*!< @brief Never change the this! This is only for the test framework. */
+    void inline SetSNAllGaussPts( bool useall ) { _allGaussPts = useall; } /*!< @brief Never change the this! This is only for the test framework. */
     // Mesh Structure
-    void SetNCells( unsigned nCells ) { _nCells = nCells; }
+    void inline SetNCells( unsigned nCells ) { _nCells = nCells; }
+    void inline SetEnforceNeuralRotationalSymmetry(bool symmetryEnforce) {  _enforceNeuralRotationalSymmetry =symmetryEnforce ; }
+
 };
 
 #endif    // CONFIG_H

@@ -20,12 +20,60 @@ DataGeneratorRegression::DataGeneratorRegression( Config* settings ) : DataGener
 
 DataGeneratorRegression::~DataGeneratorRegression() {}
 
+Matrix DataGeneratorRegression::CreateRotatorSphericalHarmonics(double theta, double x, double y ) {
+    // Assumes that spherical harmonics degree is > 1
+
+    double r =  sqrt( x * x + y * y );
+    double c = x / r;
+    double s = -y / r;
+    double c2 = c*c - s*s;
+    double s2 = 2*s*c;
+
+
+    Matrix R = Matrix(_nTotalEntries,_nTotalEntries,0.0);
+
+    // Build R by going through submatrices
+    R(0,0) =1.0;
+    if ( _settings->GetMaxMomentDegree()>=1){
+        R(1,1) = c;
+        R(3,1) = s;
+        R(2,2) = 1.0;
+        R(1,3) = -s;
+        R(3,3) = c;
+    }
+    if ( _settings->GetMaxMomentDegree()>=2){
+        R(4,4) = c2;
+        R(4,8) = s2;
+        R(5,5) = c;
+        R(5,7) = s;
+        R(6,6) = 1;
+        R(7,5) = -s;
+        R(7,7) = c;
+        R(8,4) = -s2;
+        R(8,8) = c2;
+    }
+    if ( _settings->GetMaxMomentDegree()>=3){
+        ErrorMessages::Error("Rotation Matrix for spherical harmonics with degree >2 not yet implementd.",CURRENT_FUNCTION);
+    }
+    return R;
+}
+
 void DataGeneratorRegression::ComputeTrainingData() {
     PrintLoadScreen();
 
     auto log = spdlog::get( "event" );
     if( _settings->GetAlphaSampling() ) {
         // --- sample alpha ---
+        //TextProcessingToolbox::PrintVectorVector( _momentBasis );
+        Vector integral  = Vector(_nTotalEntries, 0.0);
+        double sum_weights = 0.0;
+        for (unsigned idx_q = 0; idx_q<_nq; idx_q++){
+            integral+=_momentBasis[idx_q]*_momentBasis[idx_q]* _weights[idx_q];
+            sum_weights +=  _weights[idx_q];
+        }
+        std::cout << integral << "\n";
+        std::cout << sum_weights << "\n";
+
         log->info( "| Sample Lagrange multipliers." );
         SampleMultiplierAlpha();
         log->info( "| Multipliers sampled." );
@@ -33,14 +81,56 @@ void DataGeneratorRegression::ComputeTrainingData() {
         log->info( "| Compute realizable problems." );
 
         // --- Postprocessing
+        //TextProcessingToolbox::PrintVectorVector( _alpha );
+        //_alpha[0][1] = 0.0;
+        //_alpha[0][2] = 0.0;
+        //_alpha[0][3] = 0.0;
+
+
         ComputeRealizableSolution();
 
         // debugging purposes for rotation
-        TextProcessingToolbox::PrintVectorVector( _uSol );
-        TextProcessingToolbox::PrintVectorVector( _alpha );
-
         //TextProcessingToolbox::PrintVectorVector( _uSol );
         //TextProcessingToolbox::PrintVectorVector( _alpha );
+
+        //log->info( "| Create Rotator." );
+        //double a = _uSol[0][1];
+        //double b = _uSol[0][3];
+        //double  theta = 0.0;
+        //double r = norm(Vector{a,b}); // norm
+        //if (r<1e-8){theta=0;}
+        //else{
+        //    theta = acos(a / r);
+        //}
+        ////std::cout << "theta: " << theta << "\n";
+        //Matrix R = CreateRotatorSphericalHarmonics(theta,_uSol[0][1],_uSol[0][3] ); //theta
+
+        //VectorVector rotU = VectorVector(_setSize,Vector(_nTotalEntries,0.0));
+        //VectorVector reconsRotU = VectorVector(_setSize,Vector(_nTotalEntries,0.0));
+        //VectorVector backRotU = VectorVector(_setSize,Vector(_nTotalEntries,0.0));
+        //VectorVector rotAlpha = VectorVector(_setSize,Vector(_nTotalEntries,0.0));
+
+        ////TextProcessingToolbox::PrintVectorVector( reconsRotU );
+        //TextProcessingToolbox::PrintMatrix(R);
+
+        //log->info( "| Rotate moments." );
+
+        //for(unsigned idx_set = 0; idx_set<_setSize;idx_set++){
+        //    rotU[idx_set]= R*_uSol[idx_set];
+        //    rotAlpha[idx_set]= R*_alpha[idx_set];
+        //    _optimizer->ReconstructMoments( reconsRotU[idx_set], rotAlpha[idx_set], _momentBasis );
+        //    backRotU[idx_set] =  blaze::trans(R )*reconsRotU[idx_set];
+        //}
+
+        //log->info( "| Print rotated moments." );
+
+        //TextProcessingToolbox::PrintVectorVector( rotU );
+        //TextProcessingToolbox::PrintVectorVector( reconsRotU );
+
+        //log->info( "| Print back rotated moments." );
+        //TextProcessingToolbox::PrintVectorVector( _uSol );
+        //TextProcessingToolbox::PrintVectorVector( backRotU );
+
 
         //std::cout << "here\n";
 

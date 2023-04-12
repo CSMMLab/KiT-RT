@@ -11,34 +11,52 @@
 #include "toolboxes/errormessages.hpp"
 #include "toolboxes/textprocessingtoolbox.hpp"
 #include "velocitybasis/sphericalbase.hpp"
+#include "optimizers/newtonoptimizer.hpp"
+#include "optimizers/partregularizednewtonoptimizer.hpp"
 
 // externals
 #include "spdlog/spdlog.h"
 #include <iostream>
 #include <mpi.h>
 
-MNSolverNormalized::MNSolverNormalized( Config* settings ) : MNSolver( settings ) { _u0 = Vector( _nCells, 0.0 ); }
+MNSolverNormalized::MNSolverNormalized( Config* settings ) : MNSolver( settings ) { _u0 = Vector( _nCells, 0.0 );
+     if (_settings->GetRegularizerGamma() > 0){
+         _optimizer2 = new PartRegularizedNewtonOptimizer( settings );
+
+     }
+     else{
+        _optimizer2 = new NewtonOptimizer( settings );
+     }
+}
 
 MNSolverNormalized::~MNSolverNormalized() {}
 
-void MNSolverNormalized::IterPreprocessing( unsigned /*idx_pseudotime*/ ) {
+void MNSolverNormalized::IterPreprocessing( unsigned idx_pseudotime ) {
+
 
     // ------- Entropy closure Step ----------------
-#pragma omp parallel for
+//#pragma omp parallel for
     for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
         _u0[idx_cell] = _sol[idx_cell][0];
         _sol[idx_cell] /= _u0[idx_cell];    // assume _u0 > 0 always!!
     }
     Vector alpha_norm_per_cell( _nCells, 0 );    // ONLY FOR DEBUGGING! THIS SLOWS DOWN THE CODE
 
-    _optimizer->SolveMultiCell( _alpha, _sol, _momentBasis, alpha_norm_per_cell );
+    if (idx_pseudotime <180){
+        std::cout << "use NEwton\n";
+        _optimizer2->SolveMultiCell( _alpha, _sol, _momentBasis, alpha_norm_per_cell ); //Newton for the first few iterations
+    }
+    else{
+       _optimizer->SolveMultiCell( _alpha, _sol, _momentBasis, alpha_norm_per_cell );
+       //_optimizer2->SolveMultiCell( _alpha, _sol, _momentBasis, alpha_norm_per_cell ); //Newton for the first few iterations
+
+    }
+
 
     // ------- Solution reconstruction step ----
 #pragma omp parallel for
     for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
-
         alpha_norm_per_cell[idx_cell] *= _momentBasis[0][0] * 0.5 * _settings->GetRegularizerGamma();    // is constant
-        // std::cout << alpha_norm << "|" << _momentBasis[0][0] << "\n";
         if( _settings->GetEntropyDynamicAnsatz() ) {
             for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
                 // compute the kinetic density at all grid cells
@@ -54,7 +72,7 @@ void MNSolverNormalized::IterPreprocessing( unsigned /*idx_pseudotime*/ ) {
                     _u0[idx_cell] * _entropy->EntropyPrimeDual( blaze::dot( _alpha[idx_cell], _momentBasis[idx_quad] ) );
             }
         }
-        if( _settings->GetRealizabilityReconstruction() ) ComputeRealizableSolution( idx_cell );
+        if( _settings->GetRealizabilityReconstruction() ){ ComputeRealizableSolution( idx_cell );}
         _sol[idx_cell] *= _u0[idx_cell];
     }
 

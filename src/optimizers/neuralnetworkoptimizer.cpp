@@ -80,6 +80,9 @@ NeuralNetworkOptimizer::NeuralNetworkOptimizer( Config* settings ) : OptimizerBa
     _tfModelInputName                            = "";
     bool model_found                             = false;
     std::vector<std::string> input_name_1_models = {
+        "Harmonic_Mk11_M1_2D",
+        "Harmonic_Mk12_M1_3D", "Harmonic_Mk12_M1_3D_gamma1", "Harmonic_Mk12_M1_3D_gamma2", "Harmonic_Mk12_M1_3D_gamma3",
+        "Harmonic_Mk11_M1_3D", "Harmonic_Mk11_M1_3D_gamma1", "Harmonic_Mk11_M1_3D_gamma2", "Harmonic_Mk11_M1_3D_gamma3",
         "Monomial_Mk11_M1_2D",        "Monomial_Mk11_M1_2D_gamma1", "Monomial_Mk11_M1_2D_gamma2", "Monomial_Mk11_M1_2D_gamma3",
         "Monomial_Mk12_M1_2D",        "Monomial_Mk12_M1_2D_gamma3", "Monomial_Mk11_M2_2D",        "Monomial_Mk11_M2_2D_gamma1",
         "Monomial_Mk11_M2_2D_gamma2", "Monomial_Mk11_M2_2D_gamma3", "Monomial_Mk12_M2_2D",        "Monomial_Mk12_M2_2D_gamma1",
@@ -114,7 +117,7 @@ NeuralNetworkOptimizer::NeuralNetworkOptimizer( Config* settings ) : OptimizerBa
 
 NeuralNetworkOptimizer::~NeuralNetworkOptimizer() {}
 
-void NeuralNetworkOptimizer::Solve( Vector& alpha, Vector& u, const VectorVector& /*moments*/, unsigned /*idx_cell*/ ) {}
+void NeuralNetworkOptimizer::Solve( Vector& /*alpha*/, Vector& /* u*/, const VectorVector& /*moments*/, unsigned /*idx_cell*/ ) {}
 
 Matrix NeuralNetworkOptimizer::CreateRotator( const Vector& uFirstMoment ) {
     double a = uFirstMoment[0];
@@ -128,42 +131,96 @@ Matrix NeuralNetworkOptimizer::CreateRotator( const Vector& uFirstMoment ) {
     return Matrix{ { c, -s }, { s, c } };    // Rotation Matrix
 }
 
-Matrix NeuralNetworkOptimizer::CreateRotatorSphericalHarmonics(double theta ) {
+Matrix NeuralNetworkOptimizer::CreateRotatorSphericalHarmonics(double theta, double x, double y ) {
     // Assumes that spherical harmonics degree is > 1
 
-    double c = cos(theta);
-    double s = sin( theta );
+    double r = norm( Vector{x,y} ); // sqrt( a * a + b * b );
+    double c = x / r;
+    double s = -y / r;
+    if (r <  std::numeric_limits<double>::epsilon()  ){
+        s = 0.0;
+        c = 1.0;
+    }
+    if (isnan(c) || isnan(s)){
+        std::cout << x << " | " << y << "\n";
+        ErrorMessages::Error("nan detected" ,CURRENT_FUNCTION);
+    }
 
-    double c2 = cos( 2 * theta );
-    double s2 = sin(2*theta);
+    //double c = cos(theta);
+    //double s = sin(theta);
+
+    double c2 = c*c - s*s;
+    double s2 = 2*s*c;
 
     Matrix R = Matrix(_nSystem,_nSystem,0.0);
 
-    int i = 0;
     // Build R by going through submatrices
     R(0,0) =1.0;
     if ( _settings->GetMaxMomentDegree()>=1){
         R(1,1) = c;
-        R(3,1) = -s;
-        R(1,3) = s;
+        R(3,1) = s;
+        R(2,2) = 1.0;
+        R(1,3) = -s;
         R(3,3) = c;
     }
     if ( _settings->GetMaxMomentDegree()>=2){
         R(4,4) = c2;
-        R(4,8) = s2;
+        R(4,8) = -s2;
         R(5,5) = c;
-        R(5,7) = s;
+        R(5,7) = -s;
         R(6,6) = 1;
-        R(7,5) = -s;
+        R(7,5) = s;
         R(7,7) = c;
-        R(8,4) = -s2;
+        R(8,4) = s2;
         R(8,8) = c2;
     }
     if ( _settings->GetMaxMomentDegree()>=3){
         ErrorMessages::Error("Rotation Matrix for spherical harmonics with degree >2 not yet implementd.",CURRENT_FUNCTION);
     }
-    TextProcessingToolbox::PrintMatrix(R);
+    return R;    // Rotation Matrix
+}
 
+Matrix NeuralNetworkOptimizer::CreateRotatorSphericalHarmonics2D(double theta, double x, double y ) {
+    // Assumes that spherical harmonics degree is > 1
+
+    double r = norm( Vector{x,y} ); // sqrt( a * a + b * b );
+    double c = x / r;
+    double s = -y / r;
+    if (r <  std::numeric_limits<double>::epsilon()  ){
+        s = 0.0;
+        c = 1.0;
+    }
+    if (isnan(c) || isnan(s)){
+        std::cout << x << " | " << y << "\n";
+        ErrorMessages::Error("nan detected" ,CURRENT_FUNCTION);
+    }
+
+    //double c = cos(theta);
+    //double s = sin(theta);
+
+    double c2 = c*c - s*s;
+    double s2 = 2*s*c;
+
+    Matrix R = Matrix(_nSystem,_nSystem,0.0);
+
+    // Build R by going through submatrices
+    R(0,0) =1.0;
+    if ( _settings->GetMaxMomentDegree()>=1){
+        R(1,1) = c;
+        R(2,1) = s;
+        R(1,2) = -s;
+        R(2,2) = c;
+    }
+    //if ( _settings->GetMaxMomentDegree()>=2){
+    //    R(4,4) = c2;
+    //    R(4,8) = -s2;
+    //    R(6,6) = 1;
+    //    R(8,4) = s2;
+    //    R(8,8) = c2;
+    //}
+    if ( _settings->GetMaxMomentDegree()>=2){
+        ErrorMessages::Error("Rotation Matrix for spherical harmonics with degree >2 not yet implementd.",CURRENT_FUNCTION);
+    }
     return R;    // Rotation Matrix
 }
 
@@ -171,7 +228,7 @@ Vector NeuralNetworkOptimizer::RotateM1( Vector& vec, Matrix& R ) { return R * v
 
 Matrix NeuralNetworkOptimizer::RotateM2( Matrix& vec, Matrix& R, Matrix& Rt ) { return R * vec * Rt; }
 
-void NeuralNetworkOptimizer::InferenceMonomial( VectorVector& alpha, VectorVector& u, Vector& alpha_norms ) {
+void NeuralNetworkOptimizer::InferenceMonomial( VectorVector& alpha, VectorVector& u,const VectorVector& moments, Vector& alpha_norms ) {
     unsigned servingSize = _settings->GetNCells();
     Matrix rot180{ { -1.0, 0.0 }, { 0.0, -1.0 } };
 
@@ -228,7 +285,7 @@ void NeuralNetworkOptimizer::InferenceMonomial( VectorVector& alpha, VectorVecto
         }
         servingSize *= 2;
     }
-    else {    // No Postprocessing
+    else {    // No Preprocessing
 #pragma omp parallel for
         for( unsigned idx_cell = 0; idx_cell < _settings->GetNCells(); idx_cell++ ) {
             for( unsigned idx_sys = 0; idx_sys < _nSystem - 1; idx_sys++ ) {
@@ -254,18 +311,45 @@ void NeuralNetworkOptimizer::InferenceMonomial( VectorVector& alpha, VectorVecto
             for( unsigned idx_cell = 0; idx_cell < _settings->GetNCells(); idx_cell++ ) {
                 Vector alphaRed       = Vector( _nSystem - 1, 0.0 );    // local reduced alpha
                 Vector alphaRedMirror = Vector( _nSystem - 1, 0.0 );    // local reduced mirrored alpha
+                Vector alphaCorr = Vector(_nSystem,0.0);
+                Vector uCorr =  Vector(_nSystem,0.0);
+
                 for( unsigned idx_sys = 0; idx_sys < _nSystem - 1; idx_sys++ ) {
                     alphaRed[idx_sys]       = (double)_modelServingVectorAlpha[idx_cell * ( _nSystem - 1 ) + idx_sys];
                     alphaRedMirror[idx_sys] = (double)_modelServingVectorAlpha[( _settings->GetNCells() + idx_cell ) * ( _nSystem - 1 ) + idx_sys];
                     // Mirror order 1 Moments
                     alphaRedMirror[idx_sys] =
                         -1 * (double)_modelServingVectorAlpha[( _settings->GetNCells() + idx_cell ) * ( _nSystem - 1 ) + idx_sys];
-
                     alphaRed[idx_sys] = ( alphaRed[idx_sys] + alphaRedMirror[idx_sys] ) / 2;    // average (and store in alphaRed)
+                    alphaCorr[idx_sys+1] = alphaRed[idx_sys];
                 }
 
+                // Correct rotation offset made by nn approximation
+                {
+                // Restore alpha_0
+                double integral = 0.0;
+                for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
+                    integral += _entropy->EntropyPrimeDual( dot( alphaRed, _reducedMomentBasis[idx_quad] ) ) * _weights[idx_quad];
+                }
+                alphaCorr[0] =  -log( integral );    // log trafo
+                for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
+                    uCorr += moments[idx_quad]*_entropy->EntropyPrimeDual( dot( alphaCorr, moments[idx_quad] ) ) * _weights[idx_quad];
+                }
+                //Rotate uCorr onto x-axis
+                Vector u1{ uCorr[1], uCorr[2] };
+                Vector u1_star(2,0.0);
+
+                Matrix rotationMatsCorr  = CreateRotator( u1 );
+
+                u1_star = RotateM1( u1, rotationMatsCorr );    //, _rotationMatsT[idx_cell] );
+                if (u1_star[1]> 0.000001){
+                    ErrorMessages::Error("Somethings wrong" + std::to_string(u1[1]) + " " + std::to_string(u1_star[1]),CURRENT_FUNCTION);
+                }
+                alphaRed = RotateM1( alphaRed, rotationMatsCorr ); // rotate corresponding alpha
+                }
                 // Rotate Back
                 alphaRed = RotateM1( alphaRed, _rotationMatsT[idx_cell] );
+                alpha_norms[idx_cell] = norm( alphaRed ) * norm( alphaRed );
 
                 // Restore alpha_0
                 double integral = 0.0;
@@ -294,7 +378,6 @@ void NeuralNetworkOptimizer::InferenceMonomial( VectorVector& alpha, VectorVecto
                     }
                     alphaRed[idx_sys] = ( alphaRed[idx_sys] + alphaRedMirror[idx_sys] ) / 2;    // average (and store in alphaRed)
                 }
-                alpha_norms[idx_cell] = norm( alphaRed ) * norm( alphaRed );
 
                 // Rotate Back
                 Vector alpha1{ alphaRed[0], alphaRed[1] };
@@ -308,6 +391,9 @@ void NeuralNetworkOptimizer::InferenceMonomial( VectorVector& alpha, VectorVecto
                 alphaRed[2] = alpha2( 0, 0 );
                 alphaRed[3] = 2 * alpha2( 1, 0 );
                 alphaRed[4] = alpha2( 1, 1 );
+
+                alpha_norms[idx_cell] = norm( alphaRed ) * norm( alphaRed );
+
 
                 // Restore alpha_0
                 double integral = 0.0;
@@ -342,26 +428,171 @@ void NeuralNetworkOptimizer::InferenceMonomial( VectorVector& alpha, VectorVecto
     _modelServingVectorAlpha.clear();
 }
 
+void NeuralNetworkOptimizer::InferenceSphericalHarmonics2D( VectorVector& alpha, VectorVector& u,const VectorVector& moments, Vector& alpha_norms ) {
+    unsigned servingSize = _settings->GetNCells();
+
+    Matrix rot180 = CreateRotatorSphericalHarmonics2D( M_PI, -1.0,0.0 );
+
+    if( _settings->GetEnforceNeuralRotationalSymmetry() ) {    // Rotation Preprocessing
+        if( _settings->GetMaxMomentDegree() == 1 ) {
+            rot180 = Matrix{ { -1.0, 0.0 }, { 0.0, -1.0 } };
+
+#pragma omp parallel for
+            for( unsigned idx_cell = 0; idx_cell < _settings->GetNCells(); idx_cell++ ) {
+                Vector u1{ u[idx_cell][1], u[idx_cell][2] };
+                _rotationMats[idx_cell]  = CreateRotator( u1 );
+                _rotationMatsT[idx_cell] = blaze::trans( _rotationMats[idx_cell] );
+
+                u1 = RotateM1( u1, _rotationMats[idx_cell] );    //, _rotationMatsT[idx_cell] );
+                // Save rotated moment
+                _modelServingVectorU[idx_cell * ( _nSystem - 1 )]     = (float)( u1[0] );
+                _modelServingVectorU[idx_cell * ( _nSystem - 1 ) + 1] = (float)( u1[1] );    // should be zero
+
+                // Rotate Moment by 180 degrees and save mirrored moment
+                RotateM1( u1, rot180 );
+                _modelServingVectorU[( _settings->GetNCells() + idx_cell ) * ( _nSystem - 1 )] = (float)( u1[0] );    // Only first moment is mirrored
+                _modelServingVectorU[( _settings->GetNCells() + idx_cell ) * ( _nSystem - 1 ) + 1] = (float)( u1[1] );    // should be zero
+            }
+        }
+        servingSize *= 2;
+    }
+    else {    // No Preprocessing
+#pragma omp parallel for
+        for( unsigned idx_cell = 0; idx_cell < _settings->GetNCells(); idx_cell++ ) {
+            u[idx_cell][2] = 0.0;  //manually enforce slab geometry
+            for( unsigned idx_sys = 0; idx_sys < _nSystem - 1; idx_sys++ ) {
+                _modelServingVectorU[idx_cell * ( _nSystem - 1 ) + idx_sys] = (float)( u[idx_cell][idx_sys + 1] );
+            }
+        }
+    }
+
+    // Create tensor from flattened vector
+    _modelInput = cppflow::tensor( _modelServingVectorU, { servingSize, _nSystem - 1 } );
+
+    // Call model
+    std::vector<cppflow::tensor> output = _tfModel->operator()(
+        { { _tfModelInputName, _modelInput } }, { "StatefulPartitionedCall:0", "StatefulPartitionedCall:1", "StatefulPartitionedCall:2" } );
+
+    // reform output to vector<float>
+    _modelServingVectorAlpha = output[1].get_data<float>();
+
+    // Postprocessing
+    if( _settings->GetEnforceNeuralRotationalSymmetry() ) {    // Rotational postprocessing
+        if( _settings->GetMaxMomentDegree() == 1 ) {
+#pragma omp parallel for
+            for( unsigned idx_cell = 0; idx_cell < _settings->GetNCells(); idx_cell++ ) {
+                Vector alphaRed       = Vector( _nSystem - 1, 0.0 );    // local reduced alpha
+                Vector alphaRedMirror = Vector( _nSystem - 1, 0.0 );    // local reduced mirrored alpha
+                for( unsigned idx_sys = 0; idx_sys < _nSystem - 1; idx_sys++ ) {
+                    alphaRed[idx_sys]       = (double)_modelServingVectorAlpha[idx_cell * ( _nSystem - 1 ) + idx_sys];
+                    alphaRedMirror[idx_sys] = (double)_modelServingVectorAlpha[( _settings->GetNCells() + idx_cell ) * ( _nSystem - 1 ) + idx_sys];
+                    // Mirror order 1 Moments
+                    alphaRedMirror[idx_sys] =
+                        -1 * (double)_modelServingVectorAlpha[( _settings->GetNCells() + idx_cell ) * ( _nSystem - 1 ) + idx_sys];
+                   // alphaRed[idx_sys] = ( alphaRed[idx_sys] + alphaRedMirror[idx_sys] ) / 2;    // average (and store in alphaRed)
+                }
+
+                // Rotate Back
+                alphaRed = RotateM1( alphaRed, _rotationMatsT[idx_cell] );
+                alpha_norms[idx_cell] = norm( alphaRed ) * norm( alphaRed );
+
+                // Restore alpha_0
+                double integral = 0.0;
+                for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
+                    integral += _entropy->EntropyPrimeDual( dot( alphaRed, _reducedMomentBasis[idx_quad] ) ) * _weights[idx_quad];
+                }
+                alpha[idx_cell][0] = -(log( integral )+ log(moments[0][0]) )/moments[0][0];     // log trafo
+
+                // Store output
+                for( unsigned idx_sys = 0; idx_sys < _nSystem - 1; idx_sys++ ) {
+                    alpha[idx_cell][idx_sys + 1] = alphaRed[idx_sys];
+                }
+            }
+        }
+    }
+    else {
+//#pragma omp parallel for
+        for( unsigned idx_cell = 0; idx_cell < _settings->GetNCells(); idx_cell++ ) {
+            Vector alphaRed = Vector( _nSystem - 1, 0.0 );    // local reduced alpha
+            for( unsigned idx_sys = 0; idx_sys < _nSystem - 1; idx_sys++ ) {
+                alphaRed[idx_sys]            = (double)_modelServingVectorAlpha[idx_cell * ( _nSystem - 1 ) + idx_sys];
+                alpha[idx_cell][idx_sys + 1] = alphaRed[idx_sys];
+            }
+            // Restore alpha_0
+            double integral = 0.0;
+            for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
+                integral += _entropy->EntropyPrimeDual( dot( alphaRed, _reducedMomentBasis[idx_quad] ) ) * _weights[idx_quad];
+            }
+            alpha[idx_cell][0] = -(log( integral )+ log(moments[0][0]) )/moments[0][0];     // log trafo
+
+            //Vector u_recons = Vector(_nSystem, 0.0);
+            //for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
+            //    u_recons += _entropy->EntropyPrimeDual( dot( alpha[idx_cell], moments[idx_quad] ) ) * _weights[idx_quad]* moments[idx_quad];
+            //}
+            //if (norm(u_recons-u[idx_cell])/norm(u[idx_cell])>1e-2){
+
+            //    std::cout << u[idx_cell]<<" \n\n "<< u_recons << "\n\n >> " << norm(u_recons-u[idx_cell]) <<"\n";
+            //    ErrorMessages::Error("Reconstruction failed" ,CURRENT_FUNCTION);
+            //}
+
+
+        }
+    }
+    _modelServingVectorAlpha.clear();
+}
+
 void NeuralNetworkOptimizer::InferenceSphericalHarmonics( VectorVector& alpha, VectorVector& u,const VectorVector& moments, Vector& alpha_norms ) {
     unsigned servingSize = _settings->GetNCells();
 
-    Matrix rot180 = CreateRotatorSphericalHarmonics( M_PI );
+    Matrix rot180 = CreateRotatorSphericalHarmonics( M_PI, -1.0,0.0 );
 
     if( _settings->GetEnforceNeuralRotationalSymmetry() ) {    // Rotation Preprocessing
-#pragma omp parallel for
+//#pragma omp parallel for
             for( unsigned idx_cell = 0; idx_cell < _settings->GetNCells(); idx_cell++ ) {
-                double a = u[idx_cell][1];
-                double b = u[idx_cell][3];
-                double c, s, r;
-                r = sqrt( a * a + b * b ); // norm
-                c = a / r; // cosine
-                double theta = acos(c);
 
-                _rotationMats[idx_cell]  = CreateRotatorSphericalHarmonics( theta );
+                u[idx_cell][2] = 0.0;  //manually enforce slab geometry
+
+                double theta = atan2( u[idx_cell][1], u[idx_cell][3]); // Calculate angle using atan2 function
+
+                _rotationMats[idx_cell]  = CreateRotatorSphericalHarmonics( theta, u[idx_cell][1], u[idx_cell][3] );
                 _rotationMatsT[idx_cell] = blaze::trans( _rotationMats[idx_cell] );
+                Vector Ru =_rotationMats[idx_cell] * u[idx_cell];
+                Vector RRu =  _rotationMatsT[idx_cell]*Ru;
+                if (norm(RRu-u[idx_cell])>1e-6){
+                    TextProcessingToolbox::PrintMatrix(  _rotationMats[idx_cell]);
+                    TextProcessingToolbox::PrintMatrix(  _rotationMatsT[idx_cell]);
+                    std::cout << u[idx_cell]<<" | "<< Ru << " | "<<RRu <<" " << norm(RRu-u[idx_cell]) <<"\n";
+                    ErrorMessages::Error("Rotations not proper" ,CURRENT_FUNCTION);
+                }
 
-                Vector Ru =_rotationMats[idx_cell] *u[idx_cell];
-                Vector Ru_minus = rot180*Ru;
+                //std::cout << u[idx_cell]<<" | "<< a  <<" | "<< b <<" | "<< r <<" | " << theta<< "\n";
+                //exit(1);
+                //std::cout << u[idx_cell]<<" \n| "<< _rotationMats[idx_cell] * u[idx_cell]  <<"\n";
+
+                //if (normu1_slab > 1e-15){
+                //    std::cout << "ux,uy " << u[idx_cell][1]<< u[idx_cell][3] << "\n ";
+
+                //    std::cout << "theta " << theta << "\n ";
+
+                //    std::cout << "u orig: " << u[idx_cell]<<" \n| u_rot: "<< Ru  <<"\n";
+                //    Vector t  = _rotationMatsT[idx_cell]* Ru;
+                //    std::cout << "u backrot: " << t << "\n --------------\n";
+                //}
+
+                //if (Ru[3]/u[idx_cell][3] >1e-10){
+                //    std::cout << "ux,uy " << u[idx_cell][1]<< u[idx_cell][3] << "\n ";
+
+                //    std::cout << "theta " << theta << "\n ";
+
+                //    std::cout << "u orig: " << u[idx_cell]<<" \n| u_rot: "<< Ru  <<"\n";
+                //    Vector t  = _rotationMatsT[idx_cell]* Ru;
+                //    std::cout << "u backrot: " << t << "\n --------------\n";
+
+                //    std::cout << "alert \n --------------\n";
+                //    std::cout << _rotationMats[idx_cell] << "\n"<<_rotationMatsT[idx_cell] ;
+                //    exit(1);
+                //}
+                Vector Ru_minus = rot180 * Ru;
 
                 for( unsigned idx_sys = 0; idx_sys < _nSystem - 1; idx_sys++ ) {
                      _modelServingVectorU[( _settings->GetNCells() + idx_cell ) * ( _nSystem - 1 )  + idx_sys] =  (float)( Ru[idx_sys + 1] );
@@ -370,9 +601,10 @@ void NeuralNetworkOptimizer::InferenceSphericalHarmonics( VectorVector& alpha, V
             }
         servingSize *= 2;
     }
-    else {    // No Postprocessing
+    else {    // No Preprocessing
 #pragma omp parallel for
         for( unsigned idx_cell = 0; idx_cell < _settings->GetNCells(); idx_cell++ ) {
+            u[idx_cell][2] = 0.0;  //manually enforce slab geometry
             for( unsigned idx_sys = 0; idx_sys < _nSystem - 1; idx_sys++ ) {
                 _modelServingVectorU[idx_cell * ( _nSystem - 1 ) + idx_sys] = (float)( u[idx_cell][idx_sys + 1] );
             }
@@ -392,37 +624,68 @@ void NeuralNetworkOptimizer::InferenceSphericalHarmonics( VectorVector& alpha, V
     // Postprocessing
     if( _settings->GetEnforceNeuralRotationalSymmetry() ) {    // Rotational postprocessing
 #pragma omp parallel for
-            for( unsigned idx_cell = 0; idx_cell < _settings->GetNCells(); idx_cell++ ) {
+        for( unsigned idx_cell = 0; idx_cell < _settings->GetNCells(); idx_cell++ ) {
+            Vector alphaRed = Vector( _nSystem - 1, 0.0 );    // local reduced alpha
+            Vector alphaP = Vector( _nSystem , 0.0 );    // local  alpha
+            Vector alpha_P_Mirror = Vector( _nSystem , 0.0 );    // local mirrored alpha
 
-                Vector alpha_P       = Vector( _nSystem , 0.0 );    // local reduced alpha
-                Vector alpha_P_Mirror = Vector( _nSystem , 0.0 );    // local reduced mirrored alpha
-                Vector alpha_P_Red       = Vector( _nSystem-1 , 0.0 );    // local reduced alpha
 
-                Vector Ru =_rotationMats[idx_cell] *u[idx_cell];
-                Vector Ru_minus = rot180*Ru;
-
-                for( unsigned idx_sys = 0; idx_sys < _nSystem - 1; idx_sys++ ) { // Load tf vectors
-                    alpha_P[idx_sys+1]       = (double)_modelServingVectorAlpha[idx_cell * ( _nSystem - 1 ) + idx_sys];
-                    alpha_P_Mirror[idx_sys+1] = (double)_modelServingVectorAlpha[( _settings->GetNCells() + idx_cell ) * ( _nSystem - 1 ) + idx_sys];
-                }
-                // Rotate back mirrored alpha
-                alpha_P_Mirror = rot180*alpha_P_Mirror;
-                alpha[idx_cell]= ( alpha_P + alpha_P_Mirror ) / 2;    // average (and store in alpha)
-                alpha_norms[idx_cell] = norm( alpha_P ) * norm( alpha_P ); // compute norm squared for dynamic ansatz.
-                // Rotated back to position of original u
-                alpha_P = _rotationMatsT[idx_cell] * alpha_P;
-                for( unsigned idx_sys = 0; idx_sys < _nSystem - 1; idx_sys++ ) { // Load tf vectors
-                    alpha_P_Red[idx_sys]      = alpha_P[1 + idx_sys];
-                }
-
-                // Restore alpha_0
-                double integral = 0.0;
-                for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
-                    integral += _entropy->EntropyPrimeDual( dot( alpha_P_Red, _reducedMomentBasis[idx_quad] ) ) * _weights[idx_quad];
-                }
-                alpha[idx_cell][0] = -( log( integral ) + log( moments[0][0] ) ) / moments[0][0];    // log trafo
+            for( unsigned idx_sys = 0; idx_sys < _nSystem - 1; idx_sys++ ) {
+                alphaP[idx_sys + 1]         = (double)_modelServingVectorAlpha[idx_cell * ( _nSystem - 1 ) + idx_sys];
+                alpha_P_Mirror[idx_sys+1] = (double)_modelServingVectorAlpha[( _settings->GetNCells() + idx_cell ) * ( _nSystem - 1 ) + idx_sys];
             }
+            alpha_P_Mirror = rot180*alpha_P_Mirror;
+            alpha[idx_cell]= ( alphaP + alpha_P_Mirror ) / 2;    // average (and store in alpha)
+
+
+            alpha[idx_cell] = _rotationMatsT[idx_cell] * alpha[idx_cell]; // Rotate back
+            //alpha[idx_cell][2] = 0.0;    //manually enforce slab geometry
+            // compute norm squared for dynamic ansatz  alpha[idx_cell][0] = 0 by construction
+            alpha_norms[idx_cell] = norm(  alpha[idx_cell] ) * norm(  alpha[idx_cell] );
+
+
+            // Restore alpha_0
+            double integral = 0.0;
+            for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
+                integral += _entropy->EntropyPrimeDual( dot( alphaRed, _reducedMomentBasis[idx_quad] ) ) * _weights[idx_quad];
+            }
+            alpha[idx_cell][0] = -(log( integral )+ log(moments[0][0]) )/moments[0][0];     // log trafo
         }
+
+
+        //for( unsigned idx_cell = 0; idx_cell < _settings->GetNCells(); idx_cell++ ) {
+
+        //        Vector alpha_P       = Vector( _nSystem , 0.0 );    // local reduced alpha
+        //        Vector alpha_P_Mirror = Vector( _nSystem , 0.0 );    // local reduced mirrored alpha
+        //        Vector alpha_P_Red       = Vector( _nSystem-1 , 0.0 );    // local reduced alpha
+
+
+        //        for( unsigned idx_sys = 0; idx_sys < _nSystem - 1; idx_sys++ ) { // Load tf vectors
+        //            alpha_P[idx_sys+1]       = (double)_modelServingVectorAlpha[idx_cell * ( _nSystem - 1 ) + idx_sys];
+        //            alpha_P_Mirror[idx_sys+1] = (double)_modelServingVectorAlpha[( _settings->GetNCells() + idx_cell ) * ( _nSystem - 1 ) + idx_sys];
+        //        }
+        //        //alpha_P[2]=0.0;
+        //        //alpha_P_Mirror[2]=0.0;
+
+        //        // Rotate back mirrored alpha
+        //        //alpha_P_Mirror = rot180*alpha_P_Mirror;
+        //        alpha[idx_cell]= alpha_P;//( alpha_P + alpha_P_Mirror ) / 2;    // average (and store in alpha)
+        //        alpha_norms[idx_cell] = 0.0;// compute norm squared for dynamic ansatz.
+        //        // Rotated back to position of original u
+        //        alpha_P = _rotationMatsT[idx_cell] * alpha_P;
+        //        for( unsigned idx_sys = 0; idx_sys < _nSystem - 1; idx_sys++ ) { // Load tf vectors
+        //            alpha_P_Red[idx_sys]   = alpha_P[1 + idx_sys];
+        //            alpha_norms[idx_cell] += alpha_P_Red[idx_sys]* alpha_P_Red[idx_sys];
+        //        }
+
+        //        // Restore alpha_0
+        //        double integral = 0.0;
+        //        for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
+        //            integral += _entropy->EntropyPrimeDual( dot( alpha_P_Red, _reducedMomentBasis[idx_quad] ) ) * _weights[idx_quad];
+        //        }
+        //        alpha[idx_cell][0] = -( log( integral ) + log( moments[0][0] ) ) / moments[0][0];    // log trafo
+        //    }
+   }
 
     else {
 #pragma omp parallel for
@@ -432,12 +695,25 @@ void NeuralNetworkOptimizer::InferenceSphericalHarmonics( VectorVector& alpha, V
                 alphaRed[idx_sys]            = (double)_modelServingVectorAlpha[idx_cell * ( _nSystem - 1 ) + idx_sys];
                 alpha[idx_cell][idx_sys + 1] = alphaRed[idx_sys];
             }
+            alphaRed[1] = 0.0; //manually enforce slab geometry
+            alpha[idx_cell][2] = 0.0;    //manually enforce slab geometry
+            alpha_norms[idx_cell] = norm( alphaRed ) * norm( alphaRed ); // compute norm squared for dynamic ansatz.
+
             // Restore alpha_0
             double integral = 0.0;
             for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
                 integral += _entropy->EntropyPrimeDual( dot( alphaRed, _reducedMomentBasis[idx_quad] ) ) * _weights[idx_quad];
             }
             alpha[idx_cell][0] = -(log( integral )+ log(moments[0][0]) )/moments[0][0];     // log trafo
+            Vector u_recons = Vector(_nSystem, 0.0);
+
+            for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
+                u_recons += _entropy->EntropyPrimeDual( dot( alpha[idx_cell], moments[idx_quad] ) ) * _weights[idx_quad]* moments[idx_quad];
+            }
+            //if (norm(u_recons-u[idx_cell])/norm(u[idx_cell])>1e-2){
+            //    std::cout << u[idx_cell]<<" \n\n "<< u_recons << "\n\n >> " << norm(u_recons-u[idx_cell]) <<"\n";
+            //    ErrorMessages::Error("Reconstruction failed" ,CURRENT_FUNCTION);
+            //}
         }
     }
     _modelServingVectorAlpha.clear();
@@ -445,10 +721,15 @@ void NeuralNetworkOptimizer::InferenceSphericalHarmonics( VectorVector& alpha, V
 
 void NeuralNetworkOptimizer::SolveMultiCell( VectorVector& alpha, VectorVector& u, const VectorVector& moments, Vector& alpha_norms ) {
     if( _settings->GetSphericalBasisName() == SPHERICAL_HARMONICS ) {
-        InferenceSphericalHarmonics( alpha, u,moments, alpha_norms );
+        if (_settings->GetDim() == 2){
+            InferenceSphericalHarmonics2D( alpha, u,moments, alpha_norms );
+        }
+        else{
+            InferenceSphericalHarmonics( alpha, u,moments, alpha_norms );
+        }
     }
     else {
-        InferenceMonomial( alpha, u, alpha_norms );
+        InferenceMonomial( alpha, u,moments, alpha_norms );
     }
 }
 
