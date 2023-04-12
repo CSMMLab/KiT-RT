@@ -71,13 +71,13 @@ Vector SphericalHarmonics::ComputeSphericalBasis( double my, double phi, double 
         }
         return r * YBasis1D;
     }
-    // For 2D, just use the terms k!=l, except for l=0
+    // For 2D, just use the terms idx_l + idx_k % 2 == 1
     if( _spatialDim == 2 ) {
         Vector YBasis2D( GetBasisSize(), 0.0 );
         unsigned count = 0;
         for( int idx_l = 0; idx_l <= (int)_LMaxDegree; idx_l++ ) {
             for( int idx_k = -idx_l; idx_k <= idx_l; idx_k++ ) {
-                if( idx_l == 0 || idx_l != idx_k ) {
+                if( idx_l + idx_k % 2 == 1 ) {
                     YBasis2D[count] = _YBasis[GetGlobalIndexBasis( idx_l, idx_k )];
                     count++;
                 }
