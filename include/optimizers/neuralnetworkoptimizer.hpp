@@ -17,7 +17,7 @@ class NeuralNetworkOptimizer : public OptimizerBase
 
     void Solve( Vector& alpha, Vector& u, const VectorVector& moments, unsigned idx_cell = 0 ) override;
 
-    void SolveMultiCell( VectorVector& alpha, VectorVector& u, const VectorVector& moments ) override;
+    void SolveMultiCell( VectorVector& alpha, VectorVector& u, const VectorVector& moments, Vector& alpha_norms ) override;
 
     /*! @brief Reconstruct the moment sol from the Lagrange multiplier alpha
      *  @param sol moment vector
@@ -59,7 +59,7 @@ class NeuralNetworkOptimizer : public OptimizerBase
 
     inline void Solve( Vector& alpha, Vector& u, const VectorVector& moments, unsigned idx_cell = 0 ) override{};
 
-    inline void SolveMultiCell( VectorVector& alpha, VectorVector& u, const VectorVector& moments ) override{};
+    inline void SolveMultiCell( VectorVector& alpha, VectorVector& u, const VectorVector& moments, Vector& alpha_norms ) override{};
 
     /*! @brief Reconstruct the moment sol from the Lagrange multiplier alpha
      *  @param sol moment vector

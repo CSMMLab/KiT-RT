@@ -71,11 +71,12 @@ CSDMNSolver::~CSDMNSolver() {}
 void CSDMNSolver::IterPreprocessing( unsigned idx_iter ) {
 
     // ------- Entropy closure Step ----------------
+    Vector alpha_norm_dummy( _nCells, 0 );    // ONLY FOR DEBUGGING! THIS SLOWS DOWN THE CODE
 
-    _optimizer->SolveMultiCell( _alpha, _sol, _momentBasis );
+    _optimizer->SolveMultiCell( _alpha, _sol, _momentBasis, alpha_norm_dummy );
 
     // ------- Solution reconstruction step ----
-    //#pragma omp parallel for
+#pragma omp parallel for
     for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
         for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
             // compute the kinetic density at all grid cells

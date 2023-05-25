@@ -250,21 +250,6 @@ void DataGeneratorClassification2D::PrintTrainingData() {
 
     for( unsigned idx_set = 0; idx_set < _setSize; idx_set++ ) {
 
-        // Test the moments of the kinetic density
-        // Vector u    = Vector( _nTotalEntries, 0.0 );
-        // double tmp  = 0.0;
-        // double recT = 0.0;
-        // for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
-        //    u += _momentBasis[idx_quad] * _weights[idx_quad] * _kineticDensity[idx_set][idx_quad];
-        //    tmp += _weights[idx_quad] * _kineticDensity[idx_set][idx_quad];
-        //    recT += 0.5 * ( _momentBasis[idx_quad][1] * _momentBasis[idx_quad][1] + _momentBasis[idx_quad][2] * _momentBasis[idx_quad][2] ) *
-        //            _weights[idx_quad] * _kineticDensity[idx_set][idx_quad];
-        //}
-        // std::cout << "alpha_" << idx_set << " : " << _alpha[idx_set] << "\n";
-        // std::cout << "u_" << idx_set << " : " << u << "\n";
-        // std::cout << "rho" << idx_set << " : " << tmp << "\n";
-        // std::cout << "T" << idx_set << " : " << recT << "\n";
-
         std::stringstream streamDensity;
         for( unsigned idx_quad = 0; idx_quad < _nq - 1; idx_quad++ ) {
             streamDensity << std::fixed << std::setprecision( 12 ) << _kineticDensity[idx_set][idx_quad] << ",";
