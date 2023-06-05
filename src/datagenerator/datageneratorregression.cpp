@@ -120,7 +120,7 @@ void DataGeneratorRegression::ComputeTrainingData() {
 
         ComputeRealizableSolution();
 
-        // RotateMomentsAndMultipliers();
+        RotateMomentsAndMultipliers();
 
         // ComputeRealizableSolution();
 
