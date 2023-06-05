@@ -111,7 +111,6 @@ DataGeneratorBase* DataGeneratorBase::Create( Config* settings ) {
 void DataGeneratorBase::SampleMultiplierAlpha() {
     double maxAlphaValue = _settings->GetAlphaSamplingBound();
     // Rejection Sampling based on smallest EV of H
-
     if( _settings->GetNormalizedSampling() ) {
         if( _maxPolyDegree == 0 ) {
             ErrorMessages::Error( "Normalized sampling not meaningful for M0 closure", CURRENT_FUNCTION );
@@ -133,7 +132,7 @@ void DataGeneratorBase::SampleMultiplierAlpha() {
         std::normal_distribution<double> distribution_normal( mean, stddev );
 
         // Can be parallelized, but check if there is a race condition with datagenerator
-#pragma omp parallel for schedule( guided )
+        //#pragma omp parallel for schedule( guided )
         for( unsigned idx_set = 0; idx_set < _setSize; idx_set++ ) {
             Vector alphaRed = Vector( _nTotalEntries - 1, 0.0 );    // local reduced alpha
 
@@ -224,7 +223,6 @@ bool DataGeneratorBase::ComputeReducedEVRejection( VectorVector& redMomentBasis,
 void DataGeneratorBase::ComputeRealizableSolution() {
     if( _reducedSampling ) {
         VectorVector momentsRed = VectorVector( _nq, Vector( _nTotalEntries - 1, 0.0 ) );
-
         for( unsigned idx_nq = 0; idx_nq < _nq; idx_nq++ ) {    // copy (reduced) moments
             for( unsigned idx_sys = 1; idx_sys < _nTotalEntries; idx_sys++ ) {
                 momentsRed[idx_nq][idx_sys - 1] = _momentBasis[idx_nq][idx_sys];
@@ -248,7 +246,9 @@ void DataGeneratorBase::ComputeRealizableSolution() {
     else {
 #pragma omp parallel for schedule( guided )
         for( unsigned idx_sol = 0; idx_sol < _setSize; idx_sol++ ) {
+            // std::cout << _uSol[idx_sol] << "\n";
             _optimizer->ReconstructMoments( _uSol[idx_sol], _alpha[idx_sol], _momentBasis );
+            // std::cout << _uSol[idx_sol] << "\n-------------\n";
         }
     }
 }

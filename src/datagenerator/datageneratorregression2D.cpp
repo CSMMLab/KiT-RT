@@ -163,9 +163,6 @@ void DataGeneratorRegression2D::CheckRealizability() {
                                           CURRENT_FUNCTION );
                 }
                 if( normU1 / _uSol[idx_set][0] <= 0 /*+ 0.5 * epsilon*/ ) {
-                    // std::cout << "_uSol" << _uSol[idx_set][1] << " | " << _uSol[idx_set][2] << " | " << _uSol[idx_set][3] << " \n";
-                    // std::cout << "normU1 / _uSol[" << idx_set << "][0]: " << normU1 / _uSol[idx_set][0] << "\n";
-                    // std::cout << "normU1: " << normU1 << " | _uSol[idx_set][0] " << _uSol[idx_set][0] << "\n";
                     ErrorMessages::Error( "Moment to close to boundary of realizable set [code 2].\nBoundary ratio: " +
                                               std::to_string( normU1 / _uSol[idx_set][0] ),
                                           CURRENT_FUNCTION );

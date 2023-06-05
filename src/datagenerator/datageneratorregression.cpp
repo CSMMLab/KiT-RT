@@ -20,7 +20,7 @@ DataGeneratorRegression::DataGeneratorRegression( Config* settings ) : DataGener
 
 DataGeneratorRegression::~DataGeneratorRegression() {}
 
-Matrix DataGeneratorRegression::CreateRotatorSphericalHarmonics(double theta, double x, double y ) {
+Matrix DataGeneratorRegression::CreateRotatorSphericalHarmonics( double x, double y ) {
     // Assumes that spherical harmonics degree is > 1
 
     double r =  sqrt( x * x + y * y );
@@ -58,6 +58,38 @@ Matrix DataGeneratorRegression::CreateRotatorSphericalHarmonics(double theta, do
     return R;
 }
 
+Matrix DataGeneratorRegression::CreateRotatorSphericalHarmonics2D( double x, double y ) {
+    // Assumes that spherical harmonics degree is > 1
+
+    double r  = sqrt( x * x + y * y );
+    double c  = x / r;
+    double s  = -y / r;
+    double c2 = c * c - s * s;
+    double s2 = 2 * s * c;
+
+    Matrix R = Matrix( _nTotalEntries, _nTotalEntries, 0.0 );
+
+    // Build R by going through submatrices
+    R( 0, 0 ) = 1.0;
+    if( _settings->GetMaxMomentDegree() >= 1 ) {
+        R( 1, 1 ) = c;
+        R( 2, 1 ) = s;
+        R( 1, 2 ) = -s;
+        R( 2, 2 ) = c;
+    }
+    if( _settings->GetMaxMomentDegree() >= 2 ) {
+        R( 3, 3 ) = c2;
+        R( 3, 5 ) = s2;
+        R( 4, 4 ) = 1;
+        R( 5, 3 ) = -s2;
+        R( 5, 5 ) = c2;
+    }
+    if( _settings->GetMaxMomentDegree() >= 3 ) {
+        ErrorMessages::Error( "Rotation Matrix for spherical harmonics with degree >2 not yet implementd.", CURRENT_FUNCTION );
+    }
+    return R;
+}
+
 void DataGeneratorRegression::ComputeTrainingData() {
     PrintLoadScreen();
 
@@ -71,8 +103,8 @@ void DataGeneratorRegression::ComputeTrainingData() {
             integral+=_momentBasis[idx_q]*_momentBasis[idx_q]* _weights[idx_q];
             sum_weights +=  _weights[idx_q];
         }
-        std::cout << integral << "\n";
-        std::cout << sum_weights << "\n";
+        // std::cout << integral << "\n";
+        // std::cout << sum_weights << "\n";
 
         log->info( "| Sample Lagrange multipliers." );
         SampleMultiplierAlpha();
@@ -81,17 +113,20 @@ void DataGeneratorRegression::ComputeTrainingData() {
         log->info( "| Compute realizable problems." );
 
         // --- Postprocessing
-        //TextProcessingToolbox::PrintVectorVector( _alpha );
+        // TextProcessingToolbox::PrintVectorVector( _alpha );
         //_alpha[0][1] = 0.0;
         //_alpha[0][2] = 0.0;
         //_alpha[0][3] = 0.0;
 
-
         ComputeRealizableSolution();
 
+        RotateMomentsAndMultipliers();
+
+        // ComputeRealizableSolution();
+
         // debugging purposes for rotation
-        //TextProcessingToolbox::PrintVectorVector( _uSol );
-        //TextProcessingToolbox::PrintVectorVector( _alpha );
+        // TextProcessingToolbox::PrintVectorVector( _uSol );
+        // TextProcessingToolbox::PrintVectorVector( _alpha );
 
         //log->info( "| Create Rotator." );
         //double a = _uSol[0][1];
@@ -313,5 +348,33 @@ void DataGeneratorRegression::ComputeSetSizeAlpha() {
         for( unsigned i = 0; i < _nTotalEntries - 2; i++ ) {
             _setSize *= _gridSize;
         }
+    }
+}
+
+void DataGeneratorRegression::RotateMomentsAndMultipliers() {
+
+#pragma omp parallel for
+    for( unsigned idx_sol = 0; idx_sol < _setSize; idx_sol++ ) {
+        Matrix R_T = CreateRotatorSphericalHarmonics2D( _uSol[idx_sol][1], _uSol[idx_sol][2] );
+
+        // std::cout << R_T * blaze::trans( R_T ) << "\n";
+
+        // std::cout << _uSol[idx_sol] << "\n";
+
+        _optimizer->ReconstructMoments( _uSol[idx_sol], _alpha[idx_sol], _momentBasis );
+        _uSol[idx_sol]  = R_T * _uSol[idx_sol];
+        _alpha[idx_sol] = R_T * _alpha[idx_sol];
+
+        // std::cout << _uSol[idx_sol] << "\n";
+
+        //_optimizer->ReconstructMoments( _uSol[idx_sol], _alpha[idx_sol], _momentBasis );
+        // std::cout << _uSol[idx_sol] << "\n-------------\n";
+    }
+    VectorVector alpha_comp = VectorVector( _setSize, Vector( _nTotalEntries, 0.0 ) );
+    Vector alpha_norm_dummy( _setSize, 0 );
+    _optimizer->SolveMultiCell( alpha_comp, _uSol, _momentBasis, alpha_norm_dummy );
+    for( unsigned idx_sol = 0; idx_sol < _setSize; idx_sol++ ) {
+        std::cout << alpha_comp[idx_sol] << "\n";
+        std::cout << _alpha[idx_sol] << "\n-----------\n";
     }
 }
