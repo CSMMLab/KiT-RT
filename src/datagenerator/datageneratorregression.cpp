@@ -120,7 +120,7 @@ void DataGeneratorRegression::ComputeTrainingData() {
 
         ComputeRealizableSolution();
 
-        RotateMomentsAndMultipliers();
+        // RotateMomentsAndMultipliers();
 
         // ComputeRealizableSolution();
 
@@ -364,17 +364,16 @@ void DataGeneratorRegression::RotateMomentsAndMultipliers() {
         _optimizer->ReconstructMoments( _uSol[idx_sol], _alpha[idx_sol], _momentBasis );
         _uSol[idx_sol]  = R_T * _uSol[idx_sol];
         _alpha[idx_sol] = R_T * _alpha[idx_sol];
-
-        // std::cout << _uSol[idx_sol] << "\n";
-
-        //_optimizer->ReconstructMoments( _uSol[idx_sol], _alpha[idx_sol], _momentBasis );
-        // std::cout << _uSol[idx_sol] << "\n-------------\n";
     }
-    VectorVector alpha_comp = VectorVector( _setSize, Vector( _nTotalEntries, 0.0 ) );
-    Vector alpha_norm_dummy( _setSize, 0 );
-    _optimizer->SolveMultiCell( alpha_comp, _uSol, _momentBasis, alpha_norm_dummy );
-    for( unsigned idx_sol = 0; idx_sol < _setSize; idx_sol++ ) {
-        std::cout << alpha_comp[idx_sol] << "\n";
-        std::cout << _alpha[idx_sol] << "\n-----------\n";
-    }
+    // VectorVector alpha_comp = VectorVector( _setSize, Vector( _nTotalEntries, 0.0 ) );
+    // VectorVector u_recons   = VectorVector( _setSize, Vector( _nTotalEntries, 0.0 ) );
+    // Vector alpha_norm_dummy( _setSize, 0 );
+    //_optimizer->SolveMultiCell( alpha_comp, _uSol, _momentBasis, alpha_norm_dummy );
+    // for( unsigned idx_sol = 0; idx_sol < _setSize; idx_sol++ ) {
+    //    std::cout << alpha_comp[idx_sol] << "\n";
+    //    std::cout << _alpha[idx_sol] << "\n-----------\n";
+    //    _optimizer->ReconstructMoments( u_recons[idx_sol], alpha_comp[idx_sol], _momentBasis );
+    //    std::cout << _uSol[idx_sol] << "\n";
+    //    std::cout << u_recons[idx_sol] << "\n-----------\n-----------\n";
+    //}
 }
