@@ -103,8 +103,6 @@ void DataGeneratorRegression::ComputeTrainingData() {
             integral+=_momentBasis[idx_q]*_momentBasis[idx_q]* _weights[idx_q];
             sum_weights +=  _weights[idx_q];
         }
-        // std::cout << integral << "\n";
-        // std::cout << sum_weights << "\n";
 
         log->info( "| Sample Lagrange multipliers." );
         SampleMultiplierAlpha();
@@ -113,99 +111,10 @@ void DataGeneratorRegression::ComputeTrainingData() {
         log->info( "| Compute realizable problems." );
 
         // --- Postprocessing
-        // TextProcessingToolbox::PrintVectorVector( _alpha );
-        //_alpha[0][1] = 0.0;
-        //_alpha[0][2] = 0.0;
-        //_alpha[0][3] = 0.0;
 
         ComputeRealizableSolution();
 
         RotateMomentsAndMultipliers();
-
-        // ComputeRealizableSolution();
-
-        // debugging purposes for rotation
-        // TextProcessingToolbox::PrintVectorVector( _uSol );
-        // TextProcessingToolbox::PrintVectorVector( _alpha );
-
-        //log->info( "| Create Rotator." );
-        //double a = _uSol[0][1];
-        //double b = _uSol[0][3];
-        //double  theta = 0.0;
-        //double r = norm(Vector{a,b}); // norm
-        //if (r<1e-8){theta=0;}
-        //else{
-        //    theta = acos(a / r);
-        //}
-        ////std::cout << "theta: " << theta << "\n";
-        //Matrix R = CreateRotatorSphericalHarmonics(theta,_uSol[0][1],_uSol[0][3] ); //theta
-
-        //VectorVector rotU = VectorVector(_setSize,Vector(_nTotalEntries,0.0));
-        //VectorVector reconsRotU = VectorVector(_setSize,Vector(_nTotalEntries,0.0));
-        //VectorVector backRotU = VectorVector(_setSize,Vector(_nTotalEntries,0.0));
-        //VectorVector rotAlpha = VectorVector(_setSize,Vector(_nTotalEntries,0.0));
-
-        ////TextProcessingToolbox::PrintVectorVector( reconsRotU );
-        //TextProcessingToolbox::PrintMatrix(R);
-
-        //log->info( "| Rotate moments." );
-
-        //for(unsigned idx_set = 0; idx_set<_setSize;idx_set++){
-        //    rotU[idx_set]= R*_uSol[idx_set];
-        //    rotAlpha[idx_set]= R*_alpha[idx_set];
-        //    _optimizer->ReconstructMoments( reconsRotU[idx_set], rotAlpha[idx_set], _momentBasis );
-        //    backRotU[idx_set] =  blaze::trans(R )*reconsRotU[idx_set];
-        //}
-
-        //log->info( "| Print rotated moments." );
-
-        //TextProcessingToolbox::PrintVectorVector( rotU );
-        //TextProcessingToolbox::PrintVectorVector( reconsRotU );
-
-        //log->info( "| Print back rotated moments." );
-        //TextProcessingToolbox::PrintVectorVector( _uSol );
-        //TextProcessingToolbox::PrintVectorVector( backRotU );
-
-
-        //std::cout << "here\n";
-
-        //VectorVector rot_uSol       = VectorVector( _setSize, Vector( _nTotalEntries, 0.0 ) );
-        //VectorVector alpha_comp = VectorVector( _setSize, Vector( _nTotalEntries, 0.0 ) );
-        //VectorVector rot_alpha      = VectorVector( _setSize, Vector( _nTotalEntries, 0.0 ) );
-        //Vector alpha_norm_dummy( _setSize, 0 );
-
-        //for( unsigned i = 0; i < _setSize; i++ ) {
-        //    Vector u1{ _uSol[i][1], _uSol[i][2] };
-        //    Matrix u2{ { _uSol[i][3], _uSol[i][4] }, { _uSol[i][4], _uSol[i][5] } };
-
-        //    Vector alpha1{ _alpha[i][1], _alpha[i][2] };
-        //    Matrix alpha2{ { _alpha[i][3], _alpha[i][4] }, { _alpha[i][4], _alpha[i][5] } };
-
-        //    Matrix rotationMat  = CreateRotator( u1 );
-        //    Matrix rotationMatT = blaze::trans( rotationMat );
-
-        //    u1 = RotateM1( u1, rotationMat );
-        //    u2 = RotateM2( u2, rotationMat, rotationMatT );
-
-        //    rot_uSol[i][0] = (float)( u1[0] );
-        //    rot_uSol[i][1] = (float)( u1[1] );    // should be zero
-        //    rot_uSol[i][2] = (float)( u2( 0, 0 ) );
-        //    rot_uSol[i][3] = (float)( u2( 0, 1 ) );
-        //    rot_uSol[i][4] = (float)( u2( 1, 1 ) );
-
-        //    rot_alpha[i][0] = (float)( alpha1[0] );
-        //    rot_alpha[i][1] = (float)( alpha1[1] );    // should be zero
-        //    rot_alpha[i][2] = (float)( alpha2( 0, 0 ) );
-        //    rot_alpha[i][3] = (float)( alpha2( 0, 1 ) );
-        //    rot_alpha[i][4] = (float)( alpha2( 1, 1 ) );
-        //}
-        //_optimizer->SolveMultiCell( alpha_comp,_uSol, _momentBasis, alpha_norm_dummy );
-        //TextProcessingToolbox::PrintVectorVector( _uSol );
-        //std::cout << "___\n";
-        //TextProcessingToolbox::PrintVectorVector( _alpha );
-        //std::cout << "___\n";
-        //TextProcessingToolbox::PrintVectorVector( alpha_comp );
-        //std::cout << "here\n";
     }
     else{
         // --- sample u ---
@@ -356,24 +265,8 @@ void DataGeneratorRegression::RotateMomentsAndMultipliers() {
 #pragma omp parallel for
     for( unsigned idx_sol = 0; idx_sol < _setSize; idx_sol++ ) {
         Matrix R_T = CreateRotatorSphericalHarmonics2D( _uSol[idx_sol][1], _uSol[idx_sol][2] );
-
-        // std::cout << R_T * blaze::trans( R_T ) << "\n";
-
-        // std::cout << _uSol[idx_sol] << "\n";
-
         _optimizer->ReconstructMoments( _uSol[idx_sol], _alpha[idx_sol], _momentBasis );
         _uSol[idx_sol]  = R_T * _uSol[idx_sol];
         _alpha[idx_sol] = R_T * _alpha[idx_sol];
     }
-    // VectorVector alpha_comp = VectorVector( _setSize, Vector( _nTotalEntries, 0.0 ) );
-    // VectorVector u_recons   = VectorVector( _setSize, Vector( _nTotalEntries, 0.0 ) );
-    // Vector alpha_norm_dummy( _setSize, 0 );
-    //_optimizer->SolveMultiCell( alpha_comp, _uSol, _momentBasis, alpha_norm_dummy );
-    // for( unsigned idx_sol = 0; idx_sol < _setSize; idx_sol++ ) {
-    //    std::cout << alpha_comp[idx_sol] << "\n";
-    //    std::cout << _alpha[idx_sol] << "\n-----------\n";
-    //    _optimizer->ReconstructMoments( u_recons[idx_sol], alpha_comp[idx_sol], _momentBasis );
-    //    std::cout << _uSol[idx_sol] << "\n";
-    //    std::cout << u_recons[idx_sol] << "\n-----------\n-----------\n";
-    //}
 }

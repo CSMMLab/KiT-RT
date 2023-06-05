@@ -246,9 +246,7 @@ void DataGeneratorBase::ComputeRealizableSolution() {
     else {
 #pragma omp parallel for schedule( guided )
         for( unsigned idx_sol = 0; idx_sol < _setSize; idx_sol++ ) {
-            // std::cout << _uSol[idx_sol] << "\n";
             _optimizer->ReconstructMoments( _uSol[idx_sol], _alpha[idx_sol], _momentBasis );
-            // std::cout << _uSol[idx_sol] << "\n-------------\n";
         }
     }
 }
