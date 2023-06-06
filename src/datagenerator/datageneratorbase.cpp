@@ -199,8 +199,7 @@ bool DataGeneratorBase::ComputeEVRejection( unsigned idx_set ) {
     Vector ew = Vector( _nTotalEntries, 0.0 );
     eigen( hessianSym, ew );
     if( min( ew ) < _settings->GetMinimalEVBound() ) {
-        std::cout << "ew: " <<  min( ew ) << "\n";
-
+        std::cout << "ew: " << min( ew ) << "\n";
         return false;
     }
     return true;
