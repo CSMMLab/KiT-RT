@@ -61,17 +61,16 @@ Matrix DataGeneratorRegression::CreateRotatorSphericalHarmonics( double x, doubl
 Matrix DataGeneratorRegression::CreateRotatorSphericalHarmonics2D( double x, double y ) {
     // Assumes that spherical harmonics degree is > 1
 
-    double r  = sqrt( x * x + y * y );
-    double c  = x / r;
-    double s  = -y / r;
-    double c2 = c * c - s * s;
-    double s2 = 2 * s * c;
+    double theta = std::atan2(x,y);
 
-    double c3 = c2 * c - s2 * s;
-    double s3 = s2 * c + c2 * s;
-
-    double c4 = c3 * c - s3 * s;
-    double s4 = s3 * c + c3 * s;
+    double c = cos(theta);
+    double s = sin(theta);
+    double c2 = cos(2*theta);
+    double s2 = sin(2*theta);
+    double c3 = cos(3*theta);
+    double s3 = sin(3*theta);
+    double c4 = cos(4*theta);
+    double s4 = sin(4*theta);
 
     Matrix R = Matrix( _nTotalEntries, _nTotalEntries, 0.0 );
 
@@ -79,17 +78,17 @@ Matrix DataGeneratorRegression::CreateRotatorSphericalHarmonics2D( double x, dou
     R( 0, 0 ) = 1.0;
     if( _settings->GetMaxMomentDegree() >= 1 ) {
         R( 1, 1 ) = c;
-        R( 2, 1 ) = s;
-        R( 1, 2 ) = -s;
         R( 2, 2 ) = c;
+        R( 1, 2 ) = -s;
+        R( 2, 1 ) = s;
     }
     if( _settings->GetMaxMomentDegree() >= 2 ) {
         R( 3, 3 ) = c2;
         R( 4, 4 ) = 1;
         R( 5, 5 ) = c2;
-
-        R( 3, 5 ) = s2;
-        R( 5, 3 ) = -s2;
+        // off-diagonal
+        R( 3, 5 ) = -s2;
+        R( 5, 3 ) = s2;
     }
     if( _settings->GetMaxMomentDegree() >= 3 ) {
         // diagonal
@@ -98,10 +97,10 @@ Matrix DataGeneratorRegression::CreateRotatorSphericalHarmonics2D( double x, dou
         R( 8, 8 ) = c;
         R( 9, 9 ) = c3;
         // off-diagonal
-        R( 6, 9 ) = s3;
-        R( 7, 8 ) = s;
-        R( 8, 7 ) = -s;
-        R( 9, 6 ) = -s3;
+        R( 6, 9 ) = -s3;
+        R( 7, 8 ) = -s;
+        R( 8, 7 ) = s;
+        R( 9, 6 ) = s3;
     }
     if( _settings->GetMaxMomentDegree() >= 4 ) {
         // diagonal
@@ -111,10 +110,10 @@ Matrix DataGeneratorRegression::CreateRotatorSphericalHarmonics2D( double x, dou
         R( 13, 13 ) = c2;
         R( 14, 14 ) = c4;
         // off-diagonal
-        R( 10, 14 ) = s4;
-        R( 11, 13 ) = s2;
-        R( 13, 11 ) = -s2;
-        R( 14, 10 ) = -s4;
+        R( 10, 14 ) = -s4;
+        R( 11, 13 ) = -s2;
+        R( 13, 11 ) = s2;
+        R( 14, 10 ) = s4;
     }    // Further entries are sN and cN in above notation (see https://3dvar.com/Green2003Spherical.pdf)
     if( _settings->GetMaxMomentDegree() >= 5 ) {
         ErrorMessages::Error( "Rotation Matrix for spherical harmonics with degree >5 not yet implementd.", CURRENT_FUNCTION );
@@ -297,7 +296,7 @@ void DataGeneratorRegression::RotateMomentsAndMultipliers() {
 #pragma omp parallel for
     for( unsigned idx_sol = 0; idx_sol < _setSize; idx_sol++ ) {
         Matrix R_T = CreateRotatorSphericalHarmonics2D( _uSol[idx_sol][1], _uSol[idx_sol][2] );
-        _optimizer->ReconstructMoments( _uSol[idx_sol], _alpha[idx_sol], _momentBasis );
+
         _uSol[idx_sol]  = R_T * _uSol[idx_sol];
         _alpha[idx_sol] = R_T * _alpha[idx_sol];
     }
