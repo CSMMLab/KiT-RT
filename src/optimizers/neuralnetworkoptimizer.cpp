@@ -183,7 +183,7 @@ Matrix NeuralNetworkOptimizer::CreateRotatorSphericalHarmonics(double theta, dou
 Matrix NeuralNetworkOptimizer::CreateRotatorSphericalHarmonics2D( double theta, double x, double y ) {
     // Assumes that spherical harmonics degree is > 1
 
-    double theta = std::atan2( x, y );
+    theta = std::atan2( x, y );
 
     double c  = cos( theta );
     double s  = sin( theta );
