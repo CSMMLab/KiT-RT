@@ -3,7 +3,7 @@ python callNeuralClosure.py \
 --batch=64 \
 --curriculum=1 \
 --degree=1 \
---epoch=100 \
+--epoch=5 \
 --folder=sh_mk11_m1_2d_g0 \
 --loadModel=1 \
 --model=11 \

@@ -1,10 +1,10 @@
 date;2023-06-06
-git_version;86a5ce9fc6ffbd362dec93a80d8adb3e685ccfd2
+git_version;09a189a20c21ea00f390c37c2149a8f15b279043
 sampling;2
 batch;64
 curriculum;1
 degree;1
-epoch;100
+epoch;10
 folder;sh_mk11_m1_2d_g0
 loadModel;0
 model;11
