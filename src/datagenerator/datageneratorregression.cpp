@@ -145,7 +145,11 @@ void DataGeneratorRegression::ComputeTrainingData() {
 
         ComputeRealizableSolution();
 
-        RotateMomentsAndMultipliers();
+        if( _settings->GetEnforceNeuralRotationalSymmetry() ) {
+            log->info( "| Rotate moments and multipliers." );
+
+            RotateMomentsAndMultipliers();
+        }
     }
     else{
         // --- sample u ---
