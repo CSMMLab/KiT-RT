@@ -497,11 +497,12 @@ void NeuralNetworkOptimizer::InferenceSphericalHarmonics2D( VectorVector& alpha,
     if( _settings->GetEnforceNeuralRotationalSymmetry() ) {    // Rotational postprocessing
 #pragma omp parallel for
             for( unsigned idx_cell = 0; idx_cell < _settings->GetNCells(); idx_cell++ ) {
-                Vector alphaRed       = Vector( _nSystem - 1, 0.0 );    // local reduced alpha
-                Vector alphaRedMirror = Vector( _nSystem - 1, 0.0 );    // local reduced mirrored alpha
+                Vector alphaRed       = Vector( _nSystem, 0.0 );    // local reduced alpha (with dummy entry at 0)
+                Vector alphaRedMirror = Vector( _nSystem, 0.0 );    // local reduced mirrored alpha (with dummy entry at 0)
                 for( unsigned idx_sys = 0; idx_sys < _nSystem - 1; idx_sys++ ) {
-                    alphaRed[idx_sys]       = (double)_modelServingVectorAlpha[idx_cell * ( _nSystem - 1 ) + idx_sys];
-                    alphaRedMirror[idx_sys] = (double)_modelServingVectorAlpha[( _settings->GetNCells() + idx_cell ) * ( _nSystem - 1 ) + idx_sys];
+                    alphaRed[idx_sys + 1] = (double)_modelServingVectorAlpha[idx_cell * ( _nSystem - 1 ) + idx_sys];
+                    alphaRedMirror[idx_sys + 1] =
+                        (double)_modelServingVectorAlpha[( _settings->GetNCells() + idx_cell ) * ( _nSystem - 1 ) + idx_sys];
                 }
                 // Mirror back
                 alphaRedMirror = rot180 * alphaRedMirror;
