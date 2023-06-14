@@ -476,7 +476,7 @@ void NeuralNetworkOptimizer::InferenceSphericalHarmonics2D( VectorVector& alpha,
     else {    // No Preprocessing
 #pragma omp parallel for
         for( unsigned idx_cell = 0; idx_cell < _settings->GetNCells(); idx_cell++ ) {
-            u[idx_cell][2] = 0.0;  //manually enforce slab geometry
+            // u[idx_cell][2] = 0.0;  //manually enforce slab geometry
             for( unsigned idx_sys = 0; idx_sys < _nSystem - 1; idx_sys++ ) {
                 _modelServingVectorU[idx_cell * ( _nSystem - 1 ) + idx_sys] = (float)( u[idx_cell][idx_sys + 1] );
             }
