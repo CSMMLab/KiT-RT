@@ -1,10 +1,10 @@
-date;2023-06-06
-git_version;86a5ce9fc6ffbd362dec93a80d8adb3e685ccfd2
+date;2023-06-13
+git_version;7573076a1678be3d4fe2379cc902f81a49afeb4b
 sampling;2
-batch;256
+batch;64
 curriculum;1
 degree;1
-epoch;1000
+epoch;30
 folder;sh_mk11_m1_2d_g2
 loadModel;1
 model;11
@@ -17,4 +17,4 @@ spatial Dimension;2
 verbosity;2
 training;1
 network width;250
-network depth;1
+network depth;2

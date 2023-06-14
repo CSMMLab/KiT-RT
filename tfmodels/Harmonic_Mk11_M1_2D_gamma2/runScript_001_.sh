@@ -1,9 +1,9 @@
 python callNeuralClosure.py \
 --sampling=2 \
---batch=64 \
+--batch=32 \
 --curriculum=1 \
 --degree=1 \
---epoch=100 \
+--epoch=20 \
 --folder=sh_mk11_m1_2d_g2 \
 --loadModel=1 \
 --model=11 \
@@ -16,4 +16,4 @@ python callNeuralClosure.py \
 --training=1 \
 --verbosity=2 \
 --networkwidth=250 \
---networkdepth=1
+--networkdepth=2
