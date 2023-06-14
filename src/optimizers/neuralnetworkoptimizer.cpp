@@ -498,40 +498,39 @@ void NeuralNetworkOptimizer::InferenceSphericalHarmonics2D( VectorVector& alpha,
 
     // Postprocessing
     if( _settings->GetEnforceNeuralRotationalSymmetry() ) {    // Rotational postprocessing
-#pragma omp parallel for
-            for( unsigned idx_cell = 0; idx_cell < _settings->GetNCells(); idx_cell++ ) {
-                Vector alphaTemp       = Vector( _nSystem, 0.0 );    // local reduced alpha (with dummy entry at 0)
-                Vector alphaTempMirror = Vector( _nSystem, 0.0 );    // local reduced mirrored alpha (with dummy entry at 0)
-                for( unsigned idx_sys = 0; idx_sys < _nSystem - 1; idx_sys++ ) {
-                    alphaTemp[idx_sys + 1] = (double)_modelServingVectorAlpha[idx_cell * ( _nSystem - 1 ) + idx_sys];
-                    alphaTempMirror[idx_sys + 1] =
-                        (double)_modelServingVectorAlpha[( _settings->GetNCells() + idx_cell ) * ( _nSystem - 1 ) + idx_sys];
-                }
-                // Mirror back
-                alphaTempMirror = rot180 * alphaTempMirror;
-                // Average
-                alphaTemp = ( alphaTemp + alphaTempMirror ) / 2.0;
-                // Rotate Back
-                alphaTemp = _rotationMatsT[idx_cell] * alphaTemp;
+                                                               //#pragma omp parallel for
+        for( unsigned idx_cell = 0; idx_cell < _settings->GetNCells(); idx_cell++ ) {
+            Vector alphaTemp       = Vector( _nSystem, 0.0 );    // local reduced alpha (with dummy entry at 0)
+            Vector alphaTempMirror = Vector( _nSystem, 0.0 );    // local reduced mirrored alpha (with dummy entry at 0)
+            for( unsigned idx_sys = 0; idx_sys < _nSystem - 1; idx_sys++ ) {
+                alphaTemp[idx_sys + 1]       = (double)_modelServingVectorAlpha[idx_cell * ( _nSystem - 1 ) + idx_sys];
+                alphaTempMirror[idx_sys + 1] = (double)_modelServingVectorAlpha[( _settings->GetNCells() + idx_cell ) * ( _nSystem - 1 ) + idx_sys];
+            }
+            // Mirror back
+            alphaTempMirror = rot180 * alphaTempMirror;
+            // Average
+            alphaTemp = ( alphaTemp + alphaTempMirror ) / 2.0;
+            // Rotate Back
+            alphaTemp = _rotationMatsT[idx_cell] * alphaTemp;
 
-                Vector alphaRed = Vector( _nSystem - 1, 0.0 );
-                for( unsigned idx_sys = 0; idx_sys < _nSystem - 1; idx_sys++ ) {
-                    alphaRed[idx_sys] = alphaTemp[idx_sys + 1]
-                }
-                // Compute norms for scaling
-                alpha_norms[idx_cell] = norm( alphaRed ) * norm( alphaRed );
+            Vector alphaRed = Vector( _nSystem - 1, 0.0 );
+            for( unsigned idx_sys = 0; idx_sys < _nSystem - 1; idx_sys++ ) {
+                alphaRed[idx_sys] = alphaTemp[idx_sys + 1];
+            }
+            // Compute norms for scaling
+            alpha_norms[idx_cell] = norm( alphaRed ) * norm( alphaRed );
 
-                // Restore alpha_0
-                double integral = 0.0;
-                for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
-                    integral += _entropy->EntropyPrimeDual( dot( alphaRed, _reducedMomentBasis[idx_quad] ) ) * _weights[idx_quad];
-                }
-                alpha[idx_cell][0] = -( log( integral ) + log( moments[0][0] ) ) / moments[0][0];    // log trafo
+            // Restore alpha_0
+            double integral = 0.0;
+            for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
+                integral += _entropy->EntropyPrimeDual( dot( alphaRed, _reducedMomentBasis[idx_quad] ) ) * _weights[idx_quad];
+            }
+            alpha[idx_cell][0] = -( log( integral ) + log( moments[0][0] ) ) / moments[0][0];    // log trafo
 
-                // Store output
-                for( unsigned idx_sys = 0; idx_sys < _nSystem - 1; idx_sys++ ) {
-                    alpha[idx_cell][idx_sys + 1] = alphaRed[idx_sys];
-                }
+            // Store output
+            for( unsigned idx_sys = 0; idx_sys < _nSystem - 1; idx_sys++ ) {
+                alpha[idx_cell][idx_sys + 1] = alphaRed[idx_sys];
+            }
             }
     }
     else {
