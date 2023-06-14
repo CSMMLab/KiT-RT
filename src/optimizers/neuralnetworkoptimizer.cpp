@@ -500,19 +500,24 @@ void NeuralNetworkOptimizer::InferenceSphericalHarmonics2D( VectorVector& alpha,
     if( _settings->GetEnforceNeuralRotationalSymmetry() ) {    // Rotational postprocessing
 #pragma omp parallel for
             for( unsigned idx_cell = 0; idx_cell < _settings->GetNCells(); idx_cell++ ) {
-                Vector alphaRed       = Vector( _nSystem, 0.0 );    // local reduced alpha (with dummy entry at 0)
-                Vector alphaRedMirror = Vector( _nSystem, 0.0 );    // local reduced mirrored alpha (with dummy entry at 0)
+                Vector alphaTemp       = Vector( _nSystem, 0.0 );    // local reduced alpha (with dummy entry at 0)
+                Vector alphaTempMirror = Vector( _nSystem, 0.0 );    // local reduced mirrored alpha (with dummy entry at 0)
                 for( unsigned idx_sys = 0; idx_sys < _nSystem - 1; idx_sys++ ) {
-                    alphaRed[idx_sys + 1] = (double)_modelServingVectorAlpha[idx_cell * ( _nSystem - 1 ) + idx_sys];
-                    alphaRedMirror[idx_sys + 1] =
+                    alphaTemp[idx_sys + 1] = (double)_modelServingVectorAlpha[idx_cell * ( _nSystem - 1 ) + idx_sys];
+                    alphaTempMirror[idx_sys + 1] =
                         (double)_modelServingVectorAlpha[( _settings->GetNCells() + idx_cell ) * ( _nSystem - 1 ) + idx_sys];
                 }
                 // Mirror back
-                alphaRedMirror = rot180 * alphaRedMirror;
+                alphaTempMirror = rot180 * alphaTempMirror;
                 // Average
-                alphaRed = ( alphaRed + alphaRedMirror ) / 2.0;
+                alphaTemp = ( alphaTemp + alphaTempMirror ) / 2.0;
                 // Rotate Back
-                alphaRed = _rotationMatsT[idx_cell] * alphaRed;
+                alphaTemp = _rotationMatsT[idx_cell] * alphaTemp;
+
+                Vector alphaRed = Vector( _nSystem - 1, 0.0 );
+                for( unsigned idx_sys = 0; idx_sys < _nSystem - 1; idx_sys++ ) {
+                    alphaRed[idx_sys] = alphaTemp[idx_sys + 1]
+                }
                 // Compute norms for scaling
                 alpha_norms[idx_cell] = norm( alphaRed ) * norm( alphaRed );
 
@@ -521,7 +526,7 @@ void NeuralNetworkOptimizer::InferenceSphericalHarmonics2D( VectorVector& alpha,
                 for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
                     integral += _entropy->EntropyPrimeDual( dot( alphaRed, _reducedMomentBasis[idx_quad] ) ) * _weights[idx_quad];
                 }
-                alpha[idx_cell][0] = -(log( integral )+ log(moments[0][0]) )/moments[0][0];     // log trafo
+                alpha[idx_cell][0] = -( log( integral ) + log( moments[0][0] ) ) / moments[0][0];    // log trafo
 
                 // Store output
                 for( unsigned idx_sys = 0; idx_sys < _nSystem - 1; idx_sys++ ) {
