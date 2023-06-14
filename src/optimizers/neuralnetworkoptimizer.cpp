@@ -80,7 +80,7 @@ NeuralNetworkOptimizer::NeuralNetworkOptimizer( Config* settings ) : OptimizerBa
     _tfModelInputName                            = "";
     bool model_found                             = false;
     std::vector<std::string> input_name_1_models = {
-        "Harmonic_Mk11_M1_2D",        "Harmonic_Mk11_M1_2D_gamma1", "Harmonic_Mk11_M1_2D_gamma2", "Harmonic_Mk11_M1_3D_gamma3",
+        "Harmonic_Mk11_M1_2D",        "Harmonic_Mk11_M1_2D_gamma1", "Harmonic_Mk11_M1_2D_gamma2", "Harmonic_Mk11_M1_2D_gamma3",
         "Harmonic_Mk12_M1_3D",        "Harmonic_Mk12_M1_3D_gamma1", "Harmonic_Mk12_M1_3D_gamma2", "Harmonic_Mk12_M1_3D_gamma3",
         "Harmonic_Mk11_M1_3D",        "Harmonic_Mk11_M1_3D_gamma1", "Harmonic_Mk11_M1_3D_gamma2", "Harmonic_Mk11_M1_3D_gamma3",
         "Monomial_Mk11_M1_2D",        "Monomial_Mk11_M1_2D_gamma1", "Monomial_Mk11_M1_2D_gamma2", "Monomial_Mk11_M1_2D_gamma3",
