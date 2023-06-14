@@ -330,8 +330,8 @@ void NeuralNetworkOptimizer::InferenceMonomial( VectorVector& alpha, VectorVecto
             for( unsigned idx_cell = 0; idx_cell < _settings->GetNCells(); idx_cell++ ) {
                 Vector alphaRed       = Vector( _nSystem - 1, 0.0 );    // local reduced alpha
                 Vector alphaRedMirror = Vector( _nSystem - 1, 0.0 );    // local reduced mirrored alpha
-                Vector alphaCorr = Vector(_nSystem,0.0);
-                Vector uCorr =  Vector(_nSystem,0.0);
+                // Vector alphaCorr = Vector(_nSystem,0.0);
+                // Vector uCorr =  Vector(_nSystem,0.0);
 
                 for( unsigned idx_sys = 0; idx_sys < _nSystem - 1; idx_sys++ ) {
                     alphaRed[idx_sys]       = (double)_modelServingVectorAlpha[idx_cell * ( _nSystem - 1 ) + idx_sys];
@@ -340,32 +340,32 @@ void NeuralNetworkOptimizer::InferenceMonomial( VectorVector& alpha, VectorVecto
                     alphaRedMirror[idx_sys] =
                         -1 * (double)_modelServingVectorAlpha[( _settings->GetNCells() + idx_cell ) * ( _nSystem - 1 ) + idx_sys];
                     alphaRed[idx_sys] = ( alphaRed[idx_sys] + alphaRedMirror[idx_sys] ) / 2;    // average (and store in alphaRed)
-                    alphaCorr[idx_sys+1] = alphaRed[idx_sys];
+                    // alphaCorr[idx_sys+1] = alphaRed[idx_sys];
                 }
 
                 // Correct rotation offset made by nn approximation
-                {
-                // Restore alpha_0
-                double integral = 0.0;
-                for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
-                    integral += _entropy->EntropyPrimeDual( dot( alphaRed, _reducedMomentBasis[idx_quad] ) ) * _weights[idx_quad];
-                }
-                alphaCorr[0] =  -log( integral );    // log trafo
-                for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
-                    uCorr += moments[idx_quad]*_entropy->EntropyPrimeDual( dot( alphaCorr, moments[idx_quad] ) ) * _weights[idx_quad];
-                }
-                //Rotate uCorr onto x-axis
-                Vector u1{ uCorr[1], uCorr[2] };
-                Vector u1_star(2,0.0);
-
-                Matrix rotationMatsCorr  = CreateRotator( u1 );
-
-                u1_star = RotateM1( u1, rotationMatsCorr );    //, _rotationMatsT[idx_cell] );
-                if (u1_star[1]> 0.000001){
-                    ErrorMessages::Error("Somethings wrong" + std::to_string(u1[1]) + " " + std::to_string(u1_star[1]),CURRENT_FUNCTION);
-                }
-                alphaRed = RotateM1( alphaRed, rotationMatsCorr ); // rotate corresponding alpha
-                }
+                //{
+                //// Restore alpha_0
+                // double integral = 0.0;
+                // for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
+                //    integral += _entropy->EntropyPrimeDual( dot( alphaRed, _reducedMomentBasis[idx_quad] ) ) * _weights[idx_quad];
+                //}
+                // alphaCorr[0] =  -log( integral );    // log trafo
+                // for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
+                //    uCorr += moments[idx_quad]*_entropy->EntropyPrimeDual( dot( alphaCorr, moments[idx_quad] ) ) * _weights[idx_quad];
+                //}
+                ////Rotate uCorr onto x-axis
+                // Vector u1{ uCorr[1], uCorr[2] };
+                // Vector u1_star(2,0.0);
+                //
+                // Matrix rotationMatsCorr  = CreateRotator( u1 );
+                //
+                // u1_star = RotateM1( u1, rotationMatsCorr );    //, _rotationMatsT[idx_cell] );
+                // if (u1_star[1]> 0.000001){
+                //    ErrorMessages::Error("Somethings wrong" + std::to_string(u1[1]) + " " + std::to_string(u1_star[1]),CURRENT_FUNCTION);
+                //}
+                // alphaRed = RotateM1( alphaRed, rotationMatsCorr ); // rotate corresponding alpha
+                //}
                 // Rotate Back
                 alphaRed = RotateM1( alphaRed, _rotationMatsT[idx_cell] );
                 alpha_norms[idx_cell] = norm( alphaRed ) * norm( alphaRed );
@@ -441,6 +441,9 @@ void NeuralNetworkOptimizer::InferenceMonomial( VectorVector& alpha, VectorVecto
             for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
                 integral += _entropy->EntropyPrimeDual( dot( alphaRed, _reducedMomentBasis[idx_quad] ) ) * _weights[idx_quad];
             }
+
+            alpha_norms[idx_cell] = norm( alphaRed ) * norm( alphaRed );
+
             alpha[idx_cell][0] = -log( integral );    // log trafo
         }
     }
@@ -534,6 +537,9 @@ void NeuralNetworkOptimizer::InferenceSphericalHarmonics2D( VectorVector& alpha,
                 alphaRed[idx_sys]            = (double)_modelServingVectorAlpha[idx_cell * ( _nSystem - 1 ) + idx_sys];
                 alpha[idx_cell][idx_sys + 1] = alphaRed[idx_sys];
             }
+            // Compute norms for scaling
+            alpha_norms[idx_cell] = norm( alphaRed ) * norm( alphaRed );
+
             // Restore alpha_0
             double integral = 0.0;
             for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
