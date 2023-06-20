@@ -45,10 +45,7 @@ class NeuralNetworkOptimizer : public OptimizerBase
 
     Matrix CreateRotator( const Vector& uFirstMoment ); /*!< @brief Creates a rotation matrix R for the tensorized monomial basis using the first
                                                            moment of a momnet vector */
-    Matrix CreateRotatorSphericalHarmonics(
-        double theta,
-        double x,
-        double y ); /*!< @brief Creates a rotation matrix R for the spherical harmonics basisusing the first moment of a momnet vector */
+    Matrix CreateRotatorSphericalHarmonics( const double x, const double y ); /*!< @brief Creates a rotation matrix R for the spherical harmonics basisusing the first moment of a momnet vector */
     Matrix CreateRotatorSphericalHarmonics2D( const double x, const double y ); /*!< @brief Creates a rotation matrix R for the spherical harmonics basisusing the first moment of a momnet vector */
 
     Vector RotateM1( Vector& vec, Matrix& R ); /*!< @brief Rotates the M1 part of a 2D moment vector using a rotation matrix R */
