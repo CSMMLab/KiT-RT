@@ -60,8 +60,7 @@ Matrix DataGeneratorRegression::CreateRotatorSphericalHarmonics( double x, doubl
 
 Matrix DataGeneratorRegression::CreateRotatorSphericalHarmonics2D( double x, double y ) {
     // Assumes that spherical harmonics degree is > 1
-
-    double theta = std::atan2( x, y ) + M_PI / 2.0;
+    double theta = std::atan2( x, y ) - M_PI / 2.0;
 
     double c  = cos( theta );
     double s  = sin( theta );
@@ -87,8 +86,8 @@ Matrix DataGeneratorRegression::CreateRotatorSphericalHarmonics2D( double x, dou
         R( 4, 4 ) = 1;
         R( 5, 5 ) = c2;
         // off-diagonal
-        R( 3, 5 ) = -s2;
-        R( 5, 3 ) = s2;
+        R( 3, 5 ) = s2;
+        R( 5, 3 ) = -s2;
     }
     if( _settings->GetMaxMomentDegree() >= 3 ) {
         // diagonal
@@ -97,10 +96,10 @@ Matrix DataGeneratorRegression::CreateRotatorSphericalHarmonics2D( double x, dou
         R( 8, 8 ) = c;
         R( 9, 9 ) = c3;
         // off-diagonal
-        R( 6, 9 ) = -s3;
-        R( 7, 8 ) = -s;
-        R( 8, 7 ) = s;
-        R( 9, 6 ) = s3;
+        R( 6, 9 ) = s3;
+        R( 7, 8 ) = s;
+        R( 8, 7 ) = -s;
+        R( 9, 6 ) = -s3;
     }
     if( _settings->GetMaxMomentDegree() >= 4 ) {
         // diagonal
@@ -110,10 +109,10 @@ Matrix DataGeneratorRegression::CreateRotatorSphericalHarmonics2D( double x, dou
         R( 13, 13 ) = c2;
         R( 14, 14 ) = c4;
         // off-diagonal
-        R( 10, 14 ) = -s4;
-        R( 11, 13 ) = -s2;
-        R( 13, 11 ) = s2;
-        R( 14, 10 ) = s4;
+        R( 10, 14 ) = s4;
+        R( 11, 13 ) = s2;
+        R( 13, 11 ) = -s2;
+        R( 14, 10 ) = -s4;
     }    // Further entries are sN and cN in above notation (see https://3dvar.com/Green2003Spherical.pdf)
     if( _settings->GetMaxMomentDegree() >= 5 ) {
         ErrorMessages::Error( "Rotation Matrix for spherical harmonics with degree >5 not yet implementd.", CURRENT_FUNCTION );
@@ -140,15 +139,15 @@ void DataGeneratorRegression::ComputeTrainingData() {
         log->info( "| Multipliers sampled." );
 
         log->info( "| Compute realizable problems." );
+        ComputeRealizableSolution();
 
         // --- Postprocessing
 
-        ComputeRealizableSolution();
 
         if( _settings->GetEnforceNeuralRotationalSymmetry() ) {
             log->info( "| Rotate moments and multipliers." );
-
             RotateMomentsAndMultipliers();
+            ComputeRealizableSolution();
         }
     }
     else {
@@ -263,6 +262,10 @@ void DataGeneratorRegression::PrintTrainingData() {
     for( unsigned idx_sys = 0; idx_sys < _nTotalEntries; idx_sys++ ) {
         uSolString += "u_" + std::to_string( idx_sys ) + ",";
         alphaString += "alpha_" + std::to_string( idx_sys ) + ",";
+
+        if( _settings->GetEnforceNeuralRotationalSymmetry() && idx_sys ==1 ) {
+            idx_sys++; // jump over index 2
+        }
     }
     // log->info( uSolString + alphaString + "h" );
     logCSV->info( uSolString + alphaString + "h" );
@@ -274,6 +277,9 @@ void DataGeneratorRegression::PrintTrainingData() {
         for( unsigned idx_sys = 0; idx_sys < _nTotalEntries; idx_sys++ ) {
             streamU << std::fixed << std::setprecision( 12 ) << _uSol[idx_set][idx_sys] << ",";
             streamAlpha << std::fixed << std::setprecision( 12 ) << _alpha[idx_set][idx_sys] << ",";
+            if( _settings->GetEnforceNeuralRotationalSymmetry() && idx_sys ==1 ) {
+                idx_sys++; // jump over index 2
+            }
         }
         streamH << std::fixed << std::setprecision( 12 ) << _hEntropy[idx_set];
 
@@ -296,12 +302,18 @@ void DataGeneratorRegression::ComputeSetSizeAlpha() {
 }
 
 void DataGeneratorRegression::RotateMomentsAndMultipliers() {
+    Matrix rot180 = CreateRotatorSphericalHarmonics2D(-1.0, 0.0 );
 
 #pragma omp parallel for
-    for( unsigned idx_sol = 0; idx_sol < _setSize; idx_sol++ ) {
+    for( unsigned idx_sol = 0; idx_sol < _setSize; idx_sol+=2 ) {
         Matrix R_T = CreateRotatorSphericalHarmonics2D( _uSol[idx_sol][1], _uSol[idx_sol][2] );
 
         _uSol[idx_sol]  = R_T * _uSol[idx_sol];
         _alpha[idx_sol] = R_T * _alpha[idx_sol];
+
+        if (idx_sol+ 1 < _setSize){
+            _uSol[idx_sol+ 1]  = rot180 * _uSol[idx_sol];
+            _alpha[idx_sol + 1] = rot180 * _alpha[idx_sol];
+        }
     }
 }

@@ -42,13 +42,14 @@ void MNSolverNormalized::IterPreprocessing( unsigned idx_pseudotime ) {
     }
     Vector alpha_norm_per_cell( _nCells, 0 );    // ONLY FOR DEBUGGING! THIS SLOWS DOWN THE CODE
 
-    if (idx_pseudotime <180){
-        // std::cout << "use Newton\n";
+    if (idx_pseudotime >10){
+        //
         _optimizer->SolveMultiCell( _alpha, _sol, _momentBasis, alpha_norm_per_cell );    // Newton for the first few iterations
     }
     else{
-       _optimizer->SolveMultiCell( _alpha, _sol, _momentBasis, alpha_norm_per_cell );
-       //_optimizer2->SolveMultiCell( _alpha, _sol, _momentBasis, alpha_norm_per_cell ); //Newton for the first few iterations
+       //std::cout << "use Newton\n";
+       //_optimizer->SolveMultiCell( _alpha, _sol, _momentBasis, alpha_norm_per_cell );
+       _optimizer2->SolveMultiCell( _alpha, _sol, _momentBasis, alpha_norm_per_cell ); //Newton for the first few iterations
 
     }
 
