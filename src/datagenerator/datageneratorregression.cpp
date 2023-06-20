@@ -34,14 +34,14 @@ Matrix DataGeneratorRegression::CreateRotatorSphericalHarmonics( double x, doubl
 
     // Build R by going through submatrices
     R( 0, 0 ) = 1.0;
-    if ( _settings->GetMaxMomentDegree()>=1){
+    if( _settings->GetMaxMomentDegree() >= 1 ) {
         R( 1, 1 ) = c;
         R( 3, 1 ) = s;
         R( 2, 2 ) = 1.0;
         R( 1, 3 ) = -s;
         R( 3, 3 ) = c;
     }
-    if ( _settings->GetMaxMomentDegree()>=2){
+    if( _settings->GetMaxMomentDegree() >= 2 ) {
         R( 4, 4 ) = c2;
         R( 4, 8 ) = s2;
         R( 5, 5 ) = c;
@@ -53,7 +53,7 @@ Matrix DataGeneratorRegression::CreateRotatorSphericalHarmonics( double x, doubl
         R( 8, 8 ) = c2;
     }
     if( _settings->GetMaxMomentDegree() >= 3 ) {
-        ErrorMessages::Error("Rotation Matrix for spherical harmonics with degree >2 not yet implementd.",CURRENT_FUNCTION);
+        ErrorMessages::Error( "Rotation Matrix for spherical harmonics with degree >2 not yet implementd.", CURRENT_FUNCTION );
     }
     return R;
 }
@@ -61,16 +61,16 @@ Matrix DataGeneratorRegression::CreateRotatorSphericalHarmonics( double x, doubl
 Matrix DataGeneratorRegression::CreateRotatorSphericalHarmonics2D( double x, double y ) {
     // Assumes that spherical harmonics degree is > 1
 
-    double theta = std::atan2(x,y);
+    double theta = std::atan2( x, y ) + M_PI / 2.0;
 
-    double c = cos(theta);
-    double s = sin(theta);
-    double c2 = cos(2*theta);
-    double s2 = sin(2*theta);
-    double c3 = cos(3*theta);
-    double s3 = sin(3*theta);
-    double c4 = cos(4*theta);
-    double s4 = sin(4*theta);
+    double c  = cos( theta );
+    double s  = sin( theta );
+    double c2 = cos( 2 * theta );
+    double s2 = sin( 2 * theta );
+    double c3 = cos( 3 * theta );
+    double s3 = sin( 3 * theta );
+    double c4 = cos( 4 * theta );
+    double s4 = sin( 4 * theta );
 
     Matrix R = Matrix( _nTotalEntries, _nTotalEntries, 0.0 );
 
@@ -151,7 +151,7 @@ void DataGeneratorRegression::ComputeTrainingData() {
             RotateMomentsAndMultipliers();
         }
     }
-    else{
+    else {
         // --- sample u ---
         SampleSolutionU();
         log->info( "| Moments sampled." );

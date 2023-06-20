@@ -53,7 +53,7 @@ SolverBase::SolverBase( Config* settings ) {
         _nEnergies  = std::ceil( ( maxE - minE ) / _dE );
         _energies   = blaze::linspace( _nEnergies, minE, maxE );
     }
-    else {    // Not CSD Solver
+    else {                                                                       // Not CSD Solver
         _nEnergies = unsigned( settings->GetTEnd() / _dE );
         _energies  = blaze::linspace( _nEnergies, 0.0, settings->GetTEnd() );    // go upward from 0 to T_end
     }
@@ -76,8 +76,8 @@ SolverBase::SolverBase( Config* settings ) {
     // Solver Output
     _solverOutput.resize( _nCells );    // LEGACY! Only used for CSD SN
 
-    PrepareScreenOutput();     // Screen Output
-    PrepareHistoryOutput();    // History Output
+    PrepareScreenOutput();              // Screen Output
+    PrepareHistoryOutput();             // History Output
 
     // initialize Helper Variables
     _fluxNew = Vector( _nCells, 0 );
@@ -375,7 +375,7 @@ void SolverBase::PrintScreenOutput( unsigned iteration ) {
             tmp.erase( std::remove( tmp.begin(), tmp.end(), '+' ), tmp.end() );    // removing the '+' sign
         }
 
-        if( strLen > tmp.size() )    // Padding
+        if( strLen > tmp.size() )         // Padding
             tmp.insert( 0, strLen - tmp.size(), paddingChar );
         else if( strLen < tmp.size() )    // Cutting
             tmp.resize( strLen );
@@ -465,7 +465,7 @@ void SolverBase::DrawPreSolverOutput() {
         for( unsigned idxFields = 0; idxFields < _settings->GetNScreenOutput(); idxFields++ ) {
             std::string tmp = _screenOutputFieldNames[idxFields];
 
-            if( strLen > tmp.size() )    // Padding
+            if( strLen > tmp.size() )         // Padding
                 tmp.insert( 0, strLen - tmp.size(), paddingChar );
             else if( strLen < tmp.size() )    // Cutting
                 tmp.resize( strLen );
@@ -510,7 +510,7 @@ void SolverBase::DrawPostSolverOutput() {
         for( unsigned idxFields = 0; idxFields < _settings->GetNScreenOutput(); idxFields++ ) {
             std::string tmp = _screenOutputFieldNames[idxFields];
 
-            if( strLen > tmp.size() )    // Padding
+            if( strLen > tmp.size() )         // Padding
                 tmp.insert( 0, strLen - tmp.size(), paddingChar );
             else if( strLen < tmp.size() )    // Cutting
                 tmp.resize( strLen );
