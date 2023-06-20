@@ -25,7 +25,7 @@ NewtonOptimizer::NewtonOptimizer( Config* settings ) : OptimizerBase( settings )
 
 NewtonOptimizer::~NewtonOptimizer() { delete _quadrature; }
 
-double NewtonOptimizer::ComputeObjFunc( Vector& alpha, Vector& sol, const VectorVector& moments ) {
+double NewtonOptimizer::ComputeObjFunc( const Vector& alpha, const Vector& sol, const VectorVector& moments ) {
     double result = 0.0;
 
     // Integrate
@@ -36,7 +36,7 @@ double NewtonOptimizer::ComputeObjFunc( Vector& alpha, Vector& sol, const Vector
     return result;
 }
 
-void NewtonOptimizer::ComputeGradient( Vector& alpha, Vector& sol, const VectorVector& moments, Vector& grad ) {
+void NewtonOptimizer::ComputeGradient( const Vector& alpha, const Vector& sol, const VectorVector& moments, Vector& grad ) {
 
     // Reset Vector
     for( unsigned idx_sys = 0; idx_sys < grad.size(); idx_sys++ ) {
@@ -50,7 +50,7 @@ void NewtonOptimizer::ComputeGradient( Vector& alpha, Vector& sol, const VectorV
     grad -= sol;
 }
 
-void NewtonOptimizer::ComputeHessian( Vector& alpha, const VectorVector& moments, Matrix& hessian ) {
+void NewtonOptimizer::ComputeHessian( const Vector& alpha, const VectorVector& moments, Matrix& hessian ) {
     // Reset Matrix
     unsigned nSize = alpha.size();
 
@@ -67,7 +67,7 @@ void NewtonOptimizer::ComputeHessian( Vector& alpha, const VectorVector& moments
     }
 }
 
-void NewtonOptimizer::SolveMultiCell( VectorVector& alpha, VectorVector& sol, const VectorVector& moments, Vector& alpha_norms ) {
+void NewtonOptimizer::SolveMultiCell( VectorVector& alpha, const VectorVector& sol, const VectorVector& moments, Vector& alpha_norms ) {
 
     unsigned nCells = alpha.size();
     unsigned nSys = alpha[0].size();
@@ -90,7 +90,7 @@ void NewtonOptimizer::SolveMultiCell( VectorVector& alpha, VectorVector& sol, co
     }
 }
 
-void NewtonOptimizer::Solve( Vector& alpha, Vector& sol, const VectorVector& moments, unsigned idx_cell ) {
+void NewtonOptimizer::Solve( Vector& alpha,const Vector& sol, const VectorVector& moments, unsigned idx_cell ) {
 
     /* solve the problem argmin ( <eta_*(alpha*m)>-alpha*u))
      * where alpha = Lagrange multiplier

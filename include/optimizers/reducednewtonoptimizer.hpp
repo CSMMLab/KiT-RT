@@ -18,11 +18,11 @@ class ReducedNewtonOptimizer : public NewtonOptimizer
 
     /*! @brief Computes the objective function
                 grad = <eta(alpha*m)> - alpha*sol */
-    virtual double ComputeObjFunc( Vector& alpha, Vector& sol, const VectorVector& moments ) override;
+    virtual double ComputeObjFunc( const Vector& alpha, const Vector& sol, const VectorVector& moments ) override;
 
     /*! @brief Computes hessian of objective function and stores it in hessian
         grad = <mXm*eta*'(alpha*m)> */
-    virtual void ComputeHessian( Vector& alpha, const VectorVector& moments, Matrix& hessian ) override;
+    virtual void ComputeHessian( const Vector& alpha, const VectorVector& moments, Matrix& hessian ) override;
 
     /*! @brief Reconstruct the moment sol from the Lagrange multiplier alpha
      *  @param sol moment vector
@@ -34,7 +34,7 @@ class ReducedNewtonOptimizer : public NewtonOptimizer
   protected:
     /*! @brief Computes gradient of objective function and stores it in grad
                 grad = <m*eta*'(alpha*m)> - sol */
-    virtual void ComputeGradient( Vector& alpha, Vector& sol, const VectorVector& moments, Vector& grad ) override;
+    virtual void ComputeGradient( const Vector& alpha, const Vector& sol, const VectorVector& moments, Vector& grad ) override;
 };
 
 #endif    // REDUCEDNEWTONOPTIMIZER_H

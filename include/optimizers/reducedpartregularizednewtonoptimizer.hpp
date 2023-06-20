@@ -19,11 +19,11 @@ class ReducedPartRegularizedNewtonOptimizer : public ReducedNewtonOptimizer
 
     /*! @brief Computes the objective function
                 grad = <eta(alpha*m)> - alpha*sol  + gamma/2*norm(alpha)*/
-    double ComputeObjFunc( Vector& alpha, Vector& sol, const VectorVector& moments ) override;
+    double ComputeObjFunc( const Vector& alpha, const Vector& sol, const VectorVector& moments ) override;
 
     /*! @brief Computes hessian of objective function and stores it in hessian
         grad = <mXm*eta*'(alpha*m)> */
-    void ComputeHessian( Vector& alpha, const VectorVector& moments, Matrix& hessian ) override;
+    void ComputeHessian( const Vector& alpha, const VectorVector& moments, Matrix& hessian ) override;
 
     /*! @brief In 1D, this function scales the quadrature weigths to compute the entropy integrals in arbitrary (bounded) intervals
         @param leftBound : left boundary of the interval
@@ -40,7 +40,7 @@ class ReducedPartRegularizedNewtonOptimizer : public ReducedNewtonOptimizer
   private:
     /*! @brief Computes gradient of objective function and stores it in grad
                 grad = <m*eta*'(alpha*m)> - sol + _gamma*alpha */
-    void ComputeGradient( Vector& alpha, Vector& sol, const VectorVector& moments, Vector& grad ) override;
+    void ComputeGradient( const Vector& alpha, const Vector& sol, const VectorVector& moments, Vector& grad ) override;
 
     double _gamma; /*!<  @brief Regularization Parameter*/
 };
