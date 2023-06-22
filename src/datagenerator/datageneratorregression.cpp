@@ -263,7 +263,7 @@ void DataGeneratorRegression::PrintTrainingData() {
         uSolString += "u_" + std::to_string( idx_sys ) + ",";
         alphaString += "alpha_" + std::to_string( idx_sys ) + ",";
 
-        if( _settings->GetEnforceNeuralRotationalSymmetry() && idx_sys ==1 ) {
+        if( _settings->GetEnforceNeuralRotationalSymmetry() && _settings->GetMaxMomentDegree() == 1 && idx_sys == 1 ) {
             idx_sys++; // jump over index 2
         }
     }
@@ -277,7 +277,7 @@ void DataGeneratorRegression::PrintTrainingData() {
         for( unsigned idx_sys = 0; idx_sys < _nTotalEntries; idx_sys++ ) {
             streamU << std::fixed << std::setprecision( 12 ) << _uSol[idx_set][idx_sys] << ",";
             streamAlpha << std::fixed << std::setprecision( 12 ) << _alpha[idx_set][idx_sys] << ",";
-            if( _settings->GetEnforceNeuralRotationalSymmetry() && idx_sys ==1 ) {
+            if( _settings->GetEnforceNeuralRotationalSymmetry() && _settings->GetMaxMomentDegree() == 1 && idx_sys == 1 ) {
                 idx_sys++; // jump over index 2
             }
         }
