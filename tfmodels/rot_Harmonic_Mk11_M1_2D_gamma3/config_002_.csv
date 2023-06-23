@@ -1,17 +1,17 @@
-date;2023-06-21
-git_version;0f81a4ab64c8185d7045ff53d15734aba06afa64
+date;2023-06-23
+git_version;9a2435b2e1e1acea8dbb1ab03b4c533071ccdeec
 sampling;2
-batch;32
+batch;64
 curriculum;1
 degree;1
-epoch;20
+epoch;30
 folder;rot_Harmonic_Mk11_M1_2D_gamma3
 loadModel;1
 model;11
 normalized moments;True
 decorrelate inputs;False
 scaled outputs;False
-objective;0
+objective;2
 processingmode;1
 spatial Dimension;2
 verbosity;2

@@ -16,4 +16,6 @@ python callNeuralClosure.py \
 --training=1 \
 --verbosity=2 \
 --networkwidth=250 \
---networkdepth=2
+--networkdepth=2 \
+--basis=spherical_harmonics \
+--rotated=1

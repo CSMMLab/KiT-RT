@@ -1,4 +1,4 @@
-date;2023-06-20
+date;2023-06-22
 git_version;0f81a4ab64c8185d7045ff53d15734aba06afa64
 sampling;2
 batch;256
@@ -10,7 +10,7 @@ loadModel;1
 model;11
 normalized moments;True
 decorrelate inputs;False
-scaled outputs;True
+scaled outputs;False
 objective;2
 processingmode;1
 spatial Dimension;2

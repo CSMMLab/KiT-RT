@@ -1,9 +1,9 @@
 python callNeuralClosure.py \
 --sampling=2 \
---batch=64 \
+--batch=256 \
 --curriculum=1 \
 --degree=1 \
---epoch=30 \
+--epoch=1000 \
 --folder=rot_Harmonic_Mk11_M1_2D_gamma3 \
 --loadModel=1 \
 --model=11 \
@@ -16,4 +16,6 @@ python callNeuralClosure.py \
 --training=1 \
 --verbosity=2 \
 --networkwidth=250 \
---networkdepth=2
+--networkdepth=2 \
+--basis=spherical_harmonics \
+--rotated=1
