@@ -4,15 +4,15 @@
 #include "common/mesh.hpp"
 #include "entropies/entropybase.hpp"
 #include "fluxes/numericalflux.hpp"
+#include "optimizers/newtonoptimizer.hpp"
 #include "optimizers/optimizerbase.hpp"
+#include "optimizers/partregularizednewtonoptimizer.hpp"
 #include "problems/problembase.hpp"
 #include "quadratures/quadraturebase.hpp"
 #include "solvers/mnsolver.hpp"
 #include "toolboxes/errormessages.hpp"
 #include "toolboxes/textprocessingtoolbox.hpp"
 #include "velocitybasis/sphericalbase.hpp"
-#include "optimizers/newtonoptimizer.hpp"
-#include "optimizers/partregularizednewtonoptimizer.hpp"
 
 // externals
 #include "spdlog/spdlog.h"
