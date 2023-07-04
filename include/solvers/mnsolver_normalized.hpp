@@ -21,6 +21,7 @@ class MNSolverNormalized : public MNSolver
 
   private:
     Vector _u0; /*!< @brief Vector of zeroOrderMoments*/
+    VectorVector _sol2; /*!< @brief Backup of solution vector. Only experimental */
 
     // ---- Private Member functions ---
 

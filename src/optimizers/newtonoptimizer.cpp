@@ -90,7 +90,7 @@ void NewtonOptimizer::SolveMultiCell( VectorVector& alpha, const VectorVector& s
     }
 }
 
-void NewtonOptimizer::Solve( Vector& alpha,const Vector& sol, const VectorVector& moments, unsigned idx_cell ) {
+void NewtonOptimizer::Solve( Vector& alpha, const Vector& sol, const VectorVector& moments, unsigned idx_cell ) {
 
     /* solve the problem argmin ( <eta_*(alpha*m)>-alpha*u))
      * where alpha = Lagrange multiplier
@@ -107,6 +107,8 @@ void NewtonOptimizer::Solve( Vector& alpha,const Vector& sol, const VectorVector
     // Start Newton Algorithm
 
     unsigned nSize = alpha.size();
+
+    Vector recons_u(nSize,0.0);
 
     Vector grad( nSize, 0.0 );
 
@@ -164,7 +166,8 @@ void NewtonOptimizer::Solve( Vector& alpha,const Vector& sol, const VectorVector
             ComputeGradient( alphaNew, sol, moments, dalphaNew );
 
             // Check if FONC is locally fullfilled
-            if( norm( dalphaNew ) < _epsilon ) {
+            ReconstructMoments(recons_u, alphaNew,moments);
+            if( norm(recons_u - sol ) < _epsilon ) {
                 alpha = alphaNew;
                 return;
             }
@@ -185,7 +188,9 @@ void NewtonOptimizer::Solve( Vector& alpha,const Vector& sol, const VectorVector
             }
         }
         alpha = alphaNew;
-        if( norm( dalphaNew ) < _epsilon ) {
+        ReconstructMoments(recons_u, alphaNew,moments);
+
+        if( norm(recons_u - sol ) < _epsilon ) {
             alpha = alphaNew;
             return;
         }
