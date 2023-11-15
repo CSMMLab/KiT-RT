@@ -85,6 +85,11 @@ class ProblemBase
      */
     virtual VectorVector SetupIC() = 0;
 
+    /**
+     * @brief Returns the Dirichlet Boundary value for given cell index
+     */
+    virtual Vector GetGhostCellValue(int idx_cell);
+
     /*! @brief Exact analytical solution for the Line Source Test Case. Returns 0 for all other test cases.
          @return exact solution at x,y,t,scatteringXS
     */ // Default is set to 0. ~> if no analytical solution is available.

@@ -3,6 +3,7 @@
 #include "problems/aircavity1d.hpp"
 #include "problems/checkerboard.hpp"
 #include "problems/hohlraum.hpp"
+#include "problems/symmetrichohlraum.hpp"
 #include "problems/linesource.hpp"
 #include "problems/meltingcube.hpp"
 #include "problems/phantomimage.hpp"
@@ -82,6 +83,12 @@ ProblemBase* ProblemBase::Create( Config* settings, Mesh* mesh ) {
             else
                 return new Hohlraum( settings, mesh );
         } break;
+        case PROBLEM_SymmetricHohlraum: {
+            if( settings->GetIsMomentSolver() )
+                return new SymmetricHohlraum_Moment( settings, mesh );
+            else
+                return new SymmetricHohlraum( settings, mesh );
+        } break;
 
         default: ErrorMessages::Error( "No valid physical problem chosen. Please check your config file", CURRENT_FUNCTION ); return nullptr;
     }
@@ -100,4 +107,8 @@ VectorVector ProblemBase::GetScatteringXSE( const Vector& /*energies*/, const Ve
 Vector ProblemBase::GetStoppingPower( const Vector& /* energies */ ) {
     ErrorMessages::Error( "Not yet implemented", CURRENT_FUNCTION );
     return Vector( 1, -1.0 );
+}
+
+Vector ProblemBase::GetGhostCellValue(int idx_cell){
+    return Vector(1u, 0.0);
 }

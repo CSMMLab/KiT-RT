@@ -23,9 +23,9 @@ def main():
     parser = OptionParser()
     parser.add_option("-o", "--output_name", dest="output_name", default="struct_2dmesh")
     parser.add_option("-c", "--char_length", dest="char_length", default=0.01)
-    parser.add_option("-s", "--start_pt", dest="start_pt", nargs=2, default=(0,0))
-    parser.add_option("-l", "--length", dest="length", nargs=2, default=(1,1))
-    parser.add_option("-b", "--boundary", dest="b_type", default="void")
+    parser.add_option("-s", "--start_pt", dest="start_pt", nargs=2, default=(-0.65,-0.65))
+    parser.add_option("-l", "--length", dest="length", nargs=2, default=(1.3,1.3))
+    parser.add_option("-b", "--boundary", dest="b_type", default="dirichletNeumann")
     (options, args) = parser.parse_args()
 
     options.output_name = str(options.output_name)
@@ -56,20 +56,22 @@ def main():
         geom.add_physical(void, label="void")
 
     elif options.b_type == "dirichletNeumann":
-        dirichlet = list()
-        wall_low = list()
-        wall_up = list()
-        wall_low.append(domain.lines[0])
-        wall_up.append(domain.lines[2])
+        dirichlet_wall_up = list()
+        dirichlet_wall_low = list()
+        neumann_wall_left = list()
+        neumann_wall_right = list()
+        dirichlet_wall_low.append(domain.lines[0])
+        dirichlet_wall_up.append(domain.lines[2])
 
-        dirichlet.append(domain.lines[1])
-        dirichlet.append(domain.lines[3])
+        neumann_wall_left.append(domain.lines[1])
+        neumann_wall_right.append(domain.lines[3])
 
-        geom.add_physical(dirichlet, label="dirichlet")
-        geom.add_physical(wall_low, label="wall_low")
-        geom.add_physical(wall_up, label="wall_up")
-        print("| Neumann marker has tag wall_low and wall_up")
-        print("| Dirichlet marker has tag dirichlet")
+        geom.add_physical(dirichlet_wall_up, label="dirichlet_wall_low")
+        geom.add_physical(dirichlet_wall_low, label="dirichlet_wall_up")
+        geom.add_physical(neumann_wall_left, label="neumann_wall_left")
+        geom.add_physical(neumann_wall_right, label="neumann_wall_right")
+        print("| Neumann marker has tag neumann_wall_left and neumann_wall_right")
+        print("| Dirichlet marker has tag dirichlet_wall_up and dirichlet_wall_low")
 
     else:
         print("Boundary condition not yet implemented")

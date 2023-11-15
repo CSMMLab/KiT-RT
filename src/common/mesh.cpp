@@ -332,63 +332,12 @@ void Mesh::ComputeLimiter(
                     std::cout << "r <0.0 \n";    // if this happens there is a bug or a deformend mesh
                 }
                 localLimiter[idx_nbr] = std::min( r, 1.0 );    // LimiterBarthJespersen( r );
-                // double epsVenka = ( 1 * sqrt( _cellAreas[idx_cell] ) );
-                // epsVenka        = epsVenka * epsVenka * epsVenka;
-                // double dMax     = maxSol - sol[idx_cell][idx_sys];
-                // double dMin     = minSol - sol[idx_cell][idx_sys];
-                //// venkat limiter
-                // if( gaussPt > 0.0 ) {
-                //    localLimiter[idx_nbr] = ( 1 / gaussPt ) * ( ( dMax * dMax + epsVenka * epsVenka ) * gaussPt + 2 * gaussPt * gaussPt * dMax ) /
-                //                            ( dMax * dMax + 2 * gaussPt * gaussPt + dMax * gaussPt + epsVenka * epsVenka );
-                //}
-                // else if( gaussPt < 0.0 ) {
-                //    localLimiter[idx_nbr] = ( 1 / gaussPt ) * ( ( dMin * dMin + epsVenka * epsVenka ) * gaussPt + 2 * gaussPt * gaussPt * dMin ) /
-                //                            ( dMin * dMin + 2 * gaussPt * gaussPt + dMin * gaussPt + epsVenka * epsVenka );
-                //}
-                // else {
-                //    localLimiter[idx_nbr] = 1.0;
-                //}
             }
             // get smallest limiter
             limiter[idx_cell][idx_sys] = localLimiter[0];
             for( unsigned idx_nbr = 0; idx_nbr < _cellNeighbors[idx_cell].size(); idx_nbr++ ) {
                 if( localLimiter[idx_nbr] < limiter[idx_cell][idx_sys] ) limiter[idx_cell][idx_sys] = localLimiter[idx_nbr];
             }
-            // check maximum principle
-            // for( unsigned idx_nbr = 0; idx_nbr < _cellNeighbors[idx_cell].size(); idx_nbr++ ) {
-            //    double currLim = limiter[idx_cell][idx_sys];
-            //    // double dy      = solDy[idx_cell][idx_sys];
-            //    // double dx      = solDx[idx_cell][idx_sys];
-            //    // double rijx    = _cellInterfaceMidPoints[idx_cell][idx_nbr][0];
-            //    // double rijy    = _cellInterfaceMidPoints[idx_cell][idx_nbr][1];
-            //    // double cmx     = _cellMidPoints[idx_cell][0];
-            //    // double cmy     = _cellMidPoints[idx_cell][1];
-            //    // double curSol  = sol[idx_cell][idx_sys];
-            //    double gaussPt = solDx[idx_cell][idx_sys] * ( _cellInterfaceMidPoints[idx_cell][idx_nbr][0] - _cellMidPoints[idx_cell][0] ) +
-            //                     solDy[idx_cell][idx_sys] * ( _cellInterfaceMidPoints[idx_cell][idx_nbr][1] - _cellMidPoints[idx_cell][1] );
-
-            //    double psiL = sol[idx_cell][idx_sys] + currLim * gaussPt;
-            //    // double psiL2 = curSol + currLim * ( dx * ( rijx - cmx ) + dy * ( rijy - cmy ) );
-
-            //    if( psiL > maxSol ) {
-            //        // std::cout << "max principle hurt\n";
-            //        // gaussPt = solDx[idx_cell][idx_sys] * ( _nodes[_cells[idx_cell][idx_nbr]][0] - _cellMidPoints[idx_cell][0] ) +
-            //        //           solDy[idx_cell][idx_sys] * ( _nodes[_cells[idx_cell][idx_nbr]][1] - _cellMidPoints[idx_cell][1] );
-            //        // std::cout << "gaussPt" << gaussPt << "\n";
-            //        // std::cout << "enumMax" << maxSol - sol[idx_cell][idx_sys] << "\n";
-            //        // std::cout << "enumMin" << minSol - sol[idx_cell][idx_sys] << "\n";
-            //        // std::cout << "minSol" << minSol << "psiL" << psiL << "maxSol" << maxSol << "\n";
-            //        // limiter[idx_cell][idx_sys] = 0.0;
-            //    }
-            //    if( psiL < minSol ) {
-            //        // std::cout << "min principle hurt\n";
-            //        // std::cout << "gaussPt" << gaussPt << "\n";
-            //        // std::cout << "enumMax" << maxSol - sol[idx_cell][idx_sys] << "\n";
-            //        // std::cout << "enumMin" << minSol - sol[idx_cell][idx_sys] << "\n";
-            //        // std::cout << "minSol" << minSol << "psiL" << psiL << "maxSol" << maxSol << "\n";
-            //        // limiter[idx_cell][idx_sys] = 0.0;
-            //    }
-            //}
         }
     }
 }
