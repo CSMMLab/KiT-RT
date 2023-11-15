@@ -9,13 +9,12 @@
 #include "entropies/entropybase.hpp"
 #include "quadratures/quadraturebase.hpp"
 #include "toolboxes/errormessages.hpp"
-#include "toolboxes/textprocessingtoolbox.hpp"
 
 ReducedNewtonOptimizer::ReducedNewtonOptimizer( Config* settings ) : NewtonOptimizer( settings ) {}
 
 ReducedNewtonOptimizer::~ReducedNewtonOptimizer() { delete _quadrature; }
 
-double ReducedNewtonOptimizer::ComputeObjFunc( Vector& alpha, Vector& sol, const VectorVector& moments ) {
+double ReducedNewtonOptimizer::ComputeObjFunc( const Vector& alpha, const Vector& sol, const VectorVector& moments ) {
     double result = 0.0;
 
     // Integrate
@@ -29,7 +28,7 @@ double ReducedNewtonOptimizer::ComputeObjFunc( Vector& alpha, Vector& sol, const
     return result + 1.0;
 }
 
-void ReducedNewtonOptimizer::ComputeGradient( Vector& alpha, Vector& sol, const VectorVector& moments, Vector& grad ) {
+void ReducedNewtonOptimizer::ComputeGradient( const Vector& alpha, const Vector& sol, const VectorVector& moments, Vector& grad ) {
 
     // Reset Vector
     for( unsigned idx_sys = 0; idx_sys < grad.size(); idx_sys++ ) {
@@ -54,7 +53,7 @@ void ReducedNewtonOptimizer::ComputeGradient( Vector& alpha, Vector& sol, const 
     grad -= sol;
 }
 
-void ReducedNewtonOptimizer::ComputeHessian( Vector& alpha, const VectorVector& moments, Matrix& hessian ) {
+void ReducedNewtonOptimizer::ComputeHessian( const Vector& alpha, const VectorVector& moments, Matrix& hessian ) {
     // Reset Matrix
     unsigned nSize = alpha.size();
 

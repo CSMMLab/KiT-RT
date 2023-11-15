@@ -18,16 +18,16 @@ class NewtonOptimizer : public OptimizerBase
 
     ~NewtonOptimizer();
 
-    void Solve( Vector& alpha, Vector& sol, const VectorVector& moments, unsigned idx_cell = 0 ) override;
-    void SolveMultiCell( VectorVector& alpha, VectorVector& sol, const VectorVector& moments, Vector& alpha_norms ) override;
+    void Solve( Vector& alpha, const Vector& sol, const VectorVector& moments, unsigned idx_cell = 0 ) override;
+    void SolveMultiCell( VectorVector& alpha, const VectorVector& sol, const VectorVector& moments, Vector& alpha_norms ) override;
 
     /*! @brief Computes the objective function
                 grad = <eta(alpha*m)> - alpha*sol */
-    virtual double ComputeObjFunc( Vector& alpha, Vector& sol, const VectorVector& moments );
+    virtual double ComputeObjFunc(const Vector& alpha, const Vector& sol, const VectorVector& moments );
 
     /*! @brief Computes hessian of objective function and stores it in hessian
         grad = <mXm*eta*'(alpha*m)> */
-    virtual void ComputeHessian( Vector& alpha, const VectorVector& moments, Matrix& hessian );
+    virtual void ComputeHessian(const Vector& alpha, const VectorVector& moments, Matrix& hessian );
 
     /*! @brief In 1D, this function scales the quadrature weigths to compute the entropy integrals in arbitrary (bounded) intervals
         @param velocityScale :scaling factor of the symmetric velocity intervall with mean 0
@@ -39,12 +39,12 @@ class NewtonOptimizer : public OptimizerBase
      *  @param alpha Lagrange multipliers
      *  @param moments Moment basis
      */
-    virtual void ReconstructMoments( Vector& sol, const Vector& alpha, const VectorVector& moments );
+    virtual void ReconstructMoments( Vector& sol, const Vector& alpha, const VectorVector& moments ) override;
 
   protected:
     /*! @brief Computes gradient of objective function and stores it in grad
                 grad = <m*eta*'(alpha*m)> - sol */
-    virtual void ComputeGradient( Vector& alpha, Vector& sol, const VectorVector& moments, Vector& grad );
+    virtual void ComputeGradient(const Vector& alpha, const Vector& sol, const VectorVector& moments, Vector& grad );
 
     QuadratureBase* _quadrature; /*!< @brief used quadrature */    // THis is memory doubling! Try to use a pointer.
 

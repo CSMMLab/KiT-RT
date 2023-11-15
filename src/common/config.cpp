@@ -278,6 +278,10 @@ void Config::SetConfigOptions() {
     AddEnumOption( "ENTROPY_FUNCTIONAL", _entropyName, Entropy_Map, QUADRATIC );
     /*! @brief Optimizer Name \n DESCRIPTION:  Optimizer used to determine the minimal Entropy reconstruction \n DEFAULT NEWTON \ingroup Config */
     AddEnumOption( "ENTROPY_OPTIMIZER", _entropyOptimizerName, Optimizer_Map, NEWTON );
+    /*! @brief Sets Flag for dynamic ansatz for normalized mn entropy closure \n DESCRIPTION:  True = enable ansatz, False = disable ansatz \n DEFAULT
+     * false \ingroup Config */
+    AddBoolOption( "ENTROPY_DYNAMIC_CLOSURE", _entropyDynamicClosure, true );
+
     // Newton optimizer related options
     /*! @brief Regularization Parameter \n DESCRIPTION:  Regularization Parameter for the regularized entropy closure. Must not be negative \n DEFAULT
      * 1e-2 \ingroup Config */
@@ -285,12 +289,12 @@ void Config::SetConfigOptions() {
     /*! @brief Newton Optimizer Epsilon \n DESCRIPTION:  Convergencce Epsilon for Newton Optimizer \n DEFAULT 1e-3 \ingroup Config */
     AddDoubleOption( "NEWTON_EPSILON", _optimizerEpsilon, 0.001 );
     /*! @brief Max Iter Newton Optmizers \n DESCRIPTION: Max number of newton iterations \n DEFAULT 10 \ingroup Config */
-    AddUnsignedLongOption( "NEWTON_ITER", _newtonIter, 100 );
+    AddUnsignedLongOption( "NEWTON_ITER", _newtonIter, 1000 );
     /*! @brief Step Size Newton Optmizers \n DESCRIPTION: Step size for Newton optimizer \n DEFAULT 10 \ingroup Config */
-    AddDoubleOption( "NEWTON_STEP_SIZE", _newtonStepSize, 0.1 );
+    AddDoubleOption( "NEWTON_STEP_SIZE", _newtonStepSize, 1 );
     /*! @brief Max Iter for line search in Newton Optmizers \n DESCRIPTION: Max number of line search iter for newton optimizer \n DEFAULT 10
      * \ingroup Config */
-    AddUnsignedLongOption( "NEWTON_LINE_SEARCH_ITER", _newtonLineSearchIter, 100 );
+    AddUnsignedLongOption( "NEWTON_LINE_SEARCH_ITER", _newtonLineSearchIter, 1000 );
     /*! @brief Newton Fast mode \n DESCRIPTION:  If true, we skip the Newton optimizer for Quadratic entropy and set alpha = u \n DEFAULT false
      * \ingroup Config */
     AddBoolOption( "NEWTON_FAST_MODE", _newtonFastMode, false );

@@ -103,6 +103,7 @@ class Config
 
     // Optimizer
     OPTIMIZER_NAME _entropyOptimizerName; /*!< @brief Choice of optimizer */
+    bool _entropyDynamicClosure;          /*!< @brief Flag for dynamic closure ansatz for normalized mn solver */
     double _optimizerEpsilon;             /*!< @brief termination criterion epsilon for Newton Optmizer */
     unsigned long _newtonIter;            /*!< @brief Maximal Number of newton iterations */
     double _newtonStepSize;               /*!< @brief Stepsize factor for newton optimizer */
@@ -313,6 +314,8 @@ class Config
     bool inline GetNewtonFastMode() const { return _newtonFastMode; }
     OPTIMIZER_NAME inline GetOptimizerName() const { return _entropyOptimizerName; }
     double inline GetRegularizerGamma() const { return _regularizerGamma; }
+    double inline GetEntropyDynamicAnsatz() const { return _entropyDynamicClosure; }
+
     // Neural Closure
     unsigned short inline GetModelMK() { return _neuralModel; }
     unsigned short inline GetNeuralModelGamma() { return _neuralGamma; }
@@ -363,14 +366,16 @@ class Config
     // ---- Setters for option structure
     // This section is dangerous
     // Quadrature Structure
-    void SetNQuadPoints( unsigned nq ) { _nQuadPoints = nq; }        /*!< @brief Never change the nq! This is only for the test framework. */
-    void SetQuadName( QUAD_NAME quadName ) { _quadName = quadName; } /*!< @brief Never change the quadName! This is only for the test framework. */
-    void SetQuadOrder( unsigned quadOrder ) {
+    void inline SetNQuadPoints( unsigned nq ) { _nQuadPoints = nq; }        /*!< @brief Never change the nq! This is only for the test framework. */
+    void inline SetQuadName( QUAD_NAME quadName ) { _quadName = quadName; } /*!< @brief Never change the quadName! This is only for the test framework. */
+    void inline SetQuadOrder( unsigned quadOrder ) {
         _quadOrder = quadOrder;
     }                                                               /*!< @brief Never change the quadOrder! This is only for the test framework. */
-    void SetSNAllGaussPts( bool useall ) { _allGaussPts = useall; } /*!< @brief Never change the this! This is only for the test framework. */
+    void inline SetSNAllGaussPts( bool useall ) { _allGaussPts = useall; } /*!< @brief Never change the this! This is only for the test framework. */
     // Mesh Structure
-    void SetNCells( unsigned nCells ) { _nCells = nCells; }
+    void inline SetNCells( unsigned nCells ) { _nCells = nCells; }
+    void inline SetEnforceNeuralRotationalSymmetry(bool symmetryEnforce) {  _enforceNeuralRotationalSymmetry =symmetryEnforce ; }
+
 };
 
 #endif    // CONFIG_H

@@ -18,7 +18,7 @@ ReducedPartRegularizedNewtonOptimizer::ReducedPartRegularizedNewtonOptimizer( Co
 
 ReducedPartRegularizedNewtonOptimizer::~ReducedPartRegularizedNewtonOptimizer() {}
 
-double ReducedPartRegularizedNewtonOptimizer::ComputeObjFunc( Vector& alpha, Vector& sol, const VectorVector& moments ) {
+double ReducedPartRegularizedNewtonOptimizer::ComputeObjFunc( const Vector& alpha, const Vector& sol, const VectorVector& moments ) {
     double result = ReducedNewtonOptimizer::ComputeObjFunc( alpha, sol, moments );    // Calls non regularized objective function
     for( unsigned idx_sys = 0; idx_sys < alpha.size(); idx_sys++ ) {
         result += 0.5 * _gamma * alpha[idx_sys] * alpha[idx_sys];    // Add regularizer norm(_alpha^r)^2
@@ -26,14 +26,14 @@ double ReducedPartRegularizedNewtonOptimizer::ComputeObjFunc( Vector& alpha, Vec
     return result;
 }
 
-void ReducedPartRegularizedNewtonOptimizer::ComputeGradient( Vector& alpha, Vector& sol, const VectorVector& moments, Vector& grad ) {
+void ReducedPartRegularizedNewtonOptimizer::ComputeGradient( const Vector& alpha, const Vector& sol, const VectorVector& moments, Vector& grad ) {
     ReducedNewtonOptimizer::ComputeGradient( alpha, sol, moments, grad );    // compute unregularized gradients
     for( unsigned idx_sys = 0; idx_sys < alpha.size(); idx_sys++ ) {
         grad[idx_sys] += _gamma * alpha[idx_sys];    // Add regularizer _alpha^r
     }
 }
 
-void ReducedPartRegularizedNewtonOptimizer::ComputeHessian( Vector& alpha, const VectorVector& moments, Matrix& hessian ) {
+void ReducedPartRegularizedNewtonOptimizer::ComputeHessian(const Vector& alpha, const VectorVector& moments, Matrix& hessian ) {
     ReducedNewtonOptimizer::ComputeHessian( alpha, moments, hessian );    // compute unregularized hessian)
     for( unsigned idx_sys = 0; idx_sys < alpha.size(); idx_sys++ ) {
         hessian( idx_sys, idx_sys ) += _gamma;    // Add block identity matrix with regularizer

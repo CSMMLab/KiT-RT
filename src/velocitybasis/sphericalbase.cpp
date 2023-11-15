@@ -9,6 +9,7 @@
 #include "toolboxes/errormessages.hpp"
 #include "velocitybasis/sphericalharmonics.hpp"
 #include "velocitybasis/sphericalmonomials.hpp"
+#include "velocitybasis/sphericalmonomialsrotated.hpp"
 
 SphericalBase* SphericalBase::Create( Config* settings ) {
     SPHERICAL_BASIS_NAME name = settings->GetSphericalBasisName();
@@ -18,6 +19,8 @@ SphericalBase* SphericalBase::Create( Config* settings ) {
     switch( name ) {
         case SPHERICAL_HARMONICS: return new SphericalHarmonics( maxMomentDegree, spatialDim ); break;
         case SPHERICAL_MONOMIALS: return new SphericalMonomials( maxMomentDegree, spatialDim ); break;
+        case SPHERICAL_MONOMIALS_ROTATED: return new SphericalMonomialsRotated( maxMomentDegree, spatialDim ); break;
+
         default: ErrorMessages::Error( "Creator for the chosen basis does not yet exist. This is is the fault of the coder!", CURRENT_FUNCTION );
     }
     return nullptr;

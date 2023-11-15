@@ -37,6 +37,10 @@ class DataGeneratorRegression : public DataGeneratorBase
     virtual void ComputeSetSizeU()    = 0; /*!< @brief Computes the size of the training set, depending on the chosen settings.*/
     void ComputeSetSizeAlpha();            /*!< @brief Computes the seSize for alphasampling */
 
+    Matrix CreateRotatorSphericalHarmonics( double x, double y );
+    Matrix CreateRotatorSphericalHarmonics2D( double x, double y );
+    void RotateMomentsAndMultipliers(); /*!< @brief Rotates Moments and Multipliers to x axis. */
+
     // Debugging
     Matrix CreateRotator( const Vector& uFirstMoment );
     Vector RotateM1( Vector& vec, Matrix& R );

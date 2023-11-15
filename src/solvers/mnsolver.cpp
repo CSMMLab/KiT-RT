@@ -21,6 +21,7 @@ MNSolver::MNSolver( Config* settings ) : SolverBase( settings ) {
     _basis           = SphericalBase::Create( _settings );
     _nSystem         = _basis->GetBasisSize();
 
+
     // build quadrature object and store quadrature points and weights
     _quadPoints = _quadrature->GetPoints();
     _weights    = _quadrature->GetWeights();
@@ -279,6 +280,7 @@ void MNSolver::PrepareVolumeOutput() {
     _outputFieldNames.resize( nGroups );
     _outputFields.resize( nGroups );
     // Prepare all OutputGroups ==> Specified in option VOLUME_OUTPUT
+#pragma omp parallel for
     for( unsigned idx_group = 0; idx_group < nGroups; idx_group++ ) {
         // Prepare all Output Fields per group
         // Different procedure, depending on the Group...
@@ -308,7 +310,7 @@ void MNSolver::PrepareVolumeOutput() {
                         unsigned count = 0;
                         for( int idx_l = 0; idx_l <= (int)_polyDegreeBasis; idx_l++ ) {
                             for( int idx_k = -idx_l; idx_k <= idx_l; idx_k++ ) {
-                                if( idx_l == 0 || idx_l != idx_k ) {
+                                if( ( idx_l + idx_k ) % 2 == 0 ) {
                                     _outputFields[idx_group][count].resize( _nCells );
                                     _outputFieldNames[idx_group][count] =
                                         std::string( "u_" + std::to_string( idx_l ) + "^" + std::to_string( idx_k ) );
@@ -353,7 +355,7 @@ void MNSolver::PrepareVolumeOutput() {
                         unsigned count = 0;
                         for( int idx_l = 0; idx_l <= (int)_polyDegreeBasis; idx_l++ ) {
                             for( int idx_k = -idx_l; idx_k <= idx_l; idx_k++ ) {
-                                if( idx_l == 0 || idx_l != idx_k ) {
+                                if( ( idx_l + idx_k ) % 2 == 0 ) {
                                     _outputFields[idx_group][count].resize( _nCells );
                                     _outputFieldNames[idx_group][count] =
                                         std::string( "alpha_" + std::to_string( idx_l ) + "^" + std::to_string( idx_k ) );
@@ -397,6 +399,7 @@ void MNSolver::WriteVolumeOutput( unsigned idx_iter ) {
     // Check if volume output fields are written to file this iteration
     if( ( _settings->GetVolumeOutputFrequency() != 0 && idx_iter % (unsigned)_settings->GetVolumeOutputFrequency() == 0 ) ||
         ( idx_iter == _nEnergies - 1 ) /* need sol at last iteration */ ) {
+#pragma omp parallel for
         for( unsigned idx_group = 0; idx_group < nGroups; idx_group++ ) {
             switch( _settings->GetVolumeOutput()[idx_group] ) {
                 case MINIMAL:

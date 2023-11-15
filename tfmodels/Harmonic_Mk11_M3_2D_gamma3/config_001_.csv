@@ -1,0 +1,23 @@
+date;2023-06-26
+git_version;620c220bf79fcc44dfc4eac687c486a647b01343
+sampling;2
+batch;32
+curriculum;1
+degree;3
+epoch;100
+folder;Harmonic_Mk11_M3_2D_gamma3
+loadModel;0
+model;11
+normalized moments;True
+decorrelate inputs;True
+scaled outputs;False
+objective;0
+processingmode;1
+spatial Dimension;2
+verbosity;2
+training;1
+network width;300
+network depth;3
+basis;spherical_harmonics
+rotated;False
+max_alpha_norm;12.0

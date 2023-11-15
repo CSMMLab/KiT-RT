@@ -28,13 +28,13 @@ class OptimizerBase
      *  @param  u  moment vector
      *  @param  moments  VectorVector to the moment basis evaluated at all quadpoints
      *  @param idx_cell index of the cell where alpha should be computed (out of u) */
-    virtual void Solve( Vector& alpha, Vector& u, const VectorVector& moments, unsigned idx_cell = 0 ) = 0;
+    virtual void Solve( Vector& alpha, const Vector& u, const VectorVector& moments, unsigned idx_cell = 0 ) = 0;
 
     /*! @brief   Computes the optimal Lagrange multilpiers for the dual entropy minimization problem
      *  @param   alpha vector where the solution Lagrange multipliers are saved to.
      *  @param   u  moment vector
      *  @param   moments  VectorVector to the moment basis evaluated at all quadpoints    */
-    virtual void SolveMultiCell( VectorVector& alpha, VectorVector& u, const VectorVector& moments, Vector& alpha_norms ) = 0;
+    virtual void SolveMultiCell( VectorVector& alpha, const VectorVector& u, const VectorVector& moments, Vector& alpha_norms ) = 0;
 
     /*! @brief Reconstruct the moment sol from the Lagrange multiplier alpha
      *  @param sol moment vector
