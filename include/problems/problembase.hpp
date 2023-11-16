@@ -88,7 +88,7 @@ class ProblemBase
     /**
      * @brief Returns the Dirichlet Boundary value for given cell index
      */
-    virtual Vector GetGhostCellValue(int idx_cell);
+    virtual Vector GetGhostCellValue(int idx_cell,  const Vector& cell_sol);
 
     /*! @brief Exact analytical solution for the Line Source Test Case. Returns 0 for all other test cases.
          @return exact solution at x,y,t,scatteringXS

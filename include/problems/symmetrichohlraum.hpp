@@ -19,7 +19,7 @@ class SymmetricHohlraum : public ProblemBase
     virtual VectorVector SetupIC() override;
     VectorVector GetScatteringXS( const Vector& energies ) override final;
     VectorVector GetTotalXS( const Vector& energies ) override final;
-    Vector GetGhostCellValue(int idx_cell) override final;
+    Vector GetGhostCellValue(int idx_cell,  const Vector& cell_sol) override final;
 };
 
 class SymmetricHohlraum_Moment : public SymmetricHohlraum

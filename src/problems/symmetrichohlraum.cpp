@@ -116,7 +116,7 @@ void SymmetricHohlraum::SetGhostCells(){
     delete quad;
 }
 
-Vector SymmetricHohlraum::GetGhostCellValue(int idx_cell){
+Vector SymmetricHohlraum::GetGhostCellValue(int idx_cell,  const Vector& cell_sol){
     return _ghostCells[idx_cell];
 }
 

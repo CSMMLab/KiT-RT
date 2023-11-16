@@ -3,6 +3,7 @@
 #include "problems/aircavity1d.hpp"
 #include "problems/checkerboard.hpp"
 #include "problems/hohlraum.hpp"
+#include "problems/lattice.hpp"
 #include "problems/symmetrichohlraum.hpp"
 #include "problems/linesource.hpp"
 #include "problems/meltingcube.hpp"
@@ -89,6 +90,12 @@ ProblemBase* ProblemBase::Create( Config* settings, Mesh* mesh ) {
             else
                 return new SymmetricHohlraum( settings, mesh );
         } break;
+        case PROBLEM_Lattice: {
+            if( settings->GetIsMomentSolver() )
+                return new Lattice_Moment( settings, mesh );
+            else
+                return new Lattice_SN( settings, mesh );
+        } break;
 
         default: ErrorMessages::Error( "No valid physical problem chosen. Please check your config file", CURRENT_FUNCTION ); return nullptr;
     }
@@ -109,6 +116,6 @@ Vector ProblemBase::GetStoppingPower( const Vector& /* energies */ ) {
     return Vector( 1, -1.0 );
 }
 
-Vector ProblemBase::GetGhostCellValue(int idx_cell){
-    return Vector(1u, 0.0);
+Vector ProblemBase::GetGhostCellValue(int idx_cell,  const Vector& cell_sol){
+    return cell_sol;
 }
