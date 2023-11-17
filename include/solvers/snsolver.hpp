@@ -3,25 +3,26 @@
 
 #include "solvers/solverbase.hpp"
 
-class SNSolver : public SolverBase {
- protected:
+class SNSolver : public SolverBase
+{
+protected:
   Matrix _scatteringKernel; /*!<  @brief scattering kernel for the quadrature */
 
   // quadrature related numbers
 
   VectorVector _quadPoints; /*!<  @brief quadrature points, dim(_quadPoints) =
                                (_nq,spatialDim) */
-  Vector _weights; /*!<  @brief quadrature weights, dim(_weights) = (_nq) */
+  Vector _weights;          /*!<  @brief quadrature weights, dim(_weights) = (_nq) */
 
- public:
+public:
   /*! @brief SNSolver constructor
    * @param settings stores all needed information
    */
-  SNSolver(Config* settings);
+  SNSolver(Config *settings);
 
   virtual ~SNSolver() {}
 
- protected:
+protected:
   // IO
   void virtual PrepareVolumeOutput() override;
   void virtual WriteVolumeOutput(unsigned idx_pseudoTime) override;
@@ -34,8 +35,8 @@ class SNSolver : public SolverBase {
 
   // Helper
   void ComputeRadFlux() override;
-  void FluxUpdatePseudo1D();  // Helper
-  void FluxUpdatePseudo2D();  // Helper
+  void FluxUpdatePseudo1D(); // Helper
+  void FluxUpdatePseudo2D(); // Helper
 
   // --- Member variables ---
 
@@ -45,43 +46,39 @@ class SNSolver : public SolverBase {
    *
    */
 
-  virtual Vector& GetFinalTimeOutflow() override final;
+  double GetCurrentOutflow() override final;
   /**
    * @brief Computes Problemspecific Scalar QOI
    */
-  virtual Vector& GetTotalOutflow(const VectorVector& sol) override final;
+  double GetTotalOutflow(unsigned iteration) override final;
   /**
    * @brief Computes Problemspecific Scalar QOI
    */
-  virtual Vector& GetMaxOutflow(const VectorVector& sol) override final;
+  double GetMaxOutflow() override final;
   /**
    * @brief Computes Problemspecific Scalar QOI
    */
-  virtual Vector& GetFinalTimeAbsorption(
-      const VectorVector& sol) override final;
+  double GetFinalTimeAbsorption() override final;
   /**
    * @brief Computes Problemspecific Scalar QOI
    */
-  virtual Vector& GetTotalAbsorption(const VectorVector& sol) override final;
+  double GetTotalAbsorption() override final;
   /**
    * @brief Computes Problemspecific Scalar QOI
    */
-  virtual Vector& GetMaxAbsorption(const VectorVector& sol) override final;
+  double GetMaxAbsorption() override final;
   /**
    * @brief Computes Problemspecific Scalar QOI
    */
-  virtual Vector& GetTotalAbsorptionCenter(
-      const VectorVector& sol) override final;
+  double GetTotalAbsorptionCenter() override final;
   /**
    * @brief Computes Problemspecific Scalar QOI
    */
-  virtual Vector& GetTotalAbsorptionVertical(
-      const VectorVector& sol) override final;
+  double GetTotalAbsorptionVertical() override final;
   /**
    * @brief Computes Problemspecific Scalar QOI
    */
-  virtual Vector& GetTotalAbsorptionHorizontal(
-      const VectorVector& sol) override final;
+  double GetTotalAbsorptionHorizontal() override final;
 };
 
-#endif  // SNSOLVER_H
+#endif // SNSOLVER_H
