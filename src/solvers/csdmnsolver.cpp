@@ -123,10 +123,10 @@ void CSDMNSolver::IterPostprocessing( unsigned idx_iter ) {
 #pragma omp parallel for
     for( unsigned j = 0; j < _nCells; ++j ) {
         if( idx_iter > 0 && idx_iter < _nEnergies - 1 ) {
-            _dose[j] += _dE * ( _sol[j][0] * _sMid[idx_iter] ) / _density[j];    // update dose with trapezoidal rule // diss Kerstin
+            _dose[j] += _dT * ( _sol[j][0] * _sMid[idx_iter] ) / _density[j];    // update dose with trapezoidal rule // diss Kerstin
         }
         else {
-            _dose[j] += 0.5 * _dE * ( _sol[j][0] * _sMid[idx_iter] ) / _density[j];
+            _dose[j] += 0.5 * _dT * ( _sol[j][0] * _sMid[idx_iter] ) / _density[j];
         }
     }
 }
@@ -186,7 +186,7 @@ void CSDMNSolver::FluxUpdate() {
 void CSDMNSolver::FVMUpdate( unsigned idx_energy ) {
     bool implicitScattering = true;
     // transform energy difference
-    _dE = fabs( _eTrafo[idx_energy + 1] - _eTrafo[idx_energy] );
+    _dT = fabs( _eTrafo[idx_energy + 1] - _eTrafo[idx_energy] );
     // loop over all spatial cells
 #pragma omp parallel for
     for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
@@ -197,13 +197,13 @@ void CSDMNSolver::FVMUpdate( unsigned idx_energy ) {
                 int idx_sys = _basis->GetGlobalIndexBasis( idx_l, idx_k );
                 if( implicitScattering ) {
                     _solNew[idx_cell][idx_sys] =
-                        _sol[idx_cell][idx_sys] - ( _dE / _areas[idx_cell] ) * _solNew[idx_cell][idx_sys];            /* cell averaged flux */
-                    _solNew[idx_cell][idx_sys] = _solNew[idx_cell][idx_sys] / ( 1.0 + _dE * _sigmaTAtEnergy[idx_l] ); /* implicit scattering */
+                        _sol[idx_cell][idx_sys] - ( _dT / _areas[idx_cell] ) * _solNew[idx_cell][idx_sys];            /* cell averaged flux */
+                    _solNew[idx_cell][idx_sys] = _solNew[idx_cell][idx_sys] / ( 1.0 + _dT * _sigmaTAtEnergy[idx_l] ); /* implicit scattering */
                 }
                 else {
                     _solNew[idx_cell][idx_sys] = _sol[idx_cell][idx_sys] -
-                                                 ( _dE / _areas[idx_cell] ) * _solNew[idx_cell][idx_sys]   /* cell averaged flux */
-                                                 - _dE * _sol[idx_cell][idx_sys] * _sigmaTAtEnergy[idx_l]; /* scattering */
+                                                 ( _dT / _areas[idx_cell] ) * _solNew[idx_cell][idx_sys]   /* cell averaged flux */
+                                                 - _dT * _sol[idx_cell][idx_sys] * _sigmaTAtEnergy[idx_l]; /* scattering */
                 }
             }
             // Source Term TODO
@@ -304,13 +304,13 @@ void CSDMNSolver::WriteVolumeOutput( unsigned idx_pseudoTime ) {
     unsigned nGroups = (unsigned)_settings->GetNVolumeOutput();
     double maxDose;
     if( ( _settings->GetVolumeOutputFrequency() != 0 && idx_pseudoTime % (unsigned)_settings->GetVolumeOutputFrequency() == 0 ) ||
-        ( idx_pseudoTime == _maxIter - 1 ) /* need sol at last iteration */ ) {
+        ( idx_pseudoTime == _nIter - 1 ) /* need sol at last iteration */ ) {
 
         for( unsigned idx_group = 0; idx_group < nGroups; idx_group++ ) {
             switch( _settings->GetVolumeOutput()[idx_group] ) {
                 case MINIMAL:
                     for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
-                        _outputFields[idx_group][0][idx_cell] = _fluxNew[idx_cell];
+                        _outputFields[idx_group][0][idx_cell] = _scalarFluxNew[idx_cell];
                     }
                     break;
 

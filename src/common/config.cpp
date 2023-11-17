@@ -800,7 +800,7 @@ void Config::SetPostprocessing()
             switch (_problemName)
             {
             case PROBLEM_Lattice:
-                legalOutputs = {ITER, MASS, RMS_FLUX, VTK_OUTPUT, CSV_OUTPUT, FINAL_TIME_OUTFLOW, TOTAL_OUTFLOW, MAX_OUTFLOW, FINAL_TIME_PARTICLE_ABSORPTION, TOTAL_PARTICLE_ABSORPTION, MAX_PARTICLE_ABSORPTION};
+                legalOutputs = {ITER, MASS, RMS_FLUX, VTK_OUTPUT, CSV_OUTPUT, CUR_OUTFLOW, TOTAL_OUTFLOW, MAX_OUTFLOW, CUR_PARTICLE_ABSORPTION, TOTAL_PARTICLE_ABSORPTION, MAX_PARTICLE_ABSORPTION};
                 it = std::find(legalOutputs.begin(), legalOutputs.end(), _screenOutput[idx_screenOutput]);
                 if (it == legalOutputs.end())
                 {
@@ -893,7 +893,7 @@ void Config::SetPostprocessing()
             switch (_problemName)
             {
             case PROBLEM_Lattice:
-                legalOutputs = {ITER, MASS, RMS_FLUX, VTK_OUTPUT, CSV_OUTPUT, FINAL_TIME_OUTFLOW, TOTAL_OUTFLOW, MAX_OUTFLOW, FINAL_TIME_PARTICLE_ABSORPTION, TOTAL_PARTICLE_ABSORPTION, MAX_PARTICLE_ABSORPTION};
+                legalOutputs = {ITER, MASS, RMS_FLUX, VTK_OUTPUT, CSV_OUTPUT, CUR_OUTFLOW, TOTAL_OUTFLOW, MAX_OUTFLOW, CUR_PARTICLE_ABSORPTION, TOTAL_PARTICLE_ABSORPTION, MAX_PARTICLE_ABSORPTION};
                 it = std::find(legalOutputs.begin(), legalOutputs.end(), _historyOutput[idx_screenOutput]);
                 if (it == legalOutputs.end())
                 {

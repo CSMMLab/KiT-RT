@@ -18,7 +18,7 @@ SymmetricHohlraum::SymmetricHohlraum( Config* settings, Mesh* mesh ) : ProblemBa
 #pragma omp parallel for
     for( unsigned idx_cell = 0; idx_cell < _mesh->GetNumCells(); idx_cell++ ) {
         // Assumption: Domain size is 1.3x1.3
-        double x = _mesh->GetCellMidPoints()[idx_cell][0]; 
+        double x = _mesh->GetCellMidPoints()[idx_cell][0];
         double y = _mesh->GetCellMidPoints()[idx_cell][1];
 
         // red area left
@@ -47,7 +47,7 @@ SymmetricHohlraum::SymmetricHohlraum( Config* settings, Mesh* mesh ) : ProblemBa
             _totalXS[idx_cell]      = 100.0;
         }
         // green area 4 (right boundary)
-        if(x > -0.2 && x < 0.2 && y > 0.35 && y < 0.4 ) {
+        if( x > -0.2 && x < 0.2 && y > 0.35 && y < 0.4 ) {
             _scatteringXS[idx_cell] = 90.0;
             _totalXS[idx_cell]      = 100.0;
         }
@@ -77,38 +77,42 @@ VectorVector SymmetricHohlraum::SetupIC() {
     VectorVector cellMids = _mesh->GetCellMidPoints();
 
     for( unsigned j = 0; j < cellMids.size(); ++j ) {
-            psi[j] = 1e-4; // zero initial condition
+        psi[j] = 1e-4;    // zero initial condition
     }
     return psi;
 }
 
-void SymmetricHohlraum::SetGhostCells(){
+void SymmetricHohlraum::SetGhostCells() {
     // Loop over all cells. If its a Dirichlet boundary, add cell to dict with {cell_idx, boundary_value}
     auto cellBoundaries = _mesh->GetBoundaryTypes();
     std::map<int, Vector> ghostCellMap;
 
-    QuadratureBase* quad          = QuadratureBase::Create( _settings );
-    VectorVector vq = quad->GetPoints();
-    unsigned nq = quad->GetNq();
+    QuadratureBase* quad = QuadratureBase::Create( _settings );
+    VectorVector vq      = quad->GetPoints();
+    unsigned nq          = quad->GetNq();
 
-    Vector left_inflow(nq, 0.0);
-    Vector right_inflow(nq, 0.0);
-    Vector vertical_flow(nq, 0.0);
+    Vector left_inflow( nq, 0.0 );
+    Vector right_inflow( nq, 0.0 );
+    Vector vertical_flow( nq, 0.0 );
 
-    for(unsigned idx_q = 0; idx_q < nq; idx_q++){
-        if (vq[idx_q][0] > 0.0) left_inflow[idx_q] = 1.0;
-        if (vq[idx_q][0] < 0.0) right_inflow[idx_q] = 1.0;
+    for( unsigned idx_q = 0; idx_q < nq; idx_q++ ) {
+        if( vq[idx_q][0] > 0.0 ) left_inflow[idx_q] = 1.0;
+        if( vq[idx_q][0] < 0.0 ) right_inflow[idx_q] = 1.0;
     }
 
-    for (unsigned idx_cell =0; idx_cell<_mesh->GetNumCells(); idx_cell ++){
-        double x = _mesh->GetCellMidPoints()[idx_cell][0]; 
+    for( unsigned idx_cell = 0; idx_cell < _mesh->GetNumCells(); idx_cell++ ) {
+        double x = _mesh->GetCellMidPoints()[idx_cell][0];
         double y = _mesh->GetCellMidPoints()[idx_cell][1];
 
-        if (cellBoundaries[idx_cell]== BOUNDARY_TYPE::NEUMANN || cellBoundaries[idx_cell] == BOUNDARY_TYPE::DIRICHLET){      
-            if (y < -0.6)      ghostCellMap.insert({idx_cell, vertical_flow});
-            else if (y > 0.6)  ghostCellMap.insert({idx_cell, vertical_flow});
-            else if (x < -0.6) ghostCellMap.insert({idx_cell, left_inflow});
-            else if (x > 0.6)  ghostCellMap.insert({idx_cell, right_inflow});
+        if( cellBoundaries[idx_cell] == BOUNDARY_TYPE::NEUMANN || cellBoundaries[idx_cell] == BOUNDARY_TYPE::DIRICHLET ) {
+            if( y < -0.6 )
+                ghostCellMap.insert( { idx_cell, vertical_flow } );
+            else if( y > 0.6 )
+                ghostCellMap.insert( { idx_cell, vertical_flow } );
+            else if( x < -0.6 )
+                ghostCellMap.insert( { idx_cell, left_inflow } );
+            else if( x > 0.6 )
+                ghostCellMap.insert( { idx_cell, right_inflow } );
         }
     }
     _ghostCells = ghostCellMap;
@@ -116,9 +120,7 @@ void SymmetricHohlraum::SetGhostCells(){
     delete quad;
 }
 
-const Vector& SymmetricHohlraum::GetGhostCellValue(int idx_cell,  const Vector& cell_sol){
-    return _ghostCells[idx_cell];
-}
+const Vector& SymmetricHohlraum::GetGhostCellValue( int idx_cell, const Vector& cell_sol ) { return _ghostCells[idx_cell]; }
 
 VectorVector SymmetricHohlraum::GetScatteringXS( const Vector& energies ) { return VectorVector( energies.size(), _scatteringXS ); }
 
