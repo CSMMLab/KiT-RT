@@ -132,7 +132,6 @@ void SNSolver::FluxUpdatePseudo2D() {
             for( unsigned idx_nbr = 0; idx_nbr < _neighbors[idx_cell].size(); ++idx_nbr ) {
                 // store flux contribution on psiNew_sigmaS to save memory
                 if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::NEUMANN && _neighbors[idx_cell][idx_nbr] == _nCells ){
-                    //std::cout << "here\n" ;
                     _solNew[idx_cell][idx_quad] +=
                         _g->Flux( _quadPoints[idx_quad], _sol[idx_cell][idx_quad], _problem->GetGhostCellValue(idx_cell,_sol[idx_cell])[idx_quad], _normals[idx_cell][idx_nbr] );
                 }

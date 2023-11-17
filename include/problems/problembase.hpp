@@ -17,6 +17,8 @@ class ProblemBase
 
     std::vector<double> _density;       /*!< @brief vector with patient densities */
     std::vector<double> _stoppingPower; /*!< @brief vector with stopping powers*/
+    std::map<int, Vector> _ghostCells;  /*!< @brief Vector of ghost cells for boundary conditions */
+    virtual void SetGhostCells() ; /*!< @brief Sets vector of ghost cells for boundary conditions */
 
     ProblemBase() = delete;
 
@@ -88,7 +90,7 @@ class ProblemBase
     /**
      * @brief Returns the Dirichlet Boundary value for given cell index
      */
-    virtual Vector GetGhostCellValue(int idx_cell,  const Vector& cell_sol);
+    virtual const Vector&  GetGhostCellValue(int idx_cell,  const Vector& cell_sol);
 
     /*! @brief Exact analytical solution for the Line Source Test Case. Returns 0 for all other test cases.
          @return exact solution at x,y,t,scatteringXS

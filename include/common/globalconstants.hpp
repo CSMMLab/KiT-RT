@@ -163,17 +163,28 @@ inline std::map<std::string, OPTIMIZER_NAME> Optimizer_Map{ { "NEWTON", NEWTON }
                                                             { "ML", ML } };
 
 // Volume output
-enum VOLUME_OUTPUT { ANALYTIC, MINIMAL, MOMENTS, DUAL_MOMENTS, MEDICAL };
+enum VOLUME_OUTPUT { ANALYTIC, MINIMAL, MOMENTS, DUAL_MOMENTS, MEDICAL, MOMENT_TIME_TRACE };
 
 inline std::map<std::string, VOLUME_OUTPUT> VolOutput_Map{
-    { "ANALYTIC", ANALYTIC }, { "MINIMAL", MINIMAL }, { "MOMENTS", MOMENTS }, { "DUAL_MOMENTS", DUAL_MOMENTS }, { "MEDICAL", MEDICAL } };
+    { "ANALYTIC", ANALYTIC }, { "MINIMAL", MINIMAL }, { "MOMENTS", MOMENTS }, { "DUAL_MOMENTS", DUAL_MOMENTS }, { "MEDICAL", MEDICAL }, { "MOMENT_TIME_TRACE", MOMENT_TIME_TRACE } };
+
 
 // Scalar output
-enum SCALAR_OUTPUT { ITER, MASS, RMS_FLUX, VTK_OUTPUT, CSV_OUTPUT };
+enum SCALAR_OUTPUT { ITER, MASS, RMS_FLUX, VTK_OUTPUT, CSV_OUTPUT, FINAL_TIME_OUTFLOW, TOTAL_OUTFLOW, MAX_OUTFLOW, 
+                    FINAL_TIME_PARTICLE_ABSORPTION, TOTAL_PARTICLE_ABSORPTION, MAX_PARTICLE_ABSORPTION , TOTAL_PARTICLE_ABSORPTION_CENTER, TOTAL_PARTICLE_ABSORPTION_VERTICAL, TOTAL_PARTICLE_ABSORPTION_HORIZONTAL };
 
-inline std::map<std::string, SCALAR_OUTPUT> ScalarOutput_Map{
-    { "ITER", ITER }, { "MASS", MASS }, { "RMS_FLUX", RMS_FLUX }, { "VTK_OUTPUT", VTK_OUTPUT }, { "CSV_OUTPUT", CSV_OUTPUT } };
-
+inline std::map<std::string, SCALAR_OUTPUT> ScalarOutput_Map{{ "ITER", ITER }, { "MASS", MASS }, { "RMS_FLUX", RMS_FLUX },
+                                                            { "VTK_OUTPUT", VTK_OUTPUT }, { "CSV_OUTPUT", CSV_OUTPUT },
+                                                            { "FINAL_TIME_OUTFLOW", FINAL_TIME_OUTFLOW },
+                                                            { "TOTAL_OUTFLOW", TOTAL_OUTFLOW },
+                                                            { "MAX_OUTFLOW", MAX_OUTFLOW },
+                                                            { "FINAL_TIME_PARTICLE_ABSORPTION", FINAL_TIME_PARTICLE_ABSORPTION },
+                                                            { "TOTAL_PARTICLE_ABSORPTION", TOTAL_PARTICLE_ABSORPTION }, 
+                                                            { "MAX_PARTICLE_ABSORPTION", MAX_PARTICLE_ABSORPTION } ,
+                                                            { "TOTAL_PARTICLE_ABSORPTION_CENTER", TOTAL_PARTICLE_ABSORPTION_CENTER } ,
+                                                            { "TOTAL_PARTICLE_ABSORPTION_VERTICAL", TOTAL_PARTICLE_ABSORPTION_VERTICAL } ,
+                                                            { "TOTAL_PARTICLE_ABSORPTION_HORIZONTAL", TOTAL_PARTICLE_ABSORPTION_HORIZONTAL } ,
+                                                            };
 // Spherical Basis Name
 enum SPHERICAL_BASIS_NAME { SPHERICAL_HARMONICS, SPHERICAL_MONOMIALS, SPHERICAL_MONOMIALS_ROTATED };
 

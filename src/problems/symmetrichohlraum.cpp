@@ -104,7 +104,7 @@ void SymmetricHohlraum::SetGhostCells(){
         double x = _mesh->GetCellMidPoints()[idx_cell][0]; 
         double y = _mesh->GetCellMidPoints()[idx_cell][1];
 
-        if (cellBoundaries[idx_cell]== BOUNDARY_TYPE::NEUMANN){      
+        if (cellBoundaries[idx_cell]== BOUNDARY_TYPE::NEUMANN || cellBoundaries[idx_cell] == BOUNDARY_TYPE::DIRICHLET){      
             if (y < -0.6)      ghostCellMap.insert({idx_cell, vertical_flow});
             else if (y > 0.6)  ghostCellMap.insert({idx_cell, vertical_flow});
             else if (x < -0.6) ghostCellMap.insert({idx_cell, left_inflow});
@@ -116,7 +116,7 @@ void SymmetricHohlraum::SetGhostCells(){
     delete quad;
 }
 
-Vector SymmetricHohlraum::GetGhostCellValue(int idx_cell,  const Vector& cell_sol){
+const Vector& SymmetricHohlraum::GetGhostCellValue(int idx_cell,  const Vector& cell_sol){
     return _ghostCells[idx_cell];
 }
 

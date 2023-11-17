@@ -142,6 +142,44 @@ class SolverBase
     /*! @brief Post Solver Screen and Logger Output */
     void DrawPostSolverOutput();
 
+    // Scalar output helper functions
+        /**
+     * @brief Computes Problemspecific Scalar QOI
+     */
+    virtual Vector& GetFinalTimeOutflow( const VectorVector& sol, const VectorVector& sol _quadPoints  ); 
+    /**
+     * @brief Computes Problemspecific Scalar QOI
+     */
+    virtual Vector&  GetTotalOutflow( const VectorVector& sol  ); 
+    /**
+     * @brief Computes Problemspecific Scalar QOI
+     */
+    virtual Vector&  GetMaxOutflow( const VectorVector& sol  ); 
+    /**
+     * @brief Computes Problemspecific Scalar QOI
+     */
+    virtual Vector&  GetFinalTimeAbsorption( const VectorVector& sol  ); 
+    /**
+     * @brief Computes Problemspecific Scalar QOI
+     */
+    virtual Vector&  GetTotalAbsorption( const VectorVector& sol  ); 
+     /**
+     * @brief Computes Problemspecific Scalar QOI
+     */
+    virtual Vector&  GetMaxAbsorption( const VectorVector& sol  ); 
+    /**
+     * @brief Computes Problemspecific Scalar QOI
+     */
+    virtual Vector&  GetTotalAbsorptionCenter( const VectorVector& sol  ); 
+    /**
+     * @brief Computes Problemspecific Scalar QOI
+     */
+    virtual Vector&  GetTotalAbsorptionVertical( const VectorVector& sol  ); 
+    /**
+     * @brief Computes Problemspecific Scalar QOI
+     */
+    virtual Vector&  GetTotalAbsorptionHorizontal( const VectorVector& sol  ); 
+
   public:
     /*! @brief Solver constructor
      *  @param settings config class that stores all needed config information */

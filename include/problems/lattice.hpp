@@ -16,6 +16,9 @@ class Lattice_SN : public ProblemBase
     bool isAbsorption( const Vector& pos ) const; /*!< @return True if pos is in absorption region, False otherwise */
     bool isSource( const Vector& pos ) const;     /*!< @return True if pos is in source region, False otherwise */
 
+  protected:
+      void SetGhostCells() override ; /*!< @brief Sets vector of ghost cells for boundary conditions */
+      
   public:
     Lattice_SN( Config* settings, Mesh* mesh );
     virtual ~Lattice_SN();
@@ -24,6 +27,9 @@ class Lattice_SN : public ProblemBase
     virtual VectorVector GetTotalXS( const Vector& energies ) override;
     virtual std::vector<VectorVector> GetExternalSource( const Vector& energies ) override;
     virtual VectorVector SetupIC() override;
+
+    const Vector& GetGhostCellValue(int idx_cell,  const Vector& cell_sol) override final;
+
 };
 
 class Lattice_Moment : public ProblemBase

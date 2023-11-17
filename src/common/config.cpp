@@ -615,7 +615,11 @@ void Config::SetPostprocessing() {
         for( unsigned short idx_volOutput = 0; idx_volOutput < _nVolumeOutput; idx_volOutput++ ) {
             switch( _solverName ) {
                 case SN_SOLVER:
+                    if (_problemName == PROBLEM_SymmetricHohlraum)
+                    supportedGroups = { MINIMAL, ANALYTIC, MOMENT_TIME_TRACE };
+                    else
                     supportedGroups = { MINIMAL, ANALYTIC };
+
                     if( supportedGroups.end() == std::find( supportedGroups.begin(), supportedGroups.end(), _volumeOutput[idx_volOutput] ) ) {
                         ErrorMessages::Error( "SN_SOLVER only supports volume output MINIMAL and ANALYTIC.\nPlease check your .cfg file.",
                                               CURRENT_FUNCTION );
@@ -628,18 +632,21 @@ void Config::SetPostprocessing() {
                     break;
                 case MN_SOLVER:    // Fallthrough
                 case MN_SOLVER_NORMALIZED:
-                    supportedGroups = { MINIMAL, MOMENTS, DUAL_MOMENTS, ANALYTIC };
+                    if (_problemName == PROBLEM_SymmetricHohlraum)
+                    supportedGroups = { MINIMAL, MOMENTS, DUAL_MOMENTS , MOMENT_TIME_TRACE };
+                    else if ( _problemName == PROBLEM_Linesource )
+                    supportedGroups = { MINIMAL, ANALYTIC,  MOMENTS, DUAL_MOMENTS  };
+                    else
+                    supportedGroups = { MINIMAL, MOMENTS, DUAL_MOMENTS };
                     if( supportedGroups.end() == std::find( supportedGroups.begin(), supportedGroups.end(), _volumeOutput[idx_volOutput] ) ) {
-
+                        std::string supportedGroupStr = "";
+                        for (unsigned i=0; i,supportedGroups.size(); i++) {
+                            supportedGroupStr+= findKey(VolOutput_Map, supportedGroups[i]) + ", ";
+                        }
                         ErrorMessages::Error(
-                            "MN_SOLVER only supports volume output ANALYTIC, MINIMAL, MOMENTS and DUAL_MOMENTS.\nPlease check your .cfg file.",
+                            "MN_SOLVER supports volume outputs" + supportedGroupStr +".\nPlease check your .cfg file.",
                             CURRENT_FUNCTION );
-                    }
-                    if( _volumeOutput[idx_volOutput] == ANALYTIC && _problemName != PROBLEM_Linesource ) {
-                        ErrorMessages::Error( "Analytical solution (VOLUME_OUTPUT=ANALYTIC) is only available for the PROBLEM=LINESOURCE.\nPlease "
-                                              "check your .cfg file.",
-                                              CURRENT_FUNCTION );
-                    }
+                        }
                     break;
                 case PN_SOLVER:
                     supportedGroups = { MINIMAL, MOMENTS, ANALYTIC };
@@ -654,7 +661,7 @@ void Config::SetPostprocessing() {
                                               CURRENT_FUNCTION );
                     }
                     break;
-                case CSD_SN_SOLVER:    // Fallthrough
+                case CSD_SN_SOLVER:    
                     supportedGroups = { MINIMAL, MEDICAL };
                     if( supportedGroups.end() == std::find( supportedGroups.begin(), supportedGroups.end(), _volumeOutput[idx_volOutput] ) ) {
 
@@ -684,7 +691,7 @@ void Config::SetPostprocessing() {
                     ErrorMessages::Error( "Solver output check not implemented for this Solver.\nThis is the fault of the coder.", CURRENT_FUNCTION );
             }
         }
-
+        
         // Set default volume output
         if( _nVolumeOutput == 0 ) {    // If no specific output is chosen,  use "MINIMAL"
             _nVolumeOutput = 1;
@@ -712,7 +719,48 @@ void Config::SetPostprocessing() {
                                       CURRENT_FUNCTION );
             }
         }
+        // Check if the choice of screen output is compatible to the problem
+        for( unsigned short idx_screenOutput = 0; idx_screenOutput < _nScreenOutput; idx_screenOutput++ ) {
+            std::vector<SCALAR_OUTPUT> legalOutputs;
+            std::vector<SCALAR_OUTPUT>::iterator it;
+            switch (_problemName){
+                case PROBLEM_Lattice:
+                    legalOutputs = {ITER, MASS, RMS_FLUX, VTK_OUTPUT, CSV_OUTPUT, FINAL_TIME_OUTFLOW, TOTAL_OUTFLOW, MAX_OUTFLOW, FINAL_TIME_PARTICLE_ABSORPTION, TOTAL_PARTICLE_ABSORPTION, MAX_PARTICLE_ABSORPTION };
+                    it = std::find(legalOutputs.begin(), legalOutputs.end(), _screenOutput[idx_screenOutput]);
+                    if (it != legalOutputs.end()){   
+                        std::string foundKey = findKey(ScalarOutput_Map, _screenOutput[idx_screenOutput]);
+                        ErrorMessages::Error( "Illegal output field <" + foundKey + "> for option SCREEN_OUTPUT for this test case.\n"
+                        "Supported fields are: ITER, MASS, RMS_FLUX, VTK_OUTPUT, CSV_OUTPUT, FINAL_TIME_OUTFLOW, TOTAL_OUTFLOW, MAX_OUTFLOW, FINAL_TIME_PARTICLE_ABSORPTION, TOTAL_PARTICLE_ABSORPTION, MAX_PARTICLE_ABSORPTION\n"
+                        "Please check your .cfg file.",
+                                        CURRENT_FUNCTION );
+                    }
+                        break;
+                case PROBLEM_SymmetricHohlraum:
+                    legalOutputs = {ITER, MASS, RMS_FLUX, VTK_OUTPUT, CSV_OUTPUT, TOTAL_PARTICLE_ABSORPTION_CENTER, TOTAL_PARTICLE_ABSORPTION_VERTICAL, TOTAL_PARTICLE_ABSORPTION_HORIZONTAL};
+                    it = std::find(legalOutputs.begin(), legalOutputs.end(), _screenOutput[idx_screenOutput]);
 
+                    if (it != legalOutputs.end()){   
+                        std::string foundKey = findKey(ScalarOutput_Map, _screenOutput[idx_screenOutput]);
+                        ErrorMessages::Error( "Illegal output field <" + foundKey + "> for option SCREEN_OUTPUT for this test case.\n"
+                        "Supported fields are: ITER, MASS, RMS_FLUX, VTK_OUTPUT, CSV_OUTPUT, TOTAL_PARTICLE_ABSORPTION_CENTER, TOTAL_PARTICLE_ABSORPTION_VERTICAL, TOTAL_PARTICLE_ABSORPTION_HORIZONTAL\n"
+                        "Please check your .cfg file.",
+                                        CURRENT_FUNCTION );
+                    }
+                       break;
+                default:
+                    legalOutputs = {ITER, MASS, RMS_FLUX, VTK_OUTPUT, CSV_OUTPUT};
+                    it = std::find(legalOutputs.begin(), legalOutputs.end(), _screenOutput[idx_screenOutput]);
+
+                    if (it != legalOutputs.end()){   
+                        std::string foundKey = findKey(ScalarOutput_Map, _screenOutput[idx_screenOutput]);
+                        ErrorMessages::Error( "Illegal output field <" + foundKey + "> for option SCREEN_OUTPUT for this test case.\n"
+                        "Supported fields are: ITER, MASS, RMS_FLUX, VTK_OUTPUT, CSV_OUTPUT\n"
+                        "Please check your .cfg file.",
+                                        CURRENT_FUNCTION );
+                    }
+                        break;
+            }
+        }
         // Set ITER always to index 0 . Assume only one instance of iter is chosen
         if( _nScreenOutput > 0 ) {
             std::vector<SCALAR_OUTPUT>::iterator it;
@@ -728,11 +776,12 @@ void Config::SetPostprocessing() {
             _screenOutput.push_back( MASS );
             _screenOutput.push_back( VTK_OUTPUT );
         }
+
     }
 
     // History Output Postprocessing
     {
-        // Check for doublicates in VOLUME OUTPUT
+        // Check for doublicates in HISTORY OUTPUT
         std::map<SCALAR_OUTPUT, int> dublicate_map;
 
         for( unsigned short idx_screenOutput = 0; idx_screenOutput < _nHistoryOutput; idx_screenOutput++ ) {
@@ -748,6 +797,50 @@ void Config::SetPostprocessing() {
             if( e.second > 0 ) {
                 ErrorMessages::Error( "Each output field for option SCREEN_OUTPUT can only be set once.\nPlease check your .cfg file.",
                                       CURRENT_FUNCTION );
+            }
+        }
+
+        // Check if the choice of history output is compatible to the problem
+        for( unsigned short idx_screenOutput = 0; idx_screenOutput < _nHistoryOutput; idx_screenOutput++ ) {
+            std::vector<SCALAR_OUTPUT> legalOutputs;
+            std::vector<SCALAR_OUTPUT>::iterator it;
+
+            switch (_problemName){
+                case PROBLEM_Lattice:
+                    legalOutputs = {ITER, MASS, RMS_FLUX, VTK_OUTPUT, CSV_OUTPUT, FINAL_TIME_OUTFLOW, TOTAL_OUTFLOW, MAX_OUTFLOW, FINAL_TIME_PARTICLE_ABSORPTION, TOTAL_PARTICLE_ABSORPTION, MAX_PARTICLE_ABSORPTION };
+                    it = std::find(legalOutputs.begin(), legalOutputs.end(), _historyOutput[idx_screenOutput]);
+                    if (it != legalOutputs.end()){   
+                        std::string foundKey = findKey(ScalarOutput_Map, _historyOutput[idx_screenOutput]);
+                        ErrorMessages::Error( "Illegal output field <" + foundKey + "> for option SCREEN_OUTPUT for this test case.\n"
+                        "Supported fields are: ITER, MASS, RMS_FLUX, VTK_OUTPUT, CSV_OUTPUT, FINAL_TIME_OUTFLOW, TOTAL_OUTFLOW, MAX_OUTFLOW, FINAL_TIME_PARTICLE_ABSORPTION, TOTAL_PARTICLE_ABSORPTION, MAX_PARTICLE_ABSORPTION\n"
+                        "Please check your .cfg file.",
+                                        CURRENT_FUNCTION );
+                    }
+                        break;
+                case PROBLEM_SymmetricHohlraum:
+                    legalOutputs = {ITER, MASS, RMS_FLUX, VTK_OUTPUT, CSV_OUTPUT, TOTAL_PARTICLE_ABSORPTION_CENTER, TOTAL_PARTICLE_ABSORPTION_VERTICAL, TOTAL_PARTICLE_ABSORPTION_HORIZONTAL};
+                    it = std::find(legalOutputs.begin(), legalOutputs.end(), _historyOutput[idx_screenOutput]);
+
+                    if (it != legalOutputs.end()){   
+                        std::string foundKey = findKey(ScalarOutput_Map, _historyOutput[idx_screenOutput]);
+                        ErrorMessages::Error( "Illegal output field <" + foundKey + "> for option SCREEN_OUTPUT for this test case.\n"
+                        "Supported fields are: ITER, MASS, RMS_FLUX, VTK_OUTPUT, CSV_OUTPUT, TOTAL_PARTICLE_ABSORPTION_CENTER, TOTAL_PARTICLE_ABSORPTION_VERTICAL, TOTAL_PARTICLE_ABSORPTION_HORIZONTAL\n"
+                        "Please check your .cfg file.",
+                                        CURRENT_FUNCTION );
+                    }
+                       break;
+                default:
+                    legalOutputs = {ITER, MASS, RMS_FLUX, VTK_OUTPUT, CSV_OUTPUT};
+                    it = std::find(legalOutputs.begin(), legalOutputs.end(), _historyOutput[idx_screenOutput]);
+
+                    if (it != legalOutputs.end()){   
+                        std::string foundKey = findKey(ScalarOutput_Map, _historyOutput[idx_screenOutput]);
+                        ErrorMessages::Error( "Illegal output field <" + foundKey + "> for option SCREEN_OUTPUT for this test case.\n"
+                        "Supported fields are: ITER, MASS, RMS_FLUX, VTK_OUTPUT, CSV_OUTPUT\n"
+                        "Please check your .cfg file.",
+                                        CURRENT_FUNCTION );
+                    }
+                        break;
             }
         }
 
@@ -1078,4 +1171,17 @@ void Config::InitLogger() {
         spdlog::register_logger( tabular_logger );
         spdlog::flush_every( std::chrono::seconds( 5 ) );
     }
+}
+
+
+// Function to find the key for a given value in a map
+template <typename K, typename V>
+K Config::findKey(const std::map<K, V>& myMap, const V& valueToFind) {
+    for (const auto& pair : myMap) {
+        if (pair.second == valueToFind) {
+            return pair.first; // Return the key if the value is found
+        }
+    }
+    // If the value is not found, you can return a default value or throw an exception
+    throw std::out_of_range("Value not found in the map");
 }

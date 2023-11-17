@@ -64,11 +64,11 @@ class QuadratureBase
     inline std::string GetName() const { return _name; }           /*! @returns std::string _name:  name of the quadrature */
     inline unsigned GetOrder() const { return _order; }            /*! @returns unsigned _order:  order of the quadrature */
     inline unsigned GetNq() const { return _nq; }                  /*! @returns unsigned _nq:  number of gridpoints of the quadrature */
-    inline VectorVector GetPoints() const { return _pointsKarth; } /*! @returns VectorVector _points:  coordinates of gridpoints of the quadrature */
-    inline VectorVector GetPointsSphere() const {
+    inline VectorVector& GetPoints() const { return _pointsKarth; } /*! @returns VectorVector _points:  coordinates of gridpoints of the quadrature */
+    inline VectorVector& GetPointsSphere() const {
         return _pointsSphere;
     }                                                     /*! @returns VectorVector _pointsSphere:  "---- " in spherical coordinates (my, phi)*/
-    inline Vector GetWeights() const { return _weights; } /*! @returns Vector _weights:  weights of gridpoints of the quadrature */
+    inline Vector& GetWeights() const { return _weights; } /*! @returns Vector _weights:  weights of gridpoints of the quadrature */
 
     /*! @returns VectorVectorU _connectivity:  connectivity of gridpoints of the quadrature */
     inline VectorVectorU GetConnectivity() const { return _connectivity; }

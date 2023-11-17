@@ -246,6 +246,10 @@ class Config
     // Initialize the cmdline and file logger
     void InitLogger();
 
+    // Helper functions
+    template <typename K, typename V>
+    K findKey(const std::map<K, V>& myMap, const V& valueToFind);
+
   public:
     /*!
      * @brief Constructor of the class which reads the input file.

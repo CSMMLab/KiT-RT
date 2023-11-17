@@ -22,6 +22,8 @@ Lattice_SN::Lattice_SN( Config* settings, Mesh* mesh ) : ProblemBase( settings, 
             _totalXS[j]      = 10.0;
         }
     }
+    SetGhostCells();
+
 }
 
 Lattice_SN::~Lattice_SN() {}
@@ -67,6 +69,33 @@ bool Lattice_SN::isSource( const Vector& pos ) const {
     else
         return false;
 }
+
+
+void Lattice_SN::SetGhostCells(){
+    // Loop over all cells. If its a Dirichlet boundary, add cell to dict with {cell_idx, boundary_value}
+    auto cellBoundaries = _mesh->GetBoundaryTypes();
+    std::map<int, Vector> ghostCellMap;
+
+    QuadratureBase* quad          = QuadratureBase::Create( _settings );
+    VectorVector vq = quad->GetPoints();
+    unsigned nq = quad->GetNq();
+
+    Vector void_ghostcell(nq, 0.0);
+
+    for (unsigned idx_cell =0; idx_cell<_mesh->GetNumCells(); idx_cell ++){
+        if (cellBoundaries[idx_cell]== BOUNDARY_TYPE::NEUMANN || cellBoundaries[idx_cell] == BOUNDARY_TYPE::DIRICHLET){      
+            ghostCellMap.insert({idx_cell, void_ghostcell});
+        }
+    }
+    _ghostCells = ghostCellMap;
+
+    delete quad;
+}
+
+const Vector& Lattice_SN::GetGhostCellValue(int idx_cell,  const Vector& cell_sol){  //re-write to use pointers
+    return _ghostCells[idx_cell];
+}
+
 
 // ---- Checkerboard Moments ----
 
@@ -191,8 +220,9 @@ VectorVector Lattice_Moment::SetupIC() {
 
 bool Lattice_Moment::isAbsorption( const Vector& pos ) const {
     // Check whether pos is in absorption region
-    std::vector<double> lbounds{ 1, 2, 3, 4, 5 };
-    std::vector<double> ubounds{ 2, 3, 4, 5, 6 };
+    double xy_corrector =-3.5;
+    std::vector<double> lbounds{ 1+xy_corrector, 2+xy_corrector, 3+xy_corrector, 4+xy_corrector, 5+xy_corrector };
+    std::vector<double> ubounds{ 2+xy_corrector, 3+xy_corrector, 4+xy_corrector, 5+xy_corrector, 6+xy_corrector };
     for( unsigned k = 0; k < lbounds.size(); ++k ) {
         for( unsigned l = 0; l < lbounds.size(); ++l ) {
             if( ( l + k ) % 2 == 1 || ( k == 2 && l == 2 ) || ( k == 2 && l == 4 ) ) continue;
@@ -206,7 +236,7 @@ bool Lattice_Moment::isAbsorption( const Vector& pos ) const {
 
 bool Lattice_Moment::isSource( const Vector& pos ) const {
     // Check whether pos is in source region
-    if( pos[0] >= 3 && pos[0] <= 4 && pos[1] >= 3 && pos[1] <= 4 )
+    if( pos[0] >= 3-3.5 && pos[0] <= 4-3.5 && pos[1] >= 3-3.5 && pos[1] <= 4 -3.5)
         return true;
     else
         return false;

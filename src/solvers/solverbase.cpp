@@ -228,14 +228,19 @@ void SolverBase::PrepareScreenOutput() {
         // Different procedure, depending on the Group...
         switch( _settings->GetScreenOutput()[idx_field] ) {
             case MASS: _screenOutputFieldNames[idx_field] = "Mass"; break;
-
             case ITER: _screenOutputFieldNames[idx_field] = "Iter"; break;
-
             case RMS_FLUX: _screenOutputFieldNames[idx_field] = "RMS flux"; break;
-
             case VTK_OUTPUT: _screenOutputFieldNames[idx_field] = "VTK out"; break;
-
             case CSV_OUTPUT: _screenOutputFieldNames[idx_field] = "CSV out"; break;
+            case FINAL_TIME_OUTFLOW: _screenOutputFieldNames[idx_field] = "Final time outflow"; break;
+            case TOTAL_OUTFLOW: _screenOutputFieldNames[idx_field] = "Cumulated outflow"; break;
+            case MAX_OUTFLOW: _screenOutputFieldNames[idx_field] = "Max outflow"; break;
+            case FINAL_TIME_PARTICLE_ABSORPTION: _screenOutputFieldNames[idx_field] = "Final time absorption"; break;
+            case TOTAL_PARTICLE_ABSORPTION: _screenOutputFieldNames[idx_field] = "Cumulated absorption"; break;
+            case MAX_PARTICLE_ABSORPTION: _screenOutputFieldNames[idx_field] = "Max absorption"; break;
+            case TOTAL_PARTICLE_ABSORPTION_CENTER: _screenOutputFieldNames[idx_field] = "Cumulated absorption center"; break;
+            case TOTAL_PARTICLE_ABSORPTION_VERTICAL: _screenOutputFieldNames[idx_field] = "Cumulated absorption vertical wall"; break;
+            case TOTAL_PARTICLE_ABSORPTION_HORIZONTAL: _screenOutputFieldNames[idx_field] = "Cumulated absorption horizontal wall"; break;
 
             default: ErrorMessages::Error( "Screen output field not defined!", CURRENT_FUNCTION ); break;
         }
@@ -278,6 +283,17 @@ void SolverBase::WriteScalarOutput( unsigned iteration ) {
                     _screenOutputFields[idx_field] = 1;
                 }
                 break;
+
+            case FINAL_TIME_OUTFLOW: _screenOutputFields[idx_field] = _problem->GetFinalTimeOutflow(_sol); break;
+            case TOTAL_OUTFLOW: _screenOutputFields[idx_field] = _problem->GetTotalOutflow(_sol); break;
+            case MAX_OUTFLOW: _screenOutputFields[idx_field] = _problem->GetMaxOutflow(_sol); break;
+            case FINAL_TIME_PARTICLE_ABSORPTION: _screenOutputFields[idx_field] = _problem->GetFinalTimeAbsorption(_sol);  break;
+            case TOTAL_PARTICLE_ABSORPTION: _screenOutputFields[idx_field] = _problem->GetTotalAbsorption(_sol);  break;
+            case MAX_PARTICLE_ABSORPTION: _screenOutputFields[idx_field] = _problem->GetMaxAbsorption(_sol);  break;
+            case TOTAL_PARTICLE_ABSORPTION_CENTER: _screenOutputFields[idx_field] = _problem->GetTotalAbsorptionCenter(_sol);  break;
+            case TOTAL_PARTICLE_ABSORPTION_VERTICAL: _screenOutputFields[idx_field] = _problem->GetTotalAbsorptionVertical(_sol);  break;
+            case TOTAL_PARTICLE_ABSORPTION_HORIZONTAL: _screenOutputFields[idx_field] =  _problem->GetTotalAbsorptionHorizontal(_sol); break;
+            
             default: ErrorMessages::Error( "Screen output group not defined!", CURRENT_FUNCTION ); break;
         }
     }
@@ -405,15 +421,19 @@ void SolverBase::PrepareHistoryOutput() {
         // Different procedure, depending on the Group...
         switch( _settings->GetHistoryOutput()[idx_field] ) {
             case MASS: _historyOutputFieldNames[idx_field] = "Mass"; break;
-
             case ITER: _historyOutputFieldNames[idx_field] = "Iter"; break;
-
             case RMS_FLUX: _historyOutputFieldNames[idx_field] = "RMS_flux"; break;
-
             case VTK_OUTPUT: _historyOutputFieldNames[idx_field] = "VTK_out"; break;
-
             case CSV_OUTPUT: _historyOutputFieldNames[idx_field] = "CSV_out"; break;
-
+            case FINAL_TIME_OUTFLOW: _screenOutputFieldNames[idx_field] = "Final_time_outflow"; break;
+            case TOTAL_OUTFLOW: _screenOutputFieldNames[idx_field] = "Cumulated_outflow"; break;
+            case MAX_OUTFLOW: _screenOutputFieldNames[idx_field] = "Max_outflow"; break;
+            case FINAL_TIME_PARTICLE_ABSORPTION: _screenOutputFieldNames[idx_field] = "Final_time_absorption"; break;
+            case TOTAL_PARTICLE_ABSORPTION: _screenOutputFieldNames[idx_field] = "Cumulated_absorption"; break;
+            case MAX_PARTICLE_ABSORPTION: _screenOutputFieldNames[idx_field] = "Max_absorption"; break;
+            case TOTAL_PARTICLE_ABSORPTION_CENTER: _screenOutputFieldNames[idx_field] = "Cumulated_absorption_center"; break;
+            case TOTAL_PARTICLE_ABSORPTION_VERTICAL: _screenOutputFieldNames[idx_field] = "Cumulated_absorption_vertical_wall"; break;
+            case TOTAL_PARTICLE_ABSORPTION_HORIZONTAL: _screenOutputFieldNames[idx_field] = "Cumulated_absorption_horizontal_wall"; break;
             default: ErrorMessages::Error( "History output field not defined!", CURRENT_FUNCTION ); break;
         }
     }

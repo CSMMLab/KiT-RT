@@ -9,8 +9,9 @@ class SymmetricHohlraum : public ProblemBase
     SymmetricHohlraum() = delete;
     Vector _scatteringXS; /*!< @brief Vector of scattering crosssections */
     Vector _totalXS;      /*!< @brief Vector of total crosssections */
-    std::map<int, Vector> _ghostCells; /*!< @brief Vector of ghost cells for boundary conditions */
-    void SetGhostCells(); /*!< @brief Sets vector of ghost cells for boundary conditions */
+
+  protected:
+    void SetGhostCells() override ; /*!< @brief Sets vector of ghost cells for boundary conditions */
 
   public:
     SymmetricHohlraum( Config* settings, Mesh* mesh );
@@ -19,13 +20,14 @@ class SymmetricHohlraum : public ProblemBase
     virtual VectorVector SetupIC() override;
     VectorVector GetScatteringXS( const Vector& energies ) override final;
     VectorVector GetTotalXS( const Vector& energies ) override final;
-    Vector GetGhostCellValue(int idx_cell,  const Vector& cell_sol) override final;
+    const Vector& GetGhostCellValue(int idx_cell,  const Vector& cell_sol) override final;
 };
 
 class SymmetricHohlraum_Moment : public SymmetricHohlraum
 {
   private:
     SymmetricHohlraum_Moment() = delete;
+       // TODO void SetGhostCells() override final; /*!< @brief Sets vector of ghost cells for boundary conditions */
 
   public:
     SymmetricHohlraum_Moment( Config* settings, Mesh* mesh );
