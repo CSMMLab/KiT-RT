@@ -113,11 +113,8 @@ void CSDMNSolver::SolverPreprocessing() {
 }
 
 void CSDMNSolver::IterPostprocessing( unsigned idx_iter ) {
-    // --- Update Solution ---
-    //_sol = _solNew;
-
     // --- Compute Flux for solution and Screen Output ---
-    ComputeRadFlux();
+    ComputeScalarFlux();
 
     // --- Compute Dose ---
 #pragma omp parallel for

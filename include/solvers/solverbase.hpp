@@ -93,8 +93,21 @@ class SolverBase
     std::vector<double> _historyOutputFields;          /*!< @brief Solver Output: dimensions (FieldID). */
     std::vector<std::string> _historyOutputFieldNames; /*!< @brief Names of the outputFields: dimensions (FieldID) */
 
-    Vector _timeDependentOutflow;    /*!< @brief Outflow over boundary at each time step */
-    Vector _timeDependentAbsorption; /*!< @brief Absorption of particles at problem specific regions at each time step */
+    // Quantitties of Interest
+    double _curScalarOutflow;        /*!< @brief Outflow over whole boundary at current time step */
+    double _totalScalarOutflow;      /*!< @brief Outflow over whole boundary integrated until current time step */
+    double _curMaxOrdinateOutflow;   /*!< @brief Maximum ordinate-wise ouftlow  over boundary over all time steps */
+    double _curAbsorptionLattice;    /*!< @brief Absorption of particles at Lattice checkerboard regions at current time step */
+    double _totalAbsorptionLattice;  /*!< @brief Absorption of particles at Lattice checkerboard regions integrated until current time step */
+    double _curMaxAbsorptionLattice; /*!< @brief Maximum pointwise absorption of particles at Lattice checkerboard regions  until current time step */
+    double _curAbsorptionHohlraumCenter;       /*!< @brief Absorption of particles at Hohlraum center at current time step  */
+    double _curAbsorptionHohlraumVertical;     /*!< @brief Absorption of particles at Hohlraum vertical walls at current time step */
+    double _curAbsorptionHohlraumHorizontal;   /*!< @brief Absorption of particles at Hohlraum horizontal walls at current time step */
+    double _totalAbsorptionHohlraumCenter;     /*!< @brief Absorption of particles at Hohlraum center integrated until current time step  */
+    double _totalAbsorptionHohlraumVertical;   /*!< @brief Absorption of particles at Hohlraum vertical walls integrated until current time step */
+    double _totalAbsorptionHohlraumHorizontal; /*!< @brief Absorption of particles at Hohlraum horizontal walls integrated until current time step */
+    std::vector<unsigned> _probingCells;       /*!< @brief Indices of cells that contain a probing sensor */
+    VectorVector _probingMoments;              /*!< @brief Solution Momnets at the probing cells that contain a probing sensor */
 
     // ---- Member functions ----
 
@@ -106,7 +119,7 @@ class SolverBase
         @param idx_iter current (peudo) time iteration */
     virtual void IterPreprocessing( unsigned idx_iter ) = 0;
     /*! @brief Performs postprocessing for the current solver iteration */
-    virtual void IterPostprocessing( unsigned idx_iter ) = 0;
+    virtual void IterPostprocessing( unsigned idx_iter );
     /*! @brief Constructs  the flux update for the current iteration and stores it
      * in psiNew*/
     virtual void FluxUpdate() = 0;
@@ -124,7 +137,7 @@ class SolverBase
     double ComputeTimeStep( double cfl ) const;
     /*! @brief Computes the flux of the solution to check conservation properties
      */
-    virtual void ComputeRadFlux() = 0;
+    virtual void ComputeScalarFlux() = 0;
 
     // IO
     /*! @brief Initializes the output groups and fields of this solver and names
@@ -166,39 +179,39 @@ class SolverBase
     /**
      * @brief Computes Problemspecific Scalar QOI
      */
-    virtual double GetCurrentOutflow() = 0;
+    virtual void GetCurrentOutflow() = 0;
     /**
      * @brief Computes Problemspecific Scalar QOI
      */
-    double GetTotalOutflow( unsigned idx_iter );
+    void GetTotalOutflow();
     /**
      * @brief Computes Problemspecific Scalar QOI
      */
-    double GetMaxOutflow( unsigned idx_iter );
+    virtual void GetMaxOrdinatewiseOutflow() = 0;
     /**
      * @brief Computes Problemspecific Scalar QOI
      */
-    double GetCurrentAbsorption( unsigned idx_iter );
+    void GetCurrentAbsorptionLattice( unsigned idx_iter );
     /**
      * @brief Computes Problemspecific Scalar QOI
      */
-    double GetTotalAbsorption( unsigned idx_iter );
+    void GetTotalAbsorptionLattice();
     /**
      * @brief Computes Problemspecific Scalar QOI
      */
-    double GetMaxAbsorption( unsigned idx_iter );
+    void GetMaxAbsorptionLattice( unsigned idx_iter );
     /**
      * @brief Computes Problemspecific Scalar QOI
      */
-    virtual double GetTotalAbsorptionCenter() = 0;
+    void GetCurrentAbsorptionHohlraum( unsigned idx_iter );
     /**
      * @brief Computes Problemspecific Scalar QOI
      */
-    virtual double GetTotalAbsorptionVertical() = 0;
+    void GetTotalAbsorptionHohlraum();
     /**
      * @brief Computes Problemspecific Scalar QOI
      */
-    virtual double GetTotalAbsorptionHorizontal() = 0;
+    virtual void ComputeCurrentProbeMoment() = 0;
 
   public:
     /*! @brief Solver constructor

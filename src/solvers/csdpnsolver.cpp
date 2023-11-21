@@ -93,11 +93,9 @@ void CSDPNSolver::IterPreprocessing( unsigned idx_iter ) {
 void CSDPNSolver::SolverPreprocessing() {}
 
 void CSDPNSolver::IterPostprocessing( unsigned idx_iter ) {
-    // --- Update Solution ---
-    //_sol = _solNew;
 
     // --- Compute Flux for solution and Screen Output ---
-    ComputeRadFlux();
+    ComputeScalarFlux();
 
     // -- Compute Dose
     for( unsigned j = 0; j < _nCells; ++j ) {

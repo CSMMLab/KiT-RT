@@ -130,14 +130,7 @@ void MNSolver::IterPreprocessing( unsigned /*idx_pseudotime*/ ) {
     }
 }
 
-void MNSolver::IterPostprocessing( unsigned idx_iter ) {
-    // --- Compute Flux for solution and Screen Output ---
-    ComputeRadFlux();
-    _timeDependentOutflow[idx_iter]    = GetCurrentOutflow();
-    _timeDependentAbsorption[idx_iter] = GetCurrentAbsorption( idx_iter );
-}
-
-void MNSolver::ComputeRadFlux() {
+void MNSolver::ComputeScalarFlux() {
     double firstMomentScaleFactor = 4 * M_PI;
     if( _settings->GetProblemName() == PROBLEM_Aircavity1D || _settings->GetProblemName() == PROBLEM_Linesource1D ||
         _settings->GetProblemName() == PROBLEM_Checkerboard1D ) {
@@ -436,10 +429,19 @@ void MNSolver::WriteVolumeOutput( unsigned idx_iter ) {
     }
 }
 
-double MNSolver::GetCurrentOutflow() { return 0.0; }
+void MNSolver::GetCurrentOutflow() {}            // TOOD
+void MNSolver::GetMaxOrdinatewiseOutflow() {}    // TODO
 
-double MNSolver::GetTotalAbsorptionCenter() { return 0; }
-
-double MNSolver::GetTotalAbsorptionVertical() { return 0; }
-
-double MNSolver::GetTotalAbsorptionHorizontal() { return 0; }
+void MNSolver::ComputeCurrentProbeMoment() {
+    // Red areas of symmetric hohlraum
+    double total_absorption = 0.0;
+    if( _settings->GetProblemName() == PROBLEM_SymmetricHohlraum ) {
+        for( unsigned idx_cell = 0; idx_cell < 4; idx_cell++ ) {    // Loop over probing cells
+            _probingMoments[idx_cell][0] = _sol[idx_cell][0];
+            if( _nSystem > 1 ) {
+                _probingMoments[idx_cell][1] = _sol[idx_cell][1];
+                _probingMoments[idx_cell][2] = _sol[idx_cell][2];
+            }
+        }
+    }
+}

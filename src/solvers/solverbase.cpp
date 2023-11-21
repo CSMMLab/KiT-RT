@@ -23,7 +23,8 @@ SolverBase::SolverBase( Config* settings ) {
     // @TODO save parameters from settings class
 
     // build mesh and store  and store frequently used params
-    _mesh      = LoadSU2MeshFromFile( settings );
+    _mesh = LoadSU2MeshFromFile( settings );
+
     _areas     = _mesh->GetCellAreas();
     _neighbors = _mesh->GetNeighbours();
     _normals   = _mesh->GetNormals();
@@ -96,8 +97,27 @@ SolverBase::SolverBase( Config* settings ) {
     _density = _problem->GetDensity( _mesh->GetCellMidPoints() );
 
     // initialize QOI helper variables
-    _timeDependentAbsorption = Vector( _nIter, 0.0 );
-    _timeDependentOutflow    = Vector( _nIter, 0 );
+    _curMaxOrdinateOutflow             = 0.0;
+    _curScalarOutflow                  = 0.0;
+    _totalScalarOutflow                = 0.0;
+    _curAbsorptionLattice              = 0.0;
+    _curMaxAbsorptionLattice           = 0.0;
+    _totalAbsorptionLattice            = 0.0;
+    _curAbsorptionHohlraumCenter       = 0.0;
+    _curAbsorptionHohlraumVertical     = 0.0;
+    _curAbsorptionHohlraumHorizontal   = 0.0;
+    _totalAbsorptionHohlraumCenter     = 0.0;
+    _totalAbsorptionHohlraumVertical   = 0.0;
+    _totalAbsorptionHohlraumHorizontal = 0.0;
+
+    // Hardcoded for the symmetric hohlraum testcase (experimental, needs refactoring)
+    _probingCells = {
+        _mesh->GetCellOfKoordinate( -0.4, 0. ),
+        _mesh->GetCellOfKoordinate( 0.4, 0. ),
+        _mesh->GetCellOfKoordinate( 0., -0.6 ),
+        _mesh->GetCellOfKoordinate( 0., 0.6 ),
+    };
+    _probingMoments = VectorVector( 4, Vector( 3, 0.0 ) );
 }
 
 SolverBase::~SolverBase() {
@@ -161,11 +181,14 @@ void SolverBase::Solve() {
         // --- Runge Kutta Timestep ---
         if( rkStages == 2 ) RKUpdate( solRK0, _sol );
 
-        // --- Solver Output ---
+        // --- Write Output ---
         WriteVolumeOutput( iter );
         WriteScalarOutput( iter );
+
         // --- Update Scalar Fluxes
         _scalarFlux = _scalarFluxNew;
+
+        // --- Print Output ---
         PrintScreenOutput( iter );
         PrintHistoryOutput( iter );
         PrintVolumeOutput( iter );
@@ -243,15 +266,23 @@ void SolverBase::PrepareScreenOutput() {
             case VTK_OUTPUT: _screenOutputFieldNames[idx_field] = "VTK out"; break;
             case CSV_OUTPUT: _screenOutputFieldNames[idx_field] = "CSV out"; break;
             case CUR_OUTFLOW: _screenOutputFieldNames[idx_field] = "Cur. outflow"; break;
-            case TOTAL_OUTFLOW: _screenOutputFieldNames[idx_field] = "Cum. outflow"; break;
+            case TOTAL_OUTFLOW: _screenOutputFieldNames[idx_field] = "Tot. outflow"; break;
             case MAX_OUTFLOW: _screenOutputFieldNames[idx_field] = "Max outflow"; break;
             case CUR_PARTICLE_ABSORPTION: _screenOutputFieldNames[idx_field] = "Cur. absorption"; break;
-            case TOTAL_PARTICLE_ABSORPTION: _screenOutputFieldNames[idx_field] = "Cum. absorption"; break;
+            case TOTAL_PARTICLE_ABSORPTION: _screenOutputFieldNames[idx_field] = "Tot. absorption"; break;
             case MAX_PARTICLE_ABSORPTION: _screenOutputFieldNames[idx_field] = "Max absorption"; break;
-            case TOTAL_PARTICLE_ABSORPTION_CENTER: _screenOutputFieldNames[idx_field] = "Cum. absorption center"; break;
-            case TOTAL_PARTICLE_ABSORPTION_VERTICAL: _screenOutputFieldNames[idx_field] = "Cum. absorption vertical wall"; break;
-            case TOTAL_PARTICLE_ABSORPTION_HORIZONTAL: _screenOutputFieldNames[idx_field] = "Cum. absorption horizontal wall"; break;
-
+            case TOTAL_PARTICLE_ABSORPTION_CENTER: _screenOutputFieldNames[idx_field] = "Tot. abs. center"; break;
+            case TOTAL_PARTICLE_ABSORPTION_VERTICAL: _screenOutputFieldNames[idx_field] = "Tot. abs. vertical wall"; break;
+            case TOTAL_PARTICLE_ABSORPTION_HORIZONTAL: _screenOutputFieldNames[idx_field] = "Tot. abs. horizontal wall"; break;
+            case PROBE_MOMENT_TIME_TRACE:
+                _screenOutputFieldNames[idx_field] = "Probe 1 u_0";
+                idx_field++;
+                _screenOutputFieldNames[idx_field] = "Probe 2 u_0";
+                idx_field++;
+                _screenOutputFieldNames[idx_field] = "Probe 3 u_0";
+                idx_field++;
+                _screenOutputFieldNames[idx_field] = "Probe 4 u_0";
+                break;
             default: ErrorMessages::Error( "Screen output field not defined!", CURRENT_FUNCTION ); break;
         }
     }
@@ -292,15 +323,22 @@ void SolverBase::WriteScalarOutput( unsigned idx_iter ) {
                     _screenOutputFields[idx_field] = 1;
                 }
                 break;
-            case CUR_OUTFLOW: _screenOutputFields[idx_field] = _timeDependentOutflow[idx_iter]; break;
-            case TOTAL_OUTFLOW: _screenOutputFields[idx_field] = GetTotalOutflow( idx_iter ); break;
-            case MAX_OUTFLOW: _screenOutputFields[idx_field] = GetMaxOutflow( idx_iter ); break;
-            case CUR_PARTICLE_ABSORPTION: _screenOutputFields[idx_field] = _timeDependentAbsorption[idx_iter]; break;
-            case TOTAL_PARTICLE_ABSORPTION: _screenOutputFields[idx_field] = GetTotalAbsorption( idx_iter ); break;
-            case MAX_PARTICLE_ABSORPTION: _screenOutputFields[idx_field] = GetMaxAbsorption( idx_iter ); break;
-            case TOTAL_PARTICLE_ABSORPTION_CENTER: _screenOutputFields[idx_field] = GetTotalAbsorptionCenter(); break;
-            case TOTAL_PARTICLE_ABSORPTION_VERTICAL: _screenOutputFields[idx_field] = GetTotalAbsorptionVertical(); break;
-            case TOTAL_PARTICLE_ABSORPTION_HORIZONTAL: _screenOutputFields[idx_field] = GetTotalAbsorptionHorizontal(); break;
+            case CUR_OUTFLOW: _screenOutputFields[idx_field] = _curScalarOutflow; break;
+            case TOTAL_OUTFLOW: _screenOutputFields[idx_field] = _totalScalarOutflow; break;
+            case MAX_OUTFLOW: _screenOutputFields[idx_field] = _curMaxOrdinateOutflow; break;
+            case CUR_PARTICLE_ABSORPTION: _screenOutputFields[idx_field] = _curAbsorptionLattice; break;
+            case TOTAL_PARTICLE_ABSORPTION: _screenOutputFields[idx_field] = _totalAbsorptionLattice; break;
+            case MAX_PARTICLE_ABSORPTION: _screenOutputFields[idx_field] = _curMaxAbsorptionLattice; break;
+            case TOTAL_PARTICLE_ABSORPTION_CENTER: _screenOutputFields[idx_field] = _totalAbsorptionHohlraumCenter; break;
+            case TOTAL_PARTICLE_ABSORPTION_VERTICAL: _screenOutputFields[idx_field] = _totalAbsorptionHohlraumVertical; break;
+            case TOTAL_PARTICLE_ABSORPTION_HORIZONTAL: _screenOutputFields[idx_field] = _totalAbsorptionHohlraumHorizontal; break;
+            case PROBE_MOMENT_TIME_TRACE:
+                for( unsigned i = 0; i < 4; i++ ) {
+                    _screenOutputFields[idx_field] = _probingMoments[i][0];
+                    idx_field++;
+                }
+                idx_field--;
+                break;
             default: ErrorMessages::Error( "Screen output group not defined!", CURRENT_FUNCTION ); break;
         }
     }
@@ -356,15 +394,24 @@ void SolverBase::WriteScalarOutput( unsigned idx_iter ) {
                     _historyOutputFields[idx_field] = 1;
                 }
                 break;
-            case CUR_OUTFLOW: _historyOutputFields[idx_field] = _timeDependentOutflow[idx_iter]; break;
-            case TOTAL_OUTFLOW: _historyOutputFields[idx_field] = GetTotalOutflow( idx_iter ); break;
-            case MAX_OUTFLOW: _historyOutputFields[idx_field] = GetMaxOutflow( idx_iter ); break;
-            case CUR_PARTICLE_ABSORPTION: _historyOutputFields[idx_field] = _timeDependentAbsorption[idx_iter]; break;
-            case TOTAL_PARTICLE_ABSORPTION: _historyOutputFields[idx_field] = GetTotalAbsorption( idx_iter ); break;
-            case MAX_PARTICLE_ABSORPTION: _historyOutputFields[idx_field] = GetMaxAbsorption( idx_iter ); break;
-            case TOTAL_PARTICLE_ABSORPTION_CENTER: _historyOutputFields[idx_field] = GetTotalAbsorptionCenter(); break;
-            case TOTAL_PARTICLE_ABSORPTION_VERTICAL: _historyOutputFields[idx_field] = GetTotalAbsorptionVertical(); break;
-            case TOTAL_PARTICLE_ABSORPTION_HORIZONTAL: _historyOutputFields[idx_field] = GetTotalAbsorptionHorizontal(); break;
+            case CUR_OUTFLOW: _historyOutputFields[idx_field] = _curScalarOutflow; break;
+            case TOTAL_OUTFLOW: _historyOutputFields[idx_field] = _totalScalarOutflow; break;
+            case MAX_OUTFLOW: _historyOutputFields[idx_field] = _curMaxOrdinateOutflow; break;
+            case CUR_PARTICLE_ABSORPTION: _historyOutputFields[idx_field] = _curAbsorptionLattice; break;
+            case TOTAL_PARTICLE_ABSORPTION: _historyOutputFields[idx_field] = _totalAbsorptionLattice; break;
+            case MAX_PARTICLE_ABSORPTION: _historyOutputFields[idx_field] = _curMaxAbsorptionLattice; break;
+            case TOTAL_PARTICLE_ABSORPTION_CENTER: _historyOutputFields[idx_field] = _totalAbsorptionHohlraumCenter; break;
+            case TOTAL_PARTICLE_ABSORPTION_VERTICAL: _historyOutputFields[idx_field] = _totalAbsorptionHohlraumVertical; break;
+            case TOTAL_PARTICLE_ABSORPTION_HORIZONTAL: _historyOutputFields[idx_field] = _totalAbsorptionHohlraumHorizontal; break;
+            case PROBE_MOMENT_TIME_TRACE:
+                for( unsigned i = 0; i < 4; i++ ) {
+                    for( unsigned j = 0; j < 3; j++ ) {
+                        _historyOutputFields[idx_field] = _probingMoments[i][j];
+                        idx_field++;
+                    }
+                }
+                idx_field--;
+                break;
             default: ErrorMessages::Error( "History output group not defined!", CURRENT_FUNCTION ); break;
         }
     }
@@ -375,7 +422,7 @@ void SolverBase::PrintScreenOutput( unsigned idx_iter ) {
     MPI_Comm_rank( MPI_COMM_WORLD, &rank );
     auto log = spdlog::get( "event" );
 
-    unsigned strLen  = 10;    // max width of one column
+    unsigned strLen  = 15;    // max width of one column
     char paddingChar = ' ';
 
     // assemble the line to print
@@ -386,7 +433,18 @@ void SolverBase::PrintScreenOutput( unsigned idx_iter ) {
 
         // Format outputs correctly
         std::vector<SCALAR_OUTPUT> integerFields    = { ITER };
-        std::vector<SCALAR_OUTPUT> scientificFields = { RMS_FLUX, MASS };
+        std::vector<SCALAR_OUTPUT> scientificFields = { RMS_FLUX,
+                                                        MASS,
+                                                        CUR_OUTFLOW,
+                                                        TOTAL_OUTFLOW,
+                                                        MAX_OUTFLOW,
+                                                        CUR_PARTICLE_ABSORPTION,
+                                                        TOTAL_PARTICLE_ABSORPTION,
+                                                        MAX_PARTICLE_ABSORPTION,
+                                                        TOTAL_PARTICLE_ABSORPTION_CENTER,
+                                                        TOTAL_PARTICLE_ABSORPTION_VERTICAL,
+                                                        TOTAL_PARTICLE_ABSORPTION_HORIZONTAL,
+                                                        PROBE_MOMENT_TIME_TRACE };
         std::vector<SCALAR_OUTPUT> booleanFields    = { VTK_OUTPUT, CSV_OUTPUT };
 
         if( !( integerFields.end() == std::find( integerFields.begin(), integerFields.end(), _settings->GetScreenOutput()[idx_field] ) ) ) {
@@ -448,6 +506,15 @@ void SolverBase::PrepareHistoryOutput() {
             case TOTAL_PARTICLE_ABSORPTION_CENTER: _historyOutputFieldNames[idx_field] = "Cumulated_absorption_center"; break;
             case TOTAL_PARTICLE_ABSORPTION_VERTICAL: _historyOutputFieldNames[idx_field] = "Cumulated_absorption_vertical_wall"; break;
             case TOTAL_PARTICLE_ABSORPTION_HORIZONTAL: _historyOutputFieldNames[idx_field] = "Cumulated_absorption_horizontal_wall"; break;
+            case PROBE_MOMENT_TIME_TRACE:
+                for( unsigned i = 0; i < 4; i++ ) {
+                    for( unsigned j = 0; j < 3; j++ ) {
+                        _historyOutputFieldNames[idx_field] = "Probe " + std::to_string( i ) + " u_" + std::to_string( j );
+                        idx_field++;
+                    }
+                }
+                idx_field--;
+                break;
             default: ErrorMessages::Error( "History output field not defined!", CURRENT_FUNCTION ); break;
         }
     }
@@ -490,12 +557,12 @@ void SolverBase::DrawPreSolverOutput() {
     std::string hLine = "--";
 
     if( rank == 0 ) {
-        unsigned strLen  = 10;    // max width of one column
+        unsigned strLen  = 15;    // max width of one column
         char paddingChar = ' ';
 
         // Assemble Header for Screen Output
         std::string lineToPrint = "| ";
-        std::string tmpLine     = "------------";
+        std::string tmpLine     = "-----------------";
         for( unsigned idxFields = 0; idxFields < _settings->GetNScreenOutput(); idxFields++ ) {
             std::string tmp = _screenOutputFieldNames[idxFields];
 
@@ -563,28 +630,10 @@ void SolverBase::DrawPostSolverOutput() {
 
 void SolverBase::SolverPreprocessing() {}
 
-double SolverBase::GetTotalOutflow( unsigned idx_iter ) {
-    double totalOutflow = 0.0;
-    for( unsigned i = 0; i < idx_iter + 1; i++ ) {
-        totalOutflow += _timeDependentOutflow[i] * _dT;
-    }
-    return totalOutflow;
-}
+void SolverBase::GetTotalOutflow() { _totalScalarOutflow += _curScalarOutflow * _dT; }
 
-double SolverBase::GetMaxOutflow( unsigned idx_iter ) {
-    // NOT WHAT IT IS IN SLIDES!
-    double maxOutflow = 0.0;
-
-    for( unsigned i = 0; i < idx_iter + 1; i++ ) {
-        if( _timeDependentOutflow[idx_iter] > maxOutflow ) {
-            maxOutflow = _timeDependentOutflow[idx_iter];
-        }
-    }
-    return maxOutflow;
-}
-
-double SolverBase::GetCurrentAbsorption( unsigned idx_iter ) {
-    double total_absorption = 0.0;
+void SolverBase::GetCurrentAbsorptionLattice( unsigned idx_iter ) {
+    _curAbsorptionLattice = 0.0;
     if( _settings->GetProblemName() == PROBLEM_Lattice ) {
         for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
             // Assumption: Domain size is 7x7
@@ -598,29 +647,89 @@ double SolverBase::GetCurrentAbsorption( unsigned idx_iter ) {
                 for( unsigned l = 0; l < lbounds.size(); ++l ) {
                     if( ( l + k ) % 2 == 1 || ( k == 2 && l == 2 ) || ( k == 2 && l == 4 ) ) continue;
                     if( x >= lbounds[k] && x <= ubounds[k] && y >= lbounds[l] && y <= ubounds[l] ) {
-                        total_absorption += _scalarFlux[idx_cell] * ( _sigmaT[idx_iter][idx_cell] - _sigmaS[idx_iter][idx_cell] ) * _areas[idx_cell];
+                        _curAbsorptionLattice +=
+                            _scalarFlux[idx_cell] * ( _sigmaT[idx_iter][idx_cell] - _sigmaS[idx_iter][idx_cell] ) * _areas[idx_cell];
                     }
                 }
             }
         }
     }
-
-    return total_absorption;
 }
 
-double SolverBase::GetTotalAbsorption( unsigned idx_iter ) {
-    double totalAbsorption = 0.0;
-    for( unsigned i = 0; i < idx_iter + 1; i++ ) {
-        totalAbsorption += _timeDependentAbsorption[i] * _dT;
-    }
-    return totalAbsorption;
-}
-double SolverBase::GetMaxAbsorption( unsigned idx_iter ) {
-    double maxAbsorption = 0.0;
-    for( unsigned i = 0; i < idx_iter + 1; i++ ) {
-        if( _timeDependentOutflow[idx_iter] > maxAbsorption ) {
-            maxAbsorption = _timeDependentOutflow[idx_iter];
+void SolverBase::GetTotalAbsorptionLattice() { _totalAbsorptionLattice += _curAbsorptionLattice * _dT; }
+
+void SolverBase::GetMaxAbsorptionLattice( unsigned idx_iter ) {
+    _curMaxAbsorptionLattice = 0.0;
+    if( _settings->GetProblemName() == PROBLEM_Lattice ) {
+        for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
+            // Assumption: Domain size is 7x7
+            double x            = _mesh->GetCellMidPoints()[idx_cell][0];
+            double y            = _mesh->GetCellMidPoints()[idx_cell][1];
+            double xy_corrector = -3.5;
+            std::vector<double> lbounds{ 1 + xy_corrector, 2 + xy_corrector, 3 + xy_corrector, 4 + xy_corrector, 5 + xy_corrector };
+            std::vector<double> ubounds{ 2 + xy_corrector, 3 + xy_corrector, 4 + xy_corrector, 5 + xy_corrector, 6 + xy_corrector };
+
+            for( unsigned k = 0; k < lbounds.size(); ++k ) {
+                for( unsigned l = 0; l < lbounds.size(); ++l ) {
+                    if( ( l + k ) % 2 == 1 || ( k == 2 && l == 2 ) || ( k == 2 && l == 4 ) ) continue;
+                    if( x >= lbounds[k] && x <= ubounds[k] && y >= lbounds[l] && y <= ubounds[l] ) {
+                        if( _curMaxAbsorptionLattice < _scalarFlux[idx_cell] * ( _sigmaT[idx_iter][idx_cell] - _sigmaS[idx_iter][idx_cell] ) )
+                            _curMaxAbsorptionLattice = _scalarFlux[idx_cell] * ( _sigmaT[idx_iter][idx_cell] - _sigmaS[idx_iter][idx_cell] );
+                    }
+                }
+            }
         }
     }
-    return maxAbsorption;
+}
+
+void SolverBase::GetCurrentAbsorptionHohlraum( unsigned idx_iter ) {
+    _curAbsorptionHohlraumCenter     = 0.0;    // Green and blue areas of symmetric hohlraum
+    _curAbsorptionHohlraumVertical   = 0.0;    // Red areas of symmetric hohlraum
+    _curAbsorptionHohlraumHorizontal = 0.0;    // Black areas of symmetric hohlraum
+
+    if( _settings->GetProblemName() == PROBLEM_SymmetricHohlraum ) {
+        for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
+            double x = _mesh->GetCellMidPoints()[idx_cell][0];
+            double y = _mesh->GetCellMidPoints()[idx_cell][1];
+
+            if( x > -0.2 && x < 0.2 && y > -0.35 && y < 0.35 ) {
+                _curAbsorptionHohlraumCenter +=
+                    _scalarFlux[idx_cell] * ( _sigmaT[idx_iter][idx_cell] - _sigmaS[idx_iter][idx_cell] ) * _areas[idx_cell];
+            }
+            if( ( x < -0.6 && y > -0.4 && y < 0.4 ) || ( x > 0.6 && y > -0.4 && y < 0.4 ) ) {
+                _curAbsorptionHohlraumVertical +=
+                    _scalarFlux[idx_cell] * ( _sigmaT[idx_iter][idx_cell] - _sigmaS[idx_iter][idx_cell] ) * _areas[idx_cell];
+            }
+            if( y > 0.6 || y < -0.6 ) {
+                _curAbsorptionHohlraumHorizontal +=
+                    _scalarFlux[idx_cell] * ( _sigmaT[idx_iter][idx_cell] - _sigmaS[idx_iter][idx_cell] ) * _areas[idx_cell];
+            }
+        }
+    }
+}
+
+void SolverBase::GetTotalAbsorptionHohlraum() {
+    _totalAbsorptionHohlraumCenter += _curAbsorptionHohlraumCenter * _dT;
+    _totalAbsorptionHohlraumVertical += _curAbsorptionHohlraumVertical * _dT;
+    _totalAbsorptionHohlraumHorizontal += _curAbsorptionHohlraumHorizontal * _dT;
+}
+
+void SolverBase::IterPostprocessing( unsigned idx_iter ) {
+    // --- Compute Quantities of interest for Volume and Screen Output ---
+    ComputeScalarFlux();
+
+    GetCurrentOutflow();
+    GetTotalOutflow();
+    GetMaxOrdinatewiseOutflow();
+
+    if( _settings->GetProblemName() == PROBLEM_Lattice ) {
+        GetCurrentAbsorptionLattice( idx_iter );
+        GetTotalAbsorptionLattice();
+        GetMaxAbsorptionLattice( idx_iter );
+    }
+    if( _settings->GetProblemName() == PROBLEM_SymmetricHohlraum ) {
+        GetCurrentAbsorptionHohlraum( idx_iter );
+        GetTotalAbsorptionHohlraum();
+        ComputeCurrentProbeMoment();
+    }
 }

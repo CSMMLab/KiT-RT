@@ -38,16 +38,7 @@ void SNSolver::IterPreprocessing( unsigned /*idx_iter*/ ) {
     }
 }
 
-void SNSolver::IterPostprocessing( unsigned idx_iter ) {
-
-    // --- Compute Flux for solution and Screen Output ---
-    ComputeRadFlux();
-
-    _timeDependentOutflow[idx_iter]    = GetCurrentOutflow();
-    _timeDependentAbsorption[idx_iter] = GetCurrentAbsorption( idx_iter );
-}
-
-void SNSolver::ComputeRadFlux() {
+void SNSolver::ComputeScalarFlux() {
     double firstMomentScaleFactor = 4 * M_PI;
     if( _settings->GetProblemName() == PROBLEM_Aircavity1D || _settings->GetProblemName() == PROBLEM_Linesource1D ||
         _settings->GetProblemName() == PROBLEM_Checkerboard1D || _settings->GetProblemName() == PROBLEM_Meltingcube1D ) {
@@ -55,7 +46,7 @@ void SNSolver::ComputeRadFlux() {
     }
 #pragma omp parallel for
     for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
-        _scalarFluxNew[idx_cell] = blaze::dot( _sol[idx_cell], _weights ) / firstMomentScaleFactor;
+        _scalarFluxNew[idx_cell] = blaze::dot( _sol[idx_cell], _weights );    // / firstMomentScaleFactor;
     }
 }
 
@@ -265,8 +256,38 @@ void SNSolver::WriteVolumeOutput( unsigned idx_iter ) {
 }
 
 // Needs to go to Solver, not to Problem
-double SNSolver::GetCurrentOutflow() {
-    double finalTimeOutflow           = 0.0;
+void SNSolver::GetCurrentOutflow() {
+    _curScalarOutflow         = 0.0;
+    double transportDirection = 0.0;
+
+    std::map<int, Vector>& ghostCells = _problem->GetGhostCells();
+
+    // Iterate over boundaries
+    for( std::map<int, Vector>::iterator it = ghostCells.begin(); it != ghostCells.end(); ++it ) {
+        int idx_cell = it->first;    // Get Boundary cell index
+
+        // Iterate over face cell faces
+        for( unsigned idx_nbr = 0; idx_nbr < _neighbors[idx_cell].size(); ++idx_nbr ) {
+            // Find face that points outward
+            if( _neighbors[idx_cell][idx_nbr] == _nCells ) {
+                // Iterate over transport directions
+                for( unsigned idx_quad = 0; idx_quad < _nq; ++idx_quad ) {
+                    transportDirection =
+                        _normals[idx_cell][idx_nbr][0] * _quadPoints[idx_quad][0] + _normals[idx_cell][idx_nbr][1] * _quadPoints[idx_quad][1];
+                    // Find outward facing transport directions
+                    if( transportDirection > 0.0 ) {
+                        _curScalarOutflow += transportDirection * _sol[idx_cell][idx_quad] * _weights[idx_quad];    // Integrate flux
+                    }
+                }
+            }
+        }
+    }
+}
+
+void SNSolver::GetMaxOrdinatewiseOutflow() {
+    double currOrdinatewiseOutflow = 0.0;
+    double transportDirection      = 0.0;
+
     std::map<int, Vector>& ghostCells = _problem->GetGhostCells();
 
     // Iterate over boundaries
@@ -275,21 +296,34 @@ double SNSolver::GetCurrentOutflow() {
         for( unsigned idx_nbr = 0; idx_nbr < _neighbors[idx_cell].size(); ++idx_nbr ) {
             // Find face that points outward
             if( _neighbors[idx_cell][idx_nbr] == _nCells ) {
+                // Iterate over transport directions
                 for( unsigned idx_quad = 0; idx_quad < _nq; ++idx_quad ) {
-                    double fluxOut =
+                    transportDirection =
                         _normals[idx_cell][idx_nbr][0] * _quadPoints[idx_quad][0] + _normals[idx_cell][idx_nbr][1] * _quadPoints[idx_quad][1];
-                    if( fluxOut > 0.0 ) {
-                        finalTimeOutflow += fluxOut * _sol[idx_cell][idx_quad];
+                    // Find outward facing transport directions
+                    if( transportDirection > 0.0 ) {
+                        currOrdinatewiseOutflow = transportDirection / norm( _normals[idx_cell][idx_nbr] ) * _sol[idx_cell][idx_quad];
+                        if( currOrdinatewiseOutflow > _curMaxOrdinateOutflow ) _curMaxOrdinateOutflow = currOrdinatewiseOutflow;
                     }
                 }
             }
         }
     }
-    return finalTimeOutflow;
 }
 
-double SNSolver::GetTotalAbsorptionCenter() { return 0; }
+void SNSolver::ComputeCurrentProbeMoment() {
+    // Red areas of symmetric hohlraum
+    double total_absorption = 0.0;
+    if( _settings->GetProblemName() == PROBLEM_SymmetricHohlraum ) {
+        for( unsigned idx_cell = 0; idx_cell < 4; idx_cell++ ) {    // Loop over probing cells
+            _probingMoments[idx_cell][0] = blaze::dot( _sol[_probingCells[idx_cell]], _weights );
+            _probingMoments[idx_cell][1] = 0.0;
+            _probingMoments[idx_cell][2] = 0.0;
 
-double SNSolver::GetTotalAbsorptionVertical() { return 0; }
-
-double SNSolver::GetTotalAbsorptionHorizontal() { return 0; }
+            for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
+                _probingMoments[idx_cell][1] += _quadPoints[idx_quad][0] * _sol[_probingCells[idx_cell]][idx_quad] * _weights[idx_quad];
+                _probingMoments[idx_cell][2] += _quadPoints[idx_quad][2] * _sol[_probingCells[idx_cell]][idx_quad] * _weights[idx_quad];
+            }
+        }
+    }
+}

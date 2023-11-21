@@ -343,7 +343,7 @@ void Mesh::ComputeLimiter(
 }
 
 void Mesh::ComputeLimiter1D( unsigned nSys, const VectorVector& sol, VectorVector& limiter ) const {
-    //#pragma omp parallel for
+#pragma omp parallel for
     double const eps = 1e-10;
     for( unsigned idx_cell = 0; idx_cell < _numCells; idx_cell++ ) {
         for( unsigned idx_sys = 0; idx_sys < nSys; idx_sys++ ) {
@@ -394,4 +394,31 @@ double Mesh::GetDistanceToOrigin( unsigned idx_cell ) const {
         distance += _cellMidPoints[idx_cell][idx_dim] * _cellMidPoints[idx_cell][idx_dim];
     }
     return sqrt( distance );
+}
+
+unsigned Mesh::GetCellOfKoordinate( double x, double y ) const {
+    unsigned koordinate_idx = 0;
+    for( unsigned idx_cell = 0; idx_cell < _numCells; idx_cell++ ) {
+        if( IsPointInsideCell( idx_cell, x, y ) ) {
+            return idx_cell;
+        }
+    }
+    ErrorMessages::Error( "Probing point (" + std::to_string( x ) + "," + std::to_string( y ) + ") is contained in mesh.", CURRENT_FUNCTION );
+}
+
+bool Mesh::IsPointInsideCell( unsigned idx_cell, double x, double y ) const {
+    bool inside = false;
+    for( unsigned i = 0, j = _numNodesPerCell - 1; i < _numNodesPerCell; j = i++ ) {
+        double xi = _nodes[_cells[idx_cell][i]][0];
+        double yi = _nodes[_cells[idx_cell][i]][1];
+        double xj = _nodes[_cells[idx_cell][j]][0];
+        double yj = _nodes[_cells[idx_cell][j]][1];
+
+        bool intersect = ( ( yi > y ) != ( yj > y ) ) && ( x < ( xj - xi ) * ( y - yi ) / ( yj - yi ) + xi );
+
+        if( intersect ) {
+            inside = true;
+        }
+    }
+    return inside;
 }

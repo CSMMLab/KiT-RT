@@ -48,10 +48,9 @@ class PNSolver : public SolverBase
     void FVMUpdate( unsigned idx_iter ) override;
     void FluxUpdate() override;
     void IterPreprocessing( unsigned idx_iter ) override;
-    void IterPostprocessing( unsigned idx_iter ) override;
 
     // Helper
-    void ComputeRadFlux() override;
+    void ComputeScalarFlux() override;
 
     // Initialization of the Solver
     /*! @brief parameter functions for setting up system matrix
@@ -150,19 +149,9 @@ class PNSolver : public SolverBase
     void FluxUpdatePseudo2D();
 
     // Output helper functions
-    double GetCurrentOutflow() override final;
-    /**
-     * @brief Computes Problemspecific Scalar QOI
-     */
-    double GetTotalAbsorptionCenter() override final;
-    /**
-     * @brief Computes Problemspecific Scalar QOI
-     */
-    double GetTotalAbsorptionVertical() override final;
-    /**
-     * @brief Computes Problemspecific Scalar QOI
-     */
-    double GetTotalAbsorptionHorizontal() override final;
+    void GetCurrentOutflow() override final;
+    void GetMaxOrdinatewiseOutflow() override final;
+    void ComputeCurrentProbeMoment() override final;
 };
 
 #endif    // PNSOLVER_H

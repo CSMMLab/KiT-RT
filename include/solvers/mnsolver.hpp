@@ -53,7 +53,6 @@ class MNSolver : public SolverBase
     virtual void FVMUpdate( unsigned idx_iter ) override;
     virtual void FluxUpdate() override;
     virtual void IterPreprocessing( unsigned idx_iter ) override;
-    virtual void IterPostprocessing( unsigned idx_iter ) override;
 
     void FluxUpdatePseudo1D();    // Helper
     void FluxUpdatePseudo2D();    // Helper
@@ -70,21 +69,12 @@ class MNSolver : public SolverBase
 
     // Helper
     /*! @brief Computes the radiative flux from the solution vector of the moment system */
-    void ComputeRadFlux() override;
+    void ComputeScalarFlux() override;
 
     // Output helper functions
-    double GetCurrentOutflow() override final;
-    /**
-     * @brief Computes Problemspecific Scalar QOI
-     */
-    double GetTotalAbsorptionCenter() override final;
-    /**
-     * @brief Computes Problemspecific Scalar QOI
-     */
-    double GetTotalAbsorptionVertical() override final;
-    /**
-     * @brief Computes Problemspecific Scalar QOI
-     */
-    double GetTotalAbsorptionHorizontal() override final;
+    void GetCurrentOutflow() override final;
+    void GetMaxOrdinatewiseOutflow() override final;
+
+    void ComputeCurrentProbeMoment() override final;
 };
 #endif    // MNSOLVER_H

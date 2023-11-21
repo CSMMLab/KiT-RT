@@ -31,10 +31,9 @@ class SNSolver : public SolverBase
     void virtual FVMUpdate( unsigned idx_iter ) override;
     void virtual FluxUpdate() override;
     void virtual IterPreprocessing( unsigned idx_iter ) override;
-    void virtual IterPostprocessing( unsigned idx_iter ) override;
 
     // Helper
-    void ComputeRadFlux() override;
+    void ComputeScalarFlux() override;
     void FluxUpdatePseudo1D();    // Helper
     void FluxUpdatePseudo2D();    // Helper
 
@@ -45,20 +44,18 @@ class SNSolver : public SolverBase
      * @brief Computes Problemspecific Scalar QOI
      *
      */
+    void GetCurrentOutflow() override final;
+    /**
+     * @brief Computes Problemspecific Scalar QOI
+     *
+     */
+    void GetMaxOrdinatewiseOutflow() override final;
 
-    double GetCurrentOutflow() override final;
     /**
      * @brief Computes Problemspecific Scalar QOI
+     *
      */
-    double GetTotalAbsorptionCenter() override final;
-    /**
-     * @brief Computes Problemspecific Scalar QOI
-     */
-    double GetTotalAbsorptionVertical() override final;
-    /**
-     * @brief Computes Problemspecific Scalar QOI
-     */
-    double GetTotalAbsorptionHorizontal() override final;
+    void ComputeCurrentProbeMoment() override final;
 };
 
 #endif    // SNSOLVER_H

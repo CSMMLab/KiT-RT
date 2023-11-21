@@ -127,20 +127,10 @@ void CSDSNSolver::IterPreprocessing( unsigned idx_pseudotime ) {
             }
         }
         _sol[j] = _O * u;
-        //_sol[j] = blaze::solve( _identity + _dE * _O * Sigma * _M, _sol[j] );
     }
 }
 
-void CSDSNSolver::SolverPreprocessing() {
-    // Need to transform ordinate solution with density and scattering, depending on problem setup
-    // do substitution from psi to psiTildeHat (cf. Dissertation Kerstion Kuepper, Eq. 1.23)
-    //#pragma omp parallel for
-    //    for( unsigned j = 0; j < _nCells; ++j ) {
-    //        for( unsigned k = 0; k < _nq; ++k ) {
-    //            _sol[j][k] = _sol[j][k] * _density[j] * _s[0];    // note that _s[_nEnergies - 1] is stopping power at highest energy
-    //        }
-    //    }
-}
+void CSDSNSolver::SolverPreprocessing() {}
 
 void CSDSNSolver::IterPostprocessing( unsigned idx_pseudotime ) {
     unsigned n = idx_pseudotime;
