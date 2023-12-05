@@ -111,13 +111,15 @@ SolverBase::SolverBase( Config* settings ) {
     _totalAbsorptionHohlraumHorizontal = 0.0;
 
     // Hardcoded for the symmetric hohlraum testcase (experimental, needs refactoring)
-    _probingCells = {
-        _mesh->GetCellOfKoordinate( -0.4, 0. ),
-        _mesh->GetCellOfKoordinate( 0.4, 0. ),
-        _mesh->GetCellOfKoordinate( 0., -0.6 ),
-        _mesh->GetCellOfKoordinate( 0., 0.6 ),
-    };
-    _probingMoments = VectorVector( 4, Vector( 3, 0.0 ) );
+    if( _settings->GetProblemName() == PROBLEM_SymmetricHohlraum ) {
+        _probingCells = {
+            _mesh->GetCellOfKoordinate( -0.4, 0. ),
+            _mesh->GetCellOfKoordinate( 0.4, 0. ),
+            _mesh->GetCellOfKoordinate( 0., -0.6 ),
+            _mesh->GetCellOfKoordinate( 0., 0.6 ),
+        };
+        _probingMoments = VectorVector( 4, Vector( 3, 0.0 ) );
+    }
 }
 
 SolverBase::~SolverBase() {
