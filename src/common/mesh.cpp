@@ -343,8 +343,8 @@ void Mesh::ComputeLimiter(
 }
 
 void Mesh::ComputeLimiter1D( unsigned nSys, const VectorVector& sol, VectorVector& limiter ) const {
-#pragma omp parallel for
     double const eps = 1e-10;
+#pragma omp parallel for
     for( unsigned idx_cell = 0; idx_cell < _numCells; idx_cell++ ) {
         for( unsigned idx_sys = 0; idx_sys < nSys; idx_sys++ ) {
             double r = 0.0;
