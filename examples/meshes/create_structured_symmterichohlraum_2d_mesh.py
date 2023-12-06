@@ -21,7 +21,7 @@ def main():
     print("Parsing options")
     # --- parse options ---
     parser = OptionParser()
-    parser.add_option("-o", "--output_name", dest="output_name", default="struct_2dmesh")
+    parser.add_option("-o", "--output_name", dest="output_name", default="struct_mesh_symmetric_hohlraum.su2")
     parser.add_option("-c", "--char_length", dest="char_length", default=0.01)
     parser.add_option("-s", "--start_pt", dest="start_pt", nargs=2, default=(-0.65,-0.65))
     parser.add_option("-l", "--length", dest="length", nargs=2, default=(1.3,1.3))

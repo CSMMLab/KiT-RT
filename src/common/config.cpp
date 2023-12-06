@@ -521,18 +521,6 @@ void Config::SetPostprocessing() {
         default: _isMomentSolver = false;
     }
 
-    // Check, if mesh file exists
-    // if( _solverName == CSD_SN_FOKKERPLANCK_TRAFO_SOLVER ) {    // Check if this is neccessary
-    //    if( !std::filesystem::exists( this->GetHydrogenFile() ) ) {
-    //        ErrorMessages::Error( "Path to mesh file <" + this->GetHydrogenFile() + "> does not exist. Please check your config file.",
-    //                              CURRENT_FUNCTION );
-    //    }
-    //    if( !std::filesystem::exists( this->GetOxygenFile() ) ) {
-    //        ErrorMessages::Error( "Path to mesh file <" + this->GetOxygenFile() + "> does not exist. Please check your config file.",
-    //                              CURRENT_FUNCTION );
-    //    }
-    //}
-
     // Quadrature Postprocessing
     {
         QuadratureBase* quad                      = QuadratureBase::Create( this );
