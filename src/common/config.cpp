@@ -747,7 +747,8 @@ void Config::SetPostprocessing() {
                                      TOTAL_PARTICLE_ABSORPTION_CENTER,
                                      TOTAL_PARTICLE_ABSORPTION_VERTICAL,
                                      TOTAL_PARTICLE_ABSORPTION_HORIZONTAL,
-                                     PROBE_MOMENT_TIME_TRACE };
+                                     PROBE_MOMENT_TIME_TRACE,
+                                     VAR_ABSORPTION_GREEN };
                     it           = std::find( legalOutputs.begin(), legalOutputs.end(), _screenOutput[idx_screenOutput] );
 
                     if( it == legalOutputs.end() ) {

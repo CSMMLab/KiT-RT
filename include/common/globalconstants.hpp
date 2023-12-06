@@ -184,7 +184,8 @@ enum SCALAR_OUTPUT {
     TOTAL_PARTICLE_ABSORPTION_CENTER,
     TOTAL_PARTICLE_ABSORPTION_VERTICAL,
     TOTAL_PARTICLE_ABSORPTION_HORIZONTAL,
-    PROBE_MOMENT_TIME_TRACE
+    PROBE_MOMENT_TIME_TRACE,
+    VAR_ABSORPTION_GREEN
 };
 
 inline std::map<std::string, SCALAR_OUTPUT> ScalarOutput_Map{ { "ITER", ITER },
@@ -201,7 +202,8 @@ inline std::map<std::string, SCALAR_OUTPUT> ScalarOutput_Map{ { "ITER", ITER },
                                                               { "TOTAL_PARTICLE_ABSORPTION_CENTER", TOTAL_PARTICLE_ABSORPTION_CENTER },
                                                               { "TOTAL_PARTICLE_ABSORPTION_VERTICAL", TOTAL_PARTICLE_ABSORPTION_VERTICAL },
                                                               { "TOTAL_PARTICLE_ABSORPTION_HORIZONTAL", TOTAL_PARTICLE_ABSORPTION_HORIZONTAL },
-                                                              { "PROBE_MOMENT_TIME_TRACE", PROBE_MOMENT_TIME_TRACE } };
+                                                              { "PROBE_MOMENT_TIME_TRACE", PROBE_MOMENT_TIME_TRACE },
+                                                              { "VAR_ABSORPTION_GREEN", VAR_ABSORPTION_GREEN } };
 
 // Spherical Basis Name
 enum SPHERICAL_BASIS_NAME { SPHERICAL_HARMONICS, SPHERICAL_MONOMIALS, SPHERICAL_MONOMIALS_ROTATED };
