@@ -106,6 +106,9 @@ class SolverBase
     double _totalAbsorptionHohlraumCenter;     /*!< @brief Absorption of particles at Hohlraum center integrated until current time step  */
     double _totalAbsorptionHohlraumVertical;   /*!< @brief Absorption of particles at Hohlraum vertical walls integrated until current time step */
     double _totalAbsorptionHohlraumHorizontal; /*!< @brief Absorption of particles at Hohlraum horizontal walls integrated until current time step */
+    double _varAbsorptionHohlraumGreen;        /*!< @brief Absorption of particles at Hohlraum green center cells integrated at current time step */
+    double _mass;                              /*!< @brief Integrated radiation flux over the whole simulation (i.e. mass of the particles) */
+    double _changeRateFlux;                    /*!< @brief Integrated change of radiation flux over the whole simulation  */
     std::vector<unsigned> _probingCells;       /*!< @brief Indices of cells that contain a probing sensor */
     VectorVector _probingMoments;              /*!< @brief Solution Momnets at the probing cells that contain a probing sensor */
 
@@ -212,6 +215,18 @@ class SolverBase
      * @brief Computes Problemspecific Scalar QOI
      */
     virtual void ComputeCurrentProbeMoment() = 0;
+    /**
+     * @brief Computes Problemspecific Scalar QOI
+     */
+    void GetVarAbsorptionGreen( unsigned idx_iter );
+    /**
+     * @brief Computes Problemspecific Scalar QOI
+     */
+    void GetMass();
+    /**
+     * @brief Computes Problemspecific Scalar QOI
+     */
+    void GetChangeRateFlux();
 
   public:
     /*! @brief Solver constructor

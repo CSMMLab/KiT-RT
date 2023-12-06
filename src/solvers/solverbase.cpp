@@ -109,6 +109,9 @@ SolverBase::SolverBase( Config* settings ) {
     _totalAbsorptionHohlraumCenter     = 0.0;
     _totalAbsorptionHohlraumVertical   = 0.0;
     _totalAbsorptionHohlraumHorizontal = 0.0;
+    _varAbsorptionHohlraumGreen        = 0.0;
+    _mass                              = 0.0;
+    _changeRateFlux                    = 0.0;
 
     // Hardcoded for the symmetric hohlraum testcase (experimental, needs refactoring)
     if( _settings->GetProblemName() == PROBLEM_SymmetricHohlraum ) {
@@ -118,6 +121,10 @@ SolverBase::SolverBase( Config* settings ) {
             _mesh->GetCellOfKoordinate( 0., -0.6 ),
             _mesh->GetCellOfKoordinate( 0., 0.6 ),
         };
+        _probingMoments = VectorVector( 4, Vector( 3, 0.0 ) );
+    }
+    else {
+        _probingCells   = { 0 };    // Dummy needs refactoring
         _probingMoments = VectorVector( 4, Vector( 3, 0.0 ) );
     }
 }
@@ -285,6 +292,7 @@ void SolverBase::PrepareScreenOutput() {
                 idx_field++;
                 _screenOutputFieldNames[idx_field] = "Probe 4 u_0";
                 break;
+            case VAR_ABSORPTION_GREEN: _screenOutputFieldNames[idx_field] = "Var. absorption green"; break;
             default: ErrorMessages::Error( "Screen output field not defined!", CURRENT_FUNCTION ); break;
         }
     }
@@ -300,17 +308,9 @@ void SolverBase::WriteScalarOutput( unsigned idx_iter ) {
         // Prepare all Output Fields per group
         // Different procedure, depending on the Group...
         switch( _settings->GetScreenOutput()[idx_field] ) {
-            case MASS:
-                for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
-                    mass += _scalarFluxNew[idx_cell] * _areas[idx_cell];
-                }
-                _screenOutputFields[idx_field] = mass;
-                break;
-
+            case MASS: _screenOutputFields[idx_field] = _mass; break;
             case ITER: _screenOutputFields[idx_field] = idx_iter; break;
-
-            case RMS_FLUX: _screenOutputFields[idx_field] = blaze::l2Norm( _scalarFluxNew - _scalarFlux ); break;
-
+            case RMS_FLUX: _screenOutputFields[idx_field] = _changeRateFlux; break;
             case VTK_OUTPUT:
                 _screenOutputFields[idx_field] = 0;
                 if( ( _settings->GetVolumeOutputFrequency() != 0 && idx_iter % (unsigned)_settings->GetVolumeOutputFrequency() == 0 ) ||
@@ -341,6 +341,7 @@ void SolverBase::WriteScalarOutput( unsigned idx_iter ) {
                 }
                 idx_field--;
                 break;
+            case VAR_ABSORPTION_GREEN: _screenOutputFields[idx_field] = _varAbsorptionHohlraumGreen; break;
             default: ErrorMessages::Error( "Screen output group not defined!", CURRENT_FUNCTION ); break;
         }
     }
@@ -351,36 +352,12 @@ void SolverBase::WriteScalarOutput( unsigned idx_iter ) {
     std::vector<SCALAR_OUTPUT> screenOutputFields = _settings->GetScreenOutput();
     for( unsigned idx_field = 0; idx_field < nFields; idx_field++ ) {
 
-        // Check first, if the field was already filled by screenoutput writer!
-        std::vector<SCALAR_OUTPUT>::iterator itScreenOutput =
-            std::find( screenOutputFields.begin(), screenOutputFields.end(), _settings->GetHistoryOutput()[idx_field] );
-
         // Prepare all Output Fields per group
         // Different procedure, depending on the Group...
         switch( _settings->GetHistoryOutput()[idx_field] ) {
-            case MASS:
-                if( screenOutputFields.end() == itScreenOutput ) {
-                    for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
-                        mass += _scalarFluxNew[idx_cell] * _areas[idx_cell];
-                    }
-                    _historyOutputFields[idx_field] = mass;
-                }
-                else {
-                    _historyOutputFields[idx_field] = *itScreenOutput;
-                }
-                break;
-
+            case MASS: _historyOutputFields[idx_field] = _mass; break;
             case ITER: _historyOutputFields[idx_field] = idx_iter; break;
-
-            case RMS_FLUX:
-                if( screenOutputFields.end() == itScreenOutput ) {
-                    _screenOutputFields[idx_field] = blaze::l2Norm( _scalarFluxNew - _scalarFlux );
-                }
-                else {
-                    _historyOutputFields[idx_field] = *itScreenOutput;
-                }
-                break;
-
+            case RMS_FLUX: _historyOutputFields[idx_field] = _changeRateFlux; break;
             case VTK_OUTPUT:
                 _historyOutputFields[idx_field] = 0;
                 if( ( _settings->GetVolumeOutputFrequency() != 0 && idx_iter % (unsigned)_settings->GetVolumeOutputFrequency() == 0 ) ||
@@ -414,6 +391,8 @@ void SolverBase::WriteScalarOutput( unsigned idx_iter ) {
                 }
                 idx_field--;
                 break;
+            case VAR_ABSORPTION_GREEN: _historyOutputFields[idx_field] = _varAbsorptionHohlraumGreen; break;
+
             default: ErrorMessages::Error( "History output group not defined!", CURRENT_FUNCTION ); break;
         }
     }
@@ -517,6 +496,7 @@ void SolverBase::PrepareHistoryOutput() {
                 }
                 idx_field--;
                 break;
+            case VAR_ABSORPTION_GREEN: _historyOutputFieldNames[idx_field] = "Var. absorption green"; break;
             default: ErrorMessages::Error( "History output field not defined!", CURRENT_FUNCTION ); break;
         }
     }
@@ -716,10 +696,53 @@ void SolverBase::GetTotalAbsorptionHohlraum() {
     _totalAbsorptionHohlraumHorizontal += _curAbsorptionHohlraumHorizontal * _dT;
 }
 
+void SolverBase::GetVarAbsorptionGreen( unsigned idx_iter ) {
+    bool green1, green2, green3, green4;
+    double a_g                  = 0.0;
+    _varAbsorptionHohlraumGreen = 0.0;
+    double x, y;
+    for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
+        x = _mesh->GetCellMidPoints()[idx_cell][0];
+        y = _mesh->GetCellMidPoints()[idx_cell][1];
+
+        green1 = x > -0.2 && x < -0.15 && y > -0.35 && y < 0.35;    // green area 1 (lower boundary)
+        green2 = x > 0.15 && x < 0.2 && y > -0.35 && y < 0.35;      // green area 2 (upper boundary)
+        green3 = x > -0.2 && x < 0.2 && y > -0.4 && y < -0.35;      // green area 3 (left boundary)
+        green4 = x > -0.2 && x < 0.2 && y > 0.35 && y < 0.4;        // green area 4 (right boundary)
+
+        if( green1 || green2 || green3 || green4 ) {
+            a_g += ( _sigmaT[idx_iter][idx_cell] - _sigmaS[idx_iter][idx_cell] ) * _scalarFlux[idx_cell] * _areas[idx_cell];
+        }
+    }
+    for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
+        x = _mesh->GetCellMidPoints()[idx_cell][0];
+        y = _mesh->GetCellMidPoints()[idx_cell][1];
+
+        green1 = x > -0.2 && x < -0.15 && y > -0.35 && y < 0.35;    // green area 1 (lower boundary)
+        green2 = x > 0.15 && x < 0.2 && y > -0.35 && y < 0.35;      // green area 2 (upper boundary)
+        green3 = x > -0.2 && x < 0.2 && y > -0.4 && y < -0.35;      // green area 3 (left boundary)
+        green4 = x > -0.2 && x < 0.2 && y > 0.35 && y < 0.4;        // green area 4 (right boundary)
+
+        if( green1 || green2 || green3 || green4 ) {
+            _varAbsorptionHohlraumGreen += ( a_g - _scalarFlux[idx_cell] * ( _sigmaT[idx_iter][idx_cell] - _sigmaS[idx_iter][idx_cell] ) ) *
+                                           ( a_g - _scalarFlux[idx_cell] * ( _sigmaT[idx_iter][idx_cell] - _sigmaS[idx_iter][idx_cell] ) ) *
+                                           _areas[idx_cell];
+        }
+    }
+}
+void SolverBase::GetMass() {
+    _mass = 0.0;
+    for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
+        _mass += _scalarFluxNew[idx_cell] * _areas[idx_cell];
+    }
+}
+void SolverBase::GetChangeRateFlux() { _changeRateFlux = blaze::l2Norm( _scalarFluxNew - _scalarFlux ); }
+
 void SolverBase::IterPostprocessing( unsigned idx_iter ) {
     // --- Compute Quantities of interest for Volume and Screen Output ---
-    ComputeScalarFlux();
+    ComputeScalarFlux();    // Needs to be called first
 
+    GetMass();
     GetCurrentOutflow();
     GetTotalOutflow();
 
@@ -734,5 +757,6 @@ void SolverBase::IterPostprocessing( unsigned idx_iter ) {
         GetCurrentAbsorptionHohlraum( idx_iter );
         GetTotalAbsorptionHohlraum();
         ComputeCurrentProbeMoment();
+        GetVarAbsorptionGreen( idx_iter );
     }
 }
