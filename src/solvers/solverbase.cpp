@@ -722,6 +722,7 @@ void SolverBase::IterPostprocessing( unsigned idx_iter ) {
 
     GetCurrentOutflow();
     GetTotalOutflow();
+
     GetMaxOrdinatewiseOutflow();
 
     if( _settings->GetProblemName() == PROBLEM_Lattice ) {

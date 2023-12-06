@@ -289,7 +289,6 @@ void SNSolver::GetMaxOrdinatewiseOutflow() {
     double transportDirection      = 0.0;
 
     std::map<int, Vector>& ghostCells = _problem->GetGhostCells();
-
     // Iterate over boundaries
     for( std::map<int, Vector>::iterator it = ghostCells.begin(); it != ghostCells.end(); ++it ) {
         int idx_cell = it->first;    // Get Boundary cell index
@@ -302,7 +301,9 @@ void SNSolver::GetMaxOrdinatewiseOutflow() {
                         _normals[idx_cell][idx_nbr][0] * _quadPoints[idx_quad][0] + _normals[idx_cell][idx_nbr][1] * _quadPoints[idx_quad][1];
                     // Find outward facing transport directions
                     if( transportDirection > 0.0 ) {
+
                         currOrdinatewiseOutflow = transportDirection / norm( _normals[idx_cell][idx_nbr] ) * _sol[idx_cell][idx_quad];
+
                         if( currOrdinatewiseOutflow > _curMaxOrdinateOutflow ) _curMaxOrdinateOutflow = currOrdinatewiseOutflow;
                     }
                 }
