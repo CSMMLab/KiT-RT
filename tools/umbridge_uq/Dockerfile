@@ -57,6 +57,8 @@ RUN FILENAME=libtensorflow-gpu-linux-x86_64-2.7.0.tar.gz \
 
 RUN pip3 install numpy pygmsh==6.1.1 Pillow pydicom gcovr sphinx_rtd_theme breathe cpp-coveralls coveralls
 
+RUN pip3 install pandas subprocess datetime
+
 RUN pip3 install umbridge
 
 COPY minimal_server.py /
