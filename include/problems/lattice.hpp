@@ -8,10 +8,15 @@ class SphericalBase;
 class Lattice_SN : public ProblemBase
 {
   private:
-    Vector _scatteringXS; /*!< @brief Vector of scattering crosssections */
-    Vector _totalXS;      /*!< @brief Vector of total crosssections */
-
     Lattice_SN() = delete;
+
+    Vector _sigmaS; /*!< @brief Vector of scattering crosssections */
+    Vector _sigmaT; /*!< @brief Vector of total crosssections */
+
+    // Lattice QOIS
+    double _curAbsorptionLattice;    /*!< @brief Absorption of particles at Lattice checkerboard regions at current time step */
+    double _totalAbsorptionLattice;  /*!< @brief Absorption of particles at Lattice checkerboard regions integrated until current time step */
+    double _curMaxAbsorptionLattice; /*!< @brief Maximum pointwise absorption of particles at Lattice checkerboard regions  until current time step */
 
     bool IsAbsorption( const Vector& pos ) const; /*!< @return True if pos is in absorption region, False otherwise */
     bool IsSource( const Vector& pos ) const;     /*!< @return True if pos is in source region, False otherwise */
@@ -30,6 +35,13 @@ class Lattice_SN : public ProblemBase
     virtual VectorVector SetupIC() override;
 
     const Vector& GetGhostCellValue( int idx_cell, const Vector& cell_sol ) override final;
+
+    double GetCurAbsorptionLattice() override final;
+    double GetTotalAbsorptionLattice() override final;
+    double GetMaxAbsorptionLattice() override final;
+    void ComputeTotalAbsorptionLattice( double dT ) override;
+    void ComputeCurrentAbsorptionLattice( const Vector& scalarFlux ) override;
+    void ComputeMaxAbsorptionLattice( const Vector& scalarFlux ) override;
 };
 
 class Lattice_Moment : public ProblemBase

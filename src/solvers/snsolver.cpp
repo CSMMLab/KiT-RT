@@ -166,28 +166,43 @@ void SNSolver::FluxUpdatePseudo2D() {
 }
 
 void SNSolver::FVMUpdate( unsigned idx_iter ) {
+    if( _Q.size() == 1u && _sigmaT.size() == 1u && _sigmaS.size() == 1u ) {
 #pragma omp parallel for
-    for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
-        // Dirichlet cells stay at IC, farfield assumption
-        if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::DIRICHLET ) continue;
-        // loop over all ordinates
-        for( unsigned idx_quad = 0; idx_quad < _nq; ++idx_quad ) {
-            // time update angular flux with numerical flux and total scattering cross
-            // section
-            _solNew[idx_cell][idx_quad] = _sol[idx_cell][idx_quad] - ( _dT / _areas[idx_cell] ) * _solNew[idx_cell][idx_quad] -
-                                          _dT * _sigmaT[idx_iter][idx_cell] * _sol[idx_cell][idx_quad];
-        }
-        // compute scattering effects
-        _solNew[idx_cell] += _dT * _sigmaS[idx_iter][idx_cell] * _scatteringKernel * _sol[idx_cell];    // multiply scattering matrix with psi
-
-        // Source Term
-        if( _Q.size() == 1u ) {                   // constant source for all energies
+        for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
+            // Dirichlet cells stay at IC, farfield assumption
+            if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::DIRICHLET ) continue;
+            // loop over all ordinates
+            for( unsigned idx_quad = 0; idx_quad < _nq; ++idx_quad ) {
+                // time update angular flux with numerical flux and total scattering cross
+                // section
+                _solNew[idx_cell][idx_quad] = _sol[idx_cell][idx_quad] - ( _dT / _areas[idx_cell] ) * _solNew[idx_cell][idx_quad] -
+                                              _dT * _sigmaT[0][idx_cell] * _sol[idx_cell][idx_quad];
+            }
+            // compute scattering effects
+            _solNew[idx_cell] += _dT * _sigmaS[0][idx_cell] * _scatteringKernel * _sol[idx_cell];    // multiply scattering matrix with psi
+            // Source Term
             if( _Q[0][idx_cell].size() == 1u )    // isotropic source
                 _solNew[idx_cell] += _dT * _Q[0][idx_cell][0];
             else
                 _solNew[idx_cell] += _dT * _Q[0][idx_cell];
         }
-        else {
+    }
+    else {
+#pragma omp parallel for
+        for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
+            // Dirichlet cells stay at IC, farfield assumption
+            if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::DIRICHLET ) continue;
+            // loop over all ordinates
+            for( unsigned idx_quad = 0; idx_quad < _nq; ++idx_quad ) {
+                // time update angular flux with numerical flux and total scattering cross
+                // section
+                _solNew[idx_cell][idx_quad] = _sol[idx_cell][idx_quad] - ( _dT / _areas[idx_cell] ) * _solNew[idx_cell][idx_quad] -
+                                              _dT * _sigmaT[idx_iter][idx_cell] * _sol[idx_cell][idx_quad];
+            }
+            // compute scattering effects
+            _solNew[idx_cell] += _dT * _sigmaS[idx_iter][idx_cell] * _scatteringKernel * _sol[idx_cell];    // multiply scattering matrix with psi
+
+            // Source Term
             if( _Q[0][idx_cell].size() == 1u )    // isotropic source
                 _solNew[idx_cell] += _dT * _Q[idx_iter][idx_cell][0];
             else
@@ -195,7 +210,6 @@ void SNSolver::FVMUpdate( unsigned idx_iter ) {
         }
     }
 }
-
 void SNSolver::PrepareVolumeOutput() {
     unsigned nGroups = (unsigned)_settings->GetNVolumeOutput();
 

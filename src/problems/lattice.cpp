@@ -11,8 +11,13 @@
 Lattice_SN::Lattice_SN( Config* settings, Mesh* mesh ) : ProblemBase( settings, mesh ) {
 
     // Initialise crosssections to 1
-    _scatteringXS = Vector( _mesh->GetNumCells(), _settings->GetLatticeScatterWhite() );
-    _totalXS      = Vector( _mesh->GetNumCells(), _settings->GetLatticeScatterWhite() );
+    _sigmaS = Vector( _mesh->GetNumCells(), _settings->GetLatticeScatterWhite() );
+    _sigmaT = Vector( _mesh->GetNumCells(), _settings->GetLatticeScatterWhite() );
+
+    // Initialize Quantities of interest
+    _curAbsorptionLattice    = 0.0;
+    _curMaxAbsorptionLattice = 0.0;
+    _totalAbsorptionLattice  = 0.0;
 
     if( _settings->GetNLatticeAbsIndividual() == 49 && _settings->GetNLatticeScatterIndividual() == 49 ) {    // Individual values set
         auto log = spdlog::get( "event" );
@@ -25,8 +30,8 @@ Lattice_SN::Lattice_SN( Config* settings, Mesh* mesh ) : ProblemBase( settings, 
         std::vector<double> absorptionValues = _settings->GetLatticeAbsorptionIndividual();
 
         for( unsigned j = 0; j < cellMids.size(); ++j ) {
-            _scatteringXS[j] = scatteringValues[GetBlockID( cellMids[j] )];
-            _totalXS[j]      = absorptionValues[GetBlockID( cellMids[j] )] + scatteringValues[GetBlockID( cellMids[j] )];
+            _sigmaS[j] = scatteringValues[GetBlockID( cellMids[j] )];
+            _sigmaT[j] = absorptionValues[GetBlockID( cellMids[j] )] + scatteringValues[GetBlockID( cellMids[j] )];
         }
     }
     else {
@@ -37,8 +42,8 @@ Lattice_SN::Lattice_SN( Config* settings, Mesh* mesh ) : ProblemBase( settings, 
         auto cellMids = _mesh->GetCellMidPoints();
         for( unsigned j = 0; j < cellMids.size(); ++j ) {
             if( IsAbsorption( cellMids[j] ) ) {
-                _scatteringXS[j] = 0.0;
-                _totalXS[j]      = _settings->GetLatticeAbsBlue();
+                _sigmaS[j] = 0.0;
+                _sigmaT[j] = _settings->GetLatticeAbsBlue();
             }
         }
     }
@@ -48,9 +53,9 @@ Lattice_SN::Lattice_SN( Config* settings, Mesh* mesh ) : ProblemBase( settings, 
 
 Lattice_SN::~Lattice_SN() {}
 
-VectorVector Lattice_SN::GetScatteringXS( const Vector& energies ) { return VectorVector( energies.size(), _scatteringXS ); }
+VectorVector Lattice_SN::GetScatteringXS( const Vector& energies ) { return VectorVector( 1u, _sigmaS ); }
 
-VectorVector Lattice_SN::GetTotalXS( const Vector& energies ) { return VectorVector( energies.size(), _totalXS ); }
+VectorVector Lattice_SN::GetTotalXS( const Vector& energies ) { return VectorVector( 1u, _sigmaT ); }
 
 std::vector<VectorVector> Lattice_SN::GetExternalSource( const Vector& /*energies*/ ) {
     VectorVector Q( _mesh->GetNumCells(), Vector( 1u, 0.0 ) );
@@ -120,6 +125,40 @@ void Lattice_SN::SetGhostCells() {
 
 const Vector& Lattice_SN::GetGhostCellValue( int idx_cell, const Vector& cell_sol ) {    // re-write to use pointers
     return _ghostCells[idx_cell];
+}
+
+// QOI getter
+double Lattice_SN::GetCurAbsorptionLattice() { return _curAbsorptionLattice; }
+double Lattice_SN::GetTotalAbsorptionLattice() { return _totalAbsorptionLattice; }
+double Lattice_SN::GetMaxAbsorptionLattice() { return _curMaxAbsorptionLattice; }
+// QOI setter
+void Lattice_SN::ComputeTotalAbsorptionLattice( double dT ) { _totalAbsorptionLattice += _curAbsorptionLattice * dT; }
+
+void Lattice_SN::ComputeCurrentAbsorptionLattice( const Vector& scalarFlux ) {
+    _curAbsorptionLattice     = 0.0;
+    unsigned nCells           = _mesh->GetNumCells();
+    auto cellMids             = _mesh->GetCellMidPoints();
+    std::vector<double> areas = _mesh->GetCellAreas();
+
+    for( unsigned idx_cell = 0; idx_cell < nCells; idx_cell++ ) {
+        if( IsAbsorption( cellMids[idx_cell] ) ) {
+            _curAbsorptionLattice += scalarFlux[idx_cell] * ( _sigmaT[idx_cell] - _sigmaS[idx_cell] ) * areas[idx_cell];
+        }
+    }
+}
+// TODO all absorption qois can be refactored in one function
+void Lattice_SN::ComputeMaxAbsorptionLattice( const Vector& scalarFlux ) {
+    _curMaxAbsorptionLattice  = 0.0;
+    unsigned nCells           = _mesh->GetNumCells();
+    auto cellMids             = _mesh->GetCellMidPoints();
+    std::vector<double> areas = _mesh->GetCellAreas();
+
+    for( unsigned idx_cell = 0; idx_cell < nCells; idx_cell++ ) {
+        if( IsAbsorption( cellMids[idx_cell] ) ) {
+            if( _curMaxAbsorptionLattice < scalarFlux[idx_cell] * ( _sigmaT[idx_cell] - _sigmaS[idx_cell] ) )
+                _curMaxAbsorptionLattice = scalarFlux[idx_cell] * ( _sigmaT[idx_cell] - _sigmaS[idx_cell] );
+        }
+    }
 }
 
 // ---- Checkerboard Moments ----

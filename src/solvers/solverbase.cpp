@@ -54,9 +54,9 @@ SolverBase::SolverBase( Config* settings ) {
         _nEnergies  = std::ceil( ( maxE - minE ) / _dT );
         _energies   = blaze::linspace( _nEnergies, minE, maxE );
     }
-    else {    // Not CSD Solver
-        _nEnergies = unsigned( settings->GetTEnd() / _dT );
-        _energies  = blaze::linspace( _nEnergies, 0.0, settings->GetTEnd() );    // go upward from 0 to T_end
+    else {                                                     // Not CSD Solver
+        _nEnergies = unsigned( settings->GetTEnd() / _dT );    // redundancy with nIter (<-Better) ?
+        _energies  = 0;    // blaze::linspace( _nEnergies, 0.0, settings->GetTEnd() );    // go upward from 0 to T_end =>Not needed
     }
 
     // Adjust maxIter, depending if we have a normal run or a csd Run
@@ -97,21 +97,11 @@ SolverBase::SolverBase( Config* settings ) {
     _density = _problem->GetDensity( _mesh->GetCellMidPoints() );
 
     // initialize QOI helper variables
-    _curMaxOrdinateOutflow             = 0.0;
-    _curScalarOutflow                  = 0.0;
-    _totalScalarOutflow                = 0.0;
-    _curAbsorptionLattice              = 0.0;
-    _curMaxAbsorptionLattice           = 0.0;
-    _totalAbsorptionLattice            = 0.0;
-    _curAbsorptionHohlraumCenter       = 0.0;
-    _curAbsorptionHohlraumVertical     = 0.0;
-    _curAbsorptionHohlraumHorizontal   = 0.0;
-    _totalAbsorptionHohlraumCenter     = 0.0;
-    _totalAbsorptionHohlraumVertical   = 0.0;
-    _totalAbsorptionHohlraumHorizontal = 0.0;
-    _varAbsorptionHohlraumGreen        = 0.0;
-    _mass                              = 0.0;
-    _changeRateFlux                    = 0.0;
+    _curMaxOrdinateOutflow = 0.0;
+    _curScalarOutflow      = 0.0;
+    _totalScalarOutflow    = 0.0;
+    _mass                  = 0.0;
+    _changeRateFlux        = 0.0;
 
     // Hardcoded for the symmetric hohlraum testcase (experimental, needs refactoring)
     if( _settings->GetProblemName() == PROBLEM_SymmetricHohlraum ) {
@@ -328,12 +318,12 @@ void SolverBase::WriteScalarOutput( unsigned idx_iter ) {
             case CUR_OUTFLOW: _screenOutputFields[idx_field] = _curScalarOutflow; break;
             case TOTAL_OUTFLOW: _screenOutputFields[idx_field] = _totalScalarOutflow; break;
             case MAX_OUTFLOW: _screenOutputFields[idx_field] = _curMaxOrdinateOutflow; break;
-            case CUR_PARTICLE_ABSORPTION: _screenOutputFields[idx_field] = _curAbsorptionLattice; break;
-            case TOTAL_PARTICLE_ABSORPTION: _screenOutputFields[idx_field] = _totalAbsorptionLattice; break;
-            case MAX_PARTICLE_ABSORPTION: _screenOutputFields[idx_field] = _curMaxAbsorptionLattice; break;
-            case TOTAL_PARTICLE_ABSORPTION_CENTER: _screenOutputFields[idx_field] = _totalAbsorptionHohlraumCenter; break;
-            case TOTAL_PARTICLE_ABSORPTION_VERTICAL: _screenOutputFields[idx_field] = _totalAbsorptionHohlraumVertical; break;
-            case TOTAL_PARTICLE_ABSORPTION_HORIZONTAL: _screenOutputFields[idx_field] = _totalAbsorptionHohlraumHorizontal; break;
+            case CUR_PARTICLE_ABSORPTION: _screenOutputFields[idx_field] = _problem->GetCurAbsorptionLattice(); break;
+            case TOTAL_PARTICLE_ABSORPTION: _screenOutputFields[idx_field] = _problem->GetTotalAbsorptionLattice(); break;
+            case MAX_PARTICLE_ABSORPTION: _screenOutputFields[idx_field] = _problem->GetMaxAbsorptionLattice(); break;
+            case TOTAL_PARTICLE_ABSORPTION_CENTER: _screenOutputFields[idx_field] = _problem->GetTotalAbsorptionHohlraumCenter(); break;
+            case TOTAL_PARTICLE_ABSORPTION_VERTICAL: _screenOutputFields[idx_field] = _problem->GetTotalAbsorptionHohlraumVertical(); break;
+            case TOTAL_PARTICLE_ABSORPTION_HORIZONTAL: _screenOutputFields[idx_field] = _problem->GetTotalAbsorptionHohlraumHorizontal(); break;
             case PROBE_MOMENT_TIME_TRACE:
                 for( unsigned i = 0; i < 4; i++ ) {
                     _screenOutputFields[idx_field] = _probingMoments[i][0];
@@ -341,7 +331,7 @@ void SolverBase::WriteScalarOutput( unsigned idx_iter ) {
                 }
                 idx_field--;
                 break;
-            case VAR_ABSORPTION_GREEN: _screenOutputFields[idx_field] = _varAbsorptionHohlraumGreen; break;
+            case VAR_ABSORPTION_GREEN: _screenOutputFields[idx_field] = _problem->GetVarAbsorptionHohlraumGreen(); break;
             default: ErrorMessages::Error( "Screen output group not defined!", CURRENT_FUNCTION ); break;
         }
     }
@@ -376,12 +366,12 @@ void SolverBase::WriteScalarOutput( unsigned idx_iter ) {
             case CUR_OUTFLOW: _historyOutputFields[idx_field] = _curScalarOutflow; break;
             case TOTAL_OUTFLOW: _historyOutputFields[idx_field] = _totalScalarOutflow; break;
             case MAX_OUTFLOW: _historyOutputFields[idx_field] = _curMaxOrdinateOutflow; break;
-            case CUR_PARTICLE_ABSORPTION: _historyOutputFields[idx_field] = _curAbsorptionLattice; break;
-            case TOTAL_PARTICLE_ABSORPTION: _historyOutputFields[idx_field] = _totalAbsorptionLattice; break;
-            case MAX_PARTICLE_ABSORPTION: _historyOutputFields[idx_field] = _curMaxAbsorptionLattice; break;
-            case TOTAL_PARTICLE_ABSORPTION_CENTER: _historyOutputFields[idx_field] = _totalAbsorptionHohlraumCenter; break;
-            case TOTAL_PARTICLE_ABSORPTION_VERTICAL: _historyOutputFields[idx_field] = _totalAbsorptionHohlraumVertical; break;
-            case TOTAL_PARTICLE_ABSORPTION_HORIZONTAL: _historyOutputFields[idx_field] = _totalAbsorptionHohlraumHorizontal; break;
+            case CUR_PARTICLE_ABSORPTION: _historyOutputFields[idx_field] = _problem->GetCurAbsorptionLattice(); break;
+            case TOTAL_PARTICLE_ABSORPTION: _historyOutputFields[idx_field] = _problem->GetTotalAbsorptionLattice(); break;
+            case MAX_PARTICLE_ABSORPTION: _historyOutputFields[idx_field] = _problem->GetMaxAbsorptionLattice(); break;
+            case TOTAL_PARTICLE_ABSORPTION_CENTER: _historyOutputFields[idx_field] = _problem->GetTotalAbsorptionHohlraumCenter(); break;
+            case TOTAL_PARTICLE_ABSORPTION_VERTICAL: _historyOutputFields[idx_field] = _problem->GetTotalAbsorptionHohlraumVertical(); break;
+            case TOTAL_PARTICLE_ABSORPTION_HORIZONTAL: _historyOutputFields[idx_field] = _problem->GetTotalAbsorptionHohlraumHorizontal(); break;
             case PROBE_MOMENT_TIME_TRACE:
                 for( unsigned i = 0; i < 4; i++ ) {
                     for( unsigned j = 0; j < 3; j++ ) {
@@ -391,7 +381,7 @@ void SolverBase::WriteScalarOutput( unsigned idx_iter ) {
                 }
                 idx_field--;
                 break;
-            case VAR_ABSORPTION_GREEN: _historyOutputFields[idx_field] = _varAbsorptionHohlraumGreen; break;
+            case VAR_ABSORPTION_GREEN: _historyOutputFields[idx_field] = _problem->GetVarAbsorptionHohlraumGreen(); break;
 
             default: ErrorMessages::Error( "History output group not defined!", CURRENT_FUNCTION ); break;
         }
@@ -614,128 +604,13 @@ void SolverBase::SolverPreprocessing() {}
 
 void SolverBase::GetTotalOutflow() { _totalScalarOutflow += _curScalarOutflow * _dT; }
 
-void SolverBase::GetCurrentAbsorptionLattice( unsigned idx_iter ) {
-    _curAbsorptionLattice = 0.0;
-    if( _settings->GetProblemName() == PROBLEM_Lattice ) {
-        for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
-            // Assumption: Domain size is 7x7
-            double x            = _mesh->GetCellMidPoints()[idx_cell][0];
-            double y            = _mesh->GetCellMidPoints()[idx_cell][1];
-            double xy_corrector = -3.5;
-            std::vector<double> lbounds{ 1 + xy_corrector, 2 + xy_corrector, 3 + xy_corrector, 4 + xy_corrector, 5 + xy_corrector };
-            std::vector<double> ubounds{ 2 + xy_corrector, 3 + xy_corrector, 4 + xy_corrector, 5 + xy_corrector, 6 + xy_corrector };
-
-            for( unsigned k = 0; k < lbounds.size(); ++k ) {
-                for( unsigned l = 0; l < lbounds.size(); ++l ) {
-                    if( ( l + k ) % 2 == 1 || ( k == 2 && l == 2 ) || ( k == 2 && l == 4 ) ) continue;
-                    if( x >= lbounds[k] && x <= ubounds[k] && y >= lbounds[l] && y <= ubounds[l] ) {
-                        _curAbsorptionLattice +=
-                            _scalarFlux[idx_cell] * ( _sigmaT[idx_iter][idx_cell] - _sigmaS[idx_iter][idx_cell] ) * _areas[idx_cell];
-                    }
-                }
-            }
-        }
-    }
-}
-
-void SolverBase::GetTotalAbsorptionLattice() { _totalAbsorptionLattice += _curAbsorptionLattice * _dT; }
-
-void SolverBase::GetMaxAbsorptionLattice( unsigned idx_iter ) {
-    _curMaxAbsorptionLattice = 0.0;
-    if( _settings->GetProblemName() == PROBLEM_Lattice ) {
-        for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
-            // Assumption: Domain size is 7x7
-            double x            = _mesh->GetCellMidPoints()[idx_cell][0];
-            double y            = _mesh->GetCellMidPoints()[idx_cell][1];
-            double xy_corrector = -3.5;
-            std::vector<double> lbounds{ 1 + xy_corrector, 2 + xy_corrector, 3 + xy_corrector, 4 + xy_corrector, 5 + xy_corrector };
-            std::vector<double> ubounds{ 2 + xy_corrector, 3 + xy_corrector, 4 + xy_corrector, 5 + xy_corrector, 6 + xy_corrector };
-
-            for( unsigned k = 0; k < lbounds.size(); ++k ) {
-                for( unsigned l = 0; l < lbounds.size(); ++l ) {
-                    if( ( l + k ) % 2 == 1 || ( k == 2 && l == 2 ) || ( k == 2 && l == 4 ) ) continue;
-                    if( x >= lbounds[k] && x <= ubounds[k] && y >= lbounds[l] && y <= ubounds[l] ) {
-                        if( _curMaxAbsorptionLattice < _scalarFlux[idx_cell] * ( _sigmaT[idx_iter][idx_cell] - _sigmaS[idx_iter][idx_cell] ) )
-                            _curMaxAbsorptionLattice = _scalarFlux[idx_cell] * ( _sigmaT[idx_iter][idx_cell] - _sigmaS[idx_iter][idx_cell] );
-                    }
-                }
-            }
-        }
-    }
-}
-
-void SolverBase::GetCurrentAbsorptionHohlraum( unsigned idx_iter ) {
-    _curAbsorptionHohlraumCenter     = 0.0;    // Green and blue areas of symmetric hohlraum
-    _curAbsorptionHohlraumVertical   = 0.0;    // Red areas of symmetric hohlraum
-    _curAbsorptionHohlraumHorizontal = 0.0;    // Black areas of symmetric hohlraum
-
-    if( _settings->GetProblemName() == PROBLEM_SymmetricHohlraum ) {
-        for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
-            double x = _mesh->GetCellMidPoints()[idx_cell][0];
-            double y = _mesh->GetCellMidPoints()[idx_cell][1];
-
-            if( x > -0.2 && x < 0.2 && y > -0.35 && y < 0.35 ) {
-                _curAbsorptionHohlraumCenter +=
-                    _scalarFlux[idx_cell] * ( _sigmaT[idx_iter][idx_cell] - _sigmaS[idx_iter][idx_cell] ) * _areas[idx_cell];
-            }
-            if( ( x < -0.6 && y > -0.4 && y < 0.4 ) || ( x > 0.6 && y > -0.4 && y < 0.4 ) ) {
-                _curAbsorptionHohlraumVertical +=
-                    _scalarFlux[idx_cell] * ( _sigmaT[idx_iter][idx_cell] - _sigmaS[idx_iter][idx_cell] ) * _areas[idx_cell];
-            }
-            if( y > 0.6 || y < -0.6 ) {
-                _curAbsorptionHohlraumHorizontal +=
-                    _scalarFlux[idx_cell] * ( _sigmaT[idx_iter][idx_cell] - _sigmaS[idx_iter][idx_cell] ) * _areas[idx_cell];
-            }
-        }
-    }
-}
-
-void SolverBase::GetTotalAbsorptionHohlraum() {
-    _totalAbsorptionHohlraumCenter += _curAbsorptionHohlraumCenter * _dT;
-    _totalAbsorptionHohlraumVertical += _curAbsorptionHohlraumVertical * _dT;
-    _totalAbsorptionHohlraumHorizontal += _curAbsorptionHohlraumHorizontal * _dT;
-}
-
-void SolverBase::GetVarAbsorptionGreen( unsigned idx_iter ) {
-    bool green1, green2, green3, green4;
-    double a_g                  = 0.0;
-    _varAbsorptionHohlraumGreen = 0.0;
-    double x, y;
-    for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
-        x = _mesh->GetCellMidPoints()[idx_cell][0];
-        y = _mesh->GetCellMidPoints()[idx_cell][1];
-
-        green1 = x > -0.2 && x < -0.15 && y > -0.35 && y < 0.35;    // green area 1 (lower boundary)
-        green2 = x > 0.15 && x < 0.2 && y > -0.35 && y < 0.35;      // green area 2 (upper boundary)
-        green3 = x > -0.2 && x < 0.2 && y > -0.4 && y < -0.35;      // green area 3 (left boundary)
-        green4 = x > -0.2 && x < 0.2 && y > 0.35 && y < 0.4;        // green area 4 (right boundary)
-
-        if( green1 || green2 || green3 || green4 ) {
-            a_g += ( _sigmaT[idx_iter][idx_cell] - _sigmaS[idx_iter][idx_cell] ) * _scalarFlux[idx_cell] * _areas[idx_cell];
-        }
-    }
-    for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
-        x = _mesh->GetCellMidPoints()[idx_cell][0];
-        y = _mesh->GetCellMidPoints()[idx_cell][1];
-
-        green1 = x > -0.2 && x < -0.15 && y > -0.35 && y < 0.35;    // green area 1 (lower boundary)
-        green2 = x > 0.15 && x < 0.2 && y > -0.35 && y < 0.35;      // green area 2 (upper boundary)
-        green3 = x > -0.2 && x < 0.2 && y > -0.4 && y < -0.35;      // green area 3 (left boundary)
-        green4 = x > -0.2 && x < 0.2 && y > 0.35 && y < 0.4;        // green area 4 (right boundary)
-
-        if( green1 || green2 || green3 || green4 ) {
-            _varAbsorptionHohlraumGreen += ( a_g - _scalarFlux[idx_cell] * ( _sigmaT[idx_iter][idx_cell] - _sigmaS[idx_iter][idx_cell] ) ) *
-                                           ( a_g - _scalarFlux[idx_cell] * ( _sigmaT[idx_iter][idx_cell] - _sigmaS[idx_iter][idx_cell] ) ) *
-                                           _areas[idx_cell];
-        }
-    }
-}
 void SolverBase::GetMass() {
     _mass = 0.0;
     for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
         _mass += _scalarFluxNew[idx_cell] * _areas[idx_cell];
     }
 }
+
 void SolverBase::GetChangeRateFlux() { _changeRateFlux = blaze::l2Norm( _scalarFluxNew - _scalarFlux ); }
 
 void SolverBase::IterPostprocessing( unsigned idx_iter ) {
@@ -749,14 +624,14 @@ void SolverBase::IterPostprocessing( unsigned idx_iter ) {
     GetMaxOrdinatewiseOutflow();
 
     if( _settings->GetProblemName() == PROBLEM_Lattice ) {
-        GetCurrentAbsorptionLattice( idx_iter );
-        GetTotalAbsorptionLattice();
-        GetMaxAbsorptionLattice( idx_iter );
+        _problem->ComputeCurrentAbsorptionLattice( _scalarFlux );
+        _problem->ComputeTotalAbsorptionLattice( _dT );
+        _problem->ComputeMaxAbsorptionLattice( _scalarFlux );
     }
     if( _settings->GetProblemName() == PROBLEM_SymmetricHohlraum ) {
-        GetCurrentAbsorptionHohlraum( idx_iter );
-        GetTotalAbsorptionHohlraum();
+        _problem->ComputeCurrentAbsorptionHohlraum( _scalarFlux );
+        _problem->ComputeTotalAbsorptionHohlraum( _dT );
         ComputeCurrentProbeMoment();
-        GetVarAbsorptionGreen( idx_iter );
+        _problem->ComputeVarAbsorptionGreen( _scalarFlux );
     }
 }

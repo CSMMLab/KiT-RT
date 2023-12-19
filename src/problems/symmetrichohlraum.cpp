@@ -12,8 +12,16 @@
 #include "velocitybasis/sphericalharmonics.hpp"
 
 SymmetricHohlraum::SymmetricHohlraum( Config* settings, Mesh* mesh ) : ProblemBase( settings, mesh ) {
-    _scatteringXS = Vector( _mesh->GetNumCells(), 0.1 );    // white area default
-    _totalXS      = Vector( _mesh->GetNumCells(), 0.1 );    // white area default
+    _sigmaS = Vector( _mesh->GetNumCells(), 0.1 );    // white area default
+    _sigmaT = Vector( _mesh->GetNumCells(), 0.1 );    // white area default
+
+    _curAbsorptionHohlraumCenter       = 0.0;
+    _curAbsorptionHohlraumVertical     = 0.0;
+    _curAbsorptionHohlraumHorizontal   = 0.0;
+    _totalAbsorptionHohlraumCenter     = 0.0;
+    _totalAbsorptionHohlraumVertical   = 0.0;
+    _totalAbsorptionHohlraumHorizontal = 0.0;
+    _varAbsorptionHohlraumGreen        = 0.0;
 
 #pragma omp parallel for
     for( unsigned idx_cell = 0; idx_cell < _mesh->GetNumCells(); idx_cell++ ) {
@@ -23,43 +31,43 @@ SymmetricHohlraum::SymmetricHohlraum( Config* settings, Mesh* mesh ) : ProblemBa
 
         // red area left
         if( x < -0.6 && y > -0.4 && y < 0.4 ) {
-            _scatteringXS[idx_cell] = 95.0;
-            _totalXS[idx_cell]      = 100.0;
+            _sigmaS[idx_cell] = 95.0;
+            _sigmaT[idx_cell] = 100.0;
         }
         // red area right
         if( x > 0.6 && y > -0.4 && y < 0.4 ) {
-            _scatteringXS[idx_cell] = 95.0;
-            _totalXS[idx_cell]      = 100.0;
+            _sigmaS[idx_cell] = 95.0;
+            _sigmaT[idx_cell] = 100.0;
         }
         // green area 1 (lower boundary)
         if( x > -0.2 && x < -0.15 && y > -0.35 && y < 0.35 ) {
-            _scatteringXS[idx_cell] = 90.0;
-            _totalXS[idx_cell]      = 100.0;
+            _sigmaS[idx_cell] = 90.0;
+            _sigmaT[idx_cell] = 100.0;
         }
         // green area 2 (upper boundary)
         if( x > 0.15 && x < 0.2 && y > -0.35 && y < 0.35 ) {
-            _scatteringXS[idx_cell] = 90.0;
-            _totalXS[idx_cell]      = 100.0;
+            _sigmaS[idx_cell] = 90.0;
+            _sigmaT[idx_cell] = 100.0;
         }
         // green area 3 (left boundary)
         if( x > -0.2 && x < 0.2 && y > -0.4 && y < -0.35 ) {
-            _scatteringXS[idx_cell] = 90.0;
-            _totalXS[idx_cell]      = 100.0;
+            _sigmaS[idx_cell] = 90.0;
+            _sigmaT[idx_cell] = 100.0;
         }
         // green area 4 (right boundary)
         if( x > -0.2 && x < 0.2 && y > 0.35 && y < 0.4 ) {
-            _scatteringXS[idx_cell] = 90.0;
-            _totalXS[idx_cell]      = 100.0;
+            _sigmaS[idx_cell] = 90.0;
+            _sigmaT[idx_cell] = 100.0;
         }
         // blue checkered area
         if( x > -0.15 && x < 0.15 && y > -0.35 && y < 0.35 ) {
-            _scatteringXS[idx_cell] = 50.0;
-            _totalXS[idx_cell]      = 100.0;
+            _sigmaS[idx_cell] = 50.0;
+            _sigmaT[idx_cell] = 100.0;
         }
         // black area (upper and lower boundary)
         if( y > 0.6 || y < -0.6 ) {
-            _scatteringXS[idx_cell] = 0.0;
-            _totalXS[idx_cell]      = 100.0;
+            _sigmaS[idx_cell] = 0.0;
+            _sigmaT[idx_cell] = 100.0;
         }
     }
     SetGhostCells();
@@ -122,9 +130,81 @@ void SymmetricHohlraum::SetGhostCells() {
 
 const Vector& SymmetricHohlraum::GetGhostCellValue( int idx_cell, const Vector& cell_sol ) { return _ghostCells[idx_cell]; }
 
-VectorVector SymmetricHohlraum::GetScatteringXS( const Vector& energies ) { return VectorVector( energies.size(), _scatteringXS ); }
+VectorVector SymmetricHohlraum::GetScatteringXS( const Vector& energies ) { return VectorVector( 1u, _sigmaS ); }
 
-VectorVector SymmetricHohlraum::GetTotalXS( const Vector& energies ) { return VectorVector( energies.size(), _totalXS ); }
+VectorVector SymmetricHohlraum::GetTotalXS( const Vector& energies ) { return VectorVector( 1u, _sigmaT ); }
+
+void SymmetricHohlraum::ComputeCurrentAbsorptionHohlraum( const Vector& scalarFlux ) {
+    _curAbsorptionHohlraumCenter     = 0.0;    // Green and blue areas of symmetric hohlraum
+    _curAbsorptionHohlraumVertical   = 0.0;    // Red areas of symmetric hohlraum
+    _curAbsorptionHohlraumHorizontal = 0.0;    // Black areas of symmetric hohlraum
+
+    unsigned nCells           = _mesh->GetNumCells();
+    auto cellMids             = _mesh->GetCellMidPoints();
+    std::vector<double> areas = _mesh->GetCellAreas();
+
+    for( unsigned idx_cell = 0; idx_cell < nCells; idx_cell++ ) {
+        double x = _mesh->GetCellMidPoints()[idx_cell][0];
+        double y = _mesh->GetCellMidPoints()[idx_cell][1];
+
+        if( x > -0.2 && x < 0.2 && y > -0.35 && y < 0.35 ) {
+            _curAbsorptionHohlraumCenter += scalarFlux[idx_cell] * ( _sigmaT[idx_cell] - _sigmaS[idx_cell] ) * areas[idx_cell];
+        }
+        if( ( x < -0.6 && y > -0.4 && y < 0.4 ) || ( x > 0.6 && y > -0.4 && y < 0.4 ) ) {
+            _curAbsorptionHohlraumVertical += scalarFlux[idx_cell] * ( _sigmaT[idx_cell] - _sigmaS[idx_cell] ) * areas[idx_cell];
+        }
+        if( y > 0.6 || y < -0.6 ) {
+            _curAbsorptionHohlraumHorizontal += scalarFlux[idx_cell] * ( _sigmaT[idx_cell] - _sigmaS[idx_cell] ) * areas[idx_cell];
+        }
+    }
+}
+
+void SymmetricHohlraum::ComputeTotalAbsorptionHohlraum( double dT ) {
+    _totalAbsorptionHohlraumCenter += _curAbsorptionHohlraumCenter * dT;
+    _totalAbsorptionHohlraumVertical += _curAbsorptionHohlraumVertical * dT;
+    _totalAbsorptionHohlraumHorizontal += _curAbsorptionHohlraumHorizontal * dT;
+}
+
+void SymmetricHohlraum::ComputeVarAbsorptionGreen( const Vector& scalarFlux ) {
+    bool green1, green2, green3, green4;
+    double a_g                  = 0.0;
+    _varAbsorptionHohlraumGreen = 0.0;
+    double x, y;
+
+    unsigned nCells           = _mesh->GetNumCells();
+    auto cellMids             = _mesh->GetCellMidPoints();
+    std::vector<double> areas = _mesh->GetCellAreas();
+
+    for( unsigned idx_cell = 0; idx_cell < nCells; ++idx_cell ) {
+        x = _mesh->GetCellMidPoints()[idx_cell][0];
+        y = _mesh->GetCellMidPoints()[idx_cell][1];
+
+        green1 = x > -0.2 && x < -0.15 && y > -0.35 && y < 0.35;    // green area 1 (lower boundary)
+        green2 = x > 0.15 && x < 0.2 && y > -0.35 && y < 0.35;      // green area 2 (upper boundary)
+        green3 = x > -0.2 && x < 0.2 && y > -0.4 && y < -0.35;      // green area 3 (left boundary)
+        green4 = x > -0.2 && x < 0.2 && y > 0.35 && y < 0.4;        // green area 4 (right boundary)
+
+        if( green1 || green2 || green3 || green4 ) {
+            a_g += ( _sigmaT[idx_cell] - _sigmaS[idx_cell] ) * scalarFlux[idx_cell] * areas[idx_cell];
+        }
+    }
+    for( unsigned idx_cell = 0; idx_cell < nCells; ++idx_cell ) {
+        x = _mesh->GetCellMidPoints()[idx_cell][0];
+        y = _mesh->GetCellMidPoints()[idx_cell][1];
+
+        green1 = x > -0.2 && x < -0.15 && y > -0.35 && y < 0.35;    // green area 1 (lower boundary)
+        green2 = x > 0.15 && x < 0.2 && y > -0.35 && y < 0.35;      // green area 2 (upper boundary)
+        green3 = x > -0.2 && x < 0.2 && y > -0.4 && y < -0.35;      // green area 3 (left boundary)
+        green4 = x > -0.2 && x < 0.2 && y > 0.35 && y < 0.4;        // green area 4 (right boundary)
+
+        if( green1 || green2 || green3 || green4 ) {
+            _varAbsorptionHohlraumGreen += ( a_g - scalarFlux[idx_cell] * ( _sigmaT[idx_cell] - _sigmaS[idx_cell] ) ) *
+                                           ( a_g - scalarFlux[idx_cell] * ( _sigmaT[idx_cell] - _sigmaS[idx_cell] ) ) * areas[idx_cell];
+        }
+    }
+}
+
+// -------------- Moment Symmetric Hohlraum ---------------
 
 SymmetricHohlraum_Moment::SymmetricHohlraum_Moment( Config* settings, Mesh* mesh ) : SymmetricHohlraum( settings, mesh ) {}
 

@@ -27,10 +27,8 @@ class SolverBase
     // --------- Often used variables of member classes for faster access ----
 
     // Time or Energystepping
-    unsigned _nIter;     /*!< @brief number of time steps, for non CSD, this equals
-                              _nEnergies, for _csd, _maxIter = _nEnergies-1*/
-    unsigned _nEnergies; /*!< @brief number of energysteps, number of nodal energy
-                            values for CSD */
+    unsigned _nIter;     /*!< @brief number of time steps, for non CSD, this equals _nEnergies, for _csd, _maxIter =_nEnergies-1*/
+    unsigned _nEnergies; /*!< @brief number of energysteps, number of nodal energy values for CSD */
     double _dT;          /*!< @brief energy/time step size */
     Vector _energies;    /*!< @brief energy groups used in the simulation [keV] */
 
@@ -57,9 +55,9 @@ class SolverBase
     Vector _sMid;                 /*!< @brief stopping power at intermediate time steps, dim(_s) =
                                      _maxIter (only for csdsolver) */
 
-    std::vector<VectorVector> _Q; /*!< @brief external source term. Dim(_Q) = _maxIter x (_nCells x _nSystem) */
-    VectorVector _sigmaS;         /*!< @brief scattering cross section for all energies. len: _nEnergies x _nCells */
-    VectorVector _sigmaT;         /*!< @brief total cross section for all energies.  len:_nEnergies x _nCells*/
+    VectorVector _sigmaS; /*!< @brief scattering cross section for all energies. len: _nEnergies x _nCells or 1 x _nCells (if not time dependent)*/
+    VectorVector _sigmaT; /*!< @brief total cross section for all energies.  len:_nEnergies x _nCells or 1 x _nCells (if not time dependent)*/
+    std::vector<VectorVector> _Q; /*!< @brief external source term. Dim(_Q) = _maxIter x (_nCells x _nSystem) or 1 x _nCells (if not time dependent)*/
 
     // quadrature related numbers
     QuadratureBase* _quadrature; /*!< @brief pointer to quadrature class */
@@ -93,24 +91,14 @@ class SolverBase
     std::vector<double> _historyOutputFields;          /*!< @brief Solver Output: dimensions (FieldID). */
     std::vector<std::string> _historyOutputFieldNames; /*!< @brief Names of the outputFields: dimensions (FieldID) */
 
-    // Quantitties of Interest
-    double _curScalarOutflow;        /*!< @brief Outflow over whole boundary at current time step */
-    double _totalScalarOutflow;      /*!< @brief Outflow over whole boundary integrated until current time step */
-    double _curMaxOrdinateOutflow;   /*!< @brief Maximum ordinate-wise ouftlow  over boundary over all time steps */
-    double _curAbsorptionLattice;    /*!< @brief Absorption of particles at Lattice checkerboard regions at current time step */
-    double _totalAbsorptionLattice;  /*!< @brief Absorption of particles at Lattice checkerboard regions integrated until current time step */
-    double _curMaxAbsorptionLattice; /*!< @brief Maximum pointwise absorption of particles at Lattice checkerboard regions  until current time step */
-    double _curAbsorptionHohlraumCenter;       /*!< @brief Absorption of particles at Hohlraum center at current time step  */
-    double _curAbsorptionHohlraumVertical;     /*!< @brief Absorption of particles at Hohlraum vertical walls at current time step */
-    double _curAbsorptionHohlraumHorizontal;   /*!< @brief Absorption of particles at Hohlraum horizontal walls at current time step */
-    double _totalAbsorptionHohlraumCenter;     /*!< @brief Absorption of particles at Hohlraum center integrated until current time step  */
-    double _totalAbsorptionHohlraumVertical;   /*!< @brief Absorption of particles at Hohlraum vertical walls integrated until current time step */
-    double _totalAbsorptionHohlraumHorizontal; /*!< @brief Absorption of particles at Hohlraum horizontal walls integrated until current time step */
-    double _varAbsorptionHohlraumGreen;        /*!< @brief Absorption of particles at Hohlraum green center cells integrated at current time step */
-    double _mass;                              /*!< @brief Integrated radiation flux over the whole simulation (i.e. mass of the particles) */
-    double _changeRateFlux;                    /*!< @brief Integrated change of radiation flux over the whole simulation  */
-    std::vector<unsigned> _probingCells;       /*!< @brief Indices of cells that contain a probing sensor */
-    VectorVector _probingMoments;              /*!< @brief Solution Momnets at the probing cells that contain a probing sensor */
+    // Quantities of Interest
+    double _curScalarOutflow;            /*!< @brief Outflow over whole boundary at current time step */
+    double _totalScalarOutflow;          /*!< @brief Outflow over whole boundary integrated until current time step */
+    double _curMaxOrdinateOutflow;       /*!< @brief Maximum ordinate-wise ouftlow  over boundary over all time steps */
+    double _mass;                        /*!< @brief Integrated radiation flux over the whole simulation (i.e. mass of the particles) */
+    double _changeRateFlux;              /*!< @brief Integrated change of radiation flux over the whole simulation  */
+    std::vector<unsigned> _probingCells; /*!< @brief Indices of cells that contain a probing sensor */
+    VectorVector _probingMoments;        /*!< @brief Solution Momnets at the probing cells that contain a probing sensor */
 
     // ---- Member functions ----
 
@@ -194,31 +182,8 @@ class SolverBase
     /**
      * @brief Computes Problemspecific Scalar QOI
      */
-    void GetCurrentAbsorptionLattice( unsigned idx_iter );
-    /**
-     * @brief Computes Problemspecific Scalar QOI
-     */
-    void GetTotalAbsorptionLattice();
-    /**
-     * @brief Computes Problemspecific Scalar QOI
-     */
-    void GetMaxAbsorptionLattice( unsigned idx_iter );
-    /**
-     * @brief Computes Problemspecific Scalar QOI
-     */
-    void GetCurrentAbsorptionHohlraum( unsigned idx_iter );
-    /**
-     * @brief Computes Problemspecific Scalar QOI
-     */
-    void GetTotalAbsorptionHohlraum();
-    /**
-     * @brief Computes Problemspecific Scalar QOI
-     */
     virtual void ComputeCurrentProbeMoment() = 0;
-    /**
-     * @brief Computes Problemspecific Scalar QOI
-     */
-    void GetVarAbsorptionGreen( unsigned idx_iter );
+
     /**
      * @brief Computes Problemspecific Scalar QOI
      */

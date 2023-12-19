@@ -14,7 +14,7 @@
 Hohlraum::Hohlraum( Config* settings, Mesh* mesh ) : ProblemBase( settings, mesh ) {
     _scatteringXS = Vector( _mesh->GetNumCells(), 0.1 );    // white area default
     _totalXS      = Vector( _mesh->GetNumCells(), 0.1 );    // white area default
-
+    
 #pragma omp parallel for
     for( unsigned idx_cell = 0; idx_cell < _mesh->GetNumCells(); idx_cell++ ) {
         double x = _mesh->GetCellMidPoints()[idx_cell][0];
