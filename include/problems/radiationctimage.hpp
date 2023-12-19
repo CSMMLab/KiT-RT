@@ -9,7 +9,7 @@ class RadiationCTImage : public ProblemBase
     RadiationCTImage() = delete;
 
   public:
-    RadiationCTImage( Config* settings, Mesh* mesh );
+    RadiationCTImage( Config* settings, Mesh* mesh, QuadratureBase* quad );
     ~RadiationCTImage();
     std::vector<VectorVector> GetExternalSource( const Vector& energies ) override;
     VectorVector SetupIC() override;
@@ -24,7 +24,7 @@ class RadiationCTImage_Moment : public RadiationCTImage
     RadiationCTImage_Moment() = delete;
 
   public:
-    RadiationCTImage_Moment( Config* settings, Mesh* mesh );
+    RadiationCTImage_Moment( Config* settings, Mesh* mesh, QuadratureBase* quad );
     ~RadiationCTImage_Moment();
     std::vector<VectorVector> GetExternalSource( const Vector& energies ) override final;
     VectorVector SetupIC() override final;

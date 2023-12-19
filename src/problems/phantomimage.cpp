@@ -6,7 +6,7 @@
 
 // ---- 2d test case
 
-PhantomImage::PhantomImage( Config* settings, Mesh* mesh ) : ProblemBase( settings, mesh ) {}
+PhantomImage::PhantomImage( Config* settings, Mesh* mesh, QuadratureBase* quad ) : ProblemBase( settings, mesh, quad ) {}
 
 PhantomImage::~PhantomImage() {}
 

@@ -14,14 +14,10 @@
 #include "solvers/pnsolver.hpp"
 #include "solvers/snsolver.hpp"
 #include "toolboxes/textprocessingtoolbox.hpp"
-
 #include <mpi.h>
 
 SolverBase::SolverBase( Config* settings ) {
     _settings = settings;
-
-    // @TODO save parameters from settings class
-
     // build mesh and store  and store frequently used params
     _mesh = LoadSU2MeshFromFile( settings );
 
@@ -37,9 +33,8 @@ SolverBase::SolverBase( Config* settings ) {
     _settings->SetNQuadPoints( _nq );
 
     // build slope related params
-    _reconstructor = new Reconstructor( settings );
-    _reconsOrder   = _reconstructor->GetReconsOrder();
-
+    _reconstructor      = new Reconstructor( settings );    // Not used!
+    _reconsOrder        = _reconstructor->GetReconsOrder();
     _interfaceMidPoints = _mesh->GetInterfaceMidPoints();
 
     _cellMidPoints = _mesh->GetCellMidPoints();
@@ -67,7 +62,7 @@ SolverBase::SolverBase( Config* settings ) {
 
     // setup problem  and store frequently used params
 
-    _problem = ProblemBase::Create( _settings, _mesh );
+    _problem = ProblemBase::Create( _settings, _mesh, _quadrature );
     _sol     = _problem->SetupIC();
 
     _solNew = _sol;    // setup temporary sol variable

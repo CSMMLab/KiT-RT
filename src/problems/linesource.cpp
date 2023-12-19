@@ -8,7 +8,9 @@
 
 // ---- Linesource ----
 
-LineSource::LineSource( Config* settings, Mesh* mesh ) : ProblemBase( settings, mesh ) { _sigmaS = settings->GetSigmaS(); }
+LineSource::LineSource( Config* settings, Mesh* mesh, QuadratureBase* quad ) : ProblemBase( settings, mesh, quad ) {
+    _sigmaS = settings->GetSigmaS();
+}
 
 LineSource::~LineSource() {}
 
@@ -106,7 +108,7 @@ double LineSource::HelperIntRho_ptc2( double t, double gamma ) {
 
 // ---- LineSource_SN ----
 
-LineSource_SN::LineSource_SN( Config* settings, Mesh* mesh ) : LineSource( settings, mesh ) {}
+LineSource_SN::LineSource_SN( Config* settings, Mesh* mesh, QuadratureBase* quad ) : LineSource( settings, mesh, quad ) {}
 
 LineSource_SN::~LineSource_SN() {}
 
@@ -134,7 +136,7 @@ VectorVector LineSource_SN::SetupIC() {
 
 // ---- LineSource_PN ----
 
-LineSource_Moment::LineSource_Moment( Config* settings, Mesh* mesh ) : LineSource( settings, mesh ) {}
+LineSource_Moment::LineSource_Moment( Config* settings, Mesh* mesh, QuadratureBase* quad ) : LineSource( settings, mesh, quad ) {}
 
 LineSource_Moment::~LineSource_Moment() {}
 
@@ -209,7 +211,7 @@ VectorVector LineSource_Moment::SetupIC() {
 
 // ---- LineSource SN pseudo1D ----
 
-LineSource_SN_1D::LineSource_SN_1D( Config* settings, Mesh* mesh ) : LineSource_SN( settings, mesh ) {}
+LineSource_SN_1D::LineSource_SN_1D( Config* settings, Mesh* mesh, QuadratureBase* quad ) : LineSource_SN( settings, mesh, quad ) {}
 
 VectorVector LineSource_SN_1D::SetupIC() {
     VectorVector psi( _mesh->GetNumCells(), Vector( _settings->GetNQuadPoints(), 1e-10 ) );
@@ -227,7 +229,7 @@ VectorVector LineSource_SN_1D::SetupIC() {
 
 // ---- LineSource Moment pseudo1D ----
 
-LineSource_Moment_1D::LineSource_Moment_1D( Config* settings, Mesh* mesh ) : LineSource_Moment( settings, mesh ) {}
+LineSource_Moment_1D::LineSource_Moment_1D( Config* settings, Mesh* mesh, QuadratureBase* quad ) : LineSource_Moment( settings, mesh, quad ) {}
 
 VectorVector LineSource_Moment_1D::SetupIC() {
     double t       = 3.2e-4;    // pseudo time for gaussian smoothing (Approx to dirac impulse)
@@ -280,7 +282,7 @@ VectorVector LineSource_Moment_1D::SetupIC() {
         for( unsigned j = 0; j < cellMids.size(); ++j ) {
             double x               = cellMids[j][0];
             double kinetic_density = std::max( 1.0 / ( 4.0 * M_PI * t ) * std::exp( -( x * x ) / ( 4 * t ) ), epsilon );
-            if( _settings->GetSphericalBasisName() == SPHERICAL_MONOMIALS  || _settings->GetSphericalBasisName() == SPHERICAL_MONOMIALS_ROTATED) {
+            if( _settings->GetSphericalBasisName() == SPHERICAL_MONOMIALS || _settings->GetSphericalBasisName() == SPHERICAL_MONOMIALS_ROTATED ) {
                 initialSolution[j] = kinetic_density * uIC / uIC[0];    // Remember scaling
             }
             if( _settings->GetSphericalBasisName() == SPHERICAL_HARMONICS ) {

@@ -7,12 +7,14 @@
 
 class Config;
 class Mesh;
+class QuadratureBase;
 
 class ProblemBase
 {
   protected:
-    Config* _settings; /*!< @brief pointer to settings  */
-    Mesh* _mesh;       /*!< @brief pointer to mesh  */
+    Config* _settings;     /*!< @brief pointer to settings  */
+    Mesh* _mesh;           /*!< @brief pointer to mesh  */
+    QuadratureBase* _quad; /*!< @brief pointer to quadrature  */
 
     std::vector<double> _density;       /*!< @brief vector with patient densities */
     std::vector<double> _stoppingPower; /*!< @brief vector with stopping powers*/
@@ -114,7 +116,7 @@ class ProblemBase
      * @param settings stores all needed user information
      * @param mesh for the test case
      */
-    ProblemBase( Config* settings, Mesh* mesh );
+    ProblemBase( Config* settings, Mesh* mesh, QuadratureBase* quad );
     virtual ~ProblemBase();
 
     /**
@@ -123,7 +125,7 @@ class ProblemBase
      * @param mesh for the test case
      * @return pointer to ProblemBase
      */
-    static ProblemBase* Create( Config* settings, Mesh* mesh );
+    static ProblemBase* Create( Config* settings, Mesh* mesh, QuadratureBase* quad );
 
     // Virtual getter function for all QOIS for all test problems
     // Getter

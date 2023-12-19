@@ -12,91 +12,93 @@
 #include "problems/radiationctimage.hpp"
 #include "problems/starmapvalidation.hpp"
 #include "problems/symmetrichohlraum.hpp"
+#include "quadratures/quadraturebase.hpp"
 #include "toolboxes/errormessages.hpp"
 
-ProblemBase::ProblemBase( Config* settings, Mesh* mesh ) {
+ProblemBase::ProblemBase( Config* settings, Mesh* mesh, QuadratureBase* quad ) {
     _settings = settings;
     _mesh     = mesh;
+    _quad     = quad;
     SetGhostCells();
 }
 
 ProblemBase::~ProblemBase() {}
 
-ProblemBase* ProblemBase::Create( Config* settings, Mesh* mesh ) {
+ProblemBase* ProblemBase::Create( Config* settings, Mesh* mesh, QuadratureBase* quad ) {
     // Choose problem type
     switch( settings->GetProblemName() ) {
         case PROBLEM_Linesource: {
             if( settings->GetIsMomentSolver() )
-                return new LineSource_Moment( settings, mesh );
+                return new LineSource_Moment( settings, mesh, quad );
             else
-                return new LineSource_SN( settings, mesh );
+                return new LineSource_SN( settings, mesh, quad );
         } break;
         case PROBLEM_Linesource1D: {
             if( settings->GetIsMomentSolver() )
-                return new LineSource_Moment_1D( settings, mesh );
+                return new LineSource_Moment_1D( settings, mesh, quad );
             else
-                return new LineSource_SN_1D( settings, mesh );
+                return new LineSource_SN_1D( settings, mesh, quad );
         } break;
         case PROBLEM_Checkerboard: {
             if( settings->GetIsMomentSolver() )
-                return new Checkerboard_Moment( settings, mesh );
+                return new Checkerboard_Moment( settings, mesh, quad );
             else
-                return new Checkerboard_SN( settings, mesh );
+                return new Checkerboard_SN( settings, mesh, quad );
         } break;
         case PROBLEM_Checkerboard1D: {
             if( settings->GetIsMomentSolver() )
-                return new Checkerboard_Moment_1D( settings, mesh );
+                return new Checkerboard_Moment_1D( settings, mesh, quad );
             else
-                return new Checkerboard_SN_1D( settings, mesh );
+                return new Checkerboard_SN_1D( settings, mesh, quad );
         } break;
         case PROBLEM_Aircavity1D: {
             if( settings->GetIsMomentSolver() )
-                return new AirCavity1D_Moment( settings, mesh );
+                return new AirCavity1D_Moment( settings, mesh, quad );
             else
-                return new AirCavity1D( settings, mesh );
+                return new AirCavity1D( settings, mesh, quad );
         } break;
         case PROBLEM_StarmapValidation: {
             if( settings->GetIsMomentSolver() )
-                return new StarMapValidation_Moment( settings, mesh );
+                return new StarMapValidation_Moment( settings, mesh, quad );
             else
-                return new StarMapValidation_SN( settings, mesh );
+                return new StarMapValidation_SN( settings, mesh, quad );
         } break;
-        case PROBLEM_Phantomimage: return new PhantomImage( settings, mesh );
+        case PROBLEM_Phantomimage: return new PhantomImage( settings, mesh, quad );
         case PROBLEM_RadiationCT: {
             if( settings->GetIsMomentSolver() )
-                return new RadiationCTImage_Moment( settings, mesh );
+                return new RadiationCTImage_Moment( settings, mesh, quad );
             else
-                return new RadiationCTImage( settings, mesh );
+                return new RadiationCTImage( settings, mesh, quad );
         } break;
         case PROBLEM_Meltingcube: {
             if( settings->GetIsMomentSolver() )
-                return new MeltingCube_Moment( settings, mesh );
+                return new MeltingCube_Moment( settings, mesh, quad );
             else
-                return new MeltingCube_SN( settings, mesh );
+                return new MeltingCube_SN( settings, mesh, quad );
         } break;
         case PROBLEM_Meltingcube1D: {
             if( settings->GetIsMomentSolver() )
-                return new MeltingCube_Moment_1D( settings, mesh );
+                return new MeltingCube_Moment_1D( settings, mesh, quad );
             else
-                return new MeltingCube_SN_1D( settings, mesh );
+                return new MeltingCube_SN_1D( settings, mesh, quad );
         } break;
         case PROBLEM_Hohlraum: {
             if( settings->GetIsMomentSolver() )
-                return new Hohlraum_Moment( settings, mesh );
+                return new Hohlraum_Moment( settings, mesh, quad );
             else
-                return new Hohlraum( settings, mesh );
+                return new Hohlraum( settings, mesh, quad );
         } break;
         case PROBLEM_SymmetricHohlraum: {
             if( settings->GetIsMomentSolver() )
-                return new SymmetricHohlraum_Moment( settings, mesh );
+                return new SymmetricHohlraum_Moment( settings, mesh, quad );
             else
-                return new SymmetricHohlraum( settings, mesh );
+                return new SymmetricHohlraum( settings, mesh, quad );
         } break;
         case PROBLEM_Lattice: {
             if( settings->GetIsMomentSolver() )
-                return new Lattice_Moment( settings, mesh );
+                return new Lattice_Moment( settings, mesh, quad );
             else
-                return new Lattice_SN( settings, mesh );
+                return new Lattice_SN( settings, mesh, quad );
         } break;
 
         default: ErrorMessages::Error( "No valid physical problem chosen. Please check your config file", CURRENT_FUNCTION ); return nullptr;

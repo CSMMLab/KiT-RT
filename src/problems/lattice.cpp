@@ -8,7 +8,7 @@
 
 // ---- Checkerboard Sn ----
 // Constructor for Ckeckerboard case with Sn
-Lattice_SN::Lattice_SN( Config* settings, Mesh* mesh ) : ProblemBase( settings, mesh ) {
+Lattice_SN::Lattice_SN( Config* settings, Mesh* mesh, QuadratureBase* quad ) : ProblemBase( settings, mesh, quad ) {
 
     // Initialise crosssections to 1
     _sigmaS = Vector( _mesh->GetNumCells(), _settings->GetLatticeScatterWhite() );
@@ -164,7 +164,7 @@ void Lattice_SN::ComputeMaxAbsorptionLattice( const Vector& scalarFlux ) {
 // ---- Checkerboard Moments ----
 
 // Constructor for checkerboard case with Pn
-Lattice_Moment::Lattice_Moment( Config* settings, Mesh* mesh ) : ProblemBase( settings, mesh ) {
+Lattice_Moment::Lattice_Moment( Config* settings, Mesh* mesh, QuadratureBase* quad ) : ProblemBase( settings, mesh, quad ) {
 
     // Initialise crosssections = 1 (scattering)
     _scatteringXS = Vector( _mesh->GetNumCells(), 1.0 );

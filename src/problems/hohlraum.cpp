@@ -11,10 +11,10 @@
 #include "velocitybasis/sphericalbase.hpp"
 #include "velocitybasis/sphericalharmonics.hpp"
 
-Hohlraum::Hohlraum( Config* settings, Mesh* mesh ) : ProblemBase( settings, mesh ) {
+Hohlraum::Hohlraum( Config* settings, Mesh* mesh, QuadratureBase* quad ) : ProblemBase( settings, mesh, quad ) {
     _scatteringXS = Vector( _mesh->GetNumCells(), 0.1 );    // white area default
     _totalXS      = Vector( _mesh->GetNumCells(), 0.1 );    // white area default
-    
+
 #pragma omp parallel for
     for( unsigned idx_cell = 0; idx_cell < _mesh->GetNumCells(); idx_cell++ ) {
         double x = _mesh->GetCellMidPoints()[idx_cell][0];
@@ -88,7 +88,7 @@ VectorVector Hohlraum::GetScatteringXS( const Vector& energies ) { return Vector
 
 VectorVector Hohlraum::GetTotalXS( const Vector& energies ) { return VectorVector( energies.size(), _totalXS ); }
 
-Hohlraum_Moment::Hohlraum_Moment( Config* settings, Mesh* mesh ) : Hohlraum( settings, mesh ) {}
+Hohlraum_Moment::Hohlraum_Moment( Config* settings, Mesh* mesh, QuadratureBase* quad ) : Hohlraum( settings, mesh, quad ) {}
 
 Hohlraum_Moment::~Hohlraum_Moment() {}
 

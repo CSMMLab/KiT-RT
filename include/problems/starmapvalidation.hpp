@@ -14,7 +14,7 @@ class StarMapValidation_SN : public ProblemBase
     double NormPDF( double x, double mu, double sigma ); /*!< Creates an 1D normal distribution at x with mean mu and stddev sigma */
 
   public:
-    StarMapValidation_SN( Config* settings, Mesh* mesh );
+    StarMapValidation_SN( Config* settings, Mesh* mesh, QuadratureBase* quad );
     ~StarMapValidation_SN();
 
     VectorVector GetScatteringXS( const Vector& energies ) override;
@@ -32,7 +32,7 @@ class StarMapValidation_Moment : public StarMapValidation_SN
     StarMapValidation_Moment() = delete;
 
   public:
-    StarMapValidation_Moment( Config* settings, Mesh* mesh );
+    StarMapValidation_Moment( Config* settings, Mesh* mesh, QuadratureBase* quad );
     ~StarMapValidation_Moment();
     VectorVector SetupIC() override;
     std::vector<VectorVector> GetExternalSource( const Vector& energies ) override;

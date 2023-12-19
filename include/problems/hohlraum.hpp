@@ -11,7 +11,7 @@ class Hohlraum : public ProblemBase
     Vector _totalXS;      /*!< @brief Vector of total crosssections */
 
   public:
-    Hohlraum( Config* settings, Mesh* mesh );
+    Hohlraum( Config* settings, Mesh* mesh, QuadratureBase* quad );
     virtual ~Hohlraum();
     virtual std::vector<VectorVector> GetExternalSource( const Vector& energies ) override;
     virtual VectorVector SetupIC() override;
@@ -25,7 +25,7 @@ class Hohlraum_Moment : public Hohlraum
     Hohlraum_Moment() = delete;
 
   public:
-    Hohlraum_Moment( Config* settings, Mesh* mesh );
+    Hohlraum_Moment( Config* settings, Mesh* mesh, QuadratureBase* quad );
     ~Hohlraum_Moment();
     std::vector<VectorVector> GetExternalSource( const Vector& energies ) override final;
     VectorVector SetupIC() override final;

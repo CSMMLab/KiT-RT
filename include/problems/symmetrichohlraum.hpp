@@ -22,7 +22,7 @@ class SymmetricHohlraum : public ProblemBase
     double _varAbsorptionHohlraumGreen;        /*!< @brief Absorption of particles at Hohlraum green center cells integrated at current time step */
 
   public:
-    SymmetricHohlraum( Config* settings, Mesh* mesh );
+    SymmetricHohlraum( Config* settings, Mesh* mesh, QuadratureBase* quad );
     virtual ~SymmetricHohlraum();
     virtual std::vector<VectorVector> GetExternalSource( const Vector& energies ) override;
     virtual VectorVector SetupIC() override;
@@ -50,7 +50,7 @@ class SymmetricHohlraum_Moment : public SymmetricHohlraum
     // TODO void SetGhostCells() override final; /*!< @brief Sets vector of ghost cells for boundary conditions */
 
   public:
-    SymmetricHohlraum_Moment( Config* settings, Mesh* mesh );
+    SymmetricHohlraum_Moment( Config* settings, Mesh* mesh, QuadratureBase* quad );
     ~SymmetricHohlraum_Moment();
     std::vector<VectorVector> GetExternalSource( const Vector& energies ) override final;
     VectorVector SetupIC() override final;

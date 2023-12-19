@@ -12,7 +12,7 @@ class LineSource : public ProblemBase
     double _sigmaS; /*!< @brief Scattering coefficient */
 
   public:
-    LineSource( Config* settings, Mesh* mesh );
+    LineSource( Config* settings, Mesh* mesh, QuadratureBase* quad );
 
     ~LineSource();
 
@@ -48,7 +48,7 @@ class LineSource_SN : public LineSource
     LineSource_SN() = delete;
 
   public:
-    LineSource_SN( Config* settings, Mesh* mesh );
+    LineSource_SN( Config* settings, Mesh* mesh, QuadratureBase* quad );
     ~LineSource_SN();
 
     VectorVector GetScatteringXS( const Vector& energies ) override;
@@ -63,7 +63,7 @@ class LineSource_Moment : public LineSource
     LineSource_Moment() = delete;
 
   public:
-    LineSource_Moment( Config* settings, Mesh* mesh );
+    LineSource_Moment( Config* settings, Mesh* mesh, QuadratureBase* quad );
     ~LineSource_Moment();
 
     VectorVector GetScatteringXS( const Vector& energies ) override;
@@ -78,7 +78,7 @@ class LineSource_SN_1D : public LineSource_SN
     LineSource_SN_1D() = delete;
 
   public:
-    LineSource_SN_1D( Config* settings, Mesh* mesh );
+    LineSource_SN_1D( Config* settings, Mesh* mesh, QuadratureBase* quad );
 
     VectorVector SetupIC() override;
 };
@@ -89,7 +89,7 @@ class LineSource_Moment_1D : public LineSource_Moment
     LineSource_Moment_1D() = delete;
 
   public:
-    LineSource_Moment_1D( Config* settings, Mesh* mesh );
+    LineSource_Moment_1D( Config* settings, Mesh* mesh, QuadratureBase* quad );
 
     VectorVector SetupIC() override;
 };

@@ -11,7 +11,7 @@
 #include "velocitybasis/sphericalbase.hpp"
 #include "velocitybasis/sphericalharmonics.hpp"
 
-SymmetricHohlraum::SymmetricHohlraum( Config* settings, Mesh* mesh ) : ProblemBase( settings, mesh ) {
+SymmetricHohlraum::SymmetricHohlraum( Config* settings, Mesh* mesh, QuadratureBase* quad ) : ProblemBase( settings, mesh, quad ) {
     _sigmaS = Vector( _mesh->GetNumCells(), 0.1 );    // white area default
     _sigmaT = Vector( _mesh->GetNumCells(), 0.1 );    // white area default
 
@@ -206,7 +206,8 @@ void SymmetricHohlraum::ComputeVarAbsorptionGreen( const Vector& scalarFlux ) {
 
 // -------------- Moment Symmetric Hohlraum ---------------
 
-SymmetricHohlraum_Moment::SymmetricHohlraum_Moment( Config* settings, Mesh* mesh ) : SymmetricHohlraum( settings, mesh ) {}
+SymmetricHohlraum_Moment::SymmetricHohlraum_Moment( Config* settings, Mesh* mesh, QuadratureBase* quad )
+    : SymmetricHohlraum( settings, mesh, quad ) {}
 
 SymmetricHohlraum_Moment::~SymmetricHohlraum_Moment() {}
 

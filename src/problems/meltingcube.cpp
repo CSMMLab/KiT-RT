@@ -8,7 +8,9 @@
 
 // ---- Linesource ----
 
-MeltingCube::MeltingCube( Config* settings, Mesh* mesh ) : ProblemBase( settings, mesh ) { _sigmaS = settings->GetSigmaS(); }
+MeltingCube::MeltingCube( Config* settings, Mesh* mesh, QuadratureBase* quad ) : ProblemBase( settings, mesh, quad ) {
+    _sigmaS = settings->GetSigmaS();
+}
 
 MeltingCube::~MeltingCube() {}
 
@@ -24,7 +26,7 @@ std::vector<VectorVector> MeltingCube::GetExternalSource( const Vector& /*energi
 
 // ---- MeltingCube_SN ----
 
-MeltingCube_SN::MeltingCube_SN( Config* settings, Mesh* mesh ) : MeltingCube( settings, mesh ) {}
+MeltingCube_SN::MeltingCube_SN( Config* settings, Mesh* mesh, QuadratureBase* quad ) : MeltingCube( settings, mesh, quad ) {}
 
 MeltingCube_SN::~MeltingCube_SN() {}
 
@@ -49,7 +51,7 @@ VectorVector MeltingCube_SN::SetupIC() {
 
 // ---- LineSource_PN ----
 
-MeltingCube_Moment::MeltingCube_Moment( Config* settings, Mesh* mesh ) : MeltingCube( settings, mesh ) {}
+MeltingCube_Moment::MeltingCube_Moment( Config* settings, Mesh* mesh, QuadratureBase* quad ) : MeltingCube( settings, mesh, quad ) {}
 
 MeltingCube_Moment::~MeltingCube_Moment() {}
 
@@ -108,7 +110,7 @@ VectorVector MeltingCube_Moment::SetupIC() {
 
 // ---- LineSource SN pseudo1D ----
 
-MeltingCube_SN_1D::MeltingCube_SN_1D( Config* settings, Mesh* mesh ) : MeltingCube( settings, mesh ) {}
+MeltingCube_SN_1D::MeltingCube_SN_1D( Config* settings, Mesh* mesh, QuadratureBase* quad ) : MeltingCube( settings, mesh, quad ) {}
 
 MeltingCube_SN_1D::~MeltingCube_SN_1D() {}
 
@@ -135,7 +137,7 @@ VectorVector MeltingCube_SN_1D::SetupIC() {
 
 // ---- LineSource Moment pseudo1D ----
 
-MeltingCube_Moment_1D::MeltingCube_Moment_1D( Config* settings, Mesh* mesh ) : MeltingCube( settings, mesh ) {}
+MeltingCube_Moment_1D::MeltingCube_Moment_1D( Config* settings, Mesh* mesh, QuadratureBase* quad ) : MeltingCube( settings, mesh, quad ) {}
 
 MeltingCube_Moment_1D::~MeltingCube_Moment_1D() {}
 

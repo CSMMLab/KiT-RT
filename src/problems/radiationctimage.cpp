@@ -13,7 +13,7 @@
 
 #include <fstream>
 
-RadiationCTImage::RadiationCTImage( Config* settings, Mesh* mesh ) : ProblemBase( settings, mesh ) {}
+RadiationCTImage::RadiationCTImage( Config* settings, Mesh* mesh, QuadratureBase* quad ) : ProblemBase( settings, mesh, quad ) {}
 
 RadiationCTImage::~RadiationCTImage() {}
 
@@ -107,7 +107,7 @@ VectorVector RadiationCTImage::GetTotalXS( const Vector& /*energies*/ ) {
     return VectorVector( 1, Vector( 1, 0.0 ) );
 }
 
-RadiationCTImage_Moment::RadiationCTImage_Moment( Config* settings, Mesh* mesh ) : RadiationCTImage( settings, mesh ) {}
+RadiationCTImage_Moment::RadiationCTImage_Moment( Config* settings, Mesh* mesh, QuadratureBase* quad ) : RadiationCTImage( settings, mesh,quad ) {}
 
 RadiationCTImage_Moment::~RadiationCTImage_Moment() {}
 

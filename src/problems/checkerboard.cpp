@@ -8,7 +8,7 @@
 
 // ---- Checkerboard Sn ----
 // Constructor for Ckeckerboard case with Sn
-Checkerboard_SN::Checkerboard_SN( Config* settings, Mesh* mesh ) : ProblemBase( settings, mesh ) {
+Checkerboard_SN::Checkerboard_SN( Config* settings, Mesh* mesh, QuadratureBase* quad ) : ProblemBase( settings, mesh, quad ) {
 
     // Initialise crosssections to 1
     _scatteringXS = Vector( _mesh->GetNumCells(), 1.0 );
@@ -70,7 +70,7 @@ bool Checkerboard_SN::isSource( const Vector& pos ) const {
 // ---- Checkerboard Moments ----
 
 // Constructor for checkerboard case with Pn
-Checkerboard_Moment::Checkerboard_Moment( Config* settings, Mesh* mesh ) : ProblemBase( settings, mesh ) {
+Checkerboard_Moment::Checkerboard_Moment( Config* settings, Mesh* mesh, QuadratureBase* quad ) : ProblemBase( settings, mesh, quad ) {
 
     // Initialise crosssections = 1 (scattering)
     _scatteringXS = Vector( _mesh->GetNumCells(), 1.0 );
@@ -213,7 +213,7 @@ bool Checkerboard_Moment::isSource( const Vector& pos ) const {
 
 // ---- Checkerboard SN 1D ----
 // Constructor for Ckeckerboard case with Sn
-Checkerboard_SN_1D::Checkerboard_SN_1D( Config* settings, Mesh* mesh ) : ProblemBase( settings, mesh ) {
+Checkerboard_SN_1D::Checkerboard_SN_1D( Config* settings, Mesh* mesh, QuadratureBase* quad ) : ProblemBase( settings, mesh, quad ) {
 
     // Initialise crosssections to 1
     _scatteringXS = Vector( _mesh->GetNumCells(), 1.0 );
@@ -268,7 +268,7 @@ bool Checkerboard_SN_1D::isSource( const Vector& pos ) const {
 
 // --- Moment version 1d ---
 
-Checkerboard_Moment_1D::Checkerboard_Moment_1D( Config* settings, Mesh* mesh ) : ProblemBase( settings, mesh ) {
+Checkerboard_Moment_1D::Checkerboard_Moment_1D( Config* settings, Mesh* mesh, QuadratureBase* quad ) : ProblemBase( settings, mesh, quad ) {
 
     // Initialise crosssections to 1
     _scatteringXS = Vector( _mesh->GetNumCells(), 1.0 );

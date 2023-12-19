@@ -26,7 +26,7 @@ class Lattice_SN : public ProblemBase
     unsigned GetBlockID( const Vector& pos ) const; /*!< @brief Returns checkerboard field id (0-48, row major) of the Lattice test case */
 
   public:
-    Lattice_SN( Config* settings, Mesh* mesh );
+    Lattice_SN( Config* settings, Mesh* mesh, QuadratureBase* quad );
     virtual ~Lattice_SN();
 
     virtual VectorVector GetScatteringXS( const Vector& energies ) override;
@@ -66,7 +66,7 @@ class Lattice_Moment : public ProblemBase
     int GlobalIndex( int l, int k ) const;
 
   public:
-    Lattice_Moment( Config* settings, Mesh* mesh );
+    Lattice_Moment( Config* settings, Mesh* mesh, QuadratureBase* quad );
     virtual ~Lattice_Moment();
 
     virtual VectorVector GetScatteringXS( const Vector& energies ) override;
