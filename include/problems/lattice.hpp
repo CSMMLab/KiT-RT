@@ -13,12 +13,13 @@ class Lattice_SN : public ProblemBase
 
     Lattice_SN() = delete;
 
-    bool isAbsorption( const Vector& pos ) const; /*!< @return True if pos is in absorption region, False otherwise */
-    bool isSource( const Vector& pos ) const;     /*!< @return True if pos is in source region, False otherwise */
+    bool IsAbsorption( const Vector& pos ) const; /*!< @return True if pos is in absorption region, False otherwise */
+    bool IsSource( const Vector& pos ) const;     /*!< @return True if pos is in source region, False otherwise */
 
   protected:
-      void SetGhostCells() override ; /*!< @brief Sets vector of ghost cells for boundary conditions */
-      
+    void SetGhostCells() override;                  /*!< @brief Sets vector of ghost cells for boundary conditions */
+    unsigned GetBlockID( const Vector& pos ) const; /*!< @brief Returns checkerboard field id (0-48, row major) of the Lattice test case */
+
   public:
     Lattice_SN( Config* settings, Mesh* mesh );
     virtual ~Lattice_SN();
@@ -28,8 +29,7 @@ class Lattice_SN : public ProblemBase
     virtual std::vector<VectorVector> GetExternalSource( const Vector& energies ) override;
     virtual VectorVector SetupIC() override;
 
-    const Vector& GetGhostCellValue(int idx_cell,  const Vector& cell_sol) override final;
-
+    const Vector& GetGhostCellValue( int idx_cell, const Vector& cell_sol ) override final;
 };
 
 class Lattice_Moment : public ProblemBase
@@ -62,6 +62,5 @@ class Lattice_Moment : public ProblemBase
     virtual std::vector<VectorVector> GetExternalSource( const Vector& energies ) override;
     virtual VectorVector SetupIC() override;
 };
-
 
 #endif    // LATTICE_H

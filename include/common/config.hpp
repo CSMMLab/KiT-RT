@@ -90,6 +90,13 @@ class Config
     std::string _hydrogenFile;      /*!< @brief Name of hydrogen cross section file path*/
     std::string _oxygenFile;        /*!< @brief Name of oxygen cross section file path */
     std::string _stoppingPowerFile; /*!< @brief Name of stopping power file path */
+    // Lattice
+    double _dsgnAbsBlue;                        /*!< @brief Absorption in all blue blocks */
+    double _dsgnScatterWhite;                   /*!< @brief Scattering in all white blocks */
+    std::vector<double> _dsgnAbsIndividual;     /*!< @brief Absorption in all 7x7 blocks of the Lattice test case (up left to low right) */
+    unsigned short _nDsgnAbsIndividual;         /*!< @brief Number of individual blocks. Needs to be 47*/
+    std::vector<double> _dsgnScatterIndividual; /*!< @brief Scatter in all 7x7 blocks of the Lattice test case (up left to low right) */
+    unsigned short _nDsgnScatterIndividual;     /*!< @brief Number of individual blocks. Needs to be 47*/
 
     // CSD
     double _maxEnergyCSD; /*!< @brief Maximum energy for CSD simulation */
@@ -237,6 +244,8 @@ class Config
     // List Options
     void AddStringListOption( const std::string name, unsigned short& input_size, std::vector<std::string>& option_field );
 
+    void AddDoubleListOption( const std::string name, unsigned short& input_size, std::vector<double>& option_field );
+
     template <class Tenum>
     void AddEnumListOption( const std::string name,
                             unsigned short& num_marker,
@@ -247,8 +256,7 @@ class Config
     void InitLogger();
 
     // Helper functions
-    template <typename K, typename V>
-    K findKey(const std::map<K, V>& myMap, const V& valueToFind);
+    template <typename K, typename V> K findKey( const std::map<K, V>& myMap, const V& valueToFind );
 
   public:
     /*!
@@ -310,6 +318,14 @@ class Config
     double inline GetSourceMagnitude() const { return _magQ; }
     // CSD
     double inline GetMaxEnergyCSD() const { return _maxEnergyCSD; }
+    // Lattice
+    double inline GetLatticeAbsBlue() const { return _dsgnAbsBlue; }
+    double inline GetLatticeScatterWhite() const { return _dsgnScatterWhite; }
+    std::vector<double> inline GetLatticeAbsorptionIndividual() const { return _dsgnAbsIndividual; }
+    unsigned short inline GetNLatticeAbsIndividual() { return _nDsgnAbsIndividual; }
+    std::vector<double> inline GetLatticeScatterIndividual() const { return _dsgnScatterIndividual; }
+    unsigned short inline GetNLatticeScatterIndividual() { return _nDsgnScatterIndividual; }
+
     //  Optimizer
     double inline GetNewtonOptimizerEpsilon() const { return _optimizerEpsilon; }
     unsigned long inline GetNewtonIter() const { return _newtonIter; }
@@ -370,16 +386,17 @@ class Config
     // ---- Setters for option structure
     // This section is dangerous
     // Quadrature Structure
-    void inline SetNQuadPoints( unsigned nq ) { _nQuadPoints = nq; }        /*!< @brief Never change the nq! This is only for the test framework. */
-    void inline SetQuadName( QUAD_NAME quadName ) { _quadName = quadName; } /*!< @brief Never change the quadName! This is only for the test framework. */
+    void inline SetNQuadPoints( unsigned nq ) { _nQuadPoints = nq; } /*!< @brief Never change the nq! This is only for the test framework. */
+    void inline SetQuadName( QUAD_NAME quadName ) {
+        _quadName = quadName;
+    } /*!< @brief Never change the quadName! This is only for the test framework. */
     void inline SetQuadOrder( unsigned quadOrder ) {
         _quadOrder = quadOrder;
-    }                                                               /*!< @brief Never change the quadOrder! This is only for the test framework. */
+    } /*!< @brief Never change the quadOrder! This is only for the test framework. */
     void inline SetSNAllGaussPts( bool useall ) { _allGaussPts = useall; } /*!< @brief Never change the this! This is only for the test framework. */
     // Mesh Structure
     void inline SetNCells( unsigned nCells ) { _nCells = nCells; }
-    void inline SetEnforceNeuralRotationalSymmetry(bool symmetryEnforce) {  _enforceNeuralRotationalSymmetry =symmetryEnforce ; }
-
+    void inline SetEnforceNeuralRotationalSymmetry( bool symmetryEnforce ) { _enforceNeuralRotationalSymmetry = symmetryEnforce; }
 };
 
 #endif    // CONFIG_H

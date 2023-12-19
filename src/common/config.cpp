@@ -164,6 +164,13 @@ void Config::AddStringListOption( const string name, unsigned short& num_marker,
     _optionMap.insert( pair<string, OptionBase*>( name, val ) );
 }
 
+void Config::AddDoubleListOption( const string name, unsigned short& num_marker, std::vector<double>& option_field ) {
+    assert( _optionMap.find( name ) == _optionMap.end() );
+    _allOptions.insert( pair<string, bool>( name, true ) );
+    OptionBase* val = new OptionDoubleList( name, num_marker, option_field );
+    _optionMap.insert( pair<string, OptionBase*>( name, val ) );
+}
+
 template <class Tenum>
 void Config::AddEnumListOption( const std::string name,
                                 unsigned short& input_size,
@@ -272,6 +279,17 @@ void Config::SetConfigOptions() {
     // CSD related options
     /*! @brief MAX_ENERGY_CSD \n DESCRIPTION: Sets maximum energy for the CSD simulation.\n DEFAULT \ingroup Config */
     AddDoubleOption( "MAX_ENERGY_CSD", _maxEnergyCSD, 5.0 );
+
+    // Lattice related options
+    /*! @brief LATTICE_DSGN_ABSORPTION_BLUE \n DESCRIPTION: Sets absorption rate for the blue blocks (absorption blocks) in the lattice test case. \n
+     * DEFAULT \ingroup Config */
+    AddDoubleOption( "LATTICE_DSGN_ABSORPTION_BLUE", _dsgnAbsBlue, 10.0 );
+    /*! @brief LATTICE_DSGN_ABSORPTION_INDIVIDUAL \n DESCRIPTION: Sets absorption rate all 7x7 blocks in the lattice test case. Order from upper left
+     * to lower right (row major). \n DEFAULT \ingroup Config */
+    AddDoubleListOption( "LATTICE_DSGN_ABSORPTION_INDIVIDUAL", _nDsgnAbsIndividual, _dsgnAbsIndividual );
+    /*! @brief LATTICE_DSGN_SCATTER_INDIVIDUAL \n DESCRIPTION: Sets scattering rate all 7x7 blocks in the lattice test case. Order from upper left to
+     * lower right (row major). \n DEFAULT \ingroup Config */
+    AddDoubleListOption( "LATTICE_DSGN_SCATTER_INDIVIDUAL", _nDsgnScatterIndividual, _dsgnScatterIndividual );
 
     // Entropy related options
     /*! @brief Entropy Functional \n DESCRIPTION: Entropy functional used for the MN_Solver \n DEFAULT QUADRTATIC @ingroup Config. */

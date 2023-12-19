@@ -11,17 +11,38 @@
 Lattice_SN::Lattice_SN( Config* settings, Mesh* mesh ) : ProblemBase( settings, mesh ) {
 
     // Initialise crosssections to 1
-    _scatteringXS = Vector( _mesh->GetNumCells(), 1.0 );
-    _totalXS      = Vector( _mesh->GetNumCells(), 1.0 );
+    _scatteringXS = Vector( _mesh->GetNumCells(), _settings->GetLatticeScatterWhite() );
+    _totalXS      = Vector( _mesh->GetNumCells(), _settings->GetLatticeScatterWhite() );
 
-    // For absorption cells: set scattering XS to 0 and absorption to 10
-    auto cellMids = _mesh->GetCellMidPoints();
-    for( unsigned j = 0; j < cellMids.size(); ++j ) {
-        if( isAbsorption( cellMids[j] ) ) {
-            _scatteringXS[j] = 0.0;
-            _totalXS[j]      = 10.0;
+    if( _settings->GetNLatticeAbsIndividual() == 49 && _settings->GetNLatticeScatterIndividual() == 49 ) {    // Individual values set
+        auto log = spdlog::get( "event" );
+        log->info( "| " );
+        log->info( "| Lattice test case WITH individual scattering and absorption values for each block.  " );
+
+        auto cellMids = _mesh->GetCellMidPoints();
+
+        std::vector<double> scatteringValues = _settings->GetLatticeScatterIndividual();
+        std::vector<double> absorptionValues = _settings->GetLatticeAbsorptionIndividual();
+
+        for( unsigned j = 0; j < cellMids.size(); ++j ) {
+            _scatteringXS[j] = scatteringValues[GetBlockID( cellMids[j] )];
+            _totalXS[j]      = absorptionValues[GetBlockID( cellMids[j] )] + scatteringValues[GetBlockID( cellMids[j] )];
         }
     }
+    else {
+        auto log = spdlog::get( "event" );
+        log->info( "| " );
+        log->info( "| Lattice test case WITHOUT individual scattering and absorption values for each block.  " );
+        // For absorption cells: set scattering XS to 0 and absorption to 10
+        auto cellMids = _mesh->GetCellMidPoints();
+        for( unsigned j = 0; j < cellMids.size(); ++j ) {
+            if( IsAbsorption( cellMids[j] ) ) {
+                _scatteringXS[j] = 0.0;
+                _totalXS[j]      = _settings->GetLatticeAbsBlue();
+            }
+        }
+    }
+
     SetGhostCells();
 }
 
@@ -35,7 +56,7 @@ std::vector<VectorVector> Lattice_SN::GetExternalSource( const Vector& /*energie
     VectorVector Q( _mesh->GetNumCells(), Vector( 1u, 0.0 ) );
     auto cellMids = _mesh->GetCellMidPoints();
     for( unsigned j = 0; j < cellMids.size(); ++j ) {
-        if( isSource( cellMids[j] ) ) Q[j] = _settings->GetSourceMagnitude();    // isotropic source
+        if( IsSource( cellMids[j] ) ) Q[j] = _settings->GetSourceMagnitude();    // isotropic source
     }
     return std::vector<VectorVector>( 1u, Q );
 }
@@ -45,7 +66,7 @@ VectorVector Lattice_SN::SetupIC() {
     return psi;
 }
 
-bool Lattice_SN::isAbsorption( const Vector& pos ) const {
+bool Lattice_SN::IsAbsorption( const Vector& pos ) const {
     // Check whether pos is inside absorbing squares
     double xy_corrector = -3.5;
     std::vector<double> lbounds{ 1 + xy_corrector, 2 + xy_corrector, 3 + xy_corrector, 4 + xy_corrector, 5 + xy_corrector };
@@ -61,7 +82,14 @@ bool Lattice_SN::isAbsorption( const Vector& pos ) const {
     return false;
 }
 
-bool Lattice_SN::isSource( const Vector& pos ) const {
+unsigned Lattice_SN::GetBlockID( const Vector& pos ) const {
+    double xy_corrector = 3.5;
+    int block_x         = int( pos[0] + xy_corrector );
+    int block_y         = int( pos[1] + xy_corrector );
+    return (unsigned)( block_y * 7 + block_x );
+}
+
+bool Lattice_SN::IsSource( const Vector& pos ) const {
     // Check whether pos is part of source region
     if( pos[0] >= 3 - 3.5 && pos[0] <= 4 - 3.5 && pos[1] >= 3 - 3.5 && pos[1] <= 4 - 3.5 )
         return true;
