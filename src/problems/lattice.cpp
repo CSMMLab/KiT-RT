@@ -123,9 +123,7 @@ void Lattice_SN::SetGhostCells() {
     delete quad;
 }
 
-const Vector& Lattice_SN::GetGhostCellValue( int idx_cell, const Vector& cell_sol ) {    // re-write to use pointers
-    return _ghostCells[idx_cell];
-}
+const Vector& Lattice_SN::GetGhostCellValue( int idx_cell, const Vector& cell_sol ) { return _ghostCells[idx_cell]; }
 
 // QOI getter
 double Lattice_SN::GetCurAbsorptionLattice() { return _curAbsorptionLattice; }

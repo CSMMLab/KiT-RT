@@ -2,6 +2,7 @@
 #define PROBLEMBASE_H
 
 #include "common/typedef.hpp"
+#include <map>
 
 // Forward Declaration
 

@@ -397,13 +397,13 @@ double Mesh::GetDistanceToOrigin( unsigned idx_cell ) const {
 }
 
 unsigned Mesh::GetCellOfKoordinate( double x, double y ) const {
-    unsigned koordinate_idx = 0;
     for( unsigned idx_cell = 0; idx_cell < _numCells; idx_cell++ ) {
         if( IsPointInsideCell( idx_cell, x, y ) ) {
             return idx_cell;
         }
     }
     ErrorMessages::Error( "Probing point (" + std::to_string( x ) + "," + std::to_string( y ) + ") is contained in mesh.", CURRENT_FUNCTION );
+    return 0;
 }
 
 bool Mesh::IsPointInsideCell( unsigned idx_cell, double x, double y ) const {
