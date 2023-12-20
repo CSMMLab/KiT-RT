@@ -22,7 +22,13 @@ SymmetricHohlraum::SymmetricHohlraum( Config* settings, Mesh* mesh, QuadratureBa
     _totalAbsorptionHohlraumVertical   = 0.0;
     _totalAbsorptionHohlraumHorizontal = 0.0;
     _varAbsorptionHohlraumGreen        = 0.0;
-
+    _probingCells                      = {
+        _mesh->GetCellOfKoordinate( -0.4, 0. ),
+        _mesh->GetCellOfKoordinate( 0.4, 0. ),
+        _mesh->GetCellOfKoordinate( 0., -0.6 ),
+        _mesh->GetCellOfKoordinate( 0., 0.6 ),
+    };
+    _probingMoments = VectorVector( 4, Vector( 3, 0.0 ) );
 #pragma omp parallel for
     for( unsigned idx_cell = 0; idx_cell < _mesh->GetNumCells(); idx_cell++ ) {
         // Assumption: Domain size is 1.3x1.3
@@ -176,8 +182,8 @@ void SymmetricHohlraum::ComputeVarAbsorptionGreen( const Vector& scalarFlux ) {
     std::vector<double> areas = _mesh->GetCellAreas();
 
     for( unsigned idx_cell = 0; idx_cell < nCells; ++idx_cell ) {
-        x = _mesh->GetCellMidPoints()[idx_cell][0];
-        y = _mesh->GetCellMidPoints()[idx_cell][1];
+        x = cellMids[idx_cell][0];
+        y = cellMids[idx_cell][1];
 
         green1 = x > -0.2 && x < -0.15 && y > -0.35 && y < 0.35;    // green area 1 (lower boundary)
         green2 = x > 0.15 && x < 0.2 && y > -0.35 && y < 0.35;      // green area 2 (upper boundary)
@@ -189,8 +195,8 @@ void SymmetricHohlraum::ComputeVarAbsorptionGreen( const Vector& scalarFlux ) {
         }
     }
     for( unsigned idx_cell = 0; idx_cell < nCells; ++idx_cell ) {
-        x = _mesh->GetCellMidPoints()[idx_cell][0];
-        y = _mesh->GetCellMidPoints()[idx_cell][1];
+        x = cellMids[idx_cell][0];
+        y = cellMids[idx_cell][1];
 
         green1 = x > -0.2 && x < -0.15 && y > -0.35 && y < 0.35;    // green area 1 (lower boundary)
         green2 = x > 0.15 && x < 0.2 && y > -0.35 && y < 0.35;      // green area 2 (upper boundary)
@@ -200,6 +206,24 @@ void SymmetricHohlraum::ComputeVarAbsorptionGreen( const Vector& scalarFlux ) {
         if( green1 || green2 || green3 || green4 ) {
             _varAbsorptionHohlraumGreen += ( a_g - scalarFlux[idx_cell] * ( _sigmaT[idx_cell] - _sigmaS[idx_cell] ) ) *
                                            ( a_g - scalarFlux[idx_cell] * ( _sigmaT[idx_cell] - _sigmaS[idx_cell] ) ) * areas[idx_cell];
+        }
+    }
+}
+
+void SymmetricHohlraum::ComputeCurrentProbeMoment( const VectorVector& solution ) {
+    const VectorVector& quadPoints = _quad->GetPoints();
+    const Vector& weights          = _quad->GetWeights();
+    unsigned nq                    = _quad->GetNq();
+    // Red areas of symmetric hohlraum
+    double total_absorption = 0.0;
+    for( unsigned idx_cell = 0; idx_cell < 4; idx_cell++ ) {    // Loop over probing cells
+        _probingMoments[idx_cell][0] = blaze::dot( solution[_probingCells[idx_cell]], weights );
+        _probingMoments[idx_cell][1] = 0.0;
+        _probingMoments[idx_cell][2] = 0.0;
+
+        for( unsigned idx_quad = 0; idx_quad < nq; idx_quad++ ) {
+            _probingMoments[idx_cell][1] += quadPoints[idx_quad][0] * solution[_probingCells[idx_cell]][idx_quad] * weights[idx_quad];
+            _probingMoments[idx_cell][2] += quadPoints[idx_quad][2] * solution[_probingCells[idx_cell]][idx_quad] * weights[idx_quad];
         }
     }
 }
@@ -316,4 +340,14 @@ VectorVector SymmetricHohlraum_Moment::SetupIC() {
     }
     delete tempBase;    // Only temporally needed
     return initialSolution;
+}
+
+void SymmetricHohlraum_Moment::ComputeCurrentProbeMoment( const VectorVector& solution ) {
+    for( unsigned idx_cell = 0; idx_cell < 4; idx_cell++ ) {    // Loop over probing cells
+        _probingMoments[idx_cell][0] = solution[_probingCells[idx_cell]][0];
+        if( _probingMoments[idx_cell].size() > 1 ) {
+            _probingMoments[idx_cell][1] = solution[_probingCells[idx_cell]][1];
+            _probingMoments[idx_cell][2] = solution[_probingCells[idx_cell]][2];
+        }
+    }
 }

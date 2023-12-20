@@ -90,28 +90,6 @@ SolverBase::SolverBase( Config* settings ) {
 
     // write density
     _density = _problem->GetDensity( _mesh->GetCellMidPoints() );
-
-    // initialize QOI helper variables
-    _curMaxOrdinateOutflow = 0.0;
-    _curScalarOutflow      = 0.0;
-    _totalScalarOutflow    = 0.0;
-    _mass                  = 0.0;
-    _changeRateFlux        = 0.0;
-
-    // Hardcoded for the symmetric hohlraum testcase (experimental, needs refactoring)
-    if( _settings->GetProblemName() == PROBLEM_SymmetricHohlraum ) {
-        _probingCells = {
-            _mesh->GetCellOfKoordinate( -0.4, 0. ),
-            _mesh->GetCellOfKoordinate( 0.4, 0. ),
-            _mesh->GetCellOfKoordinate( 0., -0.6 ),
-            _mesh->GetCellOfKoordinate( 0., 0.6 ),
-        };
-        _probingMoments = VectorVector( 4, Vector( 3, 0.0 ) );
-    }
-    else {
-        _probingCells   = { 0 };    // Dummy needs refactoring
-        _probingMoments = VectorVector( 4, Vector( 3, 0.0 ) );
-    }
 }
 
 SolverBase::~SolverBase() {
@@ -285,17 +263,17 @@ void SolverBase::PrepareScreenOutput() {
 
 void SolverBase::WriteScalarOutput( unsigned idx_iter ) {
 
-    unsigned nFields = (unsigned)_settings->GetNScreenOutput();
-    double mass      = 0.0;
-
+    unsigned nFields                  = (unsigned)_settings->GetNScreenOutput();
+    double mass                       = 0.0;
+    const VectorVector probingMoments = _problem->GetCurrentProbeMoment();
     // -- Screen Output
     for( unsigned idx_field = 0; idx_field < nFields; idx_field++ ) {
         // Prepare all Output Fields per group
         // Different procedure, depending on the Group...
         switch( _settings->GetScreenOutput()[idx_field] ) {
-            case MASS: _screenOutputFields[idx_field] = _mass; break;
+            case MASS: _screenOutputFields[idx_field] = _problem->GetMass(); break;
             case ITER: _screenOutputFields[idx_field] = idx_iter; break;
-            case RMS_FLUX: _screenOutputFields[idx_field] = _changeRateFlux; break;
+            case RMS_FLUX: _screenOutputFields[idx_field] = _problem->GetChangeRateFlux(); break;
             case VTK_OUTPUT:
                 _screenOutputFields[idx_field] = 0;
                 if( ( _settings->GetVolumeOutputFrequency() != 0 && idx_iter % (unsigned)_settings->GetVolumeOutputFrequency() == 0 ) ||
@@ -310,9 +288,9 @@ void SolverBase::WriteScalarOutput( unsigned idx_iter ) {
                     _screenOutputFields[idx_field] = 1;
                 }
                 break;
-            case CUR_OUTFLOW: _screenOutputFields[idx_field] = _curScalarOutflow; break;
-            case TOTAL_OUTFLOW: _screenOutputFields[idx_field] = _totalScalarOutflow; break;
-            case MAX_OUTFLOW: _screenOutputFields[idx_field] = _curMaxOrdinateOutflow; break;
+            case CUR_OUTFLOW: _screenOutputFields[idx_field] = _problem->GetCurrentOutflow(); break;
+            case TOTAL_OUTFLOW: _screenOutputFields[idx_field] = _problem->GetTotalOutflow(); break;
+            case MAX_OUTFLOW: _screenOutputFields[idx_field] = _problem->GetMaxOrdinatewiseOutflow(); break;
             case CUR_PARTICLE_ABSORPTION: _screenOutputFields[idx_field] = _problem->GetCurAbsorptionLattice(); break;
             case TOTAL_PARTICLE_ABSORPTION: _screenOutputFields[idx_field] = _problem->GetTotalAbsorptionLattice(); break;
             case MAX_PARTICLE_ABSORPTION: _screenOutputFields[idx_field] = _problem->GetMaxAbsorptionLattice(); break;
@@ -321,7 +299,7 @@ void SolverBase::WriteScalarOutput( unsigned idx_iter ) {
             case TOTAL_PARTICLE_ABSORPTION_HORIZONTAL: _screenOutputFields[idx_field] = _problem->GetTotalAbsorptionHohlraumHorizontal(); break;
             case PROBE_MOMENT_TIME_TRACE:
                 for( unsigned i = 0; i < 4; i++ ) {
-                    _screenOutputFields[idx_field] = _probingMoments[i][0];
+                    _screenOutputFields[idx_field] = probingMoments[i][0];
                     idx_field++;
                 }
                 idx_field--;
@@ -340,9 +318,9 @@ void SolverBase::WriteScalarOutput( unsigned idx_iter ) {
         // Prepare all Output Fields per group
         // Different procedure, depending on the Group...
         switch( _settings->GetHistoryOutput()[idx_field] ) {
-            case MASS: _historyOutputFields[idx_field] = _mass; break;
+            case MASS: _historyOutputFields[idx_field] = _problem->GetMass(); break;
             case ITER: _historyOutputFields[idx_field] = idx_iter; break;
-            case RMS_FLUX: _historyOutputFields[idx_field] = _changeRateFlux; break;
+            case RMS_FLUX: _historyOutputFields[idx_field] = _problem->GetChangeRateFlux(); break;
             case VTK_OUTPUT:
                 _historyOutputFields[idx_field] = 0;
                 if( ( _settings->GetVolumeOutputFrequency() != 0 && idx_iter % (unsigned)_settings->GetVolumeOutputFrequency() == 0 ) ||
@@ -358,9 +336,9 @@ void SolverBase::WriteScalarOutput( unsigned idx_iter ) {
                     _historyOutputFields[idx_field] = 1;
                 }
                 break;
-            case CUR_OUTFLOW: _historyOutputFields[idx_field] = _curScalarOutflow; break;
-            case TOTAL_OUTFLOW: _historyOutputFields[idx_field] = _totalScalarOutflow; break;
-            case MAX_OUTFLOW: _historyOutputFields[idx_field] = _curMaxOrdinateOutflow; break;
+            case CUR_OUTFLOW: _historyOutputFields[idx_field] = _problem->GetCurrentOutflow(); break;
+            case TOTAL_OUTFLOW: _historyOutputFields[idx_field] = _problem->GetTotalOutflow(); break;
+            case MAX_OUTFLOW: _historyOutputFields[idx_field] = _problem->GetMaxOrdinatewiseOutflow(); break;
             case CUR_PARTICLE_ABSORPTION: _historyOutputFields[idx_field] = _problem->GetCurAbsorptionLattice(); break;
             case TOTAL_PARTICLE_ABSORPTION: _historyOutputFields[idx_field] = _problem->GetTotalAbsorptionLattice(); break;
             case MAX_PARTICLE_ABSORPTION: _historyOutputFields[idx_field] = _problem->GetMaxAbsorptionLattice(); break;
@@ -368,9 +346,10 @@ void SolverBase::WriteScalarOutput( unsigned idx_iter ) {
             case TOTAL_PARTICLE_ABSORPTION_VERTICAL: _historyOutputFields[idx_field] = _problem->GetTotalAbsorptionHohlraumVertical(); break;
             case TOTAL_PARTICLE_ABSORPTION_HORIZONTAL: _historyOutputFields[idx_field] = _problem->GetTotalAbsorptionHohlraumHorizontal(); break;
             case PROBE_MOMENT_TIME_TRACE:
+
                 for( unsigned i = 0; i < 4; i++ ) {
                     for( unsigned j = 0; j < 3; j++ ) {
-                        _historyOutputFields[idx_field] = _probingMoments[i][j];
+                        _historyOutputFields[idx_field] = probingMoments[i][j];
                         idx_field++;
                     }
                 }
@@ -597,26 +576,16 @@ void SolverBase::DrawPostSolverOutput() {
 
 void SolverBase::SolverPreprocessing() {}
 
-void SolverBase::GetTotalOutflow() { _totalScalarOutflow += _curScalarOutflow * _dT; }
-
-void SolverBase::GetMass() {
-    _mass = 0.0;
-    for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
-        _mass += _scalarFluxNew[idx_cell] * _areas[idx_cell];
-    }
-}
-
-void SolverBase::GetChangeRateFlux() { _changeRateFlux = blaze::l2Norm( _scalarFluxNew - _scalarFlux ); }
-
 void SolverBase::IterPostprocessing( unsigned idx_iter ) {
     // --- Compute Quantities of interest for Volume and Screen Output ---
-    ComputeScalarFlux();    // Needs to be called first
+    ComputeScalarFlux();    // Needs to be called first is a solver function
 
-    GetMass();
-    GetCurrentOutflow();
-    GetTotalOutflow();
+    _problem->ComputeMass( _scalarFluxNew );
+    _problem->ComputeChangeRateFlux( _scalarFlux, _scalarFluxNew );
 
-    GetMaxOrdinatewiseOutflow();
+    _problem->ComputeCurrentOutflow( _sol );
+    _problem->ComputeTotalOutflow( _dT );
+    _problem->ComputeMaxOrdinatewiseOutflow( _sol );
 
     if( _settings->GetProblemName() == PROBLEM_Lattice ) {
         _problem->ComputeCurrentAbsorptionLattice( _scalarFlux );
@@ -624,9 +593,9 @@ void SolverBase::IterPostprocessing( unsigned idx_iter ) {
         _problem->ComputeMaxAbsorptionLattice( _scalarFlux );
     }
     if( _settings->GetProblemName() == PROBLEM_SymmetricHohlraum ) {
-        _problem->ComputeCurrentAbsorptionHohlraum( _scalarFlux );
-        _problem->ComputeTotalAbsorptionHohlraum( _dT );
-        ComputeCurrentProbeMoment();
+        _problem->ComputeCurrentAbsorptionHohlraum( _scalarFlux );    // Unify
+        _problem->ComputeTotalAbsorptionHohlraum( _dT );              // Unify and parallelize
+        _problem->ComputeCurrentProbeMoment( _sol );
         _problem->ComputeVarAbsorptionGreen( _scalarFlux );
     }
 }

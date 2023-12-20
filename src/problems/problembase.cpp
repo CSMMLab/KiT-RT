@@ -19,6 +19,15 @@ ProblemBase::ProblemBase( Config* settings, Mesh* mesh, QuadratureBase* quad ) {
     _settings = settings;
     _mesh     = mesh;
     _quad     = quad;
+
+    // initialize QOI helper variables
+    _curMaxOrdinateOutflow = 0.0;
+    _curScalarOutflow      = 0.0;
+    _totalScalarOutflow    = 0.0;
+    _mass                  = 0.0;
+    _changeRateFlux        = 0.0;
+    _dummyProbeMoments     = VectorVector( 4, Vector( 3, 0.0 ) );
+
     SetGhostCells();
 }
 
@@ -140,3 +149,99 @@ void ProblemBase::SetGhostCells() {
 }
 
 const Vector& ProblemBase::GetGhostCellValue( int idx_cell, const Vector& cell_sol ) { return cell_sol; }
+
+void ProblemBase::ComputeMaxOrdinatewiseOutflow( const VectorVector& solution ) {
+    if( _settings->GetSolverName() == SN_SOLVER || _settings->GetSolverName() == CSD_SN_SOLVER ) {
+        double currOrdinatewiseOutflow = 0.0;
+        double transportDirection      = 0.0;
+
+        auto nCells   = _mesh->GetNumCells();
+        auto cellMids = _mesh->GetCellMidPoints();
+        auto areas    = _mesh->GetCellAreas();
+        auto neigbors = _mesh->GetNeighbours();
+        auto normals  = _mesh->GetNormals();
+
+        auto quadPoints = _quad->GetPoints();
+        auto weights    = _quad->GetWeights();
+        auto nq         = _quad->GetNq();
+
+        // Iterate over boundaries
+        for( std::map<int, Vector>::iterator it = _ghostCells.begin(); it != _ghostCells.end(); ++it ) {
+            int idx_cell = it->first;    // Get Boundary cell index
+            for( unsigned idx_nbr = 0; idx_nbr < neigbors[idx_cell].size(); ++idx_nbr ) {
+                // Find face that points outward
+                if( neigbors[idx_cell][idx_nbr] == nCells ) {
+                    // Iterate over transport directions
+                    for( unsigned idx_quad = 0; idx_quad < nq; ++idx_quad ) {
+                        transportDirection =
+                            normals[idx_cell][idx_nbr][0] * quadPoints[idx_quad][0] + normals[idx_cell][idx_nbr][1] * quadPoints[idx_quad][1];
+                        // Find outward facing transport directions
+                        if( transportDirection > 0.0 ) {
+
+                            currOrdinatewiseOutflow = transportDirection / norm( normals[idx_cell][idx_nbr] ) * solution[idx_cell][idx_quad];
+
+                            if( currOrdinatewiseOutflow > _curMaxOrdinateOutflow ) _curMaxOrdinateOutflow = currOrdinatewiseOutflow;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    // TODO define alternative for Moment solvers
+}
+
+void ProblemBase::ComputeCurrentOutflow( const VectorVector& solution ) {
+    if( _settings->GetSolverName() == SN_SOLVER || _settings->GetSolverName() == CSD_SN_SOLVER ) {
+
+        _curScalarOutflow         = 0.0;
+        double transportDirection = 0.0;
+
+        auto nCells   = _mesh->GetNumCells();
+        auto cellMids = _mesh->GetCellMidPoints();
+        auto areas    = _mesh->GetCellAreas();
+        auto neigbors = _mesh->GetNeighbours();
+        auto normals  = _mesh->GetNormals();
+
+        auto quadPoints = _quad->GetPoints();
+        auto weights    = _quad->GetWeights();
+        auto nq         = _quad->GetNq();
+
+        // Iterate over boundaries
+        for( std::map<int, Vector>::iterator it = _ghostCells.begin(); it != _ghostCells.end(); ++it ) {
+            int idx_cell = it->first;    // Get Boundary cell index
+
+            // Iterate over face cell faces
+            for( unsigned idx_nbr = 0; idx_nbr < neigbors[idx_cell].size(); ++idx_nbr ) {
+                // Find face that points outward
+                if( neigbors[idx_cell][idx_nbr] == nCells ) {
+                    // Iterate over transport directions
+                    for( unsigned idx_quad = 0; idx_quad < nq; ++idx_quad ) {
+                        transportDirection =
+                            normals[idx_cell][idx_nbr][0] * quadPoints[idx_quad][0] + normals[idx_cell][idx_nbr][1] * quadPoints[idx_quad][1];
+                        // Find outward facing transport directions
+                        if( transportDirection > 0.0 ) {
+                            _curScalarOutflow += transportDirection * solution[idx_cell][idx_quad] * weights[idx_quad];    // Integrate flux
+                        }
+                    }
+                }
+            }
+        }
+    }
+    // TODO define alternative for Moment solvers
+}
+
+void ProblemBase::ComputeTotalOutflow( double dT ) { _totalScalarOutflow += _curScalarOutflow * dT; }
+
+void ProblemBase::ComputeMass( const Vector& scalarFlux ) {
+    _mass = 0.0;
+
+    auto areas      = _mesh->GetCellAreas();
+    unsigned nCells = _mesh->GetNumCells();
+    for( unsigned idx_cell = 0; idx_cell < nCells; ++idx_cell ) {
+        _mass += scalarFlux[idx_cell] * areas[idx_cell];
+    }
+}
+
+void ProblemBase::ComputeChangeRateFlux( const Vector& scalarFlux, const Vector& scalarFluxNew ) {
+    _changeRateFlux = blaze::l2Norm( scalarFluxNew - scalarFlux );
+}

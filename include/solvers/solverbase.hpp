@@ -91,15 +91,6 @@ class SolverBase
     std::vector<double> _historyOutputFields;          /*!< @brief Solver Output: dimensions (FieldID). */
     std::vector<std::string> _historyOutputFieldNames; /*!< @brief Names of the outputFields: dimensions (FieldID) */
 
-    // Quantities of Interest
-    double _curScalarOutflow;            /*!< @brief Outflow over whole boundary at current time step */
-    double _totalScalarOutflow;          /*!< @brief Outflow over whole boundary integrated until current time step */
-    double _curMaxOrdinateOutflow;       /*!< @brief Maximum ordinate-wise ouftlow  over boundary over all time steps */
-    double _mass;                        /*!< @brief Integrated radiation flux over the whole simulation (i.e. mass of the particles) */
-    double _changeRateFlux;              /*!< @brief Integrated change of radiation flux over the whole simulation  */
-    std::vector<unsigned> _probingCells; /*!< @brief Indices of cells that contain a probing sensor */
-    VectorVector _probingMoments;        /*!< @brief Solution Momnets at the probing cells that contain a probing sensor */
-
     // ---- Member functions ----
 
     // Solver
@@ -165,33 +156,6 @@ class SolverBase
     void DrawPreSolverOutput();
     /*! @brief Post Solver Screen and Logger Output */
     void DrawPostSolverOutput();
-
-    // Scalar output helper functions
-    /**
-     * @brief Computes Problemspecific Scalar QOI
-     */
-    virtual void GetCurrentOutflow() = 0;
-    /**
-     * @brief Computes Problemspecific Scalar QOI
-     */
-    void GetTotalOutflow();
-    /**
-     * @brief Computes Problemspecific Scalar QOI
-     */
-    virtual void GetMaxOrdinatewiseOutflow() = 0;
-    /**
-     * @brief Computes Problemspecific Scalar QOI
-     */
-    virtual void ComputeCurrentProbeMoment() = 0;
-
-    /**
-     * @brief Computes Problemspecific Scalar QOI
-     */
-    void GetMass();
-    /**
-     * @brief Computes Problemspecific Scalar QOI
-     */
-    void GetChangeRateFlux();
 
   public:
     /*! @brief Solver constructor

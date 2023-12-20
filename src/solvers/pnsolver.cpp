@@ -598,20 +598,3 @@ int PNSolver::Sgn( int k ) const {
     else
         return -1;
 }
-
-void PNSolver::GetCurrentOutflow() {}            // TOOD
-void PNSolver::GetMaxOrdinatewiseOutflow() {}    // TODO
-
-void PNSolver::ComputeCurrentProbeMoment() {
-    // Red areas of symmetric hohlraum
-    double total_absorption = 0.0;
-    if( _settings->GetProblemName() == PROBLEM_SymmetricHohlraum ) {
-        for( unsigned idx_cell = 0; idx_cell < 4; idx_cell++ ) {    // Loop over probing cells
-            _probingMoments[idx_cell][0] = _sol[idx_cell][0];
-            if( _nSystem > 1 ) {
-                _probingMoments[idx_cell][1] = _sol[idx_cell][1];
-                _probingMoments[idx_cell][2] = _sol[idx_cell][2];
-            }
-        }
-    }
-}

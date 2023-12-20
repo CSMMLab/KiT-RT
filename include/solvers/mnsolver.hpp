@@ -70,11 +70,5 @@ class MNSolver : public SolverBase
     // Helper
     /*! @brief Computes the radiative flux from the solution vector of the moment system */
     void ComputeScalarFlux() override;
-
-    // Output helper functions
-    void GetCurrentOutflow() override final;
-    void GetMaxOrdinatewiseOutflow() override final;
-
-    void ComputeCurrentProbeMoment() override final;
 };
 #endif    // MNSOLVER_H

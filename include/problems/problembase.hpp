@@ -21,13 +21,15 @@ class ProblemBase
     std::map<int, Vector> _ghostCells;  /*!< @brief Vector of ghost cells for boundary conditions */
     virtual void SetGhostCells();       /*!< @brief Sets vector of ghost cells for
                                            boundary conditions */
-
+    VectorVector _dummyProbeMoments;
     ProblemBase() = delete;
 
     // Quantities of Interest
     double _curScalarOutflow;      /*!< @brief Outflow over whole boundary at current time step */
     double _totalScalarOutflow;    /*!< @brief Outflow over whole boundary integrated until current time step */
     double _curMaxOrdinateOutflow; /*!< @brief Maximum ordinate-wise ouftlow  over boundary over all time steps */
+    double _mass;                  /*!< @brief Integrated radiation flux over the whole simulation (i.e. mass of the particles) */
+    double _changeRateFlux;        /*!< @brief Integrated change of radiation flux over the whole simulation  */
 
   public:
     /**
@@ -127,12 +129,20 @@ class ProblemBase
      */
     static ProblemBase* Create( Config* settings, Mesh* mesh, QuadratureBase* quad );
 
-    // Virtual getter function for all QOIS for all test problems
+    // ---- Helper Functions to compute quantities of interest ----
     // Getter
+    // Test case agnostic
+    virtual double GetMass() { return _mass; };
+    virtual double GetChangeRateFlux() { return _changeRateFlux; };
+    virtual double GetCurrentOutflow() { return _curScalarOutflow; };
+    virtual double GetTotalOutflow() { return _totalScalarOutflow; };
+    virtual double GetMaxOrdinatewiseOutflow() { return _curMaxOrdinateOutflow; };
+    // Test case Specific
+    // Lattice
     virtual double GetCurAbsorptionLattice() { return 0.0; };
     virtual double GetTotalAbsorptionLattice() { return 0.0; };
     virtual double GetMaxAbsorptionLattice() { return 0.0; };
-
+    // Symmetric Hohlraum
     virtual double GetCurAbsorptionHohlraumCenter() { return 0.0; };
     virtual double GetCurAbsorptionHohlraumVertical() { return 0.0; };
     virtual double GetCurAbsorptionHohlraumHorizontal() { return 0.0; };
@@ -140,15 +150,27 @@ class ProblemBase
     virtual double GetTotalAbsorptionHohlraumVertical() { return 0.0; };
     virtual double GetTotalAbsorptionHohlraumHorizontal() { return 0.0; };
     virtual double GetVarAbsorptionHohlraumGreen() { return 0.0; };
+    virtual const VectorVector& GetCurrentProbeMoment() const { return _dummyProbeMoments; };
 
-    // Setter
-    virtual void ComputeTotalAbsorptionLattice( double dT ){};                   /*!<   @brief Computes Problemspecific Scalar QOI */
-    virtual void ComputeCurrentAbsorptionLattice( const Vector& scalarFlux ){};  /*!<   @brief Computes Problemspecific Scalar QOI */
-    virtual void ComputeMaxAbsorptionLattice( const Vector& scalarFlux ){};      /*!<   @brief Computes Problemspecific Scalar QOI */
+    // Computer
+    // Test case agnostic
+    void ComputeCurrentOutflow( const VectorVector& solution );                          /*!<   @brief Computes Problemspeagnostic Scalar QOI */
+    void ComputeMaxOrdinatewiseOutflow( const VectorVector& solution );                  /*!<   @brief Computes Problemspeagnostic Scalar QOI */
+    void ComputeTotalOutflow( double dT );                                               /*!<   @brief Computes Problemspeagnostic Scalar QOI */
+    void ComputeMass( const Vector& scalarFlux );                                        /*!<   @brief Computes Problemspeagnostic Scalar QOI */
+    void ComputeChangeRateFlux( const Vector& scalarFlux, const Vector& scalarFluxNew ); /*!<   @brief Computes Problemspeagnostic Scalar QOI */
+
+    // Test case Specific
+    // Lattice
+    virtual void ComputeTotalAbsorptionLattice( double dT ){};                  /*!<   @brief Computes Problemspecific Scalar QOI */
+    virtual void ComputeCurrentAbsorptionLattice( const Vector& scalarFlux ){}; /*!<   @brief Computes Problemspecific Scalar QOI */
+    virtual void ComputeMaxAbsorptionLattice( const Vector& scalarFlux ){};     /*!<   @brief Computes Problemspecific Scalar QOI */
+
+    // Symmetric Hohlraum
     virtual void ComputeCurrentAbsorptionHohlraum( const Vector& scalarFlux ){}; /*!<   @brief Computes Problemspecific Scalar QOI */
     virtual void ComputeTotalAbsorptionHohlraum( double dT ){};                  /*!<   @brief Computes Problemspecific Scalar QOI */
-    // virtual void ComputeCurrentProbeMoment(){};                                  /*!<   @brief Computes Problemspecific Scalar QOI */
-    virtual void ComputeVarAbsorptionGreen( const Vector& scalarFlux ){}; /*!<   @brief Computes Problemspecific Scalar QOI */
+    virtual void ComputeCurrentProbeMoment( const VectorVector& solution ){};    /*!<   @brief Computes Problemspecific Scalar QOI */
+    virtual void ComputeVarAbsorptionGreen( const Vector& scalarFlux ){};        /*!<   @brief Computes Problemspecific Scalar QOI */
 };
 
 #endif

@@ -147,11 +147,6 @@ class PNSolver : public SolverBase
     void FluxUpdatePseudo1D();
     /*! @brief  Flux update version for Pseudo2D  */
     void FluxUpdatePseudo2D();
-
-    // Output helper functions
-    void GetCurrentOutflow() override final;
-    void GetMaxOrdinatewiseOutflow() override final;
-    void ComputeCurrentProbeMoment() override final;
 };
 
 #endif    // PNSOLVER_H

@@ -20,6 +20,9 @@ class SymmetricHohlraum : public ProblemBase
     double _totalAbsorptionHohlraumVertical;   /*!< @brief Absorption of particles at Hohlraum vertical walls integrated until current time step */
     double _totalAbsorptionHohlraumHorizontal; /*!< @brief Absorption of particles at Hohlraum horizontal walls integrated until current time step */
     double _varAbsorptionHohlraumGreen;        /*!< @brief Absorption of particles at Hohlraum green center cells integrated at current time step */
+    std::vector<unsigned> _probingCells;       /*!< @brief Indices of cells that contain a probing sensor */
+
+    VectorVector _probingMoments; /*!< @brief Solution Momnets at the probing cells that contain a probing sensor */
 
   public:
     SymmetricHohlraum( Config* settings, Mesh* mesh, QuadratureBase* quad );
@@ -32,15 +35,16 @@ class SymmetricHohlraum : public ProblemBase
 
     void ComputeCurrentAbsorptionHohlraum( const Vector& scalarFlux ) override; /*!<   @brief Computes Problemspecific Scalar QOI */
     void ComputeTotalAbsorptionHohlraum( double dT ) override;                  /*!<   @brief Computes Problemspecific Scalar QOI */
-    // void ComputeCurrentProbeMoment() override;                                  /*!<   @brief Computes Problemspecific Scalar QOI */
-    void ComputeVarAbsorptionGreen( const Vector& scalarFlux ) override; /*!<   @brief Computes Problemspecific Scalar QOI */
-    double GetCurAbsorptionHohlraumCenter() { return _curAbsorptionHohlraumCenter; };
-    double GetCurAbsorptionHohlraumVertical() { return _curAbsorptionHohlraumVertical; };
-    double GetCurAbsorptionHohlraumHorizontal() { return _curAbsorptionHohlraumHorizontal; };
-    double GetTotalAbsorptionHohlraumCenter() { return _totalAbsorptionHohlraumCenter; };
-    double GetTotalAbsorptionHohlraumVertical() { return _totalAbsorptionHohlraumVertical; };
-    double GetTotalAbsorptionHohlraumHorizontal() { return _totalAbsorptionHohlraumHorizontal; };
-    double GetVarAbsorptionHohlraumGreen() { return _varAbsorptionHohlraumGreen; };
+    void ComputeCurrentProbeMoment( const VectorVector& solution ) override;    /*!<   @brief Computes Problemspecific Scalar QOI */
+    void ComputeVarAbsorptionGreen( const Vector& scalarFlux ) override;        /*!<   @brief Computes Problemspecific Scalar QOI */
+    double GetCurAbsorptionHohlraumCenter() override { return _curAbsorptionHohlraumCenter; };
+    double GetCurAbsorptionHohlraumVertical() override { return _curAbsorptionHohlraumVertical; };
+    double GetCurAbsorptionHohlraumHorizontal() override { return _curAbsorptionHohlraumHorizontal; };
+    double GetTotalAbsorptionHohlraumCenter() override { return _totalAbsorptionHohlraumCenter; };
+    double GetTotalAbsorptionHohlraumVertical() override { return _totalAbsorptionHohlraumVertical; };
+    double GetTotalAbsorptionHohlraumHorizontal() override { return _totalAbsorptionHohlraumHorizontal; };
+    double GetVarAbsorptionHohlraumGreen() override { return _varAbsorptionHohlraumGreen; };
+    const VectorVector& GetCurrentProbeMoment() const override { return _probingMoments; };
 };
 
 class SymmetricHohlraum_Moment : public SymmetricHohlraum
@@ -54,6 +58,7 @@ class SymmetricHohlraum_Moment : public SymmetricHohlraum
     ~SymmetricHohlraum_Moment();
     std::vector<VectorVector> GetExternalSource( const Vector& energies ) override final;
     VectorVector SetupIC() override final;
+    void ComputeCurrentProbeMoment( const VectorVector& solution ) override final; /*!<   @brief Computes Problemspecific Scalar QOI */
 };
 
 #endif    // SYMMETRIC_HOHLRAUM_H

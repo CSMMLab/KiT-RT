@@ -36,26 +36,6 @@ class SNSolver : public SolverBase
     void ComputeScalarFlux() override;
     void FluxUpdatePseudo1D();    // Helper
     void FluxUpdatePseudo2D();    // Helper
-
-    // --- Member variables ---
-
-    // Scalar output helper functions
-    /**
-     * @brief Computes Problemspecific Scalar QOI
-     *
-     */
-    void GetCurrentOutflow() override final;
-    /**
-     * @brief Computes Problemspecific Scalar QOI
-     *
-     */
-    void GetMaxOrdinatewiseOutflow() override final;
-
-    /**
-     * @brief Computes Problemspecific Scalar QOI
-     *
-     */
-    void ComputeCurrentProbeMoment() override final;
 };
 
 #endif    // SNSOLVER_H
