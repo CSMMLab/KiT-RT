@@ -163,15 +163,15 @@ class ProblemBase
 
     // Test case Specific
     // Lattice
-    virtual void ComputeTotalAbsorptionLattice( double dT ){};                  /*!<   @brief Computes Problemspecific Scalar QOI */
-    virtual void ComputeCurrentAbsorptionLattice( const Vector& scalarFlux ){}; /*!<   @brief Computes Problemspecific Scalar QOI */
-    virtual void ComputeMaxAbsorptionLattice( const Vector& scalarFlux ){};     /*!<   @brief Computes Problemspecific Scalar QOI */
+    virtual void ComputeTotalAbsorptionLattice( double /* dT */ ){};                  /*!<   @brief Computes Problemspecific Scalar QOI */
+    virtual void ComputeCurrentAbsorptionLattice( const Vector& /* scalarFlux */ ){}; /*!<   @brief Computes Problemspecific Scalar QOI */
+    virtual void ComputeMaxAbsorptionLattice( const Vector& /* scalarFlux */ ){};     /*!<   @brief Computes Problemspecific Scalar QOI */
 
     // Symmetric Hohlraum
-    virtual void ComputeCurrentAbsorptionHohlraum( const Vector& scalarFlux ){}; /*!<   @brief Computes Problemspecific Scalar QOI */
-    virtual void ComputeTotalAbsorptionHohlraum( double dT ){};                  /*!<   @brief Computes Problemspecific Scalar QOI */
-    virtual void ComputeCurrentProbeMoment( const VectorVector& solution ){};    /*!<   @brief Computes Problemspecific Scalar QOI */
-    virtual void ComputeVarAbsorptionGreen( const Vector& scalarFlux ){};        /*!<   @brief Computes Problemspecific Scalar QOI */
+    virtual void ComputeCurrentAbsorptionHohlraum( const Vector& /* scalarFlux */ ){}; /*!<   @brief Computes Problemspecific Scalar QOI */
+    virtual void ComputeTotalAbsorptionHohlraum( double /* dT  */ ){};                 /*!<   @brief Computes Problemspecific Scalar QOI */
+    virtual void ComputeCurrentProbeMoment( const VectorVector& /* solution */ ){};    /*!<   @brief Computes Problemspecific Scalar QOI */
+    virtual void ComputeVarAbsorptionGreen( const Vector& /* scalarFlux*/ ){};         /*!<   @brief Computes Problemspecific Scalar QOI */
 };
 
 #endif

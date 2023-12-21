@@ -5,6 +5,7 @@
 #include "common/mesh.hpp"
 #include "fluxes/numericalflux.hpp"
 #include "kernels/scatteringkernelbase.hpp"
+#include "problems/problembase.hpp"
 #include "quadratures/quadraturebase.hpp"
 #include "toolboxes/errormessages.hpp"
 #include "toolboxes/textprocessingtoolbox.hpp"
