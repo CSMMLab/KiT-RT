@@ -22,7 +22,8 @@ class SymmetricHohlraum : public ProblemBase
     double _varAbsorptionHohlraumGreen;        /*!< @brief Absorption of particles at Hohlraum green center cells integrated at current time step */
     std::vector<unsigned> _probingCells;       /*!< @brief Indices of cells that contain a probing sensor */
     VectorVector _probingMoments;              /*!< @brief Solution Momnets at the probing cells that contain a probing sensor */
-    VectorVector _probingCellsLineGreen;       /*!< @brief Indices of cells that contain a probing sensor for the sliding window */
+    unsigned _nProbingCellsLineGreen;          /*!< @brief Number of sampling cells that contain a probing sensor for the sliding window */
+    std::vector<unsigned> _probingCellsLineGreen; /*!< @brief Indices of cells that contain a probing sensor for the sliding window */
 
   public:
     SymmetricHohlraum( Config* settings, Mesh* mesh, QuadratureBase* quad );

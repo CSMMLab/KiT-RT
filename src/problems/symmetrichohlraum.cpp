@@ -28,9 +28,11 @@ SymmetricHohlraum::SymmetricHohlraum( Config* settings, Mesh* mesh, QuadratureBa
         _mesh->GetCellOfKoordinate( 0., -0.6 ),
         _mesh->GetCellOfKoordinate( 0., 0.6 ),
     };
-    _probingMoments = VectorVector( 4, Vector( 3, 0.0 ) );
+    _probingMoments         = VectorVector( 4, Vector( 3, 0.0 ) );
+    _nProbingCellsLineGreen = _settings->GetNumProbingCellsLineHohlraum();
+    _probingCellsLineGreen = VectorVector( 4, Vector( 3, 0.0 ) );
 #pragma omp parallel for
-    for( unsigned idx_cell = 0; idx_cell < _mesh->GetNumCells(); idx_cell++ ) {
+        for( unsigned idx_cell = 0; idx_cell < _mesh->GetNumCells(); idx_cell++ ) {
         // Assumption: Domain size is 1.3x1.3
         double x = _mesh->GetCellMidPoints()[idx_cell][0];
         double y = _mesh->GetCellMidPoints()[idx_cell][1];

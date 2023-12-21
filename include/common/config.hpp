@@ -94,10 +94,12 @@ class Config
     double _dsgnAbsBlue;                        /*!< @brief Absorption in all blue blocks */
     double _dsgnScatterWhite;                   /*!< @brief Scattering in all white blocks */
     std::vector<double> _dsgnAbsIndividual;     /*!< @brief Absorption in all 7x7 blocks of the Lattice test case (up left to low right) */
-    unsigned short _nDsgnAbsIndividual;         /*!< @brief Number of individual blocks. Needs to be 47*/
+    unsigned short _nDsgnAbsIndividual;         /*!< @brief Number of individual blocks. Needs to be 49*/
     std::vector<double> _dsgnScatterIndividual; /*!< @brief Scatter in all 7x7 blocks of the Lattice test case (up left to low right) */
-    unsigned short _nDsgnScatterIndividual;     /*!< @brief Number of individual blocks. Needs to be 47*/
+    unsigned short _nDsgnScatterIndividual;     /*!< @brief Number of individual blocks. Needs to be 49*/
 
+    // Hohlraum
+    unsigned _nProbingCellsLineGreenHohlraum; /*!< @brief Number SamplingPoints for Hohlraum Green region sampling.*/
     // CSD
     double _maxEnergyCSD; /*!< @brief Maximum energy for CSD simulation */
 
@@ -325,6 +327,8 @@ class Config
     unsigned short inline GetNLatticeAbsIndividual() { return _nDsgnAbsIndividual; }
     std::vector<double> inline GetLatticeScatterIndividual() const { return _dsgnScatterIndividual; }
     unsigned short inline GetNLatticeScatterIndividual() { return _nDsgnScatterIndividual; }
+    // Hohlraum
+    unsigned inline GetNumProbingCellsLineHohlraum() { return _nProbingCellsLineGreenHohlraum; }
 
     //  Optimizer
     double inline GetNewtonOptimizerEpsilon() const { return _optimizerEpsilon; }
