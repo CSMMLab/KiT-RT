@@ -646,7 +646,7 @@ void Config::SetPostprocessing() {
                         supportedGroups = { MINIMAL, MOMENTS, DUAL_MOMENTS };
                     if( supportedGroups.end() == std::find( supportedGroups.begin(), supportedGroups.end(), _volumeOutput[idx_volOutput] ) ) {
                         std::string supportedGroupStr = "";
-                        for( unsigned i = 0; i, supportedGroups.size(); i++ ) {
+                        for( unsigned i = 0; i < supportedGroups.size(); i++ ) {
                             supportedGroupStr += findKey( VolOutput_Map, supportedGroups[i] ) + ", ";
                         }
                         ErrorMessages::Error( "MN_SOLVER supports volume outputs" + supportedGroupStr + ".\nPlease check your .cfg file.",
