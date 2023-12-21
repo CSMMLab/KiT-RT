@@ -99,7 +99,7 @@ class Config
     unsigned short _nDsgnScatterIndividual;     /*!< @brief Number of individual blocks. Needs to be 49*/
 
     // Hohlraum
-    unsigned _nProbingCellsLineGreenHohlraum; /*!< @brief Number SamplingPoints for Hohlraum Green region sampling.*/
+    unsigned short _nProbingCellsLineGreenHohlraum; /*!< @brief Number SamplingPoints for Hohlraum Green region sampling.*/
     // CSD
     double _maxEnergyCSD; /*!< @brief Maximum energy for CSD simulation */
 
