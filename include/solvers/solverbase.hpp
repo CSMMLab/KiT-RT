@@ -76,9 +76,6 @@ class SolverBase
     VectorVector _solDy;   /*!< @brief  solution gradient in y direction*/
     VectorVector _limiter; /*! < @brief slope limiter at cell and system pt */
 
-    std::vector<double> _solverOutput; /*!< @brief LEGACY: Outputfield for solver ==> Will be
-                   replaced by _outputFields in the near future */
-
     // Output related members
     std::vector<std::vector<std::vector<double>>> _outputFields; /*!< @brief Solver Output: dimensions
                    (GroupID,FieldID,CellID).*/

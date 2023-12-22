@@ -16,11 +16,11 @@ SymmetricHohlraum::SymmetricHohlraum( Config* settings, Mesh* mesh, QuadratureBa
     _sigmaT = Vector( _mesh->GetNumCells(), 0.1 );    // white area default
 
     // Geometry of the green capsule
-    _thicknessGreen        = 0.5;
-    _cornerUpperLeftGreen  = { -0.2 - _thicknessGreen / 2.0, 0.35 - _thicknessGreen / 2.0 };
-    _cornerLowerLeftGreen  = { -0.2 - _thicknessGreen / 2.0, -0.35 - _thicknessGreen / 2.0 };
-    _cornerUpperRightGreen = { 0.2 - _thicknessGreen / 2.0, 0.35 - _thicknessGreen / 2.0 };
-    _cornerLowerRightGreen = { 0.2 - _thicknessGreen / 2.0, -0.35 - _thicknessGreen / 2.0 };
+    _thicknessGreen        = 0.05;
+    _cornerUpperLeftGreen  = { -0.2 + _thicknessGreen / 2.0, 0.4 - _thicknessGreen / 2.0 };
+    _cornerLowerLeftGreen  = { -0.2 + _thicknessGreen / 2.0, -0.4 + _thicknessGreen / 2.0 };
+    _cornerUpperRightGreen = { 0.2 - _thicknessGreen / 2.0, 0.4 - _thicknessGreen / 2.0 };
+    _cornerLowerRightGreen = { 0.2 - _thicknessGreen / 2.0, -0.4 + _thicknessGreen / 2.0 };
 
     _curAbsorptionHohlraumCenter       = 0.0;
     _curAbsorptionHohlraumVertical     = 0.0;
@@ -248,25 +248,27 @@ void SymmetricHohlraum::SetProbingCellsLineGreen() {
     double dx = 2 * ( horizontalLineWidth + verticalLineWidth ) / ( (double)_nProbingCellsLineGreen );
 
     unsigned nHorizontalProbingCells =
-        (unsigned)( _nProbingCellsLineGreen / 2 * ( horizontalLineWidth / ( horizontalLineWidth + verticalLineWidth ) ) );
-    unsigned nVerticalProbingCells = (unsigned)( _nProbingCellsLineGreen / 2 * ( verticalLineWidth / ( horizontalLineWidth + verticalLineWidth ) ) );
-    _nProbingCellsLineGreen        = 2 * nVerticalProbingCells + 2 * nHorizontalProbingCells;
+        (unsigned)std::ceil( _nProbingCellsLineGreen / 2 * ( horizontalLineWidth / ( horizontalLineWidth + verticalLineWidth ) ) );
+    unsigned nVerticalProbingCells =
+        (unsigned)std::ceil( _nProbingCellsLineGreen / 2 * ( verticalLineWidth / ( horizontalLineWidth + verticalLineWidth ) ) );
 
-    _probingCellsLineGreen = std::vector<unsigned>( _nProbingCellsLineGreen );
+    _nProbingCellsLineGreen = 2 * nVerticalProbingCells + 2 * nHorizontalProbingCells;
+    _probingCellsLineGreen  = std::vector<unsigned>( _nProbingCellsLineGreen );
 
-    // Fill the vector of sampling coordinates, walk counter clockwise from upper left
-    for( std::size_t i = 0; i < nVerticalProbingCells; ++i ) {
-        _probingCellsLineGreen[i] = _mesh->GetCellOfKoordinate( _cornerUpperLeftGreen[0], _cornerUpperLeftGreen[1] - dx * i );
-    }
-    for( std::size_t i = nVerticalProbingCells; i < nVerticalProbingCells + nVerticalProbingCells; ++i ) {
-        _probingCellsLineGreen[i] = _mesh->GetCellOfKoordinate( _cornerLowerLeftGreen[0] + dx * i, _cornerLowerLeftGreen[1] );
-    }
-    for( std::size_t i = nVerticalProbingCells + nVerticalProbingCells; i < 2 * nVerticalProbingCells + nVerticalProbingCells; ++i ) {
-        _probingCellsLineGreen[i] = _mesh->GetCellOfKoordinate( _cornerLowerRightGreen[0], _cornerLowerRightGreen[1] + dx * i );
-    }
-    for( std::size_t i = 2 * nVerticalProbingCells + nVerticalProbingCells; i < 2 * nVerticalProbingCells + 2 * nVerticalProbingCells; ++i ) {
-        _probingCellsLineGreen[i] = _mesh->GetCellOfKoordinate( _cornerUpperRightGreen[0] - dx * i, _cornerUpperRightGreen[1] );
-    }
+    printf( "here" );
+
+    // Sample points on each side of the rectangle
+    std::vector<unsigned> side1 = linspace2D( _cornerUpperLeftGreen, _cornerLowerLeftGreen, nVerticalProbingCells );
+    std::vector<unsigned> side2 = linspace2D( _cornerLowerLeftGreen, _cornerLowerRightGreen, nHorizontalProbingCells );
+    std::vector<unsigned> side3 = linspace2D( _cornerLowerRightGreen, _cornerUpperRightGreen, nVerticalProbingCells );
+    std::vector<unsigned> side4 = linspace2D( _cornerUpperRightGreen, _cornerUpperLeftGreen, nHorizontalProbingCells );
+
+    printf( "here" );
+    // Combine the points from each side
+    _probingCellsLineGreen.insert( _probingCellsLineGreen.end(), side1.begin(), side1.end() );
+    _probingCellsLineGreen.insert( _probingCellsLineGreen.end(), side2.begin(), side2.end() );
+    _probingCellsLineGreen.insert( _probingCellsLineGreen.end(), side3.begin(), side3.end() );
+    _probingCellsLineGreen.insert( _probingCellsLineGreen.end(), side4.begin(), side4.end() );
 }
 
 void SymmetricHohlraum::ComputeQOIsGreenProbingLine( const Vector& scalarFlux ) {
@@ -289,6 +291,21 @@ void SymmetricHohlraum::ComputeQOIsGreenProbingLine( const Vector& scalarFlux ) 
     }
 }
 
+std::vector<unsigned> SymmetricHohlraum::linspace2D( const std::vector<double>& start, const std::vector<double>& end, unsigned num_points ) {
+    std::vector<unsigned> result;
+    result.resize( num_points );
+    double stepX = ( end[0] - start[0] ) / ( num_points - 1 );
+    double stepY = ( end[1] - start[1] ) / ( num_points - 1 );
+
+    for( int i = 0; i < num_points; ++i ) {
+        double x = start[0] + i * stepX;
+        double y = start[1] + i * stepY;
+
+        result[i] = _mesh->GetCellOfKoordinate( x, y );
+    }
+
+    return result;
+}
 // -------------- Moment Symmetric Hohlraum ---------------
 
 SymmetricHohlraum_Moment::SymmetricHohlraum_Moment( Config* settings, Mesh* mesh, QuadratureBase* quad )

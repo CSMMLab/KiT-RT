@@ -7,6 +7,10 @@ class SymmetricHohlraum : public ProblemBase
 {
   private:
     SymmetricHohlraum() = delete;
+
+    std::vector<unsigned> linspace2D( const std::vector<double>& start, const std::vector<double>& end, unsigned num_points );
+
+  protected:
     Vector _sigmaS; /*!< @brief Vector of scattering crosssections */
     Vector _sigmaT; /*!< @brief Vector of total crosssections */
 
@@ -16,7 +20,6 @@ class SymmetricHohlraum : public ProblemBase
     std::vector<double> _cornerLowerRightGreen; /*!< @brief Coord of corner of the green area (minus thickness/2 of it) */
     double _thicknessGreen;                     /*!< @brief thickness of the green area */
 
-  protected:
     void SetGhostCells() override; /*!< @brief Sets vector of ghost cells for boundary conditions */
 
     void SetProbingCellsLineGreen(); /*!< @brief Sets cell ids for probing cells on the green line of the hohlraum */

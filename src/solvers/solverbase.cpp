@@ -78,8 +78,7 @@ SolverBase::SolverBase( Config* settings ) {
     // boundary type
     _boundaryCells = _mesh->GetBoundaryTypes();
 
-    // Solver Output
-    _solverOutput.resize( _nCells );    // LEGACY! Only used for CSD SN
+    printf( "here" );
 
     PrepareScreenOutput();     // Screen Output
     PrepareHistoryOutput();    // History Output
@@ -609,5 +608,6 @@ void SolverBase::IterPostprocessing( unsigned idx_iter ) {
         _problem->ComputeTotalAbsorptionHohlraum( _dT );              // Unify and parallelize
         _problem->ComputeCurrentProbeMoment( _sol );
         _problem->ComputeVarAbsorptionGreen( _scalarFlux );
+        _problem->ComputeQOIsGreenProbingLine( _scalarFlux );
     }
 }

@@ -770,16 +770,17 @@ void Config::SetPostprocessing() {
                                      TOTAL_PARTICLE_ABSORPTION_HORIZONTAL,
                                      PROBE_MOMENT_TIME_TRACE,
                                      VAR_ABSORPTION_GREEN };
-                    it           = std::find( legalOutputs.begin(), legalOutputs.end(), _screenOutput[idx_screenOutput] );
+
+                    it = std::find( legalOutputs.begin(), legalOutputs.end(), _screenOutput[idx_screenOutput] );
 
                     if( it == legalOutputs.end() ) {
                         std::string foundKey = findKey( ScalarOutput_Map, _screenOutput[idx_screenOutput] );
                         ErrorMessages::Error(
-                            "Illegal output field <" + foundKey +
+                            "HERE Illegal output field <" + foundKey +
                                 "> for option SCREEN_OUTPUT for this test case.\n"
                                 "Supported fields are: ITER, MASS, RMS_FLUX, VTK_OUTPUT, CSV_OUTPUT, TOTAL_PARTICLE_ABSORPTION_CENTER, \n"
                                 "TOTAL_PARTICLE_ABSORPTION_VERTICAL, TOTAL_PARTICLE_ABSORPTION_HORIZONTAL, PROBE_MOMENT_TIME_TRACE, CUR_OUTFLOW, \n "
-                                "TOTAL_OUTFLOW, MAX_OUTFLOW \n"
+                                "TOTAL_OUTFLOW, MAX_OUTFLOW, VAR_ABSORPTION_GREEN \n"
                                 "Please check your .cfg file.",
                             CURRENT_FUNCTION );
                     }
@@ -874,7 +875,7 @@ void Config::SetPostprocessing() {
                         std::string foundKey = findKey( ScalarOutput_Map, _historyOutput[idx_screenOutput] );
                         ErrorMessages::Error(
                             "Illegal output field <" + foundKey +
-                                "> for option SCREEN_OUTPUT for this test case.\n"
+                                "> for option HISTORY_OUTPUT for this test case.\n"
                                 "Supported fields are: ITER, MASS, RMS_FLUX, VTK_OUTPUT, CSV_OUTPUT, FINAL_TIME_OUTFLOW,\n"
                                 "TOTAL_OUTFLOW, MAX_OUTFLOW, FINAL_TIME_PARTICLE_ABSORPTION, TOTAL_PARTICLE_ABSORPTION, MAX_PARTICLE_ABSORPTION\n"
                                 "Please check your .cfg file.",
@@ -893,17 +894,20 @@ void Config::SetPostprocessing() {
                                      TOTAL_PARTICLE_ABSORPTION_CENTER,
                                      TOTAL_PARTICLE_ABSORPTION_VERTICAL,
                                      TOTAL_PARTICLE_ABSORPTION_HORIZONTAL,
-                                     PROBE_MOMENT_TIME_TRACE };
-                    it           = std::find( legalOutputs.begin(), legalOutputs.end(), _historyOutput[idx_screenOutput] );
+                                     PROBE_MOMENT_TIME_TRACE,
+                                     VAR_ABSORPTION_GREEN,
+                                     VAR_ABSORPTION_GREEN_LINE };
+
+                    it = std::find( legalOutputs.begin(), legalOutputs.end(), _historyOutput[idx_screenOutput] );
 
                     if( it == legalOutputs.end() ) {
                         std::string foundKey = findKey( ScalarOutput_Map, _historyOutput[idx_screenOutput] );
                         ErrorMessages::Error(
                             "Illegal output field <" + foundKey +
-                                "> for option SCREEN_OUTPUT for this test case.\n"
+                                "> for option HISTORY_OUTPUT for this test case.\n"
                                 "Supported fields are: ITER, MASS, RMS_FLUX, VTK_OUTPUT, CSV_OUTPUT, TOTAL_PARTICLE_ABSORPTION_CENTER, \n "
                                 "TOTAL_PARTICLE_ABSORPTION_VERTICAL, TOTAL_PARTICLE_ABSORPTION_HORIZONTAL,PROBE_MOMENT_TIME_TRACE,  CUR_OUTFLOW, \n"
-                                "TOTAL_OUTFLOW, MAX_OUTFLOW \n"
+                                "TOTAL_OUTFLOW, MAX_OUTFLOW , VAR_ABSORPTION_GREEN, VAR_ABSORPTION_GREEN_LINE \n"
                                 "Please check your .cfg file.",
                             CURRENT_FUNCTION );
                     }
