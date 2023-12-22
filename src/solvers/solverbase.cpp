@@ -346,7 +346,6 @@ void SolverBase::WriteScalarOutput( unsigned idx_iter ) {
             case TOTAL_PARTICLE_ABSORPTION_VERTICAL: _historyOutputFields[idx_field] = _problem->GetTotalAbsorptionHohlraumVertical(); break;
             case TOTAL_PARTICLE_ABSORPTION_HORIZONTAL: _historyOutputFields[idx_field] = _problem->GetTotalAbsorptionHohlraumHorizontal(); break;
             case PROBE_MOMENT_TIME_TRACE:
-
                 for( unsigned i = 0; i < 4; i++ ) {
                     for( unsigned j = 0; j < 3; j++ ) {
                         _historyOutputFields[idx_field] = probingMoments[i][j];
@@ -356,7 +355,13 @@ void SolverBase::WriteScalarOutput( unsigned idx_iter ) {
                 idx_field--;
                 break;
             case VAR_ABSORPTION_GREEN: _historyOutputFields[idx_field] = _problem->GetVarAbsorptionHohlraumGreen(); break;
-
+            case VAR_ABSORPTION_GREEN_LINE:
+                for( unsigned i = 0; i < _settings->GetNumProbingCellsLineHohlraum(); i++ ) {
+                    _historyOutputFieldNames[idx_field] = _problem->GetCurrentVarProbeValuesGreenLine()[i];
+                    idx_field++;
+                }
+                idx_field--;
+                break;
             default: ErrorMessages::Error( "History output group not defined!", CURRENT_FUNCTION ); break;
         }
     }
@@ -461,6 +466,13 @@ void SolverBase::PrepareHistoryOutput() {
                 idx_field--;
                 break;
             case VAR_ABSORPTION_GREEN: _historyOutputFieldNames[idx_field] = "Var. absorption green"; break;
+            case VAR_ABSORPTION_GREEN_LINE:
+                for( unsigned i = 0; i < _settings->GetNumProbingCellsLineHohlraum(); i++ ) {
+                    _historyOutputFieldNames[idx_field] = "Probe Green Line " + std::to_string( i );
+                    idx_field++;
+                }
+                idx_field--;
+                break;
             default: ErrorMessages::Error( "History output field not defined!", CURRENT_FUNCTION ); break;
         }
     }

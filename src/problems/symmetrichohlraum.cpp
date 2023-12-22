@@ -29,7 +29,8 @@ SymmetricHohlraum::SymmetricHohlraum( Config* settings, Mesh* mesh, QuadratureBa
     _totalAbsorptionHohlraumVertical   = 0.0;
     _totalAbsorptionHohlraumHorizontal = 0.0;
     _varAbsorptionHohlraumGreen        = 0.0;
-    _probingCells                      = {
+
+    _probingCells = {
         _mesh->GetCellOfKoordinate( -0.4, 0. ),
         _mesh->GetCellOfKoordinate( 0.4, 0. ),
         _mesh->GetCellOfKoordinate( 0., -0.6 ),
@@ -38,6 +39,8 @@ SymmetricHohlraum::SymmetricHohlraum( Config* settings, Mesh* mesh, QuadratureBa
     _probingMoments         = VectorVector( 4, Vector( 3, 0.0 ) );
     _nProbingCellsLineGreen = _settings->GetNumProbingCellsLineHohlraum();
     SetProbingCellsLineGreen();
+    _absorptionValsIntegrated    = std::vector<double>( _nProbingCellsLineGreen, 0.0 );
+    _varAbsorptionValsIntegrated = std::vector<double>( _nProbingCellsLineGreen, 0.0 );
 
 #pragma omp parallel for
     for( unsigned idx_cell = 0; idx_cell < _mesh->GetNumCells(); idx_cell++ ) {
@@ -90,34 +93,6 @@ SymmetricHohlraum::SymmetricHohlraum( Config* settings, Mesh* mesh, QuadratureBa
 }
 
 SymmetricHohlraum::~SymmetricHohlraum() {}
-
-void SymmetricHohlraum::SetProbingCellsLineGreen() {
-
-    double verticalLineWidth   = std::abs( _cornerUpperLeftGreen[1] - _cornerLowerLeftGreen[1] );
-    double horizontalLineWidth = std::abs( _cornerUpperLeftGreen[0] - _cornerUpperRightGreen[0] );
-
-    double dx = 2 * ( horizontalLineWidth + verticalLineWidth ) / ( (double)_nProbingCellsLineGreen );
-
-    unsigned nHorizontalProbingCells =
-        (unsigned)( _nProbingCellsLineGreen / 2 * ( horizontalLineWidth / ( horizontalLineWidth + verticalLineWidth ) ) );
-    unsigned nVerticalProbingCells = (unsigned)( _nProbingCellsLineGreen / 2 * ( verticalLineWidth / ( horizontalLineWidth + verticalLineWidth ) ) );
-    _nProbingCellsLineGreen        = 2 * nVerticalProbingCells + 2 * nHorizontalProbingCells;
-
-    _probingCellsLineGreen = std::vector<unsigned>( _nProbingCellsLineGreen );
-    // Fill the vector of sampling coordinates, walk counter clockwise from upper left
-    for( std::size_t i = 0; i < nVerticalProbingCells; ++i ) {
-        _probingCellsLineGreen[i] = _mesh->GetCellOfKoordinate( _cornerUpperLeftGreen[0], _cornerUpperLeftGreen[1] - dx * i );
-    }
-    for( std::size_t i = nVerticalProbingCells; i < nVerticalProbingCells + nVerticalProbingCells; ++i ) {
-        _probingCellsLineGreen[i] = _mesh->GetCellOfKoordinate( _cornerLowerLeftGreen[0] + dx * i, _cornerLowerLeftGreen[1] );
-    }
-    for( std::size_t i = nVerticalProbingCells + nVerticalProbingCells; i < 2 * nVerticalProbingCells + nVerticalProbingCells; ++i ) {
-        _probingCellsLineGreen[i] = _mesh->GetCellOfKoordinate( _cornerLowerRightGreen[0], _cornerLowerRightGreen[1] + dx * i );
-    }
-    for( std::size_t i = 2 * nVerticalProbingCells + nVerticalProbingCells; i < 2 * nVerticalProbingCells + 2 * nVerticalProbingCells; ++i ) {
-        _probingCellsLineGreen[i] = _mesh->GetCellOfKoordinate( _cornerUpperRightGreen[0] - dx * i, _cornerUpperRightGreen[1] );
-    }
-}
 
 std::vector<VectorVector> SymmetricHohlraum::GetExternalSource( const Vector& /* energies */ ) {
     VectorVector Q( _mesh->GetNumCells(), Vector( 1u, 0.0 ) );
@@ -262,6 +237,55 @@ void SymmetricHohlraum::ComputeCurrentProbeMoment( const VectorVector& solution 
             _probingMoments[idx_cell][1] += quadPoints[idx_quad][0] * solution[_probingCells[idx_cell]][idx_quad] * weights[idx_quad];
             _probingMoments[idx_cell][2] += quadPoints[idx_quad][2] * solution[_probingCells[idx_cell]][idx_quad] * weights[idx_quad];
         }
+    }
+}
+
+void SymmetricHohlraum::SetProbingCellsLineGreen() {
+
+    double verticalLineWidth   = std::abs( _cornerUpperLeftGreen[1] - _cornerLowerLeftGreen[1] );
+    double horizontalLineWidth = std::abs( _cornerUpperLeftGreen[0] - _cornerUpperRightGreen[0] );
+
+    double dx = 2 * ( horizontalLineWidth + verticalLineWidth ) / ( (double)_nProbingCellsLineGreen );
+
+    unsigned nHorizontalProbingCells =
+        (unsigned)( _nProbingCellsLineGreen / 2 * ( horizontalLineWidth / ( horizontalLineWidth + verticalLineWidth ) ) );
+    unsigned nVerticalProbingCells = (unsigned)( _nProbingCellsLineGreen / 2 * ( verticalLineWidth / ( horizontalLineWidth + verticalLineWidth ) ) );
+    _nProbingCellsLineGreen        = 2 * nVerticalProbingCells + 2 * nHorizontalProbingCells;
+
+    _probingCellsLineGreen = std::vector<unsigned>( _nProbingCellsLineGreen );
+
+    // Fill the vector of sampling coordinates, walk counter clockwise from upper left
+    for( std::size_t i = 0; i < nVerticalProbingCells; ++i ) {
+        _probingCellsLineGreen[i] = _mesh->GetCellOfKoordinate( _cornerUpperLeftGreen[0], _cornerUpperLeftGreen[1] - dx * i );
+    }
+    for( std::size_t i = nVerticalProbingCells; i < nVerticalProbingCells + nVerticalProbingCells; ++i ) {
+        _probingCellsLineGreen[i] = _mesh->GetCellOfKoordinate( _cornerLowerLeftGreen[0] + dx * i, _cornerLowerLeftGreen[1] );
+    }
+    for( std::size_t i = nVerticalProbingCells + nVerticalProbingCells; i < 2 * nVerticalProbingCells + nVerticalProbingCells; ++i ) {
+        _probingCellsLineGreen[i] = _mesh->GetCellOfKoordinate( _cornerLowerRightGreen[0], _cornerLowerRightGreen[1] + dx * i );
+    }
+    for( std::size_t i = 2 * nVerticalProbingCells + nVerticalProbingCells; i < 2 * nVerticalProbingCells + 2 * nVerticalProbingCells; ++i ) {
+        _probingCellsLineGreen[i] = _mesh->GetCellOfKoordinate( _cornerUpperRightGreen[0] - dx * i, _cornerUpperRightGreen[1] );
+    }
+}
+
+void SymmetricHohlraum::ComputeQOIsGreenProbingLine( const Vector& scalarFlux ) {
+
+    double verticalLineWidth   = std::abs( _cornerUpperLeftGreen[1] - _cornerLowerLeftGreen[1] );
+    double horizontalLineWidth = std::abs( _cornerUpperLeftGreen[0] - _cornerUpperRightGreen[0] );
+
+    double dl    = 2 * ( horizontalLineWidth + verticalLineWidth ) / ( (double)_nProbingCellsLineGreen );
+    double area  = dl * _thicknessGreen;
+    double a_g   = 0;
+    double l_max = _nProbingCellsLineGreen * dl;
+
+    for( unsigned i = 0; i < _nProbingCellsLineGreen; i++ ) {    // Loop over probing cells
+        _absorptionValsIntegrated[i] =
+            ( _sigmaT[_probingCellsLineGreen[i]] - _sigmaS[_probingCellsLineGreen[i]] ) * scalarFlux[_probingCellsLineGreen[i]] * area;
+        a_g += _absorptionValsIntegrated[i] / (double)_nProbingCellsLineGreen;
+    }
+    for( unsigned i = 0; i < _nProbingCellsLineGreen; i++ ) {    // Loop over probing cells
+        _varAbsorptionValsIntegrated[i] = dl / l_max * ( a_g - _absorptionValsIntegrated[i] ) * ( a_g - _absorptionValsIntegrated[i] );
     }
 }
 

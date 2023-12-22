@@ -402,7 +402,7 @@ unsigned Mesh::GetCellOfKoordinate( double x, double y ) const {
             return idx_cell;
         }
     }
-    ErrorMessages::Error( "Probing point (" + std::to_string( x ) + "," + std::to_string( y ) + ") is contained in mesh.", CURRENT_FUNCTION );
+    ErrorMessages::Error( "Probing point (" + std::to_string( x ) + "," + std::to_string( y ) + ") is not contained in mesh.", CURRENT_FUNCTION );
     return 0;
 }
 

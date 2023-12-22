@@ -23,6 +23,7 @@ class ProblemBase
     virtual void SetGhostCells();       /*!< @brief Sets vector of ghost cells for
                                            boundary conditions */
     VectorVector _dummyProbeMoments;
+    std::vector<double> _dummyProbeValsGreenLine;
     ProblemBase() = delete;
 
     // Quantities of Interest
@@ -152,6 +153,8 @@ class ProblemBase
     virtual double GetTotalAbsorptionHohlraumHorizontal() { return 0.0; };
     virtual double GetVarAbsorptionHohlraumGreen() { return 0.0; };
     virtual const VectorVector& GetCurrentProbeMoment() const { return _dummyProbeMoments; };
+    virtual const std::vector<double>& GetCurrentProbeValuesGreenLine() const { return _dummyProbeValsGreenLine; };
+    virtual const std::vector<double>& GetCurrentVarProbeValuesGreenLine() const { return _dummyProbeValsGreenLine; };
 
     // Computer
     // Test case agnostic
@@ -172,6 +175,7 @@ class ProblemBase
     virtual void ComputeTotalAbsorptionHohlraum( double /* dT  */ ){};                 /*!<   @brief Computes Problemspecific Scalar QOI */
     virtual void ComputeCurrentProbeMoment( const VectorVector& /* solution */ ){};    /*!<   @brief Computes Problemspecific Scalar QOI */
     virtual void ComputeVarAbsorptionGreen( const Vector& /* scalarFlux*/ ){};         /*!<   @brief Computes Problemspecific Scalar QOI */
+    virtual void ComputeQOIsGreenProbingLine( const Vector& /* scalarFlux*/ ){};       /*!<   @brief Computes Problemspecific Scalar QOI */
 };
 
 #endif
