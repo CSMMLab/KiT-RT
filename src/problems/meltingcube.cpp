@@ -36,8 +36,7 @@ VectorVector MeltingCube_SN::SetupIC() {
     double kinetic_density = 0.0;
     double epsilon         = 1e-3;    // minimal value for first moment to avoid div by zero error
     for( unsigned j = 0; j < cellMids.size(); ++j ) {
-        double x = cellMids[j][0];
-        double y = cellMids[j][1];
+
         if( norm( cellMids[j] ) < 0.4 ) {
             kinetic_density = std::max( 0.2 * std::cos( norm( cellMids[j] ) * 4 ) * std::cos( norm( cellMids[j] ) * 4.0 ), epsilon );
         }
@@ -142,8 +141,8 @@ MeltingCube_Moment_1D::MeltingCube_Moment_1D( Config* settings, Mesh* mesh, Quad
 MeltingCube_Moment_1D::~MeltingCube_Moment_1D() {}
 
 VectorVector MeltingCube_Moment_1D::SetupIC() {
-    double t       = 3.2e-4;    // pseudo time for gaussian smoothing (Approx to dirac impulse)
-    double epsilon = 1e-3;      // minimal value for first moment to avoid div by zero error
+    // double t     = 3.2e-4;    // pseudo time for gaussian smoothing (Approx to dirac impulse)
+    double epsilon = 1e-3;    // minimal value for first moment to avoid div by zero error
 
     // In case of PN, spherical basis is per default SPHERICAL_HARMONICS
     if( _settings->GetSolverName() == PN_SOLVER || _settings->GetSolverName() == CSD_PN_SOLVER ) {

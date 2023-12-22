@@ -15,6 +15,13 @@ SymmetricHohlraum::SymmetricHohlraum( Config* settings, Mesh* mesh, QuadratureBa
     _sigmaS = Vector( _mesh->GetNumCells(), 0.1 );    // white area default
     _sigmaT = Vector( _mesh->GetNumCells(), 0.1 );    // white area default
 
+    // Geometry of the green capsule
+    _thicknessGreen        = 0.5;
+    _cornerUpperLeftGreen  = { -0.2 - _thicknessGreen / 2.0, 0.35 - _thicknessGreen / 2.0 };
+    _cornerLowerLeftGreen  = { -0.2 - _thicknessGreen / 2.0, -0.35 - _thicknessGreen / 2.0 };
+    _cornerUpperRightGreen = { 0.2 - _thicknessGreen / 2.0, 0.35 - _thicknessGreen / 2.0 };
+    _cornerLowerRightGreen = { 0.2 - _thicknessGreen / 2.0, -0.35 - _thicknessGreen / 2.0 };
+
     _curAbsorptionHohlraumCenter       = 0.0;
     _curAbsorptionHohlraumVertical     = 0.0;
     _curAbsorptionHohlraumHorizontal   = 0.0;
@@ -22,7 +29,8 @@ SymmetricHohlraum::SymmetricHohlraum( Config* settings, Mesh* mesh, QuadratureBa
     _totalAbsorptionHohlraumVertical   = 0.0;
     _totalAbsorptionHohlraumHorizontal = 0.0;
     _varAbsorptionHohlraumGreen        = 0.0;
-    _probingCells                      = {
+
+    _probingCells = {
         _mesh->GetCellOfKoordinate( -0.4, 0. ),
         _mesh->GetCellOfKoordinate( 0.4, 0. ),
         _mesh->GetCellOfKoordinate( 0., -0.6 ),
@@ -30,9 +38,12 @@ SymmetricHohlraum::SymmetricHohlraum( Config* settings, Mesh* mesh, QuadratureBa
     };
     _probingMoments         = VectorVector( 4, Vector( 3, 0.0 ) );
     _nProbingCellsLineGreen = _settings->GetNumProbingCellsLineHohlraum();
-    _probingCellsLineGreen = VectorVector( 4, Vector( 3, 0.0 ) );
+    SetProbingCellsLineGreen();
+    _absorptionValsIntegrated    = std::vector<double>( _nProbingCellsLineGreen, 0.0 );
+    _varAbsorptionValsIntegrated = std::vector<double>( _nProbingCellsLineGreen, 0.0 );
+
 #pragma omp parallel for
-        for( unsigned idx_cell = 0; idx_cell < _mesh->GetNumCells(); idx_cell++ ) {
+    for( unsigned idx_cell = 0; idx_cell < _mesh->GetNumCells(); idx_cell++ ) {
         // Assumption: Domain size is 1.3x1.3
         double x = _mesh->GetCellMidPoints()[idx_cell][0];
         double y = _mesh->GetCellMidPoints()[idx_cell][1];
@@ -83,7 +94,7 @@ SymmetricHohlraum::SymmetricHohlraum( Config* settings, Mesh* mesh, QuadratureBa
 
 SymmetricHohlraum::~SymmetricHohlraum() {}
 
-std::vector<VectorVector> SymmetricHohlraum::GetExternalSource( const Vector& energies ) {
+std::vector<VectorVector> SymmetricHohlraum::GetExternalSource( const Vector& /* energies */ ) {
     VectorVector Q( _mesh->GetNumCells(), Vector( 1u, 0.0 ) );
     return std::vector<VectorVector>( 1u, Q );
 }
@@ -136,11 +147,11 @@ void SymmetricHohlraum::SetGhostCells() {
     delete quad;
 }
 
-const Vector& SymmetricHohlraum::GetGhostCellValue( int idx_cell, const Vector& cell_sol ) { return _ghostCells[idx_cell]; }
+const Vector& SymmetricHohlraum::GetGhostCellValue( int idx_cell, const Vector& /* cell_sol */ ) { return _ghostCells[idx_cell]; }
 
-VectorVector SymmetricHohlraum::GetScatteringXS( const Vector& energies ) { return VectorVector( 1u, _sigmaS ); }
+VectorVector SymmetricHohlraum::GetScatteringXS( const Vector& /* energies */ ) { return VectorVector( 1u, _sigmaS ); }
 
-VectorVector SymmetricHohlraum::GetTotalXS( const Vector& energies ) { return VectorVector( 1u, _sigmaT ); }
+VectorVector SymmetricHohlraum::GetTotalXS( const Vector& /* energies */ ) { return VectorVector( 1u, _sigmaT ); }
 
 void SymmetricHohlraum::ComputeCurrentAbsorptionHohlraum( const Vector& scalarFlux ) {
     _curAbsorptionHohlraumCenter     = 0.0;    // Green and blue areas of symmetric hohlraum
@@ -216,8 +227,7 @@ void SymmetricHohlraum::ComputeCurrentProbeMoment( const VectorVector& solution 
     const VectorVector& quadPoints = _quad->GetPoints();
     const Vector& weights          = _quad->GetWeights();
     unsigned nq                    = _quad->GetNq();
-    // Red areas of symmetric hohlraum
-    double total_absorption = 0.0;
+
     for( unsigned idx_cell = 0; idx_cell < 4; idx_cell++ ) {    // Loop over probing cells
         _probingMoments[idx_cell][0] = blaze::dot( solution[_probingCells[idx_cell]], weights );
         _probingMoments[idx_cell][1] = 0.0;
@@ -230,6 +240,55 @@ void SymmetricHohlraum::ComputeCurrentProbeMoment( const VectorVector& solution 
     }
 }
 
+void SymmetricHohlraum::SetProbingCellsLineGreen() {
+
+    double verticalLineWidth   = std::abs( _cornerUpperLeftGreen[1] - _cornerLowerLeftGreen[1] );
+    double horizontalLineWidth = std::abs( _cornerUpperLeftGreen[0] - _cornerUpperRightGreen[0] );
+
+    double dx = 2 * ( horizontalLineWidth + verticalLineWidth ) / ( (double)_nProbingCellsLineGreen );
+
+    unsigned nHorizontalProbingCells =
+        (unsigned)( _nProbingCellsLineGreen / 2 * ( horizontalLineWidth / ( horizontalLineWidth + verticalLineWidth ) ) );
+    unsigned nVerticalProbingCells = (unsigned)( _nProbingCellsLineGreen / 2 * ( verticalLineWidth / ( horizontalLineWidth + verticalLineWidth ) ) );
+    _nProbingCellsLineGreen        = 2 * nVerticalProbingCells + 2 * nHorizontalProbingCells;
+
+    _probingCellsLineGreen = std::vector<unsigned>( _nProbingCellsLineGreen );
+
+    // Fill the vector of sampling coordinates, walk counter clockwise from upper left
+    for( std::size_t i = 0; i < nVerticalProbingCells; ++i ) {
+        _probingCellsLineGreen[i] = _mesh->GetCellOfKoordinate( _cornerUpperLeftGreen[0], _cornerUpperLeftGreen[1] - dx * i );
+    }
+    for( std::size_t i = nVerticalProbingCells; i < nVerticalProbingCells + nVerticalProbingCells; ++i ) {
+        _probingCellsLineGreen[i] = _mesh->GetCellOfKoordinate( _cornerLowerLeftGreen[0] + dx * i, _cornerLowerLeftGreen[1] );
+    }
+    for( std::size_t i = nVerticalProbingCells + nVerticalProbingCells; i < 2 * nVerticalProbingCells + nVerticalProbingCells; ++i ) {
+        _probingCellsLineGreen[i] = _mesh->GetCellOfKoordinate( _cornerLowerRightGreen[0], _cornerLowerRightGreen[1] + dx * i );
+    }
+    for( std::size_t i = 2 * nVerticalProbingCells + nVerticalProbingCells; i < 2 * nVerticalProbingCells + 2 * nVerticalProbingCells; ++i ) {
+        _probingCellsLineGreen[i] = _mesh->GetCellOfKoordinate( _cornerUpperRightGreen[0] - dx * i, _cornerUpperRightGreen[1] );
+    }
+}
+
+void SymmetricHohlraum::ComputeQOIsGreenProbingLine( const Vector& scalarFlux ) {
+
+    double verticalLineWidth   = std::abs( _cornerUpperLeftGreen[1] - _cornerLowerLeftGreen[1] );
+    double horizontalLineWidth = std::abs( _cornerUpperLeftGreen[0] - _cornerUpperRightGreen[0] );
+
+    double dl    = 2 * ( horizontalLineWidth + verticalLineWidth ) / ( (double)_nProbingCellsLineGreen );
+    double area  = dl * _thicknessGreen;
+    double a_g   = 0;
+    double l_max = _nProbingCellsLineGreen * dl;
+
+    for( unsigned i = 0; i < _nProbingCellsLineGreen; i++ ) {    // Loop over probing cells
+        _absorptionValsIntegrated[i] =
+            ( _sigmaT[_probingCellsLineGreen[i]] - _sigmaS[_probingCellsLineGreen[i]] ) * scalarFlux[_probingCellsLineGreen[i]] * area;
+        a_g += _absorptionValsIntegrated[i] / (double)_nProbingCellsLineGreen;
+    }
+    for( unsigned i = 0; i < _nProbingCellsLineGreen; i++ ) {    // Loop over probing cells
+        _varAbsorptionValsIntegrated[i] = dl / l_max * ( a_g - _absorptionValsIntegrated[i] ) * ( a_g - _absorptionValsIntegrated[i] );
+    }
+}
+
 // -------------- Moment Symmetric Hohlraum ---------------
 
 SymmetricHohlraum_Moment::SymmetricHohlraum_Moment( Config* settings, Mesh* mesh, QuadratureBase* quad )
@@ -237,7 +296,7 @@ SymmetricHohlraum_Moment::SymmetricHohlraum_Moment( Config* settings, Mesh* mesh
 
 SymmetricHohlraum_Moment::~SymmetricHohlraum_Moment() {}
 
-std::vector<VectorVector> SymmetricHohlraum_Moment::GetExternalSource( const Vector& energies ) {
+std::vector<VectorVector> SymmetricHohlraum_Moment::GetExternalSource( const Vector& /* energies */ ) {
     // In case of PN, spherical basis is per default SPHERICAL_HARMONICS
 
     double integrationFactor = ( 4 * M_PI );

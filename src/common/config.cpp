@@ -292,7 +292,7 @@ void Config::SetConfigOptions() {
     AddDoubleListOption( "LATTICE_DSGN_SCATTER_INDIVIDUAL", _nDsgnScatterIndividual, _dsgnScatterIndividual );
 
     // Hohlraum related options
-    AddUnsignedShortOption( "N_SAMPLING_PTS_LINE_GREEN", _nProbingCellsLineGreenHohlraum, 20 );
+    AddUnsignedShortOption( "N_SAMPLING_PTS_LINE_GREEN", _nProbingCellsLineGreenHohlraum, 4 );
 
     // Entropy related options
     /*! @brief Entropy Functional \n DESCRIPTION: Entropy functional used for the MN_Solver \n DEFAULT QUADRTATIC @ingroup Config. */

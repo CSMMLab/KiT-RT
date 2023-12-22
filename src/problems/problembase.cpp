@@ -21,13 +21,13 @@ ProblemBase::ProblemBase( Config* settings, Mesh* mesh, QuadratureBase* quad ) {
     _quad     = quad;
 
     // initialize QOI helper variables
-    _curMaxOrdinateOutflow = 0.0;
-    _curScalarOutflow      = 0.0;
-    _totalScalarOutflow    = 0.0;
-    _mass                  = 0.0;
-    _changeRateFlux        = 0.0;
-    _dummyProbeMoments     = VectorVector( 4, Vector( 3, 0.0 ) );
-
+    _curMaxOrdinateOutflow   = 0.0;
+    _curScalarOutflow        = 0.0;
+    _totalScalarOutflow      = 0.0;
+    _mass                    = 0.0;
+    _changeRateFlux          = 0.0;
+    _dummyProbeMoments       = VectorVector( 4, Vector( 3, 0.0 ) );
+    _dummyProbeValsGreenLine = std::vector<double>( _settings->GetNumProbingCellsLineHohlraum(), 0.0 );
     SetGhostCells();
 }
 

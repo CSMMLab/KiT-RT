@@ -328,7 +328,7 @@ class Config
     std::vector<double> inline GetLatticeScatterIndividual() const { return _dsgnScatterIndividual; }
     unsigned short inline GetNLatticeScatterIndividual() { return _nDsgnScatterIndividual; }
     // Hohlraum
-    unsigned inline GetNumProbingCellsLineHohlraum() { return _nProbingCellsLineGreenHohlraum; }
+    unsigned short inline GetNumProbingCellsLineHohlraum() { return _nProbingCellsLineGreenHohlraum; }
 
     //  Optimizer
     double inline GetNewtonOptimizerEpsilon() const { return _optimizerEpsilon; }
