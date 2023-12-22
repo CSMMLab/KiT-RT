@@ -99,7 +99,7 @@ class Config
     unsigned short _nDsgnScatterIndividual;     /*!< @brief Number of individual blocks. Needs to be 49*/
 
     // Hohlraum
-    unsigned _nProbingCellsLineGreenHohlraum; /*!< @brief Number SamplingPoints for Hohlraum Green region sampling.*/
+    unsigned short _nProbingCellsLineGreenHohlraum; /*!< @brief Number SamplingPoints for Hohlraum Green region sampling.*/
     // CSD
     double _maxEnergyCSD; /*!< @brief Maximum energy for CSD simulation */
 
@@ -328,7 +328,7 @@ class Config
     std::vector<double> inline GetLatticeScatterIndividual() const { return _dsgnScatterIndividual; }
     unsigned short inline GetNLatticeScatterIndividual() { return _nDsgnScatterIndividual; }
     // Hohlraum
-    unsigned inline GetNumProbingCellsLineHohlraum() { return _nProbingCellsLineGreenHohlraum; }
+    unsigned short inline GetNumProbingCellsLineHohlraum() { return _nProbingCellsLineGreenHohlraum; }
 
     //  Optimizer
     double inline GetNewtonOptimizerEpsilon() const { return _optimizerEpsilon; }

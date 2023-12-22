@@ -10,8 +10,16 @@ class SymmetricHohlraum : public ProblemBase
     Vector _sigmaS; /*!< @brief Vector of scattering crosssections */
     Vector _sigmaT; /*!< @brief Vector of total crosssections */
 
+    std::vector<double> _cornerUpperLeftGreen;  /*!< @brief Coord of corner of the green area (minus thickness/2 of it) */
+    std::vector<double> _cornerLowerLeftGreen;  /*!< @brief Coord of corner of the green area (minus thickness/2 of it) */
+    std::vector<double> _cornerUpperRightGreen; /*!< @brief Coord of corner of the green area (minus thickness/2 of it) */
+    std::vector<double> _cornerLowerRightGreen; /*!< @brief Coord of corner of the green area (minus thickness/2 of it) */
+    double _thicknessGreen;                     /*!< @brief thickness of the green area */
+
   protected:
     void SetGhostCells() override; /*!< @brief Sets vector of ghost cells for boundary conditions */
+
+    void SetProbingCellsLineGreen(); /*!< @brief Sets cell ids for probing cells on the green line of the hohlraum */
 
     double _curAbsorptionHohlraumCenter;       /*!< @brief Absorption of particles at Hohlraum center at current time step  */
     double _curAbsorptionHohlraumVertical;     /*!< @brief Absorption of particles at Hohlraum vertical walls at current time step */
