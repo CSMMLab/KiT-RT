@@ -18,7 +18,7 @@
 
 SolverBase::SolverBase( Config* settings ) {
     _settings = settings;
-    // build mesh and store  and store frequently used params
+
     _mesh = LoadSU2MeshFromFile( settings );
 
     _areas     = _mesh->GetCellAreas();
@@ -77,8 +77,6 @@ SolverBase::SolverBase( Config* settings ) {
 
     // boundary type
     _boundaryCells = _mesh->GetBoundaryTypes();
-
-    printf( "here" );
 
     PrepareScreenOutput();     // Screen Output
     PrepareHistoryOutput();    // History Output
