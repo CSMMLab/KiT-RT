@@ -70,7 +70,7 @@ NeuralNetworkOptimizer::NeuralNetworkOptimizer( Config* settings ) : OptimizerBa
     _tfModel             = new cppflow::model( tfModelPath );    // load model
     unsigned servingSize = _settings->GetNCells();
     if( _settings->GetEnforceNeuralRotationalSymmetry() ) {
-        if( _settings->GetMaxMomentDegree() > 2 ) {
+        if( _settings->GetMaxMomentDegree() > 3 ) {
             ErrorMessages::Error( "This postprocessing step is currently only for M1 and M2 models available.", CURRENT_FUNCTION );
         }
         servingSize *= 2;    // Double number of vectors, since we mirror the rotated vector
@@ -78,12 +78,11 @@ NeuralNetworkOptimizer::NeuralNetworkOptimizer( Config* settings ) : OptimizerBa
         _rotationMatsT.resize( _settings->GetNCells() );
     }
 
-    if (_settings->GetMaxMomentDegree() == 1 && _settings->GetDim() ==2 && _settings->GetEnforceNeuralRotationalSymmetry()){
+    if( _settings->GetMaxMomentDegree() == 1 && _settings->GetDim() == 2 && _settings->GetEnforceNeuralRotationalSymmetry() ) {
         _modelServingVectorU.resize( servingSize * ( _nSystem - 2 ) );    // reserve size for model servitor
     }
-    else
-    {
-    _modelServingVectorU.resize( servingSize * ( _nSystem - 1 ) );    // reserve size for model servitor
+    else {
+        _modelServingVectorU.resize( servingSize * ( _nSystem - 1 ) );    // reserve size for model servitor
     }
     // Specify model input name
     // Call Model (change call depending on model mk) (Seems to be randomly assigned by tensorflow)
@@ -594,7 +593,7 @@ void NeuralNetworkOptimizer::InferenceSphericalHarmonics2D( VectorVector& alpha,
             Vector alphaTempFull   = Vector( _nSystem, 0.0 );    // local reduced mirrored alpha (with dummy entry at 0)
             Vector alphaTempMirror = Vector( _nSystem, 0.0 );    // local reduced mirrored alpha (with dummy entry at 0)
 
-            if( _settings->GetMaxMomentDegree() == 1 ) {         // Using this
+            if( _settings->GetMaxMomentDegree() == 1 ) {    // Using this
                 for( unsigned idx_sys = 0; idx_sys < _nSystem - 2; idx_sys++ ) {
                     alphaTempFull[idx_sys + 1] = (double)_modelServingVectorAlpha[idx_cell * ( _nSystem - 2 ) + idx_sys];
                     alphaTempMirror[idx_sys + 1] =
@@ -754,7 +753,7 @@ void NeuralNetworkOptimizer::InferenceSphericalHarmonics( VectorVector& alpha,
                 alpha_P_Mirror[idx_sys + 1] = (double)_modelServingVectorAlpha[( _settings->GetNCells() + idx_cell ) * ( _nSystem - 1 ) + idx_sys];
             }
             alpha_P_Mirror  = rot180 * alpha_P_Mirror;
-            alpha[idx_cell] = ( alphaP + alpha_P_Mirror ) / 2;               // average (and store in alpha)
+            alpha[idx_cell] = ( alphaP + alpha_P_Mirror ) / 2;    // average (and store in alpha)
 
             alpha[idx_cell] = _rotationMatsT[idx_cell] * alpha[idx_cell];    // Rotate back
             // alpha[idx_cell][2] = 0.0;    //manually enforce slab geometry
