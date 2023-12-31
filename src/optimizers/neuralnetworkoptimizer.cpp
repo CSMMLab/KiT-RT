@@ -366,7 +366,7 @@ void NeuralNetworkOptimizer::InferenceMonomial( VectorVector& alpha, const Vecto
         }
         servingSize *= 2;
     }
-    else {    // No Preprocessing
+    else {    // No Postprocessing
 #pragma omp parallel for
         for( unsigned idx_cell = 0; idx_cell < _settings->GetNCells(); idx_cell++ ) {
             for( unsigned idx_sys = 0; idx_sys < _nSystem - 1; idx_sys++ ) {
@@ -401,6 +401,7 @@ void NeuralNetworkOptimizer::InferenceMonomial( VectorVector& alpha, const Vecto
                     // Mirror order 1 Moments
                     alphaRedMirror[idx_sys] =
                         -1 * (double)_modelServingVectorAlpha[( _settings->GetNCells() + idx_cell ) * ( _nSystem - 1 ) + idx_sys];
+
                     alphaRed[idx_sys] = ( alphaRed[idx_sys] + alphaRedMirror[idx_sys] ) / 2;    // average (and store in alphaRed)
                     // alphaCorr[idx_sys+1] = alphaRed[idx_sys];
                 }
@@ -459,6 +460,7 @@ void NeuralNetworkOptimizer::InferenceMonomial( VectorVector& alpha, const Vecto
                     }
                     alphaRed[idx_sys] = ( alphaRed[idx_sys] + alphaRedMirror[idx_sys] ) / 2;    // average (and store in alphaRed)
                 }
+                alpha_norms[idx_cell] = norm( alphaRed ) * norm( alphaRed );
 
                 // Rotate Back
                 Vector alpha1{ alphaRed[0], alphaRed[1] };
