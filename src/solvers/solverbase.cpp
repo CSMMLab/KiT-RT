@@ -14,6 +14,8 @@
 #include "solvers/pnsolver.hpp"
 #include "solvers/snsolver.hpp"
 #include "toolboxes/textprocessingtoolbox.hpp"
+#include <cmath>
+#include <limits>
 #include <mpi.h>
 
 SolverBase::SolverBase( Config* settings ) {
@@ -206,14 +208,14 @@ double SolverBase::ComputeTimeStep( double cfl ) const {
         default: break;    // 2d as normal
     }
     // 2D case
-    double maxEdge = -1.0;
+    double charSize = __DBL_MAX__;    // minimum char size of all mesh cells in the mesh
     for( unsigned j = 0; j < _nCells; j++ ) {
-        for( unsigned l = 0; l < _normals[j].size(); l++ ) {
-            double currentEdge = _areas[j] / norm( _normals[j][l] );
-            if( currentEdge > maxEdge ) maxEdge = currentEdge;
+        double currCharSize = sqrt( _areas[j] );
+        if( currCharSize < charSize ) {
+            charSize = currCharSize;
         }
     }
-    return cfl * maxEdge;
+    return cfl * charSize;
 }
 
 // --- IO ----

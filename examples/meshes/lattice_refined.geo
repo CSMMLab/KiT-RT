@@ -1,5 +1,5 @@
-cl_fine = 0.01;
-cl_coarse = 0.1;
+cl_fine = 0.02;
+cl_coarse = 0.2;
 length =  0.05;
 Point(1) = {-3.5, -3.5, 0, cl_coarse};
 Point(2) = {3.5, -3.5, 0, cl_coarse};
