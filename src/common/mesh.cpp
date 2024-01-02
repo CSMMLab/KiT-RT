@@ -168,6 +168,7 @@ void Mesh::ComputeConnectivity() {
 
     // assign boundary types to all cells
     _cellBoundaryTypes.resize( _numCells, BOUNDARY_TYPE::NONE );
+#pragma omp parallel for
     for( unsigned i = 0; i < _numCells; ++i ) {
         if( std::any_of( _cellNeighbors[i].begin(), _cellNeighbors[i].end(), [this]( unsigned i ) {
                 return i == _ghostCellID;
