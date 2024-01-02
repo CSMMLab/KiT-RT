@@ -5,12 +5,12 @@ import subprocess
 def main():
     # Example usage:
     quad_order = 19
-    cl_fine_vals = [0.02, 0.01, 0.005]
+    cl_fine_vals = [0.05, 0.02, 0.01, 0.005]
     cl_coarse = 0.075
     cl_boundary = 0.2
     length = 0.075
 
-    for i in range(3):
+    for i in range(len(cl_fine_vals)):
         cl_fine = cl_fine_vals[i]
         modify_and_run_geo_file(
             cl_fine=cl_fine, cl_coarse=cl_coarse, cl_boundary=cl_boundary, length=length
@@ -79,6 +79,7 @@ def modify_and_save_log_file(quad_order, cl_fine, cl_coarse, cl_boundary, length
     # Identify the lines containing "LOG_DIR" and "LOG_FILE"
     log_dir_line = next(line for line in lines if "LOG_DIR" in line)
     log_file_line = next(line for line in lines if "LOG_FILE" in line)
+    vtk_file_line = next(line for line in lines if "OUTPUT_FILE" in line)
 
     print(log_file_line)
     # Extract the current log directory and file name
@@ -87,10 +88,13 @@ def modify_and_save_log_file(quad_order, cl_fine, cl_coarse, cl_boundary, length
 
     # Construct the new log file name
     new_log_file = f"lattice_quad_order_{quad_order}_cl_fine_{cl_fine}_cl_coarse_{cl_coarse}_cl_boundary_{cl_boundary}_length_{length}"
+    new_vtk_file = f"lattice_quad_order_{quad_order}_cl_fine_{cl_fine}_cl_coarse_{cl_coarse}_cl_boundary_{cl_boundary}_length_{length}"
 
     # Update the log file name in the lines list
     log_file_line_new = f"LOG_FILE = {new_log_file}\n"
+    vtk_file_line_new = f"OUTPUT_FILE = {new_vtk_file}\n"
     lines[lines.index(log_file_line)] = log_file_line_new
+    lines[lines.index(vtk_file_line)] = vtk_file_line_new
 
     # Save the modified lattice.cfg file
     with open(cfg_file_path, "w") as file:
