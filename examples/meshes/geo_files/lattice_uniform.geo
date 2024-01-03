@@ -211,3 +211,17 @@ Plane Surface(15) = {17};
 Plane Surface(16) = {5};
 //+
 Physical Curve("void", 53) = {1, 2, 3, 4};
+//+
+Transfinite Curve {47, 48, 46} = 10 Using Progression 1;
+//+
+Transfinite Surface {15} = {25, 26, 27, 28};
+//+
+Transfinite Surface {15} = {25, 26, 27, 28};
+//+
+Transfinite Curve {12} = 10 Using Progression 1;
+//+
+Transfinite Curve {12, 11, 9} = 10 Using Progression 1;
+//+
+Transfinite Curve {12, 11, 9} = 10 Using Progression 1;
+//+
+Surface{2, 4} In Surface{2};

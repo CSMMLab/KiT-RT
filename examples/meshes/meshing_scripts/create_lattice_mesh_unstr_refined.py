@@ -95,7 +95,7 @@ def main():
     with open(options.output_name + ".geo", "w") as mesh_file:
         mesh_file.write(mesh_code)
 
-    # os.system('gmsh ' + options.output_name + '.geo -2 -format su2 -save_all')
+    os.system('gmsh ' + options.output_name + '.geo -2 -format su2 -save_all')
     os.system('gmsh ' + options.output_name + '.geo -2 -format vtk -save_all')
 
     # os.system('rm ' + options.output_name + '.geo')
