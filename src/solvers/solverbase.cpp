@@ -215,6 +215,11 @@ double SolverBase::ComputeTimeStep( double cfl ) const {
             charSize = currCharSize;
         }
     }
+    auto log         = spdlog::get( "event" );
+    std::string line = "| Smallest characteristic length of a grid cell in this mesh: " + std::to_string( charSize );
+    log->info( line );
+    line = "| Corresponding maximal time-step: " + std::to_string( cfl * charSize );
+    log->info( line );
     return cfl * charSize;
 }
 
