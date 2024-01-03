@@ -1,10 +1,11 @@
 cl_fine = 0.02;
-cl_coarse = 0.2;
-length =  0.05;
-Point(1) = {-3.5, -3.5, 0, cl_coarse};
-Point(2) = {3.5, -3.5, 0, cl_coarse};
-Point(3) = {-3.5, 3.5, 0, cl_coarse};
-Point(4) = {3.5, 3.5, 0, cl_coarse};
+cl_coarse = 0.075;
+cl_boundary = 0.2;
+length = 0.075;
+Point(1) = {-3.5, -3.5, 0, cl_boundary};
+Point(2) = {3.5, -3.5, 0, cl_boundary};
+Point(3) = {-3.5, 3.5, 0, cl_boundary};
+Point(4) = {3.5, 3.5, 0, cl_boundary};
 Point(5) = {-1.5, -1.5, 0, cl_fine};
 Point(6) = {-2.5, -1.5, 0, cl_fine};
 Point(7) = {-2.5, -2.5, 0, cl_fine};
