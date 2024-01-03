@@ -53,9 +53,9 @@ Lattice_SN::Lattice_SN( Config* settings, Mesh* mesh, QuadratureBase* quad ) : P
 
 Lattice_SN::~Lattice_SN() {}
 
-VectorVector Lattice_SN::GetScatteringXS( const Vector& energies ) { return VectorVector( 1u, _sigmaS ); }
+VectorVector Lattice_SN::GetScatteringXS( const Vector& /*energies */ ) { return VectorVector( 1u, _sigmaS ); }
 
-VectorVector Lattice_SN::GetTotalXS( const Vector& energies ) { return VectorVector( 1u, _sigmaT ); }
+VectorVector Lattice_SN::GetTotalXS( const Vector& /*energies */ ) { return VectorVector( 1u, _sigmaT ); }
 
 std::vector<VectorVector> Lattice_SN::GetExternalSource( const Vector& /*energies*/ ) {
     VectorVector Q( _mesh->GetNumCells(), Vector( 1u, 0.0 ) );
@@ -165,24 +165,24 @@ void Lattice_SN::ComputeMaxAbsorptionLattice( const Vector& scalarFlux ) {
 Lattice_Moment::Lattice_Moment( Config* settings, Mesh* mesh, QuadratureBase* quad ) : ProblemBase( settings, mesh, quad ) {
 
     // Initialise crosssections = 1 (scattering)
-    _scatteringXS = Vector( _mesh->GetNumCells(), 1.0 );
-    _totalXS      = Vector( _mesh->GetNumCells(), 1.0 );
+    _sigmaS = Vector( _mesh->GetNumCells(), 1.0 );
+    _sigmaT = Vector( _mesh->GetNumCells(), 1.0 );
 
     // for absorption regions change crosssections to all absorption
     auto cellMids = _mesh->GetCellMidPoints();
     for( unsigned j = 0; j < cellMids.size(); ++j ) {
         if( isAbsorption( cellMids[j] ) ) {
-            _scatteringXS[j] = 0.0;
-            _totalXS[j]      = 10.0;
+            _sigmaS[j] = 0.0;
+            _sigmaT[j] = 10.0;
         }
     }
 }
 
 Lattice_Moment::~Lattice_Moment() {}
 
-VectorVector Lattice_Moment::GetScatteringXS( const Vector& energies ) { return VectorVector( energies.size(), _scatteringXS ); }
+VectorVector Lattice_Moment::GetScatteringXS( const Vector& /*energies*/ ) { return VectorVector( 1u, _sigmaS ); }
 
-VectorVector Lattice_Moment::GetTotalXS( const Vector& energies ) { return VectorVector( energies.size(), _totalXS ); }
+VectorVector Lattice_Moment::GetTotalXS( const Vector& /*energies*/ ) { return VectorVector( 1u, _sigmaT ); }
 
 std::vector<VectorVector> Lattice_Moment::GetExternalSource( const Vector& /*energies*/ ) {
     // In case of PN, spherical basis is per default SPHERICAL_HARMONICS

@@ -9,10 +9,20 @@
 // ---- Linesource ----
 
 LineSource::LineSource( Config* settings, Mesh* mesh, QuadratureBase* quad ) : ProblemBase( settings, mesh, quad ) {
-    _sigmaS = settings->GetSigmaS();
+    _sigmaS = Vector( _mesh->GetNumCells(), _settings->GetSigmaS() );
+    _sigmaT = Vector( _mesh->GetNumCells(), _settings->GetSigmaS() );
 }
 
 LineSource::~LineSource() {}
+
+VectorVector LineSource::GetScatteringXS( const Vector& /*energies*/ ) { return VectorVector( 1u, _sigmaS ); }
+
+VectorVector LineSource::GetTotalXS( const Vector& /*energies*/ ) { return VectorVector( 1u, _sigmaS ); }
+
+std::vector<VectorVector> LineSource::GetExternalSource( const Vector& /*energies*/ ) {
+    VectorVector Q( _mesh->GetNumCells(), Vector( 1u, 0.0 ) );
+    return std::vector<VectorVector>( 1u, Q );
+}
 
 double LineSource::GetAnalyticalSolution( double x, double y, double t, double /*sigma_s*/ ) {
 
@@ -112,16 +122,6 @@ LineSource_SN::LineSource_SN( Config* settings, Mesh* mesh, QuadratureBase* quad
 
 LineSource_SN::~LineSource_SN() {}
 
-VectorVector LineSource_SN::GetScatteringXS( const Vector& energies ) {
-    return VectorVector( energies.size(), Vector( _mesh->GetNumCells(), _sigmaS ) );
-}
-
-VectorVector LineSource_SN::GetTotalXS( const Vector& energies ) { return VectorVector( energies.size(), Vector( _mesh->GetNumCells(), _sigmaS ) ); }
-
-std::vector<VectorVector> LineSource_SN::GetExternalSource( const Vector& /*energies*/ ) {
-    return std::vector<VectorVector>( 1u, std::vector<Vector>( _mesh->GetNumCells(), Vector( 1u, 0.0 ) ) );
-}
-
 VectorVector LineSource_SN::SetupIC() {
     VectorVector psi( _mesh->GetNumCells(), Vector( _settings->GetNQuadPoints(), 1e-10 ) );
     auto cellMids = _mesh->GetCellMidPoints();
@@ -140,21 +140,13 @@ LineSource_Moment::LineSource_Moment( Config* settings, Mesh* mesh, QuadratureBa
 
 LineSource_Moment::~LineSource_Moment() {}
 
-VectorVector LineSource_Moment::GetScatteringXS( const Vector& energies ) {
-    return VectorVector( energies.size(), Vector( _mesh->GetNumCells(), _sigmaS ) );
-}
-
-VectorVector LineSource_Moment::GetTotalXS( const Vector& energies ) {
-    return VectorVector( energies.size(), Vector( _mesh->GetNumCells(), _sigmaS ) );
-}
-
-std::vector<VectorVector> LineSource_Moment::GetExternalSource( const Vector& /*energies*/ ) {
-    SphericalBase* tempBase  = SphericalBase::Create( _settings );
-    unsigned ntotalEquations = tempBase->GetBasisSize();
-    delete tempBase;    // Only temporally needed
-
-    return std::vector<VectorVector>( 1u, std::vector<Vector>( _mesh->GetNumCells(), Vector( ntotalEquations, 0.0 ) ) );
-}
+// std::vector<VectorVector> LineSource_Moment::GetExternalSource( const Vector& /*energies*/ ) {
+//     SphericalBase* tempBase  = SphericalBase::Create( _settings );
+//     unsigned ntotalEquations = tempBase->GetBasisSize();
+//     delete tempBase;    // Only temporally needed
+//
+//     return std::vector<VectorVector>( 1u, std::vector<Vector>( _mesh->GetNumCells(), Vector( ntotalEquations, 0.0 ) ) );
+// }
 
 VectorVector LineSource_Moment::SetupIC() {
     // Compute number of equations in the system

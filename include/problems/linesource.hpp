@@ -9,7 +9,8 @@ class LineSource : public ProblemBase
     LineSource() = delete;
 
   protected:
-    double _sigmaS; /*!< @brief Scattering coefficient */
+    Vector _sigmaS; /*!< @brief Vector of scattering crosssections */
+    Vector _sigmaT; /*!< @brief Vector of total crosssections */
 
   public:
     LineSource( Config* settings, Mesh* mesh, QuadratureBase* quad );
@@ -24,6 +25,10 @@ class LineSource : public ProblemBase
          @return exact solution at x,y,t,scatteringXS
     */
     virtual double GetAnalyticalSolution( double x, double y, double t, double sigma_s ) override;
+
+    VectorVector GetScatteringXS( const Vector& energies ) override;
+    VectorVector GetTotalXS( const Vector& energies ) override;
+    std::vector<VectorVector> GetExternalSource( const Vector& energies ) override;
 
   private:
     /*! @brief Helper Functions to compute the analytic solution for sigma != 0
@@ -51,9 +56,6 @@ class LineSource_SN : public LineSource
     LineSource_SN( Config* settings, Mesh* mesh, QuadratureBase* quad );
     ~LineSource_SN();
 
-    VectorVector GetScatteringXS( const Vector& energies ) override;
-    VectorVector GetTotalXS( const Vector& energies ) override;
-    std::vector<VectorVector> GetExternalSource( const Vector& energies ) override;
     VectorVector SetupIC() override;
 };
 
@@ -66,9 +68,6 @@ class LineSource_Moment : public LineSource
     LineSource_Moment( Config* settings, Mesh* mesh, QuadratureBase* quad );
     ~LineSource_Moment();
 
-    VectorVector GetScatteringXS( const Vector& energies ) override;
-    VectorVector GetTotalXS( const Vector& energies ) override;
-    std::vector<VectorVector> GetExternalSource( const Vector& energies ) override;
     VectorVector SetupIC() override;
 };
 

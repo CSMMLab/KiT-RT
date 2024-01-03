@@ -7,8 +7,8 @@ class Hohlraum : public ProblemBase
 {
   private:
     Hohlraum() = delete;
-    Vector _scatteringXS; /*!< @brief Vector of scattering crosssections */
-    Vector _totalXS;      /*!< @brief Vector of total crosssections */
+    Vector _sigmaS; /*!< @brief Vector of scattering crosssections */
+    Vector _sigmaT; /*!< @brief Vector of total crosssections */
 
   public:
     Hohlraum( Config* settings, Mesh* mesh, QuadratureBase* quad );

@@ -128,7 +128,6 @@ void SolverBase::Solve() {
     unsigned rkStages = _settings->GetRKStages();
     // Create Backup solution for Runge Kutta
     VectorVector solRK0 = _sol;
-    std::cout << "here\n";
 
     // Loop over energies (pseudo-time of continuous slowing down approach)
     for( unsigned iter = 0; iter < _nIter; iter++ ) {
@@ -136,15 +135,12 @@ void SolverBase::Solve() {
         for( unsigned rkStep = 0; rkStep < rkStages; ++rkStep ) {
             // --- Prepare Boundaries and temp variables
             IterPreprocessing( iter + rkStep );
-            std::cout << "here2\n";
 
             // --- Compute Fluxes ---
             FluxUpdate();
-            std::cout << "here3\n";
 
             // --- Finite Volume Update ---
             FVMUpdate( iter + rkStep );
-            std::cout << "here4\n";
 
             // --- Update Solution within Runge Kutta Stages
             _sol = _solNew;
@@ -152,7 +148,6 @@ void SolverBase::Solve() {
 
         // --- Iter Postprocessing ---
         IterPostprocessing( iter );
-        std::cout << "here5\n";
 
         // --- Runge Kutta Timestep ---
         if( rkStages == 2 ) RKUpdate( solRK0, _sol );
@@ -160,7 +155,6 @@ void SolverBase::Solve() {
         // --- Write Output ---
         WriteVolumeOutput( iter );
         WriteScalarOutput( iter );
-        std::cout << "here6\n";
 
         // --- Update Scalar Fluxes
         _scalarFlux = _scalarFluxNew;

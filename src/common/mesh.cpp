@@ -27,6 +27,7 @@ Mesh::Mesh( std::vector<Vector> nodes,
 Mesh::~Mesh() {}
 
 void Mesh::ComputeConnectivity() {
+    auto log = spdlog::get( "event" );
 
     // get MPI info
     int comm_size, comm_rank;
@@ -45,7 +46,10 @@ void Mesh::ComputeConnectivity() {
     std::vector<Vector> interfaceMidFlatPart( _numNodesPerCell * chunkSize, Vector( _dim, -1.0 ) );
 
     // pre sort cells and boundaries; sorting is needed for std::set_intersection
+    log->info( "| ... sort cells..." );
+
     auto sortedCells( _cells );
+#pragma omp parallal for
     for( unsigned i = 0; i < _numCells; ++i ) {
         std::sort( sortedCells[i].begin(), sortedCells[i].end() );
     }
@@ -56,12 +60,16 @@ void Mesh::ComputeConnectivity() {
     }
 
     // save which cell has which nodes
+    log->info( "| ... connect cells to nodes..." );
     blaze::CompressedMatrix<bool> connMat( _numCells, _numNodes );
+#pragma omp parallal for
     for( unsigned i = mpiCellStart; i < mpiCellEnd; ++i ) {
         for( auto j : _cells[i] ) connMat.set( i, j, true );
     }
 
     // determine neighbor cells and normals with MPI and OpenMP
+    log->info( "| ... determine neighbors of cells..." );
+
 #pragma omp parallel for schedule( guided )
     for( unsigned i = mpiCellStart; i < mpiCellEnd; ++i ) {
         std::vector<unsigned>* cellsI = &sortedCells[i];

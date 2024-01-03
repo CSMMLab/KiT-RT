@@ -47,8 +47,8 @@ class Lattice_SN : public ProblemBase
 class Lattice_Moment : public ProblemBase
 {
   private:
-    Vector _scatteringXS; /*!< @brief Vector of scattering crosssections len: numCells  */
-    Vector _totalXS;      /*!< @brief Vector of total crosssections. len: numCells*/
+    Vector _sigmaS; /*!< @brief Vector of scattering crosssections len: numCells  */
+    Vector _sigmaT;       /*!< @brief Vector of total crosssections. len: numCells*/
 
     Lattice_Moment() = delete;
 

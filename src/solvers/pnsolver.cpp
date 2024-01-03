@@ -217,8 +217,7 @@ void PNSolver::FVMUpdate( unsigned idx_energy ) {
             _solNew[idx_cell][idx_sys] = _sol[idx_cell][idx_sys] - ( _dT / _areas[idx_cell] ) * _solNew[idx_cell][idx_sys] /* cell averaged flux */
                                          - _dT * _sol[idx_cell][idx_sys] *
                                                ( _sigmaS[idx_energy][idx_cell] * _scatterMatDiag[idx_sys] /* scattering influence */
-                                                 + _sigmaT[idx_energy][idx_cell] );
-            /* total xs influence  */
+                                                 + _sigmaT[idx_energy][idx_cell] );                       /* total xs influence  */
         }
         // Source Term
         _solNew[idx_cell] += _dT * _Q[0][idx_cell];

@@ -12,8 +12,8 @@
 #include "velocitybasis/sphericalharmonics.hpp"
 
 Hohlraum::Hohlraum( Config* settings, Mesh* mesh, QuadratureBase* quad ) : ProblemBase( settings, mesh, quad ) {
-    _scatteringXS = Vector( _mesh->GetNumCells(), 0.1 );    // white area default
-    _totalXS      = Vector( _mesh->GetNumCells(), 0.1 );    // white area default
+    _sigmaS  = Vector( _mesh->GetNumCells(), 0.1 );    // white area default
+    _sigmaT = Vector( _mesh->GetNumCells(), 0.1 );    // white area default
 
 #pragma omp parallel for
     for( unsigned idx_cell = 0; idx_cell < _mesh->GetNumCells(); idx_cell++ ) {
@@ -21,33 +21,33 @@ Hohlraum::Hohlraum( Config* settings, Mesh* mesh, QuadratureBase* quad ) : Probl
         double y = _mesh->GetCellMidPoints()[idx_cell][1];
         // red area
         if( x < 0.05 && y > 0.25 && y < 1.05 ) {
-            _scatteringXS[idx_cell] = 95.0;
-            _totalXS[idx_cell]      = 100.0;
+            _sigmaS[idx_cell]  = 95.0;
+            _sigmaT[idx_cell] = 100.0;
         }
         // green area 1
         if( x > 0.45 && x < 0.85 && y > 0.25 && y < 0.3 ) {
-            _scatteringXS[idx_cell] = 90.0;
-            _totalXS[idx_cell]      = 100.0;
+            _sigmaS[idx_cell]  = 90.0;
+            _sigmaT[idx_cell] = 100.0;
         }
         // green area 2
         if( x > 0.45 && x < 0.85 && y > 1.0 && y < 1.05 ) {
-            _scatteringXS[idx_cell] = 90.0;
-            _totalXS[idx_cell]      = 100.0;
+            _sigmaS[idx_cell]  = 90.0;
+            _sigmaT[idx_cell] = 100.0;
         }
         // green area 3
         if( x > 0.45 && x < 0.5 && y > 0.25 && y < 1.05 ) {
-            _scatteringXS[idx_cell] = 90.0;
-            _totalXS[idx_cell]      = 100.0;
+            _sigmaS[idx_cell]  = 90.0;
+            _sigmaT[idx_cell] = 100.0;
         }
         // black area
         if( x > 0.5 && x < 0.85 && y > 0.3 && y < 1.0 ) {
-            _scatteringXS[idx_cell] = 50.0;
-            _totalXS[idx_cell]      = 100.0;
+            _sigmaS[idx_cell]  = 50.0;
+            _sigmaT[idx_cell] = 100.0;
         }
         // blue area
         if( x > 1.25 || y < 0.05 || y > 1.25 ) {
-            _scatteringXS[idx_cell] = 0.0;
-            _totalXS[idx_cell]      = 100.0;
+            _sigmaS[idx_cell]  = 0.0;
+            _sigmaT[idx_cell] = 100.0;
         }
     }
 }
@@ -84,9 +84,9 @@ VectorVector Hohlraum::SetupIC() {
     return psi;
 }
 
-VectorVector Hohlraum::GetScatteringXS( const Vector& energies ) { return VectorVector( energies.size(), _scatteringXS ); }
+VectorVector Hohlraum::GetScatteringXS( const Vector& energies ) { return VectorVector( energies.size(), _sigmaS ); }
 
-VectorVector Hohlraum::GetTotalXS( const Vector& energies ) { return VectorVector( energies.size(), _totalXS ); }
+VectorVector Hohlraum::GetTotalXS( const Vector& energies ) { return VectorVector( energies.size(), _sigmaT ); }
 
 Hohlraum_Moment::Hohlraum_Moment( Config* settings, Mesh* mesh, QuadratureBase* quad ) : Hohlraum( settings, mesh, quad ) {}
 
