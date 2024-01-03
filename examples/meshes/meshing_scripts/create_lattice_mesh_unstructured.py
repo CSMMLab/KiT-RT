@@ -20,8 +20,8 @@ def main():
     print("Parsing options")
     # --- parse options ---
     parser = OptionParser()
-    parser.add_option("-o", "--output_name", dest="output_name", default="../lattice_quad")
-    parser.add_option("-c", "--char_length", dest="char_length", default=0.075)
+    parser.add_option("-o", "--output_name", dest="output_name", default="../lattice_unstructured")
+    parser.add_option("-c", "--char_length", dest="char_length", default=0.01)
     (options, args) = parser.parse_args()
 
     options.output_name = str(options.output_name)
@@ -38,9 +38,9 @@ def main():
     geom.boolean_fragments(boxes, [])
     geom.add_physical(domain.lines, label="void")
 
-    geom.add_raw_code("Transfinite Surface{:};")
-    geom.add_raw_code('Mesh.Algorithm= 3;')
-    geom.add_raw_code("Recombine Surface {:} = 0;")
+    #geom.add_raw_code("Transfinite Surface{:};")
+    #geom.add_raw_code('Mesh.Algorithm= 3;')
+    #geom.add_raw_code("Recombine Surface {:} = 0;")
 
     mesh_code = geom.get_code()
     with open(options.output_name + ".geo", "w") as mesh_file:

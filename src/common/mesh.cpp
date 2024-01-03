@@ -13,9 +13,14 @@ Mesh::Mesh( std::vector<Vector> nodes,
     else {
         ErrorMessages::Error( "Unsupported mesh dimension!", CURRENT_FUNCTION );
     }
+    auto log = spdlog::get( "event" );
+    log->info( "| Compute cell areas..." );
     ComputeCellAreas();
+    log->info( "| Compute cell midpoints..." );
     ComputeCellMidpoints();
+    log->info( "| Compute mesh connectivity..." );
     ComputeConnectivity();
+    log->info( "| Compute boundary..." );
     ComputeBounds();
 }
 
@@ -57,7 +62,7 @@ void Mesh::ComputeConnectivity() {
     }
 
     // determine neighbor cells and normals with MPI and OpenMP
-#pragma omp parallel for
+#pragma omp parallel for schedule( guided )
     for( unsigned i = mpiCellStart; i < mpiCellEnd; ++i ) {
         std::vector<unsigned>* cellsI = &sortedCells[i];
         unsigned ctr                  = 0;
@@ -168,7 +173,7 @@ void Mesh::ComputeConnectivity() {
 
     // assign boundary types to all cells
     _cellBoundaryTypes.resize( _numCells, BOUNDARY_TYPE::NONE );
-#pragma omp parallel for
+    // #pragma omp parallel for
     for( unsigned i = 0; i < _numCells; ++i ) {
         if( std::any_of( _cellNeighbors[i].begin(), _cellNeighbors[i].end(), [this]( unsigned i ) {
                 return i == _ghostCellID;

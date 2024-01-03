@@ -5,10 +5,10 @@ import subprocess
 def main():
     # Example usage:
     quad_order = 19
-    cl_fine_vals = [0.05, 0.02, 0.01, 0.005]
-    cl_coarse = 0.075
+    cl_fine_vals = [0.02, 0.02, 0.01, 0.005]
+    cl_coarse = 0.05
     cl_boundary = 0.2
-    length = 0.075
+    length = 0.05
 
     for i in range(len(cl_fine_vals)):
         cl_fine = cl_fine_vals[i]

@@ -1,7 +1,7 @@
 cl_fine = 0.02;
-cl_coarse = 0.075;
+cl_coarse = 0.05;
 cl_boundary = 0.2;
-length = 0.075;
+length = 0.05;
 Point(1) = {-3.5, -3.5, 0, cl_boundary};
 Point(2) = {3.5, -3.5, 0, cl_boundary};
 Point(3) = {-3.5, 3.5, 0, cl_boundary};
