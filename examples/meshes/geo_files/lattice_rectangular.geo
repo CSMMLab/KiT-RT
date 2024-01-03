@@ -5,16 +5,6 @@ Point(1) = {-3.5, -3.5, 0, cl_fine};
 Point(2) = {3.5, -3.5, 0, cl_fine};
 Point(3) = {-3.5, 3.5, 0, cl_fine};
 Point(4) = {3.5, 3.5, 0, cl_fine};
-//+
-//+
-Line(1) = {1, 2};
-//+
-Line(2) = {2, 4};
-//+
-Line(3) = {4, 3};
-//+
-Line(4) = {3, 1};
-Physical Curve("void", 1) = {1,2,3,4};
 
 // Inner grid
 Point(5) = { -2.5, -2.5, 0, cl_fine };
@@ -138,6 +128,52 @@ Point(122) = { 2.5, 1.0, 0, cl_fine };
 Point(123) = { 2.5, 1.5, 0, cl_fine };
 Point(124) = { 2.5, 2.0, 0, cl_fine };
 Point(125) = { 2.5, 2.5, 0, cl_fine };
+
+// helper boundary points
+Point(126) = { -2.5, -3.5, 0, cl_fine };
+Point(127) = { -2.0, -3.5, 0, cl_fine };
+Point(128) = { -1.5, -3.5, 0, cl_fine };
+Point(129) = { -1.0, -3.5, 0, cl_fine };
+Point(130) = { -0.5, -3.5, 0, cl_fine };
+Point(131) = { 0.0, -3.5, 0, cl_fine };
+Point(132) = { 0.5, -3.5, 0, cl_fine };
+Point(133) = { 1.0, -3.5, 0, cl_fine };
+Point(134) = { 1.5, -3.5, 0, cl_fine };
+Point(135) = { 2.0, -3.5, 0, cl_fine };
+Point(136) = { 2.5, -3.5, 0, cl_fine };
+Point(137) = { -2.5, 3.5, 0, cl_fine };
+Point(138) = { -2.0, 3.5, 0, cl_fine };
+Point(139) = { -1.5, 3.5, 0, cl_fine };
+Point(140) = { -1.0, 3.5, 0, cl_fine };
+Point(141) = { -0.5, 3.5, 0, cl_fine };
+Point(142) = { 0.0, 3.5, 0, cl_fine };
+Point(143) = { 0.5, 3.5, 0, cl_fine };
+Point(144) = { 1.0, 3.5, 0, cl_fine };
+Point(145) = { 1.5, 3.5, 0, cl_fine };
+Point(146) = { 2.0, 3.5, 0, cl_fine };
+Point(147) = { 2.5, 3.5, 0, cl_fine };
+Point(148) = { -3.5, -2.5, 0, cl_fine };
+Point(149) = { -3.5, -2.0, 0, cl_fine };
+Point(150) = { -3.5, -1.5, 0, cl_fine };
+Point(151) = { -3.5, -1.0, 0, cl_fine };
+Point(152) = { -3.5, -0.5, 0, cl_fine };
+Point(153) = { -3.5, 0.0, 0, cl_fine };
+Point(154) = { -3.5, 0.5, 0, cl_fine };
+Point(155) = { -3.5, 1.0, 0, cl_fine };
+Point(156) = { -3.5, 1.5, 0, cl_fine };
+Point(157) = { -3.5, 2.0, 0, cl_fine };
+Point(158) = { -3.5, 2.5, 0, cl_fine };
+Point(159) = { 3.5, -2.5, 0, cl_fine };
+Point(160) = { 3.5, -2.0, 0, cl_fine };
+Point(161) = { 3.5, -1.5, 0, cl_fine };
+Point(162) = { 3.5, -1.0, 0, cl_fine };
+Point(163) = { 3.5, -0.5, 0, cl_fine };
+Point(164) = { 3.5, 0.0, 0, cl_fine };
+Point(165) = { 3.5, 0.5, 0, cl_fine };
+Point(166) = { 3.5, 1.0, 0, cl_fine };
+Point(167) = { 3.5, 1.5, 0, cl_fine };
+Point(168) = { 3.5, 2.0, 0, cl_fine };
+Point(169) = { 3.5, 2.5, 0, cl_fine };
 
 // Horizontal and vertical lines in inner grid
 Line(5) = { 5, 16};
@@ -689,25 +725,464 @@ Transfinite Surface {100};
 Transfinite Curve {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114} = n_recombine Using Progression 1.2;
 //+
 Transfinite Curve {126, 136, 146, 156, 166, 176, 186, 196, 206, 216, 226, 127, 137, 147, 157, 167, 177, 187, 197, 207, 217, 227, 128, 138, 148, 158, 168, 178, 188, 198, 208, 218, 228, 129, 139, 149, 159, 169, 179, 189, 199, 209, 219, 229, 130, 140, 150, 160, 170, 180, 190, 200, 210, 220, 230, 131, 141, 151, 161, 171, 181, 191, 201, 211, 221, 231, 132, 142, 152, 162, 172, 182, 192, 202, 212, 222, 232, 133, 143, 153, 163, 173, 183, 193, 203, 213, 223, 233, 134, 144, 154, 164, 174, 184, 194, 204, 214, 224, 234, 135, 145, 155, 165, 175, 185, 195, 205, 215, 225, 235} = n_recombine Using Progression 1.2;
+//
 //+
+Line(236) = {1, 126};
+//+
+Line(237) = {126, 127};
+//+
+Line(238) = {127, 128};
+//+
+Line(239) = {128, 129};
+//+
+Line(240) = {129, 130};
+//+
+Line(241) = {130, 131};
+//+
+Line(242) = {131, 132};
+//+
+Line(243) = {132, 133};
+//+
+Line(244) = {133, 134};
+//+
+Line(245) = {134, 135};
+//+
+Line(246) = {135, 136};
+//+
+Line(247) = {136, 2};
+//+
+Line(248) = {2, 159};
+//+
+Line(249) = {159, 160};
+//+
+Line(250) = {160, 161};
+//+
+Line(251) = {161, 162};
+//+
+Line(252) = {162, 163};
+//+
+Line(253) = {163, 164};
+//+
+Line(254) = {164, 165};
+//+
+Line(255) = {165, 166};
+//+
+Line(256) = {166, 167};
+//+
+Line(257) = {167, 168};
+//+
+Line(258) = {168, 169};
+//+
+Line(259) = {169, 4};
+//+
+Line(260) = {4, 147};
+//+
+Line(261) = {147, 146};
+//+
+Line(262) = {146, 145};
+//+
+Line(263) = {145, 144};
+//+
+Line(264) = {144, 143};
+//+
+Line(265) = {143, 142};
+//+
+Line(266) = {142, 141};
+//+
+Line(267) = {141, 140};
+//+
+Line(268) = {140, 139};
+//+
+Line(269) = {139, 138};
+//+
+Line(270) = {138, 137};
+//+
+Line(271) = {137, 3};
+//+
+Line(272) = {3, 158};
+//+
+Line(273) = {158, 157};
+//+
+Line(274) = {157, 156};
+//+
+Line(275) = {156, 155};
+//+
+Line(276) = {155, 154};
+//+
+Line(277) = {154, 153};
+//+
+Line(278) = {153, 152};
+//+
+Line(279) = {152, 151};
+//+
+Line(280) = {151, 150};
+//+
+Line(281) = {150, 149};
+//+
+Line(282) = {149, 148};
+//+
+Line(283) = {148, 1};
+//+
+Line(284) = {126, 5};
+//+
+Line(285) = {127, 16};
+//+
+Line(286) = {128, 27};
+//+
+Line(287) = {129, 38};
+//+
+Line(288) = {130, 49};
+//+
+Line(289) = {131, 60};
+//+
+Line(290) = {132, 71};
+//+
+Line(291) = {133, 82};
+//+
+Line(292) = {134, 93};
+//+
+Line(293) = {135, 104};
+//+
+Line(294) = {136, 115};
+//+
+Line(295) = {159, 115};
+//+
+Line(296) = {160, 116};
+//+
+Line(297) = {161, 117};
+//+
+Line(298) = {162, 118};
+//+
+Line(299) = {163, 119};
+//+
+Line(300) = {164, 120};
+//+
+Line(301) = {165, 121};
+//+
+Line(302) = {166, 122};
+//+
+Line(303) = {167, 123};
+//+
+Line(304) = {168, 124};
+//+
+Line(305) = {169, 125};
+//+
+Line(306) = {147, 125};
+//+
+Line(307) = {146, 114};
+//+
+Line(308) = {145, 103};
+//+
+Line(309) = {144, 92};
+//+
+Line(310) = {143, 81};
+//+
+Line(311) = {142, 70};
+//+
+Line(312) = {141, 59};
+//+
+Line(313) = {140, 48};
+//+
+Line(314) = {139, 37};
+//+
+Line(315) = {138, 26};
+//+
+Line(316) = {137, 15};
+//+
+Line(317) = {158, 15};
+//+
+Line(318) = {157, 14};
+//+
+Line(319) = {156, 13};
+//+
+Line(320) = {155, 12};
+//+
+Line(321) = {154, 11};
+//+
+Line(322) = {153, 10};
+//+
+Line(323) = {152, 9};
+//+
+Line(324) = {151, 8};
+//+
+Line(325) = {150, 7};
+//+
+Line(326) = {149, 6};
+//+
+Line(327) = {148, 5};
+//+
+Curve Loop(103) = {236, 284, -327, 283};
+//+
+Plane Surface(102) = {103};
+//+
+Curve Loop(104) = {237, 285, -5, -284};
+//+
+Plane Surface(103) = {104};
+//+
+Curve Loop(105) = {238, 286, 16, -285};
+//+
+Plane Surface(104) = {105};
+//+
+Curve Loop(106) = {239, 287, -27, -286};
+//+
+Plane Surface(105) = {106};
+//+
+Curve Loop(107) = {240, 288, 38, -287};
+//+
+Plane Surface(106) = {107};
+//+
+Curve Loop(108) = {241, 289, -49, -288};
+//+
+Plane Surface(107) = {108};
+//+
+Curve Loop(109) = {242, 290, 60, -289};
+//+
+Plane Surface(108) = {109};
+//+
+Curve Loop(110) = {243, 291, -71, -290};
+//+
+Plane Surface(109) = {110};
+//+
+Curve Loop(111) = {244, 292, 82, -291};
+//+
+Plane Surface(110) = {111};
+//+
+Curve Loop(112) = {245, 293, -93, -292};
+//+
+Plane Surface(111) = {112};
+//+
+Curve Loop(113) = {246, 294, 104, -293};
+//+
+Plane Surface(112) = {113};
+//+
+Curve Loop(114) = {247, 248, 295, -294};
+//+
+Plane Surface(113) = {114};
+//+
+Curve Loop(115) = {249, 296, -226, -295};
+//+
+Plane Surface(114) = {115};
+//+
+Curve Loop(116) = {250, 297, 227, -296};
+//+
+Plane Surface(115) = {116};
+//+
+Curve Loop(117) = {251, 298, -228, -297};
+//+
+Plane Surface(116) = {117};
+//+
+Curve Loop(118) = {252, 299, 229, -298};
+//+
+Plane Surface(117) = {118};
+//+
+Curve Loop(119) = {253, 300, -230, -299};
+//+
+Plane Surface(118) = {119};
+//+
+Curve Loop(120) = {254, 301, 231, -300};
+//+
+Plane Surface(119) = {120};
+//+
+Curve Loop(121) = {255, 302, -232, -301};
+//+
+Plane Surface(120) = {121};
+//+
+Curve Loop(122) = {256, 303, 233, -302};
+//+
+Plane Surface(121) = {122};
+//+
+Curve Loop(123) = {257, 304, -234, -303};
+//+
+Plane Surface(122) = {123};
+//+
+Curve Loop(124) = {258, 305, 235, -304};
+//+
+Plane Surface(123) = {124};
+//+
+Curve Loop(125) = {259, 260, 306, -305};
+//+
+Plane Surface(124) = {125};
+//+
+Curve Loop(126) = {261, 307, -114, -306};
+//+
+Plane Surface(125) = {126};
+//+
+Curve Loop(127) = {262, 308, 103, -307};
+//+
+Plane Surface(126) = {127};
+//+
+Curve Loop(128) = {263, 309, -92, -308};
+//+
+Plane Surface(127) = {128};
+//+
+Curve Loop(129) = {264, 310, 81, -309};
+//+
+Plane Surface(128) = {129};
+//+
+Curve Loop(130) = {265, 311, -70, -310};
+//+
+Plane Surface(129) = {130};
+//+
+Curve Loop(131) = {266, 312, 59, -311};
+//+
+Plane Surface(130) = {131};
+//+
+Curve Loop(132) = {267, 313, -48, -312};
+//+
+Plane Surface(131) = {132};
+//+
+Curve Loop(133) = {268, 314, 37, -313};
+//+
+Plane Surface(132) = {133};
+//+
+Curve Loop(134) = {269, 315, -26, -314};
+//+
+Plane Surface(133) = {134};
+//+
+Curve Loop(135) = {270, 316, 15, -315};
+//+
+Plane Surface(134) = {135};
+//+
+Curve Loop(136) = {271, 272, 317, -316};
+//+
+Plane Surface(135) = {136};
+//+
+Curve Loop(137) = {273, 318, -135, -317};
+//+
+Plane Surface(136) = {137};
+//+
+Curve Loop(138) = {274, 319, 134, -318};
+//+
+Plane Surface(137) = {138};
+//+
+Curve Loop(139) = {275, 320, -133, -319};
+//+
+Plane Surface(138) = {139};
+//+
+Curve Loop(140) = {276, 321, 132, -320};
+//+
+Plane Surface(139) = {140};
+//+
+Curve Loop(141) = {277, 322, -131, -321};
+//+
+Plane Surface(140) = {141};
+//+
+Curve Loop(142) = {278, 323, 130, -322};
+//+
+Plane Surface(141) = {142};
+//+
+Curve Loop(143) = {279, 324, -129, -323};
+//+
+Plane Surface(142) = {143};
+//+
+Curve Loop(144) = {280, 325, 128, -324};
+//+
+Plane Surface(143) = {144};
+//+
+Curve Loop(145) = {281, 326, -127, -325};
+//+
+Plane Surface(144) = {145};
+//+
+Curve Loop(146) = {282, 327, 126, -326};
+//+
+Plane Surface(145) = {146};
+//+
+//+
+Transfinite Surface {102};
+//+
+Transfinite Surface {103};
+//+
+Transfinite Surface {104};
+//+
+Transfinite Surface {105};
+//+
+Transfinite Surface {106};
+//+
+Transfinite Surface {107};
+//+
+Transfinite Surface {108};
+//+
+Transfinite Surface {109};
+//+
+Transfinite Surface {110};
+//+
+Transfinite Surface {111};
+//+
+Transfinite Surface {112};
+//+
+Transfinite Surface {113};
+//+
+Transfinite Surface {114};
+//+
+Transfinite Surface {115};
+//+
+Transfinite Surface {116};
+//+
+Transfinite Surface {117};
+//+
+Transfinite Surface {118};
+//+
+Transfinite Surface {119};
+//+
+Transfinite Surface {120};
+//+
+Transfinite Surface {121};
+//+
+Transfinite Surface {122};
+//+
+Transfinite Surface {123};
+//+
+Transfinite Surface {124};
+//+
+Transfinite Surface {125};
+//+
+Transfinite Surface {126};
+//+
+Transfinite Surface {127};
+//+
+Transfinite Surface {128};
+//+
+Transfinite Surface {129};
+//+
+Transfinite Surface {130};
+//+
+Transfinite Surface {131};
+//+
+Transfinite Surface {132};
+//+
+Transfinite Surface {133};
+//+
+Transfinite Surface {134};
+//+
+Transfinite Surface {135};
+//+
+Transfinite Surface {136};
+//+
+Transfinite Surface {137};
+//+
+Transfinite Surface {138};
+//+
+Transfinite Surface {139};
+//+
+Transfinite Surface {140};
+//+
+Transfinite Surface {141};
+//+
+Transfinite Surface {142};
+//+
+Transfinite Surface {143};
+//+
+Transfinite Surface {144};
+//+
+Transfinite Surface {145};
+//+
+Transfinite Curve {237, 238, 239, 240, 241, 242, 243, 244, 245, 246, 249, 250, 251, 252, 253, 254, 255, 256, 257, 258, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 273, 274, 275, 276, 277, 278, 279, 280, 281,282} = n_recombine Using Progression 1;
+//+
+Physical Curve("void",328) = {236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276, 277, 278, 279, 280, 281, 282, 283};
 
-//+
-Curve Loop(101) = {4, 1, 2, 3};
-//+
-Curve Loop(102) = {5, -16, 27, -38, 49, -60, 71, -82, 93, -104, 226, -227, 228, -229, 230, -231, 232, -233, 234, -235, 114, -103, 92, -81, 70, -59, 48, -37, 26, -15, 135, -134, 133, -132, 131, -130, 129, -128, 127, -126};
-//+
-Plane Surface(101) = {101, 102};
-//Transfinite Surface {101};
-//+
-//Transfinite Surface {101};
-//Transfinite Curve {1, 3} = 210 Using Progression 1;
-//+
-//Transfinite Curve {2, 4} = 210 Using Progression 1;
-//+
-Recombine Surface {:};
+Recombine Surface "*";
 // Define meshing options
-Mesh.Algorithm = 6; // Specify meshing algorithm (e.g., Delaunay)
-Mesh.ElementOrder = 1; // Specify element order
+//Mesh.Algorithm = 6; // Specify meshing algorithm (e.g., Delaunay)
+//Mesh.ElementOrder = 1; // Specify element order
 // Generate the mesh
-Mesh 2;
-
+//Mesh 2;
