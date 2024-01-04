@@ -1,6 +1,7 @@
 #include "common/mesh.hpp"
 
 #include <chrono>
+#include <omp.h>
 
 Mesh::Mesh( std::vector<Vector> nodes,
             std::vector<std::vector<unsigned>> cells,
@@ -29,15 +30,11 @@ Mesh::~Mesh() {}
 void Mesh::ComputeConnectivity() {
     auto log = spdlog::get( "event" );
 
-    // get MPI info
-    int comm_size, comm_rank;
-    MPI_Comm_size( MPI_COMM_WORLD, &comm_size );
-    MPI_Comm_rank( MPI_COMM_WORLD, &comm_rank );
-
-    // determine number/chunk size and indices of cells treated by each mpi thread
-    unsigned chunkSize    = std::ceil( static_cast<float>( _numCells ) / static_cast<float>( comm_size ) );
-    unsigned mpiCellStart = comm_rank * chunkSize;
-    unsigned mpiCellEnd   = std::min( ( comm_rank + 1 ) * chunkSize, _numCells );
+    unsigned comm_size = 1;    // No MPI implementation right now
+    // determine number/chunk size and indices of cells treated by each mpi thread (deactivated for now)
+    unsigned chunkSize    = _numCells;    // std::ceil( static_cast<float>( _numCells ) / static_cast<float>( comm_size ) );
+    unsigned mpiCellStart = 0;            // comm_rank * chunkSize;
+    unsigned mpiCellEnd   = _numCells;    // std::min( ( comm_rank + 1 ) * chunkSize, _numCells );
 
     // 'flat' vectors are a flattened representation of the neighbors numCells<numNodesPerCell> nested vectors; easier for MPI
     // 'part' vectors store information for each single MPI thread
@@ -49,7 +46,7 @@ void Mesh::ComputeConnectivity() {
     log->info( "| ... sort cells..." );
 
     auto sortedCells( _cells );
-#pragma omp parallal for
+#pragma omp parallel for
     for( unsigned i = 0; i < _numCells; ++i ) {
         std::sort( sortedCells[i].begin(), sortedCells[i].end() );
     }
@@ -62,7 +59,8 @@ void Mesh::ComputeConnectivity() {
     // save which cell has which nodes
     log->info( "| ... connect cells to nodes..." );
     blaze::CompressedMatrix<bool> connMat( _numCells, _numNodes );
-#pragma omp parallal for
+
+    // #pragma omp parallel for
     for( unsigned i = mpiCellStart; i < mpiCellEnd; ++i ) {
         for( auto j : _cells[i] ) connMat.set( i, j, true );
     }
@@ -132,20 +130,20 @@ void Mesh::ComputeConnectivity() {
     std::vector<int> neighborsFlat( _numNodesPerCell * chunkSize * comm_size, -1 );
     std::vector<Vector> normalsFlat( _numNodesPerCell * chunkSize * comm_size, Vector( _dim, 0.0 ) );
     std::vector<Vector> interfaceMidFlat( _numNodesPerCell * chunkSize * comm_size, Vector( _dim, 0.0 ) );
-    if( comm_size == 1 ) {    // can be done directly if there is only one MPI thread
-        neighborsFlat.assign( neighborsFlatPart.begin(), neighborsFlatPart.end() );
-        normalsFlat.assign( normalsFlatPart.begin(), normalsFlatPart.end() );
-        interfaceMidFlat.assign( interfaceMidFlatPart.begin(), interfaceMidFlatPart.end() );
-    }
-    else {
-        MPI_Allgather( neighborsFlatPart.data(),
-                       _numNodesPerCell * chunkSize,
-                       MPI_INT,
-                       neighborsFlat.data(),
-                       _numNodesPerCell * chunkSize,
-                       MPI_INT,
-                       MPI_COMM_WORLD );
-    }
+    // if( comm_size == 1 ) {    // can be done directly if there is only one MPI thread
+    neighborsFlat.assign( neighborsFlatPart.begin(), neighborsFlatPart.end() );
+    normalsFlat.assign( normalsFlatPart.begin(), normalsFlatPart.end() );
+    interfaceMidFlat.assign( interfaceMidFlatPart.begin(), interfaceMidFlatPart.end() );
+    //}
+    // else {
+    //    MPI_Allgather( neighborsFlatPart.data(),
+    //                   _numNodesPerCell * chunkSize,
+    //                   MPI_INT,
+    //                   neighborsFlat.data(),
+    //                   _numNodesPerCell * chunkSize,
+    //                   MPI_INT,
+    //                   MPI_COMM_WORLD );
+    //}
 
     // check for any unassigned faces
     if( std::any_of( neighborsFlat.begin(), neighborsFlat.end(), []( int i ) { return i == -1; } ) ) {    // if any entry in neighborsFlat is -1
@@ -181,7 +179,7 @@ void Mesh::ComputeConnectivity() {
 
     // assign boundary types to all cells
     _cellBoundaryTypes.resize( _numCells, BOUNDARY_TYPE::NONE );
-    // #pragma omp parallel for
+#pragma omp parallel for
     for( unsigned i = 0; i < _numCells; ++i ) {
         if( std::any_of( _cellNeighbors[i].begin(), _cellNeighbors[i].end(), [this]( unsigned i ) {
                 return i == _ghostCellID;
@@ -199,6 +197,7 @@ void Mesh::ComputeConnectivity() {
 
 void Mesh::ComputeCellAreas() {
     _cellAreas.resize( _numCells );
+#pragma omp parallel for
     for( unsigned i = 0; i < _numCells; ++i ) {
         switch( _numNodesPerCell ) {
             case 3: {    // triangular cells
@@ -237,6 +236,7 @@ void Mesh::ComputeCellAreas() {
 
 void Mesh::ComputeCellMidpoints() {
     _cellMidPoints = std::vector( _numCells, Vector( _dim, 0.0 ) );
+#pragma omp parallel for
     for( unsigned j = 0; j < _numCells; ++j ) {               // loop over cells
         for( unsigned l = 0; l < _cells[j].size(); ++l ) {    // loop over nodes of the cell
             _cellMidPoints[j] = _cellMidPoints[j] + _nodes[_cells[j][l]];

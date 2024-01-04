@@ -13,7 +13,6 @@
 
 // externals
 #include "spdlog/spdlog.h"
-#include <mpi.h>
 
 MNSolver::MNSolver( Config* settings ) : SolverBase( settings ) {
 

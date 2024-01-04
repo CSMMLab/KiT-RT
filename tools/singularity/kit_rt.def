@@ -10,8 +10,6 @@ From: ubuntu:20.04
     DEBIAN_FRONTEND=noninteractive apt-get install -qq \
        gcc \
        g++ \
-       libopenmpi-dev \
-       openmpi-bin \
        libblas-dev \
        liblapack-dev \
        git \

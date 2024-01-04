@@ -31,18 +31,12 @@ set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake ${CMAKE_MODULE_PATH})
 
 find_package( OpenMP REQUIRED )
 
-find_package( MPI REQUIRED )
-include_directories( ${MPI_INCLUDE_PATH} )
-
 find_package( LAPACK REQUIRED )
 include_directories( ${LAPACK_INCLUDE_DIR} )
 
 find_package( BLAS )
 
 find_package( VTK COMPONENTS vtkIOGeometry vtkFiltersCore REQUIRED )
-
-find_package( Python3 COMPONENTS Interpreter Development NumPy REQUIRED )
-include_directories( ${Python3_INCLUDE_DIRS} ${Python3_NumPy_INCLUDE_DIRS} )
 
 add_compile_definitions( KITRT_PYTHON_PATH="${CMAKE_SOURCE_DIR}/python" )
 add_compile_definitions( BLAZE_USE_SHARED_MEMORY_PARALLELIZATION=0 )
@@ -61,7 +55,7 @@ include_directories( ${CMAKE_SOURCE_DIR}/ext/blaze )
 include_directories( ${CMAKE_SOURCE_DIR}/ext/cpptoml/include )
 include_directories( ${CMAKE_SOURCE_DIR}/ext/spdlog/include )
 
-set( CORE_LIBRARIES ${Python3_LIBRARIES} ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} ${MPI_LIBRARIES} ${VTK_LIBRARIES} OpenMP::OpenMP_CXX -lstdc++fs )
+set( CORE_LIBRARIES ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES}  ${VTK_LIBRARIES} OpenMP::OpenMP_CXX -lstdc++fs )
 
 
 #################################################
@@ -105,30 +99,6 @@ target_compile_options( ${CMAKE_PROJECT_NAME} PUBLIC "$<$<CONFIG:DEBUG>:${KITRT_
 target_compile_options( ${CMAKE_PROJECT_NAME} PUBLIC "$<$<CONFIG:RELWITHDEBINFO>:${KITRT_RELWITHDEBINFO_OPTIONS}>" )
 target_compile_options( ${CMAKE_PROJECT_NAME} PUBLIC "$<$<CONFIG:RELEASE>:${KITRT_RELEASE_OPTIONS}>" )
 #################################################
-
-
-### BUILD ML ###################################
-# Standalone ML Build (legacy)
-#if( BUILD_ML )
-#    # Tensorflow
-#    include_directories( ${CMAKE_SOURCE_DIR}/ext/cppflow/include/ )
-#    find_library(TENSORFLOW_LIB tensorflow)
-#    add_executable( ${CMAKE_PROJECT_NAME} ${SRCS} ${EXT_SRCS} )
-#
-#    # Specify Path for tensorflow models
-#    add_compile_definitions( TENSORFLOW_MODEL_PATH="${CMAKE_SOURCE_DIR}/tfmodels" )
-#
-#    target_compile_definitions( ${CMAKE_PROJECT_NAME} PUBLIC BUILD_ML )
-#    target_link_libraries( ${CMAKE_PROJECT_NAME} ${CORE_LIBRARIES} ${TENSORFLOW_LIB})
-#    set_target_properties( ${CMAKE_PROJECT_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin" )
-#
-#    target_compile_options( ${CMAKE_PROJECT_NAME} PUBLIC "$<$<CONFIG:DEBUG>:${KITRT_DEBUG_OPTIONS}>" )
-#    target_compile_options( ${CMAKE_PROJECT_NAME} PUBLIC "$<$<CONFIG:RELWITHDEBINFO>:${KITRT_RELWITHDEBINFO_OPTIONS}>" )
-#    target_compile_options( ${CMAKE_PROJECT_NAME} PUBLIC "$<$<CONFIG:RELEASE>:${KITRT_RELEASE_OPTIONS}>" )
-#
-#endif()
-#################################################
-
 
 ### BUILD UNIT TESTS ############################
 if( BUILD_TESTING )

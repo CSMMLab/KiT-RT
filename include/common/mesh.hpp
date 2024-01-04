@@ -6,8 +6,6 @@
 #include "common/typedef.hpp"
 
 #include <algorithm>
-#include <mpi.h>
-#include <omp.h>
 #include <vector>
 
 #include "toolboxes/errormessages.hpp"

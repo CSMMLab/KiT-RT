@@ -17,7 +17,6 @@
 // externals
 #include "spdlog/spdlog.h"
 #include <iostream>
-#include <mpi.h>
 
 MNSolverNormalized::MNSolverNormalized( Config* settings ) : MNSolver( settings ) {
     _u0 = Vector( _nCells, 0.0 );

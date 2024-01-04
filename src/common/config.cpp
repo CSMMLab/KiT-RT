@@ -19,7 +19,6 @@
 #include "spdlog/spdlog.h"
 #include <filesystem>
 #include <fstream>
-#include <mpi.h>
 
 using namespace std;
 
@@ -1170,8 +1169,8 @@ void Config::InitLogger() {
         }
         if( fileLogLvl != spdlog::level::off ) {
             // define filename on root
-            int pe;
-            MPI_Comm_rank( MPI_COMM_WORLD, &pe );
+            int pe = 0;
+            // MPI_Comm_rank( MPI_COMM_WORLD, &pe );
             char cfilename[1024];
 
             if( pe == 0 ) {
@@ -1201,8 +1200,8 @@ void Config::InitLogger() {
                 strncpy( cfilename, filename.c_str(), sizeof( cfilename ) );
                 cfilename[sizeof( cfilename ) - 1] = 0;
             }
-            MPI_Bcast( &cfilename, sizeof( cfilename ), MPI_CHAR, 0, MPI_COMM_WORLD );
-            MPI_Barrier( MPI_COMM_WORLD );
+            // MPI_Bcast( &cfilename, sizeof( cfilename ), MPI_CHAR, 0, MPI_COMM_WORLD );
+            // MPI_Barrier( MPI_COMM_WORLD );
 
             // create spdlog file sink
             auto fileSink = std::make_shared<spdlog::sinks::basic_file_sink_mt>( _logDir + cfilename );
@@ -1222,8 +1221,8 @@ void Config::InitLogger() {
         std::vector<spdlog::sink_ptr> sinks;
         if( fileLogLvl != spdlog::level::off ) {
             // define filename on root
-            int pe;
-            MPI_Comm_rank( MPI_COMM_WORLD, &pe );
+            int pe = 0;
+            // MPI_Comm_rank( MPI_COMM_WORLD, &pe );
             char cfilename[1024];
 
             if( pe == 0 ) {
@@ -1253,8 +1252,8 @@ void Config::InitLogger() {
                 strncpy( cfilename, filename.c_str(), sizeof( cfilename ) );
                 cfilename[sizeof( cfilename ) - 1] = 0;
             }
-            MPI_Bcast( &cfilename, sizeof( cfilename ), MPI_CHAR, 0, MPI_COMM_WORLD );
-            MPI_Barrier( MPI_COMM_WORLD );
+            // MPI_Bcast( &cfilename, sizeof( cfilename ), MPI_CHAR, 0, MPI_COMM_WORLD );
+            // MPI_Barrier( MPI_COMM_WORLD );
 
             // create spdlog file sink
             auto fileSink = std::make_shared<spdlog::sinks::basic_file_sink_mt>( _logDir + cfilename );

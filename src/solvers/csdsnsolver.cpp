@@ -13,7 +13,6 @@
 
 // externals
 #include "spdlog/spdlog.h"
-#include <mpi.h>
 
 CSDSNSolver::CSDSNSolver( Config* settings ) : SNSolver( settings ) {
     _dose = std::vector<double>( _settings->GetNCells(), 0.0 );

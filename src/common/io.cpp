@@ -13,7 +13,7 @@
 
 #include <iostream>
 
-#include <mpi.h>
+// #include <mpi.h>
 #include <omp.h>
 
 #include <vtkCellArray.h>
@@ -27,9 +27,9 @@
 #include <vtkUnstructuredGrid.h>
 #include <vtkUnstructuredGridWriter.h>
 
-#include <Python.h>
-#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
-#include <numpy/arrayobject.h>
+// #include <Python.h>
+// #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
+// #include <numpy/arrayobject.h>
 
 using vtkPointsSP                 = vtkSmartPointer<vtkPoints>;
 using vtkUnstructuredGridSP       = vtkSmartPointer<vtkUnstructuredGrid>;
@@ -43,8 +43,8 @@ void ExportVTK( const std::string fileName,
                 const std::vector<std::vector<std::vector<double>>>& outputFields,
                 const std::vector<std::vector<std::string>>& outputFieldNames,
                 const Mesh* mesh ) {
-    int rank;
-    MPI_Comm_rank( MPI_COMM_WORLD, &rank );
+    int rank = 0;
+    // MPI_Comm_rank( MPI_COMM_WORLD, &rank );
     if( rank == 0 ) {
         unsigned dim             = mesh->GetDim();
         unsigned numCells        = mesh->GetNumCells();
@@ -132,7 +132,7 @@ void ExportVTK( const std::string fileName,
         // auto log = spdlog::get( "event" );
         // log->info( "Result successfully exported to '{0}'!", fileNameWithExt );
     }
-    MPI_Barrier( MPI_COMM_WORLD );
+    // MPI_Barrier( MPI_COMM_WORLD );
 }
 
 Mesh* LoadSU2MeshFromFile( const Config* settings ) {
@@ -328,9 +328,10 @@ std::string ParseArguments( int argc, char* argv[] ) {
 }
 
 void PrintLogHeader( std::string inputFile ) {
-    int nprocs, rank;
-    MPI_Comm_size( MPI_COMM_WORLD, &nprocs );
-    MPI_Comm_rank( MPI_COMM_WORLD, &rank );
+    int nprocs = 1;
+    int rank   = 0;
+    // MPI_Comm_size( MPI_COMM_WORLD, &nprocs );
+    // MPI_Comm_rank( MPI_COMM_WORLD, &rank );
     if( rank == 0 ) {
         auto log = spdlog::get( "event" );
 
@@ -366,9 +367,10 @@ void PrintLogHeader( std::string inputFile ) {
         }
         // log->info( "------------------------------------------------------------------------" );
     }
-    MPI_Barrier( MPI_COMM_WORLD );
+    // MPI_Barrier( MPI_COMM_WORLD );
 }
 
+/*
 Matrix createSU2MeshFromImage( std::string imageName, std::string SU2Filename ) {
     auto log = spdlog::get( "event" );
 
@@ -433,3 +435,4 @@ Matrix createSU2MeshFromImage( std::string imageName, std::string SU2Filename ) 
 
     return gsImage.transpose();
 }
+*/

@@ -10,11 +10,6 @@
 #include "toolboxes/errormessages.hpp"
 #include "toolboxes/textprocessingtoolbox.hpp"
 
-// externals
-#include <mpi.h>
-
-#include <iostream>
-
 #include "spdlog/spdlog.h"
 
 SNSolver::SNSolver( Config* settings ) : SolverBase( settings ) {

@@ -26,6 +26,6 @@ std::string ParseArguments( int argc, char* argv[] );
 
 void PrintLogHeader( std::string inputFile );
 
-Matrix createSU2MeshFromImage( std::string imageName, std::string SU2Filename );
+//Matrix createSU2MeshFromImage( std::string imageName, std::string SU2Filename ); Deprecated
 
 #endif    // IO_H

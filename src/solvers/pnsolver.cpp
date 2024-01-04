@@ -11,7 +11,6 @@
 #include "spdlog/spdlog.h"
 
 #include <iostream>
-#include <mpi.h>
 
 PNSolver::PNSolver( Config* settings ) : SolverBase( settings ) {
     _polyDegreeBasis = settings->GetMaxMomentDegree();

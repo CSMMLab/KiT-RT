@@ -16,7 +16,6 @@
 #include "toolboxes/textprocessingtoolbox.hpp"
 #include <cmath>
 #include <limits>
-#include <mpi.h>
 
 SolverBase::SolverBase( Config* settings ) {
     _settings = settings;
@@ -372,8 +371,6 @@ void SolverBase::WriteScalarOutput( unsigned idx_iter ) {
 }
 
 void SolverBase::PrintScreenOutput( unsigned idx_iter ) {
-    int rank;
-    MPI_Comm_rank( MPI_COMM_WORLD, &rank );
     auto log = spdlog::get( "event" );
 
     unsigned strLen  = 15;    // max width of one column
@@ -424,13 +421,11 @@ void SolverBase::PrintScreenOutput( unsigned idx_iter ) {
 
         lineToPrint += tmp + " |";
     }
-    if( rank == 0 ) {
-        if( _settings->GetScreenOutputFrequency() != 0 && idx_iter % (unsigned)_settings->GetScreenOutputFrequency() == 0 ) {
-            log->info( lineToPrint );
-        }
-        else if( idx_iter == _nIter - 1 ) {    // Always print last iteration
-            log->info( lineToPrint );
-        }
+    if( _settings->GetScreenOutputFrequency() != 0 && idx_iter % (unsigned)_settings->GetScreenOutputFrequency() == 0 ) {
+        log->info( lineToPrint );
+    }
+    else if( idx_iter == _nIter - 1 ) {    // Always print last iteration
+        log->info( lineToPrint );
     }
 }
 
@@ -483,8 +478,7 @@ void SolverBase::PrepareHistoryOutput() {
 }
 
 void SolverBase::PrintHistoryOutput( unsigned idx_iter ) {
-    int rank;
-    MPI_Comm_rank( MPI_COMM_WORLD, &rank );
+
     auto log = spdlog::get( "tabular" );
 
     // assemble the line to print
@@ -497,20 +491,15 @@ void SolverBase::PrintHistoryOutput( unsigned idx_iter ) {
     tmp = std::to_string( _screenOutputFields[_settings->GetNScreenOutput() - 1] );
     lineToPrint += tmp;    // Last element without comma
 
-    if( rank == 0 ) {
-        if( _settings->GetHistoryOutputFrequency() != 0 && idx_iter % (unsigned)_settings->GetHistoryOutputFrequency() == 0 ) {
-            log->info( lineToPrint );
-        }
-        else if( idx_iter == _nEnergies - 1 ) {    // Always print last iteration
-            log->info( lineToPrint );
-        }
+    if( _settings->GetHistoryOutputFrequency() != 0 && idx_iter % (unsigned)_settings->GetHistoryOutputFrequency() == 0 ) {
+        log->info( lineToPrint );
+    }
+    else if( idx_iter == _nEnergies - 1 ) {    // Always print last iteration
+        log->info( lineToPrint );
     }
 }
 
 void SolverBase::DrawPreSolverOutput() {
-    // MPI
-    int rank;
-    MPI_Comm_rank( MPI_COMM_WORLD, &rank );
 
     // Logger
     auto log    = spdlog::get( "event" );
@@ -518,76 +507,69 @@ void SolverBase::DrawPreSolverOutput() {
 
     std::string hLine = "--";
 
-    if( rank == 0 ) {
-        unsigned strLen  = 15;    // max width of one column
-        char paddingChar = ' ';
+    unsigned strLen  = 15;    // max width of one column
+    char paddingChar = ' ';
 
-        // Assemble Header for Screen Output
-        std::string lineToPrint = "| ";
-        std::string tmpLine     = "-----------------";
-        for( unsigned idxFields = 0; idxFields < _settings->GetNScreenOutput(); idxFields++ ) {
-            std::string tmp = _screenOutputFieldNames[idxFields];
+    // Assemble Header for Screen Output
+    std::string lineToPrint = "| ";
+    std::string tmpLine     = "-----------------";
+    for( unsigned idxFields = 0; idxFields < _settings->GetNScreenOutput(); idxFields++ ) {
+        std::string tmp = _screenOutputFieldNames[idxFields];
 
-            if( strLen > tmp.size() )    // Padding
-                tmp.insert( 0, strLen - tmp.size(), paddingChar );
-            else if( strLen < tmp.size() )    // Cutting
-                tmp.resize( strLen );
+        if( strLen > tmp.size() )    // Padding
+            tmp.insert( 0, strLen - tmp.size(), paddingChar );
+        else if( strLen < tmp.size() )    // Cutting
+            tmp.resize( strLen );
 
-            lineToPrint += tmp + " |";
-            hLine += tmpLine;
-        }
-        log->info( "---------------------------- Solver Starts -----------------------------" );
-        log->info( "| The simulation will run for {} iterations.", _nEnergies );
-        log->info( "| The spatial grid contains {} cells.", _nCells );
-        log->info( hLine );
-        log->info( lineToPrint );
-        log->info( hLine );
-
-        std::string lineToPrintCSV = "";
-        for( int idxFields = 0; idxFields < _settings->GetNHistoryOutput() - 1; idxFields++ ) {
-            std::string tmp = _historyOutputFieldNames[idxFields];
-            lineToPrintCSV += tmp + ",";
-        }
-        lineToPrintCSV += _historyOutputFieldNames[_settings->GetNHistoryOutput() - 1];
-        logCSV->info( lineToPrintCSV );
+        lineToPrint += tmp + " |";
+        hLine += tmpLine;
     }
+    log->info( "---------------------------- Solver Starts -----------------------------" );
+    log->info( "| The simulation will run for {} iterations.", _nEnergies );
+    log->info( "| The spatial grid contains {} cells.", _nCells );
+    log->info( hLine );
+    log->info( lineToPrint );
+    log->info( hLine );
+
+    std::string lineToPrintCSV = "";
+    for( int idxFields = 0; idxFields < _settings->GetNHistoryOutput() - 1; idxFields++ ) {
+        std::string tmp = _historyOutputFieldNames[idxFields];
+        lineToPrintCSV += tmp + ",";
+    }
+    lineToPrintCSV += _historyOutputFieldNames[_settings->GetNHistoryOutput() - 1];
+    logCSV->info( lineToPrintCSV );
 }
 
 void SolverBase::DrawPostSolverOutput() {
-    // MPI
-    int rank;
-    MPI_Comm_rank( MPI_COMM_WORLD, &rank );
 
     // Logger
     auto log = spdlog::get( "event" );
 
     std::string hLine = "--";
 
-    if( rank == 0 ) {
-        unsigned strLen  = 10;    // max width of one column
-        char paddingChar = ' ';
+    unsigned strLen  = 10;    // max width of one column
+    char paddingChar = ' ';
 
-        // Assemble Header for Screen Output
-        std::string lineToPrint = "| ";
-        std::string tmpLine     = "------------";
-        for( unsigned idxFields = 0; idxFields < _settings->GetNScreenOutput(); idxFields++ ) {
-            std::string tmp = _screenOutputFieldNames[idxFields];
+    // Assemble Header for Screen Output
+    std::string lineToPrint = "| ";
+    std::string tmpLine     = "------------";
+    for( unsigned idxFields = 0; idxFields < _settings->GetNScreenOutput(); idxFields++ ) {
+        std::string tmp = _screenOutputFieldNames[idxFields];
 
-            if( strLen > tmp.size() )    // Padding
-                tmp.insert( 0, strLen - tmp.size(), paddingChar );
-            else if( strLen < tmp.size() )    // Cutting
-                tmp.resize( strLen );
+        if( strLen > tmp.size() )    // Padding
+            tmp.insert( 0, strLen - tmp.size(), paddingChar );
+        else if( strLen < tmp.size() )    // Cutting
+            tmp.resize( strLen );
 
-            lineToPrint += tmp + " |";
-            hLine += tmpLine;
-        }
-        log->info( hLine );
-#ifndef BUILD_TESTING
-        log->info( "| The volume output files have been stored at " + _settings->GetOutputFile() );
-        log->info( "| The log files have been stored at " + _settings->GetLogDir() + _settings->GetLogFile() );
-#endif
-        log->info( "--------------------------- Solver Finished ----------------------------" );
+        lineToPrint += tmp + " |";
+        hLine += tmpLine;
     }
+    log->info( hLine );
+#ifndef BUILD_TESTING
+    log->info( "| The volume output files have been stored at " + _settings->GetOutputFile() );
+    log->info( "| The log files have been stored at " + _settings->GetLogDir() + _settings->GetLogFile() );
+#endif
+    log->info( "--------------------------- Solver Finished ----------------------------" );
 }
 
 void SolverBase::SolverPreprocessing() {}
