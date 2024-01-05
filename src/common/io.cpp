@@ -15,7 +15,6 @@
 #include <iostream>
 #include <sstream>
 #include <vector>
-
 // #include <mpi.h>
 #include <omp.h>
 #include <vtkCellArray.h>
@@ -315,26 +314,42 @@ void LoadConnectivityFromFile( const std::string inputFile,
     // cellInterfaceMidPoints (nNodesPerCell x nDim elements),
     // cellNormals (nNodesPerCell x nDim elements),
     // cellBoundaryTypes (1 element), (tranlated from  unsigned to enum BOUNDARY_TYPE)
-    std::ifstream inFile( inputFile );
 
+    std::ifstream inFile( inputFile );
     if( !inFile.is_open() ) {
         ErrorMessages::Error( "Error opening connectivity file.", CURRENT_FUNCTION );
         return;
     }
     for( unsigned i = 0; i < nCells; ++i ) {
         std::string line;
+        unsigned count = 1;
+
         std::getline( inFile, line );
+        for( char ch : line ) {
+            if( ch == ',' ) {
+                count++;
+            }
+        }
+
+        unsigned correctedNodesPerCell = nNodesPerCell;
+        if( count < nNodesPerCell + nNodesPerCell * nDim * 2 + 1 ) {
+            correctedNodesPerCell = nNodesPerCell - 1;
+        }
+
         std::istringstream iss( line );
         // Load cellNeighbors
-        cellNeighbors[i].resize( nNodesPerCell );
-        for( unsigned j = 0; j < nNodesPerCell; ++j ) {
+        cellNeighbors[i].resize( correctedNodesPerCell );
+
+        for( unsigned j = 0; j < correctedNodesPerCell; ++j ) {
             std::getline( iss, line, ',' );
             std::istringstream converter( line );
             converter >> cellNeighbors[i][j];
         }
+
         // Load cellInterfaceMidPoints
-        cellInterfaceMidPoints[i].resize( nNodesPerCell );
-        for( unsigned j = 0; j < nNodesPerCell; ++j ) {
+        cellInterfaceMidPoints[i].resize( correctedNodesPerCell );
+        for( unsigned j = 0; j < correctedNodesPerCell; ++j ) {
+            cellInterfaceMidPoints[i][j] = Vector( nDim, 0.0 );
             for( unsigned k = 0; k < nDim; ++k ) {
                 std::getline( iss, line, ',' );
                 std::istringstream converter( line );
@@ -342,8 +357,9 @@ void LoadConnectivityFromFile( const std::string inputFile,
             }
         }
         // Load cellNormals
-        cellNormals[i].resize( nNodesPerCell );
-        for( unsigned j = 0; j < nNodesPerCell; ++j ) {
+        cellNormals[i].resize( correctedNodesPerCell );
+        for( unsigned j = 0; j < correctedNodesPerCell; ++j ) {
+            cellNormals[i][j] = Vector( nDim, 0.0 );
             for( unsigned k = 0; k < nDim; ++k ) {
                 std::getline( iss, line, ',' );
                 std::istringstream converter( line );
@@ -361,12 +377,12 @@ void LoadConnectivityFromFile( const std::string inputFile,
 }
 
 void WriteConnecitivityToFile( const std::string outputFile,
-                               std::vector<std::vector<unsigned>>& cellNeighbors,
-                               std::vector<std::vector<Vector>>& cellInterfaceMidPoints,
-                               std::vector<std::vector<Vector>>& cellNormals,
-                               std::vector<BOUNDARY_TYPE>& cellBoundaryTypes,
-                               unsigned nNodesPerCell,
+                               const std::vector<std::vector<unsigned>>& cellNeighbors,
+                               const std::vector<std::vector<Vector>>& cellInterfaceMidPoints,
+                               const std::vector<std::vector<Vector>>& cellNormals,
+                               const std::vector<BOUNDARY_TYPE>& cellBoundaryTypes,
                                unsigned nCells,
+                               unsigned nNodesPerCell,
                                unsigned nDim ) {
     // File has nCells lines, each line is a comma separated entry containing:
     // cellNeighbors (nNodesPerCell elements),
@@ -375,46 +391,45 @@ void WriteConnecitivityToFile( const std::string outputFile,
     // cellBoundaryTypes (1 element), (tranlated from BOUNDARY_TYPE to unsigned)
 
     std::ofstream outFile( outputFile );
+    // const std::size_t bufferSize = 10000;    // Adjust as needed
+    // outFile.rdbuf()->pubsetbuf( 0, bufferSize );
+    if( outFile.is_open() ) {
+        // Write data to the file
+        for( unsigned i = 0; i < nCells; ++i ) {
+            // Write cellNeighbors
+            for( unsigned j = 0; j < cellNeighbors[i].size(); ++j ) {
+                outFile << cellNeighbors[i][j];
+                if( j < cellNeighbors[i].size() - 1 ) {
+                    outFile << ",";
+                }
+            }
+            // Write cellInterfaceMidPoints
+            for( unsigned j = 0; j < cellInterfaceMidPoints[i].size(); ++j ) {
+                for( unsigned k = 0; k < nDim; ++k ) {
+                    outFile << "," << cellInterfaceMidPoints[i][j][k];
+                }
+            }
+            // Write cellNormals
+            for( unsigned j = 0; j < cellNormals[i].size(); ++j ) {
+                for( unsigned k = 0; k < nDim; ++k ) {
+                    outFile << "," << cellNormals[i][j][k];
+                }
+            }
 
-    if( !outFile.is_open() ) {
+            // Write cellBoundaryTypes
+            outFile << "," << static_cast<unsigned>( cellBoundaryTypes[i] );
+            outFile << std::endl;
+        }
+        outFile.close();
+    }
+    else {
         ErrorMessages::Error( "Error opening connectivity file.", CURRENT_FUNCTION );
-        return;
     }
-
-    // Write data to the file
-    for( unsigned i = 0; i < nCells; ++i ) {
-        // Write cellNeighbors
-        for( unsigned j = 0; j < nNodesPerCell; ++j ) {
-            outFile << cellNeighbors[i][j];
-            if( j < nNodesPerCell - 1 ) {
-                outFile << ",";
-            }
-        }
-        // Write cellInterfaceMidPoints
-        for( unsigned j = 0; j < nNodesPerCell; ++j ) {
-            for( unsigned k = 0; k < nDim; ++k ) {
-                outFile << "," << cellInterfaceMidPoints[i][j][k];    // Replace with appropriate member of Vector
-            }
-        }
-        // Write cellNormals
-        for( unsigned j = 0; j < nNodesPerCell; ++j ) {
-            for( unsigned k = 0; k < nDim; ++k ) {
-                outFile << "," << cellNormals[i][j][k];    // Replace with appropriate member of Vector
-            }
-        }
-        // Write cellBoundaryTypes
-        outFile << "," << static_cast<unsigned>( cellBoundaryTypes[i] );
-
-        outFile << std::endl;
-    }
-    outFile.close();
 }
 
 std::string ParseArguments( int argc, char* argv[] ) {
     std::string inputFile;
-    std::string usage_help = "\n"
-                             "Usage: " +
-                             std::string( argv[0] ) + " inputfile\n";
+    std::string usage_help = "\nUsage: " + std::string( argv[0] ) + " inputfile\n";
 
     if( argc < 2 ) {
         std::cout << usage_help;

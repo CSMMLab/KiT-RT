@@ -32,10 +32,10 @@ void LoadConnectivityFromFile( const std::string outputFile,
                                unsigned nDim );
 
 void WriteConnecitivityToFile( const std::string outputFile,
-                               std::vector<std::vector<unsigned>>& cellNeighbors,
-                               std::vector<std::vector<Vector>>& cellInterfaceMidPoints,
-                               std::vector<std::vector<Vector>>& cellNormals,
-                               std::vector<BOUNDARY_TYPE>& cellBoundaryTypes,
+                               const std::vector<std::vector<unsigned>>& cellNeighbors,
+                               const std::vector<std::vector<Vector>>& cellInterfaceMidPoints,
+                               const std::vector<std::vector<Vector>>& cellNormals,
+                               const std::vector<BOUNDARY_TYPE>& cellBoundaryTypes,
                                unsigned nNodesPerCell,
                                unsigned nCells,
                                unsigned nDim );

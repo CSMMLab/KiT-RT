@@ -27,11 +27,11 @@ Mesh::Mesh( const Config* settings,
     std::string connectivityFile = _settings->GetMeshFile();
     size_t lastDotIndex          = connectivityFile.find_last_of( '.' );
     connectivityFile             = connectivityFile.substr( 0, lastDotIndex );
-    connectivityFile += ".connectivity";
+    connectivityFile += ".con";
     if( !std::filesystem::exists( connectivityFile ) ) {
         log->info( "| Compute mesh connectivity..." );
         ComputeConnectivity();    // Computes  _cellNeighbors, _cellInterfaceMidPoints, _cellNormals, _cellBoundaryTypes
-        log->info( "| Save mesh connectivity to file..." );
+        log->info( "| Save mesh connectivity to file " + connectivityFile );
         WriteConnecitivityToFile(
             connectivityFile, _cellNeighbors, _cellInterfaceMidPoints, _cellNormals, _cellBoundaryTypes, _numCells, _numNodesPerCell, _dim );
     }
@@ -41,13 +41,7 @@ Mesh::Mesh( const Config* settings,
         _cellInterfaceMidPoints.resize( _numCells );
         _cellNormals.resize( _numCells );
         _cellBoundaryTypes.resize( _numCells );
-
-        for( unsigned i = 0; i < _numCells; i++ ) {
-            _cellNeighbors[i].resize( _numNodesPerCell, -1 );
-            _cellInterfaceMidPoints[i].resize( _numNodesPerCell, Vector( _dim, 0.0 ) );
-            _cellNormals[i].resize( _numNodesPerCell, Vector( _dim, 0.0 ) );
-        }
-        log->info( "| Load mesh connectivity from file..." );
+        log->info( "| Load mesh connectivity from file " + connectivityFile );
         LoadConnectivityFromFile(
             connectivityFile, _cellNeighbors, _cellInterfaceMidPoints, _cellNormals, _cellBoundaryTypes, _numCells, _numNodesPerCell, _dim );
     }
@@ -73,7 +67,7 @@ void Mesh::ComputeConnectivity() {
     std::vector<Vector> interfaceMidFlatPart( _numNodesPerCell * chunkSize, Vector( _dim, -1.0 ) );
 
     // pre sort cells and boundaries; sorting is needed for std::set_intersection
-    log->info( "| ... sort cells..." );
+    log->info( "| ...sort cells..." );
 
     auto sortedCells( _cells );
 #pragma omp parallel for
@@ -87,17 +81,17 @@ void Mesh::ComputeConnectivity() {
     }
 
     // save which cell has which nodes
-    log->info( "| ... connect cells to nodes..." );
+    log->info( "| ...connect cells to nodes..." );
     blaze::CompressedMatrix<bool> connMat( _numCells, _numNodes );
-#pragma omp parallel for
+
+    // #pragma omp parallel for
     for( unsigned i = mpiCellStart; i < mpiCellEnd; ++i ) {
-        for( unsigned j = 0; i < _numNodesPerCell; ++i ) {
-            connMat.set( i, _cells[i][j], true );
-        }
+        for( auto j : _cells[i] ) connMat.set( i, j, true );
     }
 
     // determine neighbor cells and normals with MPI and OpenMP
-    log->info( "| ... determine neighbors of cells..." );
+    log->info( "| ...determine neighbors of cells..." );
+
 #pragma omp parallel for schedule( guided )
     for( unsigned i = mpiCellStart; i < mpiCellEnd; ++i ) {
         std::vector<unsigned>* cellsI = &sortedCells[i];
@@ -121,8 +115,9 @@ void Mesh::ComputeConnectivity() {
                 // determine unused index
                 unsigned pos0 = _numNodesPerCell * ( i - mpiCellStart );
                 unsigned pos  = pos0;
-                while( neighborsFlatPart[pos] != -1 && pos < pos0 + _numNodesPerCell - 1 && pos < chunkSize * _numNodesPerCell - 1 )
+                while( neighborsFlatPart[pos] != -1 && pos < pos0 + _numNodesPerCell - 1 && pos < chunkSize * _numNodesPerCell - 1 ) {
                     pos++;    // neighbors should be at same edge position for cells i AND j
+                }
                 neighborsFlatPart[pos] = j;
                 // compute normal vector
                 normalsFlatPart[pos]      = ComputeOutwardFacingNormal( _nodes[commonElements[0]], _nodes[commonElements[1]], _cellMidPoints[i] );
@@ -147,7 +142,9 @@ void Mesh::ComputeConnectivity() {
                 if( commonElements.size() >= _numNodesPerBoundary && commonElements.size() <= _numNodesPerCell ) {
                     unsigned pos0 = _numNodesPerCell * ( i - mpiCellStart );
                     unsigned pos  = pos0;
-                    while( neighborsFlatPart[pos] != -1 && pos < pos0 + _numNodesPerCell - 1 && pos < chunkSize * _numNodesPerCell - 1 ) pos++;
+                    while( neighborsFlatPart[pos] != -1 && pos < pos0 + _numNodesPerCell - 1 && pos < chunkSize * _numNodesPerCell - 1 ) {
+                        pos++;
+                    }
                     neighborsFlatPart[pos]    = _ghostCellID;
                     normalsFlatPart[pos]      = ComputeOutwardFacingNormal( _nodes[commonElements[0]], _nodes[commonElements[1]], _cellMidPoints[i] );
                     interfaceMidFlatPart[pos] = ComputeCellInterfaceMidpoints( _nodes[commonElements[0]], _nodes[commonElements[1]] );
@@ -200,7 +197,7 @@ void Mesh::ComputeConnectivity() {
         }
         else {    // normal cell neighbor
             if( std::find( _cellNeighbors[IDi].begin(), _cellNeighbors[IDi].end(), IDj ) == _cellNeighbors[IDi].end() ) {
-                _cellNeighbors[IDi].push_back( IDj );
+                _cellNeighbors[IDi].push_back( neighborsFlat[i] );
                 _cellNormals[IDi].push_back( normalsFlat[i] );
                 _cellInterfaceMidPoints[IDi].push_back( interfaceMidFlat[i] );
             }
