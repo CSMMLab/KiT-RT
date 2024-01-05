@@ -22,8 +22,35 @@ Mesh::Mesh( const Config* settings,
     ComputeCellAreas();
     log->info( "| Compute cell midpoints..." );
     ComputeCellMidpoints();
-    log->info( "| Compute mesh connectivity..." );
-    ComputeConnectivity();
+
+    // Connectivity
+    std::string connectivityFile = _settings->GetMeshFile();
+    size_t lastDotIndex          = connectivityFile.find_last_of( '.' );
+    connectivityFile             = connectivityFile.substr( 0, lastDotIndex );
+    connectivityFile += ".connectivity";
+    if( !std::filesystem::exists( connectivityFile ) ) {
+        log->info( "| Compute mesh connectivity..." );
+        ComputeConnectivity();    // Computes  _cellNeighbors, _cellInterfaceMidPoints, _cellNormals, _cellBoundaryTypes
+        log->info( "| Save mesh connectivity to file..." );
+        WriteConnecitivityToFile(
+            connectivityFile, _cellNeighbors, _cellInterfaceMidPoints, _cellNormals, _cellBoundaryTypes, _numCells, _numNodesPerCell, _dim );
+    }
+    else {
+        // Resize the outer vector to have nCells elements
+        _cellNeighbors.resize( _numCells );
+        _cellInterfaceMidPoints.resize( _numCells );
+        _cellNormals.resize( _numCells );
+        _cellBoundaryTypes.resize( _numCells );
+
+        for( unsigned i = 0; i < _numCells; i++ ) {
+            _cellNeighbors[i].resize( _numNodesPerCell, -1 );
+            _cellInterfaceMidPoints[i].resize( _numNodesPerCell, Vector( _dim, 0.0 ) );
+            _cellNormals[i].resize( _numNodesPerCell, Vector( _dim, 0.0 ) );
+        }
+        log->info( "| Load mesh connectivity from file..." );
+        LoadConnectivityFromFile(
+            connectivityFile, _cellNeighbors, _cellInterfaceMidPoints, _cellNormals, _cellBoundaryTypes, _numCells, _numNodesPerCell, _dim );
+    }
     log->info( "| Compute boundary..." );
     ComputeBounds();
 }
