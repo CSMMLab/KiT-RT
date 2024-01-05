@@ -3,11 +3,14 @@
 #include <chrono>
 #include <omp.h>
 
-Mesh::Mesh( std::vector<Vector> nodes,
+Mesh::Mesh( const Config* settings,
+            std::vector<Vector> nodes,
             std::vector<std::vector<unsigned>> cells,
             std::vector<std::pair<BOUNDARY_TYPE, std::vector<unsigned>>> boundaries )
     : _dim( nodes[0].size() ), _numCells( cells.size() ), _numNodes( nodes.size() ), _numNodesPerCell( cells[0].size() ),
       _numBoundaries( boundaries.size() ), _ghostCellID( _numCells ), _nodes( nodes ), _cells( cells ), _boundaries( boundaries ) {
+
+    _settings = settings;
     if( _dim == 2 ) {
         _numNodesPerBoundary = 2u;
     }

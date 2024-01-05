@@ -1,6 +1,6 @@
 /*!
  * \file io.cpp
- * \brief Set of utility io functions for rtns
+ * \brief Set of utility io functions for KiT-RT
  * \author  J. Kusch, S. Schotthoefer, P. Stammer,  J. Wolters, T. Xiao
  */
 
@@ -11,11 +11,13 @@
 #include "toolboxes/errormessages.hpp"
 #include "toolboxes/textprocessingtoolbox.hpp"
 
+#include <fstream>
 #include <iostream>
+#include <sstream>
+#include <vector>
 
 // #include <mpi.h>
 #include <omp.h>
-
 #include <vtkCellArray.h>
 #include <vtkCellData.h>
 #include <vtkCellDataToPointData.h>
@@ -297,7 +299,115 @@ Mesh* LoadSU2MeshFromFile( const Config* settings ) {
     }
     ifs.close();
     log->info( "| Mesh imported." );
-    return new Mesh( nodes, cells, boundaries );
+    return new Mesh( settings, nodes, cells, boundaries );
+}
+
+void LoadConnectivityFromFile( const std::string inputFile,
+                               std::vector<std::vector<unsigned>>& cellNeighbors,
+                               std::vector<std::vector<Vector>>& cellInterfaceMidPoints,
+                               std::vector<std::vector<Vector>>& cellNormals,
+                               std::vector<BOUNDARY_TYPE>& cellBoundaryTypes,
+                               unsigned nCells,
+                               unsigned nNodesPerCell,
+                               unsigned nDim ) {
+    // File has nCells lines, each line is a comma separated entry containing:
+    // cellNeighbors (nNodesPerCell elements),
+    // cellInterfaceMidPoints (nNodesPerCell x nDim elements),
+    // cellNormals (nNodesPerCell x nDim elements),
+    // cellBoundaryTypes (1 element), (tranlated from  unsigned to enum BOUNDARY_TYPE)
+    std::ifstream inFile( inputFile );
+
+    if( !inFile.is_open() ) {
+        ErrorMessages::Error( "Error opening connectivity file.", CURRENT_FUNCTION );
+        return;
+    }
+    for( unsigned i = 0; i < nCells; ++i ) {
+        std::string line;
+        std::getline( inFile, line );
+        std::istringstream iss( line );
+        // Load cellNeighbors
+        cellNeighbors[i].resize( nNodesPerCell );
+        for( unsigned j = 0; j < nNodesPerCell; ++j ) {
+            std::getline( iss, line, ',' );
+            std::istringstream converter( line );
+            converter >> cellNeighbors[i][j];
+        }
+        // Load cellInterfaceMidPoints
+        cellInterfaceMidPoints[i].resize( nNodesPerCell );
+        for( unsigned j = 0; j < nNodesPerCell; ++j ) {
+            for( unsigned k = 0; k < nDim; ++k ) {
+                std::getline( iss, line, ',' );
+                std::istringstream converter( line );
+                converter >> cellInterfaceMidPoints[i][j][k];    // Replace with appropriate member of Vector
+            }
+        }
+        // Load cellNormals
+        cellNormals[i].resize( nNodesPerCell );
+        for( unsigned j = 0; j < nNodesPerCell; ++j ) {
+            for( unsigned k = 0; k < nDim; ++k ) {
+                std::getline( iss, line, ',' );
+                std::istringstream converter( line );
+                converter >> cellNormals[i][j][k];    // Replace with appropriate member of Vector
+            }
+        }
+        // Load cellBoundaryTypes
+        std::getline( iss, line, ',' );
+        std::istringstream converter( line );
+        unsigned boundaryTypeValue;
+        converter >> boundaryTypeValue;
+        cellBoundaryTypes[i] = static_cast<BOUNDARY_TYPE>( boundaryTypeValue );
+    }
+    inFile.close();
+}
+
+void WriteConnecitivityToFile( const std::string outputFile,
+                               std::vector<std::vector<unsigned>>& cellNeighbors,
+                               std::vector<std::vector<Vector>>& cellInterfaceMidPoints,
+                               std::vector<std::vector<Vector>>& cellNormals,
+                               std::vector<BOUNDARY_TYPE>& cellBoundaryTypes,
+                               unsigned nNodesPerCell,
+                               unsigned nCells,
+                               unsigned nDim ) {
+    // File has nCells lines, each line is a comma separated entry containing:
+    // cellNeighbors (nNodesPerCell elements),
+    // cellInterfaceMidPoints (nNodesPerCell x nDim elements),
+    // cellNormals (nNodesPerCell x nDim elements),
+    // cellBoundaryTypes (1 element), (tranlated from BOUNDARY_TYPE to unsigned)
+
+    std::ofstream outFile( outputFile );
+
+    if( !outFile.is_open() ) {
+        ErrorMessages::Error( "Error opening connectivity file.", CURRENT_FUNCTION );
+        return;
+    }
+
+    // Write data to the file
+    for( unsigned i = 0; i < nCells; ++i ) {
+        // Write cellNeighbors
+        for( unsigned j = 0; j < nNodesPerCell; ++j ) {
+            outFile << cellNeighbors[i][j];
+            if( j < nNodesPerCell - 1 ) {
+                outFile << ",";
+            }
+        }
+        // Write cellInterfaceMidPoints
+        for( unsigned j = 0; j < nNodesPerCell; ++j ) {
+            for( unsigned k = 0; k < nDim; ++k ) {
+                outFile << "," << cellInterfaceMidPoints[i][j][k];    // Replace with appropriate member of Vector
+            }
+        }
+        // Write cellNormals
+        for( unsigned j = 0; j < nNodesPerCell; ++j ) {
+            for( unsigned k = 0; k < nDim; ++k ) {
+                outFile << "," << cellNormals[i][j][k];    // Replace with appropriate member of Vector
+            }
+        }
+        // Write cellBoundaryTypes
+        outFile << "," << static_cast<unsigned>( cellBoundaryTypes[i] );
+
+        outFile << std::endl;
+    }
+    outFile.close();
 }
 
 std::string ParseArguments( int argc, char* argv[] ) {
