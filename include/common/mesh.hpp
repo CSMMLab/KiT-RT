@@ -11,9 +11,13 @@
 #include "toolboxes/errormessages.hpp"
 #include "toolboxes/reconstructor.hpp"
 
+class Config;
+
 class Mesh
 {
   protected:
+    const Config* _settings; /*!< @brief config class for global information */
+
     const unsigned _dim;             /*!< @brief spatial dimension of the mesh, i.e. 1D,2D,3D */
     const unsigned _numCells;        /*!< @brief number of cells in the mesh */
     const unsigned _numNodes;        /*!< @brief number of nodes in the mesh (for node centered view)*/
@@ -66,7 +70,8 @@ class Mesh
 
     /*! @brief Constructor of mesh. Needs nodes, cells, and boundary descriptions as specified above.
      *          See LoadSU2MeshFromFile in io.cpp for setup information*/
-    Mesh( std::vector<Vector> nodes,
+    Mesh( const Config* settings,
+          std::vector<Vector> nodes,
           std::vector<std::vector<unsigned>> cells,
           std::vector<std::pair<BOUNDARY_TYPE, std::vector<unsigned>>> boundaries );
     ~Mesh();
