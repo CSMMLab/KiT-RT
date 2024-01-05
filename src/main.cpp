@@ -5,6 +5,7 @@
  */
 
 #include <string>
+#include <omp.h>
 
 #include "common/config.hpp"
 #include "common/io.hpp"

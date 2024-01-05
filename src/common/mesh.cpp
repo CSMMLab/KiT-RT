@@ -59,15 +59,15 @@ void Mesh::ComputeConnectivity() {
     // save which cell has which nodes
     log->info( "| ... connect cells to nodes..." );
     blaze::CompressedMatrix<bool> connMat( _numCells, _numNodes );
-
-    // #pragma omp parallel for
+#pragma omp parallel for
     for( unsigned i = mpiCellStart; i < mpiCellEnd; ++i ) {
-        for( auto j : _cells[i] ) connMat.set( i, j, true );
+        for( unsigned j = 0; i < _numNodesPerCell; ++i ) {
+            connMat.set( i, _cells[i][j], true );
+        }
     }
 
     // determine neighbor cells and normals with MPI and OpenMP
     log->info( "| ... determine neighbors of cells..." );
-
 #pragma omp parallel for schedule( guided )
     for( unsigned i = mpiCellStart; i < mpiCellEnd; ++i ) {
         std::vector<unsigned>* cellsI = &sortedCells[i];
