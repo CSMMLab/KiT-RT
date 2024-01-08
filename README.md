@@ -140,12 +140,14 @@ ldconfig /usr/local/lib
 ```
 ## Cite
 ```
-@misc{kitrt2022,
-      title={KiT-RT: An extendable framework for radiative transfer and therapy}, 
-      author={Jonas Kusch and Steffen Schotthöfer and Pia Stammer and Jannick Wolters and Tianbai Xiao},
-      year={2022},
-      eprint={2205.08417},
-      archivePrefix={arXiv},
-      primaryClass={physics.med-ph}
+@article{kitrt2023,
+    title={KiT-RT: An extendable framework for radiative transfer and therapy},
+    author={Kusch, Jonas and Schotth{\"o}fer, Steffen and Stammer, Pia and Wolters, Jannick and Xiao, Tianbai},
+    journal={ACM Transactions on Mathematical Software},
+    volume={49},
+    number={4},
+    pages={1--24},
+    year={2023},
+    publisher={ACM New York, NY}
 }
 ```
