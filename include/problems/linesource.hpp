@@ -69,6 +69,8 @@ class LineSource_Moment : public LineSource
     ~LineSource_Moment();
 
     VectorVector SetupIC() override;
+
+    std::vector<VectorVector> GetExternalSource( const Vector& energies ) override final;
 };
 
 class LineSource_SN_1D : public LineSource_SN

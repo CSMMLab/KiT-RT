@@ -206,6 +206,7 @@ void SNSolver::FVMUpdate( unsigned idx_iter ) {
         }
     }
 }
+
 void SNSolver::PrepareVolumeOutput() {
     unsigned nGroups = (unsigned)_settings->GetNVolumeOutput();
 
