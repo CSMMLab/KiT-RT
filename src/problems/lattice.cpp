@@ -146,7 +146,6 @@ void Lattice_SN::ComputeCurrentAbsorptionLattice( const Vector& scalarFlux ) {
 }
 // TODO all absorption qois can be refactored in one function
 void Lattice_SN::ComputeMaxAbsorptionLattice( const Vector& scalarFlux ) {
-    _curMaxAbsorptionLattice  = 0.0;
     unsigned nCells           = _mesh->GetNumCells();
     auto cellMids             = _mesh->GetCellMidPoints();
     std::vector<double> areas = _mesh->GetCellAreas();
