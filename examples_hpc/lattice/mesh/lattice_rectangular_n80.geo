@@ -1,5 +1,5 @@
 cl_fine = 0.1;
-n_recombine = 40;
+n_recombine = 80;
 n_prog = 1.1;
 Point(1) = {-3.5, -3.5, 0, cl_fine};
 Point(2) = {3.5, -3.5, 0, cl_fine};
