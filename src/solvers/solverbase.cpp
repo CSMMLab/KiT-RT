@@ -409,7 +409,7 @@ void SolverBase::PrintScreenOutput( unsigned idx_iter ) {
                     std::find( scientificFields.begin(), scientificFields.end(), _settings->GetScreenOutput()[idx_field] ) ) ) {
 
             std::stringstream ss;
-            ss << TextProcessingToolbox::DoubleToScientificNotation(_screenOutputFields[idx_field] );
+            ss << TextProcessingToolbox::DoubleToScientificNotation( _screenOutputFields[idx_field] );
             tmp = ss.str();
             tmp.erase( std::remove( tmp.begin(), tmp.end(), '+' ), tmp.end() );    // removing the '+' sign
         }
@@ -485,11 +485,11 @@ void SolverBase::PrintHistoryOutput( unsigned idx_iter ) {
     std::string lineToPrint = "";
     std::string tmp;
     for( int idx_field = 0; idx_field < _settings->GetNHistoryOutput() - 1; idx_field++ ) {
-        if (idx_field == 0){ 
+        if( idx_field == 0 ) {
             tmp = std::to_string( _historyOutputFields[idx_field] );
         }
-        else{
-            tmp =  TextProcessingToolbox::DoubleToScientificNotation(_historyOutputFields[idx_field] );
+        else {
+            tmp = TextProcessingToolbox::DoubleToScientificNotation( _historyOutputFields[idx_field] );
         }
         lineToPrint += tmp + ",";
     }

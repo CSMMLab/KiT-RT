@@ -1169,50 +1169,52 @@ void Config::InitLogger() {
         }
         if( fileLogLvl != spdlog::level::off ) {
             // define filename on root
-            int pe = 0;
+            // int pe = 0;
             // MPI_Comm_rank( MPI_COMM_WORLD, &pe );
             char cfilename[1024];
 
-            if( pe == 0 ) {
-                // get date and time
-                time_t now = time( nullptr );
-                struct tm tstruct;
-                char buf[80];
-                tstruct = *localtime( &now );
-                strftime( buf, sizeof( buf ), "%Y-%m-%d_%X", &tstruct );
+            // if( pe == 0 ) {
+            //  get date and time
+            time_t now = time( nullptr );
+            struct tm tstruct;
+            char buf[80];
+            tstruct = *localtime( &now );
+            strftime( buf, sizeof( buf ), "%Y-%m-%d_%X", &tstruct );
 
-                // set filename
-                std::string filename;
-                if( _logFileName.compare( "use_date" ) == 0 ) {
-                    _logFileName = buf;    // set filename to date and time
-                }
-                filename = _logFileName;
-
-                // in case of existing files append '_#'
-                std::string filePath =  _logDir + filename;
-                
-                
-                if (fs::exists(_logDir + filename)) {
+            // set filename
+            std::string filepathStr;
+            if( _logFileName.compare( "use_date" ) == 0 ) {
+                _logFileName = buf;    // set filename to date and time
+                filepathStr  = _logDir + _logFileName;
+            }
+            else {
+                std::filesystem::path filePath( _logDir + _logFileName );
+                std::string baseFilename( _logDir + _logFileName );
+                filepathStr = _logDir + _logFileName;
+                // Check if the file with the original name exists
+                if( std::filesystem::exists( filePath ) ) {
                     // Extract the stem and extension
-                    std::string stem = filePath.stem().string();
+                    std::string stem      = filePath.stem().string();
                     std::string extension = filePath.extension().string();
 
                     // Counter for incrementing the filename
                     int counter = 1;
 
                     // Keep incrementing the counter until a unique filename is found
-                    while (fs::exists(_logDir + filename)) {
-                        stem = baseFilename + std::to_string(counter);
-                        filename.replace_filename(stem + extension);
+                    while( std::filesystem::exists( filePath ) ) {
+                        stem = baseFilename + std::to_string( counter );
+                        filePath.replace_filename( stem + extension );
                         counter++;
-                    }  
+                    }
                 }
+                filepathStr = filePath.string();
             }
+            //}
             // MPI_Bcast( &cfilename, sizeof( cfilename ), MPI_CHAR, 0, MPI_COMM_WORLD );
             // MPI_Barrier( MPI_COMM_WORLD );
 
             // create spdlog file sink
-            auto fileSink = std::make_shared<spdlog::sinks::basic_file_sink_mt>( _logDir + cfilename );
+            auto fileSink = std::make_shared<spdlog::sinks::basic_file_sink_mt>( filepathStr );
             fileSink->set_level( fileLogLvl );
             fileSink->set_pattern( "%Y-%m-%d %H:%M:%S.%f | %v" );
             sinks.push_back( fileSink );
@@ -1229,42 +1231,53 @@ void Config::InitLogger() {
         std::vector<spdlog::sink_ptr> sinks;
         if( fileLogLvl != spdlog::level::off ) {
             // define filename on root
-            int pe = 0;
+            // int pe = 0;
             // MPI_Comm_rank( MPI_COMM_WORLD, &pe );
-            char cfilename[1024];
+            // char cfilename[1024];
 
-            if( pe == 0 ) {
-                // get date and time
-                time_t now = time( nullptr );
-                struct tm tstruct;
-                char buf[80];
-                tstruct = *localtime( &now );
-                strftime( buf, sizeof( buf ), "%Y-%m-%d_%X.csv", &tstruct );
+            // if( pe == 0 ) {
+            //  get date and time
+            time_t now = time( nullptr );
+            struct tm tstruct;
+            char buf[80];
+            tstruct = *localtime( &now );
+            strftime( buf, sizeof( buf ), "%Y-%m-%d_%X.csv", &tstruct );
 
-                // set filename
-                std::string filename;
-                if( _logFileName.compare( "use_date" ) == 0 )
-                    filename = buf;    // set filename to date and time
-                else
-                    filename = _logFileName + ".csv";
-
-                // in case of existing files append '_#'
-                int ctr = 0;
-                if( std::filesystem::exists( _logDir + filename ) ) {
-                    filename += "_" + std::to_string( ++ctr );
-                }
-                while( std::filesystem::exists( _logDir + filename ) ) {
-                    filename.pop_back();
-                    filename += std::to_string( ++ctr );
-                }
-                strncpy( cfilename, filename.c_str(), sizeof( cfilename ) );
-                cfilename[sizeof( cfilename ) - 1] = 0;
+            // set filename
+            // set filename
+            std::string filepathStr;
+            if( _logFileName.compare( "use_date" ) == 0 ) {
+                _logFileName = buf;    // set filename to date and time
+                filepathStr  = _logDir + _logFileName + ".csv";
             }
+            else {
+                std::filesystem::path filePath( _logDir + _logFileName + ".csv" );
+                std::string baseFilename( _logDir + _logFileName );
+                filepathStr = _logDir + _logFileName + ".csv";
+                // Check if the file with the original name exists
+                if( std::filesystem::exists( filePath ) ) {
+                    // Extract the stem and extension
+                    std::string stem      = filePath.stem().string();
+                    std::string extension = filePath.extension().string();
+
+                    // Counter for incrementing the filename
+                    int counter = 1;
+
+                    // Keep incrementing the counter until a unique filename is found
+                    while( std::filesystem::exists( filePath ) ) {
+                        stem = baseFilename + std::to_string( counter );
+                        filePath.replace_filename( stem + extension );
+                        counter++;
+                    }
+                }
+                filepathStr = filePath.string();
+            }
+            //}
             // MPI_Bcast( &cfilename, sizeof( cfilename ), MPI_CHAR, 0, MPI_COMM_WORLD );
             // MPI_Barrier( MPI_COMM_WORLD );
 
             // create spdlog file sink
-            auto fileSink = std::make_shared<spdlog::sinks::basic_file_sink_mt>( _logDir + cfilename );
+            auto fileSink = std::make_shared<spdlog::sinks::basic_file_sink_mt>( filepathStr );
             fileSink->set_level( fileLogLvl );
             fileSink->set_pattern( "%Y-%m-%d %H:%M:%S.%f ,%v" );
             sinks.push_back( fileSink );
