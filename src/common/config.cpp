@@ -1189,16 +1189,24 @@ void Config::InitLogger() {
                 filename = _logFileName;
 
                 // in case of existing files append '_#'
-                int ctr = 0;
-                if( std::filesystem::exists( _logDir + filename ) ) {
-                    filename += "_" + std::to_string( ++ctr );
+                std::string filePath =  _logDir + filename;
+                
+                
+                if (fs::exists(_logDir + filename)) {
+                    // Extract the stem and extension
+                    std::string stem = filePath.stem().string();
+                    std::string extension = filePath.extension().string();
+
+                    // Counter for incrementing the filename
+                    int counter = 1;
+
+                    // Keep incrementing the counter until a unique filename is found
+                    while (fs::exists(_logDir + filename)) {
+                        stem = baseFilename + std::to_string(counter);
+                        filename.replace_filename(stem + extension);
+                        counter++;
+                    }  
                 }
-                while( std::filesystem::exists( _logDir + filename ) ) {
-                    filename.pop_back();
-                    filename += std::to_string( ++ctr );
-                }
-                strncpy( cfilename, filename.c_str(), sizeof( cfilename ) );
-                cfilename[sizeof( cfilename ) - 1] = 0;
             }
             // MPI_Bcast( &cfilename, sizeof( cfilename ), MPI_CHAR, 0, MPI_COMM_WORLD );
             // MPI_Barrier( MPI_COMM_WORLD );
