@@ -205,21 +205,44 @@ void PNSolver::FluxUpdatePseudo2D() {
     }
 }
 
-void PNSolver::FVMUpdate( unsigned idx_energy ) {
+void PNSolver::FVMUpdate( unsigned idx_iter ) {
+    if( _Q.size() == 1u && _sigmaT.size() == 1u && _sigmaS.size() == 1u ) {    // Physics constant in time
+
 // Loop over all spatial cells
 #pragma omp parallel for
-    for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
-        // Dirichlet cells stay at IC, farfield assumption
-        if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::DIRICHLET ) continue;
-        // Flux update
-        for( unsigned idx_sys = 0; idx_sys < _nSystem; idx_sys++ ) {
-            _solNew[idx_cell][idx_sys] = _sol[idx_cell][idx_sys] - ( _dT / _areas[idx_cell] ) * _solNew[idx_cell][idx_sys] /* cell averaged flux */
-                                         - _dT * _sol[idx_cell][idx_sys] *
-                                               ( _sigmaS[idx_energy][idx_cell] * _scatterMatDiag[idx_sys] /* scattering influence */
-                                                 + _sigmaT[idx_energy][idx_cell] );                       /* total xs influence  */
+        for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
+            // Dirichlet cells stay at IC, farfield assumption
+            if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::DIRICHLET ) continue;
+            // Flux update
+
+            for( unsigned idx_sys = 0; idx_sys < _nSystem; idx_sys++ ) {
+                _solNew[idx_cell][idx_sys] = _sol[idx_cell][idx_sys] -
+                                             ( _dT / _areas[idx_cell] ) * _solNew[idx_cell][idx_sys] /* cell averaged flux */
+                                             - _dT * _sol[idx_cell][idx_sys] *
+                                                   ( _sigmaS[0][idx_cell] * _scatterMatDiag[idx_sys] /* scattering influence */
+                                                     + _sigmaT[0][idx_cell] );                       /* total xs influence  */
+            }
+            // Source Term
+            _solNew[idx_cell] += _dT * _Q[0][idx_cell];
         }
-        // Source Term
-        _solNew[idx_cell] += _dT * _Q[0][idx_cell];
+    }
+    else {
+        // Loop over all spatial cells
+#pragma omp parallel for
+        for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
+            // Dirichlet cells stay at IC, farfield assumption
+            if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::DIRICHLET ) continue;
+            // Flux update
+            for( unsigned idx_sys = 0; idx_sys < _nSystem; idx_sys++ ) {
+                _solNew[idx_cell][idx_sys] = _sol[idx_cell][idx_sys] -
+                                             ( _dT / _areas[idx_cell] ) * _solNew[idx_cell][idx_sys] /* cell averaged flux */
+                                             - _dT * _sol[idx_cell][idx_sys] *
+                                                   ( _sigmaS[idx_iter][idx_cell] * _scatterMatDiag[idx_sys] /* scattering influence */
+                                                     + _sigmaT[idx_iter][idx_cell] );                       /* total xs influence  */
+            }
+            // Source Term
+            _solNew[idx_cell] += _dT * _Q[idx_iter][idx_cell];
+        }
     }
 }
 

@@ -140,13 +140,13 @@ LineSource_Moment::LineSource_Moment( Config* settings, Mesh* mesh, QuadratureBa
 
 LineSource_Moment::~LineSource_Moment() {}
 
-// std::vector<VectorVector> LineSource_Moment::GetExternalSource( const Vector& /*energies*/ ) {
-//     SphericalBase* tempBase  = SphericalBase::Create( _settings );
-//     unsigned ntotalEquations = tempBase->GetBasisSize();
-//     delete tempBase;    // Only temporally needed
-//
-//     return std::vector<VectorVector>( 1u, std::vector<Vector>( _mesh->GetNumCells(), Vector( ntotalEquations, 0.0 ) ) );
-// }
+std::vector<VectorVector> LineSource_Moment::GetExternalSource( const Vector& /*energies*/ ) {
+    SphericalBase* tempBase  = SphericalBase::Create( _settings );
+    unsigned ntotalEquations = tempBase->GetBasisSize();
+    delete tempBase;    // Only temporally needed
+
+    return std::vector<VectorVector>( 1u, std::vector<Vector>( _mesh->GetNumCells(), Vector( ntotalEquations, 0.0 ) ) );
+}
 
 VectorVector LineSource_Moment::SetupIC() {
     // Compute number of equations in the system

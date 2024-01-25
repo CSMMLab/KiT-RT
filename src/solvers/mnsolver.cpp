@@ -251,20 +251,39 @@ void MNSolver::FluxUpdatePseudo2D() {
 }
 
 void MNSolver::FVMUpdate( unsigned idx_iter ) {
+    if( _Q.size() == 1u && _sigmaT.size() == 1u && _sigmaS.size() == 1u ) {    // Physics constant in time
 // Loop over the grid cells
 #pragma omp parallel for
-    for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
-        // Dirichlet Boundaries stay
-        if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::DIRICHLET ) continue;
-        // Flux update
-        for( unsigned idx_sys = 0; idx_sys < _nSystem; idx_sys++ ) {
-            _solNew[idx_cell][idx_sys] = _sol[idx_cell][idx_sys]                                                            /* old solution */
-                                         - ( _dT / _areas[idx_cell] ) * _solNew[idx_cell][idx_sys]                          /* cell averaged flux */
-                                         + _dT * _sigmaS[idx_iter][idx_cell] * _sol[idx_cell][0] * _scatterMatDiag[idx_sys] /* scattering gain */
-                                         - _dT * ( _sigmaT[idx_iter][idx_cell] ) * _sol[idx_cell][idx_sys]; /* scattering and absorbtion loss */
+        for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
+            // Dirichlet Boundaries stay
+            if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::DIRICHLET ) continue;
+            // Flux update
+            for( unsigned idx_sys = 0; idx_sys < _nSystem; idx_sys++ ) {
+                _solNew[idx_cell][idx_sys] = _sol[idx_cell][idx_sys]                                                     /* old solution */
+                                             - ( _dT / _areas[idx_cell] ) * _solNew[idx_cell][idx_sys]                   /* cell averaged flux */
+                                             + _dT * _sigmaS[0][idx_cell] * _sol[idx_cell][0] * _scatterMatDiag[idx_sys] /* scattering gain */
+                                             - _dT * ( _sigmaT[0][idx_cell] ) * _sol[idx_cell][idx_sys]; /* scattering and absorbtion loss */
+            }
+            // Source Term
+            _solNew[idx_cell] += _dT * _Q[0][idx_cell];
         }
-        // Source Term
-        _solNew[idx_cell] += _dT * _Q[0][idx_cell];
+    }
+    else {
+        // Loop over the grid cells
+#pragma omp parallel for
+        for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
+            // Dirichlet Boundaries stay
+            if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::DIRICHLET ) continue;
+            // Flux update
+            for( unsigned idx_sys = 0; idx_sys < _nSystem; idx_sys++ ) {
+                _solNew[idx_cell][idx_sys] = _sol[idx_cell][idx_sys]                                   /* old solution */
+                                             - ( _dT / _areas[idx_cell] ) * _solNew[idx_cell][idx_sys] /* cell averaged flux */
+                                             + _dT * _sigmaS[idx_iter][idx_cell] * _sol[idx_cell][0] * _scatterMatDiag[idx_sys] /* scattering gain */
+                                             - _dT * ( _sigmaT[idx_iter][idx_cell] ) * _sol[idx_cell][idx_sys]; /* scattering and absorbtion loss */
+            }
+            // Source Term
+            _solNew[idx_cell] += _dT * _Q[idx_iter][idx_cell];
+        }
     }
 }
 
