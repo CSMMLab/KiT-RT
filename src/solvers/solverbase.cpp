@@ -409,7 +409,7 @@ void SolverBase::PrintScreenOutput( unsigned idx_iter ) {
                     std::find( scientificFields.begin(), scientificFields.end(), _settings->GetScreenOutput()[idx_field] ) ) ) {
 
             std::stringstream ss;
-            ss << _screenOutputFields[idx_field];
+            ss << TextProcessingToolbox::DoubleToScientificNotation( _screenOutputFields[idx_field] );
             tmp = ss.str();
             tmp.erase( std::remove( tmp.begin(), tmp.end(), '+' ), tmp.end() );    // removing the '+' sign
         }
@@ -484,11 +484,16 @@ void SolverBase::PrintHistoryOutput( unsigned idx_iter ) {
     // assemble the line to print
     std::string lineToPrint = "";
     std::string tmp;
-    for( int idx_field = 0; idx_field < _settings->GetNScreenOutput() - 1; idx_field++ ) {
-        tmp = std::to_string( _screenOutputFields[idx_field] );
+    for( int idx_field = 0; idx_field < _settings->GetNHistoryOutput() - 1; idx_field++ ) {
+        if( idx_field == 0 ) {
+            tmp = std::to_string( _historyOutputFields[idx_field] );
+        }
+        else {
+            tmp = TextProcessingToolbox::DoubleToScientificNotation( _historyOutputFields[idx_field] );
+        }
         lineToPrint += tmp + ",";
     }
-    tmp = std::to_string( _screenOutputFields[_settings->GetNScreenOutput() - 1] );
+    tmp = std::to_string( _historyOutputFields[_settings->GetNScreenOutput() - 1] );
     lineToPrint += tmp;    // Last element without comma
 
     if( _settings->GetHistoryOutputFrequency() != 0 && idx_iter % (unsigned)_settings->GetHistoryOutputFrequency() == 0 ) {
