@@ -446,11 +446,11 @@ void SolverBase::PrepareHistoryOutput() {
             case RMS_FLUX: _historyOutputFieldNames[idx_field] = "RMS_flux"; break;
             case VTK_OUTPUT: _historyOutputFieldNames[idx_field] = "VTK_out"; break;
             case CSV_OUTPUT: _historyOutputFieldNames[idx_field] = "CSV_out"; break;
-            case CUR_OUTFLOW: _historyOutputFieldNames[idx_field] = "Final_time_outflow"; break;
-            case TOTAL_OUTFLOW: _historyOutputFieldNames[idx_field] = "Cumulated_outflow"; break;
+            case CUR_OUTFLOW: _historyOutputFieldNames[idx_field] = "Cur_outflow"; break;
+            case TOTAL_OUTFLOW: _historyOutputFieldNames[idx_field] = "Total_outflow"; break;
             case MAX_OUTFLOW: _historyOutputFieldNames[idx_field] = "Max_outflow"; break;
-            case CUR_PARTICLE_ABSORPTION: _historyOutputFieldNames[idx_field] = "Final_time_absorption"; break;
-            case TOTAL_PARTICLE_ABSORPTION: _historyOutputFieldNames[idx_field] = "Cumulated_absorption"; break;
+            case CUR_PARTICLE_ABSORPTION: _historyOutputFieldNames[idx_field] = "Cur_absorption"; break;
+            case TOTAL_PARTICLE_ABSORPTION: _historyOutputFieldNames[idx_field] = "Total_absorption"; break;
             case MAX_PARTICLE_ABSORPTION: _historyOutputFieldNames[idx_field] = "Max_absorption"; break;
             case TOTAL_PARTICLE_ABSORPTION_CENTER: _historyOutputFieldNames[idx_field] = "Cumulated_absorption_center"; break;
             case TOTAL_PARTICLE_ABSORPTION_VERTICAL: _historyOutputFieldNames[idx_field] = "Cumulated_absorption_vertical_wall"; break;
@@ -486,14 +486,14 @@ void SolverBase::PrintHistoryOutput( unsigned idx_iter ) {
     std::string tmp;
     for( int idx_field = 0; idx_field < _settings->GetNHistoryOutput() - 1; idx_field++ ) {
         if( idx_field == 0 ) {
-            tmp = std::to_string( _historyOutputFields[idx_field] );
+            tmp = std::to_string( _historyOutputFields[idx_field] );    // Iteration count
         }
         else {
             tmp = TextProcessingToolbox::DoubleToScientificNotation( _historyOutputFields[idx_field] );
         }
         lineToPrint += tmp + ",";
     }
-    tmp = std::to_string( _historyOutputFields[_settings->GetNScreenOutput() - 1] );
+    tmp = TextProcessingToolbox::DoubleToScientificNotation( _historyOutputFields[_settings->GetNScreenOutput() - 1] );
     lineToPrint += tmp;    // Last element without comma
 
     if( _settings->GetHistoryOutputFrequency() != 0 && idx_iter % (unsigned)_settings->GetHistoryOutputFrequency() == 0 ) {
