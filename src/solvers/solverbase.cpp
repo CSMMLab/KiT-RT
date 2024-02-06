@@ -532,6 +532,9 @@ void SolverBase::DrawPreSolverOutput() {
     log->info( "---------------------------- Solver Starts -----------------------------" );
     log->info( "| The simulation will run for {} iterations.", _nEnergies );
     log->info( "| The spatial grid contains {} cells.", _nCells );
+    if( _settings->GetSolverName() != PN_SOLVER && _settings->GetSolverName() != CSD_PN_SOLVER ) {
+        log->info( "| The spatial grid contains {} points.", _quadrature->GetNq() );
+    }
     log->info( hLine );
     log->info( lineToPrint );
     log->info( hLine );
