@@ -10,9 +10,9 @@
 // Constructor for Ckeckerboard case with Sn
 Lattice_SN::Lattice_SN( Config* settings, Mesh* mesh, QuadratureBase* quad ) : ProblemBase( settings, mesh, quad ) {
 
-    // Initialise crosssections to 1
-    _sigmaS = Vector( _mesh->GetNumCells(), _settings->GetLatticeScatterWhite() );
-    _sigmaT = Vector( _mesh->GetNumCells(), _settings->GetLatticeScatterWhite() );
+    // Initialise scattering crosssections to 1 and absorption cross sections to 0
+    _sigmaS = Vector( _mesh->GetNumCells(), 1. );
+    _sigmaT = Vector( _mesh->GetNumCells(), 1. );
 
     // Initialize Quantities of interest
     _curAbsorptionLattice    = 0.0;
@@ -44,6 +44,10 @@ Lattice_SN::Lattice_SN( Config* settings, Mesh* mesh, QuadratureBase* quad ) : P
             if( IsAbsorption( cellMids[j] ) ) {
                 _sigmaS[j] = 0.0;
                 _sigmaT[j] = _settings->GetLatticeAbsBlue();
+            }
+            else if( !IsSource( cellMids[j] ) ) {    // White block
+                _sigmaS[j] = _settings->GetLatticeScatterWhite();
+                _sigmaT[j] = _settings->GetLatticeScatterWhite();
             }
         }
     }

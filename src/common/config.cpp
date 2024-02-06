@@ -281,8 +281,11 @@ void Config::SetConfigOptions() {
 
     // Lattice related options
     /*! @brief LATTICE_DSGN_ABSORPTION_BLUE \n DESCRIPTION: Sets absorption rate for the blue blocks (absorption blocks) in the lattice test case. \n
-     * DEFAULT \ingroup Config */
+     * DEFAULT  10.0 \ingroup Config */
     AddDoubleOption( "LATTICE_DSGN_ABSORPTION_BLUE", _dsgnAbsBlue, 10.0 );
+    /*! @brief LATTICE_DSGN_SCATTER_WHITE \n DESCRIPTION: Sets absorption rate for the white blocks (scattering blocks) in the lattice test case. \n
+     * DEFAULT 1.0 \ingroup Config */
+    AddDoubleOption( "LATTICE_DSGN_SCATTER_WHITE", _dsgnScatterWhite, 1.0 );
     /*! @brief LATTICE_DSGN_ABSORPTION_INDIVIDUAL \n DESCRIPTION: Sets absorption rate all 7x7 blocks in the lattice test case. Order from upper left
      * to lower right (row major). \n DEFAULT \ingroup Config */
     AddDoubleListOption( "LATTICE_DSGN_ABSORPTION_INDIVIDUAL", _nDsgnAbsIndividual, _dsgnAbsIndividual );
