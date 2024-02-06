@@ -119,7 +119,7 @@ void CSDSNSolver::IterPreprocessing( unsigned idx_pseudotime ) {
         Vector u = _M * _sol[j];
 
         unsigned counter = 0;
-        for( unsigned l = 0; l <= _polyDegreeBasis; ++l ) {
+        for( int l = 0; l <= (int)_polyDegreeBasis; ++l ) {
             for( int m = -l; m <= l; ++m ) {
                 u[counter] = u[counter] / ( 1.0 + _dT * sigmaTAtEnergy[l] );
                 counter++;

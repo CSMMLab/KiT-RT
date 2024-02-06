@@ -245,7 +245,7 @@ void SymmetricHohlraum::SetProbingCellsLineGreen() {
     double verticalLineWidth   = std::abs( _cornerUpperLeftGreen[1] - _cornerLowerLeftGreen[1] );
     double horizontalLineWidth = std::abs( _cornerUpperLeftGreen[0] - _cornerUpperRightGreen[0] );
 
-    double dx = 2 * ( horizontalLineWidth + verticalLineWidth ) / ( (double)_nProbingCellsLineGreen );
+    // double dx = 2 * ( horizontalLineWidth + verticalLineWidth ) / ( (double)_nProbingCellsLineGreen );
 
     unsigned nHorizontalProbingCells =
         (unsigned)std::ceil( _nProbingCellsLineGreen / 2 * ( horizontalLineWidth / ( horizontalLineWidth + verticalLineWidth ) ) );
@@ -297,7 +297,7 @@ std::vector<unsigned> SymmetricHohlraum::linspace2D( const std::vector<double>& 
     double stepX = ( end[0] - start[0] ) / ( num_points - 1 );
     double stepY = ( end[1] - start[1] ) / ( num_points - 1 );
 
-    for( int i = 0; i < num_points; ++i ) {
+    for( unsigned i = 0; i < num_points; ++i ) {
         double x = start[0] + i * stepX;
         double y = start[1] + i * stepY;
 

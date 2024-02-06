@@ -1174,7 +1174,7 @@ void Config::InitLogger() {
             // define filename on root
             // int pe = 0;
             // MPI_Comm_rank( MPI_COMM_WORLD, &pe );
-            char cfilename[1024];
+            // char cfilename[1024];
 
             // if( pe == 0 ) {
             //  get date and time

@@ -31,7 +31,7 @@ MNSolverNormalized::MNSolverNormalized( Config* settings ) : MNSolver( settings 
 
 MNSolverNormalized::~MNSolverNormalized() {}
 
-void MNSolverNormalized::IterPreprocessing( unsigned idx_pseudotime ) {
+void MNSolverNormalized::IterPreprocessing( unsigned /*idx_pseudotime*/ ) {
     Vector alpha_norm_per_cell( _nCells, 0 );    // ONLY FOR DEBUGGING! THIS SLOWS DOWN THE CODE
 
     // if (idx_pseudotime < 1600){

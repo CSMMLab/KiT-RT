@@ -31,7 +31,6 @@ std::vector<double> readVTKFile( std::string filename ) {
     return data;
 }
 
-
 TEST_CASE( "SN_SOLVER", "[validation_tests]" ) {
     std::string sn_fileDir = "input/validation_tests/SN_solver/";
     SECTION( "checkerboard" ) {
@@ -39,7 +38,6 @@ TEST_CASE( "SN_SOLVER", "[validation_tests]" ) {
 
         Config* config     = new Config( config_file_name );
         SolverBase* solver = SolverBase::Create( config );
-
         solver->Solve();
         solver->PrintVolumeOutput();
 
@@ -50,7 +48,10 @@ TEST_CASE( "SN_SOLVER", "[validation_tests]" ) {
         REQUIRE( test.size() == reference.size() );
         bool errorWithinBounds = true;
         for( unsigned i = 0; i < test.size(); ++i ) {
-            if( std::fabs( test[i] - reference[i] ) > eps ) errorWithinBounds = false;
+            if( std::fabs( test[i] - reference[i] ) > eps ) {
+                errorWithinBounds = false;
+                // std::cout << std::fabs( test[i] - reference[i] ) << "here\n";
+            }
         }
         REQUIRE( errorWithinBounds );
         delete solver;

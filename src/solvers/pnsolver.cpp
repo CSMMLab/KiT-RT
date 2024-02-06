@@ -207,7 +207,6 @@ void PNSolver::FluxUpdatePseudo2D() {
 
 void PNSolver::FVMUpdate( unsigned idx_iter ) {
     if( _Q.size() == 1u && _sigmaT.size() == 1u && _sigmaS.size() == 1u ) {    // Physics constant in time
-
 // Loop over all spatial cells
 #pragma omp parallel for
         for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {

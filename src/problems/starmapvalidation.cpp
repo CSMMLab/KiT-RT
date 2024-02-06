@@ -15,7 +15,7 @@ StarMapValidation_SN::StarMapValidation_SN( Config* settings, Mesh* mesh, Quadra
 
 StarMapValidation_SN::~StarMapValidation_SN() {}
 
-VectorVector StarMapValidation_SN::GetScatteringXS( const Vector& energies ) {
+VectorVector StarMapValidation_SN::GetScatteringXS( const Vector& /*energies*/ ) {
     // @TODO
     // Specified in subclasses
     return VectorVector( 1, Vector( 1, 0.0 ) );

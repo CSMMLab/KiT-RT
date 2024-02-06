@@ -148,7 +148,7 @@ void ProblemBase::SetGhostCells() {
     }
 }
 
-const Vector& ProblemBase::GetGhostCellValue( int idx_cell, const Vector& cell_sol ) { return cell_sol; }
+const Vector& ProblemBase::GetGhostCellValue( int /*idx_cell*/, const Vector& cell_sol ) { return cell_sol; }
 
 void ProblemBase::ComputeMaxOrdinatewiseOutflow( const VectorVector& solution ) {
     if( _settings->GetSolverName() == SN_SOLVER || _settings->GetSolverName() == CSD_SN_SOLVER ) {

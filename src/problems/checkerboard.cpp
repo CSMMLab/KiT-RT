@@ -88,9 +88,9 @@ Checkerboard_Moment::Checkerboard_Moment( Config* settings, Mesh* mesh, Quadratu
 
 Checkerboard_Moment::~Checkerboard_Moment() {}
 
-VectorVector Checkerboard_Moment::GetScatteringXS( const Vector& energies ) { return VectorVector( energies.size(), _sigmaS ); }
+VectorVector Checkerboard_Moment::GetScatteringXS( const Vector& energies ) { return VectorVector( 1u, _sigmaS ); }
 
-VectorVector Checkerboard_Moment::GetTotalXS( const Vector& energies ) { return VectorVector( energies.size(), _sigmaT ); }
+VectorVector Checkerboard_Moment::GetTotalXS( const Vector& energies ) { return VectorVector( 1u, _sigmaT ); }
 
 std::vector<VectorVector> Checkerboard_Moment::GetExternalSource( const Vector& /*energies*/ ) {
     // In case of PN, spherical basis is per default SPHERICAL_HARMONICS

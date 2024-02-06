@@ -131,6 +131,7 @@ void SolverBase::Solve() {
     // Loop over energies (pseudo-time of continuous slowing down approach)
     for( unsigned iter = 0; iter < _nIter; iter++ ) {
         if( rkStages == 2 ) solRK0 = _sol;
+
         for( unsigned rkStep = 0; rkStep < rkStages; ++rkStep ) {
             // --- Prepare Boundaries and temp variables
             IterPreprocessing( iter + rkStep );
@@ -144,7 +145,6 @@ void SolverBase::Solve() {
             // --- Update Solution within Runge Kutta Stages
             _sol = _solNew;
         }
-
         // --- Iter Postprocessing ---
         IterPostprocessing( iter );
 
@@ -267,7 +267,6 @@ void SolverBase::PrepareScreenOutput() {
 void SolverBase::WriteScalarOutput( unsigned idx_iter ) {
 
     unsigned nFields                  = (unsigned)_settings->GetNScreenOutput();
-    double mass                       = 0.0;
     const VectorVector probingMoments = _problem->GetCurrentProbeMoment();
     // -- Screen Output
     for( unsigned idx_field = 0; idx_field < nFields; idx_field++ ) {
@@ -533,7 +532,7 @@ void SolverBase::DrawPreSolverOutput() {
     log->info( "| The simulation will run for {} iterations.", _nEnergies );
     log->info( "| The spatial grid contains {} cells.", _nCells );
     if( _settings->GetSolverName() != PN_SOLVER && _settings->GetSolverName() != CSD_PN_SOLVER ) {
-        log->info( "| The spatial grid contains {} points.", _quadrature->GetNq() );
+        log->info( "| The velocity grid contains {} points.", _quadrature->GetNq() );
     }
     log->info( hLine );
     log->info( lineToPrint );
@@ -582,7 +581,7 @@ void SolverBase::DrawPostSolverOutput() {
 
 void SolverBase::SolverPreprocessing() {}
 
-void SolverBase::IterPostprocessing( unsigned idx_iter ) {
+void SolverBase::IterPostprocessing( unsigned /*idx_iter*/ ) {
     // --- Compute Quantities of interest for Volume and Screen Output ---
     ComputeScalarFlux();    // Needs to be called first is a solver function
 
