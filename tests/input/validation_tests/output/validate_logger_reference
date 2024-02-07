@@ -1,19 +1,23 @@
-2024-02-06 16:29:23.315188 | | Importing mesh. This may take a while for large meshes.
-2024-02-06 16:29:23.315619 | | Mesh imported.
-2024-02-06 16:29:23.315684 | | Compute cell areas...
-2024-02-06 16:29:23.315723 | | Compute cell midpoints...
-2024-02-06 16:29:23.315794 | | Load mesh connectivity from file /home/8v5/Projects/KiT-RT/tests/input/mesh_files/linesource.con
-2024-02-06 16:29:23.318056 | | Compute boundary...
-2024-02-06 16:29:23.318612 | | Smallest characteristic length of a grid cell in this mesh: 0.104859
-2024-02-06 16:29:23.318620 | | Corresponding maximal time-step: 0.073401
-2024-02-06 16:29:23.320628 | ---------------------------- Solver Starts -----------------------------
-2024-02-06 16:29:23.320640 | | The simulation will run for 2 iterations.
-2024-02-06 16:29:23.320645 | | The spatial grid contains 96 cells.
-2024-02-06 16:29:23.320651 | | The velocity grid contains 86 points.
-2024-02-06 16:29:23.320655 | ---------------------------------------------------------------------------------------
-2024-02-06 16:29:23.320658 | |            Iter |           Mass |       RMS flux |        VTK out |        CSV out |
-2024-02-06 16:29:23.320662 | ---------------------------------------------------------------------------------------
-2024-02-06 16:29:23.323404 | |               0 |     1.4451e-01 |        4.0368e |             no |            yes |
-2024-02-06 16:29:23.326003 | |               1 |     1.4451e-01 |        2.0608e |            yes |            yes |
-2024-02-06 16:29:23.327608 | --------------------------------------------------------------
-2024-02-06 16:29:23.327616 | --------------------------- Solver Finished ----------------------------
+2024-02-07 09:35:33.188474 | | Importing mesh. This may take a while for large meshes.
+2024-02-07 09:35:33.188904 | | Mesh imported.
+2024-02-07 09:35:33.188965 | | Compute cell areas...
+2024-02-07 09:35:33.189012 | | Compute cell midpoints...
+2024-02-07 09:35:33.189068 | | Compute mesh connectivity...
+2024-02-07 09:35:33.189211 | | ...sort cells...
+2024-02-07 09:35:33.189254 | | ...connect cells to nodes...
+2024-02-07 09:35:33.189427 | | ...determine neighbors of cells...
+2024-02-07 09:35:33.194739 | | Save mesh connectivity to file /home/8v5/Projects/KiT-RT/tests/input/mesh_files/linesource.con
+2024-02-07 09:35:33.196688 | | Compute boundary...
+2024-02-07 09:35:33.197246 | | Smallest characteristic length of a grid cell in this mesh: 0.104859
+2024-02-07 09:35:33.197254 | | Corresponding maximal time-step: 0.073401
+2024-02-07 09:35:33.199058 | ---------------------------- Solver Starts -----------------------------
+2024-02-07 09:35:33.199069 | | The simulation will run for 2 iterations.
+2024-02-07 09:35:33.199074 | | The spatial grid contains 96 cells.
+2024-02-07 09:35:33.199079 | | The velocity grid contains 86 points.
+2024-02-07 09:35:33.199083 | ---------------------------------------------------------------------------------------
+2024-02-07 09:35:33.199086 | |            Iter |           Mass |       RMS flux |        VTK out |        CSV out |
+2024-02-07 09:35:33.199090 | ---------------------------------------------------------------------------------------
+2024-02-07 09:35:33.201771 | |               0 |     1.4451e-01 |        4.0368e |             no |            yes |
+2024-02-07 09:35:33.204306 | |               1 |     1.4451e-01 |        2.0608e |            yes |            yes |
+2024-02-07 09:35:33.205929 | --------------------------------------------------------------
+2024-02-07 09:35:33.205948 | --------------------------- Solver Finished ----------------------------

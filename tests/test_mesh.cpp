@@ -5,6 +5,7 @@
 #include "common/globalconstants.hpp"
 #include "common/io.hpp"
 #include "common/mesh.hpp"
+#include <iostream>
 
 TEST_CASE( "unit mesh tests", "[mesh]" ) {
     std::string config_file_name = std::string( TESTS_PATH ) + "input/unit_tests/common/unit_mesh.cfg";
@@ -72,7 +73,11 @@ TEST_CASE( "unit mesh tests", "[mesh]" ) {
             for( unsigned j = 0; j < mesh->GetNumNodesPerCell(); ++j ) {
                 sum += n[i][j];
             }
-            if( blaze::l2Norm( sum ) > eps ) errorWithinBounds = false;
+            if( blaze::l2Norm( sum ) > eps ) {
+                errorWithinBounds = false;
+
+                std::cout << blaze::l2Norm( sum ) << "\n";
+            }
         }
         REQUIRE( errorWithinBounds );
     }

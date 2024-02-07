@@ -41,7 +41,7 @@ TEST_CASE( "SN_SOLVER", "[validation_tests]" ) {
         solver->Solve();
         solver->PrintVolumeOutput();
 
-        auto test      = readVTKFile( std::string( TESTS_PATH ) + "result/rtsn_test_checkerboard_SN.vtk" );
+        auto test      = readVTKFile( std::string( TESTS_PATH ) + "result/checkerboard_SN.vtk" );
         auto reference = readVTKFile( std::string( TESTS_PATH ) + sn_fileDir + "checkerboard_SN_reference.vtk" );
 
         double eps = 1e-3;
@@ -66,7 +66,7 @@ TEST_CASE( "SN_SOLVER", "[validation_tests]" ) {
         solver->Solve();
         solver->PrintVolumeOutput();
 
-        auto test      = readVTKFile( std::string( TESTS_PATH ) + "result/rtsn_test_linesource_SN.vtk" );
+        auto test      = readVTKFile( std::string( TESTS_PATH ) + "result/linesource_SN.vtk" );
         auto reference = readVTKFile( std::string( TESTS_PATH ) + sn_fileDir + "linesource_SN_reference.vtk" );
 
         double eps = 1e-3;
@@ -91,7 +91,7 @@ TEST_CASE( "PN_SOLVER", "[validation_tests]" ) {
         solver->Solve();
         solver->PrintVolumeOutput();
 
-        auto test      = readVTKFile( std::string( TESTS_PATH ) + "result/rtsn_test_checkerboard_PN.vtk" );
+        auto test      = readVTKFile( std::string( TESTS_PATH ) + "result/checkerboard_PN.vtk" );
         auto reference = readVTKFile( std::string( TESTS_PATH ) + pn_fileDir + "checkerboard_PN_reference.vtk" );
 
         double eps             = 1e-3;
@@ -113,7 +113,7 @@ TEST_CASE( "PN_SOLVER", "[validation_tests]" ) {
         solver->Solve();
         solver->PrintVolumeOutput();
 
-        auto test      = readVTKFile( std::string( TESTS_PATH ) + "result/rtsn_test_linesource_PN.vtk" );
+        auto test      = readVTKFile( std::string( TESTS_PATH ) + "result/linesource_PN.vtk" );
         auto reference = readVTKFile( std::string( TESTS_PATH ) + pn_fileDir + "linesource_PN_reference.vtk" );
 
         double eps             = 1e-3;
@@ -140,7 +140,7 @@ TEST_CASE( "MN_SOLVER", "[validation_tests]" ) {
         solver->Solve();
         solver->PrintVolumeOutput();
 
-        auto test      = readVTKFile( std::string( TESTS_PATH ) + "result/rtsn_test_checkerboard_MN.vtk" );
+        auto test      = readVTKFile( std::string( TESTS_PATH ) + "result/checkerboard_MN.vtk" );
         auto reference = readVTKFile( std::string( TESTS_PATH ) + mn_fileDir + "checkerboard_MN_reference.vtk" );
 
         double eps             = 1e-3;
@@ -164,7 +164,7 @@ TEST_CASE( "MN_SOLVER", "[validation_tests]" ) {
             solver->Solve();
             solver->PrintVolumeOutput();
 
-            auto test      = readVTKFile( std::string( TESTS_PATH ) + "result/rtsn_test_linesource_MN_Quad.vtk" );
+            auto test      = readVTKFile( std::string( TESTS_PATH ) + "result/linesource_MN_Quad.vtk" );
             auto reference = readVTKFile( std::string( TESTS_PATH ) + mn_fileDir + "linesource_MN_Quad_reference.vtk" );
 
             double eps             = 1e-3;
@@ -192,7 +192,7 @@ TEST_CASE( "MN_SOLVER", "[validation_tests]" ) {
             solver->Solve();
             solver->PrintVolumeOutput();
 
-            auto test      = readVTKFile( std::string( TESTS_PATH ) + "result/rtsn_test_linesource_MN_MB.vtk" );
+            auto test      = readVTKFile( std::string( TESTS_PATH ) + "result/linesource_MN_MB.vtk" );
             auto reference = readVTKFile( std::string( TESTS_PATH ) + mn_fileDir + "linesource_MN_MB_reference.vtk" );
 
             double eps             = 1e-3;
@@ -220,7 +220,7 @@ TEST_CASE( "MN_SOLVER", "[validation_tests]" ) {
             solver->Solve();
             solver->PrintVolumeOutput();
 
-            auto test      = readVTKFile( std::string( TESTS_PATH ) + "result/rtsn_test_linesource_MN_MB_regularized.vtk" );
+            auto test      = readVTKFile( std::string( TESTS_PATH ) + "result/linesource_MN_MB_regularized.vtk" );
             auto reference = readVTKFile( std::string( TESTS_PATH ) + mn_fileDir + "linesource_MN_MB_regularized_reference.vtk" );
 
             double eps             = 1e-3;
@@ -246,7 +246,7 @@ TEST_CASE( "MN_SOLVER", "[validation_tests]" ) {
     //    solver->Solve();
     //    solver->PrintVolumeOutput();
     //
-    //    auto test      = readVTKFile( std::string( TESTS_PATH ) + "result/rtsn_test_checkerboard_MN_neural.vtk" );
+    //    auto test      = readVTKFile( std::string( TESTS_PATH ) + "result/checkerboard_MN_neural.vtk" );
     //    auto reference = readVTKFile( std::string( TESTS_PATH ) + mn_fileDir + "checkerboard_MN_reference_neural.vtk" );
     //
     //    double eps             = 1e-3;
@@ -292,7 +292,7 @@ TEST_CASE( "CSD_PN_SOLVER", "[validation_tests]" ) {
         solver->Solve();
         solver->PrintVolumeOutput();
         auto test      = readVTKFile( std::string( TESTS_PATH ) + "result/starmap_validation_2nd.vtk" );
-        auto reference = readVTKFile( std::string( TESTS_PATH ) + csd_sn_fileDir + "starmap_validation_reference_2nd.vtk" );
+        auto reference = readVTKFile( std::string( TESTS_PATH ) + csd_sn_fileDir + "starmap_validation_2nd_reference.vtk" );
 
         double eps = 1e-3;
         REQUIRE( test.size() == reference.size() );
@@ -313,7 +313,7 @@ TEST_CASE( "CSD_MN_SOLVER", "[validation_tests]" ) {
         SolverBase* solver           = SolverBase::Create( config );
         solver->Solve();
         solver->PrintVolumeOutput();
-        auto test      = readVTKFile( std::string( TESTS_PATH ) + "result/test_pointsource_dual_density_MN.vtk" );
+        auto test      = readVTKFile( std::string( TESTS_PATH ) + "result/pointsource_dual_density_MN.vtk" );
         auto reference = readVTKFile( std::string( TESTS_PATH ) + csd_mn_fileDir + "point_source_dual_density_reference_MN.vtk" );
 
         double eps = 1e-3;
@@ -333,7 +333,7 @@ TEST_CASE( "CSD_MN_SOLVER", "[validation_tests]" ) {
         SolverBase* solver = SolverBase::Create( config );
         solver->Solve();
         solver->PrintVolumeOutput();
-        auto test      = readVTKFile( std::string( TESTS_PATH ) + "result/test_pointsource_dual_density_MN_2nd.vtk" );
+        auto test      = readVTKFile( std::string( TESTS_PATH ) + "result/pointsource_dual_density_MN_2nd.vtk" );
         auto reference = readVTKFile( std::string( TESTS_PATH ) + csd_mn_fileDir + "point_source_dual_density_reference_2nd_MN.vtk" );
 
         double eps = 1e-3;

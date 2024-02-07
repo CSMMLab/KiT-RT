@@ -12,6 +12,7 @@
 #include "toolboxes/textprocessingtoolbox.hpp"
 
 #include <fstream>
+#include <iomanip>
 #include <iostream>
 #include <sstream>
 #include <vector>
@@ -391,6 +392,7 @@ void WriteConnecitivityToFile( const std::string outputFile,
     // cellBoundaryTypes (1 element), (tranlated from BOUNDARY_TYPE to unsigned)
 
     std::ofstream outFile( outputFile );
+    outFile << std::fixed << setprecision( 12 ) << endl;
     // const std::size_t bufferSize = 10000;    // Adjust as needed
     // outFile.rdbuf()->pubsetbuf( 0, bufferSize );
     if( outFile.is_open() ) {
