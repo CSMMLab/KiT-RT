@@ -385,7 +385,6 @@ void WriteConnecitivityToFile( const std::string outputFile,
                                const std::vector<std::vector<Vector>>& cellNormals,
                                const std::vector<BOUNDARY_TYPE>& cellBoundaryTypes,
                                unsigned nCells,
-                               unsigned nNodesPerCell,
                                unsigned nDim ) {
     // File has nCells lines, each line is a comma separated entry containing:
     // cellNeighbors (nNodesPerCell elements),

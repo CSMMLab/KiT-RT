@@ -36,7 +36,6 @@ void WriteConnecitivityToFile( const std::string outputFile,
                                const std::vector<std::vector<Vector>>& cellInterfaceMidPoints,
                                const std::vector<std::vector<Vector>>& cellNormals,
                                const std::vector<BOUNDARY_TYPE>& cellBoundaryTypes,
-                               unsigned nNodesPerCell,
                                unsigned nCells,
                                unsigned nDim );
 

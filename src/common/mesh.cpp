@@ -35,8 +35,7 @@ Mesh::Mesh( const Config* settings,
         log->info( "| Compute mesh connectivity..." );
         ComputeConnectivity();    // Computes  _cellNeighbors, _cellInterfaceMidPoints, _cellNormals, _cellBoundaryTypes
         log->info( "| Save mesh connectivity to file " + connectivityFile );
-        WriteConnecitivityToFile(
-            connectivityFile, _cellNeighbors, _cellInterfaceMidPoints, _cellNormals, _cellBoundaryTypes, _numCells, _numNodesPerCell, _dim );
+        WriteConnecitivityToFile( connectivityFile, _cellNeighbors, _cellInterfaceMidPoints, _cellNormals, _cellBoundaryTypes, _numCells, _dim );
     }
     else {
         // Resize the outer vector to have nCells elements
