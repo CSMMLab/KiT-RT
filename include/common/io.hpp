@@ -1,10 +1,10 @@
 #ifndef IO_H
 #define IO_H
 
+#include "common/globalconstants.hpp"
 #include "common/typedef.hpp"
 #include <string>
 #include <vector>
-
 // Forward Declarations
 class Config;
 class Mesh;

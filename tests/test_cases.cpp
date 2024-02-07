@@ -135,7 +135,9 @@ TEST_CASE( "MN_SOLVER", "[validation_tests]" ) {
     SECTION( "checkerboard" ) {
         std::string config_file_name = std::string( TESTS_PATH ) + mn_fileDir + "checkerboard_MN.cfg";
 
-        Config* config     = new Config( config_file_name );
+        Config* config = new Config( config_file_name );
+        // config->SetForcedConnectivity( true );
+
         SolverBase* solver = SolverBase::Create( config );
         solver->Solve();
         solver->PrintVolumeOutput();
@@ -161,6 +163,8 @@ TEST_CASE( "MN_SOLVER", "[validation_tests]" ) {
 
             Config* config     = new Config( config_file_name );
             SolverBase* solver = SolverBase::Create( config );
+            // config->SetForcedConnectivity( true );
+
             solver->Solve();
             solver->PrintVolumeOutput();
 
@@ -187,8 +191,11 @@ TEST_CASE( "MN_SOLVER", "[validation_tests]" ) {
         {    // ---  Maxwell Boltzmann Entropy ---
             std::string config_file_name = std::string( TESTS_PATH ) + mn_fileDir + "linesource_MN_MB.cfg";
 
-            Config* config     = new Config( config_file_name );
+            Config* config = new Config( config_file_name );
+            // config->SetForcedConnectivity( true );
+
             SolverBase* solver = SolverBase::Create( config );
+
             solver->Solve();
             solver->PrintVolumeOutput();
 
@@ -215,7 +222,9 @@ TEST_CASE( "MN_SOLVER", "[validation_tests]" ) {
         {    // --- Regularized Maxwell Boltzmann Entropy ---
             std::string config_file_name = std::string( TESTS_PATH ) + mn_fileDir + "linesource_MN_MB_regularized.cfg";
 
-            Config* config     = new Config( config_file_name );
+            Config* config = new Config( config_file_name );
+            // config->SetForcedConnectivity( true );
+
             SolverBase* solver = SolverBase::Create( config );
             solver->Solve();
             solver->PrintVolumeOutput();
@@ -367,7 +376,9 @@ TEST_CASE( "screen_output", "[output]" ) {
     std::string historyLoggerReference = std::string( TESTS_PATH ) + out_fileDir + "validate_logger_csv_reference";
     std::string historyLogger          = std::string( TESTS_PATH ) + "result/logs/validate_logger_output.csv";
 
-    Config* config     = new Config( config_file_name );
+    Config* config = new Config( config_file_name );
+    config->SetForcedConnectivity( true );
+
     SolverBase* solver = SolverBase::Create( config );
     solver->Solve();
 

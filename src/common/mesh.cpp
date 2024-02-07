@@ -1,6 +1,9 @@
 #include "common/mesh.hpp"
-
+#include "common/config.hpp"
+#include "common/io.hpp"
 #include <chrono>
+#include <filesystem>
+#include <iostream>
 #include <omp.h>
 
 Mesh::Mesh( const Config* settings,
@@ -28,7 +31,7 @@ Mesh::Mesh( const Config* settings,
     size_t lastDotIndex          = connectivityFile.find_last_of( '.' );
     connectivityFile             = connectivityFile.substr( 0, lastDotIndex );
     connectivityFile += ".con";
-    if( !std::filesystem::exists( connectivityFile ) ) {
+    if( !std::filesystem::exists( connectivityFile ) || _settings->GetForcedConnectivity() ) {
         log->info( "| Compute mesh connectivity..." );
         ComputeConnectivity();    // Computes  _cellNeighbors, _cellInterfaceMidPoints, _cellNormals, _cellBoundaryTypes
         log->info( "| Save mesh connectivity to file " + connectivityFile );
