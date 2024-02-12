@@ -22,7 +22,7 @@ jobs:
         run: |
           git submodule update --init --recursive
           mkdir build && cd build
-          cmake -G Ninja -DCMAKE_BUILD_TYPE=DEBUG -DBUILD_TESTING=ON -DBUILD_ML=OFF -DBUILD_CODE_COV=ON ..
+          cmake -G Ninja -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=ON -DBUILD_ML=OFF -DBUILD_CODE_COV=ON ..
           ninja
 
       - name: Run unit tests
@@ -32,5 +32,4 @@ jobs:
 
       - name: Code coverage
         run: |
-          cd build
           cpp-coveralls -r . -b "build/" -i "src/" -i "include/" --exclude "ext/" --gcov-options "\-lp" --verbose
