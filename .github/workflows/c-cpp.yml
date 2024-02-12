@@ -28,7 +28,7 @@ jobs:
       - name: Run unit tests
         run: |
           cd build
-          ./unit_tests -r
+          ./unit_tests
           OMP_NUM_THREADS=1 ./unit_tests -r junit > unit_tests_report.xml
 
       - name: Code coverage
