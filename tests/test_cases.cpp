@@ -36,7 +36,9 @@ TEST_CASE( "SN_SOLVER", "[validation_tests]" ) {
     SECTION( "checkerboard" ) {
         std::string config_file_name = std::string( TESTS_PATH ) + sn_fileDir + "checkerboard_SN.cfg";
 
-        Config* config     = new Config( config_file_name );
+        Config* config = new Config( config_file_name );
+        // config->SetForcedConnectivity( true );
+
         SolverBase* solver = SolverBase::Create( config );
         solver->Solve();
         solver->PrintVolumeOutput();
@@ -277,7 +279,8 @@ TEST_CASE( "CSD_PN_SOLVER", "[validation_tests]" ) {
 
         std::string config_file_name = std::string( TESTS_PATH ) + csd_sn_fileDir + "starmap_validation.cfg";
 
-        Config* config     = new Config( config_file_name );
+        Config* config = new Config( config_file_name );
+
         SolverBase* solver = SolverBase::Create( config );
         solver->Solve();
         solver->PrintVolumeOutput();
