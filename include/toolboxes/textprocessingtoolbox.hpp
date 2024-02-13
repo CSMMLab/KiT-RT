@@ -126,7 +126,7 @@ inline bool StringEndsWith( std::string const& value, std::string const& ending 
     return std::equal( ending.rbegin(), ending.rend(), value.rbegin() );
 }
 
-inline std::string DoubleToScientificNotation( double value ) {
+inline std::string DoubleToScientificNotation2( double value ) {
     // Using std::ostringstream to format the double in scientific notation
     std::ostringstream oss;
     oss << std::scientific << std::setprecision( 4 ) << value;
@@ -139,6 +139,26 @@ inline std::string DoubleToScientificNotation( double value ) {
     if( pos != std::string::npos ) {
         scientificNotation.erase( scientificNotation.find_last_not_of( '0' ) + 1 );
         scientificNotation.erase( scientificNotation.find_last_not_of( '.' ) + 1 );
+    }
+
+    // Remove unnecessary trailing decimal point
+    scientificNotation = std::regex_replace( scientificNotation, std::regex( "\\.0+$" ), "" );
+
+    return scientificNotation;
+}
+
+inline std::string DoubleToScientificNotation( double value ) {
+    // Using std::ostringstream to format the double in scientific notation
+    std::ostringstream oss;
+    oss << std::scientific << std::setprecision( 4 ) << value;
+
+    // Retrieve the string from the stream
+    std::string scientificNotation = oss.str();
+
+    // Replace 'e' with 'E' for scientific notation alignment with Python
+    size_t e_pos = scientificNotation.find( 'e' );
+    if( e_pos != std::string::npos ) {
+        scientificNotation[e_pos] = 'E';
     }
 
     // Remove unnecessary trailing decimal point
