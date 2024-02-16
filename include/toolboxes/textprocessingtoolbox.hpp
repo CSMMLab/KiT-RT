@@ -150,7 +150,7 @@ inline std::string DoubleToScientificNotation2( double value ) {
 inline std::string DoubleToScientificNotation( double value ) {
     // Using std::ostringstream to format the double in scientific notation
     std::ostringstream oss;
-    oss << std::scientific << std::setprecision( 4 ) << value;
+    oss << std::scientific << std::setprecision( 6 ) << value;
 
     // Retrieve the string from the stream
     std::string scientificNotation = oss.str();
