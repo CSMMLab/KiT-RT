@@ -14,10 +14,12 @@
 #include "solvers/pnsolver.hpp"
 #include "solvers/snsolver.hpp"
 #include "toolboxes/textprocessingtoolbox.hpp"
+#include <chrono>
 #include <cmath>
 #include <limits>
 
 SolverBase::SolverBase( Config* settings ) {
+    _currTime = 0.0;
     _settings = settings;
 
     _mesh = LoadSU2MeshFromFile( settings );
@@ -128,6 +130,8 @@ void SolverBase::Solve() {
     // Create Backup solution for Runge Kutta
     VectorVector solRK0 = _sol;
 
+    auto start = std::chrono::high_resolution_clock::now();    // Start timing
+    std::chrono::duration<double> duration;
     // Loop over energies (pseudo-time of continuous slowing down approach)
     for( unsigned iter = 0; iter < _nIter; iter++ ) {
         if( rkStages == 2 ) solRK0 = _sol;
@@ -147,6 +151,10 @@ void SolverBase::Solve() {
         }
         // --- Iter Postprocessing ---
         IterPostprocessing( iter );
+
+        // --- Wall time measurement
+        duration  = std::chrono::high_resolution_clock::now() - start;
+        _currTime = std::chrono::duration_cast<std::chrono::duration<double>>( duration ).count();
 
         // --- Runge Kutta Timestep ---
         if( rkStages == 2 ) RKUpdate( solRK0, _sol );
@@ -237,6 +245,7 @@ void SolverBase::PrepareScreenOutput() {
         switch( _settings->GetScreenOutput()[idx_field] ) {
             case MASS: _screenOutputFieldNames[idx_field] = "Mass"; break;
             case ITER: _screenOutputFieldNames[idx_field] = "Iter"; break;
+            case WALL_TIME: _screenOutputFieldNames[idx_field] = "Wall time [s]"; break;
             case RMS_FLUX: _screenOutputFieldNames[idx_field] = "RMS flux"; break;
             case VTK_OUTPUT: _screenOutputFieldNames[idx_field] = "VTK out"; break;
             case CSV_OUTPUT: _screenOutputFieldNames[idx_field] = "CSV out"; break;
@@ -275,6 +284,7 @@ void SolverBase::WriteScalarOutput( unsigned idx_iter ) {
         switch( _settings->GetScreenOutput()[idx_field] ) {
             case MASS: _screenOutputFields[idx_field] = _problem->GetMass(); break;
             case ITER: _screenOutputFields[idx_field] = idx_iter; break;
+            case WALL_TIME: _screenOutputFields[idx_field] = _currTime; break;
             case RMS_FLUX: _screenOutputFields[idx_field] = _problem->GetChangeRateFlux(); break;
             case VTK_OUTPUT:
                 _screenOutputFields[idx_field] = 0;
@@ -322,6 +332,7 @@ void SolverBase::WriteScalarOutput( unsigned idx_iter ) {
         switch( _settings->GetHistoryOutput()[idx_field] ) {
             case MASS: _historyOutputFields[idx_field] = _problem->GetMass(); break;
             case ITER: _historyOutputFields[idx_field] = idx_iter; break;
+            case WALL_TIME: _historyOutputFields[idx_field] = _currTime; break;
             case RMS_FLUX: _historyOutputFields[idx_field] = _problem->GetChangeRateFlux(); break;
             case VTK_OUTPUT:
                 _historyOutputFields[idx_field] = 0;
@@ -385,6 +396,7 @@ void SolverBase::PrintScreenOutput( unsigned idx_iter ) {
         std::vector<SCALAR_OUTPUT> integerFields    = { ITER };
         std::vector<SCALAR_OUTPUT> scientificFields = { RMS_FLUX,
                                                         MASS,
+                                                        WALL_TIME,
                                                         CUR_OUTFLOW,
                                                         TOTAL_OUTFLOW,
                                                         MAX_OUTFLOW,
@@ -394,7 +406,9 @@ void SolverBase::PrintScreenOutput( unsigned idx_iter ) {
                                                         TOTAL_PARTICLE_ABSORPTION_CENTER,
                                                         TOTAL_PARTICLE_ABSORPTION_VERTICAL,
                                                         TOTAL_PARTICLE_ABSORPTION_HORIZONTAL,
-                                                        PROBE_MOMENT_TIME_TRACE };
+                                                        PROBE_MOMENT_TIME_TRACE,
+                                                        VAR_ABSORPTION_GREEN,
+                                                        VAR_ABSORPTION_GREEN_LINE };
         std::vector<SCALAR_OUTPUT> booleanFields    = { VTK_OUTPUT, CSV_OUTPUT };
 
         if( !( integerFields.end() == std::find( integerFields.begin(), integerFields.end(), _settings->GetScreenOutput()[idx_field] ) ) ) {
@@ -442,6 +456,7 @@ void SolverBase::PrepareHistoryOutput() {
         switch( _settings->GetHistoryOutput()[idx_field] ) {
             case MASS: _historyOutputFieldNames[idx_field] = "Mass"; break;
             case ITER: _historyOutputFieldNames[idx_field] = "Iter"; break;
+            case WALL_TIME: _historyOutputFieldNames[idx_field] = "Wall_time_[s]"; break;
             case RMS_FLUX: _historyOutputFieldNames[idx_field] = "RMS_flux"; break;
             case VTK_OUTPUT: _historyOutputFieldNames[idx_field] = "VTK_out"; break;
             case CSV_OUTPUT: _historyOutputFieldNames[idx_field] = "CSV_out"; break;

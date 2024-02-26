@@ -736,6 +736,7 @@ void Config::SetPostprocessing() {
             switch( _problemName ) {
                 case PROBLEM_Lattice:
                     legalOutputs = { ITER,
+                                     WALL_TIME,
                                      MASS,
                                      RMS_FLUX,
                                      VTK_OUTPUT,
@@ -760,6 +761,7 @@ void Config::SetPostprocessing() {
                     break;
                 case PROBLEM_SymmetricHohlraum:
                     legalOutputs = { ITER,
+                                     WALL_TIME,
                                      MASS,
                                      RMS_FLUX,
                                      VTK_OUTPUT,
@@ -788,7 +790,7 @@ void Config::SetPostprocessing() {
                     }
                     break;
                 default:
-                    legalOutputs = { ITER, MASS, RMS_FLUX, VTK_OUTPUT, CSV_OUTPUT, CUR_OUTFLOW, TOTAL_OUTFLOW, MAX_OUTFLOW };
+                    legalOutputs = { ITER, WALL_TIME, MASS, RMS_FLUX, VTK_OUTPUT, CSV_OUTPUT, CUR_OUTFLOW, TOTAL_OUTFLOW, MAX_OUTFLOW };
                     it           = std::find( legalOutputs.begin(), legalOutputs.end(), _screenOutput[idx_screenOutput] );
 
                     if( it == legalOutputs.end() ) {
@@ -862,6 +864,7 @@ void Config::SetPostprocessing() {
             switch( _problemName ) {
                 case PROBLEM_Lattice:
                     legalOutputs = { ITER,
+                                     WALL_TIME,
                                      MASS,
                                      RMS_FLUX,
                                      VTK_OUTPUT,
@@ -886,6 +889,7 @@ void Config::SetPostprocessing() {
                     break;
                 case PROBLEM_SymmetricHohlraum:
                     legalOutputs = { ITER,
+                                     WALL_TIME,
                                      MASS,
                                      RMS_FLUX,
                                      VTK_OUTPUT,
@@ -915,7 +919,7 @@ void Config::SetPostprocessing() {
                     }
                     break;
                 default:
-                    legalOutputs = { ITER, MASS, RMS_FLUX, VTK_OUTPUT, CSV_OUTPUT, CUR_OUTFLOW, TOTAL_OUTFLOW, MAX_OUTFLOW };
+                    legalOutputs = { ITER, WALL_TIME, MASS, RMS_FLUX, VTK_OUTPUT, CSV_OUTPUT, CUR_OUTFLOW, TOTAL_OUTFLOW, MAX_OUTFLOW };
                     it           = std::find( legalOutputs.begin(), legalOutputs.end(), _historyOutput[idx_screenOutput] );
 
                     if( it == legalOutputs.end() ) {

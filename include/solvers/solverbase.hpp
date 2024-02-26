@@ -20,6 +20,7 @@ class Reconstructor;
 class SolverBase
 {
   protected:
+    double _currTime;      /*!< @brief wall-time after current iteration */
     NumericalFluxBase* _g; /*!< @brief class for numerical flux */
     Config* _settings;     /*!< @brief config class for global information */
     ProblemBase* _problem; /*!< @brief problem class for initial conditions */
