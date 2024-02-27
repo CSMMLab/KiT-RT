@@ -104,7 +104,7 @@ VectorVector SymmetricHohlraum::SetupIC() {
     VectorVector cellMids = _mesh->GetCellMidPoints();
 
     for( unsigned j = 0; j < cellMids.size(); ++j ) {
-        psi[j] = 1e-4;    // zero initial condition
+        psi[j] = 0.0;    // zero initial condition
     }
     return psi;
 }
@@ -255,7 +255,7 @@ void SymmetricHohlraum::SetProbingCellsLineGreen() {
     _nProbingCellsLineGreen = 2 * nVerticalProbingCells + 2 * nHorizontalProbingCells;
     _probingCellsLineGreen  = std::vector<unsigned>( _nProbingCellsLineGreen );
 
-    printf( "here" );
+    // printf( "here" );
 
     // Sample points on each side of the rectangle
     std::vector<unsigned> side1 = linspace2D( _cornerUpperLeftGreen, _cornerLowerLeftGreen, nVerticalProbingCells );
@@ -263,8 +263,8 @@ void SymmetricHohlraum::SetProbingCellsLineGreen() {
     std::vector<unsigned> side3 = linspace2D( _cornerLowerRightGreen, _cornerUpperRightGreen, nVerticalProbingCells );
     std::vector<unsigned> side4 = linspace2D( _cornerUpperRightGreen, _cornerUpperLeftGreen, nHorizontalProbingCells );
 
-    printf( "here" );
-    // Combine the points from each side
+    // printf( "here" );
+    //  Combine the points from each side
     _probingCellsLineGreen.insert( _probingCellsLineGreen.end(), side1.begin(), side1.end() );
     _probingCellsLineGreen.insert( _probingCellsLineGreen.end(), side2.begin(), side2.end() );
     _probingCellsLineGreen.insert( _probingCellsLineGreen.end(), side3.begin(), side3.end() );
