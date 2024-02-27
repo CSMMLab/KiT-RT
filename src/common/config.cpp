@@ -863,6 +863,17 @@ void Config::SetPostprocessing() {
                 for( unsigned i = 0; i < 4; i++ ) _screenOutput.push_back( PROBE_MOMENT_TIME_TRACE );
             }
         }
+        if( _problemName == PROBLEM_QuarterHohlraum ) {
+            std::vector<SCALAR_OUTPUT>::iterator it;
+
+            it = find( _screenOutput.begin(), _screenOutput.end(), PROBE_MOMENT_TIME_TRACE );
+
+            if( it != _screenOutput.end() ) {
+                _screenOutput.erase( it );
+                _nScreenOutput += 1;    // extend the screen output by the number of probing points
+                for( unsigned i = 0; i < 2; i++ ) _screenOutput.push_back( PROBE_MOMENT_TIME_TRACE );
+            }
+        }
     }
 
     // History Output Postprocessing
@@ -948,7 +959,7 @@ void Config::SetPostprocessing() {
                             CURRENT_FUNCTION );
                     }
                     break;
-                 case PROBLEM_QuarterHohlraum:
+                case PROBLEM_QuarterHohlraum:
                     legalOutputs = { ITER,
                                      WALL_TIME,
                                      MASS,
@@ -1021,6 +1032,15 @@ void Config::SetPostprocessing() {
                 _historyOutput.erase( it );
                 _nHistoryOutput += 11;    // extend the screen output by the number of probing points
                 for( unsigned i = 0; i < 12; i++ ) _historyOutput.push_back( PROBE_MOMENT_TIME_TRACE );
+            }
+        }
+        if( _problemName == PROBLEM_QuarterHohlraum ) {
+            std::vector<SCALAR_OUTPUT>::iterator it;
+            it = find( _historyOutput.begin(), _historyOutput.end(), PROBE_MOMENT_TIME_TRACE );
+            if( it != _historyOutput.end() ) {
+                _historyOutput.erase( it );
+                _nHistoryOutput += 5;    // extend the screen output by the number of probing points
+                for( unsigned i = 0; i < 6; i++ ) _historyOutput.push_back( PROBE_MOMENT_TIME_TRACE );
             }
         }
     }

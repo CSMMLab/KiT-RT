@@ -44,7 +44,6 @@ SolverBase::SolverBase( Config* settings ) {
 
     // set time step or energy step
     _dT = ComputeTimeStep( _settings->GetCFL() );
-
     if( _settings->GetIsCSD() ) {
         // carefull: This gets overwritten by almost all subsolvers
         double minE = 5e-5;    // 2.231461e-01;    // 5e-5;
@@ -66,7 +65,8 @@ SolverBase::SolverBase( Config* settings ) {
     // setup problem  and store frequently used params
 
     _problem = ProblemBase::Create( _settings, _mesh, _quadrature );
-    _sol     = _problem->SetupIC();
+
+    _sol = _problem->SetupIC();
 
     _solNew = _sol;    // setup temporary sol variable
     if( !_settings->GetIsCSD() ) {
@@ -87,7 +87,6 @@ SolverBase::SolverBase( Config* settings ) {
     // initialize Helper Variables
     _scalarFluxNew = Vector( _nCells, 0 );
     _scalarFlux    = Vector( _nCells, 0 );
-
     // write density
     _density = _problem->GetDensity( _mesh->GetCellMidPoints() );
 }
@@ -119,7 +118,6 @@ SolverBase* SolverBase::Create( Config* settings ) {
 void SolverBase::Solve() {
 
     // --- Preprocessing ---
-
     PrepareVolumeOutput();
 
     DrawPreSolverOutput();
@@ -262,10 +260,12 @@ void SolverBase::PrepareScreenOutput() {
                 _screenOutputFieldNames[idx_field] = "Probe 1 u_0";
                 idx_field++;
                 _screenOutputFieldNames[idx_field] = "Probe 2 u_0";
-                idx_field++;
-                _screenOutputFieldNames[idx_field] = "Probe 3 u_0";
-                idx_field++;
-                _screenOutputFieldNames[idx_field] = "Probe 4 u_0";
+                if( _settings->GetProblemName() == PROBLEM_SymmetricHohlraum ) {
+                    idx_field++;
+                    _screenOutputFieldNames[idx_field] = "Probe 3 u_0";
+                    idx_field++;
+                    _screenOutputFieldNames[idx_field] = "Probe 4 u_0";
+                }
                 break;
             case VAR_ABSORPTION_GREEN: _screenOutputFieldNames[idx_field] = "Var. absorption green"; break;
             default: ErrorMessages::Error( "Screen output field not defined!", CURRENT_FUNCTION ); break;
@@ -274,6 +274,7 @@ void SolverBase::PrepareScreenOutput() {
 }
 
 void SolverBase::WriteScalarOutput( unsigned idx_iter ) {
+    unsigned n_probes = 4;
 
     unsigned nFields                  = (unsigned)_settings->GetNScreenOutput();
     const VectorVector probingMoments = _problem->GetCurrentProbeMoment();
@@ -310,7 +311,9 @@ void SolverBase::WriteScalarOutput( unsigned idx_iter ) {
             case TOTAL_PARTICLE_ABSORPTION_VERTICAL: _screenOutputFields[idx_field] = _problem->GetTotalAbsorptionHohlraumVertical(); break;
             case TOTAL_PARTICLE_ABSORPTION_HORIZONTAL: _screenOutputFields[idx_field] = _problem->GetTotalAbsorptionHohlraumHorizontal(); break;
             case PROBE_MOMENT_TIME_TRACE:
-                for( unsigned i = 0; i < 4; i++ ) {
+                if( _settings->GetProblemName() == PROBLEM_SymmetricHohlraum ) n_probes = 4;
+                if( _settings->GetProblemName() == PROBLEM_QuarterHohlraum ) n_probes = 2;
+                for( unsigned i = 0; i < n_probes; i++ ) {
                     _screenOutputFields[idx_field] = probingMoments[i][0];
                     idx_field++;
                 }
@@ -359,7 +362,9 @@ void SolverBase::WriteScalarOutput( unsigned idx_iter ) {
             case TOTAL_PARTICLE_ABSORPTION_VERTICAL: _historyOutputFields[idx_field] = _problem->GetTotalAbsorptionHohlraumVertical(); break;
             case TOTAL_PARTICLE_ABSORPTION_HORIZONTAL: _historyOutputFields[idx_field] = _problem->GetTotalAbsorptionHohlraumHorizontal(); break;
             case PROBE_MOMENT_TIME_TRACE:
-                for( unsigned i = 0; i < 4; i++ ) {
+                if( _settings->GetProblemName() == PROBLEM_SymmetricHohlraum ) n_probes = 4;
+                if( _settings->GetProblemName() == PROBLEM_QuarterHohlraum ) n_probes = 2;
+                for( unsigned i = 0; i < n_probes; i++ ) {
                     for( unsigned j = 0; j < 3; j++ ) {
                         _historyOutputFields[idx_field] = probingMoments[i][j];
                         idx_field++;
@@ -443,6 +448,8 @@ void SolverBase::PrintScreenOutput( unsigned idx_iter ) {
 }
 
 void SolverBase::PrepareHistoryOutput() {
+    unsigned n_probes = 4;
+
     unsigned nFields = (unsigned)_settings->GetNHistoryOutput();
 
     _historyOutputFieldNames.resize( nFields );
@@ -470,7 +477,9 @@ void SolverBase::PrepareHistoryOutput() {
             case TOTAL_PARTICLE_ABSORPTION_VERTICAL: _historyOutputFieldNames[idx_field] = "Cumulated_absorption_vertical_wall"; break;
             case TOTAL_PARTICLE_ABSORPTION_HORIZONTAL: _historyOutputFieldNames[idx_field] = "Cumulated_absorption_horizontal_wall"; break;
             case PROBE_MOMENT_TIME_TRACE:
-                for( unsigned i = 0; i < 4; i++ ) {
+                if( _settings->GetProblemName() == PROBLEM_SymmetricHohlraum ) n_probes = 4;
+                if( _settings->GetProblemName() == PROBLEM_QuarterHohlraum ) n_probes = 2;
+                for( unsigned i = 0; i < n_probes; i++ ) {
                     for( unsigned j = 0; j < 3; j++ ) {
                         _historyOutputFieldNames[idx_field] = "Probe " + std::to_string( i ) + " u_" + std::to_string( j );
                         idx_field++;
@@ -480,6 +489,8 @@ void SolverBase::PrepareHistoryOutput() {
                 break;
             case VAR_ABSORPTION_GREEN: _historyOutputFieldNames[idx_field] = "Var. absorption green"; break;
             case VAR_ABSORPTION_GREEN_LINE:
+                std::cout << "here\n";
+
                 for( unsigned i = 0; i < _settings->GetNumProbingCellsLineHohlraum(); i++ ) {
                     _historyOutputFieldNames[idx_field] = "Probe Green Line " + std::to_string( i );
                     idx_field++;

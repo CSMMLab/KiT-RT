@@ -185,18 +185,18 @@ void SymmetricHohlraum::ComputeTotalAbsorptionHohlraum( double dT ) {
 }
 
 void SymmetricHohlraum::ComputeVarAbsorptionGreen( const Vector& scalarFlux ) {
-    bool green1, green2, green3, green4;
     double a_g                  = 0.0;
     _varAbsorptionHohlraumGreen = 0.0;
-    double x, y;
 
     unsigned nCells           = _mesh->GetNumCells();
     auto cellMids             = _mesh->GetCellMidPoints();
     std::vector<double> areas = _mesh->GetCellAreas();
 
+#pragma omp parallel reduction( + : a_g )
     for( unsigned idx_cell = 0; idx_cell < nCells; ++idx_cell ) {
-        x = cellMids[idx_cell][0];
-        y = cellMids[idx_cell][1];
+        double x = cellMids[idx_cell][0];
+        double y = cellMids[idx_cell][1];
+        bool green1, green2, green3, green4;
 
         green1 = x > -0.2 && x < -0.15 && y > -0.35 && y < 0.35;    // green area 1 (lower boundary)
         green2 = x > 0.15 && x < 0.2 && y > -0.35 && y < 0.35;      // green area 2 (upper boundary)
@@ -207,9 +207,12 @@ void SymmetricHohlraum::ComputeVarAbsorptionGreen( const Vector& scalarFlux ) {
             a_g += ( _sigmaT[idx_cell] - _sigmaS[idx_cell] ) * scalarFlux[idx_cell] * areas[idx_cell];
         }
     }
+
+#pragma omp parallel reduction( + : _varAbsorptionHohlraumGreen )
     for( unsigned idx_cell = 0; idx_cell < nCells; ++idx_cell ) {
-        x = cellMids[idx_cell][0];
-        y = cellMids[idx_cell][1];
+        double x = cellMids[idx_cell][0];
+        double y = cellMids[idx_cell][1];
+        bool green1, green2, green3, green4;
 
         green1 = x > -0.2 && x < -0.15 && y > -0.35 && y < 0.35;    // green area 1 (lower boundary)
         green2 = x > 0.15 && x < 0.2 && y > -0.35 && y < 0.35;      // green area 2 (upper boundary)
@@ -249,11 +252,9 @@ void SymmetricHohlraum::SetProbingCellsLineGreen() {
 
     unsigned nHorizontalProbingCells =
         (unsigned)std::ceil( _nProbingCellsLineGreen / 2 * ( horizontalLineWidth / ( horizontalLineWidth + verticalLineWidth ) ) );
-    unsigned nVerticalProbingCells =
-        (unsigned)std::ceil( _nProbingCellsLineGreen / 2 * ( verticalLineWidth / ( horizontalLineWidth + verticalLineWidth ) ) );
+    unsigned nVerticalProbingCells = _nProbingCellsLineGreen - nHorizontalProbingCells;
 
-    _nProbingCellsLineGreen = 2 * nVerticalProbingCells + 2 * nHorizontalProbingCells;
-    _probingCellsLineGreen  = std::vector<unsigned>( _nProbingCellsLineGreen );
+    _probingCellsLineGreen = std::vector<unsigned>( _nProbingCellsLineGreen );
 
     // printf( "here" );
 

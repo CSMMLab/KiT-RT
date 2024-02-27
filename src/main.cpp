@@ -4,8 +4,8 @@
  *  @version: 0.1
  */
 
-#include <string>
 #include <omp.h>
+#include <string>
 
 #include "common/config.hpp"
 #include "common/io.hpp"
@@ -46,6 +46,7 @@ int main( int argc, char** argv ) {
     else {
         // Build solver
         SolverBase* solver = SolverBase::Create( config );
+        std::cout << "here\n";
 
         // Run solver and export
         solver->Solve();
