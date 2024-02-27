@@ -1,5 +1,5 @@
 cl_fine = 0.01;
-cl_finer = 0.005;
+cl_finer = cl_fine / 3;
 
 // Outer points
 Point(1) = {0.65, 0.65, 0, cl_fine};
