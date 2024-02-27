@@ -109,7 +109,6 @@ ProblemBase* ProblemBase::Create( Config* settings, Mesh* mesh, QuadratureBase* 
                 return new QuarterHohlraum_Moment( settings, mesh, quad );
             else
                 return new QuarterHohlraum( settings, mesh, quad );
-            
         } break;
         case PROBLEM_Lattice: {
             if( settings->GetIsMomentSolver() )
