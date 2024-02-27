@@ -345,7 +345,7 @@ void LoadConnectivityFromFile( const std::string inputFile,
         for( unsigned j = 0; j < correctedNodesPerCell; ++j ) {
             std::getline( iss, line, ',' );
             std::istringstream converter( line );
-            converter >> std::fixed >> setprecision( 15 ) >> cellNeighbors[i][j];
+            converter >> std::fixed >> setprecision( 12 ) >> cellNeighbors[i][j];
         }
 
         // Load cellInterfaceMidPoints
@@ -355,8 +355,8 @@ void LoadConnectivityFromFile( const std::string inputFile,
             for( unsigned k = 0; k < nDim; ++k ) {
                 std::getline( iss, line, ',' );
                 std::istringstream converter( line );
-                converter >> std::fixed >> setprecision( 15 ) >> cellInterfaceMidPoints[i][j][k];    // Replace with appropriate member of Vector
-                // std::cout << std::fixed << setprecision( 15 ) << cellInterfaceMidPoints[i][j][k] << std::endl;
+                converter >> std::fixed >> setprecision( 12 ) >> cellInterfaceMidPoints[i][j][k];    // Replace with appropriate member of Vector
+                // std::cout << std::fixed << setprecision( 12 ) << cellInterfaceMidPoints[i][j][k] << std::endl;
             }
         }
         // Load cellNormals
@@ -366,7 +366,7 @@ void LoadConnectivityFromFile( const std::string inputFile,
             for( unsigned k = 0; k < nDim; ++k ) {
                 std::getline( iss, line, ',' );
                 std::istringstream converter( line );
-                converter >> std::fixed >> setprecision( 15 ) >> cellNormals[i][j][k];    // Replace with appropriate member of Vector
+                converter >> std::fixed >> setprecision( 12 ) >> cellNormals[i][j][k];    // Replace with appropriate member of Vector
             }
         }
         // Load cellBoundaryTypes
@@ -393,7 +393,7 @@ void WriteConnecitivityToFile( const std::string outputFile,
     // cellBoundaryTypes (1 element), (tranlated from BOUNDARY_TYPE to unsigned)
 
     std::ofstream outFile( outputFile );
-    outFile << std::fixed << setprecision( 15 );
+    outFile << std::fixed << setprecision( 12 );
     // const std::size_t bufferSize = 10000;    // Adjust as needed
     // outFile.rdbuf()->pubsetbuf( 0, bufferSize );
     if( outFile.is_open() ) {
