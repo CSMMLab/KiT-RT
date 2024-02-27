@@ -1,5 +1,6 @@
-n_recombine = 15;
-n_recombine_coarse = 15;
+n_recombine = 20;
+n_recombine_coarse = n_recombine  /2 ;
+n_prog = 1.05;
 
 cl_fine = 0.1;
 
@@ -324,9 +325,9 @@ Curve Loop(29) = {19, 20, 21, 22};
 //+
 Plane Surface(29) = {29};
 //+
-Physical Curve("void", 87) = {71, 72, 73, 74, 8, 52, 3, 79, 80, 82, 84, 86, 1, 35, 5, 69,29, 30, 31, 28};
+Physical Curve("void", 87) = {71, 72, 73, 74, 8, 52, 3, 79, 80, 82, 84, 86, 1, 35, 5, 69};
 //+
-// Physical Curve("inflow", 88) = {};
+Physical Curve("inflow", 88) = {29, 30, 31, 28};
 //+
 Transfinite Surface {4};
 //+
@@ -388,15 +389,15 @@ Transfinite Surface {29};
 //+
 Transfinite Curve {44, 43, 41, 61} = n_recombine Using Progression 1;
 // + all vertical
-Transfinite Curve {71, 65, 56, 57, 58, 84, 72, 66, 45, 19, 21, 40, 59, 82, 73, 67, 55, 54, 60, 80} = n_recombine_coarse *2 Using Progression 1;
+Transfinite Curve {71, 65, 56, 57, 58, 84, 72, 66, 45, 19, 21, 40, 59, 82, 73, 67, 55, 54, 60, 80} = n_recombine_coarse * 8 Using Progression 1;
 //+  horizontal wide
-Transfinite Curve {35, 34, 46, 22, 20, 42, 53, 52} = n_recombine_coarse * 4 Using Progression 1;
+Transfinite Curve {35, 34, 46, 22, 20, 42, 53, 52} = n_recombine_coarse * 16 Using Progression 1;
 //+ horizontal small
-Transfinite Curve {28, 47, 62, 63, 50, 31, 30, 38, 68, 64, 33, 29} = n_recombine_coarse Using Progression 1;
+Transfinite Curve {28, 47, 62, 63, 50, 31, 30, 38, 68, 64, 33, 29} = n_recombine_coarse * 4 Using Progression 1;
 //+ inlets
-Transfinite Curve {69, 32, 10, 13, 48, 86, 79, 51, 17, 15, 37, 74} = n_recombine / 3 Using Progression 1;
+Transfinite Curve {69, 32, 10, 13, 48, 86, 79, 51, 17, 15, 37, 74} = n_recombine_coarse Using Progression 1;
 //+ upper and lower bound
-Transfinite Curve {5, 70, 77, 76, 75, 8, 3, 78, 81, 83, 85, 1} = n_recombine_coarse / 2 Using Progression 1;
+Transfinite Curve {5, 70, 77, 76, 75, 8, 3, 78, 81, 83, 85, 1} = n_recombine_coarse  Using Progression 1;
 
 Recombine Surface "*";
 // Define meshing options
