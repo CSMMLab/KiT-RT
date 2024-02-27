@@ -12,6 +12,7 @@
 #include "problems/radiationctimage.hpp"
 #include "problems/starmapvalidation.hpp"
 #include "problems/symmetrichohlraum.hpp"
+#include "problems/quarterhohlraum.hpp"
 #include "quadratures/quadraturebase.hpp"
 #include "toolboxes/errormessages.hpp"
 
@@ -102,6 +103,13 @@ ProblemBase* ProblemBase::Create( Config* settings, Mesh* mesh, QuadratureBase* 
                 return new SymmetricHohlraum_Moment( settings, mesh, quad );
             else
                 return new SymmetricHohlraum( settings, mesh, quad );
+        } break;
+        case PROBLEM_QuarterHohlraum: {
+            if( settings->GetIsMomentSolver() )
+                return new QuarterHohlraum_Moment( settings, mesh, quad );
+            else
+                return new QuarterHohlraum( settings, mesh, quad );
+            
         } break;
         case PROBLEM_Lattice: {
             if( settings->GetIsMomentSolver() )

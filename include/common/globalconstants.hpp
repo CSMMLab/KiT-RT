@@ -104,6 +104,7 @@ enum PROBLEM_NAME {
     PROBLEM_Meltingcube1D,
     PROBLEM_Hohlraum,
     PROBLEM_SymmetricHohlraum,
+    PROBLEM_QuarterHohlraum,
     PROBLEM_Lattice
 };
 
@@ -120,6 +121,7 @@ inline std::map<std::string, PROBLEM_NAME> Problem_Map{ { "LINESOURCE", PROBLEM_
                                                         { "MELTINGCUBE_1D", PROBLEM_Meltingcube1D },
                                                         { "HOHLRAUM", PROBLEM_Hohlraum },
                                                         { "SYMMETRIC_HOHLRAUM", PROBLEM_SymmetricHohlraum },
+                                                        { "QUARTER_HOHLRAUM", PROBLEM_QuarterHohlraum },
                                                         { "LATTICE", PROBLEM_Lattice } };
 
 // Kernel name

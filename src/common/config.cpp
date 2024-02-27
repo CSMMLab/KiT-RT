@@ -789,6 +789,36 @@ void Config::SetPostprocessing() {
                             CURRENT_FUNCTION );
                     }
                     break;
+                case PROBLEM_QuarterHohlraum:
+                    legalOutputs = { ITER,
+                                     WALL_TIME,
+                                     MASS,
+                                     RMS_FLUX,
+                                     VTK_OUTPUT,
+                                     CSV_OUTPUT,
+                                     CUR_OUTFLOW,
+                                     TOTAL_OUTFLOW,
+                                     MAX_OUTFLOW,
+                                     TOTAL_PARTICLE_ABSORPTION_CENTER,
+                                     TOTAL_PARTICLE_ABSORPTION_VERTICAL,
+                                     TOTAL_PARTICLE_ABSORPTION_HORIZONTAL,
+                                     PROBE_MOMENT_TIME_TRACE,
+                                     VAR_ABSORPTION_GREEN };
+
+                    it = std::find( legalOutputs.begin(), legalOutputs.end(), _screenOutput[idx_screenOutput] );
+
+                    if( it == legalOutputs.end() ) {
+                        std::string foundKey = findKey( ScalarOutput_Map, _screenOutput[idx_screenOutput] );
+                        ErrorMessages::Error(
+                            "HERE Illegal output field <" + foundKey +
+                                "> for option SCREEN_OUTPUT for this test case.\n"
+                                "Supported fields are: ITER, MASS, RMS_FLUX, VTK_OUTPUT, CSV_OUTPUT, TOTAL_PARTICLE_ABSORPTION_CENTER, \n"
+                                "TOTAL_PARTICLE_ABSORPTION_VERTICAL, TOTAL_PARTICLE_ABSORPTION_HORIZONTAL, PROBE_MOMENT_TIME_TRACE, CUR_OUTFLOW, \n "
+                                "TOTAL_OUTFLOW, MAX_OUTFLOW, VAR_ABSORPTION_GREEN \n"
+                                "Please check your .cfg file.",
+                            CURRENT_FUNCTION );
+                    }
+                    break;
                 default:
                     legalOutputs = { ITER, WALL_TIME, MASS, RMS_FLUX, VTK_OUTPUT, CSV_OUTPUT, CUR_OUTFLOW, TOTAL_OUTFLOW, MAX_OUTFLOW };
                     it           = std::find( legalOutputs.begin(), legalOutputs.end(), _screenOutput[idx_screenOutput] );
@@ -888,6 +918,37 @@ void Config::SetPostprocessing() {
                     }
                     break;
                 case PROBLEM_SymmetricHohlraum:
+                    legalOutputs = { ITER,
+                                     WALL_TIME,
+                                     MASS,
+                                     RMS_FLUX,
+                                     VTK_OUTPUT,
+                                     CSV_OUTPUT,
+                                     CUR_OUTFLOW,
+                                     TOTAL_OUTFLOW,
+                                     MAX_OUTFLOW,
+                                     TOTAL_PARTICLE_ABSORPTION_CENTER,
+                                     TOTAL_PARTICLE_ABSORPTION_VERTICAL,
+                                     TOTAL_PARTICLE_ABSORPTION_HORIZONTAL,
+                                     PROBE_MOMENT_TIME_TRACE,
+                                     VAR_ABSORPTION_GREEN,
+                                     VAR_ABSORPTION_GREEN_LINE };
+
+                    it = std::find( legalOutputs.begin(), legalOutputs.end(), _historyOutput[idx_screenOutput] );
+
+                    if( it == legalOutputs.end() ) {
+                        std::string foundKey = findKey( ScalarOutput_Map, _historyOutput[idx_screenOutput] );
+                        ErrorMessages::Error(
+                            "Illegal output field <" + foundKey +
+                                "> for option HISTORY_OUTPUT for this test case.\n"
+                                "Supported fields are: ITER, MASS, RMS_FLUX, VTK_OUTPUT, CSV_OUTPUT, TOTAL_PARTICLE_ABSORPTION_CENTER, \n "
+                                "TOTAL_PARTICLE_ABSORPTION_VERTICAL, TOTAL_PARTICLE_ABSORPTION_HORIZONTAL,PROBE_MOMENT_TIME_TRACE,  CUR_OUTFLOW, \n"
+                                "TOTAL_OUTFLOW, MAX_OUTFLOW , VAR_ABSORPTION_GREEN, VAR_ABSORPTION_GREEN_LINE \n"
+                                "Please check your .cfg file.",
+                            CURRENT_FUNCTION );
+                    }
+                    break;
+                 case PROBLEM_QuarterHohlraum:
                     legalOutputs = { ITER,
                                      WALL_TIME,
                                      MASS,
