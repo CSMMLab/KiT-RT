@@ -9,6 +9,10 @@ class QuarterHohlraum : public ProblemBase
     QuarterHohlraum() = delete;
 
     std::vector<unsigned> linspace2D( const std::vector<double>& start, const std::vector<double>& end, unsigned num_points );
+    std::map<unsigned, bool> _ghostCellsReflectingX;     /*!< map that indicates if a ghostcell has a fixed value or is a mirroring boundary */
+    std::map<unsigned, bool> _ghostCellsReflectingY;     /*!< map that indicates if a ghostcell has a fixed value or is a mirroring boundary */
+    std::map<unsigned, unsigned> _quadratureXReflection; /*!< map that gives a Reflection against the x axis for the velocity ordinates */
+    std::map<unsigned, unsigned> _quadratureYReflection; /*!< map that gives a Reflection against the x axis for the velocity ordinates */
 
   protected:
     Vector _sigmaS; /*!< @brief Vector of scattering crosssections */

@@ -1,7 +1,7 @@
+#include "problems/quarterhohlraum.hpp"
 #include "common/config.hpp"
 #include "common/io.hpp"
 #include "common/mesh.hpp"
-#include "problems/quarterhohlraum.hpp"
 #include "quadratures/qgausslegendretensorized.hpp"
 #include "quadratures/quadraturebase.hpp"
 #include "solvers/csdpn_starmap_constants.hpp"
@@ -110,32 +110,91 @@ void QuarterHohlraum::SetGhostCells() {
     // Loop over all cells. If its a Dirichlet boundary, add cell to dict with {cell_idx, boundary_value}
     auto cellBoundaries = _mesh->GetBoundaryTypes();
     std::map<int, Vector> ghostCellMap;
+    std::map<int, bool> ghostCellReflMap;
+
+    double tol = 1e-12;    // For distance to boundary
+
+    unsigned nGhostcells = 0;
+    for( unsigned idx_cell = 0; idx_cell < _mesh->GetNumCells(); idx_cell++ ) {
+        if( cellBoundaries[idx_cell] == BOUNDARY_TYPE::NEUMANN || cellBoundaries[idx_cell] == BOUNDARY_TYPE::DIRICHLET ) {
+            nGhostcells++;
+        }
+    }
 
     QuadratureBase* quad = QuadratureBase::Create( _settings );
     VectorVector vq      = quad->GetPoints();
     unsigned nq          = quad->GetNq();
 
-    Vector left_inflow( nq, 0.0 );
+    if( _settings->GetQuadName() != QUAD_GaussLegendreTensorized2D ) {
+        ErrorMessages::Error( "This simplified test case only works with symmetric quadrature orders. Use QUAD_GAUSS_LEGENDRE_TENSORIZED_2D",
+                              CURRENT_FUNCTION );
+    }
+    {    // Create the symmetry maps for the quadratures
+
+        for( unsigned idx_q = 0; idx_q < nq; idx_q++ ) {
+            for( unsigned idx_q2 = 0; idx_q2 < nq; idx_q2++ ) {
+                if( abs( vq[idx_q][0] + vq[idx_q2][0] ) + abs( vq[idx_q][1] - vq[idx_q2][1] ) < tol ) {
+                    _quadratureYReflection[idx_q] = idx_q2;
+                    break;
+                }
+            }
+            for( unsigned idx_q2 = 0; idx_q2 < nq; idx_q2++ ) {
+                if( abs( vq[idx_q][0] - vq[idx_q2][0] ) + abs( vq[idx_q][1] + vq[idx_q2][1] ) < tol ) {
+                    _quadratureXReflection[idx_q] = idx_q2;
+                    break;
+                }
+            }
+        }
+    }
+    if( _quadratureXReflection.size() != nq ) {
+        ErrorMessages::Error( "Problem with X symmetry of quadrature of this mesh", CURRENT_FUNCTION );
+    }
+    if( _quadratureYReflection.size() != nq ) {
+        ErrorMessages::Error( "Problem with Y symmetry of quadrature of this mesh", CURRENT_FUNCTION );
+    }
+
     Vector right_inflow( nq, 0.0 );
     Vector vertical_flow( nq, 0.0 );
 
     for( unsigned idx_q = 0; idx_q < nq; idx_q++ ) {
-        if( vq[idx_q][0] > 0.0 ) left_inflow[idx_q] = 1.0;
         if( vq[idx_q][0] < 0.0 ) right_inflow[idx_q] = 1.0;
     }
+
+    auto nodes = _mesh->GetNodes();
 
     for( unsigned idx_cell = 0; idx_cell < _mesh->GetNumCells(); idx_cell++ ) {
         if( cellBoundaries[idx_cell] == BOUNDARY_TYPE::NEUMANN || cellBoundaries[idx_cell] == BOUNDARY_TYPE::DIRICHLET ) {
             double x = _mesh->GetCellMidPoints()[idx_cell][0];
             double y = _mesh->GetCellMidPoints()[idx_cell][1];
-            if( y < 0.01 )
-                ghostCellMap.insert( { idx_cell, vertical_flow } );
-            else if( y > 0.6 )
-                ghostCellMap.insert( { idx_cell, vertical_flow } );
-            else if( x < 0.01 )
-                ghostCellMap.insert( { idx_cell, vertical_flow } );
-            else if( x > 0.6 )
-                ghostCellMap.insert( { idx_cell, right_inflow } );
+
+            auto localCellNodes = _mesh->GetCells()[idx_cell];
+
+            _ghostCellsReflectingX[idx_cell] = false;
+            _ghostCellsReflectingY[idx_cell] = false;
+            for( unsigned idx_node = 0; idx_node < _mesh->GetNumNodesPerCell(); idx_node++ ) {    // Check if corner node is in this cell
+                if( abs( nodes[localCellNodes[idx_node]][0] ) < tol ) {                           // close to 0 => left boundary
+                    _ghostCellsReflectingY[idx_cell] = true;
+                    ghostCellMap.insert( { idx_cell, vertical_flow } );
+                    break;
+                }
+                else if( abs( nodes[localCellNodes[idx_node]][0] ) > 0.65 - tol ) {    // right boundary
+                    ghostCellMap.insert( { idx_cell, right_inflow } );
+                    break;
+                }
+                else if( abs( nodes[localCellNodes[idx_node]][1] ) < tol ) {    // lower boundary
+                    _ghostCellsReflectingX[idx_cell] = true;
+                    ghostCellMap.insert( { idx_cell, vertical_flow } );
+
+                    break;
+                }
+                else if( abs( nodes[localCellNodes[idx_node]][1] ) > 0.65 - tol ) {    // upper boundary
+                    ghostCellMap.insert( { idx_cell, vertical_flow } );
+                    break;
+                }
+                else {
+                    ErrorMessages::Error( " Problem with ghost cell setup and  boundary of this mesh ", CURRENT_FUNCTION );
+                }
+            }
         }
     }
     _ghostCells = ghostCellMap;
@@ -144,7 +203,16 @@ void QuarterHohlraum::SetGhostCells() {
 }
 
 const Vector& QuarterHohlraum::GetGhostCellValue( int idx_cell, const Vector& cell_sol ) {
-    if( _mesh->GetCellMidPoints()[idx_cell][0] < 0.01 || _mesh->GetCellMidPoints()[idx_cell][1] < 0.01 ) return cell_sol;
+    if( _ghostCellsReflectingX[idx_cell] ) {
+        for( unsigned idx_sys = 0; idx_sys < cell_sol.size(); idx_sys++ ) {
+            _ghostCells[idx_cell][idx_sys] = cell_sol[_quadratureXReflection[idx_sys]];
+        }
+    }
+    else if( _ghostCellsReflectingY[idx_cell] ) {
+        for( unsigned idx_sys = 0; idx_sys < cell_sol.size(); idx_sys++ ) {
+            _ghostCells[idx_cell][idx_sys] = cell_sol[_quadratureYReflection[idx_sys]];
+        }
+    }
     return _ghostCells[idx_cell];
 }
 

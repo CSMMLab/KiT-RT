@@ -489,8 +489,6 @@ void SolverBase::PrepareHistoryOutput() {
                 break;
             case VAR_ABSORPTION_GREEN: _historyOutputFieldNames[idx_field] = "Var. absorption green"; break;
             case VAR_ABSORPTION_GREEN_LINE:
-                std::cout << "here\n";
-
                 for( unsigned i = 0; i < _settings->GetNumProbingCellsLineHohlraum(); i++ ) {
                     _historyOutputFieldNames[idx_field] = "Probe Green Line " + std::to_string( i );
                     idx_field++;
