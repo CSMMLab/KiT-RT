@@ -158,8 +158,8 @@ class ProblemBase
 
     // Computer
     // Test case agnostic
-    void ComputeCurrentOutflow( const VectorVector& solution );                          /*!<   @brief Computes Problemspeagnostic Scalar QOI */
-    void ComputeMaxOrdinatewiseOutflow( const VectorVector& solution );                  /*!<   @brief Computes Problemspeagnostic Scalar QOI */
+    virtual void ComputeCurrentOutflow( const VectorVector& solution );                  /*!<   @brief Computes Problemspeagnostic Scalar QOI */
+    virtual void ComputeMaxOrdinatewiseOutflow( const VectorVector& solution );          /*!<   @brief Computes Problemspeagnostic Scalar QOI */
     void ComputeTotalOutflow( double dT );                                               /*!<   @brief Computes Problemspeagnostic Scalar QOI */
     void ComputeMass( const Vector& scalarFlux );                                        /*!<   @brief Computes Problemspeagnostic Scalar QOI */
     void ComputeChangeRateFlux( const Vector& scalarFlux, const Vector& scalarFluxNew ); /*!<   @brief Computes Problemspeagnostic Scalar QOI */

@@ -219,7 +219,7 @@ void ProblemBase::ComputeCurrentOutflow( const VectorVector& solution ) {
 
             // Iterate over face cell faces
 
-#pragma omp parallel for reduction( + : _curScalarOutflow )
+#pragma omp parallel for default( shared ) reduction( + : _curScalarOutflow )
             for( unsigned idx_nbr = 0; idx_nbr < neigbors[idx_cell].size(); ++idx_nbr ) {
                 // Find face that points outward
                 if( neigbors[idx_cell][idx_nbr] == nCells ) {
@@ -246,7 +246,7 @@ void ProblemBase::ComputeMass( const Vector& scalarFlux ) {
 
     auto areas      = _mesh->GetCellAreas();
     unsigned nCells = _mesh->GetNumCells();
-#pragma omp parallel reduction( + : _mass )
+#pragma omp parallel for default( shared ) reduction( + : _mass )
     for( unsigned idx_cell = 0; idx_cell < nCells; ++idx_cell ) {
         _mass += scalarFlux[idx_cell] * areas[idx_cell];
     }

@@ -162,6 +162,8 @@ void SymmetricHohlraum::ComputeCurrentAbsorptionHohlraum( const Vector& scalarFl
     auto cellMids             = _mesh->GetCellMidPoints();
     std::vector<double> areas = _mesh->GetCellAreas();
 
+#pragma omp parallel for default( shared )                                                                                                           \
+    reduction( + : _curAbsorptionHohlraumCenter, _curAbsorptionHohlraumVertical, _curAbsorptionHohlraumHorizontal )
     for( unsigned idx_cell = 0; idx_cell < nCells; idx_cell++ ) {
         double x = _mesh->GetCellMidPoints()[idx_cell][0];
         double y = _mesh->GetCellMidPoints()[idx_cell][1];
@@ -192,7 +194,7 @@ void SymmetricHohlraum::ComputeVarAbsorptionGreen( const Vector& scalarFlux ) {
     auto cellMids             = _mesh->GetCellMidPoints();
     std::vector<double> areas = _mesh->GetCellAreas();
 
-#pragma omp parallel reduction( + : a_g )
+#pragma omp parallel for default( shared ) reduction( + : a_g )
     for( unsigned idx_cell = 0; idx_cell < nCells; ++idx_cell ) {
         double x = cellMids[idx_cell][0];
         double y = cellMids[idx_cell][1];
@@ -208,7 +210,7 @@ void SymmetricHohlraum::ComputeVarAbsorptionGreen( const Vector& scalarFlux ) {
         }
     }
 
-#pragma omp parallel reduction( + : _varAbsorptionHohlraumGreen )
+#pragma omp parallel for default( shared ) reduction( + : _varAbsorptionHohlraumGreen )
     for( unsigned idx_cell = 0; idx_cell < nCells; ++idx_cell ) {
         double x = cellMids[idx_cell][0];
         double y = cellMids[idx_cell][1];

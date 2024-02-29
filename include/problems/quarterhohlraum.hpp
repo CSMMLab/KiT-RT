@@ -57,6 +57,9 @@ class QuarterHohlraum : public ProblemBase
     void ComputeVarAbsorptionGreen( const Vector& scalarFlux ) override;        /*!<   @brief Computes Problemspecific Scalar QOI */
     void ComputeQOIsGreenProbingLine( const Vector& scalarFlux ) override;
 
+    void ComputeCurrentOutflow( const VectorVector& solution ) override;         /*!<   @brief Computes Problemspeagnostic Scalar QOI */
+    void ComputeMaxOrdinatewiseOutflow( const VectorVector& solution ) override; /*!<   @brief Computes Problemspeagnostic Scalar QOI */
+
     double GetCurAbsorptionHohlraumCenter() override { return _curAbsorptionHohlraumCenter; };
     double GetCurAbsorptionHohlraumVertical() override { return _curAbsorptionHohlraumVertical; };
     double GetCurAbsorptionHohlraumHorizontal() override { return _curAbsorptionHohlraumHorizontal; };

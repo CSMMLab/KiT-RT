@@ -229,6 +229,8 @@ void QuarterHohlraum::ComputeCurrentAbsorptionHohlraum( const Vector& scalarFlux
     auto cellMids             = _mesh->GetCellMidPoints();
     std::vector<double> areas = _mesh->GetCellAreas();
 
+#pragma omp parallel for default( shared )                                                                                                           \
+    reduction( + : _curAbsorptionHohlraumCenter, _curAbsorptionHohlraumVertical, _curAbsorptionHohlraumHorizontal )
     for( unsigned idx_cell = 0; idx_cell < nCells; idx_cell++ ) {
         double x = _mesh->GetCellMidPoints()[idx_cell][0];
         double y = _mesh->GetCellMidPoints()[idx_cell][1];
@@ -259,7 +261,7 @@ void QuarterHohlraum::ComputeVarAbsorptionGreen( const Vector& scalarFlux ) {
     auto cellMids             = _mesh->GetCellMidPoints();
     std::vector<double> areas = _mesh->GetCellAreas();
 
-#pragma omp parallel reduction( + : a_g )
+#pragma omp parallel default( shared ) reduction( + : a_g )
     for( unsigned idx_cell = 0; idx_cell < nCells; ++idx_cell ) {
         double x = cellMids[idx_cell][0];
         double y = cellMids[idx_cell][1];
@@ -275,7 +277,7 @@ void QuarterHohlraum::ComputeVarAbsorptionGreen( const Vector& scalarFlux ) {
         }
     }
 
-#pragma omp parallel reduction( + : _varAbsorptionHohlraumGreen )
+#pragma omp parallel default( shared ) reduction( + : _varAbsorptionHohlraumGreen )
     for( unsigned idx_cell = 0; idx_cell < nCells; ++idx_cell ) {
         double x = cellMids[idx_cell][0];
         double y = cellMids[idx_cell][1];
@@ -298,7 +300,7 @@ void QuarterHohlraum::ComputeCurrentProbeMoment( const VectorVector& solution ) 
     const Vector& weights          = _quad->GetWeights();
     unsigned nq                    = _quad->GetNq();
 
-    for( unsigned idx_cell = 0; idx_cell < 4; idx_cell++ ) {    // Loop over probing cells
+    for( unsigned idx_cell = 0; idx_cell < 2; idx_cell++ ) {    // Loop over probing cells
         _probingMoments[idx_cell][0] = blaze::dot( solution[_probingCells[idx_cell]], weights );
         _probingMoments[idx_cell][1] = 0.0;
         _probingMoments[idx_cell][2] = 0.0;
@@ -369,6 +371,88 @@ std::vector<unsigned> QuarterHohlraum::linspace2D( const std::vector<double>& st
     }
 
     return result;
+}
+
+void QuarterHohlraum::ComputeCurrentOutflow( const VectorVector& solution ) {
+    if( _settings->GetSolverName() == SN_SOLVER || _settings->GetSolverName() == CSD_SN_SOLVER ) {
+
+        _curScalarOutflow         = 0.0;
+        double transportDirection = 0.0;
+
+        auto nCells   = _mesh->GetNumCells();
+        auto cellMids = _mesh->GetCellMidPoints();
+        auto areas    = _mesh->GetCellAreas();
+        auto neigbors = _mesh->GetNeighbours();
+        auto normals  = _mesh->GetNormals();
+
+        auto quadPoints = _quad->GetPoints();
+        auto weights    = _quad->GetWeights();
+        auto nq         = _quad->GetNq();
+
+        // Iterate over boundaries
+        for( std::map<int, Vector>::iterator it = _ghostCells.begin(); it != _ghostCells.end(); ++it ) {
+            int idx_cell = it->first;    // Get Boundary cell index
+
+            // Iterate over face cell faces
+            if( !_ghostCellsReflectingX[idx_cell] && !_ghostCellsReflectingY[idx_cell] ) {
+                for( unsigned idx_nbr = 0; idx_nbr < neigbors[idx_cell].size(); ++idx_nbr ) {
+                    // Find face that points outward
+                    if( neigbors[idx_cell][idx_nbr] == nCells ) {
+                        // Iterate over transport directions
+                        for( unsigned idx_quad = 0; idx_quad < nq; ++idx_quad ) {
+                            transportDirection =
+                                normals[idx_cell][idx_nbr][0] * quadPoints[idx_quad][0] + normals[idx_cell][idx_nbr][1] * quadPoints[idx_quad][1];
+                            // Find outward facing transport directions
+                            if( transportDirection > 0.0 ) {
+                                _curScalarOutflow += transportDirection * solution[idx_cell][idx_quad] * weights[idx_quad];    // Integrate flux
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    // TODO define alternative for Moment solvers
+}
+
+void QuarterHohlraum::ComputeMaxOrdinatewiseOutflow( const VectorVector& solution ) {
+    if( _settings->GetSolverName() == SN_SOLVER || _settings->GetSolverName() == CSD_SN_SOLVER ) {
+        double currOrdinatewiseOutflow = 0.0;
+        double transportDirection      = 0.0;
+
+        auto nCells   = _mesh->GetNumCells();
+        auto cellMids = _mesh->GetCellMidPoints();
+        auto areas    = _mesh->GetCellAreas();
+        auto neigbors = _mesh->GetNeighbours();
+        auto normals  = _mesh->GetNormals();
+
+        auto quadPoints = _quad->GetPoints();
+        auto weights    = _quad->GetWeights();
+        auto nq         = _quad->GetNq();
+
+        // Iterate over boundaries
+        for( std::map<int, Vector>::iterator it = _ghostCells.begin(); it != _ghostCells.end(); ++it ) {
+            int idx_cell = it->first;    // Get Boundary cell index
+            if( !_ghostCellsReflectingX[idx_cell] && !_ghostCellsReflectingY[idx_cell] ) {
+                for( unsigned idx_nbr = 0; idx_nbr < neigbors[idx_cell].size(); ++idx_nbr ) {
+                    // Find face that points outward
+                    if( neigbors[idx_cell][idx_nbr] == nCells ) {
+                        // Iterate over transport directions
+                        for( unsigned idx_quad = 0; idx_quad < nq; ++idx_quad ) {
+                            transportDirection =
+                                normals[idx_cell][idx_nbr][0] * quadPoints[idx_quad][0] + normals[idx_cell][idx_nbr][1] * quadPoints[idx_quad][1];
+                            // Find outward facing transport directions
+                            if( transportDirection > 0.0 ) {
+                                currOrdinatewiseOutflow = transportDirection / norm( normals[idx_cell][idx_nbr] ) * solution[idx_cell][idx_quad];
+                                if( currOrdinatewiseOutflow > _curMaxOrdinateOutflow ) _curMaxOrdinateOutflow = currOrdinatewiseOutflow;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    // TODO define alternative for Moment solvers
 }
 // -------------- Moment Symmetric Hohlraum ---------------
 

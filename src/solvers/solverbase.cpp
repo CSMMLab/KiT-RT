@@ -621,7 +621,7 @@ void SolverBase::IterPostprocessing( unsigned /*idx_iter*/ ) {
         _problem->ComputeTotalAbsorptionLattice( _dT );
         _problem->ComputeMaxAbsorptionLattice( _scalarFlux );
     }
-    if( _settings->GetProblemName() == PROBLEM_SymmetricHohlraum ) {
+    if( _settings->GetProblemName() == PROBLEM_SymmetricHohlraum || _settings->GetProblemName() == PROBLEM_QuarterHohlraum ) {
         _problem->ComputeCurrentAbsorptionHohlraum( _scalarFlux );    // Unify
         _problem->ComputeTotalAbsorptionHohlraum( _dT );              // Unify and parallelize
         _problem->ComputeCurrentProbeMoment( _sol );
