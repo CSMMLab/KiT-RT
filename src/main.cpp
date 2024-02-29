@@ -46,8 +46,6 @@ int main( int argc, char** argv ) {
     else {
         // Build solver
         SolverBase* solver = SolverBase::Create( config );
-        std::cout << "here\n";
-
         // Run solver and export
         solver->Solve();
         solver->PrintVolumeOutput();
