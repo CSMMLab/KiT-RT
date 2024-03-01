@@ -12,9 +12,11 @@ typedef blaze::SymmetricMatrix<blaze::DynamicMatrix<double, blaze::rowMajor>> Sy
 typedef blaze::SymmetricMatrix<blaze::DynamicMatrix<double, blaze::columnMajor>> SymMatrixCol;
 typedef blaze::DiagonalMatrix<blaze::DynamicMatrix<double, blaze::rowMajor>> DiagMatrix;
 typedef blaze::CompressedMatrix<double> SparseMatrix;
-typedef std::vector<blaze::DynamicVector<double>> VectorVector;
+typedef std::vector<std::vector<double>> VectorVector;
 typedef std::vector<blaze::DynamicVector<unsigned>> VectorVectorU;
-typedef blaze::DynamicVector<double> Vector;       // Column Vector by default!
+
+typedef std::vector<double> Vector;
+// typedef blaze::DynamicVector<double> Vector;       // Column Vector by default!
 typedef blaze::DynamicVector<unsigned> VectorU;    // Column Vector by default!
 
 #endif    // TYPEDEFS_H
