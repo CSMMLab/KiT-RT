@@ -4,6 +4,7 @@
 #include "common/mesh.hpp"
 #include "problems/aircavity1d.hpp"
 #include "problems/checkerboard.hpp"
+#include "problems/halflattice.hpp"
 #include "problems/hohlraum.hpp"
 #include "problems/lattice.hpp"
 #include "problems/linesource.hpp"
@@ -116,6 +117,12 @@ ProblemBase* ProblemBase::Create( Config* settings, Mesh* mesh, QuadratureBase* 
             else
                 return new Lattice_SN( settings, mesh, quad );
         } break;
+        case PROBLEM_HalfLattice: {
+            if( settings->GetIsMomentSolver() )
+                return new HalfLattice_Moment( settings, mesh, quad );
+            else
+                return new HalfLattice_SN( settings, mesh, quad );
+        } break;
 
         default: ErrorMessages::Error( "No valid physical problem chosen. Please check your config file", CURRENT_FUNCTION ); return nullptr;
     }
@@ -219,7 +226,6 @@ void ProblemBase::ComputeCurrentOutflow( const VectorVector& solution ) {
 
             // Iterate over face cell faces
 
-#pragma omp parallel for default( shared ) reduction( + : _curScalarOutflow )
             for( unsigned idx_nbr = 0; idx_nbr < neigbors[idx_cell].size(); ++idx_nbr ) {
                 // Find face that points outward
                 if( neigbors[idx_cell][idx_nbr] == nCells ) {

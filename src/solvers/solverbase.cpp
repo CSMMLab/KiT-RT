@@ -616,7 +616,7 @@ void SolverBase::IterPostprocessing( unsigned /*idx_iter*/ ) {
     _problem->ComputeTotalOutflow( _dT );
     _problem->ComputeMaxOrdinatewiseOutflow( _sol );
 
-    if( _settings->GetProblemName() == PROBLEM_Lattice ) {
+    if( _settings->GetProblemName() == PROBLEM_Lattice || _settings->GetProblemName() == PROBLEM_HalfLattice ) {
         _problem->ComputeCurrentAbsorptionLattice( _scalarFlux );
         _problem->ComputeTotalAbsorptionLattice( _dT );
         _problem->ComputeMaxAbsorptionLattice( _scalarFlux );
