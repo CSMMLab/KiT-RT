@@ -14,11 +14,24 @@ class SymmetricHohlraum : public ProblemBase
     Vector _sigmaS; /*!< @brief Vector of scattering crosssections */
     Vector _sigmaT; /*!< @brief Vector of total crosssections */
 
-    std::vector<double> _cornerUpperLeftGreen;  /*!< @brief Coord of corner of the green area (minus thickness/2 of it) */
-    std::vector<double> _cornerLowerLeftGreen;  /*!< @brief Coord of corner of the green area (minus thickness/2 of it) */
-    std::vector<double> _cornerUpperRightGreen; /*!< @brief Coord of corner of the green area (minus thickness/2 of it) */
-    std::vector<double> _cornerLowerRightGreen; /*!< @brief Coord of corner of the green area (minus thickness/2 of it) */
-    double _thicknessGreen;                     /*!< @brief thickness of the green area */
+    std::vector<double> _cornerUpperLeftGreen; /*!< @brief Coord of corner of the green area (minus thickness/2 of it) relative to the green center */
+    std::vector<double> _cornerLowerLeftGreen; /*!< @brief Coord of corner of the green area (minus thickness/2 of it) relative to the green center */
+    std::vector<double>
+        _cornerUpperRightGreen; /*!< @brief Coord of corner of the green area (minus thickness/2 of it) relative to the green center */
+    std::vector<double>
+        _cornerLowerRightGreen; /*!< @brief Coord of corner of the green area (minus thickness/2 of it) relative to the green center */
+
+    double _widthGreen;               /*!< @brief width of the green area */
+    double _heightGreen;              /*!< @brief height of the green area  */
+    double _thicknessGreen;           /*!< @brief thickness of the green area */
+    std::vector<double> _centerGreen; /*!< @brief Center of the Hohlraum   */
+
+    double _redLeftTop;        /*!< @brief y coord of the top of the left red area  */
+    double _redLeftBottom;     /*!< @brief y coord of the bottom of the left red area  */
+    double _redRightTop;       /*!< @brief y coord of the top of the right red area  */
+    double _redRightBottom;    /*!< @brief y coord of the bottom of the right red area  */
+    double _thicknessRedLeft;  /*!< @brief thickness of the left red area */
+    double _thicknessRedRight; /*!< @brief thickness of the right red area */
 
     void SetGhostCells() override; /*!< @brief Sets vector of ghost cells for boundary conditions */
 

@@ -15,13 +15,27 @@ SymmetricHohlraum::SymmetricHohlraum( Config* settings, Mesh* mesh, QuadratureBa
     _sigmaS = Vector( _mesh->GetNumCells(), 0.1 );    // white area default
     _sigmaT = Vector( _mesh->GetNumCells(), 0.1 );    // white area default
 
-    // Geometry of the green capsule
-    _thicknessGreen        = 0.05;
+    // Design parameters defining the hohlraum geometry
+
+    // Red
+    _redLeftTop        = 0.4;
+    _redLeftBottom     = -0.4;
+    _redRightTop       = 0.4;
+    _redRightBottom    = -0.4;
+    _thicknessRedLeft  = 0.05;
+    _thicknessRedRight = 0.05;
+    // Green
+    _widthGreen     = 0.4;
+    _heightGreen    = 0.8;
+    _thicknessGreen = 0.05;
+    _centerGreen    = { 0.0, 0.0 };
+
     _cornerUpperLeftGreen  = { -0.2 + _thicknessGreen / 2.0, 0.4 - _thicknessGreen / 2.0 };
     _cornerLowerLeftGreen  = { -0.2 + _thicknessGreen / 2.0, -0.4 + _thicknessGreen / 2.0 };
     _cornerUpperRightGreen = { 0.2 - _thicknessGreen / 2.0, 0.4 - _thicknessGreen / 2.0 };
     _cornerLowerRightGreen = { 0.2 - _thicknessGreen / 2.0, -0.4 + _thicknessGreen / 2.0 };
 
+    // QOIS
     _curAbsorptionHohlraumCenter       = 0.0;
     _curAbsorptionHohlraumVertical     = 0.0;
     _curAbsorptionHohlraumHorizontal   = 0.0;
@@ -49,12 +63,12 @@ SymmetricHohlraum::SymmetricHohlraum( Config* settings, Mesh* mesh, QuadratureBa
         double y = _mesh->GetCellMidPoints()[idx_cell][1];
 
         // red area left
-        if( x < -0.6 && y > -0.4 && y < 0.4 ) {
+        if( x < -0.65 + _thicknessRedLeft && y > _redLeftBottom && y < _redLeftTop ) {
             _sigmaS[idx_cell] = 95.0;
             _sigmaT[idx_cell] = 100.0;
         }
         // red area right
-        if( x > 0.6 && y > -0.4 && y < 0.4 ) {
+        if( x > 0.65 - _thicknessRedRight && y > _redRightBottom && y < _redRightTop ) {
             _sigmaS[idx_cell] = 95.0;
             _sigmaT[idx_cell] = 100.0;
         }
