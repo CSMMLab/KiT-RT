@@ -116,68 +116,62 @@ void SNSolver::FluxUpdatePseudo2D() {
             double solR;
             // Dirichlet cells stay at IC, farfield assumption
             if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::DIRICHLET ) continue;
-            // Loop over all ordinates
-            for( unsigned idx_quad = 0; idx_quad < _nq; ++idx_quad ) {
                 // Reset temporary variable
-                _solNew[idx_cell][idx_quad] = 0.0;
+                _solNew[idx_cell]*= 0.0; //blaze op
+
                 // Loop over all neighbor cells (edges) of cell j and compute numerical
                 // fluxes
                 for( unsigned idx_nbr = 0; idx_nbr < _neighbors[idx_cell].size(); ++idx_nbr ) {
                     // store flux contribution on psiNew_sigmaS to save memory
                     if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::NEUMANN && _neighbors[idx_cell][idx_nbr] == _nCells ) {
-                        _solNew[idx_cell][idx_quad] += _g->Flux( _quadPoints[idx_quad],
-                                                                 _sol[idx_cell][idx_quad],
-                                                                 _problem->GetGhostCellValue( idx_cell, _sol[idx_cell] )[idx_quad],
-                                                                 _normals[idx_cell][idx_nbr] );
+                         _g->Flux( _quadPoints, _sol[idx_cell],  _problem->GetGhostCellValue( idx_cell, _sol[idx_cell] ),
+                                                                 _solNew[idx_cell],
+                                                                 _normals[idx_cell][idx_nbr], _nq );
                     }
                     else {
-                        unsigned int nbr_glob = _neighbors[idx_cell][idx_nbr];    // global idx of neighbor cell
                         // first order solver
-                        _solNew[idx_cell][idx_quad] +=
-                            _g->Flux( _quadPoints[idx_quad], _sol[idx_cell][idx_quad], _sol[nbr_glob][idx_quad], _normals[idx_cell][idx_nbr] );
+                        _g->Flux( _quadPoints, _sol[idx_cell], _sol[ _neighbors[idx_cell][idx_nbr]], _solNew[idx_cell],_normals[idx_cell][idx_nbr], _nq );
                     }
                 }
-            }
+            
         }
     }
     else if( _reconsOrder == 2 ) {
         // Loop over all spatial cells
 #pragma omp parallel for
         for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
-            double solL;
-            double solR;
+            Vector solL;
+            Vector solR;
             // Dirichlet cells stay at IC, farfield assumption
             if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::DIRICHLET ) continue;
             // Loop over all ordinates
-            for( unsigned idx_quad = 0; idx_quad < _nq; ++idx_quad ) {
-                // Reset temporary variable
-                _solNew[idx_cell][idx_quad] = 0.0;
+            _solNew[idx_cell] *= 0.0; // blaze operation
                 // Loop over all neighbor cells (edges) of cell j and compute numerical
                 // fluxes
-                for( unsigned idx_nbr = 0; idx_nbr < _neighbors[idx_cell].size(); ++idx_nbr ) {
-                    // store flux contribution on psiNew_sigmaS to save memory
-                    if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::NEUMANN && _neighbors[idx_cell][idx_nbr] == _nCells ) {
-                        _solNew[idx_cell][idx_quad] += _g->Flux( _quadPoints[idx_quad],
-                                                                 _sol[idx_cell][idx_quad],
-                                                                 _problem->GetGhostCellValue( idx_cell, _sol[idx_cell] )[idx_quad],
-                                                                 _normals[idx_cell][idx_nbr] );
-                    }
-                    else {
-                        unsigned int nbr_glob = _neighbors[idx_cell][idx_nbr];    // global idx of neighbor cell
+            for( unsigned idx_nbr = 0; idx_nbr < _neighbors[idx_cell].size(); ++idx_nbr ) {
+                // store flux contribution on psiNew_sigmaS to save memory
+                if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::NEUMANN && _neighbors[idx_cell][idx_nbr] == _nCells ) {
+                    _g->Flux( _quadPoints, _sol[idx_cell],      _problem->GetGhostCellValue( idx_cell, _sol[idx_cell] ),
+                                                                _solNew[idx_cell],
+                                                                _normals[idx_cell][idx_nbr], _nq );
+                }
+                else {
+                    unsigned int nbr_glob = _neighbors[idx_cell][idx_nbr];    // global idx of neighbor cell
 
-                        // left status of interface
-                        solL = _sol[idx_cell][idx_quad] +
-                               _limiter[idx_cell][idx_quad] *
-                                   ( _solDx[idx_cell][idx_quad] * ( _interfaceMidPoints[idx_cell][idx_nbr][0] - _cellMidPoints[idx_cell][0] ) +
-                                     _solDy[idx_cell][idx_quad] * ( _interfaceMidPoints[idx_cell][idx_nbr][1] - _cellMidPoints[idx_cell][1] ) );
-                        solR = _sol[nbr_glob][idx_quad] +
-                               _limiter[nbr_glob][idx_quad] *
-                                   ( _solDx[nbr_glob][idx_quad] * ( _interfaceMidPoints[idx_cell][idx_nbr][0] - _cellMidPoints[nbr_glob][0] ) +
-                                     _solDy[nbr_glob][idx_quad] * ( _interfaceMidPoints[idx_cell][idx_nbr][1] - _cellMidPoints[nbr_glob][1] ) );
+                    // left status of interface
+                    solL = _sol[idx_cell] + 
+                           _limiter[idx_cell] *
+                                (_solDx[idx_cell] * ( _interfaceMidPoints[idx_cell][idx_nbr][0] - _cellMidPoints[idx_cell][0] ) +
+                                    _solDy[idx_cell] * ( _interfaceMidPoints[idx_cell][idx_nbr][1] - _cellMidPoints[idx_cell][1] ) );
+                    
 
-                        // flux evaluation
-                        _solNew[idx_cell][idx_quad] += _g->Flux( _quadPoints[idx_quad], solL, solR, _normals[idx_cell][idx_nbr] );
-                    }
+                    solR = _sol[nbr_glob] +
+                            _limiter[nbr_glob] *
+                                ( _solDx[nbr_glob]* ( _interfaceMidPoints[idx_cell][idx_nbr][0] - _cellMidPoints[nbr_glob][0] ) +
+                                    _solDy[nbr_glob] * ( _interfaceMidPoints[idx_cell][idx_nbr][1] - _cellMidPoints[nbr_glob][1] ) );
+
+                    // flux evaluation
+                    _g->Flux( _quadPoints, solL, solR, _solNew[idx_cell], _normals[idx_cell][idx_nbr], _nq );
                 }
             }
         }
@@ -191,19 +185,19 @@ void SNSolver::FVMUpdate( unsigned idx_iter ) {
             // Dirichlet cells stay at IC, farfield assumption
             if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::DIRICHLET ) continue;
             // loop over all ordinates
-            for( unsigned idx_quad = 0; idx_quad < _nq; ++idx_quad ) {
+            //for( unsigned idx_quad = 0; idx_quad < _nq; ++idx_quad ) {
                 // time update angular flux with numerical flux and total scattering cross
                 // section
-                _solNew[idx_cell][idx_quad] = _sol[idx_cell][idx_quad] - ( _dT / _areas[idx_cell] ) * _solNew[idx_cell][idx_quad] -
-                                              _dT * _sigmaT[0][idx_cell] * _sol[idx_cell][idx_quad];
-            }
+                _solNew[idx_cell] = _sol[idx_cell] - ( _dT / _areas[idx_cell] ) * _solNew[idx_cell] -
+                                              _dT * _sigmaT[0][idx_cell] * _sol[idx_cell];
+            //}
             // compute scattering effects
             _solNew[idx_cell] += _dT * _sigmaS[0][idx_cell] * _scatteringKernel * _sol[idx_cell];    // multiply scattering matrix with psi
             // Source Term
-            if( _Q[0][idx_cell].size() == 1u )    // isotropic source
-                _solNew[idx_cell] += _dT * _Q[0][idx_cell][0];
-            else
-                _solNew[idx_cell] += _dT * _Q[0][idx_cell];
+            //if( _Q[0][idx_cell].size() == 1u )    // isotropic source
+            _solNew[idx_cell] += _dT * _Q[0][idx_cell][0];
+            //else
+            //    _solNew[idx_cell] += _dT * _Q[0][idx_cell];
         }
     }
     else {
@@ -212,12 +206,12 @@ void SNSolver::FVMUpdate( unsigned idx_iter ) {
             // Dirichlet cells stay at IC, farfield assumption
             if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::DIRICHLET ) continue;
             // loop over all ordinates
-            for( unsigned idx_quad = 0; idx_quad < _nq; ++idx_quad ) {
+            //for( unsigned idx_quad = 0; idx_quad < _nq; ++idx_quad ) {
                 // time update angular flux with numerical flux and total scattering cross
                 // section
-                _solNew[idx_cell][idx_quad] = _sol[idx_cell][idx_quad] - ( _dT / _areas[idx_cell] ) * _solNew[idx_cell][idx_quad] -
-                                              _dT * _sigmaT[idx_iter][idx_cell] * _sol[idx_cell][idx_quad];
-            }
+                _solNew[idx_cell] = _sol[idx_cell] - ( _dT / _areas[idx_cell] ) * _solNew[idx_cell] -
+                                              _dT * _sigmaT[idx_iter][idx_cell] * _sol[idx_cell];
+            // }
             // compute scattering effects
             _solNew[idx_cell] += _dT * _sigmaS[idx_iter][idx_cell] * _scatteringKernel * _sol[idx_cell];    // multiply scattering matrix with psi
 
