@@ -10,7 +10,8 @@ class SNSolver : public SolverBase
 
     // quadrature related numbers
 
-    VectorVector _quadPoints; /*!<  @brief quadrature points, dim(_quadPoints) = (_nq,spatialDim) */
+    VectorVector _quadPoints; /*!<  @brief quadrature points, dim(_quadPoints) =
+                                 (_nq,spatialDim) */
     Vector _weights;          /*!<  @brief quadrature weights, dim(_weights) = (_nq) */
 
   public:
@@ -24,20 +25,17 @@ class SNSolver : public SolverBase
   protected:
     // IO
     void virtual PrepareVolumeOutput() override;
-    void virtual WriteVolumeOutput( unsigned idx_pseudoTime ) override;
+    void virtual WriteVolumeOutput( unsigned idx_iter ) override;
 
     // Solver
-    void virtual FVMUpdate( unsigned idx_energy ) override;
+    void virtual FVMUpdate( unsigned idx_iter ) override;
     void virtual FluxUpdate() override;
-    void virtual IterPreprocessing( unsigned idx_pseudotime ) override;
-    void virtual IterPostprocessing( unsigned idx_pseudotime ) override;
+    void virtual IterPreprocessing( unsigned idx_iter ) override;
 
     // Helper
-    void ComputeRadFlux() override;
+    void ComputeScalarFlux() override;
     void FluxUpdatePseudo1D();    // Helper
     void FluxUpdatePseudo2D();    // Helper
-
-    // --- Member variables ---
 };
 
 #endif    // SNSOLVER_H

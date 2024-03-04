@@ -10,7 +10,7 @@ class AirCavity1D : public ProblemBase
     double _sigmaS; /*!< @brief Scattering coefficient */
 
   public:
-    AirCavity1D( Config* settings, Mesh* mesh );
+    AirCavity1D( Config* settings, Mesh* mesh, QuadratureBase* quad );
     ~AirCavity1D();
     std::vector<VectorVector> GetExternalSource( const Vector& energies ) override;
     VectorVector SetupIC() override;
@@ -27,7 +27,7 @@ class AirCavity1D_Moment : public ProblemBase
     double _sigmaS; /*!< @brief Scattering coefficient */
 
   public:
-    AirCavity1D_Moment( Config* settings, Mesh* mesh );
+    AirCavity1D_Moment( Config* settings, Mesh* mesh, QuadratureBase* quad );
     ~AirCavity1D_Moment();
     std::vector<VectorVector> GetExternalSource( const Vector& energies ) override;
     VectorVector SetupIC() override;

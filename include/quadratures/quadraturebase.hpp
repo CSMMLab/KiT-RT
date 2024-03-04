@@ -61,19 +61,19 @@ class QuadratureBase
     static QuadratureBase* Create( QUAD_NAME name, unsigned quadOrder );
 
     // Getter
-    inline std::string GetName() const { return _name; }           /*! @returns std::string _name:  name of the quadrature */
-    inline unsigned GetOrder() const { return _order; }            /*! @returns unsigned _order:  order of the quadrature */
-    inline unsigned GetNq() const { return _nq; }                  /*! @returns unsigned _nq:  number of gridpoints of the quadrature */
-    inline VectorVector GetPoints() const { return _pointsKarth; } /*! @returns VectorVector _points:  coordinates of gridpoints of the quadrature */
-    inline VectorVector GetPointsSphere() const {
+    inline std::string GetName() const { return _name; }                  /*! @returns std::string _name:  name of the quadrature */
+    inline unsigned GetOrder() const { return _order; }                   /*! @returns unsigned _order:  order of the quadrature */
+    inline unsigned GetNq() const { return _nq; }                         /*! @returns unsigned _nq:  number of gridpoints of the quadrature */
+    inline const VectorVector& GetPoints() const { return _pointsKarth; } /*! @returns VectorVector _points:  coordinates of the quad pts */
+    inline const VectorVector& GetPointsSphere() const {
         return _pointsSphere;
-    }                                                     /*! @returns VectorVector _pointsSphere:  "---- " in spherical coordinates (my, phi)*/
-    inline Vector GetWeights() const { return _weights; } /*! @returns Vector _weights:  weights of gridpoints of the quadrature */
+    } /*! @returns VectorVector _pointsSphere:  "---- " in spherical coordinates (my, phi)*/
+    inline const Vector& GetWeights() const { return _weights; } /*! @returns Vector _weights:  weights of gridpoints of the quadrature */
 
     /*! @returns VectorVectorU _connectivity:  connectivity of gridpoints of the quadrature */
-    inline VectorVectorU GetConnectivity() const { return _connectivity; }
+    inline const VectorVectorU& GetConnectivity() const { return _connectivity; }
     /*!< @brief Returns approved Dimensions for this quadrature */
-    inline std::vector<unsigned short> GetSupportedDims() const { return _supportedDimensions; }
+    inline const std::vector<unsigned short> GetSupportedDims() const { return _supportedDimensions; }
     /*!< @brief Scales the quadrature weights according to the intervall [-velocityScaling , velocityScaling] in 1D
                 Scales the radius of the velocity sphere by velocityScaling in 2D and 3D */
     virtual void ScalePointsAndWeights( double velocityScaling );

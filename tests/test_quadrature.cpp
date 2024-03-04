@@ -399,8 +399,7 @@ TEST_CASE( "Quadrature Tests", "[quadrature]" ) {
                     points            = Q->GetPoints();
                     pointsSphere      = Q->GetPointsSphere();
                     for( unsigned idx_nq = 0; idx_nq < Q->GetNq(); idx_nq++ ) {
-                        result   = Omega_x( pointsSphere[idx_nq][0], pointsSphere[idx_nq][1] );
-                        double y = Omega_y( pointsSphere[idx_nq][0], pointsSphere[idx_nq][1] );
+                        result = Omega_x( pointsSphere[idx_nq][0], pointsSphere[idx_nq][1] );
 
                         if( !approxequal( points[idx_nq][0], result, lowAccuracyTesting ) ) {
                             testPassed = false;

@@ -7,7 +7,9 @@
 #include "velocitybasis/sphericalbase.hpp"
 #include "velocitybasis/sphericalharmonics.hpp"
 
-AirCavity1D::AirCavity1D( Config* settings, Mesh* mesh ) : ProblemBase( settings, mesh ) { _sigmaS = settings->GetSigmaS(); }
+AirCavity1D::AirCavity1D( Config* settings, Mesh* mesh, QuadratureBase* quad ) : ProblemBase( settings, mesh, quad ) {
+    _sigmaS = settings->GetSigmaS();
+}
 
 AirCavity1D::~AirCavity1D() {}
 
@@ -50,7 +52,9 @@ VectorVector AirCavity1D::GetTotalXS( const Vector& energies ) { return VectorVe
 
 // ------ Moment version ---
 
-AirCavity1D_Moment::AirCavity1D_Moment( Config* settings, Mesh* mesh ) : ProblemBase( settings, mesh ) { _sigmaS = settings->GetSigmaS(); }
+AirCavity1D_Moment::AirCavity1D_Moment( Config* settings, Mesh* mesh, QuadratureBase* quad ) : ProblemBase( settings, mesh, quad ) {
+    _sigmaS = settings->GetSigmaS();
+}
 
 AirCavity1D_Moment::~AirCavity1D_Moment() {}
 
@@ -64,7 +68,7 @@ std::vector<VectorVector> AirCavity1D_Moment::GetExternalSource( const Vector& /
 
 VectorVector AirCavity1D_Moment::SetupIC() {
     if( _settings->GetSolverName() == PN_SOLVER ) {
-        
+
         // In case of PN, spherical basis is per default SPHERICAL_HARMONICS in 3 velocity dimensions
 
         SphericalBase* tempBase  = new SphericalHarmonics( _settings->GetMaxMomentDegree(), 3 );

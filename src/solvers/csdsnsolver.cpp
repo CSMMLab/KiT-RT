@@ -13,7 +13,6 @@
 
 // externals
 #include "spdlog/spdlog.h"
-#include <mpi.h>
 
 CSDSNSolver::CSDSNSolver( Config* settings ) : SNSolver( settings ) {
     _dose = std::vector<double>( _settings->GetNCells(), 0.0 );
@@ -98,7 +97,7 @@ void CSDSNSolver::IterPreprocessing( unsigned idx_pseudotime ) {
         _mesh->ComputeLimiter( _nq, _solDx, _solDy, solDivRho, _limiter );
     }
 
-    _dE = fabs( _eTrafo[idx_pseudotime + 1] - _eTrafo[idx_pseudotime] );
+    _dT = fabs( _eTrafo[idx_pseudotime + 1] - _eTrafo[idx_pseudotime] );
 
     Vector sigmaSAtEnergy( _polyDegreeBasis + 1, 0.0 );
     Vector sigmaTAtEnergy( _polyDegreeBasis + 1, 0.0 );
@@ -120,27 +119,17 @@ void CSDSNSolver::IterPreprocessing( unsigned idx_pseudotime ) {
         Vector u = _M * _sol[j];
 
         unsigned counter = 0;
-        for( unsigned l = 0; l <= _polyDegreeBasis; ++l ) {
+        for( int l = 0; l <= (int)_polyDegreeBasis; ++l ) {
             for( int m = -l; m <= l; ++m ) {
-                u[counter] = u[counter] / ( 1.0 + _dE * sigmaTAtEnergy[l] );
+                u[counter] = u[counter] / ( 1.0 + _dT * sigmaTAtEnergy[l] );
                 counter++;
             }
         }
         _sol[j] = _O * u;
-        //_sol[j] = blaze::solve( _identity + _dE * _O * Sigma * _M, _sol[j] );
     }
 }
 
-void CSDSNSolver::SolverPreprocessing() {
-    // Need to transform ordinate solution with density and scattering, depending on problem setup
-    // do substitution from psi to psiTildeHat (cf. Dissertation Kerstion Kuepper, Eq. 1.23)
-    //#pragma omp parallel for
-    //    for( unsigned j = 0; j < _nCells; ++j ) {
-    //        for( unsigned k = 0; k < _nq; ++k ) {
-    //            _sol[j][k] = _sol[j][k] * _density[j] * _s[0];    // note that _s[_nEnergies - 1] is stopping power at highest energy
-    //        }
-    //    }
-}
+void CSDSNSolver::SolverPreprocessing() {}
 
 void CSDSNSolver::IterPostprocessing( unsigned idx_pseudotime ) {
     unsigned n = idx_pseudotime;
@@ -151,12 +140,12 @@ void CSDSNSolver::IterPostprocessing( unsigned idx_pseudotime ) {
     // -- Compute Dose
 #pragma omp parallel for
     for( unsigned j = 0; j < _nCells; ++j ) {
-        _fluxNew[j] = dot( _sol[j], _weights );    // unscaled rad flux
+        _scalarFluxNew[j] = dot( _sol[j], _weights );    // unscaled rad flux
         if( n > 0 && n < _nEnergies - 1 ) {
-            _dose[j] += _dE * ( _fluxNew[j] * _sMid[n] ) / _density[j];    // update dose with trapezoidal rule // diss Kerstin
+            _dose[j] += _dT * ( _scalarFluxNew[j] * _sMid[n] ) / _density[j];    // update dose with trapezoidal rule // diss Kerstin
         }
         else {
-            _dose[j] += 0.5 * _dE * ( _fluxNew[j] * _sMid[n] ) / _density[j];
+            _dose[j] += 0.5 * _dT * ( _scalarFluxNew[j] * _sMid[n] ) / _density[j];
         }
     }
 }
@@ -212,7 +201,7 @@ void CSDSNSolver::FVMUpdate( unsigned /*idx_energy*/ ) {
         // loop over all ordinates
         for( unsigned i = 0; i < _nq; ++i ) {
             // time update angular flux with numerical flux and total scattering cross section
-            _solNew[j][i] = _sol[j][i] - _dE * _solNew[j][i];
+            _solNew[j][i] = _sol[j][i] - _dT * _solNew[j][i];
         }
     }
 }
@@ -260,13 +249,13 @@ void CSDSNSolver::WriteVolumeOutput( unsigned idx_pseudoTime ) {
     unsigned nGroups = (unsigned)_settings->GetNVolumeOutput();
     double maxDose;
     if( ( _settings->GetVolumeOutputFrequency() != 0 && idx_pseudoTime % (unsigned)_settings->GetVolumeOutputFrequency() == 0 ) ||
-        ( idx_pseudoTime == _maxIter - 1 ) /* need sol at last iteration */ ) {
+        ( idx_pseudoTime == _nIter - 1 ) /* need sol at last iteration */ ) {
 
         for( unsigned idx_group = 0; idx_group < nGroups; idx_group++ ) {
             switch( _settings->GetVolumeOutput()[idx_group] ) {
                 case MINIMAL:
                     for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
-                        _outputFields[idx_group][0][idx_cell] = _fluxNew[idx_cell];
+                        _outputFields[idx_group][0][idx_cell] = _scalarFluxNew[idx_cell];
                     }
                     break;
 

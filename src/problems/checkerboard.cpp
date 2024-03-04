@@ -8,27 +8,27 @@
 
 // ---- Checkerboard Sn ----
 // Constructor for Ckeckerboard case with Sn
-Checkerboard_SN::Checkerboard_SN( Config* settings, Mesh* mesh ) : ProblemBase( settings, mesh ) {
+Checkerboard_SN::Checkerboard_SN( Config* settings, Mesh* mesh, QuadratureBase* quad ) : ProblemBase( settings, mesh, quad ) {
 
     // Initialise crosssections to 1
-    _scatteringXS = Vector( _mesh->GetNumCells(), 1.0 );
-    _totalXS      = Vector( _mesh->GetNumCells(), 1.0 );
+    _sigmaS = Vector( _mesh->GetNumCells(), 1.0 );
+    _sigmaT = Vector( _mesh->GetNumCells(), 1.0 );
 
     // For absorption cells: set scattering XS to 0 and absorption to 10
     auto cellMids = _mesh->GetCellMidPoints();
     for( unsigned j = 0; j < cellMids.size(); ++j ) {
         if( isAbsorption( cellMids[j] ) ) {
-            _scatteringXS[j] = 0.0;
-            _totalXS[j]      = 10.0;
+            _sigmaS[j] = 0.0;
+            _sigmaT[j] = 10.0;
         }
     }
 }
 
 Checkerboard_SN::~Checkerboard_SN() {}
 
-VectorVector Checkerboard_SN::GetScatteringXS( const Vector& energies ) { return VectorVector( energies.size(), _scatteringXS ); }
+VectorVector Checkerboard_SN::GetScatteringXS( const Vector& /*energies */ ) { return VectorVector( 1u, _sigmaS ); }
 
-VectorVector Checkerboard_SN::GetTotalXS( const Vector& energies ) { return VectorVector( energies.size(), _totalXS ); }
+VectorVector Checkerboard_SN::GetTotalXS( const Vector& /*energies */ ) { return VectorVector( 1u, _sigmaT ); }
 
 std::vector<VectorVector> Checkerboard_SN::GetExternalSource( const Vector& /*energies*/ ) {
     VectorVector Q( _mesh->GetNumCells(), Vector( 1u, 0.0 ) );
@@ -70,27 +70,27 @@ bool Checkerboard_SN::isSource( const Vector& pos ) const {
 // ---- Checkerboard Moments ----
 
 // Constructor for checkerboard case with Pn
-Checkerboard_Moment::Checkerboard_Moment( Config* settings, Mesh* mesh ) : ProblemBase( settings, mesh ) {
+Checkerboard_Moment::Checkerboard_Moment( Config* settings, Mesh* mesh, QuadratureBase* quad ) : ProblemBase( settings, mesh, quad ) {
 
     // Initialise crosssections = 1 (scattering)
-    _scatteringXS = Vector( _mesh->GetNumCells(), 1.0 );
-    _totalXS      = Vector( _mesh->GetNumCells(), 1.0 );
+    _sigmaS = Vector( _mesh->GetNumCells(), 1.0 );
+    _sigmaT = Vector( _mesh->GetNumCells(), 1.0 );
 
     // for absorption regions change crosssections to all absorption
     auto cellMids = _mesh->GetCellMidPoints();
     for( unsigned j = 0; j < cellMids.size(); ++j ) {
         if( isAbsorption( cellMids[j] ) ) {
-            _scatteringXS[j] = 0.0;
-            _totalXS[j]      = 10.0;
+            _sigmaS[j] = 0.0;
+            _sigmaT[j] = 10.0;
         }
     }
 }
 
 Checkerboard_Moment::~Checkerboard_Moment() {}
 
-VectorVector Checkerboard_Moment::GetScatteringXS( const Vector& energies ) { return VectorVector( energies.size(), _scatteringXS ); }
+VectorVector Checkerboard_Moment::GetScatteringXS( const Vector& /*energies*/ ) { return VectorVector( 1u, _sigmaS ); }
 
-VectorVector Checkerboard_Moment::GetTotalXS( const Vector& energies ) { return VectorVector( energies.size(), _totalXS ); }
+VectorVector Checkerboard_Moment::GetTotalXS( const Vector& /*energies*/ ) { return VectorVector( 1u, _sigmaT ); }
 
 std::vector<VectorVector> Checkerboard_Moment::GetExternalSource( const Vector& /*energies*/ ) {
     // In case of PN, spherical basis is per default SPHERICAL_HARMONICS
@@ -213,27 +213,27 @@ bool Checkerboard_Moment::isSource( const Vector& pos ) const {
 
 // ---- Checkerboard SN 1D ----
 // Constructor for Ckeckerboard case with Sn
-Checkerboard_SN_1D::Checkerboard_SN_1D( Config* settings, Mesh* mesh ) : ProblemBase( settings, mesh ) {
+Checkerboard_SN_1D::Checkerboard_SN_1D( Config* settings, Mesh* mesh, QuadratureBase* quad ) : ProblemBase( settings, mesh, quad ) {
 
     // Initialise crosssections to 1
-    _scatteringXS = Vector( _mesh->GetNumCells(), 1.0 );
-    _totalXS      = Vector( _mesh->GetNumCells(), 1.0 );
+    _sigmaS = Vector( _mesh->GetNumCells(), 1.0 );
+    _sigmaT = Vector( _mesh->GetNumCells(), 1.0 );
 
     // For absorption cells: set scattering XS to 0 and absorption to 10
     auto cellMids = _mesh->GetCellMidPoints();
     for( unsigned j = 0; j < cellMids.size(); ++j ) {
         if( isAbsorption( cellMids[j] ) ) {
-            _scatteringXS[j] = 0.0;
-            _totalXS[j]      = 10.0;
+            _sigmaS[j] = 0.0;
+            _sigmaT[j] = 10.0;
         }
     }
 }
 
 Checkerboard_SN_1D::~Checkerboard_SN_1D() {}
 
-VectorVector Checkerboard_SN_1D::GetScatteringXS( const Vector& energies ) { return VectorVector( energies.size(), _scatteringXS ); }
+VectorVector Checkerboard_SN_1D::GetScatteringXS( const Vector& energies ) { return VectorVector( energies.size(), _sigmaS ); }
 
-VectorVector Checkerboard_SN_1D::GetTotalXS( const Vector& energies ) { return VectorVector( energies.size(), _totalXS ); }
+VectorVector Checkerboard_SN_1D::GetTotalXS( const Vector& energies ) { return VectorVector( energies.size(), _sigmaT ); }
 
 std::vector<VectorVector> Checkerboard_SN_1D::GetExternalSource( const Vector& /*energies*/ ) {
     VectorVector Q( _mesh->GetNumCells(), Vector( 1u, 0.0 ) );
@@ -268,27 +268,27 @@ bool Checkerboard_SN_1D::isSource( const Vector& pos ) const {
 
 // --- Moment version 1d ---
 
-Checkerboard_Moment_1D::Checkerboard_Moment_1D( Config* settings, Mesh* mesh ) : ProblemBase( settings, mesh ) {
+Checkerboard_Moment_1D::Checkerboard_Moment_1D( Config* settings, Mesh* mesh, QuadratureBase* quad ) : ProblemBase( settings, mesh, quad ) {
 
     // Initialise crosssections to 1
-    _scatteringXS = Vector( _mesh->GetNumCells(), 1.0 );
-    _totalXS      = Vector( _mesh->GetNumCells(), 1.0 );
+    _sigmaS = Vector( _mesh->GetNumCells(), 1.0 );
+    _sigmaT = Vector( _mesh->GetNumCells(), 1.0 );
 
     // For absorption cells: set scattering XS to 0 and absorption to 10
     auto cellMids = _mesh->GetCellMidPoints();
     for( unsigned j = 0; j < cellMids.size(); ++j ) {
         if( isAbsorption( cellMids[j] ) ) {
-            _scatteringXS[j] = 0.0;
-            _totalXS[j]      = 10.0;
+            _sigmaS[j] = 0.0;
+            _sigmaT[j] = 10.0;
         }
     }
 }
 
 Checkerboard_Moment_1D::~Checkerboard_Moment_1D() {}
 
-VectorVector Checkerboard_Moment_1D::GetScatteringXS( const Vector& energies ) { return VectorVector( energies.size(), _scatteringXS ); }
+VectorVector Checkerboard_Moment_1D::GetScatteringXS( const Vector& /*energies*/ ) { return VectorVector( 1u, _sigmaS ); }
 
-VectorVector Checkerboard_Moment_1D::GetTotalXS( const Vector& energies ) { return VectorVector( energies.size(), _totalXS ); }
+VectorVector Checkerboard_Moment_1D::GetTotalXS( const Vector& /*energies*/ ) { return VectorVector( 1u, _sigmaT ); }
 
 std::vector<VectorVector> Checkerboard_Moment_1D::GetExternalSource( const Vector& /*energies*/ ) {
     if( _settings->GetSolverName() == PN_SOLVER || _settings->GetSolverName() == CSD_PN_SOLVER ) {

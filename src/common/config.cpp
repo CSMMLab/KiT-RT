@@ -19,7 +19,6 @@
 #include "spdlog/spdlog.h"
 #include <filesystem>
 #include <fstream>
-#include <mpi.h>
 
 using namespace std;
 
@@ -164,6 +163,13 @@ void Config::AddStringListOption( const string name, unsigned short& num_marker,
     _optionMap.insert( pair<string, OptionBase*>( name, val ) );
 }
 
+void Config::AddDoubleListOption( const string name, unsigned short& num_marker, std::vector<double>& option_field ) {
+    assert( _optionMap.find( name ) == _optionMap.end() );
+    _allOptions.insert( pair<string, bool>( name, true ) );
+    OptionBase* val = new OptionDoubleList( name, num_marker, option_field );
+    _optionMap.insert( pair<string, OptionBase*>( name, val ) );
+}
+
 template <class Tenum>
 void Config::AddEnumListOption( const std::string name,
                                 unsigned short& input_size,
@@ -244,7 +250,7 @@ void Config::SetConfigOptions() {
      * applicable in regression sampling \n DEFAULT false \ingroup Config */
     AddBoolOption( "REALIZABILITY_RECONSTRUCTION", _realizabilityRecons, false );
     /*! @brief Runge Kutta Staes  \n DESCRIPTION: Sets number of Runge Kutta Stages for time integration \n DEFAULT 1 \ingroup Config */
-    AddUnsignedShortOption( "RUNGE_KUTTA_STAGES", _rungeKuttaStages, 1 );
+    AddUnsignedShortOption( "TIME_INTEGRATION_ORDER", _rungeKuttaStages, 1 );
 
     // Problem Relateed Options
     /*! @brief MaterialDir \n DESCRIPTION: Relative Path to the data directory (used in the ICRU database class), starting from the directory of the
@@ -272,6 +278,23 @@ void Config::SetConfigOptions() {
     // CSD related options
     /*! @brief MAX_ENERGY_CSD \n DESCRIPTION: Sets maximum energy for the CSD simulation.\n DEFAULT \ingroup Config */
     AddDoubleOption( "MAX_ENERGY_CSD", _maxEnergyCSD, 5.0 );
+
+    // Lattice related options
+    /*! @brief LATTICE_DSGN_ABSORPTION_BLUE \n DESCRIPTION: Sets absorption rate for the blue blocks (absorption blocks) in the lattice test case. \n
+     * DEFAULT  10.0 \ingroup Config */
+    AddDoubleOption( "LATTICE_DSGN_ABSORPTION_BLUE", _dsgnAbsBlue, 10.0 );
+    /*! @brief LATTICE_DSGN_SCATTER_WHITE \n DESCRIPTION: Sets absorption rate for the white blocks (scattering blocks) in the lattice test case. \n
+     * DEFAULT 1.0 \ingroup Config */
+    AddDoubleOption( "LATTICE_DSGN_SCATTER_WHITE", _dsgnScatterWhite, 1.0 );
+    /*! @brief LATTICE_DSGN_ABSORPTION_INDIVIDUAL \n DESCRIPTION: Sets absorption rate all 7x7 blocks in the lattice test case. Order from upper left
+     * to lower right (row major). \n DEFAULT \ingroup Config */
+    AddDoubleListOption( "LATTICE_DSGN_ABSORPTION_INDIVIDUAL", _nDsgnAbsIndividual, _dsgnAbsIndividual );
+    /*! @brief LATTICE_DSGN_SCATTER_INDIVIDUAL \n DESCRIPTION: Sets scattering rate all 7x7 blocks in the lattice test case. Order from upper left to
+     * lower right (row major). \n DEFAULT \ingroup Config */
+    AddDoubleListOption( "LATTICE_DSGN_SCATTER_INDIVIDUAL", _nDsgnScatterIndividual, _dsgnScatterIndividual );
+
+    // Hohlraum related options
+    AddUnsignedShortOption( "N_SAMPLING_PTS_LINE_GREEN", _nProbingCellsLineGreenHohlraum, 4 );
 
     // Entropy related options
     /*! @brief Entropy Functional \n DESCRIPTION: Entropy functional used for the MN_Solver \n DEFAULT QUADRTATIC @ingroup Config. */
@@ -521,18 +544,6 @@ void Config::SetPostprocessing() {
         default: _isMomentSolver = false;
     }
 
-    // Check, if mesh file exists
-    // if( _solverName == CSD_SN_FOKKERPLANCK_TRAFO_SOLVER ) {    // Check if this is neccessary
-    //    if( !std::filesystem::exists( this->GetHydrogenFile() ) ) {
-    //        ErrorMessages::Error( "Path to mesh file <" + this->GetHydrogenFile() + "> does not exist. Please check your config file.",
-    //                              CURRENT_FUNCTION );
-    //    }
-    //    if( !std::filesystem::exists( this->GetOxygenFile() ) ) {
-    //        ErrorMessages::Error( "Path to mesh file <" + this->GetOxygenFile() + "> does not exist. Please check your config file.",
-    //                              CURRENT_FUNCTION );
-    //    }
-    //}
-
     // Quadrature Postprocessing
     {
         QuadratureBase* quad                      = QuadratureBase::Create( this );
@@ -615,7 +626,11 @@ void Config::SetPostprocessing() {
         for( unsigned short idx_volOutput = 0; idx_volOutput < _nVolumeOutput; idx_volOutput++ ) {
             switch( _solverName ) {
                 case SN_SOLVER:
-                    supportedGroups = { MINIMAL, ANALYTIC };
+                    if( _problemName == PROBLEM_SymmetricHohlraum )
+                        supportedGroups = { MINIMAL, ANALYTIC };
+                    else
+                        supportedGroups = { MINIMAL, ANALYTIC };
+
                     if( supportedGroups.end() == std::find( supportedGroups.begin(), supportedGroups.end(), _volumeOutput[idx_volOutput] ) ) {
                         ErrorMessages::Error( "SN_SOLVER only supports volume output MINIMAL and ANALYTIC.\nPlease check your .cfg file.",
                                               CURRENT_FUNCTION );
@@ -628,16 +643,18 @@ void Config::SetPostprocessing() {
                     break;
                 case MN_SOLVER:    // Fallthrough
                 case MN_SOLVER_NORMALIZED:
-                    supportedGroups = { MINIMAL, MOMENTS, DUAL_MOMENTS, ANALYTIC };
+                    if( _problemName == PROBLEM_SymmetricHohlraum )
+                        supportedGroups = { MINIMAL, MOMENTS, DUAL_MOMENTS };
+                    else if( _problemName == PROBLEM_Linesource )
+                        supportedGroups = { MINIMAL, ANALYTIC, MOMENTS, DUAL_MOMENTS };
+                    else
+                        supportedGroups = { MINIMAL, MOMENTS, DUAL_MOMENTS };
                     if( supportedGroups.end() == std::find( supportedGroups.begin(), supportedGroups.end(), _volumeOutput[idx_volOutput] ) ) {
-
-                        ErrorMessages::Error(
-                            "MN_SOLVER only supports volume output ANALYTIC, MINIMAL, MOMENTS and DUAL_MOMENTS.\nPlease check your .cfg file.",
-                            CURRENT_FUNCTION );
-                    }
-                    if( _volumeOutput[idx_volOutput] == ANALYTIC && _problemName != PROBLEM_Linesource ) {
-                        ErrorMessages::Error( "Analytical solution (VOLUME_OUTPUT=ANALYTIC) is only available for the PROBLEM=LINESOURCE.\nPlease "
-                                              "check your .cfg file.",
+                        std::string supportedGroupStr = "";
+                        for( unsigned i = 0; i < supportedGroups.size(); i++ ) {
+                            supportedGroupStr += findKey( VolOutput_Map, supportedGroups[i] ) + ", ";
+                        }
+                        ErrorMessages::Error( "MN_SOLVER supports volume outputs" + supportedGroupStr + ".\nPlease check your .cfg file.",
                                               CURRENT_FUNCTION );
                     }
                     break;
@@ -654,7 +671,7 @@ void Config::SetPostprocessing() {
                                               CURRENT_FUNCTION );
                     }
                     break;
-                case CSD_SN_SOLVER:    // Fallthrough
+                case CSD_SN_SOLVER:
                     supportedGroups = { MINIMAL, MEDICAL };
                     if( supportedGroups.end() == std::find( supportedGroups.begin(), supportedGroups.end(), _volumeOutput[idx_volOutput] ) ) {
 
@@ -712,7 +729,85 @@ void Config::SetPostprocessing() {
                                       CURRENT_FUNCTION );
             }
         }
+        // Check if the choice of screen output is compatible to the problem
+        for( unsigned short idx_screenOutput = 0; idx_screenOutput < _nScreenOutput; idx_screenOutput++ ) {
+            std::vector<SCALAR_OUTPUT> legalOutputs;
+            std::vector<SCALAR_OUTPUT>::iterator it;
+            switch( _problemName ) {
+                case PROBLEM_HalfLattice:
+                case PROBLEM_Lattice:
+                    legalOutputs = { ITER,
+                                     WALL_TIME,
+                                     MASS,
+                                     RMS_FLUX,
+                                     VTK_OUTPUT,
+                                     CSV_OUTPUT,
+                                     CUR_OUTFLOW,
+                                     TOTAL_OUTFLOW,
+                                     MAX_OUTFLOW,
+                                     CUR_PARTICLE_ABSORPTION,
+                                     TOTAL_PARTICLE_ABSORPTION,
+                                     MAX_PARTICLE_ABSORPTION };
+                    it           = std::find( legalOutputs.begin(), legalOutputs.end(), _screenOutput[idx_screenOutput] );
+                    if( it == legalOutputs.end() ) {
+                        std::string foundKey = findKey( ScalarOutput_Map, _screenOutput[idx_screenOutput] );
+                        ErrorMessages::Error(
+                            "Illegal output field <" + foundKey +
+                                "> for option SCREEN_OUTPUT for this test case.\n"
+                                "Supported fields are: ITER, MASS, RMS_FLUX, VTK_OUTPUT, CSV_OUTPUT, FINAL_TIME_OUTFLOW, TOTAL_OUTFLOW, MAX_OUTFLOW, "
+                                "FINAL_TIME_PARTICLE_ABSORPTION, TOTAL_PARTICLE_ABSORPTION, MAX_PARTICLE_ABSORPTION\n"
+                                "Please check your .cfg file.",
+                            CURRENT_FUNCTION );
+                    }
+                    break;
+                case PROBLEM_QuarterHohlraum:
+                case PROBLEM_SymmetricHohlraum:
+                    legalOutputs = { ITER,
+                                     WALL_TIME,
+                                     MASS,
+                                     RMS_FLUX,
+                                     VTK_OUTPUT,
+                                     CSV_OUTPUT,
+                                     CUR_OUTFLOW,
+                                     TOTAL_OUTFLOW,
+                                     MAX_OUTFLOW,
+                                     TOTAL_PARTICLE_ABSORPTION_CENTER,
+                                     TOTAL_PARTICLE_ABSORPTION_VERTICAL,
+                                     TOTAL_PARTICLE_ABSORPTION_HORIZONTAL,
+                                     PROBE_MOMENT_TIME_TRACE,
+                                     VAR_ABSORPTION_GREEN };
 
+                    it = std::find( legalOutputs.begin(), legalOutputs.end(), _screenOutput[idx_screenOutput] );
+
+                    if( it == legalOutputs.end() ) {
+                        std::string foundKey = findKey( ScalarOutput_Map, _screenOutput[idx_screenOutput] );
+                        ErrorMessages::Error(
+                            "HERE Illegal output field <" + foundKey +
+                                "> for option SCREEN_OUTPUT for this test case.\n"
+                                "Supported fields are: ITER, MASS, RMS_FLUX, VTK_OUTPUT, CSV_OUTPUT, TOTAL_PARTICLE_ABSORPTION_CENTER, \n"
+                                "TOTAL_PARTICLE_ABSORPTION_VERTICAL, TOTAL_PARTICLE_ABSORPTION_HORIZONTAL, PROBE_MOMENT_TIME_TRACE, CUR_OUTFLOW, \n "
+                                "TOTAL_OUTFLOW, MAX_OUTFLOW, VAR_ABSORPTION_GREEN \n"
+                                "Please check your .cfg file.",
+                            CURRENT_FUNCTION );
+                    }
+                    break;
+
+                default:
+                    legalOutputs = { ITER, WALL_TIME, MASS, RMS_FLUX, VTK_OUTPUT, CSV_OUTPUT, CUR_OUTFLOW, TOTAL_OUTFLOW, MAX_OUTFLOW };
+                    it           = std::find( legalOutputs.begin(), legalOutputs.end(), _screenOutput[idx_screenOutput] );
+
+                    if( it == legalOutputs.end() ) {
+                        std::string foundKey = findKey( ScalarOutput_Map, _screenOutput[idx_screenOutput] );
+                        ErrorMessages::Error(
+                            "Illegal output field <" + foundKey +
+                                "> for option SCREEN_OUTPUT for this test case.\n"
+                                "Supported fields are: ITER, MASS, RMS_FLUX, VTK_OUTPUT, CSV_OUTPUT, CUR_OUTFLOW, TOTAL_OUTFLOW, MAX_OUTFLOW \n"
+                                "Please check your .cfg file.",
+                            CURRENT_FUNCTION );
+                    }
+                    break;
+            }
+        }
         // Set ITER always to index 0 . Assume only one instance of iter is chosen
         if( _nScreenOutput > 0 ) {
             std::vector<SCALAR_OUTPUT>::iterator it;
@@ -728,17 +823,41 @@ void Config::SetPostprocessing() {
             _screenOutput.push_back( MASS );
             _screenOutput.push_back( VTK_OUTPUT );
         }
+
+        // Postprocessing for probing moments in symmetric Hohlraum. Make it four outputs
+        if( _problemName == PROBLEM_SymmetricHohlraum ) {
+            std::vector<SCALAR_OUTPUT>::iterator it;
+
+            it = find( _screenOutput.begin(), _screenOutput.end(), PROBE_MOMENT_TIME_TRACE );
+
+            if( it != _screenOutput.end() ) {
+                _screenOutput.erase( it );
+                _nScreenOutput += 3;    // extend the screen output by the number of probing points
+                for( unsigned i = 0; i < 4; i++ ) _screenOutput.push_back( PROBE_MOMENT_TIME_TRACE );
+            }
+        }
+        if( _problemName == PROBLEM_QuarterHohlraum ) {
+            std::vector<SCALAR_OUTPUT>::iterator it;
+
+            it = find( _screenOutput.begin(), _screenOutput.end(), PROBE_MOMENT_TIME_TRACE );
+
+            if( it != _screenOutput.end() ) {
+                _screenOutput.erase( it );
+                _nScreenOutput += 1;    // extend the screen output by the number of probing points
+                for( unsigned i = 0; i < 2; i++ ) _screenOutput.push_back( PROBE_MOMENT_TIME_TRACE );
+            }
+        }
     }
 
     // History Output Postprocessing
     {
-        // Check for doublicates in VOLUME OUTPUT
+        // Check for doublicates in HISTORY OUTPUT
         std::map<SCALAR_OUTPUT, int> dublicate_map;
 
-        for( unsigned short idx_screenOutput = 0; idx_screenOutput < _nHistoryOutput; idx_screenOutput++ ) {
-            std::map<SCALAR_OUTPUT, int>::iterator it = dublicate_map.find( _historyOutput[idx_screenOutput] );
+        for( unsigned idx_historyOutput = 0; idx_historyOutput < _nHistoryOutput; idx_historyOutput++ ) {
+            std::map<SCALAR_OUTPUT, int>::iterator it = dublicate_map.find( _historyOutput[idx_historyOutput] );
             if( it == dublicate_map.end() ) {
-                dublicate_map.insert( std::pair<SCALAR_OUTPUT, int>( _historyOutput[idx_screenOutput], 0 ) );
+                dublicate_map.insert( std::pair<SCALAR_OUTPUT, int>( _historyOutput[idx_historyOutput], 0 ) );
             }
             else {
                 it->second++;
@@ -746,8 +865,90 @@ void Config::SetPostprocessing() {
         }
         for( auto& e : dublicate_map ) {
             if( e.second > 0 ) {
-                ErrorMessages::Error( "Each output field for option SCREEN_OUTPUT can only be set once.\nPlease check your .cfg file.",
+                ErrorMessages::Error( "Each output field for option HISTORY_OUTPUT can only be set once.\nPlease check your .cfg file.",
                                       CURRENT_FUNCTION );
+            }
+        }
+
+        // Check if the choice of history output is compatible to the problem
+        for( unsigned short idx_screenOutput = 0; idx_screenOutput < _nHistoryOutput; idx_screenOutput++ ) {
+            std::vector<SCALAR_OUTPUT> legalOutputs;
+            std::vector<SCALAR_OUTPUT>::iterator it;
+
+            switch( _problemName ) {
+                case PROBLEM_HalfLattice:
+                case PROBLEM_Lattice:
+                    legalOutputs = { ITER,
+                                     WALL_TIME,
+                                     MASS,
+                                     RMS_FLUX,
+                                     VTK_OUTPUT,
+                                     CSV_OUTPUT,
+                                     CUR_OUTFLOW,
+                                     TOTAL_OUTFLOW,
+                                     MAX_OUTFLOW,
+                                     CUR_PARTICLE_ABSORPTION,
+                                     TOTAL_PARTICLE_ABSORPTION,
+                                     MAX_PARTICLE_ABSORPTION };
+                    it           = std::find( legalOutputs.begin(), legalOutputs.end(), _historyOutput[idx_screenOutput] );
+                    if( it == legalOutputs.end() ) {
+                        std::string foundKey = findKey( ScalarOutput_Map, _historyOutput[idx_screenOutput] );
+                        ErrorMessages::Error(
+                            "Illegal output field <" + foundKey +
+                                "> for option HISTORY_OUTPUT for this test case.\n"
+                                "Supported fields are: ITER, MASS, RMS_FLUX, VTK_OUTPUT, CSV_OUTPUT, FINAL_TIME_OUTFLOW,\n"
+                                "TOTAL_OUTFLOW, MAX_OUTFLOW, FINAL_TIME_PARTICLE_ABSORPTION, TOTAL_PARTICLE_ABSORPTION, MAX_PARTICLE_ABSORPTION\n"
+                                "Please check your .cfg file.",
+                            CURRENT_FUNCTION );
+                    }
+                    break;
+                case PROBLEM_QuarterHohlraum:
+                case PROBLEM_SymmetricHohlraum:
+                    legalOutputs = { ITER,
+                                     WALL_TIME,
+                                     MASS,
+                                     RMS_FLUX,
+                                     VTK_OUTPUT,
+                                     CSV_OUTPUT,
+                                     CUR_OUTFLOW,
+                                     TOTAL_OUTFLOW,
+                                     MAX_OUTFLOW,
+                                     TOTAL_PARTICLE_ABSORPTION_CENTER,
+                                     TOTAL_PARTICLE_ABSORPTION_VERTICAL,
+                                     TOTAL_PARTICLE_ABSORPTION_HORIZONTAL,
+                                     PROBE_MOMENT_TIME_TRACE,
+                                     VAR_ABSORPTION_GREEN,
+                                     VAR_ABSORPTION_GREEN_LINE };
+
+                    it = std::find( legalOutputs.begin(), legalOutputs.end(), _historyOutput[idx_screenOutput] );
+
+                    if( it == legalOutputs.end() ) {
+                        std::string foundKey = findKey( ScalarOutput_Map, _historyOutput[idx_screenOutput] );
+                        ErrorMessages::Error(
+                            "Illegal output field <" + foundKey +
+                                "> for option HISTORY_OUTPUT for this test case.\n"
+                                "Supported fields are: ITER, MASS, RMS_FLUX, VTK_OUTPUT, CSV_OUTPUT, TOTAL_PARTICLE_ABSORPTION_CENTER, \n "
+                                "TOTAL_PARTICLE_ABSORPTION_VERTICAL, TOTAL_PARTICLE_ABSORPTION_HORIZONTAL,PROBE_MOMENT_TIME_TRACE,  CUR_OUTFLOW, \n"
+                                "TOTAL_OUTFLOW, MAX_OUTFLOW , VAR_ABSORPTION_GREEN, VAR_ABSORPTION_GREEN_LINE \n"
+                                "Please check your .cfg file.",
+                            CURRENT_FUNCTION );
+                    }
+                    break;
+
+                default:
+                    legalOutputs = { ITER, WALL_TIME, MASS, RMS_FLUX, VTK_OUTPUT, CSV_OUTPUT, CUR_OUTFLOW, TOTAL_OUTFLOW, MAX_OUTFLOW };
+                    it           = std::find( legalOutputs.begin(), legalOutputs.end(), _historyOutput[idx_screenOutput] );
+
+                    if( it == legalOutputs.end() ) {
+                        std::string foundKey = findKey( ScalarOutput_Map, _historyOutput[idx_screenOutput] );
+                        ErrorMessages::Error(
+                            "Illegal output field <" + foundKey +
+                                "> for option SCREEN_OUTPUT for this test case.\n"
+                                "Supported fields are: ITER, MASS, RMS_FLUX, VTK_OUTPUT, CSV_OUTPUT, CUR_OUTFLOW, TOTAL_OUTFLOW, MAX_OUTFLOW \n"
+                                "Please check your .cfg file.",
+                            CURRENT_FUNCTION );
+                    }
+                    break;
             }
         }
 
@@ -760,11 +961,32 @@ void Config::SetPostprocessing() {
         }
         // Set default screen output
         if( _nHistoryOutput == 0 ) {
-            _nHistoryOutput = 4;
+            _nHistoryOutput = 5;
             _historyOutput.push_back( ITER );
-            _historyOutput.push_back( RMS_FLUX );
             _historyOutput.push_back( MASS );
+            _historyOutput.push_back( RMS_FLUX );
             _historyOutput.push_back( VTK_OUTPUT );
+            _historyOutput.push_back( CSV_OUTPUT );
+        }
+
+        // Postprocessing for probing moments in symmetric Hohlraum. Make it four outputs
+        if( _problemName == PROBLEM_SymmetricHohlraum ) {
+            std::vector<SCALAR_OUTPUT>::iterator it;
+            it = find( _historyOutput.begin(), _historyOutput.end(), PROBE_MOMENT_TIME_TRACE );
+            if( it != _historyOutput.end() ) {
+                _historyOutput.erase( it );
+                _nHistoryOutput += 11;    // extend the screen output by the number of probing points
+                for( unsigned i = 0; i < 12; i++ ) _historyOutput.push_back( PROBE_MOMENT_TIME_TRACE );
+            }
+        }
+        if( _problemName == PROBLEM_QuarterHohlraum ) {
+            std::vector<SCALAR_OUTPUT>::iterator it;
+            it = find( _historyOutput.begin(), _historyOutput.end(), PROBE_MOMENT_TIME_TRACE );
+            if( it != _historyOutput.end() ) {
+                _historyOutput.erase( it );
+                _nHistoryOutput += 5;    // extend the screen output by the number of probing points
+                for( unsigned i = 0; i < 6; i++ ) _historyOutput.push_back( PROBE_MOMENT_TIME_TRACE );
+            }
         }
     }
 
@@ -980,42 +1202,52 @@ void Config::InitLogger() {
         }
         if( fileLogLvl != spdlog::level::off ) {
             // define filename on root
-            int pe;
-            MPI_Comm_rank( MPI_COMM_WORLD, &pe );
-            char cfilename[1024];
+            // int pe = 0;
+            // MPI_Comm_rank( MPI_COMM_WORLD, &pe );
+            // char cfilename[1024];
 
-            if( pe == 0 ) {
-                // get date and time
-                time_t now = time( nullptr );
-                struct tm tstruct;
-                char buf[80];
-                tstruct = *localtime( &now );
-                strftime( buf, sizeof( buf ), "%Y-%m-%d_%X", &tstruct );
+            // if( pe == 0 ) {
+            //  get date and time
+            time_t now = time( nullptr );
+            struct tm tstruct;
+            char buf[80];
+            tstruct = *localtime( &now );
+            strftime( buf, sizeof( buf ), "%Y-%m-%d_%X", &tstruct );
 
-                // set filename
-                std::string filename;
-                if( _logFileName.compare( "use_date" ) == 0 ) {
-                    _logFileName = buf;    // set filename to date and time
-                }
-                filename = _logFileName;
-
-                // in case of existing files append '_#'
-                int ctr = 0;
-                if( std::filesystem::exists( _logDir + filename ) ) {
-                    filename += "_" + std::to_string( ++ctr );
-                }
-                while( std::filesystem::exists( _logDir + filename ) ) {
-                    filename.pop_back();
-                    filename += std::to_string( ++ctr );
-                }
-                strncpy( cfilename, filename.c_str(), sizeof( cfilename ) );
-                cfilename[sizeof( cfilename ) - 1] = 0;
+            // set filename
+            std::string filepathStr;
+            if( _logFileName.compare( "use_date" ) == 0 ) {
+                _logFileName = buf;    // set filename to date and time
+                filepathStr  = _logDir + _logFileName;
             }
-            MPI_Bcast( &cfilename, sizeof( cfilename ), MPI_CHAR, 0, MPI_COMM_WORLD );
-            MPI_Barrier( MPI_COMM_WORLD );
+            else {
+                std::filesystem::path filePath( _logDir + _logFileName );
+                std::string baseFilename( _logDir + _logFileName );
+                filepathStr = _logDir + _logFileName;
+                // Check if the file with the original name exists
+                if( std::filesystem::exists( filePath ) ) {
+                    // Extract the stem and extension
+                    std::string stem      = filePath.stem().string();
+                    std::string extension = filePath.extension().string();
+
+                    // Counter for incrementing the filename
+                    int counter = 1;
+
+                    // Keep incrementing the counter until a unique filename is found
+                    while( std::filesystem::exists( filePath ) ) {
+                        stem = baseFilename + std::to_string( counter );
+                        filePath.replace_filename( stem + extension );
+                        counter++;
+                    }
+                }
+                filepathStr = filePath.string();
+            }
+            //}
+            // MPI_Bcast( &cfilename, sizeof( cfilename ), MPI_CHAR, 0, MPI_COMM_WORLD );
+            // MPI_Barrier( MPI_COMM_WORLD );
 
             // create spdlog file sink
-            auto fileSink = std::make_shared<spdlog::sinks::basic_file_sink_mt>( _logDir + cfilename );
+            auto fileSink = std::make_shared<spdlog::sinks::basic_file_sink_mt>( filepathStr );
             fileSink->set_level( fileLogLvl );
             fileSink->set_pattern( "%Y-%m-%d %H:%M:%S.%f | %v" );
             sinks.push_back( fileSink );
@@ -1032,42 +1264,53 @@ void Config::InitLogger() {
         std::vector<spdlog::sink_ptr> sinks;
         if( fileLogLvl != spdlog::level::off ) {
             // define filename on root
-            int pe;
-            MPI_Comm_rank( MPI_COMM_WORLD, &pe );
-            char cfilename[1024];
+            // int pe = 0;
+            // MPI_Comm_rank( MPI_COMM_WORLD, &pe );
+            // char cfilename[1024];
 
-            if( pe == 0 ) {
-                // get date and time
-                time_t now = time( nullptr );
-                struct tm tstruct;
-                char buf[80];
-                tstruct = *localtime( &now );
-                strftime( buf, sizeof( buf ), "%Y-%m-%d_%X.csv", &tstruct );
+            // if( pe == 0 ) {
+            //  get date and time
+            time_t now = time( nullptr );
+            struct tm tstruct;
+            char buf[80];
+            tstruct = *localtime( &now );
+            strftime( buf, sizeof( buf ), "%Y-%m-%d_%X.csv", &tstruct );
 
-                // set filename
-                std::string filename;
-                if( _logFileName.compare( "use_date" ) == 0 )
-                    filename = buf;    // set filename to date and time
-                else
-                    filename = _logFileName + ".csv";
-
-                // in case of existing files append '_#'
-                int ctr = 0;
-                if( std::filesystem::exists( _logDir + filename ) ) {
-                    filename += "_" + std::to_string( ++ctr );
-                }
-                while( std::filesystem::exists( _logDir + filename ) ) {
-                    filename.pop_back();
-                    filename += std::to_string( ++ctr );
-                }
-                strncpy( cfilename, filename.c_str(), sizeof( cfilename ) );
-                cfilename[sizeof( cfilename ) - 1] = 0;
+            // set filename
+            // set filename
+            std::string filepathStr;
+            if( _logFileName.compare( "use_date" ) == 0 ) {
+                _logFileName = buf;    // set filename to date and time
+                filepathStr  = _logDir + _logFileName + ".csv";
             }
-            MPI_Bcast( &cfilename, sizeof( cfilename ), MPI_CHAR, 0, MPI_COMM_WORLD );
-            MPI_Barrier( MPI_COMM_WORLD );
+            else {
+                std::filesystem::path filePath( _logDir + _logFileName + ".csv" );
+                std::string baseFilename( _logDir + _logFileName );
+                filepathStr = _logDir + _logFileName + ".csv";
+                // Check if the file with the original name exists
+                if( std::filesystem::exists( filePath ) ) {
+                    // Extract the stem and extension
+                    std::string stem      = filePath.stem().string();
+                    std::string extension = filePath.extension().string();
+
+                    // Counter for incrementing the filename
+                    int counter = 1;
+
+                    // Keep incrementing the counter until a unique filename is found
+                    while( std::filesystem::exists( filePath ) ) {
+                        stem = baseFilename + std::to_string( counter );
+                        filePath.replace_filename( stem + extension );
+                        counter++;
+                    }
+                }
+                filepathStr = filePath.string();
+            }
+            //}
+            // MPI_Bcast( &cfilename, sizeof( cfilename ), MPI_CHAR, 0, MPI_COMM_WORLD );
+            // MPI_Barrier( MPI_COMM_WORLD );
 
             // create spdlog file sink
-            auto fileSink = std::make_shared<spdlog::sinks::basic_file_sink_mt>( _logDir + cfilename );
+            auto fileSink = std::make_shared<spdlog::sinks::basic_file_sink_mt>( filepathStr );
             fileSink->set_level( fileLogLvl );
             fileSink->set_pattern( "%Y-%m-%d %H:%M:%S.%f ,%v" );
             sinks.push_back( fileSink );
@@ -1078,4 +1321,15 @@ void Config::InitLogger() {
         spdlog::register_logger( tabular_logger );
         spdlog::flush_every( std::chrono::seconds( 5 ) );
     }
+}
+
+// Function to find the key for a given value in a map
+template <typename K, typename V> K Config::findKey( const std::map<K, V>& myMap, const V& valueToFind ) {
+    for( const auto& pair : myMap ) {
+        if( pair.second == valueToFind ) {
+            return pair.first;    // Return the key if the value is found
+        }
+    }
+    // If the value is not found, you can return a default value or throw an exception
+    throw std::out_of_range( "Value not found in the map" );
 }

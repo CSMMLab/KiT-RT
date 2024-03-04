@@ -4,9 +4,7 @@
  *  @version: 0.1
  */
 
-#include <Python.h>
-#define PY_ARRAY_UNIQUE_SYMBOL KITRT_ARRAY_API
-#include <mpi.h>
+#include <omp.h>
 #include <string>
 
 #include "common/config.hpp"
@@ -23,15 +21,13 @@
 
 int main( int argc, char** argv ) {
 #ifdef BUILD_GUI
-    MPI_Init( &argc, &argv );
     QApplication app( argc, argv );
     MainWindow mw;
     mw.show();
     return app.exec();
 #else
-    MPI_Init( &argc, &argv );
-    wchar_t* program = Py_DecodeLocale( argv[0], NULL );
-    Py_SetProgramName( program );
+    // wchar_t* program = Py_DecodeLocale( argv[0], NULL );
+    // Py_SetProgramName( program );
 
     std::string filename = ParseArguments( argc, argv );
 
@@ -50,7 +46,6 @@ int main( int argc, char** argv ) {
     else {
         // Build solver
         SolverBase* solver = SolverBase::Create( config );
-
         // Run solver and export
         solver->Solve();
         solver->PrintVolumeOutput();
@@ -58,8 +53,6 @@ int main( int argc, char** argv ) {
     }
 
     delete config;
-
-    MPI_Finalize();
 
     return EXIT_SUCCESS;
 #endif

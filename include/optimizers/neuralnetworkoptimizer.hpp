@@ -30,23 +30,27 @@ class NeuralNetworkOptimizer : public OptimizerBase
     unsigned _nq;                                                  /*!< @brief number of quadrature points */
     Vector _weights;                                               /*!<  @brief quadrature weights, dim(_weights) = (_nq) */
 
-    std::string _tfModelInputName;                                 /*!< @brief Name of the tf model input */
-    cppflow::model* _tfModel;                                      /*!< @brief wrapper object for the compiled tensorflow model*/
-    cppflow::tensor _modelInput;                                   /*!< @brief model input tensor. dims: _nCellsx_nSys*/
-    std::vector<float> _modelServingVectorU;                       /*!< @brief model input as a 1D vector. dims: _nCells*(_nSys-1) */
-    std::vector<float> _modelServingVectorAlpha;                   /*!< @brief model output as a 1D vector. dims: _nCells*_nSys */
+    std::string _tfModelInputName;               /*!< @brief Name of the tf model input */
+    cppflow::model* _tfModel;                    /*!< @brief wrapper object for the compiled tensorflow model*/
+    cppflow::tensor _modelInput;                 /*!< @brief model input tensor. dims: _nCellsx_nSys*/
+    std::vector<float> _modelServingVectorU;     /*!< @brief model input as a 1D vector. dims: _nCells*(_nSys-1) */
+    std::vector<float> _modelServingVectorAlpha; /*!< @brief model output as a 1D vector. dims: _nCells*_nSys */
 
     // std::vector<cppflow::tensor> _modelOutput; /*!< @brief model input tensor. dims: _nModelOutputx_nCellsx_nSys*/
-    unsigned _nSystem;                                  /*!< @brief  size of the moment system including zero order moment*/
-    VectorVector _reducedMomentBasis;                   /*!< @brief reduced basis functions (excluding order zero) */
+    unsigned _nSystem;                /*!< @brief  size of the moment system including zero order moment*/
+    VectorVector _reducedMomentBasis; /*!< @brief reduced basis functions (excluding order zero) */
 
-    std::vector<Matrix> _rotationMats;                  /*!< @brief vector of Rotation matrices for symmetry enforcing */
-    std::vector<Matrix> _rotationMatsT;                 /*!< @brief vector of transpose Rotation matrices for symmetry enforcing */
+    std::vector<Matrix> _rotationMats;  /*!< @brief vector of Rotation matrices for symmetry enforcing */
+    std::vector<Matrix> _rotationMatsT; /*!< @brief vector of transpose Rotation matrices for symmetry enforcing */
 
     Matrix CreateRotator( const Vector& uFirstMoment ); /*!< @brief Creates a rotation matrix R for the tensorized monomial basis using the first
                                                            moment of a momnet vector */
-    Matrix CreateRotatorSphericalHarmonics( const double x, const double y ); /*!< @brief Creates a rotation matrix R for the spherical harmonics basisusing the first moment of a momnet vector */
-    Matrix CreateRotatorSphericalHarmonics2D( const double x, const double y ); /*!< @brief Creates a rotation matrix R for the spherical harmonics basisusing the first moment of a momnet vector */
+    Matrix CreateRotatorSphericalHarmonics(
+        const double x,
+        const double y ); /*!< @brief Creates a rotation matrix R for the spherical harmonics basisusing the first moment of a momnet vector */
+    Matrix CreateRotatorSphericalHarmonics2D(
+        const double x,
+        const double y ); /*!< @brief Creates a rotation matrix R for the spherical harmonics basisusing the first moment of a momnet vector */
 
     Vector RotateM1( Vector& vec, Matrix& R ); /*!< @brief Rotates the M1 part of a 2D moment vector using a rotation matrix R */
     /*!< @brief Rotates the tensorized M2 part of a 2D moment vector using a rotation matrix R */

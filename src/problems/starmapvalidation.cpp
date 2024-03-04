@@ -11,11 +11,11 @@
 #include <fstream>
 #include <numeric>
 
-StarMapValidation_SN::StarMapValidation_SN( Config* settings, Mesh* mesh ) : ProblemBase( settings, mesh ) {}
+StarMapValidation_SN::StarMapValidation_SN( Config* settings, Mesh* mesh, QuadratureBase* quad ) : ProblemBase( settings, mesh, quad ) {}
 
 StarMapValidation_SN::~StarMapValidation_SN() {}
 
-VectorVector StarMapValidation_SN::GetScatteringXS( const Vector& energies ) {
+VectorVector StarMapValidation_SN::GetScatteringXS( const Vector& /*energies*/ ) {
     // @TODO
     // Specified in subclasses
     return VectorVector( 1, Vector( 1, 0.0 ) );
@@ -83,7 +83,8 @@ std::vector<double> StarMapValidation_SN::GetDensity( const VectorVector& /*cell
 }
 
 // Moment  version below
-StarMapValidation_Moment::StarMapValidation_Moment( Config* settings, Mesh* mesh ) : StarMapValidation_SN( settings, mesh ) {}
+StarMapValidation_Moment::StarMapValidation_Moment( Config* settings, Mesh* mesh, QuadratureBase* quad )
+    : StarMapValidation_SN( settings, mesh, quad ) {}
 
 StarMapValidation_Moment::~StarMapValidation_Moment() {}
 
@@ -99,9 +100,9 @@ VectorVector StarMapValidation_Moment::SetupIC() {
     double x = 0.0, y = 0.0, f = 0.0;
 
     for( unsigned idx_cell = 0; idx_cell < _mesh->GetNumCells(); ++idx_cell ) {
-        x                            = cellMidpoints[idx_cell][0];
-        y                            = cellMidpoints[idx_cell][1];
-        f                            = NormPDF( x, pos_beam[0], stddev ) * NormPDF( y, pos_beam[1], stddev );
+        x = cellMidpoints[idx_cell][0];
+        y = cellMidpoints[idx_cell][1];
+        f = NormPDF( x, pos_beam[0], stddev ) * NormPDF( y, pos_beam[1], stddev );
 
         initialSolution[idx_cell][0] = f * StarMAPmoments[0];
         for( unsigned idx_sys = 1; idx_sys < ntotalEquations; idx_sys++ ) {
