@@ -108,7 +108,7 @@ class SolverBase
     virtual void FVMUpdate( unsigned idx_iter ) = 0;
     /*! @brief Computes the finite Volume update step for the current iteration
          @param idx_iter  current (peudo) time iteration */
-    virtual void RKUpdate( VectorVector sol0, VectorVector sol_rk );
+    virtual void RKUpdate( VectorVector& sol0, VectorVector sol_rk );
 
     // Helper
     /*! @brief ComputeTimeStep calculates the maximal stable time step using the

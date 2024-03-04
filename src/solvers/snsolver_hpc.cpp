@@ -1,121 +1,114 @@
-#include "solvers/solverbase.hpp"
+#include "solvers/snsolver_hpc.hpp"
 #include "common/config.hpp"
-#include "common/globalconstants.hpp"
 #include "common/io.hpp"
 #include "common/mesh.hpp"
-#include "fluxes/numericalflux.hpp"
+#include "kernels/scatteringkernelbase.hpp"
 #include "problems/problembase.hpp"
 #include "quadratures/quadraturebase.hpp"
-#include "solvers/csdmnsolver.hpp"
-#include "solvers/csdpnsolver.hpp"
-#include "solvers/csdsnsolver.hpp"
-#include "solvers/mnsolver.hpp"
-#include "solvers/mnsolver_normalized.hpp"
-#include "solvers/pnsolver.hpp"
-#include "solvers/snsolver.hpp"
-#include "toolboxes/textprocessingtoolbox.hpp"
-#include <chrono>
-#include <cmath>
-#include <limits>
+#include "quadratures/quadraturebase.hpp"
 
-SolverBase::SolverBase( Config* settings ) {
-    _currTime = 0.0;
+SNSolverHPC::SNSolverHPC( Config* settings ) {
     _settings = settings;
+    _currTime = 0.0;
 
-    _mesh = LoadSU2MeshFromFile( settings );
 
-    _areas     = _mesh->GetCellAreas();
-    _neighbors = _mesh->GetNeighbours();
-    _normals   = _mesh->GetNormals();
-    _nCells    = _mesh->GetNumCells();
-    _settings->SetNCells( _nCells );
-
-    // build quadrature object and store frequently used params
-    _quadrature = QuadratureBase::Create( settings );
-    _nq         = _quadrature->GetNq();
+    // Create Mesh
+    auto mesh = LoadSU2MeshFromFile( settings );    
+    _settings->SetNCells( mesh->GetNumCells() );
+    auto quad = QuadratureBase::Create( settings );
     _settings->SetNQuadPoints( _nq );
+    auto problem = ProblemBase::Create( _settings, mesh, quad );
 
-    // build slope related params
-    _reconstructor      = new Reconstructor( settings );    // Not used!
-    _reconsOrder        = _reconstructor->GetReconsOrder();
-    _interfaceMidPoints = _mesh->GetInterfaceMidPoints();
+    _nCells     = mesh->GetNumCells();
+    _nEdgesPerCell = mesh->GetNumNodesPerCell();
+    _spatialDim = mesh->GetDim();   
+    _nq         = quad->GetNq();
+    _nSystem = _nq; 
 
-    _cellMidPoints = _mesh->GetCellMidPoints();
+    _areas = std::vector<double>( _nCells );
+    _normals = std::vector<double>( _nCells *_nEdgesPerCell*_spatialDim );
+    _neighbors = std::vector<unsigned>( _nCells *_nEdgesPerCell );
+    _cellMidPoints = std::vector<double>( _nCells *_nEdgesPerCell );
+    _interfaceMidPoints = std::vector<double>( _nCells *_nEdgesPerCell*_spatialDim );
+    
+    // Slope
+    _solDx    = std::vector<double>( _nCells *_nSystem*_spatialDim );
+    _limiter    = std::vector<double>( _nCells *_spatialDim );
+    
+    // Physics
+    _sigmaS   = std::vector<double>( _nCells );
+    _sigmaT   = std::vector<double>( _nCells );
+    _source   = std::vector<double>( _nCells*_nSystem );
+    _scatteringKernel   = std::vector<double>( _nSystem * _nSystem );
 
-    // set time step or energy step
+    //Quadrature
+    _quadPts   = std::vector<double>( _nSystem * _spatialDim );
+    _quadWeights   = std::vector<double>( _nSystem );
+    _scatteringKernel =std::vector<double>( _nSystem *_nSystem);
+
+    // Solution 
+    _sol = std::vector<double>( _nCells*_nSystem );
+    _solNew = std::vector<double>( _nCells*_nSystem );
+    
+    auto areas           = mesh->GetCellAreas();
+    auto neighbors       = mesh->GetNeighbours();
+    auto normals         = mesh->GetNormals();
+    auto cellMidPts      = mesh->GetCellMidPoints();
+    auto interfaceMidPts = mesh->GetInterfaceMidPoints();
+
     _dT = ComputeTimeStep( _settings->GetCFL() );
-    if( _settings->GetIsCSD() ) {
-        // carefull: This gets overwritten by almost all subsolvers
-        double minE = 5e-5;    // 2.231461e-01;    // 5e-5;
-        double maxE = _settings->GetMaxEnergyCSD();
-        _nEnergies  = std::ceil( ( maxE - minE ) / _dT );
-        _energies   = blaze::linspace( _nEnergies, minE, maxE );
+    _nIter =  ceil( _settings->GetTEnd() / _dT );    // redundancy with nIter (<-Better) ?
+
+
+    auto quadPoints = quad->GetPoints();
+    auto quadWeights    = quad->GetWeights();
+
+    auto initialCondition = problem->SetupIC();
+    auto sigmaT = problem->GetTotalXS( Vector(_nIter,0.0) );
+    auto sigmaS = problem->GetScatteringXS( Vector(_nIter,0.0) );
+    auto source      = problem->GetExternalSource( Vector(_nIter,0.0) );
+
+    // Copy to everything to solver
+    for (unsigned idx_cell=0;idx_cell<_nCells; idx_cell ++){
+        _areas[idx_cell] =areas[idx_cell];
+        for (unsigned idx_nbr=0;idx_nbr<_nEdgesPerCell; idx_nbr ++){
+            _neighbors[idx_cell*_nEdgesPerCell + idx_nbr] = neighbors[idx_cell][idx_nbr];
+            _cellMidPoints[idx_cell*_nEdgesPerCell + idx_nbr] = cellMidPts[idx_cell][ idx_nbr];
+
+            for (unsigned idx_dim=0;idx_dim<_spatialDim; idx_dim ++){
+                _normals[idx_cell*_nEdgesPerCell*_spatialDim + idx_nbr*_spatialDim +idx_dim] =normals[idx_cell][idx_nbr][idx_dim];
+                _interfaceMidPoints[idx_cell*_nEdgesPerCell*_spatialDim + idx_nbr*_spatialDim +idx_dim]  =interfaceMidPts[idx_cell][idx_nbr][idx_dim];
+            }
+        }
+        _sigmaS[idx_cell] =sigmaS[0][idx_cell];
+        _sigmaT[idx_cell] =sigmaT[0][idx_cell];
+        for (unsigned idx_sys=0;idx_sys<_nSystem; idx_sys ++){
+            _source[idx_cell*_nSystem + idx_sys] =source[0][idx_cell][0]; //CAREFUL HERE hardcoded to isotropic source
+                 _sol[idx_cell*_nSystem + idx_sys] =   initialCondition  [idx_cell][idx_sys];
+                 _solNew[idx_cell*_nSystem + idx_sys] =   initialCondition  [idx_cell][idx_sys];
+        }
+
+    }   
+
+    ScatteringKernel* k = ScatteringKernel::CreateScatteringKernel( settings->GetKernelName(), quad );
+    auto scatteringKernel   = k->GetScatteringKernel();
+    for (unsigned idx_sys=0;idx_sys<_nSystem; idx_sys ++){
+        for (unsigned idx_sys2=0;idx_sys2<_nSystem; idx_sys2 ++){
+            _scatteringKernel[idx_sys*_nSystem +idx_sys2 ] =  scatteringKernel(idx_sys,idx_sys2 );
+        }
     }
-    else {                                                     // Not CSD Solver
-        _nEnergies = unsigned( settings->GetTEnd() / _dT );    // redundancy with nIter (<-Better) ?
-        _energies  = 0;    // blaze::linspace( _nEnergies, 0.0, settings->GetTEnd() );    // go upward from 0 to T_end =>Not needed
-    }
-
-    // Adjust maxIter, depending if we have a normal run or a csd Run
-    _nIter = _nEnergies;
-    if( _settings->GetIsCSD() ) {
-        _nIter = _nEnergies - 1;    // Since CSD does not go the last energy step
-    }
-
-    // setup problem  and store frequently used params
-
-    _problem = ProblemBase::Create( _settings, _mesh, _quadrature );
-
-    _sol = _problem->SetupIC();
-
-    _solNew = _sol;    // setup temporary sol variable
-    if( !_settings->GetIsCSD() ) {
-        _sigmaT = _problem->GetTotalXS( _energies );
-        _sigmaS = _problem->GetScatteringXS( _energies );
-        _Q      = _problem->GetExternalSource( _energies );
-    }
-
-    // setup numerical flux
-    _g = NumericalFluxBase::Create();
-
-    // boundary type
-    _boundaryCells = _mesh->GetBoundaryTypes();
 
     PrepareScreenOutput();     // Screen Output
     PrepareHistoryOutput();    // History Output
 
-    // initialize Helper Variables
-    _scalarFluxNew = Vector( _nCells, 0 );
-    _scalarFlux    = Vector( _nCells, 0 );
-    // write density
-    _density = _problem->GetDensity( _mesh->GetCellMidPoints() );
+    delete mesh;
+    delete quad;
+    delete problem;
+    delete k;
 }
 
-SolverBase::~SolverBase() {
-    delete _quadrature;
-    delete _mesh;
-    delete _problem;
-    delete _reconstructor;
-    delete _g;
-}
 
-SolverBase* SolverBase::Create( Config* settings ) {
-    switch( settings->GetSolverName() ) {
-        case SN_SOLVER: return new SNSolver( settings );
-        case PN_SOLVER: return new PNSolver( settings );
-        case MN_SOLVER: return new MNSolver( settings );
-        case MN_SOLVER_NORMALIZED: return new MNSolverNormalized( settings );
-        case CSD_SN_SOLVER: return new CSDSNSolver( settings );
-        case CSD_PN_SOLVER: return new CSDPNSolver( settings );
-        case CSD_MN_SOLVER: return new CSDMNSolver( settings );
-
-        default: ErrorMessages::Error( "Creator for the chosen solver does not yet exist. This is is the fault of the coder!", CURRENT_FUNCTION );
-    }
-    ErrorMessages::Error( "Creator for the chosen solver does not yet exist. This is is the fault of the coder!", CURRENT_FUNCTION );
-    return nullptr;    // This code is never reached. Just to disable compiler warnings.
-}
-
-void SolverBase::Solve() {
+void SNSolverHPC::Solve() {
 
     // --- Preprocessing ---
     PrepareVolumeOutput();
@@ -175,16 +168,16 @@ void SolverBase::Solve() {
     DrawPostSolverOutput();
 }
 
-void SolverBase::RKUpdate( VectorVector& sol_0, VectorVector& sol_rk ) {
+void SNSolverHPC::RKUpdate( VectorVector sol_0, VectorVector sol_rk ) {
 #pragma omp parallel for
-    for( unsigned i = 0; i < _nCells; ++i ) {
+    for( unsigned i = 0; i < _nCells*_nSystem; ++i ) {
         _sol[i] = 0.5 * ( sol_0[i] + sol_rk[i] );
     }
 }
 
-void SolverBase::PrintVolumeOutput() const { ExportVTK( _settings->GetOutputFile(), _outputFields, _outputFieldNames, _mesh ); }
+void SNSolverHPC::PrintVolumeOutput() const { ExportVTK( _settings->GetOutputFile(), _outputFields, _outputFieldNames, _mesh ); }
 
-void SolverBase::PrintVolumeOutput( int currEnergy ) const {
+void SNSolverHPC::PrintVolumeOutput( int currEnergy ) const {
     if( _settings->GetVolumeOutputFrequency() != 0 && currEnergy % (unsigned)_settings->GetVolumeOutputFrequency() == 0 ) {
         ExportVTK( _settings->GetOutputFile() + "_" + std::to_string( currEnergy ), _outputFields, _outputFieldNames, _mesh );
     }
@@ -194,7 +187,7 @@ void SolverBase::PrintVolumeOutput( int currEnergy ) const {
 }
 
 // --- Helper ---
-double SolverBase::ComputeTimeStep( double cfl ) const {
+double SNSolverHPC::ComputeTimeStep( double cfl ) const {
     // for pseudo 1D, set timestep to dx
     double dx, dy;
     switch( _settings->GetProblemName() ) {
@@ -229,7 +222,7 @@ double SolverBase::ComputeTimeStep( double cfl ) const {
 }
 
 // --- IO ----
-void SolverBase::PrepareScreenOutput() {
+void SNSolverHPC::PrepareScreenOutput() {
     unsigned nFields = (unsigned)_settings->GetNScreenOutput();
 
     _screenOutputFieldNames.resize( nFields );
@@ -273,7 +266,7 @@ void SolverBase::PrepareScreenOutput() {
     }
 }
 
-void SolverBase::WriteScalarOutput( unsigned idx_iter ) {
+void SNSolverHPC::WriteScalarOutput( unsigned idx_iter ) {
     unsigned n_probes = 4;
 
     unsigned nFields                  = (unsigned)_settings->GetNScreenOutput();
@@ -385,7 +378,7 @@ void SolverBase::WriteScalarOutput( unsigned idx_iter ) {
     }
 }
 
-void SolverBase::PrintScreenOutput( unsigned idx_iter ) {
+void SNSolverHPC::PrintScreenOutput( unsigned idx_iter ) {
     auto log = spdlog::get( "event" );
 
     unsigned strLen  = 15;    // max width of one column
@@ -447,7 +440,7 @@ void SolverBase::PrintScreenOutput( unsigned idx_iter ) {
     }
 }
 
-void SolverBase::PrepareHistoryOutput() {
+void SNSolverHPC::PrepareHistoryOutput() {
     unsigned n_probes = 4;
 
     unsigned nFields = (unsigned)_settings->GetNHistoryOutput();
@@ -500,7 +493,7 @@ void SolverBase::PrepareHistoryOutput() {
     }
 }
 
-void SolverBase::PrintHistoryOutput( unsigned idx_iter ) {
+void SNSolverHPC::PrintHistoryOutput( unsigned idx_iter ) {
 
     auto log = spdlog::get( "tabular" );
 
@@ -527,7 +520,7 @@ void SolverBase::PrintHistoryOutput( unsigned idx_iter ) {
     }
 }
 
-void SolverBase::DrawPreSolverOutput() {
+void SNSolverHPC::DrawPreSolverOutput() {
 
     // Logger
     auto log    = spdlog::get( "event" );
@@ -571,7 +564,7 @@ void SolverBase::DrawPreSolverOutput() {
     logCSV->info( lineToPrintCSV );
 }
 
-void SolverBase::DrawPostSolverOutput() {
+void SNSolverHPC::DrawPostSolverOutput() {
 
     // Logger
     auto log = spdlog::get( "event" );
@@ -603,9 +596,9 @@ void SolverBase::DrawPostSolverOutput() {
     log->info( "--------------------------- Solver Finished ----------------------------" );
 }
 
-void SolverBase::SolverPreprocessing() {}
+void SNSolverHPC::SolverPreprocessing() {}
 
-void SolverBase::IterPostprocessing( unsigned /*idx_iter*/ ) {
+void SNSolverHPC::IterPostprocessing( unsigned /*idx_iter*/ ) {
     // --- Compute Quantities of interest for Volume and Screen Output ---
     ComputeScalarFlux();    // Needs to be called first is a solver function
 
@@ -629,3 +622,4 @@ void SolverBase::IterPostprocessing( unsigned /*idx_iter*/ ) {
         _problem->ComputeQOIsGreenProbingLine( _scalarFlux );
     }
 }
+

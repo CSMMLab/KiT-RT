@@ -62,6 +62,7 @@ class Config
     std::vector<std::string> _MarkerNeumann;   /*!< @brief Neumann BC markers. */
 
     // Solver
+    bool _HPC; /* Triggers better performinc solvers */
     double _CFL;                      /*!< @brief CFL Number for Solver*/
     double _tEnd;                     /*!< @brief Final Time for Simulation */
     PROBLEM_NAME _problemName;        /*!< @brief Name of predefined Problem   */
@@ -304,6 +305,8 @@ class Config
     bool inline GetForcedConnectivity() const { return _forcedConnectivityWrite; }
 
     // Solver Structure
+    bool inline GetHPC() const { return _HPC; }
+
     double inline GetCFL() const { return _CFL; }
     bool inline GetCleanFluxMat() const { return _cleanFluxMat; }
     ENTROPY_NAME inline GetEntropyName() const { return _entropyName; }

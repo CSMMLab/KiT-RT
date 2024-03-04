@@ -10,7 +10,7 @@
 #include "common/config.hpp"
 #include "common/io.hpp"
 #include "solvers/solverbase.hpp"
-
+#include "solvers/snsolver_hpc.hpp"
 #include "datagenerator/datageneratorbase.hpp"
 
 #ifdef BUILD_GUI
@@ -45,11 +45,20 @@ int main( int argc, char** argv ) {
     }
     else {
         // Build solver
-        SolverBase* solver = SolverBase::Create( config );
-        // Run solver and export
-        solver->Solve();
-        solver->PrintVolumeOutput();
-        delete solver;
+        if (config->GetHPC()){
+            SNSolverHPC* solver = new SNSolverHPC( config );
+            // Run solver and export
+            solver->Solve();
+            solver->PrintVolumeOutput();
+            delete solver;
+            }
+            else{
+            SolverBase* solver = SolverBase::Create( config );
+            // Run solver and export
+            solver->Solve();
+            solver->PrintVolumeOutput();
+            delete solver;
+        }
     }
 
     delete config;

@@ -231,6 +231,9 @@ void Config::SetConfigOptions() {
     AddUnsignedShortOption( "QUAD_ORDER", _quadOrder, 1 );
 
     // Solver related options
+    /*! @brief HPC_SOLVER \n DESCRIPTION: If true, the SN Solver uses hpc implementation. \n DEFAULT false \ingroup Config */
+    AddBoolOption( "HPC_SOLVER", _HPC, false );
+
     /*! @brief MAX_MOMENT_ORDER \n: DESCRIPTON: Specifies the maximal order of Moments for PN and SN Solver */
     AddUnsignedShortOption( "MAX_MOMENT_SOLVER", _maxMomentDegree, 1 );
     /*! @brief CFL \n DESCRIPTION: CFL number \n DEFAULT 1.0 @ingroup Config.*/
@@ -252,7 +255,7 @@ void Config::SetConfigOptions() {
     /*! @brief Runge Kutta Staes  \n DESCRIPTION: Sets number of Runge Kutta Stages for time integration \n DEFAULT 1 \ingroup Config */
     AddUnsignedShortOption( "TIME_INTEGRATION_ORDER", _rungeKuttaStages, 1 );
 
-    // Problem Relateed Options
+    // Problem Related Options
     /*! @brief MaterialDir \n DESCRIPTION: Relative Path to the data directory (used in the ICRU database class), starting from the directory of the
      * cfg file . \n DEFAULT "../data/material/" \ingroup Config */
     AddStringOption( "DATA_DIR", _dataDir, string( "../data/" ) );
