@@ -18,12 +18,9 @@ void UpwindFlux::Flux( const VectorVector& quadPts, const Vector& psiL, const Ve
 
     for (unsigned idx_q = 0; idx_q < n_sys; idx_q++){
         inner = quadPts[idx_q][0] * n[0] + quadPts[idx_q][1] * n[1];   
-        if( inner > 0 ) {
-                flux[idx_q]+= inner * psiL[idx_q];
-            }
-        else {
-            flux[idx_q] += inner * psiR[idx_q];
-        }
+
+        flux[idx_q] += (inner > 0) ? inner * psiL[idx_q] : inner * psiR[idx_q];
+    
     }  
 }
 
