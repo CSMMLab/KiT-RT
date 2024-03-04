@@ -581,7 +581,7 @@ void Config::SetPostprocessing() {
             ErrorMessages::Error( "CSD_MN_SOLVER only works with Spherical Harmonics currently.", CURRENT_FUNCTION );
         }
 
-        if( GetReconsOrder() > 2 ) {
+        if( GetSpatialOrder() > 2 ) {
             ErrorMessages::Error( "Solvers only work with 1st and 2nd order spatial fluxes.", CURRENT_FUNCTION );
         }
 

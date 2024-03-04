@@ -5,96 +5,96 @@
 #include "kernels/scatteringkernelbase.hpp"
 #include "problems/problembase.hpp"
 #include "quadratures/quadraturebase.hpp"
-#include "quadratures/quadraturebase.hpp"
 
 SNSolverHPC::SNSolverHPC( Config* settings ) {
     _settings = settings;
     _currTime = 0.0;
 
-
     // Create Mesh
-    auto mesh = LoadSU2MeshFromFile( settings );    
+    auto mesh = LoadSU2MeshFromFile( settings );
     _settings->SetNCells( mesh->GetNumCells() );
     auto quad = QuadratureBase::Create( settings );
     _settings->SetNQuadPoints( _nq );
     auto problem = ProblemBase::Create( _settings, mesh, quad );
 
-    _nCells     = mesh->GetNumCells();
+    _nCells        = mesh->GetNumCells();
     _nEdgesPerCell = mesh->GetNumNodesPerCell();
-    _spatialDim = mesh->GetDim();   
-    _nq         = quad->GetNq();
-    _nSystem = _nq; 
+    _spatialDim    = mesh->GetDim();
+    _nq            = quad->GetNq();
+    _nSystem       = _nq;
 
-    _areas = std::vector<double>( _nCells );
-    _normals = std::vector<double>( _nCells *_nEdgesPerCell*_spatialDim );
-    _neighbors = std::vector<unsigned>( _nCells *_nEdgesPerCell );
-    _cellMidPoints = std::vector<double>( _nCells *_nEdgesPerCell );
-    _interfaceMidPoints = std::vector<double>( _nCells *_nEdgesPerCell*_spatialDim );
-    
+    _spatialOrder  = _settings->GetSpatialOrder();
+    _temporalOrder = _settings->GetTemporalOrder();
+
+    _areas              = std::vector<double>( _nCells );
+    _normals            = std::vector<double>( _nCells * _nEdgesPerCell * _spatialDim );
+    _neighbors          = std::vector<unsigned>( _nCells * _nEdgesPerCell );
+    _cellMidPoints      = std::vector<double>( _nCells * _nEdgesPerCell );
+    _interfaceMidPoints = std::vector<double>( _nCells * _nEdgesPerCell * _spatialDim );
+
     // Slope
-    _solDx    = std::vector<double>( _nCells *_nSystem*_spatialDim );
-    _limiter    = std::vector<double>( _nCells *_spatialDim );
-    
+    _solDx   = std::vector<double>( _nCells * _nSystem * _spatialDim );
+    _limiter = std::vector<double>( _nCells * _spatialDim );
+
     // Physics
-    _sigmaS   = std::vector<double>( _nCells );
-    _sigmaT   = std::vector<double>( _nCells );
-    _source   = std::vector<double>( _nCells*_nSystem );
-    _scatteringKernel   = std::vector<double>( _nSystem * _nSystem );
+    _sigmaS           = std::vector<double>( _nCells );
+    _sigmaT           = std::vector<double>( _nCells );
+    _source           = std::vector<double>( _nCells * _nSystem );
+    _scatteringKernel = std::vector<double>( _nSystem * _nSystem );
 
-    //Quadrature
-    _quadPts   = std::vector<double>( _nSystem * _spatialDim );
-    _quadWeights   = std::vector<double>( _nSystem );
-    _scatteringKernel =std::vector<double>( _nSystem *_nSystem);
+    // Quadrature
+    _quadPts          = std::vector<double>( _nSystem * _spatialDim );
+    _quadWeights      = std::vector<double>( _nSystem );
+    _scatteringKernel = std::vector<double>( _nSystem * _nSystem );
 
-    // Solution 
-    _sol = std::vector<double>( _nCells*_nSystem );
-    _solNew = std::vector<double>( _nCells*_nSystem );
-    
+    // Solution
+    _sol    = std::vector<double>( _nCells * _nSystem );
+    _solNew = std::vector<double>( _nCells * _nSystem );
+
     auto areas           = mesh->GetCellAreas();
     auto neighbors       = mesh->GetNeighbours();
     auto normals         = mesh->GetNormals();
     auto cellMidPts      = mesh->GetCellMidPoints();
     auto interfaceMidPts = mesh->GetInterfaceMidPoints();
 
-    _dT = ComputeTimeStep( _settings->GetCFL() );
-    _nIter =  ceil( _settings->GetTEnd() / _dT );    // redundancy with nIter (<-Better) ?
+    _dT    = ComputeTimeStep( _settings->GetCFL() );
+    _nIter = ceil( _settings->GetTEnd() / _dT );    // redundancy with nIter (<-Better) ?
 
-
-    auto quadPoints = quad->GetPoints();
-    auto quadWeights    = quad->GetWeights();
+    auto quadPoints  = quad->GetPoints();
+    auto quadWeights = quad->GetWeights();
 
     auto initialCondition = problem->SetupIC();
-    auto sigmaT = problem->GetTotalXS( Vector(_nIter,0.0) );
-    auto sigmaS = problem->GetScatteringXS( Vector(_nIter,0.0) );
-    auto source      = problem->GetExternalSource( Vector(_nIter,0.0) );
+    auto sigmaT           = problem->GetTotalXS( Vector( _nIter, 0.0 ) );
+    auto sigmaS           = problem->GetScatteringXS( Vector( _nIter, 0.0 ) );
+    auto source           = problem->GetExternalSource( Vector( _nIter, 0.0 ) );
 
     // Copy to everything to solver
-    for (unsigned idx_cell=0;idx_cell<_nCells; idx_cell ++){
-        _areas[idx_cell] =areas[idx_cell];
-        for (unsigned idx_nbr=0;idx_nbr<_nEdgesPerCell; idx_nbr ++){
-            _neighbors[idx_cell*_nEdgesPerCell + idx_nbr] = neighbors[idx_cell][idx_nbr];
-            _cellMidPoints[idx_cell*_nEdgesPerCell + idx_nbr] = cellMidPts[idx_cell][ idx_nbr];
+    for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
+        _areas[idx_cell] = areas[idx_cell];
+        for( unsigned idx_nbr = 0; idx_nbr < _nEdgesPerCell; idx_nbr++ ) {
+            _neighbors[idx_cell * _nEdgesPerCell + idx_nbr]     = neighbors[idx_cell][idx_nbr];
+            _cellMidPoints[idx_cell * _nEdgesPerCell + idx_nbr] = cellMidPts[idx_cell][idx_nbr];
 
-            for (unsigned idx_dim=0;idx_dim<_spatialDim; idx_dim ++){
-                _normals[idx_cell*_nEdgesPerCell*_spatialDim + idx_nbr*_spatialDim +idx_dim] =normals[idx_cell][idx_nbr][idx_dim];
-                _interfaceMidPoints[idx_cell*_nEdgesPerCell*_spatialDim + idx_nbr*_spatialDim +idx_dim]  =interfaceMidPts[idx_cell][idx_nbr][idx_dim];
+            for( unsigned idx_dim = 0; idx_dim < _spatialDim; idx_dim++ ) {
+                _normals[idx_cell * _nEdgesPerCell * _spatialDim + idx_nbr * _spatialDim + idx_dim] = normals[idx_cell][idx_nbr][idx_dim];
+                _interfaceMidPoints[idx_cell * _nEdgesPerCell * _spatialDim + idx_nbr * _spatialDim + idx_dim] =
+                    interfaceMidPts[idx_cell][idx_nbr][idx_dim];
             }
         }
-        _sigmaS[idx_cell] =sigmaS[0][idx_cell];
-        _sigmaT[idx_cell] =sigmaT[0][idx_cell];
-        for (unsigned idx_sys=0;idx_sys<_nSystem; idx_sys ++){
-            _source[idx_cell*_nSystem + idx_sys] =source[0][idx_cell][0]; //CAREFUL HERE hardcoded to isotropic source
-                 _sol[idx_cell*_nSystem + idx_sys] =   initialCondition  [idx_cell][idx_sys];
-                 _solNew[idx_cell*_nSystem + idx_sys] =   initialCondition  [idx_cell][idx_sys];
+        _sigmaS[idx_cell] = sigmaS[0][idx_cell];
+        _sigmaT[idx_cell] = sigmaT[0][idx_cell];
+        for( unsigned idx_sys = 0; idx_sys < _nSystem; idx_sys++ ) {
+            _source[idx_cell * _nSystem + idx_sys] = source[0][idx_cell][0];    // CAREFUL HERE hardcoded to isotropic source
+            _sol[idx_cell * _nSystem + idx_sys]    = initialCondition[idx_cell][idx_sys];
+            _solNew[idx_cell * _nSystem + idx_sys] = initialCondition[idx_cell][idx_sys];
         }
+    }
 
-    }   
-
-    ScatteringKernel* k = ScatteringKernel::CreateScatteringKernel( settings->GetKernelName(), quad );
-    auto scatteringKernel   = k->GetScatteringKernel();
-    for (unsigned idx_sys=0;idx_sys<_nSystem; idx_sys ++){
-        for (unsigned idx_sys2=0;idx_sys2<_nSystem; idx_sys2 ++){
-            _scatteringKernel[idx_sys*_nSystem +idx_sys2 ] =  scatteringKernel(idx_sys,idx_sys2 );
+    ScatteringKernel* k   = ScatteringKernel::CreateScatteringKernel( settings->GetKernelName(), quad );
+    auto scatteringKernel = k->GetScatteringKernel();
+    for( unsigned idx_sys = 0; idx_sys < _nSystem; idx_sys++ ) {
+        for( unsigned idx_sys2 = 0; idx_sys2 < _nSystem; idx_sys2++ ) {
+            _scatteringKernel[idx_sys * _nSystem + idx_sys2] = scatteringKernel( idx_sys, idx_sys2 );
         }
     }
 
@@ -107,7 +107,6 @@ SNSolverHPC::SNSolverHPC( Config* settings ) {
     delete k;
 }
 
-
 void SNSolverHPC::Solve() {
 
     // --- Preprocessing ---
@@ -117,17 +116,16 @@ void SNSolverHPC::Solve() {
 
     // Preprocessing before first pseudo time step
     SolverPreprocessing();
-    unsigned rkStages = _settings->GetRKStages();
     // Create Backup solution for Runge Kutta
-    VectorVector solRK0 = _sol;
+    std::vector<double> solRK0 = _sol;
 
     auto start = std::chrono::high_resolution_clock::now();    // Start timing
     std::chrono::duration<double> duration;
     // Loop over energies (pseudo-time of continuous slowing down approach)
     for( unsigned iter = 0; iter < _nIter; iter++ ) {
-        if( rkStages == 2 ) solRK0 = _sol;
+        if( _temporalOrder == 2 ) solRK0 = _sol;
 
-        for( unsigned rkStep = 0; rkStep < rkStages; ++rkStep ) {
+        for( unsigned rkStep = 0; rkStep < _temporalOrder; ++rkStep ) {
             // --- Prepare Boundaries and temp variables
             IterPreprocessing( iter + rkStep );
 
@@ -168,13 +166,45 @@ void SNSolverHPC::Solve() {
     DrawPostSolverOutput();
 }
 
-void SNSolverHPC::RKUpdate( VectorVector sol_0, VectorVector sol_rk ) {
+void SNSolverHPC::RKUpdate( std::vector<double>& sol_0, std::vector<double>& sol_rk ) {
 #pragma omp parallel for
-    for( unsigned i = 0; i < _nCells*_nSystem; ++i ) {
+    for( unsigned i = 0; i < _nCells * _nSystem; ++i ) {
         _sol[i] = 0.5 * ( sol_0[i] + sol_rk[i] );
     }
 }
 
+void SNSolverHPC::IterPreprocessing( unsigned /*idx_iter*/ ) {
+    // Slope Limiter computation
+    if( _spatialOrder == 2 ) {
+#pragma omp parallel for
+        for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {    // Slope computation
+            unsigned idx_x =0;
+            unsigned idx_y =0;
+            unsigned idx_nbr = 0;
+
+            for( unsigned idx_sys = 0; idx_sys < _nSystem; ++idx_sys ) {
+                idx_x = idx_cell * _nSystem * _spatialDim + idx_sys *_spatialDim ;
+idx_y = idx_cell * _nSystem * _spatialDim + idx_sys *_spatialDim + 1;
+                _solDx[idx_x] = 0.0;
+                _solDx[idx_y] = 0.0;
+                if( _cellBoundaryTypes[idx_cell] != 2 ) continue;    // skip ghost cells
+                //  compute derivative by summing over cell boundary using Green Gauss Theorem
+                for( unsigned idx_nbr = 0; idx_nbr < _cellNeighbors[idx_cell].size(); ++idx_nbr ) {
+                    idx_nbr = idx_cell * _nEdgesPerCell + idx_nbr;
+                    
+                    psiDerX[idx_cell][idx_sys] +=
+                        0.5 * ( psi[idx_cell][idx_sys] + psi[_cellNeighbors[idx_cell][idx_nbr]][idx_sys] ) * _cellNormals[idx_cell][idx_nbr][0];
+                    psiDerY[idx_cell][idx_sys] +=
+                        0.5 * ( psi[idx_cell][idx_sys] + psi[_cellNeighbors[idx_cell][idx_nbr]][idx_sys] ) * _cellNormals[idx_cell][idx_nbr][1];
+                }
+                psiDerX[idx_cell][idx_sys] /= _cellAreas[idx_cell];
+                psiDerY[idx_cell][idx_sys] /= _cellAreas[idx_cell];
+            }
+        }
+
+        _mesh->ComputeLimiter( _nq, _solDx, _solDy, _sol, _limiter );
+    }
+}
 void SNSolverHPC::PrintVolumeOutput() const { ExportVTK( _settings->GetOutputFile(), _outputFields, _outputFieldNames, _mesh ); }
 
 void SNSolverHPC::PrintVolumeOutput( int currEnergy ) const {
@@ -622,4 +652,3 @@ void SNSolverHPC::IterPostprocessing( unsigned /*idx_iter*/ ) {
         _problem->ComputeQOIsGreenProbingLine( _scalarFlux );
     }
 }
-

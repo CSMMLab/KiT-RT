@@ -36,11 +36,12 @@ class SNSolverHPC
                                                   dim(_areas) = _NCells */
     std::vector<double> _normals;              /*!< @brief edge normals multiplied by edge length,
                                                                dim(_normals) = (_NCells,nEdgesPerCell,spatialDim) */
-    std::vector<unsigned> _neighbors;            /*!< @brief edge neighbor cell ids, dim(_neighbors) = (_NCells,nEdgesPerCell) */
+    std::vector<unsigned> _neighbors;          /*!< @brief edge neighbor cell ids, dim(_neighbors) = (_NCells,nEdgesPerCell) */
     std::vector<double> _cellMidPoints;        /*!< @brief dim _nCells x _spatialDim */
     std::vector<double> _interfaceMidPoints;   /*!< @brief dim: _nCells x _nEdgesPerCell x _spatialDim */
 
-    unsigned _spatialOrder;       /*!< @brief reconstruction order (current: 1 & 2) */
+    unsigned _temporalOrder;      /*!< @brief temporal order (current: 1 & 2) */
+    unsigned _spatialOrder;       /*!< @brief spatial order (current: 1 & 2) */
     std::vector<double> _solDx;   /*!< @brief dim = _nCells x _nSys x _spatialDim*/
     std::vector<double> _limiter; /*!< @brief dim = _nCells x _nSys */
 
@@ -75,21 +76,21 @@ class SNSolverHPC
     // Solver
     /*! @brief Performs preprocessing steps before the pseudo time iteration is
      * started*/
-     void SolverPreprocessing();
+    void SolverPreprocessing();
     /*! @brief Performs preprocessing for the current solver iteration
         @param idx_iter current (peudo) time iteration */
-     void IterPreprocessing( unsigned idx_iter ) = 0;
+    void IterPreprocessing( unsigned idx_iter ) = 0;
     /*! @brief Performs postprocessing for the current solver iteration */
-     void IterPostprocessing( unsigned idx_iter );
+    void IterPostprocessing( unsigned idx_iter );
     /*! @brief Constructs  the flux update for the current iteration and stores it
      * in psiNew*/
-     void FluxUpdate() = 0;
+    void FluxUpdate() = 0;
     /*! @brief Computes the finite Volume update step for the current iteration
          @param idx_iter  current (peudo) time iteration */
-     void FVMUpdate( unsigned idx_iter ) = 0;
+    void FVMUpdate( unsigned idx_iter ) = 0;
     /*! @brief Computes the finite Volume update step for the current iteration
          @param idx_iter  current (peudo) time iteration */
-     void RKUpdate( std::vector<double>& sol0, std::vector<double> sol_rk );
+    void RKUpdate( std::vector<double>& sol0, std::vector<double> sol_rk );
 
     // Helper
     /*! @brief ComputeTimeStep calculates the maximal stable time step using the
@@ -98,16 +99,16 @@ class SNSolverHPC
     double ComputeTimeStep( double cfl ) const;
     /*! @brief Computes the flux of the solution to check conservation properties
      */
-     void ComputeScalarFlux() = 0;
+    void ComputeScalarFlux() = 0;
 
     // IO
     /*! @brief Initializes the output groups and fields of this solver and names
      * the fields */
-     void PrepareVolumeOutput() = 0;
+    void PrepareVolumeOutput() = 0;
     /*! @brief Function that prepares VTK export and csv export of the current
        solver iteration
         @param idx_iter  current (pseudo) time iteration */
-     void WriteVolumeOutput( unsigned idx_iter ) = 0;
+    void WriteVolumeOutput( unsigned idx_iter ) = 0;
     /*! @brief Save Output solution at given energy (pseudo time) to VTK file.
        Write frequency is given by option VOLUME_OUTPUT_FREQUENCY. Always prints
        last iteration without iteration affix.
@@ -141,12 +142,11 @@ class SNSolverHPC
      *  @param settings config class that stores all needed config information */
     SNSolverHPC( Config* settings );
 
-     ~SNSolverHPC();
-
+    ~SNSolverHPC();
 
     /*! @brief Solve functions runs main iteration loop. Components of the solve
      * loop are pure  and subclassed by the child solvers.  */
-     void Solve();
+    void Solve();
 
     /*! @brief Save Output solution to VTK file */
     void PrintVolumeOutput() const;    // Only for debugging purposes.

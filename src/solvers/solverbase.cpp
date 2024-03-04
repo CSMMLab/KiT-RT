@@ -37,7 +37,7 @@ SolverBase::SolverBase( Config* settings ) {
 
     // build slope related params
     _reconstructor      = new Reconstructor( settings );    // Not used!
-    _reconsOrder        = _reconstructor->GetReconsOrder();
+    _reconsOrder        = _reconstructor->GetSpatialOrder();
     _interfaceMidPoints = _mesh->GetInterfaceMidPoints();
 
     _cellMidPoints = _mesh->GetCellMidPoints();
@@ -124,7 +124,7 @@ void SolverBase::Solve() {
 
     // Preprocessing before first pseudo time step
     SolverPreprocessing();
-    unsigned rkStages = _settings->GetRKStages();
+    unsigned rkStages = _settings->GetTemporalOrder();
     // Create Backup solution for Runge Kutta
     VectorVector solRK0 = _sol;
 
