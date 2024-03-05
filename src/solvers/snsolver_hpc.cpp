@@ -5,23 +5,26 @@
 #include "kernels/scatteringkernelbase.hpp"
 #include "problems/problembase.hpp"
 #include "quadratures/quadraturebase.hpp"
+#include "toolboxes/textprocessingtoolbox.hpp"
 
 SNSolverHPC::SNSolverHPC( Config* settings ) {
     _settings = settings;
     _currTime = 0.0;
 
     // Create Mesh
-    auto mesh = LoadSU2MeshFromFile( settings );
-    _settings->SetNCells( mesh->GetNumCells() );
+    _mesh = LoadSU2MeshFromFile( settings );
+    _settings->SetNCells( _mesh->GetNumCells() );
     auto quad = QuadratureBase::Create( settings );
     _settings->SetNQuadPoints( _nq );
-    auto problem = ProblemBase::Create( _settings, mesh, quad );
+    _problem = ProblemBase::Create( _settings, _mesh, quad );
 
-    _nCells        = mesh->GetNumCells();
-    _nEdgesPerCell = mesh->GetNumNodesPerCell();
-    _spatialDim    = mesh->GetDim();
-    _nq            = quad->GetNq();
-    _nSystem       = _nq;
+    _nCells        = _mesh->GetNumCells();
+    _nEdgesPerCell = _mesh->GetNumNodesPerCell();
+    _spatialDim    = _mesh->GetDim();
+    _nNodes        = _mesh->GetNumNodes();
+
+    _nq      = quad->GetNq();
+    _nSystem = _nq;
 
     _spatialOrder  = _settings->GetSpatialOrder();
     _temporalOrder = _settings->GetTemporalOrder();
@@ -29,12 +32,15 @@ SNSolverHPC::SNSolverHPC( Config* settings ) {
     _areas              = std::vector<double>( _nCells );
     _normals            = std::vector<double>( _nCells * _nEdgesPerCell * _spatialDim );
     _neighbors          = std::vector<unsigned>( _nCells * _nEdgesPerCell );
-    _cellMidPoints      = std::vector<double>( _nCells * _nEdgesPerCell );
+    _cellNodes          = std::vector<unsigned>( _nCells * _nEdgesPerCell );
+    _nodes              = std::vector<double>( _nNodes * _spatialDim );
+    _cellMidPoints      = std::vector<double>( _nCells * _spatialDim );
     _interfaceMidPoints = std::vector<double>( _nCells * _nEdgesPerCell * _spatialDim );
+    _cellBoundaryTypes  = std::vector<BOUNDARY_TYPE>( _nCells );
 
     // Slope
     _solDx   = std::vector<double>( _nCells * _nSystem * _spatialDim );
-    _limiter = std::vector<double>( _nCells * _spatialDim );
+    _limiter = std::vector<double>( _nCells * _nSystem );
 
     // Physics
     _sigmaS           = std::vector<double>( _nCells );
@@ -51,11 +57,17 @@ SNSolverHPC::SNSolverHPC( Config* settings ) {
     _sol    = std::vector<double>( _nCells * _nSystem );
     _solNew = std::vector<double>( _nCells * _nSystem );
 
-    auto areas           = mesh->GetCellAreas();
-    auto neighbors       = mesh->GetNeighbours();
-    auto normals         = mesh->GetNormals();
-    auto cellMidPts      = mesh->GetCellMidPoints();
-    auto interfaceMidPts = mesh->GetInterfaceMidPoints();
+    _scalarFlux    = std::vector<double>( _nCells );
+    _scalarFluxNew = std::vector<double>( _nCells );
+
+    auto areas           = _mesh->GetCellAreas();
+    auto neighbors       = _mesh->GetNeighbours();
+    auto normals         = _mesh->GetNormals();
+    auto nodes           = _mesh->GetNodes();
+    auto cellNodes       = _mesh->GetCells();
+    auto cellMidPts      = _mesh->GetCellMidPoints();
+    auto interfaceMidPts = _mesh->GetInterfaceMidPoints();
+    auto boundaryTyeps   = _mesh->GetBoundaryTypes();
 
     _dT    = ComputeTimeStep( _settings->GetCFL() );
     _nIter = ceil( _settings->GetTEnd() / _dT );    // redundancy with nIter (<-Better) ?
@@ -63,20 +75,25 @@ SNSolverHPC::SNSolverHPC( Config* settings ) {
     auto quadPoints  = quad->GetPoints();
     auto quadWeights = quad->GetWeights();
 
-    auto initialCondition = problem->SetupIC();
-    auto sigmaT           = problem->GetTotalXS( Vector( _nIter, 0.0 ) );
-    auto sigmaS           = problem->GetScatteringXS( Vector( _nIter, 0.0 ) );
-    auto source           = problem->GetExternalSource( Vector( _nIter, 0.0 ) );
+    auto initialCondition = _problem->SetupIC();
+    auto sigmaT           = _problem->GetTotalXS( Vector( _nIter, 0.0 ) );
+    auto sigmaS           = _problem->GetScatteringXS( Vector( _nIter, 0.0 ) );
+    auto source           = _problem->GetExternalSource( Vector( _nIter, 0.0 ) );
 
     // Copy to everything to solver
     for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
-        _areas[idx_cell] = areas[idx_cell];
+        _cellBoundaryTypes[idx_cell]               = boundaryTyeps[idx_cell];
+        _areas[idx_cell]                           = areas[idx_cell];
+        _cellMidPoints[idx_cell * _spatialDim]     = cellMidPts[idx_cell][0];
+        _cellMidPoints[idx_cell * _spatialDim + 1] = cellMidPts[idx_cell][1];
+
         for( unsigned idx_nbr = 0; idx_nbr < _nEdgesPerCell; idx_nbr++ ) {
-            _neighbors[idx_cell * _nEdgesPerCell + idx_nbr]     = neighbors[idx_cell][idx_nbr];
-            _cellMidPoints[idx_cell * _nEdgesPerCell + idx_nbr] = cellMidPts[idx_cell][idx_nbr];
+            _neighbors[idx_cell * _nEdgesPerCell + idx_nbr] = neighbors[idx_cell][idx_nbr];
+            _cellNodes[idx_cell * _nEdgesPerCell + idx_nbr] = cellNodes[idx_cell][idx_nbr];
 
             for( unsigned idx_dim = 0; idx_dim < _spatialDim; idx_dim++ ) {
                 _normals[idx_cell * _nEdgesPerCell * _spatialDim + idx_nbr * _spatialDim + idx_dim] = normals[idx_cell][idx_nbr][idx_dim];
+
                 _interfaceMidPoints[idx_cell * _nEdgesPerCell * _spatialDim + idx_nbr * _spatialDim + idx_dim] =
                     interfaceMidPts[idx_cell][idx_nbr][idx_dim];
             }
@@ -90,9 +107,19 @@ SNSolverHPC::SNSolverHPC( Config* settings ) {
         }
     }
 
+    for( unsigned idx_node = 0; idx_node < _nNodes; idx_node++ ) {
+        for( unsigned idx_dim = 0; idx_dim < _spatialDim; idx_dim++ ) {
+            _nodes[idx_node * _spatialDim + idx_dim] = nodes[idx_node][idx_dim];
+        }
+    }
+
     ScatteringKernel* k   = ScatteringKernel::CreateScatteringKernel( settings->GetKernelName(), quad );
     auto scatteringKernel = k->GetScatteringKernel();
     for( unsigned idx_sys = 0; idx_sys < _nSystem; idx_sys++ ) {
+        _quadPts[idx_sys * _spatialDim]     = quadPoints[idx_sys][0];
+        _quadPts[idx_sys * _spatialDim + 1] = quadPoints[idx_sys][1];
+        _quadWeights[idx_sys]               = quadWeights[idx_sys];
+
         for( unsigned idx_sys2 = 0; idx_sys2 < _nSystem; idx_sys2++ ) {
             _scatteringKernel[idx_sys * _nSystem + idx_sys2] = scatteringKernel( idx_sys, idx_sys2 );
         }
@@ -101,9 +128,7 @@ SNSolverHPC::SNSolverHPC( Config* settings ) {
     PrepareScreenOutput();     // Screen Output
     PrepareHistoryOutput();    // History Output
 
-    delete mesh;
     delete quad;
-    delete problem;
     delete k;
 }
 
@@ -146,14 +171,14 @@ void SNSolverHPC::Solve() {
         _currTime = std::chrono::duration_cast<std::chrono::duration<double>>( duration ).count();
 
         // --- Runge Kutta Timestep ---
-        if( rkStages == 2 ) RKUpdate( solRK0, _sol );
+        if( _temporalOrder == 2 ) RKUpdate( solRK0, _sol );
 
         // --- Write Output ---
         WriteVolumeOutput( iter );
         WriteScalarOutput( iter );
 
         // --- Update Scalar Fluxes
-        _scalarFlux = _scalarFluxNew;
+        //_scalarFlux = _scalarFluxNew;
 
         // --- Print Output ---
         PrintScreenOutput( iter );
@@ -176,42 +201,118 @@ void SNSolverHPC::RKUpdate( std::vector<double>& sol_0, std::vector<double>& sol
 void SNSolverHPC::IterPreprocessing( unsigned /*idx_iter*/ ) {
     // Slope Limiter computation
     if( _spatialOrder == 2 ) {
-#pragma omp parallel for
-        for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {    // Slope computation
-            unsigned idx_x =0;
-            unsigned idx_y =0;
-            unsigned idx_nbr = 0;
 
-            for( unsigned idx_sys = 0; idx_sys < _nSystem; ++idx_sys ) {
-                idx_x = idx_cell * _nSystem * _spatialDim + idx_sys *_spatialDim ;
-idx_y = idx_cell * _nSystem * _spatialDim + idx_sys *_spatialDim + 1;
-                _solDx[idx_x] = 0.0;
-                _solDx[idx_y] = 0.0;
-                if( _cellBoundaryTypes[idx_cell] != 2 ) continue;    // skip ghost cells
-                //  compute derivative by summing over cell boundary using Green Gauss Theorem
-                for( unsigned idx_nbr = 0; idx_nbr < _cellNeighbors[idx_cell].size(); ++idx_nbr ) {
-                    idx_nbr = idx_cell * _nEdgesPerCell + idx_nbr;
-                    
-                    psiDerX[idx_cell][idx_sys] +=
-                        0.5 * ( psi[idx_cell][idx_sys] + psi[_cellNeighbors[idx_cell][idx_nbr]][idx_sys] ) * _cellNormals[idx_cell][idx_nbr][0];
-                    psiDerY[idx_cell][idx_sys] +=
-                        0.5 * ( psi[idx_cell][idx_sys] + psi[_cellNeighbors[idx_cell][idx_nbr]][idx_sys] ) * _cellNormals[idx_cell][idx_nbr][1];
+        double const eps = 1e-10;
+
+#pragma omp parallel for
+        for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
+            if( _cellBoundaryTypes[idx_cell] != 2 ) {
+                for( unsigned idx_sys = 0; idx_sys < _nSystem; idx_sys++ ) {
+                    _limiter[idx_cell * _nSystem + idx_sys] = 0.0;    // turn to first order on boundaries
                 }
-                psiDerX[idx_cell][idx_sys] /= _cellAreas[idx_cell];
-                psiDerY[idx_cell][idx_sys] /= _cellAreas[idx_cell];
+                continue;    // skip computation
+            }
+
+            {    // Slope computation
+                unsigned idx_x   = 0;
+                unsigned idx_y   = 0;
+                unsigned idx_nbr = 0;
+
+                double tmp = 0.0;
+                for( unsigned idx_sys = 0; idx_sys < _nSystem; ++idx_sys ) {
+
+                    idx_x         = idx_cell * _nSystem * _spatialDim + idx_sys * _spatialDim;
+                    idx_y         = idx_cell * _nSystem * _spatialDim + idx_sys * _spatialDim + 1;
+                    _solDx[idx_x] = 0.0;
+                    _solDx[idx_y] = 0.0;
+
+                    for( unsigned idx_nbr = 0; idx_nbr < _nEdgesPerCell; ++idx_nbr ) {
+
+                        //  compute derivative by summing over cell boundary using Green Gauss Theorem
+                        idx_nbr = _neighbors[idx_cell * _nEdgesPerCell + idx_nbr];
+
+                        tmp = 0.5 * ( _sol[idx_cell * _nSystem + idx_sys] + _sol[idx_nbr * _nSystem + idx_sys] );
+                        _solDx[idx_x] += tmp * _normals[idx_cell * _nEdgesPerCell * _spatialDim + idx_nbr * _spatialDim];
+                        _solDx[idx_y] += tmp * _normals[idx_cell * _nEdgesPerCell * _spatialDim + idx_nbr * _spatialDim + 1];
+                    }
+
+                    _solDx[idx_x] /= _areas[idx_cell];
+                    _solDx[idx_y] /= _areas[idx_cell];
+                }
+            }
+            {    // Compute Limiter
+
+                unsigned idx_x   = 0;
+                unsigned idx_y   = 0;
+                unsigned idx_nbr = 0;
+
+                for( unsigned idx_sys = 0; idx_sys < _nSystem; idx_sys++ ) {
+                    double r      = 0.0;
+                    double minSol = _sol[idx_cell * _nSystem + idx_sys];
+                    double maxSol = _sol[idx_cell * _nSystem + idx_sys];
+
+                    std::vector<double> localLimiter( _nEdgesPerCell );
+
+                    for( unsigned idx_nbr = 0; idx_nbr < _nEdgesPerCell; idx_nbr++ ) {
+
+                        // Compute ptswise max and minimum solultion values of current and neighbor cells
+                        idx_nbr = _neighbors[idx_cell * _nEdgesPerCell + idx_nbr];
+
+                        maxSol = std::max( _sol[idx_nbr * _nSystem + idx_sys], maxSol );
+                        minSol = std::max( _sol[idx_nbr * _nSystem + idx_sys], minSol );
+                    }
+
+                    for( unsigned idx_nbr = 0; idx_nbr < _nEdgesPerCell; idx_nbr++ ) {
+
+                        idx_x = idx_cell * _nSystem * _spatialDim + idx_sys * _spatialDim;
+                        idx_y = idx_cell * _nSystem * _spatialDim + idx_sys * _spatialDim + 1;
+
+                        // Compute value at interface midpoint, called gaussPt
+                        double gaussPt = 0.0;
+
+                        // gauss point is at cell vertex
+                        gaussPt = 0.5 * ( _solDx[idx_x] * ( _nodes[_spatialDim * _cellNodes[idx_cell * _nEdgesPerCell + idx_nbr]] -
+                                                            _cellMidPoints[idx_cell * _spatialDim] ) +
+                                          _solDx[idx_y] * ( _nodes[_spatialDim * _cellNodes[idx_cell * _nEdgesPerCell + idx_nbr] + 1] -
+                                                            _cellMidPoints[idx_cell * _spatialDim + 1] ) );
+
+                        // Compute limiter input
+                        r = 1.0;
+
+                        if( std::abs( gaussPt ) > eps ) {
+                            if( gaussPt > 0.0 ) {
+                                r = ( maxSol - _sol[idx_cell * _nSystem + idx_sys] ) / gaussPt;
+                            }
+                            else if( gaussPt < 0.0 ) {
+                                r = ( minSol - _sol[idx_cell * _nSystem + idx_sys] ) / gaussPt;
+                            }
+                        }
+                        else {
+                            r = 1.0;
+                        }
+
+                        localLimiter[idx_nbr] = std::min( r, 1.0 );    // LimiterBarthJespersen( r );
+                    }
+                    // get smallest limiter
+                    _limiter[idx_cell * _nSystem + idx_sys] = localLimiter[0];
+
+                    for( unsigned idx_nbr = 0; idx_nbr < _nEdgesPerCell; idx_nbr++ ) {
+                        if( localLimiter[idx_nbr] < _limiter[idx_cell * _nSystem + idx_sys] )
+                            _limiter[idx_cell * _nSystem + idx_sys] = localLimiter[idx_nbr];
+                    }
+                }
             }
         }
-
-        _mesh->ComputeLimiter( _nq, _solDx, _solDy, _sol, _limiter );
     }
 }
+
 void SNSolverHPC::PrintVolumeOutput() const { ExportVTK( _settings->GetOutputFile(), _outputFields, _outputFieldNames, _mesh ); }
 
-void SNSolverHPC::PrintVolumeOutput( int currEnergy ) const {
-    if( _settings->GetVolumeOutputFrequency() != 0 && currEnergy % (unsigned)_settings->GetVolumeOutputFrequency() == 0 ) {
-        ExportVTK( _settings->GetOutputFile() + "_" + std::to_string( currEnergy ), _outputFields, _outputFieldNames, _mesh );
+void SNSolverHPC::PrintVolumeOutput( int idx_iter ) const {
+    if( _settings->GetVolumeOutputFrequency() != 0 && idx_iter % (unsigned)_settings->GetVolumeOutputFrequency() == 0 ) {
+        ExportVTK( _settings->GetOutputFile() + "_" + std::to_string( idx_iter ), _outputFields, _outputFieldNames, _mesh );    // slow
     }
-    if( currEnergy == (int)_nIter - 1 ) {    // Last iteration write without suffix.
+    if( idx_iter == (int)_nIter - 1 ) {    // Last iteration write without suffix.
         ExportVTK( _settings->GetOutputFile(), _outputFields, _outputFieldNames, _mesh );
     }
 }
@@ -545,7 +646,7 @@ void SNSolverHPC::PrintHistoryOutput( unsigned idx_iter ) {
     if( _settings->GetHistoryOutputFrequency() != 0 && idx_iter % (unsigned)_settings->GetHistoryOutputFrequency() == 0 ) {
         log->info( lineToPrint );
     }
-    else if( idx_iter == _nEnergies - 1 ) {    // Always print last iteration
+    else if( idx_iter == _nIter - 1 ) {    // Always print last iteration
         log->info( lineToPrint );
     }
 }
@@ -576,10 +677,10 @@ void SNSolverHPC::DrawPreSolverOutput() {
         hLine += tmpLine;
     }
     log->info( "---------------------------- Solver Starts -----------------------------" );
-    log->info( "| The simulation will run for {} iterations.", _nEnergies );
+    log->info( "| The simulation will run for {} iterations.", _nIter );
     log->info( "| The spatial grid contains {} cells.", _nCells );
     if( _settings->GetSolverName() != PN_SOLVER && _settings->GetSolverName() != CSD_PN_SOLVER ) {
-        log->info( "| The velocity grid contains {} points.", _quadrature->GetNq() );
+        log->info( "| The velocity grid contains {} points.", _nq );
     }
     log->info( hLine );
     log->info( lineToPrint );
@@ -630,25 +731,201 @@ void SNSolverHPC::SolverPreprocessing() {}
 
 void SNSolverHPC::IterPostprocessing( unsigned /*idx_iter*/ ) {
     // --- Compute Quantities of interest for Volume and Screen Output ---
-    ComputeScalarFlux();    // Needs to be called first is a solver function
+    // ComputeScalarFlux();    // Needs to be called first is a solver function
 
-    _problem->ComputeMass( _scalarFluxNew );
-    _problem->ComputeChangeRateFlux( _scalarFlux, _scalarFluxNew );
+    // _problem->ComputeMass( _scalarFluxNew );
+    // _problem->ComputeChangeRateFlux( _scalarFlux, _scalarFluxNew );
 
-    _problem->ComputeCurrentOutflow( _sol );
-    _problem->ComputeTotalOutflow( _dT );
-    _problem->ComputeMaxOrdinatewiseOutflow( _sol );
+    // _problem->ComputeCurrentOutflow( _sol );
+    // _problem->ComputeTotalOutflow( _dT );
+    // _problem->ComputeMaxOrdinatewiseOutflow( _sol );
 
-    if( _settings->GetProblemName() == PROBLEM_Lattice || _settings->GetProblemName() == PROBLEM_HalfLattice ) {
-        _problem->ComputeCurrentAbsorptionLattice( _scalarFlux );
-        _problem->ComputeTotalAbsorptionLattice( _dT );
-        _problem->ComputeMaxAbsorptionLattice( _scalarFlux );
+    // if( _settings->GetProblemName() == PROBLEM_Lattice || _settings->GetProblemName() == PROBLEM_HalfLattice ) {
+    //     _problem->ComputeCurrentAbsorptionLattice( _scalarFlux );
+    //     _problem->ComputeTotalAbsorptionLattice( _dT );
+    //     _problem->ComputeMaxAbsorptionLattice( _scalarFlux );
+    // }
+    // if( _settings->GetProblemName() == PROBLEM_SymmetricHohlraum || _settings->GetProblemName() == PROBLEM_QuarterHohlraum ) {
+    //     _problem->ComputeCurrentAbsorptionHohlraum( _scalarFlux );    // Unify
+    //     _problem->ComputeTotalAbsorptionHohlraum( _dT );              // Unify and parallelize
+    //     _problem->ComputeCurrentProbeMoment( _sol );
+    //     _problem->ComputeVarAbsorptionGreen( _scalarFlux );
+    //     _problem->ComputeQOIsGreenProbingLine( _scalarFlux );
+    // }
+}
+
+void SNSolverHPC::FluxUpdate() {
+    if( _spatialOrder == 1 ) {
+        // Loop over all spatial cells
+#pragma omp parallel for
+        for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
+            double solL;
+            double solR;
+            double inner;
+
+            // Dirichlet cells stay at IC, farfield assumption
+            // if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::DIRICHLET ) continue;
+            // Reset temporary variable
+            _solNew[idx_cell] *= 0.0;    // blaze op
+
+            // Loop over all neighbor cells (edges) of cell j and compute numerical
+            // fluxes
+            for( unsigned idx_nbr = 0; idx_nbr < _nEdgesPerCell; ++idx_nbr ) {
+                // store flux contribution on psiNew_sigmaS to save memory
+                if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::NEUMANN && _neighbors[idx_cell * _nEdgesPerCell + idx_nbr] == _nCells ) {
+                    for( unsigned idx_sys = 0; idx_sys < _nSystem; idx_sys++ ) {
+                        inner = _quadPts[_spatialDim * idx_sys] * _normals[idx_cell * _nEdgesPerCell * _spatialDim + idx_nbr * _spatialDim] +
+                                _quadPts[_spatialDim * idx_sys + 1] * _normals[idx_cell * _nEdgesPerCell * _spatialDim + idx_nbr * _spatialDim + 1];
+
+                        _solNew[idx_cell * _nSystem + idx_sys] +=
+                            ( inner > 0 ) ? inner * _sol[idx_cell * _nSystem + idx_sys] : inner * _ghostCells[idx_cell][idx_sys];
+                    }
+                }
+                else {
+                    // first order solver
+                    unsigned int nbr_glob = _neighbors[idx_cell * _nEdgesPerCell + idx_nbr];    // global idx of neighbor cell
+
+                    for( unsigned idx_sys = 0; idx_sys < _nSystem; idx_sys++ ) {
+                        inner = _quadPts[_spatialDim * idx_sys] * _normals[idx_cell * _nEdgesPerCell * _spatialDim + idx_nbr * _spatialDim] +
+                                _quadPts[_spatialDim * idx_sys + 1] * _normals[idx_cell * _nEdgesPerCell * _spatialDim + idx_nbr * _spatialDim + 1];
+
+                        _solNew[idx_cell * _nSystem + idx_sys] +=
+                            ( inner > 0 ) ? inner * _sol[idx_cell * _nSystem + idx_sys] : inner * _sol[nbr_glob * _nSystem + idx_sys];
+                    }
+                }
+            }
+        }
     }
-    if( _settings->GetProblemName() == PROBLEM_SymmetricHohlraum || _settings->GetProblemName() == PROBLEM_QuarterHohlraum ) {
-        _problem->ComputeCurrentAbsorptionHohlraum( _scalarFlux );    // Unify
-        _problem->ComputeTotalAbsorptionHohlraum( _dT );              // Unify and parallelize
-        _problem->ComputeCurrentProbeMoment( _sol );
-        _problem->ComputeVarAbsorptionGreen( _scalarFlux );
-        _problem->ComputeQOIsGreenProbingLine( _scalarFlux );
+    else if( _spatialOrder == 2 ) {
+        // Loop over all spatial cells
+#pragma omp parallel for
+        for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
+            double solL, solR;
+            double inner;
+
+            // Dirichlet cells stay at IC, farfield assumption
+            // if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::DIRICHLET ) continue;
+
+            // Loop over all ordinates
+            for( unsigned idx_sys = 0; idx_sys < _nSystem; idx_sys++ ) {
+                _solNew[idx_cell * _nSystem + idx_sys] = 0.0;
+            }
+            // Loop over all neighbor cells (edges) of cell j and compute numerical
+            // fluxes
+            for( unsigned idx_nbr = 0; idx_nbr < _nEdgesPerCell; ++idx_nbr ) {
+                // store flux contribution on psiNew_sigmaS to save memory
+                if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::NEUMANN && _neighbors[idx_cell * _nEdgesPerCell + idx_nbr] == _nCells ) {
+                    for( unsigned idx_sys = 0; idx_sys < _nSystem; idx_sys++ ) {
+                        inner = _quadPts[_spatialDim * idx_sys] * _normals[idx_cell * _nEdgesPerCell * _spatialDim + idx_nbr * _spatialDim] +
+                                _quadPts[_spatialDim * idx_sys + 1] * _normals[idx_cell * _nEdgesPerCell * _spatialDim + idx_nbr * _spatialDim + 1];
+
+                        _solNew[idx_cell * _nSystem + idx_sys] +=
+                            ( inner > 0 ) ? inner * _sol[idx_cell * _nSystem + idx_sys] : inner * _ghostCells[idx_cell][idx_sys];
+                    }
+                }
+                else {
+                    unsigned int nbr_glob = _neighbors[idx_cell * _nEdgesPerCell + idx_nbr];    // global idx of neighbor cell
+
+                    // left status of interface
+                    for( unsigned idx_sys = 0; idx_sys < _nSystem; idx_sys++ ) {
+                        solL = _sol[idx_cell * _nSystem + idx_sys] +
+                               _limiter[idx_cell * _nSystem + idx_sys] *
+                                   ( _solDx[( idx_cell * _nSystem + idx_sys ) * _spatialDim] *
+                                         ( _interfaceMidPoints[idx_cell * _nEdgesPerCell * _spatialDim + idx_nbr * _spatialDim] -
+                                           _cellMidPoints[idx_cell * _spatialDim] ) +
+                                     _solDx[( idx_cell * _nSystem + idx_sys ) * _spatialDim + 1] *
+                                         ( _interfaceMidPoints[idx_cell * _nEdgesPerCell * _spatialDim + idx_nbr * _spatialDim + 1] -
+                                           _cellMidPoints[idx_cell * _spatialDim + 1] ) );
+
+                        solR = _sol[nbr_glob * _nSystem + idx_sys] +
+                               _limiter[nbr_glob * _nSystem + idx_sys] *
+                                   ( _solDx[( nbr_glob * _nSystem + idx_sys ) * _spatialDim] *
+                                         ( _interfaceMidPoints[idx_cell * _nEdgesPerCell * _spatialDim + idx_nbr * _spatialDim] -
+                                           _cellMidPoints[idx_cell * _spatialDim] ) +
+                                     _solDx[( nbr_glob * _nSystem + idx_sys ) * _spatialDim + 1] *
+                                         ( _interfaceMidPoints[idx_cell * _nEdgesPerCell * _spatialDim + idx_nbr * _spatialDim + 1] -
+                                           _cellMidPoints[idx_cell * _spatialDim + 1] ) );
+
+                        // flux evaluation
+                        inner = _quadPts[_spatialDim * idx_sys] * _normals[idx_cell * _nEdgesPerCell * _spatialDim + idx_nbr * _spatialDim] +
+                                _quadPts[_spatialDim * idx_sys + 1] * _normals[idx_cell * _nEdgesPerCell * _spatialDim + idx_nbr * _spatialDim + 1];
+
+                        _solNew[idx_cell * _nSystem + idx_sys] += ( inner > 0 ) ? inner * solL : inner * solR;
+                    }
+                }
+            }
+        }
+    }
+}
+
+void SNSolverHPC::FVMUpdate( unsigned idx_iter ) {
+#pragma omp parallel for
+    for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
+        for( unsigned idx_sys = 0; idx_sys < _nSystem; idx_sys++ ) {
+
+            _solNew[idx_cell * _nSystem + idx_sys] =
+                _sol[idx_cell] - ( _dT / _areas[idx_cell] ) * _solNew[idx_cell] - _dT * _sigmaT[idx_cell] * _sol[idx_cell];
+
+            // compute scattering effects
+            for( unsigned idx_sys2 = 0; idx_sys2 < _nSystem; idx_sys2++ ) {
+                _solNew[idx_cell * _nSystem + idx_sys] += _dT * _sigmaS[idx_cell] * _scatteringKernel[idx_sys * _nSystem + idx_sys2] *
+                                                          _sol[idx_sys2];    // multiply scattering matrix with psi
+            }
+            // Source Term
+            _solNew[idx_cell * _nSystem + idx_sys] += _dT * _source[idx_cell * _nSystem + idx_sys];
+        }
+    }
+}
+
+void SNSolverHPC::WriteVolumeOutput( unsigned idx_iter ) {
+    unsigned nGroups = (unsigned)_settings->GetNVolumeOutput();
+    if( ( _settings->GetVolumeOutputFrequency() != 0 && idx_iter % (unsigned)_settings->GetVolumeOutputFrequency() == 0 ) ||
+        ( idx_iter == _nIter - 1 ) /* need sol at last iteration */ ) {
+        for( unsigned idx_group = 0; idx_group < nGroups; idx_group++ ) {
+            switch( _settings->GetVolumeOutput()[idx_group] ) {
+                case MINIMAL:
+                    for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
+                        _outputFields[idx_group][0][idx_cell] = _scalarFluxNew[idx_cell];
+                    }
+                    break;
+
+                default: ErrorMessages::Error( "Volume Output Group not defined for HPC SN Solver!", CURRENT_FUNCTION ); break;
+            }
+        }
+    }
+}
+
+void SNSolverHPC::SetGhostCells() {
+    // Loop over all cells. If its a Dirichlet boundary, add cell to dict with {cell_idx, boundary_value}
+    for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
+        if( _cellBoundaryTypes[idx_cell] == BOUNDARY_TYPE::NEUMANN || _cellBoundaryTypes[idx_cell] == BOUNDARY_TYPE::DIRICHLET ) {
+            _ghostCells.insert( { idx_cell, std::vector<double>( _nSystem ) } );
+        }
+    }
+}
+
+void SNSolverHPC::PrepareVolumeOutput() {
+    unsigned nGroups = (unsigned)_settings->GetNVolumeOutput();
+
+    _outputFieldNames.resize( nGroups );
+    _outputFields.resize( nGroups );
+
+    // Prepare all OutputGroups ==> Specified in option VOLUME_OUTPUT
+    for( unsigned idx_group = 0; idx_group < nGroups; idx_group++ ) {
+        // Prepare all Output Fields per group
+
+        // Different procedure, depending on the Group...
+        switch( _settings->GetVolumeOutput()[idx_group] ) {
+            case MINIMAL:
+                // Currently only one entry ==> rad flux
+                _outputFields[idx_group].resize( 1 );
+                _outputFieldNames[idx_group].resize( 1 );
+
+                _outputFields[idx_group][0].resize( _nCells );
+                _outputFieldNames[idx_group][0] = "scalar flux";
+                break;
+
+            default: ErrorMessages::Error( "Volume Output Group not defined for HPC SN Solver!", CURRENT_FUNCTION ); break;
+        }
     }
 }

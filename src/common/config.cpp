@@ -629,10 +629,10 @@ void Config::SetPostprocessing() {
         for( unsigned short idx_volOutput = 0; idx_volOutput < _nVolumeOutput; idx_volOutput++ ) {
             switch( _solverName ) {
                 case SN_SOLVER:
-                    if( _problemName == PROBLEM_SymmetricHohlraum )
+                    if( _problemName == PROBLEM_Linesource )
                         supportedGroups = { MINIMAL, ANALYTIC };
                     else
-                        supportedGroups = { MINIMAL, ANALYTIC };
+                        supportedGroups = { MINIMAL };
 
                     if( supportedGroups.end() == std::find( supportedGroups.begin(), supportedGroups.end(), _volumeOutput[idx_volOutput] ) ) {
                         ErrorMessages::Error( "SN_SOLVER only supports volume output MINIMAL and ANALYTIC.\nPlease check your .cfg file.",

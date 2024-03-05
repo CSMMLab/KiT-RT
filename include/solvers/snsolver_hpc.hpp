@@ -10,6 +10,8 @@
 
 // Forward Declarations
 class Config;
+class Mesh;
+class ProblemBase;
 
 /*! @brief Base class for all solvers. */
 class SNSolverHPC
@@ -18,6 +20,8 @@ class SNSolverHPC
   private:
     double _currTime;  /*!< @brief wall-time after current iteration */
     Config* _settings; /*!< @brief config class for global information */
+    Mesh* _mesh;
+    ProblemBase* _problem;
 
     // Time
     unsigned _nIter; /*!< @brief number of time steps, for non CSD, this equals _nEnergies, for _csd, _maxIter =_nEnergies-1*/
@@ -29,16 +33,21 @@ class SNSolverHPC
     unsigned _nq;      /*!< @brief number of quadrature points */
     unsigned _spatialDim;
     unsigned _nEdgesPerCell;
+    unsigned _nNodes;
 
-    std::vector<BOUNDARY_TYPE> _boundaryCells; /*!< @brief boundary type for all cells, dim(_boundary) =
-                                                  (_NCells) */
-    std::vector<double> _areas;                /*!< @brief surface area of all spatial cells,
-                                                  dim(_areas) = _NCells */
-    std::vector<double> _normals;              /*!< @brief edge normals multiplied by edge length,
-                                                               dim(_normals) = (_NCells,nEdgesPerCell,spatialDim) */
-    std::vector<unsigned> _neighbors;          /*!< @brief edge neighbor cell ids, dim(_neighbors) = (_NCells,nEdgesPerCell) */
-    std::vector<double> _cellMidPoints;        /*!< @brief dim _nCells x _spatialDim */
-    std::vector<double> _interfaceMidPoints;   /*!< @brief dim: _nCells x _nEdgesPerCell x _spatialDim */
+    std::vector<BOUNDARY_TYPE> _boundaryCells;           /*!< @brief boundary type for all cells, dim(_boundary) =
+                                                            (_NCells) */
+    std::vector<double> _areas;                          /*!< @brief surface area of all spatial cells,
+                                                            dim(_areas) = _NCells */
+    std::vector<double> _normals;                        /*!< @brief edge normals multiplied by edge length,
+                                                                         dim(_normals) = (_NCells,nEdgesPerCell,spatialDim) */
+    std::vector<unsigned> _neighbors;                    /*!< @brief edge neighbor cell ids, dim(_neighbors) = (_NCells,nEdgesPerCell) */
+    std::vector<double> _nodes;                          /*!< @brief node ids , dim = (_nNodes, _spatialDim) */
+    std::vector<unsigned> _cellNodes;                    /*!< @brief node ids , dim = (_nCells, _nEdgesPerCell) */
+    std::vector<double> _cellMidPoints;                  /*!< @brief dim _nCells x _spatialDim */
+    std::vector<double> _interfaceMidPoints;             /*!< @brief dim: _nCells x _nEdgesPerCell x _spatialDim */
+    std::vector<BOUNDARY_TYPE> _cellBoundaryTypes;       /*!< @brief dim: _nCells x _nEdgesPerCell x _spatialDim */
+    std::map<unsigned, std::vector<double>> _ghostCells; /*!< @brief Vector of ghost cells for boundary conditions. CAN BE MORE EFFICIENT */
 
     unsigned _temporalOrder;      /*!< @brief temporal order (current: 1 & 2) */
     unsigned _spatialOrder;       /*!< @brief spatial order (current: 1 & 2) */
@@ -60,6 +69,9 @@ class SNSolverHPC
     std::vector<double> _solNew; /*!< @brief dim = _nCells x _nSys */
 
     // Output related members
+    std::vector<double> _scalarFlux;    /*!< @brief dim = _nCells  */
+    std::vector<double> _scalarFluxNew; /*!< @brief dim = _nCells  */
+
     std::vector<std::vector<std::vector<double>>> _outputFields; /*!< @brief Solver Output: dimensions
                    (GroupID,FieldID,CellID).*/
     std::vector<std::vector<std::string>> _outputFieldNames;     /*!< @brief Names of the outputFields: dimensions
@@ -79,36 +91,38 @@ class SNSolverHPC
     void SolverPreprocessing();
     /*! @brief Performs preprocessing for the current solver iteration
         @param idx_iter current (peudo) time iteration */
-    void IterPreprocessing( unsigned idx_iter ) = 0;
+    void IterPreprocessing( unsigned idx_iter );
     /*! @brief Performs postprocessing for the current solver iteration */
     void IterPostprocessing( unsigned idx_iter );
     /*! @brief Constructs  the flux update for the current iteration and stores it
      * in psiNew*/
-    void FluxUpdate() = 0;
+    void FluxUpdate();
     /*! @brief Computes the finite Volume update step for the current iteration
          @param idx_iter  current (peudo) time iteration */
-    void FVMUpdate( unsigned idx_iter ) = 0;
+    void FVMUpdate( unsigned idx_iter );
     /*! @brief Computes the finite Volume update step for the current iteration
          @param idx_iter  current (peudo) time iteration */
-    void RKUpdate( std::vector<double>& sol0, std::vector<double> sol_rk );
+    void RKUpdate( std::vector<double>& sol0, std::vector<double>& sol_rk );
+
+    void SetGhostCells(); /*!< @brief Sets vector of ghost cells for
 
     // Helper
     /*! @brief ComputeTimeStep calculates the maximal stable time step using the
-       cfl number
-        @param cfl Courant-Friedrichs-Levy condition number */
+    cfl number
+    @param cfl Courant-Friedrichs-Levy condition number */
     double ComputeTimeStep( double cfl ) const;
     /*! @brief Computes the flux of the solution to check conservation properties
      */
-    void ComputeScalarFlux() = 0;
+    void ComputeScalarFlux();
 
     // IO
     /*! @brief Initializes the output groups and fields of this solver and names
      * the fields */
-    void PrepareVolumeOutput() = 0;
+    void PrepareVolumeOutput();
     /*! @brief Function that prepares VTK export and csv export of the current
        solver iteration
         @param idx_iter  current (pseudo) time iteration */
-    void WriteVolumeOutput( unsigned idx_iter ) = 0;
+    void WriteVolumeOutput( unsigned idx_iter );
     /*! @brief Save Output solution at given energy (pseudo time) to VTK file.
        Write frequency is given by option VOLUME_OUTPUT_FREQUENCY. Always prints
        last iteration without iteration affix.
@@ -142,7 +156,7 @@ class SNSolverHPC
      *  @param settings config class that stores all needed config information */
     SNSolverHPC( Config* settings );
 
-    ~SNSolverHPC();
+    ~SNSolverHPC() {}
 
     /*! @brief Solve functions runs main iteration loop. Components of the solve
      * loop are pure  and subclassed by the child solvers.  */

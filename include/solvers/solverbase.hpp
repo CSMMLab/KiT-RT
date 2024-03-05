@@ -75,7 +75,7 @@ class SolverBase
     //  _nCells x nSys. nSys depents on the solver (either moments or quadpts)
     VectorVector _solDx;   /*!< @brief  solution gradient in x direction*/
     VectorVector _solDy;   /*!< @brief  solution gradient in y direction*/
-    VectorVector _limiter; /*! < @brief slope limiter at cell and system pt */
+    VectorVector _limiter; /*!< @brief slope limiter at cell and system pt */
 
     // Output related members
     std::vector<std::vector<std::vector<double>>> _outputFields; /*!< @brief Solver Output: dimensions
@@ -108,7 +108,7 @@ class SolverBase
     virtual void FVMUpdate( unsigned idx_iter ) = 0;
     /*! @brief Computes the finite Volume update step for the current iteration
          @param idx_iter  current (peudo) time iteration */
-    virtual void RKUpdate( VectorVector& sol0, VectorVector sol_rk );
+    virtual void RKUpdate( VectorVector& sol0, VectorVector& sol_rk );
 
     // Helper
     /*! @brief ComputeTimeStep calculates the maximal stable time step using the
