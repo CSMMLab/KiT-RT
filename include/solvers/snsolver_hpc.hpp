@@ -31,8 +31,8 @@ class SNSolverHPC
     unsigned _nCells;  /*!< @brief number of spatial cells */
     unsigned _nSystem; /*!< @brief number of equations in the transport system, i.e. num quad pts */
     unsigned _nq;      /*!< @brief number of quadrature points */
-    unsigned _spatialDim;
-    unsigned _nEdgesPerCell;
+    unsigned _dim;
+    unsigned _nNodesPerCell;
     unsigned _nNodes;
 
     std::vector<BOUNDARY_TYPE> _boundaryCells;           /*!< @brief boundary type for all cells, dim(_boundary) =
@@ -42,16 +42,16 @@ class SNSolverHPC
     std::vector<double> _normals;                        /*!< @brief edge normals multiplied by edge length,
                                                                          dim(_normals) = (_NCells,nEdgesPerCell,spatialDim) */
     std::vector<unsigned> _neighbors;                    /*!< @brief edge neighbor cell ids, dim(_neighbors) = (_NCells,nEdgesPerCell) */
-    std::vector<double> _nodes;                          /*!< @brief node ids , dim = (_nNodes, _spatialDim) */
+    std::vector<double> _nodes;                          /*!< @brief node ids , dim = (_nNodes, _dim) */
     std::vector<unsigned> _cellNodes;                    /*!< @brief node ids , dim = (_nCells, _nEdgesPerCell) */
-    std::vector<double> _cellMidPoints;                  /*!< @brief dim _nCells x _spatialDim */
-    std::vector<double> _interfaceMidPoints;             /*!< @brief dim: _nCells x _nEdgesPerCell x _spatialDim */
-    std::vector<BOUNDARY_TYPE> _cellBoundaryTypes;       /*!< @brief dim: _nCells x _nEdgesPerCell x _spatialDim */
+    std::vector<double> _cellMidPoints;                  /*!< @brief dim _nCells x _dim */
+    std::vector<double> _interfaceMidPoints;             /*!< @brief dim: _nCells x _nEdgesPerCell x _dim */
+    std::vector<BOUNDARY_TYPE> _cellBoundaryTypes;       /*!< @brief dim: _nCells x _nEdgesPerCell x _dim */
     std::map<unsigned, std::vector<double>> _ghostCells; /*!< @brief Vector of ghost cells for boundary conditions. CAN BE MORE EFFICIENT */
 
     unsigned _temporalOrder;      /*!< @brief temporal order (current: 1 & 2) */
     unsigned _spatialOrder;       /*!< @brief spatial order (current: 1 & 2) */
-    std::vector<double> _solDx;   /*!< @brief dim = _nCells x _nSys x _spatialDim*/
+    std::vector<double> _solDx;   /*!< @brief dim = _nCells x _nSys x _dim*/
     std::vector<double> _limiter; /*!< @brief dim = _nCells x _nSys */
 
     // Scattering, absorption and source
@@ -61,7 +61,7 @@ class SNSolverHPC
     std::vector<double> _scatteringKernel; /*!< @brief dim: _nSys x _nSys  */
 
     // quadrature related numbers
-    std::vector<double> _quadPts;     /*!< @brief dim: _nSys x _spatialDim*/
+    std::vector<double> _quadPts;     /*!< @brief dim: _nSys x _dim*/
     std::vector<double> _quadWeights; /*!< @brief dim: _nSys*/
 
     // Solution related members
@@ -72,6 +72,8 @@ class SNSolverHPC
     std::vector<double> _scalarFlux;    /*!< @brief dim = _nCells  */
     std::vector<double> _scalarFluxNew; /*!< @brief dim = _nCells  */
 
+    double _mass;                                                /*!< @brief dim = _nCells  */
+    double _rmsFlux;                                             /*!< @brief dim = _nCells  */
     std::vector<std::vector<std::vector<double>>> _outputFields; /*!< @brief Solver Output: dimensions
                    (GroupID,FieldID,CellID).*/
     std::vector<std::vector<std::string>> _outputFieldNames;     /*!< @brief Names of the outputFields: dimensions
@@ -84,6 +86,7 @@ class SNSolverHPC
     std::vector<std::string> _historyOutputFieldNames; /*!< @brief Names of the outputFields: dimensions (FieldID) */
 
     // ---- Member functions ----
+    void FVMUpdateOrder1();
 
     // Solver
     /*! @brief Performs preprocessing steps before the pseudo time iteration is
@@ -150,6 +153,14 @@ class SNSolverHPC
     void DrawPreSolverOutput();
     /*! @brief Post Solver Screen and Logger Output */
     void DrawPostSolverOutput();
+
+    /// Solver output
+    void ComputeMass();
+    void ComputeChangeRateFlux();
+
+    // Helper
+    unsigned Idx2D( unsigned idx1, unsigned idx2, unsigned len2 );
+    unsigned Idx3D( unsigned idx1, unsigned idx2, unsigned idx3, unsigned len2, unsigned len3 );
 
   public:
     /*! @brief Solver constructor

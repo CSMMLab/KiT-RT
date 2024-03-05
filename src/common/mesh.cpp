@@ -191,18 +191,20 @@ void Mesh::ComputeConnectivity() {
         unsigned IDj = neighborsFlat[i];
         if( IDi == IDj ) continue;     // avoid self assignment
         if( IDj == _ghostCellID ) {    // cell is boundary cell
-            if( std::find( _cellNeighbors[IDi].begin(), _cellNeighbors[IDi].end(), _ghostCellID ) == _cellNeighbors[IDi].end() ) {
-                _cellNeighbors[IDi].push_back( _ghostCellID );
-                _cellNormals[IDi].push_back( normalsFlat[i] );
-                _cellInterfaceMidPoints[IDi].push_back( interfaceMidFlat[i] );
-            }
+            // if( std::find( _cellNeighbors[IDi].begin(), _cellNeighbors[IDi].end(), _ghostCellID ) == _cellNeighbors[IDi].end() ) {
+            _cellNeighbors[IDi].push_back( _ghostCellID );
+            _cellNormals[IDi].push_back( normalsFlat[i] );
+            _cellInterfaceMidPoints[IDi].push_back( interfaceMidFlat[i] );
+            // temp++;
+            // }
+            // std::cout << temp << "\n";
         }
         else {    // normal cell neighbor
-            if( std::find( _cellNeighbors[IDi].begin(), _cellNeighbors[IDi].end(), IDj ) == _cellNeighbors[IDi].end() ) {
-                _cellNeighbors[IDi].push_back( neighborsFlat[i] );
-                _cellNormals[IDi].push_back( normalsFlat[i] );
-                _cellInterfaceMidPoints[IDi].push_back( interfaceMidFlat[i] );
-            }
+            // if( std::find( _cellNeighbors[IDi].begin(), _cellNeighbors[IDi].end(), IDj ) == _cellNeighbors[IDi].end() ) {
+            _cellNeighbors[IDi].push_back( neighborsFlat[i] );
+            _cellNormals[IDi].push_back( normalsFlat[i] );
+            _cellInterfaceMidPoints[IDi].push_back( interfaceMidFlat[i] );
+            //}
         }
     }
 
