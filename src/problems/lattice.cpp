@@ -91,6 +91,22 @@ bool Lattice_SN::IsAbsorption( const Vector& pos ) const {
     return false;
 }
 
+bool Lattice_SN::IsAbsorption( double x, double y ) const {
+    // Check whether pos is inside absorbing squares
+    double xy_corrector = -3.5;
+    std::vector<double> lbounds{ 1 + xy_corrector, 2 + xy_corrector, 3 + xy_corrector, 4 + xy_corrector, 5 + xy_corrector };
+    std::vector<double> ubounds{ 2 + xy_corrector, 3 + xy_corrector, 4 + xy_corrector, 5 + xy_corrector, 6 + xy_corrector };
+    for( unsigned k = 0; k < lbounds.size(); ++k ) {
+        for( unsigned l = 0; l < lbounds.size(); ++l ) {
+            if( ( l + k ) % 2 == 1 || ( k == 2 && l == 2 ) || ( k == 2 && l == 4 ) ) continue;
+            if( x >= lbounds[k] && x <= ubounds[k] && y >= lbounds[l] && y <= ubounds[l] ) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
 unsigned Lattice_SN::GetBlockID( const Vector& pos ) const {
     double xy_corrector = 3.5;
     int block_x         = int( pos[0] + xy_corrector );

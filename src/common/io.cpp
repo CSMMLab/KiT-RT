@@ -336,6 +336,7 @@ void LoadConnectivityFromFile( const std::string inputFile,
         unsigned correctedNodesPerCell = nNodesPerCell;
         if( count < nNodesPerCell + nNodesPerCell * nDim * 2 + 1 ) {
             correctedNodesPerCell = nNodesPerCell - 1;
+            ErrorMessages::Error( "Error opening connectivity file.", CURRENT_FUNCTION );
         }
 
         std::istringstream iss( line );

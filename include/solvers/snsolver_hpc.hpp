@@ -28,11 +28,11 @@ class SNSolverHPC
     double _dT;      /*!< @brief energy/time step size */
 
     // Mesh related members, memory optimized
-    unsigned _nCells;  /*!< @brief number of spatial cells */
-    unsigned _nSystem; /*!< @brief number of equations in the transport system, i.e. num quad pts */
-    unsigned _nq;      /*!< @brief number of quadrature points */
-    unsigned _dim;
-    unsigned _nNodesPerCell;
+    unsigned _nCells; /*!< @brief number of spatial cells */
+    unsigned _nSys;   /*!< @brief number of equations in the transport system, i.e. num quad pts */
+    unsigned _nq;     /*!< @brief number of quadrature points */
+    unsigned _nDim;
+    unsigned _nNbr;
     unsigned _nNodes;
 
     std::vector<BOUNDARY_TYPE> _boundaryCells;           /*!< @brief boundary type for all cells, dim(_boundary) =
@@ -72,8 +72,16 @@ class SNSolverHPC
     std::vector<double> _scalarFlux;    /*!< @brief dim = _nCells  */
     std::vector<double> _scalarFluxNew; /*!< @brief dim = _nCells  */
 
-    double _mass;                                                /*!< @brief dim = _nCells  */
-    double _rmsFlux;                                             /*!< @brief dim = _nCells  */
+    // QOIS
+    double _mass;
+    double _rmsFlux;
+    double _curAbsorptionLattice;    /*!< @brief Absorption of particles at Lattice checkerboard regions at current time step */
+    double _totalAbsorptionLattice;  /*!< @brief Absorption of particles at Lattice checkerboard regions integrated until current time step */
+    double _curMaxAbsorptionLattice; /*!< @brief Maximum pointwise absorption of particles at Lattice checkerboard regions  until current time step */
+    double _curScalarOutflow;        /*!< @brief Outflow over whole boundary at current time step */
+    double _totalScalarOutflow;      /*!< @brief Outflow over whole boundary integrated until current time step */
+    double _curMaxOrdinateOutflow;   /*!< @brief Maximum ordinate-wise ouftlow  over boundary over all time steps */
+
     std::vector<std::vector<std::vector<double>>> _outputFields; /*!< @brief Solver Output: dimensions
                    (GroupID,FieldID,CellID).*/
     std::vector<std::vector<std::string>> _outputFieldNames;     /*!< @brief Names of the outputFields: dimensions
@@ -87,6 +95,7 @@ class SNSolverHPC
 
     // ---- Member functions ----
     void FVMUpdateOrder1();
+    void FVMUpdateOrder2();
 
     // Solver
     /*! @brief Performs preprocessing steps before the pseudo time iteration is
@@ -161,6 +170,7 @@ class SNSolverHPC
     // Helper
     unsigned Idx2D( unsigned idx1, unsigned idx2, unsigned len2 );
     unsigned Idx3D( unsigned idx1, unsigned idx2, unsigned idx3, unsigned len2, unsigned len3 );
+    bool IsAbsorptionLattice( double x, double y ) const;
 
   public:
     /*! @brief Solver constructor
