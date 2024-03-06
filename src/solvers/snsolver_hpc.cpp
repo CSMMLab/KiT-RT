@@ -348,11 +348,13 @@ void SNSolverHPC::FVMUpdateOrder2() {
         double maxSol;
         double r;
 
+        unsigned idx_x        = 0;
+        unsigned idx_y        = 0;
+        unsigned idx_nbr_glob = 0;
+        unsigned idx_node     = 0;
+
+        double tmp = 0.0;
         {    // Slope computation
-            unsigned idx_x   = 0;
-            unsigned idx_y   = 0;
-            unsigned idx_nbr = 0;
-            double tmp       = 0.0;
 
             for( unsigned idx_sys = 0; idx_sys < _nSys; ++idx_sys ) {
                 idx_x = Idx3D( idx_cell, idx_sys, 0, _nSys, _nDim );
@@ -363,9 +365,14 @@ void SNSolverHPC::FVMUpdateOrder2() {
 
                 for( unsigned idx_nbr = 0; idx_nbr < _nNbr; ++idx_nbr ) {
                     //  compute derivative by summing over cell boundary using Green Gauss Theorem
-                    idx_nbr = _neighbors[Idx2D( idx_cell, idx_nbr, _nNbr )];
+                    idx_nbr_glob = _neighbors[Idx2D( idx_cell, idx_nbr, _nNbr )];
 
-                    tmp = 0.5 * ( _sol[Idx2D( idx_cell, idx_sys, _nSys )] + _sol[Idx2D( idx_nbr, idx_sys, _nSys )] );
+                    if( idx_nbr_glob == _nCells ) {    // Boundary edge
+                        tmp = 0.5 * ( _sol[Idx2D( idx_cell, idx_sys, _nSys )] + _ghostCells[idx_cell][idx_sys] );
+                    }
+                    else {
+                        tmp = 0.5 * ( _sol[Idx2D( idx_cell, idx_sys, _nSys )] + _sol[Idx2D( idx_nbr_glob, idx_sys, _nSys )] );
+                    }
                     _solDx[idx_x] += tmp * _normals[Idx3D( idx_cell, idx_nbr, 0, _nNbr, _nDim )];
                     _solDx[idx_y] += tmp * _normals[Idx3D( idx_cell, idx_nbr, 1, _nNbr, _nDim )];
                 }
@@ -373,15 +380,6 @@ void SNSolverHPC::FVMUpdateOrder2() {
                 _solDx[idx_x] /= _areas[idx_cell];
                 _solDx[idx_y] /= _areas[idx_cell];
             }
-        }
-        // std::cout << "here\n";
-
-        {    // Compute Limiter
-
-            unsigned idx_x    = 0;
-            unsigned idx_y    = 0;
-            unsigned idx_nbr  = 0;
-            unsigned idx_node = 0;
 
             for( unsigned idx_sys = 0; idx_sys < _nSys; idx_sys++ ) {
                 r      = 0.0;
@@ -393,7 +391,7 @@ void SNSolverHPC::FVMUpdateOrder2() {
                 for( unsigned idx_nbr = 0; idx_nbr < _nNbr; idx_nbr++ ) {
 
                     // Compute ptswise max and minimum solultion values of current and neighbor cells
-                    idx_nbr = _neighbors[idx_cell * _nNbr + idx_nbr];
+                    idx_nbr_glob = _neighbors[idx_cell * _nNbr + idx_nbr];
 
                     maxSol = std::max( _sol[Idx2D( idx_cell, idx_sys, _nSys )], maxSol );
                     minSol = std::max( _sol[Idx2D( idx_cell, idx_sys, _nSys )], minSol );
@@ -445,10 +443,6 @@ void SNSolverHPC::FVMUpdateOrder2() {
             _solNew[Idx2D( idx_cell, idx_sys, _nSys )] = 0.0;
         }
 
-        unsigned nbr_glob;
-        unsigned idx_x = 0;
-        unsigned idx_y = 0;
-
         // Fluxes
         for( unsigned idx_nbr = 0; idx_nbr < _nNbr; ++idx_nbr ) {
             // store flux contribution on psiNew_sigmaS to save memory
@@ -462,7 +456,7 @@ void SNSolverHPC::FVMUpdateOrder2() {
                 }
             }
             else {
-                nbr_glob = _neighbors[Idx2D( idx_cell, idx_nbr, _nNbr )];    // global idx of neighbor cell
+                idx_nbr_glob = _neighbors[Idx2D( idx_cell, idx_nbr, _nNbr )];    // global idx of neighbor cell
                 // left status of interface
                 for( unsigned idx_sys = 0; idx_sys < _nSys; idx_sys++ ) {
 
@@ -481,10 +475,10 @@ void SNSolverHPC::FVMUpdateOrder2() {
                     // solR =
                     //     _sol[Idx2D( idx_cell, idx_sys, _nSys )] +
                     //     _limiter[Idx2D( idx_cell, idx_sys, _nSys )] *
-                    //         ( _solDx[Idx3D( nbr_glob, idx_sys, 0, _nSys, _nDim )] *
+                    //         ( _solDx[Idx3D( idx_nbr_glob, idx_sys, 0, _nSys, _nDim )] *
                     //               ( _interfaceMidPoints[Idx3D( idx_cell, idx_nbr, 0, _nNbr, _nDim )] - _cellMidPoints[Idx2D( idx_cell, 0, _nDim )]
                     //               ) +
-                    //           _solDx[Idx3D( nbr_glob, idx_sys, 1, _nSys, _nDim )] *
+                    //           _solDx[Idx3D( idx_nbr_glob, idx_sys, 1, _nSys, _nDim )] *
                     //               ( _interfaceMidPoints[Idx3D( idx_cell, idx_nbr, 1, _nNbr, _nDim )] -
                     //                 _cellMidPoints[Idx2D( idx_cell, 1, _nDim )] ) );
                     //_solNew[Idx2D( idx_cell, idx_sys, _nSys )] += ( inner > 0 ) ? inner * solL : inner * solR;
@@ -499,10 +493,10 @@ void SNSolverHPC::FVMUpdateOrder2() {
                                                                           _cellMidPoints[Idx2D( idx_cell, 1, _nDim )] ) ) )
                                       : inner * ( _sol[Idx2D( idx_cell, idx_sys, _nSys )] +
                                                   _limiter[Idx2D( idx_cell, idx_sys, _nSys )] *
-                                                      ( _solDx[Idx3D( nbr_glob, idx_sys, 0, _nSys, _nDim )] *
+                                                      ( _solDx[Idx3D( idx_nbr_glob, idx_sys, 0, _nSys, _nDim )] *
                                                             ( _interfaceMidPoints[Idx3D( idx_cell, idx_nbr, 0, _nNbr, _nDim )] -
                                                               _cellMidPoints[Idx2D( idx_cell, 0, _nDim )] ) +
-                                                        _solDx[Idx3D( nbr_glob, idx_sys, 1, _nSys, _nDim )] *
+                                                        _solDx[Idx3D( idx_nbr_glob, idx_sys, 1, _nSys, _nDim )] *
                                                             ( _interfaceMidPoints[Idx3D( idx_cell, idx_nbr, 1, _nNbr, _nDim )] -
                                                               _cellMidPoints[Idx2D( idx_cell, 1, _nDim )] ) ) );
                 }
