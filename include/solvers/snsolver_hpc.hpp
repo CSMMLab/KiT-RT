@@ -81,6 +81,7 @@ class SNSolverHPC
     double _curScalarOutflow;        /*!< @brief Outflow over whole boundary at current time step */
     double _totalScalarOutflow;      /*!< @brief Outflow over whole boundary integrated until current time step */
     double _curMaxOrdinateOutflow;   /*!< @brief Maximum ordinate-wise ouftlow  over boundary over all time steps */
+    std::vector<double> _localMaxOrdinateOutflow; /*!< @brief Maximum ordinate-wise ouftlow  over boundary over all time steps */
 
     std::vector<std::vector<std::vector<double>>> _outputFields; /*!< @brief Solver Output: dimensions
                    (GroupID,FieldID,CellID).*/
