@@ -35,8 +35,6 @@ class SNSolverHPC
     unsigned _nNbr;
     unsigned _nNodes;
 
-    std::vector<BOUNDARY_TYPE> _boundaryCells;           /*!< @brief boundary type for all cells, dim(_boundary) =
-                                                            (_NCells) */
     std::vector<double> _areas;                          /*!< @brief surface area of all spatial cells,
                                                             dim(_areas) = _NCells */
     std::vector<double> _normals;                        /*!< @brief edge normals multiplied by edge length,
@@ -48,8 +46,8 @@ class SNSolverHPC
     std::map<unsigned, std::vector<double>> _ghostCells; /*!< @brief Vector of ghost cells for boundary conditions. CAN BE MORE EFFICIENT */
     std::vector<double> _relativeInterfaceMidPt;         /*!< @brief dim _nCells * _nNbr * _nDim */
 
-    std::map<unsigned, bool> _ghostCellsReflectingY;     /*!< map that indicates if a ghostcell has a fixed value or is a mirroring boundary */
-    std::vector<unsigned> _quadratureYReflection; /*!< map that gives a Reflection against the y axis for the velocity ordinates */
+    std::map<unsigned, bool> _ghostCellsReflectingY; /*!< map that indicates if a ghostcell has a fixed value or is a mirroring boundary */
+    std::vector<unsigned> _quadratureYReflection;    /*!< map that gives a Reflection against the y axis for the velocity ordinates */
 
     unsigned _temporalOrder;      /*!< @brief temporal order (current: 1 & 2) */
     unsigned _spatialOrder;       /*!< @brief spatial order (current: 1 & 2) */
