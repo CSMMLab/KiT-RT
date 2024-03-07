@@ -42,12 +42,14 @@ class SNSolverHPC
     std::vector<double> _normals;                        /*!< @brief edge normals multiplied by edge length,
                                                                          dim(_normals) = (_NCells,nEdgesPerCell,spatialDim) */
     std::vector<unsigned> _neighbors;                    /*!< @brief edge neighbor cell ids, dim(_neighbors) = (_NCells,nEdgesPerCell) */
-    std::vector<double> _nodes;                          /*!< @brief node ids , dim = (_nNodes, _dim) */
-    std::vector<unsigned> _cellNodes;                    /*!< @brief node ids , dim = (_nCells, _nEdgesPerCell) */
     std::vector<double> _cellMidPoints;                  /*!< @brief dim _nCells x _dim */
     std::vector<double> _interfaceMidPoints;             /*!< @brief dim: _nCells x _nEdgesPerCell x _dim */
     std::vector<BOUNDARY_TYPE> _cellBoundaryTypes;       /*!< @brief dim: _nCells x _nEdgesPerCell x _dim */
     std::map<unsigned, std::vector<double>> _ghostCells; /*!< @brief Vector of ghost cells for boundary conditions. CAN BE MORE EFFICIENT */
+    std::vector<double> _relativeInterfaceMidPt;         /*!< @brief dim _nCells * _nNbr * _nDim */
+
+    std::map<unsigned, bool> _ghostCellsReflectingY;     /*!< map that indicates if a ghostcell has a fixed value or is a mirroring boundary */
+    std::vector<unsigned> _quadratureYReflection; /*!< map that gives a Reflection against the y axis for the velocity ordinates */
 
     unsigned _temporalOrder;      /*!< @brief temporal order (current: 1 & 2) */
     unsigned _spatialOrder;       /*!< @brief spatial order (current: 1 & 2) */
@@ -95,24 +97,11 @@ class SNSolverHPC
     std::vector<std::string> _historyOutputFieldNames; /*!< @brief Names of the outputFields: dimensions (FieldID) */
 
     // ---- Member functions ----
+
+    // Solver
     void FVMUpdateOrder1();
     void FVMUpdateOrder2();
 
-    // Solver
-    /*! @brief Performs preprocessing steps before the pseudo time iteration is
-     * started*/
-    void SolverPreprocessing();
-    /*! @brief Performs preprocessing for the current solver iteration
-        @param idx_iter current (peudo) time iteration */
-    void IterPreprocessing( unsigned idx_iter );
-    /*! @brief Performs postprocessing for the current solver iteration */
-    void IterPostprocessing( unsigned idx_iter );
-    /*! @brief Constructs  the flux update for the current iteration and stores it
-     * in psiNew*/
-    void FluxUpdate();
-    /*! @brief Computes the finite Volume update step for the current iteration
-         @param idx_iter  current (peudo) time iteration */
-    void FVMUpdate( unsigned idx_iter );
     /*! @brief Computes the finite Volume update step for the current iteration
          @param idx_iter  current (peudo) time iteration */
     void RKUpdate( std::vector<double>& sol0, std::vector<double>& sol_rk );
@@ -124,9 +113,6 @@ class SNSolverHPC
     cfl number
     @param cfl Courant-Friedrichs-Levy condition number */
     double ComputeTimeStep( double cfl ) const;
-    /*! @brief Computes the flux of the solution to check conservation properties
-     */
-    void ComputeScalarFlux();
 
     // IO
     /*! @brief Initializes the output groups and fields of this solver and names
@@ -163,10 +149,6 @@ class SNSolverHPC
     void DrawPreSolverOutput();
     /*! @brief Post Solver Screen and Logger Output */
     void DrawPostSolverOutput();
-
-    /// Solver output
-    void ComputeMass();
-    void ComputeChangeRateFlux();
 
     // Helper
     unsigned Idx2D( unsigned idx1, unsigned idx2, unsigned len2 );

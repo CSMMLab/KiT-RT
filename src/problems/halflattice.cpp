@@ -198,6 +198,7 @@ const Vector& HalfLattice_SN::GetGhostCellValue( int idx_cell, const Vector& cel
 double HalfLattice_SN::GetCurAbsorptionLattice() { return _curAbsorptionLattice; }
 double HalfLattice_SN::GetTotalAbsorptionLattice() { return _totalAbsorptionLattice; }
 double HalfLattice_SN::GetMaxAbsorptionLattice() { return _curMaxAbsorptionLattice; }
+
 // QOI setter
 void HalfLattice_SN::ComputeTotalAbsorptionLattice( double dT ) { _totalAbsorptionLattice += _curAbsorptionLattice * dT; }
 

@@ -30,15 +30,13 @@ SNSolverHPC::SNSolverHPC( Config* settings ) {
     _spatialOrder  = _settings->GetSpatialOrder();
     _temporalOrder = _settings->GetTemporalOrder();
 
-    _areas              = std::vector<double>( _nCells );
-    _normals            = std::vector<double>( _nCells * _nNbr * _nDim );
-    _neighbors          = std::vector<unsigned>( _nCells * _nNbr );
-    _cellNodes          = std::vector<unsigned>( _nCells * _nNbr );
-    _nodes              = std::vector<double>( _nNodes * _nDim );
-    _cellMidPoints      = std::vector<double>( _nCells * _nDim );
-    _interfaceMidPoints = std::vector<double>( _nCells * _nNbr * _nDim );
-    _cellBoundaryTypes  = std::vector<BOUNDARY_TYPE>( _nCells );
-
+    _areas                  = std::vector<double>( _nCells );
+    _normals                = std::vector<double>( _nCells * _nNbr * _nDim );
+    _neighbors              = std::vector<unsigned>( _nCells * _nNbr );
+    _cellMidPoints          = std::vector<double>( _nCells * _nDim );
+    _interfaceMidPoints     = std::vector<double>( _nCells * _nNbr * _nDim );
+    _cellBoundaryTypes      = std::vector<BOUNDARY_TYPE>( _nCells );
+    _relativeInterfaceMidPt = std::vector<double>( _nCells * _nNbr * _nDim );
     // Slope
     _solDx   = std::vector<double>( _nCells * _nSys * _nDim );
     _limiter = std::vector<double>( _nCells * _nSys );
@@ -50,9 +48,10 @@ SNSolverHPC::SNSolverHPC( Config* settings ) {
     _scatteringKernel = std::vector<double>( _nSys * _nSys );
 
     // Quadrature
-    _quadPts          = std::vector<double>( _nSys * _nDim );
-    _quadWeights      = std::vector<double>( _nSys );
-    _scatteringKernel = std::vector<double>( _nSys * _nSys );
+    _quadPts               = std::vector<double>( _nSys * _nDim );
+    _quadWeights           = std::vector<double>( _nSys );
+    _scatteringKernel      = std::vector<double>( _nSys * _nSys );
+    _quadratureYReflection = std::vector<unsigned>( _nSys );
 
     // Solution
     _sol    = std::vector<double>( _nCells * _nSys );
@@ -99,12 +98,13 @@ SNSolverHPC::SNSolverHPC( Config* settings ) {
 
         for( unsigned idx_nbr = 0; idx_nbr < _nNbr; idx_nbr++ ) {
 
-            _cellNodes[Idx2D( idx_cell, idx_nbr, _nNbr )] = cellNodes[idx_cell][idx_nbr];
             _neighbors[Idx2D( idx_cell, idx_nbr, _nNbr )] = neighbors[idx_cell][idx_nbr];
 
             for( unsigned idx_dim = 0; idx_dim < _nDim; idx_dim++ ) {
                 _normals[Idx3D( idx_cell, idx_nbr, idx_dim, _nNbr, _nDim )]            = normals[idx_cell][idx_nbr][idx_dim];
                 _interfaceMidPoints[Idx3D( idx_cell, idx_nbr, idx_dim, _nNbr, _nDim )] = interfaceMidPts[idx_cell][idx_nbr][idx_dim];
+                _relativeInterfaceMidPt[Idx3D( idx_cell, idx_nbr, idx_dim, _nNbr, _nDim )] =
+                    _interfaceMidPoints[Idx3D( idx_cell, idx_nbr, idx_dim, _nNbr, _nDim )] - _cellMidPoints[Idx2D( idx_cell, idx_dim, _nDim )];
             }
         }
 
@@ -116,12 +116,6 @@ SNSolverHPC::SNSolverHPC( Config* settings ) {
             _sol[Idx2D( idx_cell, idx_sys, _nSys )]    = initialCondition[idx_cell][idx_sys];
             _solNew[Idx2D( idx_cell, idx_sys, _nSys )] = initialCondition[idx_cell][idx_sys];
             _scalarFlux[idx_cell] += _solNew[Idx2D( idx_cell, idx_sys, _nSys )] * _quadWeights[idx_sys];
-        }
-    }
-
-    for( unsigned idx_node = 0; idx_node < _nNodes; idx_node++ ) {
-        for( unsigned idx_dim = 0; idx_dim < _nDim; idx_dim++ ) {
-            _nodes[Idx2D( idx_node, idx_dim, _nDim )] = nodes[idx_node][idx_dim];
         }
     }
 
@@ -158,9 +152,6 @@ void SNSolverHPC::Solve() {
     PrepareVolumeOutput();
 
     DrawPreSolverOutput();
-
-    // Preprocessing before first pseudo time step
-    SolverPreprocessing();
 
     // Create Backup solution for Runge Kutta
     // std::vector<double> solRK0 = _sol;
@@ -215,114 +206,6 @@ void SNSolverHPC::RKUpdate( std::vector<double>& sol_0, std::vector<double>& sol
     }
 }
 
-void SNSolverHPC::IterPreprocessing( unsigned /*idx_iter*/ ) {
-    // Slope Limiter computation
-    if( _spatialOrder == 2 ) {
-
-        double const eps = 1e-10;
-
-#pragma omp parallel for
-        for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
-            if( _cellBoundaryTypes[idx_cell] != 2 ) {
-                for( unsigned idx_sys = 0; idx_sys < _nSys; idx_sys++ ) {
-                    _limiter[idx_cell * _nSys + idx_sys] = 0.0;    // turn to first order on boundaries
-                }
-                continue;    // skip computation
-            }
-
-            {    // Slope computation
-                unsigned idx_x   = 0;
-                unsigned idx_y   = 0;
-                unsigned idx_nbr = 0;
-
-                double tmp = 0.0;
-                for( unsigned idx_sys = 0; idx_sys < _nSys; ++idx_sys ) {
-
-                    idx_x         = idx_cell * _nSys * _nDim + idx_sys * _nDim;
-                    idx_y         = idx_cell * _nSys * _nDim + idx_sys * _nDim + 1;
-                    _solDx[idx_x] = 0.0;
-                    _solDx[idx_y] = 0.0;
-
-                    for( unsigned idx_nbr = 0; idx_nbr < _nNbr; ++idx_nbr ) {
-
-                        //  compute derivative by summing over cell boundary using Green Gauss Theorem
-                        idx_nbr = _neighbors[idx_cell * _nNbr + idx_nbr];
-
-                        tmp = 0.5 * ( _sol[idx_cell * _nSys + idx_sys] + _sol[idx_nbr * _nSys + idx_sys] );
-                        _solDx[idx_x] += tmp * _normals[idx_cell * _nNbr * _nDim + idx_nbr * _nDim];
-                        _solDx[idx_y] += tmp * _normals[idx_cell * _nNbr * _nDim + idx_nbr * _nDim + 1];
-                    }
-
-                    _solDx[idx_x] /= _areas[idx_cell];
-                    _solDx[idx_y] /= _areas[idx_cell];
-                }
-            }
-            {    // Compute Limiter
-
-                unsigned idx_x   = 0;
-                unsigned idx_y   = 0;
-                unsigned idx_nbr = 0;
-
-                for( unsigned idx_sys = 0; idx_sys < _nSys; idx_sys++ ) {
-                    double r      = 0.0;
-                    double minSol = _sol[idx_cell * _nSys + idx_sys];
-                    double maxSol = _sol[idx_cell * _nSys + idx_sys];
-
-                    std::vector<double> localLimiter( _nNbr );
-
-                    for( unsigned idx_nbr = 0; idx_nbr < _nNbr; idx_nbr++ ) {
-
-                        // Compute ptswise max and minimum solultion values of current and neighbor cells
-                        idx_nbr = _neighbors[idx_cell * _nNbr + idx_nbr];
-
-                        maxSol = std::max( _sol[idx_nbr * _nSys + idx_sys], maxSol );
-                        minSol = std::max( _sol[idx_nbr * _nSys + idx_sys], minSol );
-                    }
-
-                    for( unsigned idx_nbr = 0; idx_nbr < _nNbr; idx_nbr++ ) {
-
-                        idx_x = idx_cell * _nSys * _nDim + idx_sys * _nDim;
-                        idx_y = idx_cell * _nSys * _nDim + idx_sys * _nDim + 1;
-
-                        // Compute value at interface midpoint, called gaussPt
-                        double gaussPt = 0.0;
-
-                        // gauss point is at cell vertex
-                        gaussPt =
-                            0.5 *
-                            ( _solDx[idx_x] * ( _nodes[_nDim * _cellNodes[idx_cell * _nNbr + idx_nbr]] - _cellMidPoints[idx_cell * _nDim] ) +
-                              _solDx[idx_y] * ( _nodes[_nDim * _cellNodes[idx_cell * _nNbr + idx_nbr] + 1] - _cellMidPoints[idx_cell * _nDim + 1] ) );
-
-                        // Compute limiter input
-                        r = 1.0;
-
-                        if( std::abs( gaussPt ) > eps ) {
-                            if( gaussPt > 0.0 ) {
-                                r = ( maxSol - _sol[idx_cell * _nSys + idx_sys] ) / gaussPt;
-                            }
-                            else if( gaussPt < 0.0 ) {
-                                r = ( minSol - _sol[idx_cell * _nSys + idx_sys] ) / gaussPt;
-                            }
-                        }
-                        else {
-                            r = 1.0;
-                        }
-
-                        localLimiter[idx_nbr] = std::min( r, 1.0 );    // LimiterBarthJespersen( r );
-                    }
-                    // get smallest limiter
-                    _limiter[idx_cell * _nSys + idx_sys] = localLimiter[0];
-
-                    for( unsigned idx_nbr = 0; idx_nbr < _nNbr; idx_nbr++ ) {
-                        if( localLimiter[idx_nbr] < _limiter[idx_cell * _nSys + idx_sys] )
-                            _limiter[idx_cell * _nSys + idx_sys] = localLimiter[idx_nbr];
-                    }
-                }
-            }
-        }
-    }
-}
-
 void SNSolverHPC::PrintVolumeOutput() const { ExportVTK( _settings->GetOutputFile(), _outputFields, _outputFieldNames, _mesh ); }
 
 void SNSolverHPC::PrintVolumeOutput( int idx_iter ) const {
@@ -338,9 +221,19 @@ void SNSolverHPC::FVMUpdateOrder2() {
     double const eps = 1e-10;
     _mass            = 0.0;
     _rmsFlux         = 0.0;
+#pragma omp parallel
+    {
+        double localMass    = 0.0;
+        double localRMSFlux = 0.0;
 
-#pragma omp parallel for
-    for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
+        double localMaxAbsorptionLattice  = _curMaxAbsorptionLattice;
+        double localCurrAbsorptionLattice = 0.0;
+
+        double localMaxOrdinatewiseOutflow = _curMaxOrdinateOutflow;
+        double localCurrScalarOutflow      = 0.0;
+
+        // Loop over all spatial cells
+
         double solL;
         double solR;
         double inner;
@@ -348,185 +241,212 @@ void SNSolverHPC::FVMUpdateOrder2() {
         double maxSol;
         double r;
 
-        unsigned idx_x        = 0;
-        unsigned idx_y        = 0;
         unsigned idx_nbr_glob = 0;
-        unsigned idx_node     = 0;
 
-        double tmp = 0.0;
-        {    // Slope computation
+        double solInterfaceAvg = 0.0;
 
+        double solDx;
+        double solDy;
+        double limiter;
+        std::vector<double> gaussPoints( _nNbr );
+
+#pragma omp for nowait
+        for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
+
+            // Reset temporary variable
+            for( unsigned idx_sys = 0; idx_sys < _nSys; idx_sys++ ) {
+                _solNew[Idx2D( idx_cell, idx_sys, _nSys )] = 0.0;
+            }
+
+            // Fluxes
+
+            // First order at boundary
+            if( _cellBoundaryTypes[idx_cell] != BOUNDARY_TYPE::NONE ) {
+                // Fluxes
+                for( unsigned idx_nbr = 0; idx_nbr < _nNbr; ++idx_nbr ) {
+                    if( _neighbors[Idx2D( idx_cell, idx_nbr, _nNbr )] == _nCells ) {
+                        for( unsigned idx_sys = 0; idx_sys < _nSys; idx_sys++ ) {
+                            inner = _quadPts[Idx2D( idx_sys, 0, _nDim )] * _normals[Idx3D( idx_cell, idx_nbr, 0, _nNbr, _nDim )] +
+                                    _quadPts[Idx2D( idx_sys, 1, _nDim )] * _normals[Idx3D( idx_cell, idx_nbr, 1, _nNbr, _nDim )];
+
+                            if( inner > 0 ) {
+                                _solNew[Idx2D( idx_cell, idx_sys, _nSys )] += inner * _sol[Idx2D( idx_cell, idx_sys, _nSys )];
+                            }
+                            else {
+
+                                double ghostCellValue = ( _ghostCellsReflectingY[idx_cell] )
+                                                            ? _sol[Idx2D( idx_cell, _quadratureYReflection[idx_sys], _nSys )]    // Relecting boundary
+                                                            : _ghostCells[idx_cell][idx_sys];                                    // fixed boundary
+
+                                _solNew[Idx2D( idx_cell, idx_sys, _nSys )] += inner * ghostCellValue;
+                            }
+                        }
+                    }
+                    else {
+                        idx_nbr_glob = _neighbors[Idx2D( idx_cell, idx_nbr, _nNbr )];    // global idx of neighbor cell
+                        for( unsigned idx_sys = 0; idx_sys < _nSys; idx_sys++ ) {
+                            inner = _quadPts[Idx2D( idx_sys, 0, _nDim )] * _normals[Idx3D( idx_cell, idx_nbr, 0, _nNbr, _nDim )] +
+                                    _quadPts[Idx2D( idx_sys, 1, _nDim )] * _normals[Idx3D( idx_cell, idx_nbr, 1, _nNbr, _nDim )];
+                            _solNew[Idx2D( idx_cell, idx_sys, _nSys )] +=
+                                ( inner > 0 ) ? inner * _sol[Idx2D( idx_cell, idx_sys, _nSys )] : inner * _sol[Idx2D( idx_nbr_glob, idx_sys, _nSys )];
+                        }
+                    }
+                }
+            }
+
+            else {    // Second order
+                for( unsigned idx_sys = 0; idx_sys < _nSys; idx_sys++ ) {
+
+                    // Slope computation
+                    solDx   = 0.0;
+                    solDy   = 0.0;
+                    limiter = 1.0;
+
+                    minSol = _sol[Idx2D( idx_cell, idx_sys, _nSys )];
+                    maxSol = minSol;
+                    for( unsigned idx_nbr = 0; idx_nbr < _nNbr; ++idx_nbr ) {
+                        //  compute derivative by summing over cell boundary using Green Gauss Theorem
+                        idx_nbr_glob    = _neighbors[Idx2D( idx_cell, idx_nbr, _nNbr )];
+                        solInterfaceAvg = 0.5 * ( _sol[Idx2D( idx_cell, idx_sys, _nSys )] + _sol[Idx2D( idx_nbr_glob, idx_sys, _nSys )] );
+
+                        solDx += solInterfaceAvg * _normals[Idx3D( idx_cell, idx_nbr, 0, _nNbr, _nDim )];
+                        solDy += solInterfaceAvg * _normals[Idx3D( idx_cell, idx_nbr, 1, _nNbr, _nDim )];
+
+                        // Compute ptswise max and minimum solultion values of current and neighbor cells
+                        maxSol = std::max( _sol[Idx2D( idx_nbr_glob, idx_sys, _nSys )], maxSol );
+                        minSol = std::min( _sol[Idx2D( idx_nbr_glob, idx_sys, _nSys )], minSol );
+                    }
+                    solDx /= _areas[idx_cell];
+                    solDy /= _areas[idx_cell];
+
+                    for( unsigned idx_nbr = 0; idx_nbr < _nNbr; idx_nbr++ ) {
+
+                        // Compute value at interface midpoint, called gaussPt
+                        gaussPoints[idx_nbr] = solDx * _relativeInterfaceMidPt[Idx3D( idx_cell, idx_nbr, 0, _nNbr, _nDim )] +
+                                               solDy * _relativeInterfaceMidPt[Idx3D( idx_cell, idx_nbr, 1, _nNbr, _nDim )];
+
+                        // BARTH-JESPERSEN LIMITER
+                        // r = ( gaussPoints[idx_nbr] > 0 ) ? ( maxSol - _sol[Idx2D( idx_cell, idx_sys, _nSys )] ) / ( gaussPoints[idx_nbr] + eps )
+                        //                                 : ( minSol - _sol[Idx2D( idx_cell, idx_sys, _nSys )] ) / ( gaussPoints[idx_nbr] - eps );
+                        //                        limiter = std::min( std::min( r, 1.0 ), limiter );
+
+                        // VENKATAKRISHNAN LIMITER
+                        double delta1Max = maxSol - _sol[Idx2D( idx_cell, idx_sys, _nSys )];
+                        double delta1Min = minSol - _sol[Idx2D( idx_cell, idx_sys, _nSys )];
+
+                        r = ( gaussPoints[idx_nbr] > 0 ) ? ( ( delta1Max * delta1Max + _areas[idx_cell] ) * gaussPoints[idx_nbr] +
+                                                             2 * gaussPoints[idx_nbr] * gaussPoints[idx_nbr] * delta1Max ) /
+                                                               ( delta1Max * delta1Max + 2 * gaussPoints[idx_nbr] * gaussPoints[idx_nbr] +
+                                                                 delta1Max * gaussPoints[idx_nbr] + _areas[idx_cell] ) /
+                                                               ( gaussPoints[idx_nbr] + eps )
+                                                         : ( ( delta1Min * delta1Min + _areas[idx_cell] ) * gaussPoints[idx_nbr] +
+                                                             2 * gaussPoints[idx_nbr] * gaussPoints[idx_nbr] * delta1Min ) /
+                                                               ( delta1Min * delta1Min + 2 * gaussPoints[idx_nbr] * gaussPoints[idx_nbr] +
+                                                                 delta1Min * gaussPoints[idx_nbr] + _areas[idx_cell] ) /
+                                                               ( gaussPoints[idx_nbr] - eps );
+
+                        r       = ( std::abs( gaussPoints[idx_nbr] ) < eps ) ? 1 : r;
+                        limiter = std::min( r, limiter );
+                    }
+
+                    for( unsigned idx_nbr = 0; idx_nbr < _nNbr; ++idx_nbr ) {
+                        // store flux contribution on psiNew_sigmaS to save memory
+                        idx_nbr_glob = _neighbors[Idx2D( idx_cell, idx_nbr, _nNbr )];    // global idx of neighbor cell
+                        inner        = _quadPts[Idx2D( idx_sys, 0, _nDim )] * _normals[Idx3D( idx_cell, idx_nbr, 0, _nNbr, _nDim )] +
+                                _quadPts[Idx2D( idx_sys, 1, _nDim )] * _normals[Idx3D( idx_cell, idx_nbr, 1, _nNbr, _nDim )];
+
+                        _solNew[Idx2D( idx_cell, idx_sys, _nSys )] +=
+                            ( inner > 0 ) ? inner * _sol[Idx2D( idx_cell, idx_sys, _nSys )] + limiter * gaussPoints[idx_nbr]
+                                          : inner * _sol[Idx2D( idx_nbr_glob, idx_sys, _nSys )] + limiter * gaussPoints[idx_nbr];
+                    }
+                }
+            }
+            // Upate
+            for( unsigned idx_sys = 0; idx_sys < _nSys; idx_sys++ ) {
+                _solNew[Idx2D( idx_cell, idx_sys, _nSys )] = _sol[Idx2D( idx_cell, idx_sys, _nSys )] -
+                                                             ( _dT / _areas[idx_cell] ) * _solNew[Idx2D( idx_cell, idx_sys, _nSys )] -
+                                                             _dT * _sigmaT[idx_cell] * _sol[Idx2D( idx_cell, idx_sys, _nSys )];
+
+                // In-scattering Term
+
+                _solNew[Idx2D( idx_cell, idx_sys, _nSys )] +=
+                    _dT * _sigmaS[idx_cell] * _scalarFlux[idx_cell] / ( 4 * M_PI );    // Isotropic scattering
+
+                // Source Term
+                _solNew[Idx2D( idx_cell, idx_sys, _nSys )] += _dT * _source[Idx2D( idx_cell, idx_sys, _nSys )];
+            }
+            // --- Iter Postprocessing ---
+
+            _scalarFluxNew[idx_cell] = 0;
             for( unsigned idx_sys = 0; idx_sys < _nSys; ++idx_sys ) {
-                idx_x = Idx3D( idx_cell, idx_sys, 0, _nSys, _nDim );
-                idx_y = Idx3D( idx_cell, idx_sys, 1, _nSys, _nDim );
+                _scalarFluxNew[idx_cell] += _solNew[Idx2D( idx_cell, idx_sys, _nSys )] * _quadWeights[idx_sys];
+                _sol[Idx2D( idx_cell, idx_sys, _nSys )] = _solNew[Idx2D( idx_cell, idx_sys, _nSys )];    // reset sol
+            }
 
-                _solDx[idx_x] = 0.0;
-                _solDx[idx_y] = 0.0;
+            localMass += _scalarFluxNew[idx_cell] * _areas[idx_cell];
+            localRMSFlux += ( _scalarFluxNew[idx_cell] - _scalarFlux[idx_cell] ) * ( _scalarFluxNew[idx_cell] - _scalarFlux[idx_cell] );
+            _scalarFlux[idx_cell] = _scalarFluxNew[idx_cell];    // reset flux
+
+            //_problem->ComputeCurrentAbsorptionLattice( _scalarFlux );
+            if( IsAbsorptionLattice( _cellMidPoints[Idx2D( idx_cell, 0, _nDim )], _cellMidPoints[Idx2D( idx_cell, 1, _nDim )] ) ) {
+                localCurrAbsorptionLattice += _scalarFlux[idx_cell] * ( _sigmaT[idx_cell] - _sigmaS[idx_cell] ) * _areas[idx_cell];
+
+                if( localMaxAbsorptionLattice < _scalarFlux[idx_cell] * ( _sigmaT[idx_cell] - _sigmaS[idx_cell] ) )
+
+                    localMaxAbsorptionLattice = _scalarFlux[idx_cell] * ( _sigmaT[idx_cell] - _sigmaS[idx_cell] );    // Need to be a private area
+            }
+
+            if( _cellBoundaryTypes[idx_cell] == BOUNDARY_TYPE::NEUMANN && !_ghostCellsReflectingY[idx_cell] ) {
+                // Iterate over face cell faces
+                double currOrdinatewiseOutflow = 0.0;
 
                 for( unsigned idx_nbr = 0; idx_nbr < _nNbr; ++idx_nbr ) {
-                    //  compute derivative by summing over cell boundary using Green Gauss Theorem
-                    idx_nbr_glob = _neighbors[Idx2D( idx_cell, idx_nbr, _nNbr )];
+                    // Find face that points outward
+                    if( _neighbors[Idx2D( idx_cell, idx_nbr, _nNbr )] == _nCells ) {
+                        // Iterate over transport directions
+                        for( unsigned idx_sys = 0; idx_sys < _nSys; ++idx_sys ) {
+                            inner = _quadPts[Idx2D( idx_sys, 0, _nDim )] * _normals[Idx3D( idx_cell, idx_nbr, 0, _nNbr, _nDim )] +
+                                    _quadPts[Idx2D( idx_sys, 1, _nDim )] * _normals[Idx3D( idx_cell, idx_nbr, 1, _nNbr, _nDim )];
+                            // Find outward facing transport directions
+                            if( inner > 0.0 ) {
+                                localCurrScalarOutflow +=
+                                    inner * _sol[Idx2D( idx_cell, idx_sys, _nSys )] * _quadWeights[idx_sys];    // Integrate flux
 
-                    if( idx_nbr_glob == _nCells ) {    // Boundary edge
-                        tmp = 0.5 * ( _sol[Idx2D( idx_cell, idx_sys, _nSys )] + _ghostCells[idx_cell][idx_sys] );
-                    }
-                    else {
-                        tmp = 0.5 * ( _sol[Idx2D( idx_cell, idx_sys, _nSys )] + _sol[Idx2D( idx_nbr_glob, idx_sys, _nSys )] );
-                    }
-                    _solDx[idx_x] += tmp * _normals[Idx3D( idx_cell, idx_nbr, 0, _nNbr, _nDim )];
-                    _solDx[idx_y] += tmp * _normals[Idx3D( idx_cell, idx_nbr, 1, _nNbr, _nDim )];
-                }
+                                currOrdinatewiseOutflow = _sol[Idx2D( idx_cell, idx_sys, _nSys )] * inner /
+                                                          sqrt( ( _normals[Idx3D( idx_cell, idx_nbr, 0, _nNbr, _nDim )] *
+                                                                      _normals[Idx3D( idx_cell, idx_nbr, 0, _nNbr, _nDim )] +
+                                                                  _normals[Idx3D( idx_cell, idx_nbr, 1, _nNbr, _nDim )] *
+                                                                      _normals[Idx3D( idx_cell, idx_nbr, 1, _nNbr, _nDim )] ) );
 
-                _solDx[idx_x] /= _areas[idx_cell];
-                _solDx[idx_y] /= _areas[idx_cell];
-            }
-
-            for( unsigned idx_sys = 0; idx_sys < _nSys; idx_sys++ ) {
-                r      = 0.0;
-                minSol = _sol[Idx2D( idx_cell, idx_sys, _nSys )];
-                maxSol = minSol;
-
-                std::vector<double> localLimiter( _nNbr );
-
-                for( unsigned idx_nbr = 0; idx_nbr < _nNbr; idx_nbr++ ) {
-
-                    // Compute ptswise max and minimum solultion values of current and neighbor cells
-                    idx_nbr_glob = _neighbors[idx_cell * _nNbr + idx_nbr];
-
-                    maxSol = std::max( _sol[Idx2D( idx_cell, idx_sys, _nSys )], maxSol );
-                    minSol = std::max( _sol[Idx2D( idx_cell, idx_sys, _nSys )], minSol );
-                }
-
-                for( unsigned idx_nbr = 0; idx_nbr < _nNbr; idx_nbr++ ) {
-
-                    idx_x = Idx3D( idx_cell, idx_sys, 0, _nSys, _nDim );
-                    idx_y = Idx3D( idx_cell, idx_sys, 1, _nSys, _nDim );
-
-                    // Compute value at interface midpoint, called gaussPt
-                    double gaussPt = 0.0;
-
-                    idx_node = _cellNodes[Idx2D( idx_cell, idx_nbr, _nNbr )];
-                    // gauss point is at cell vertex
-                    gaussPt = 0.5 * ( _solDx[idx_x] * ( _nodes[Idx2D( idx_node, 0, _nDim )] - _cellMidPoints[Idx2D( idx_cell, 0, _nDim )] ) +
-                                      _solDx[idx_y] * ( _nodes[Idx2D( idx_node, 1, _nDim )] - _cellMidPoints[Idx2D( idx_cell, 1, _nDim )] ) );
-
-                    // Compute limiter input
-                    r = 1.0;
-
-                    if( std::abs( gaussPt ) > eps ) {
-                        if( gaussPt > 0.0 ) {
-                            r = ( maxSol - _sol[Idx2D( idx_cell, idx_sys, _nSys )] ) / gaussPt;
-                        }
-                        else if( gaussPt < 0.0 ) {
-                            r = ( minSol - _sol[Idx2D( idx_cell, idx_sys, _nSys )] ) / gaussPt;
+                                if( currOrdinatewiseOutflow > localMaxOrdinatewiseOutflow ) {
+                                    localMaxOrdinatewiseOutflow = currOrdinatewiseOutflow;
+                                }
+                            }
                         }
                     }
-                    else {
-                        r = 1.0;
-                    }
-
-                    localLimiter[idx_nbr] = std::min( r, 1.0 );    // LimiterBarthJespersen( r );
-                }
-                // get smallest limiter
-                _limiter[Idx2D( idx_cell, idx_sys, _nSys )] = localLimiter[0];
-
-                for( unsigned idx_nbr = 0; idx_nbr < _nNbr; idx_nbr++ ) {
-                    if( localLimiter[idx_nbr] < _limiter[Idx2D( idx_cell, idx_sys, _nSys )] ) {
-                        _limiter[Idx2D( idx_cell, idx_sys, _nSys )] = localLimiter[idx_nbr];
-                    }
                 }
             }
         }
-
-        // Reset temporary variable
-        for( unsigned idx_sys = 0; idx_sys < _nSys; idx_sys++ ) {
-            _solNew[Idx2D( idx_cell, idx_sys, _nSys )] = 0.0;
-        }
-
-        // Fluxes
-        for( unsigned idx_nbr = 0; idx_nbr < _nNbr; ++idx_nbr ) {
-            // store flux contribution on psiNew_sigmaS to save memory
-            if( _cellBoundaryTypes[idx_cell] == BOUNDARY_TYPE::NEUMANN && _neighbors[Idx2D( idx_cell, idx_nbr, _nNbr )] == _nCells ) {
-                for( unsigned idx_sys = 0; idx_sys < _nSys; idx_sys++ ) {
-                    inner = _quadPts[Idx2D( idx_sys, 0, _nDim )] * _normals[Idx3D( idx_cell, idx_nbr, 0, _nNbr, _nDim )] +
-                            _quadPts[Idx2D( idx_sys, 1, _nDim )] * _normals[Idx3D( idx_cell, idx_nbr, 1, _nNbr, _nDim )];
-
-                    _solNew[Idx2D( idx_cell, idx_sys, _nSys )] +=
-                        ( inner > 0 ) ? inner * _sol[Idx2D( idx_cell, idx_sys, _nSys )] : inner * _ghostCells[idx_cell][idx_sys];
-                }
+#pragma omp critical
+        {
+            if( localMaxOrdinatewiseOutflow > _curMaxOrdinateOutflow ) {
+                _curMaxOrdinateOutflow = localMaxOrdinatewiseOutflow;
             }
-            else {
-                idx_nbr_glob = _neighbors[Idx2D( idx_cell, idx_nbr, _nNbr )];    // global idx of neighbor cell
-                // left status of interface
-                for( unsigned idx_sys = 0; idx_sys < _nSys; idx_sys++ ) {
+            // reduction( + : _mass, _rmsFlux )
+            _rmsFlux += localRMSFlux;
+            _mass += localMass;
+            _curAbsorptionLattice += localCurrAbsorptionLattice;
+            _curScalarOutflow += localCurrScalarOutflow;
 
-                    idx_x = Idx3D( idx_cell, idx_sys, 0, _nSys, _nDim );
-                    idx_y = Idx3D( idx_cell, idx_sys, 1, _nSys, _nDim );
-
-                    inner = _quadPts[Idx2D( idx_sys, 0, _nDim )] * _normals[Idx3D( idx_cell, idx_nbr, 0, _nNbr, _nDim )] +
-                            _quadPts[Idx2D( idx_sys, 1, _nDim )] * _normals[Idx3D( idx_cell, idx_nbr, 1, _nNbr, _nDim )];
-
-                    // solL  = _sol[Idx2D( idx_cell, idx_sys, _nSys )] +
-                    //        _limiter[Idx2D( idx_cell, idx_sys, _nSys )] *
-                    //            ( _solDx[idx_x] * ( _interfaceMidPoints[Idx3D( idx_cell, idx_nbr, 0, _nNbr, _nDim )] -
-                    //                                _cellMidPoints[Idx2D( idx_cell, 0, _nDim )] ) +
-                    //              _solDx[idx_y] * ( _interfaceMidPoints[Idx3D( idx_cell, idx_nbr, 1, _nNbr, _nDim )] -
-                    //                                _cellMidPoints[Idx2D( idx_cell, 1, _nDim )] ) );
-                    // solR =
-                    //     _sol[Idx2D( idx_cell, idx_sys, _nSys )] +
-                    //     _limiter[Idx2D( idx_cell, idx_sys, _nSys )] *
-                    //         ( _solDx[Idx3D( idx_nbr_glob, idx_sys, 0, _nSys, _nDim )] *
-                    //               ( _interfaceMidPoints[Idx3D( idx_cell, idx_nbr, 0, _nNbr, _nDim )] - _cellMidPoints[Idx2D( idx_cell, 0, _nDim )]
-                    //               ) +
-                    //           _solDx[Idx3D( idx_nbr_glob, idx_sys, 1, _nSys, _nDim )] *
-                    //               ( _interfaceMidPoints[Idx3D( idx_cell, idx_nbr, 1, _nNbr, _nDim )] -
-                    //                 _cellMidPoints[Idx2D( idx_cell, 1, _nDim )] ) );
-                    //_solNew[Idx2D( idx_cell, idx_sys, _nSys )] += ( inner > 0 ) ? inner * solL : inner * solR;
-
-                    // flux evaluation || Thius is the same as the code above, but more efficient (hopefully)
-                    _solNew[Idx2D( idx_cell, idx_sys, _nSys )] +=
-                        ( inner > 0 ) ? inner * ( _sol[Idx2D( idx_cell, idx_sys, _nSys )] +
-                                                  _limiter[Idx2D( idx_cell, idx_sys, _nSys )] *
-                                                      ( _solDx[idx_x] * ( _interfaceMidPoints[Idx3D( idx_cell, idx_nbr, 0, _nNbr, _nDim )] -
-                                                                          _cellMidPoints[Idx2D( idx_cell, 0, _nDim )] ) +
-                                                        _solDx[idx_y] * ( _interfaceMidPoints[Idx3D( idx_cell, idx_nbr, 1, _nNbr, _nDim )] -
-                                                                          _cellMidPoints[Idx2D( idx_cell, 1, _nDim )] ) ) )
-                                      : inner * ( _sol[Idx2D( idx_cell, idx_sys, _nSys )] +
-                                                  _limiter[Idx2D( idx_cell, idx_sys, _nSys )] *
-                                                      ( _solDx[Idx3D( idx_nbr_glob, idx_sys, 0, _nSys, _nDim )] *
-                                                            ( _interfaceMidPoints[Idx3D( idx_cell, idx_nbr, 0, _nNbr, _nDim )] -
-                                                              _cellMidPoints[Idx2D( idx_cell, 0, _nDim )] ) +
-                                                        _solDx[Idx3D( idx_nbr_glob, idx_sys, 1, _nSys, _nDim )] *
-                                                            ( _interfaceMidPoints[Idx3D( idx_cell, idx_nbr, 1, _nNbr, _nDim )] -
-                                                              _cellMidPoints[Idx2D( idx_cell, 1, _nDim )] ) ) );
-                }
+            if( localMaxAbsorptionLattice > _curMaxAbsorptionLattice ) {
+                _curMaxAbsorptionLattice = localMaxAbsorptionLattice;
             }
         }
-        // Upate
-        for( unsigned idx_sys = 0; idx_sys < _nSys; idx_sys++ ) {
-            _solNew[Idx2D( idx_cell, idx_sys, _nSys )] = _sol[Idx2D( idx_cell, idx_sys, _nSys )] -
-                                                         ( _dT / _areas[idx_cell] ) * _solNew[Idx2D( idx_cell, idx_sys, _nSys )] -
-                                                         _dT * _sigmaT[idx_cell] * _sol[Idx2D( idx_cell, idx_sys, _nSys )];
-
-            // In-scattering Term
-
-            _solNew[Idx2D( idx_cell, idx_sys, _nSys )] += _dT * _sigmaS[idx_cell] * _scalarFlux[idx_cell] / ( 4 * M_PI );    // Isotropic scattering
-
-            // Source Term
-            _solNew[Idx2D( idx_cell, idx_sys, _nSys )] += _dT * _source[Idx2D( idx_cell, idx_sys, _nSys )];
-        }
-        // Output
-        _scalarFluxNew[idx_cell] = 0;
-        for( unsigned idx_sys = 0; idx_sys < _nSys; ++idx_sys ) {
-            _scalarFluxNew[idx_cell] += _solNew[Idx2D( idx_cell, idx_sys, _nSys )] * _quadWeights[idx_sys];
-            _sol[Idx2D( idx_cell, idx_sys, _nSys )] = _solNew[Idx2D( idx_cell, idx_sys, _nSys )];    // reset sol
-        }
-
-        _mass += _scalarFluxNew[idx_cell] * _areas[idx_cell];
-        _rmsFlux += ( _scalarFluxNew[idx_cell] - _scalarFlux[idx_cell] ) * ( _scalarFluxNew[idx_cell] - _scalarFlux[idx_cell] );
-        _scalarFlux[idx_cell] = _scalarFluxNew[idx_cell];    // reset flux
     }
     _rmsFlux = sqrt( _rmsFlux );
+
+    _totalScalarOutflow += _curScalarOutflow * _dT;
+    _totalAbsorptionLattice += _curAbsorptionLattice * _dT;
 }
 
 void SNSolverHPC::FVMUpdateOrder1() {
@@ -563,8 +483,17 @@ void SNSolverHPC::FVMUpdateOrder1() {
                         inner = _quadPts[Idx2D( idx_sys, 0, _nDim )] * _normals[Idx3D( idx_cell, idx_nbr, 0, _nNbr, _nDim )] +
                                 _quadPts[Idx2D( idx_sys, 1, _nDim )] * _normals[Idx3D( idx_cell, idx_nbr, 1, _nNbr, _nDim )];
 
-                        _solNew[Idx2D( idx_cell, idx_sys, _nSys )] +=
-                            ( inner > 0 ) ? inner * _sol[Idx2D( idx_cell, idx_sys, _nSys )] : inner * _ghostCells[idx_cell][idx_sys];
+                        if( inner > 0 ) {
+                            _solNew[Idx2D( idx_cell, idx_sys, _nSys )] += inner * _sol[Idx2D( idx_cell, idx_sys, _nSys )];
+                        }
+                        else {
+
+                            double ghostCellValue = ( _ghostCellsReflectingY[idx_cell] )
+                                                        ? _sol[Idx2D( idx_cell, _quadratureYReflection[idx_sys], _nSys )]    // Relecting boundary
+                                                        : _ghostCells[idx_cell][idx_sys];                                    // fixed boundary
+
+                            _solNew[Idx2D( idx_cell, idx_sys, _nSys )] += inner * ghostCellValue;
+                        }
                     }
                 }
                 else {
@@ -667,6 +596,7 @@ void SNSolverHPC::FVMUpdateOrder1() {
     _totalScalarOutflow += _curScalarOutflow * _dT;
     _totalAbsorptionLattice += _curAbsorptionLattice * _dT;
 }
+
 bool SNSolverHPC::IsAbsorptionLattice( double x, double y ) const {
     // Check whether pos is inside absorbing squares
     double xy_corrector = -3.5;
@@ -1093,161 +1023,10 @@ void SNSolverHPC::DrawPostSolverOutput() {
     log->info( "--------------------------- Solver Finished ----------------------------" );
 }
 
-void SNSolverHPC::SolverPreprocessing() {}
-
-void SNSolverHPC::IterPostprocessing( unsigned /*idx_iter*/ ) {
-    // --- Compute Quantities of interest for Volume and Screen Output ---
-    // ComputeScalarFlux();    // Needs to be called first is a solver function
-
-    // ComputeMass();
-    // ComputeChangeRateFlux();
-
-    // _problem->ComputeCurrentOutflow( _sol );
-    // _problem->ComputeTotalOutflow( _dT );
-    // _problem->ComputeMaxOrdinatewiseOutflow( _sol );
-
-    // if( _settings->GetProblemName() == PROBLEM_Lattice || _settings->GetProblemName() == PROBLEM_HalfLattice ) {
-    //     _problem->ComputeCurrentAbsorptionLattice( _scalarFlux );
-    //     _problem->ComputeTotalAbsorptionLattice( _dT );
-    //     _problem->ComputeMaxAbsorptionLattice( _scalarFlux );
-    // }
-    // if( _settings->GetProblemName() == PROBLEM_SymmetricHohlraum || _settings->GetProblemName() == PROBLEM_QuarterHohlraum ) {
-    //     _problem->ComputeCurrentAbsorptionHohlraum( _scalarFlux );    // Unify
-    //     _problem->ComputeTotalAbsorptionHohlraum( _dT );              // Unify and parallelize
-    //     _problem->ComputeCurrentProbeMoment( _sol );
-    //     _problem->ComputeVarAbsorptionGreen( _scalarFlux );
-    //     _problem->ComputeQOIsGreenProbingLine( _scalarFlux );
-    // }
-}
-
 unsigned SNSolverHPC::Idx2D( unsigned idx1, unsigned idx2, unsigned len2 ) { return idx1 * len2 + idx2; }
 
 unsigned SNSolverHPC::Idx3D( unsigned idx1, unsigned idx2, unsigned idx3, unsigned len2, unsigned len3 ) {
     return ( idx1 * len2 + idx2 ) * len3 + idx3;
-}
-
-void SNSolverHPC::FluxUpdate() {
-    if( _spatialOrder == 1 ) {
-// Loop over all spatial cells
-#pragma omp parallel for
-        for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
-            double solL;
-            double solR;
-            double inner;
-
-            // Dirichlet cells stay at IC, farfield assumption
-            // if( _cellBoundaryTypes[idx_cell] == BOUNDARY_TYPE::DIRICHLET ) continue;
-            // Reset temporary variable
-            for( unsigned idx_sys = 0; idx_sys < _nSys; idx_sys++ ) {
-                _solNew[Idx2D( idx_cell, idx_sys, _nSys )] = 0.0;
-            }
-
-            // Loop over all neighbor cells (edges) of cell j and compute numerical
-            // fluxes
-            for( unsigned idx_nbr = 0; idx_nbr < _nNbr; ++idx_nbr ) {
-
-                // store flux contribution on psiNew_sigmaS to save memory
-                if( _cellBoundaryTypes[idx_cell] == BOUNDARY_TYPE::NEUMANN && _neighbors[idx_cell * _nNbr + idx_nbr] == _nCells ) {
-                    for( unsigned idx_sys = 0; idx_sys < _nSys; idx_sys++ ) {
-                        inner = _quadPts[Idx2D( idx_sys, 0, _nDim )] * _normals[Idx3D( idx_cell, idx_nbr, 0, _nNbr, _nDim )] +
-                                _quadPts[Idx2D( idx_sys, 1, _nDim )] * _normals[Idx3D( idx_cell, idx_nbr, 1, _nNbr, _nDim )];
-
-                        _solNew[Idx2D( idx_cell, idx_sys, _nSys )] +=
-                            ( inner > 0 ) ? inner * _sol[Idx2D( idx_cell, idx_sys, _nSys )] : inner * _ghostCells[idx_cell][idx_sys];
-                    }
-                }
-                else {
-                    // first order solver
-                    unsigned nbr_glob = _neighbors[Idx2D( idx_cell, idx_nbr, _nNbr )];    // global idx of neighbor cell
-
-                    for( unsigned idx_sys = 0; idx_sys < _nSys; idx_sys++ ) {
-                        inner = _quadPts[Idx2D( idx_sys, 0, _nDim )] * _normals[Idx3D( idx_cell, idx_nbr, 0, _nNbr, _nDim )] +
-                                _quadPts[Idx2D( idx_sys, 1, _nDim )] * _normals[Idx3D( idx_cell, idx_nbr, 1, _nNbr, _nDim )];
-                        _solNew[Idx2D( idx_cell, idx_sys, _nSys )] +=
-                            ( inner > 0 ) ? inner * _sol[Idx2D( idx_cell, idx_sys, _nSys )] : inner * _sol[Idx2D( nbr_glob, idx_sys, _nSys )];
-                    }
-                }
-            }
-        }
-    }
-    else if( _spatialOrder == 2 ) {
-        // Loop over all spatial cells
-#pragma omp parallel for
-        for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
-            double solL, solR;
-            double inner;
-
-            // Dirichlet cells stay at IC, farfield assumption
-            // if( _cellBoundaryTypes[idx_cell] == BOUNDARY_TYPE::DIRICHLET ) continue;
-
-            // Loop over all ordinates
-            for( unsigned idx_sys = 0; idx_sys < _nSys; idx_sys++ ) {
-                _solNew[idx_cell * _nSys + idx_sys] = 0.0;
-            }
-            // Loop over all neighbor cells (edges) of cell j and compute numerical
-            // fluxes
-            for( unsigned idx_nbr = 0; idx_nbr < _nNbr; ++idx_nbr ) {
-                // store flux contribution on psiNew_sigmaS to save memory
-                if( _cellBoundaryTypes[idx_cell] == BOUNDARY_TYPE::NEUMANN && _neighbors[idx_cell * _nNbr + idx_nbr] == _nCells ) {
-                    for( unsigned idx_sys = 0; idx_sys < _nSys; idx_sys++ ) {
-                        inner = _quadPts[_nDim * idx_sys] * _normals[idx_cell * _nNbr * _nDim + idx_nbr * _nDim] +
-                                _quadPts[_nDim * idx_sys + 1] * _normals[idx_cell * _nNbr * _nDim + idx_nbr * _nDim + 1];
-
-                        _solNew[idx_cell * _nSys + idx_sys] +=
-                            ( inner > 0 ) ? inner * _sol[idx_cell * _nSys + idx_sys] : inner * _ghostCells[idx_cell][idx_sys];
-                    }
-                }
-                else {
-                    unsigned int nbr_glob = _neighbors[idx_cell * _nNbr + idx_nbr];    // global idx of neighbor cell
-
-                    // left status of interface
-                    for( unsigned idx_sys = 0; idx_sys < _nSys; idx_sys++ ) {
-                        solL = _sol[idx_cell * _nSys + idx_sys] +
-                               _limiter[idx_cell * _nSys + idx_sys] *
-                                   ( _solDx[( idx_cell * _nSys + idx_sys ) * _nDim] *
-                                         ( _interfaceMidPoints[idx_cell * _nNbr * _nDim + idx_nbr * _nDim] - _cellMidPoints[idx_cell * _nDim] ) +
-                                     _solDx[( idx_cell * _nSys + idx_sys ) * _nDim + 1] *
-                                         ( _interfaceMidPoints[idx_cell * _nNbr * _nDim + idx_nbr * _nDim + 1] -
-                                           _cellMidPoints[idx_cell * _nDim + 1] ) );
-
-                        solR = _sol[nbr_glob * _nSys + idx_sys] +
-                               _limiter[nbr_glob * _nSys + idx_sys] *
-                                   ( _solDx[( nbr_glob * _nSys + idx_sys ) * _nDim] *
-                                         ( _interfaceMidPoints[idx_cell * _nNbr * _nDim + idx_nbr * _nDim] - _cellMidPoints[idx_cell * _nDim] ) +
-                                     _solDx[( nbr_glob * _nSys + idx_sys ) * _nDim + 1] *
-                                         ( _interfaceMidPoints[idx_cell * _nNbr * _nDim + idx_nbr * _nDim + 1] -
-                                           _cellMidPoints[idx_cell * _nDim + 1] ) );
-
-                        // flux evaluation
-                        inner = _quadPts[_nDim * idx_sys] * _normals[idx_cell * _nNbr * _nDim + idx_nbr * _nDim] +
-                                _quadPts[_nDim * idx_sys + 1] * _normals[idx_cell * _nNbr * _nDim + idx_nbr * _nDim + 1];
-
-                        _solNew[idx_cell * _nSys + idx_sys] += ( inner > 0 ) ? inner * solL : inner * solR;
-                    }
-                }
-            }
-        }
-    }
-}
-
-void SNSolverHPC::FVMUpdate( unsigned idx_iter ) {
-#pragma omp parallel for
-    for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
-        for( unsigned idx_sys = 0; idx_sys < _nSys; idx_sys++ ) {
-
-            _solNew[Idx2D( idx_cell, idx_sys, _nSys )] = _sol[Idx2D( idx_cell, idx_sys, _nSys )] -
-                                                         ( _dT / _areas[idx_cell] ) * _solNew[Idx2D( idx_cell, idx_sys, _nSys )] -
-                                                         _dT * _sigmaT[idx_cell] * _sol[Idx2D( idx_cell, idx_sys, _nSys )];
-
-            // In-scattering Term
-            for( unsigned idx_sys2 = 0; idx_sys2 < _nSys; idx_sys2++ ) {
-                _solNew[Idx2D( idx_cell, idx_sys, _nSys )] += _dT * _sigmaS[idx_cell] * _scatteringKernel[Idx2D( idx_sys, idx_sys2, _nSys )] *
-                                                              _sol[Idx2D( idx_cell, idx_sys2, _nSys )];    // multiply scattering matrix with psi
-            }
-            // Source Term
-            _solNew[Idx2D( idx_cell, idx_sys, _nSys )] += _dT * _source[Idx2D( idx_cell, idx_sys, _nSys )];
-        }
-    }
 }
 
 void SNSolverHPC::WriteVolumeOutput( unsigned idx_iter ) {
@@ -1264,15 +1043,6 @@ void SNSolverHPC::WriteVolumeOutput( unsigned idx_iter ) {
 
                 default: ErrorMessages::Error( "Volume Output Group not defined for HPC SN Solver!", CURRENT_FUNCTION ); break;
             }
-        }
-    }
-}
-
-void SNSolverHPC::SetGhostCells() {
-    // Loop over all cells. If its a Dirichlet boundary, add cell to dict with {cell_idx, boundary_value}
-    for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
-        if( _cellBoundaryTypes[idx_cell] == BOUNDARY_TYPE::NEUMANN || _cellBoundaryTypes[idx_cell] == BOUNDARY_TYPE::DIRICHLET ) {
-            _ghostCells.insert( { idx_cell, std::vector<double>( _nSys ) } );
         }
     }
 }
@@ -1303,33 +1073,72 @@ void SNSolverHPC::PrepareVolumeOutput() {
     }
 }
 
-void SNSolverHPC::ComputeScalarFlux() {
-#pragma omp parallel for
-    for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
-        _scalarFluxNew[idx_cell] = 0;
-        for( unsigned idx_sys = 0; idx_sys < _nSys; ++idx_sys ) {
-            _scalarFluxNew[idx_cell] += _solNew[idx_cell * _nSys + idx_sys] * _quadWeights[idx_sys];    // / firstMomentScaleFactor;
+void SNSolverHPC::SetGhostCells() {
+    if( _settings->GetProblemName() == PROBLEM_Lattice ) {
+        for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
+            if( _cellBoundaryTypes[idx_cell] == BOUNDARY_TYPE::NEUMANN || _cellBoundaryTypes[idx_cell] == BOUNDARY_TYPE::DIRICHLET ) {
+                _ghostCells.insert( { idx_cell, std::vector<double>( _nSys ) } );
+                _ghostCellsReflectingY[idx_cell] = false;
+            }
         }
     }
-}
+    else {    // HALF LATTICE
 
-void SNSolverHPC::ComputeMass() {
+        double tol = 1e-12;    // For distance to boundary
 
-    _mass = 0.0;
+        QuadratureBase* quad = QuadratureBase::Create( _settings );
+        VectorVector vq      = quad->GetPoints();
+        unsigned nq          = quad->GetNq();
 
-#pragma omp parallel for default( shared ) reduction( + : _mass )
-    for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
-        _mass += _scalarFluxNew[idx_cell] * _areas[idx_cell];
+        if( _settings->GetQuadName() != QUAD_GaussLegendreTensorized2D ) {
+            ErrorMessages::Error( "This simplified test case only works with symmetric quadrature orders. Use QUAD_GAUSS_LEGENDRE_TENSORIZED_2D",
+                                  CURRENT_FUNCTION );
+        }
+        {    // Create the symmetry maps for the quadratures
+
+            for( unsigned idx_q = 0; idx_q < nq; idx_q++ ) {
+                for( unsigned idx_q2 = 0; idx_q2 < nq; idx_q2++ ) {
+                    if( abs( vq[idx_q][0] + vq[idx_q2][0] ) + abs( vq[idx_q][1] - vq[idx_q2][1] ) < tol ) {
+                        _quadratureYReflection[idx_q] = idx_q2;
+                        break;
+                    }
+                }
+            }
+        }
+
+        if( _quadratureYReflection.size() != nq ) {
+            ErrorMessages::Error( "Problem with Y symmetry of quadrature of this mesh", CURRENT_FUNCTION );
+        }
+
+        auto nodes = _mesh->GetNodes();
+
+        for( unsigned idx_cell = 0; idx_cell < _mesh->GetNumCells(); idx_cell++ ) {
+            if( _boundaryCells[idx_cell] == BOUNDARY_TYPE::NEUMANN || _boundaryCells[idx_cell] == BOUNDARY_TYPE::DIRICHLET ) {
+                double x = _mesh->GetCellMidPoints()[idx_cell][0];
+                double y = _mesh->GetCellMidPoints()[idx_cell][1];
+
+                auto localCellNodes = _mesh->GetCells()[idx_cell];
+
+                _ghostCellsReflectingY[idx_cell] = false;
+                for( unsigned idx_node = 0; idx_node < _mesh->GetNumNodesPerCell(); idx_node++ ) {    // Check if corner node is in this cell
+                    if( abs( nodes[localCellNodes[idx_node]][1] ) < -3.5 + tol || abs( nodes[localCellNodes[idx_node]][1] ) > 3.5 - tol ) {
+                        // upper and lower boundary
+                        _ghostCells.insert( { idx_cell, std::vector<double>( nq ) } );
+                        break;
+                    }
+                    else if( abs( nodes[localCellNodes[idx_node]][0] ) < tol ) {    // close to 0 => left boundary
+                        _ghostCellsReflectingY[idx_cell] = true;
+                        _ghostCells.insert( { idx_cell, std::vector<double>( nq ) } );
+                        break;
+                    }
+                    else {    // right boundary
+                        _ghostCells.insert( { idx_cell, std::vector<double>( nq ) } );
+                        break;
+                    }
+                }
+            }
+        }
+
+        delete quad;
     }
-}
-
-void SNSolverHPC::ComputeChangeRateFlux() {
-
-    _rmsFlux = 0.0;
-
-#pragma omp parallel for default( shared ) reduction( + : _rmsFlux )
-    for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
-        _rmsFlux += ( _scalarFluxNew[idx_cell] - _scalarFlux[idx_cell] ) * ( _scalarFluxNew[idx_cell] - _scalarFlux[idx_cell] );
-    }
-    _rmsFlux = sqrt( _rmsFlux );
 }
