@@ -54,11 +54,9 @@ SNSolverHPC::SNSolverHPC( Config* settings ) {
     _quadratureYReflection = std::vector<unsigned>( _nSys );
 
     // Solution
-    _sol    = std::vector<double>( _nCells * _nSys );
-    _solNew = std::vector<double>( _nCells * _nSys );
+    _sol = std::vector<double>( _nCells * _nSys );
 
     _scalarFlux              = std::vector<double>( _nCells );
-    _scalarFluxNew           = std::vector<double>( _nCells );
     _localMaxOrdinateOutflow = std::vector<double>( _nCells );
 
     auto areas           = _mesh->GetCellAreas();
@@ -1010,7 +1008,7 @@ void SNSolverHPC::WriteVolumeOutput( unsigned idx_iter ) {
             switch( _settings->GetVolumeOutput()[idx_group] ) {
                 case MINIMAL:
                     for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
-                        _outputFields[idx_group][0][idx_cell] = _scalarFluxNew[idx_cell];
+                        _outputFields[idx_group][0][idx_cell] = _scalarFlux[idx_cell];
                     }
                     break;
 

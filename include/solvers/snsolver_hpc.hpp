@@ -65,12 +65,10 @@ class SNSolverHPC
     std::vector<double> _quadWeights; /*!< @brief dim: _nSys*/
 
     // Solution related members
-    std::vector<double> _sol;    /*!< @brief dim = _nCells x _nSys */
-    std::vector<double> _solNew; /*!< @brief dim = _nCells x _nSys */
+    std::vector<double> _sol; /*!< @brief dim = _nCells x _nSys */
 
     // Output related members
-    std::vector<double> _scalarFlux;    /*!< @brief dim = _nCells  */
-    std::vector<double> _scalarFluxNew; /*!< @brief dim = _nCells  */
+    std::vector<double> _scalarFlux; /*!< @brief dim = _nCells  */
 
     // QOIS
     double _mass;
