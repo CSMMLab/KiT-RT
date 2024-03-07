@@ -158,14 +158,21 @@ void SNSolverHPC::Solve() {
     for( unsigned iter = 0; iter < _nIter; iter++ ) {
         if( iter == _nIter - 1 ) {    // last iteration
             _dT = _settings->GetTEnd() - iter * _dT;
+            if( _temporalOrder == 2 ) _dT /= 2.0;
         }
-        // if( _temporalOrder == 2 ) solRK0 = _sol;
-
-        // for( unsigned rkStep = 0; rkStep < _temporalOrder; ++rkStep ) {
-        //  --- Prepare Boundaries and temp variables
-
-        ( _spatialOrder == 2 ) ? FVMUpdateOrder2() : FVMUpdateOrder1();
-
+        if( _temporalOrder == 2 ) {
+            std::vector<double> solRK0( _sol );
+            ( _spatialOrder == 2 ) ? FVMUpdateOrder2() : FVMUpdateOrder1();
+            ( _spatialOrder == 2 ) ? FVMUpdateOrder2() : FVMUpdateOrder1();
+            iter++;
+#pragma omp parallel for
+            for( unsigned i = 0; i < _nCells; ++i ) {
+                _sol[i] = 0.5 * ( solRK0[i] + _sol[i] );
+            }
+        }
+        else {
+            ( _spatialOrder == 2 ) ? FVMUpdateOrder2() : FVMUpdateOrder1();
+        }
         // --- Update Solution within Runge Kutta Stages
 
         //}
