@@ -237,3 +237,36 @@ std::string OptionStringList::SetValue( std::vector<std::string> option_value ) 
 void OptionStringList::SetDefault() {
     this->_size = 0;    // There is no default value for list
 }
+
+// --- members of OptionDoubleList
+
+OptionDoubleList::OptionDoubleList( std::string option_field_name, unsigned short& list_size, std::vector<double>& option_field )
+    : _field( option_field ), _size( list_size ) {
+    this->_name = option_field_name;
+}
+
+std::string OptionDoubleList::SetValue( std::vector<std::string> option_value ) {
+    OptionBase::SetValue( option_value );
+    // The size is the length of option_value
+    unsigned short option_size = option_value.size();
+    if( option_size == 1 && option_value[0].compare( "NONE" ) == 0 ) {
+        this->_size = 0;
+        return "";
+    }
+    this->_size = option_size;
+
+    // Parse all of the options
+    this->_field.resize( this->_size );
+    for( unsigned long i = 0; i < option_size; i++ ) {
+        std::istringstream is( option_value[i] );
+        double val;
+        if( is >> val ) {
+            this->_field.at( i ) = val;
+        }
+    }
+    return "";
+}
+
+void OptionDoubleList::SetDefault() {
+    this->_size = 0;    // There is no default value for list
+}

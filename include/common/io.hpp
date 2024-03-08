@@ -1,10 +1,10 @@
 #ifndef IO_H
 #define IO_H
 
+#include "common/globalconstants.hpp"
 #include "common/typedef.hpp"
 #include <string>
 #include <vector>
-
 // Forward Declarations
 class Config;
 class Mesh;
@@ -22,10 +22,27 @@ void ExportVTK( const std::string fileName,
 
 Mesh* LoadSU2MeshFromFile( const Config* settings );
 
+void LoadConnectivityFromFile( const std::string outputFile,
+                               std::vector<std::vector<unsigned>>& cellNeighbors,
+                               std::vector<std::vector<Vector>>& cellInterfaceMidPoints,
+                               std::vector<std::vector<Vector>>& cellNormals,
+                               std::vector<BOUNDARY_TYPE>& cellBoundaryTypes,
+                               unsigned nCells,
+                               unsigned nNodesPerCell,
+                               unsigned nDim );
+
+void WriteConnecitivityToFile( const std::string outputFile,
+                               const std::vector<std::vector<unsigned>>& cellNeighbors,
+                               const std::vector<std::vector<Vector>>& cellInterfaceMidPoints,
+                               const std::vector<std::vector<Vector>>& cellNormals,
+                               const std::vector<BOUNDARY_TYPE>& cellBoundaryTypes,
+                               unsigned nCells,
+                               unsigned nDim );
+
 std::string ParseArguments( int argc, char* argv[] );
 
 void PrintLogHeader( std::string inputFile );
 
-Matrix createSU2MeshFromImage( std::string imageName, std::string SU2Filename );
+// Matrix createSU2MeshFromImage( std::string imageName, std::string SU2Filename ); Deprecated
 
 #endif    // IO_H

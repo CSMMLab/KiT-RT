@@ -5,15 +5,14 @@ import os
 from optparse import OptionParser
 
 
-def add_block(x0,y0,lengthX, lengthY,char_length,geom):
+def add_block(x0, y0, lengthX, lengthY, char_length, geom):
     coords = np.array([
         [x0, y0, 0.0],
-        [x0+lengthX, y0, 0.0],
-        [x0+lengthX, y0+lengthY, 0.0],
-        [x0, y0+lengthY, 0.0]
+        [x0 + lengthX, y0, 0.0],
+        [x0 + lengthX, y0 + lengthY, 0.0],
+        [x0, y0 + lengthY, 0.0]
     ])
     return geom.add_polygon(coords, char_length)
-
 
 
 def main():
@@ -23,8 +22,8 @@ def main():
     parser = OptionParser()
     parser.add_option("-o", "--output_name", dest="output_name", default="struct_2dmesh")
     parser.add_option("-c", "--char_length", dest="char_length", default=0.01)
-    parser.add_option("-s", "--start_pt", dest="start_pt", nargs=2, default=(0,0))
-    parser.add_option("-l", "--length", dest="length", nargs=2, default=(1,1))
+    parser.add_option("-s", "--start_pt", dest="start_pt", nargs=2, default=(0, 0))
+    parser.add_option("-l", "--length", dest="length", nargs=2, default=(1, 1))
     parser.add_option("-b", "--boundary", dest="b_type", default="void")
     (options, args) = parser.parse_args()
 
@@ -38,7 +37,7 @@ def main():
     y0 = float(options.start_pt[1])
 
     geom = pg.opencascade.Geometry()
-    domain = add_block(x0,y0,lengthX, lengthY,char_length,geom)
+    domain = add_block(x0, y0, lengthX, lengthY, char_length, geom)
 
     if options.b_type == "void":
         geom.add_physical(domain.lines, label="void")

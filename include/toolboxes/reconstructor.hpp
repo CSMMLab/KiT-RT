@@ -27,7 +27,7 @@ class Reconstructor
     virtual ~Reconstructor() {}
     static Reconstructor* Create( Config* settings );
 
-    unsigned inline GetReconsOrder() { return _reconsOrder; }
+    unsigned inline GetSpatialOrder() { return _reconsOrder; }
 
     /*! Method 1: structured developing
      * @brief Slope of angular flux psi inside a given cell

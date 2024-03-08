@@ -1,37 +1,66 @@
 #include "common/mesh.hpp"
-
+#include "common/config.hpp"
+#include "common/io.hpp"
 #include <chrono>
+#include <filesystem>
+#include <iostream>
+#include <omp.h>
 
-Mesh::Mesh( std::vector<Vector> nodes,
+Mesh::Mesh( const Config* settings,
+            std::vector<Vector> nodes,
             std::vector<std::vector<unsigned>> cells,
             std::vector<std::pair<BOUNDARY_TYPE, std::vector<unsigned>>> boundaries )
     : _dim( nodes[0].size() ), _numCells( cells.size() ), _numNodes( nodes.size() ), _numNodesPerCell( cells[0].size() ),
       _numBoundaries( boundaries.size() ), _ghostCellID( _numCells ), _nodes( nodes ), _cells( cells ), _boundaries( boundaries ) {
+
+    _settings = settings;
     if( _dim == 2 ) {
         _numNodesPerBoundary = 2u;
     }
     else {
         ErrorMessages::Error( "Unsupported mesh dimension!", CURRENT_FUNCTION );
     }
+    auto log = spdlog::get( "event" );
+    log->info( "| Compute cell areas..." );
     ComputeCellAreas();
+    log->info( "| Compute cell midpoints..." );
     ComputeCellMidpoints();
-    ComputeConnectivity();
+
+    // Connectivity
+    std::string connectivityFile = _settings->GetMeshFile();
+    size_t lastDotIndex          = connectivityFile.find_last_of( '.' );
+    connectivityFile             = connectivityFile.substr( 0, lastDotIndex );
+    connectivityFile += ".con";
+    if( !std::filesystem::exists( connectivityFile ) || _settings->GetForcedConnectivity() ) {
+        log->info( "| Compute mesh connectivity..." );
+        ComputeConnectivity();    // Computes  _cellNeighbors, _cellInterfaceMidPoints, _cellNormals, _cellBoundaryTypes
+        log->info( "| Save mesh connectivity to file " + connectivityFile );
+        WriteConnecitivityToFile( connectivityFile, _cellNeighbors, _cellInterfaceMidPoints, _cellNormals, _cellBoundaryTypes, _numCells, _dim );
+    }
+    else {
+        // Resize the outer vector to have nCells elements
+        _cellNeighbors.resize( _numCells );
+        _cellInterfaceMidPoints.resize( _numCells );
+        _cellNormals.resize( _numCells );
+        _cellBoundaryTypes.resize( _numCells );
+        log->info( "| Load mesh connectivity from file " + connectivityFile );
+        LoadConnectivityFromFile(
+            connectivityFile, _cellNeighbors, _cellInterfaceMidPoints, _cellNormals, _cellBoundaryTypes, _numCells, _numNodesPerCell, _dim );
+    }
+    log->info( "| Compute boundary..." );
     ComputeBounds();
 }
 
 Mesh::~Mesh() {}
 
 void Mesh::ComputeConnectivity() {
+    auto log = spdlog::get( "event" );
 
-    // get MPI info
-    int comm_size, comm_rank;
-    MPI_Comm_size( MPI_COMM_WORLD, &comm_size );
-    MPI_Comm_rank( MPI_COMM_WORLD, &comm_rank );
-
-    // determine number/chunk size and indices of cells treated by each mpi thread
-    unsigned chunkSize    = std::ceil( static_cast<float>( _numCells ) / static_cast<float>( comm_size ) );
-    unsigned mpiCellStart = comm_rank * chunkSize;
-    unsigned mpiCellEnd   = std::min( ( comm_rank + 1 ) * chunkSize, _numCells );
+    unsigned comm_size = 1;    // No MPI implementation right now
+    // determine number/chunk size and indices of cells treated by each mpi thread (deactivated for now)
+    unsigned chunkSize    = _numCells;    // std::ceil( static_cast<float>( _numCells ) / static_cast<float>( comm_size ) );
+    unsigned mpiCellStart = 0;            // comm_rank * chunkSize;
+    unsigned mpiCellEnd   = _numCells;    // std::min( ( comm_rank + 1 ) * chunkSize, _numCells );
 
     // 'flat' vectors are a flattened representation of the neighbors numCells<numNodesPerCell> nested vectors; easier for MPI
     // 'part' vectors store information for each single MPI thread
@@ -40,7 +69,10 @@ void Mesh::ComputeConnectivity() {
     std::vector<Vector> interfaceMidFlatPart( _numNodesPerCell * chunkSize, Vector( _dim, -1.0 ) );
 
     // pre sort cells and boundaries; sorting is needed for std::set_intersection
+    log->info( "| ...sort cells..." );
+
     auto sortedCells( _cells );
+#pragma omp parallel for
     for( unsigned i = 0; i < _numCells; ++i ) {
         std::sort( sortedCells[i].begin(), sortedCells[i].end() );
     }
@@ -51,13 +83,18 @@ void Mesh::ComputeConnectivity() {
     }
 
     // save which cell has which nodes
+    log->info( "| ...connect cells to nodes..." );
     blaze::CompressedMatrix<bool> connMat( _numCells, _numNodes );
+
+    // #pragma omp parallel for
     for( unsigned i = mpiCellStart; i < mpiCellEnd; ++i ) {
         for( auto j : _cells[i] ) connMat.set( i, j, true );
     }
 
     // determine neighbor cells and normals with MPI and OpenMP
-#pragma omp parallel for
+    log->info( "| ...determine neighbors of cells..." );
+
+#pragma omp parallel for schedule( guided )
     for( unsigned i = mpiCellStart; i < mpiCellEnd; ++i ) {
         std::vector<unsigned>* cellsI = &sortedCells[i];
         unsigned ctr                  = 0;
@@ -80,8 +117,9 @@ void Mesh::ComputeConnectivity() {
                 // determine unused index
                 unsigned pos0 = _numNodesPerCell * ( i - mpiCellStart );
                 unsigned pos  = pos0;
-                while( neighborsFlatPart[pos] != -1 && pos < pos0 + _numNodesPerCell - 1 && pos < chunkSize * _numNodesPerCell - 1 )
+                while( neighborsFlatPart[pos] != -1 && pos < pos0 + _numNodesPerCell - 1 && pos < chunkSize * _numNodesPerCell - 1 ) {
                     pos++;    // neighbors should be at same edge position for cells i AND j
+                }
                 neighborsFlatPart[pos] = j;
                 // compute normal vector
                 normalsFlatPart[pos]      = ComputeOutwardFacingNormal( _nodes[commonElements[0]], _nodes[commonElements[1]], _cellMidPoints[i] );
@@ -106,7 +144,9 @@ void Mesh::ComputeConnectivity() {
                 if( commonElements.size() >= _numNodesPerBoundary && commonElements.size() <= _numNodesPerCell ) {
                     unsigned pos0 = _numNodesPerCell * ( i - mpiCellStart );
                     unsigned pos  = pos0;
-                    while( neighborsFlatPart[pos] != -1 && pos < pos0 + _numNodesPerCell - 1 && pos < chunkSize * _numNodesPerCell - 1 ) pos++;
+                    while( neighborsFlatPart[pos] != -1 && pos < pos0 + _numNodesPerCell - 1 && pos < chunkSize * _numNodesPerCell - 1 ) {
+                        pos++;
+                    }
                     neighborsFlatPart[pos]    = _ghostCellID;
                     normalsFlatPart[pos]      = ComputeOutwardFacingNormal( _nodes[commonElements[0]], _nodes[commonElements[1]], _cellMidPoints[i] );
                     interfaceMidFlatPart[pos] = ComputeCellInterfaceMidpoints( _nodes[commonElements[0]], _nodes[commonElements[1]] );
@@ -119,20 +159,20 @@ void Mesh::ComputeConnectivity() {
     std::vector<int> neighborsFlat( _numNodesPerCell * chunkSize * comm_size, -1 );
     std::vector<Vector> normalsFlat( _numNodesPerCell * chunkSize * comm_size, Vector( _dim, 0.0 ) );
     std::vector<Vector> interfaceMidFlat( _numNodesPerCell * chunkSize * comm_size, Vector( _dim, 0.0 ) );
-    if( comm_size == 1 ) {    // can be done directly if there is only one MPI thread
-        neighborsFlat.assign( neighborsFlatPart.begin(), neighborsFlatPart.end() );
-        normalsFlat.assign( normalsFlatPart.begin(), normalsFlatPart.end() );
-        interfaceMidFlat.assign( interfaceMidFlatPart.begin(), interfaceMidFlatPart.end() );
-    }
-    else {
-        MPI_Allgather( neighborsFlatPart.data(),
-                       _numNodesPerCell * chunkSize,
-                       MPI_INT,
-                       neighborsFlat.data(),
-                       _numNodesPerCell * chunkSize,
-                       MPI_INT,
-                       MPI_COMM_WORLD );
-    }
+    // if( comm_size == 1 ) {    // can be done directly if there is only one MPI thread
+    neighborsFlat.assign( neighborsFlatPart.begin(), neighborsFlatPart.end() );
+    normalsFlat.assign( normalsFlatPart.begin(), normalsFlatPart.end() );
+    interfaceMidFlat.assign( interfaceMidFlatPart.begin(), interfaceMidFlatPart.end() );
+    //}
+    // else {
+    //    MPI_Allgather( neighborsFlatPart.data(),
+    //                   _numNodesPerCell * chunkSize,
+    //                   MPI_INT,
+    //                   neighborsFlat.data(),
+    //                   _numNodesPerCell * chunkSize,
+    //                   MPI_INT,
+    //                   MPI_COMM_WORLD );
+    //}
 
     // check for any unassigned faces
     if( std::any_of( neighborsFlat.begin(), neighborsFlat.end(), []( int i ) { return i == -1; } ) ) {    // if any entry in neighborsFlat is -1
@@ -151,23 +191,26 @@ void Mesh::ComputeConnectivity() {
         unsigned IDj = neighborsFlat[i];
         if( IDi == IDj ) continue;     // avoid self assignment
         if( IDj == _ghostCellID ) {    // cell is boundary cell
-            if( std::find( _cellNeighbors[IDi].begin(), _cellNeighbors[IDi].end(), _ghostCellID ) == _cellNeighbors[IDi].end() ) {
-                _cellNeighbors[IDi].push_back( _ghostCellID );
-                _cellNormals[IDi].push_back( normalsFlat[i] );
-                _cellInterfaceMidPoints[IDi].push_back( interfaceMidFlat[i] );
-            }
+            // if( std::find( _cellNeighbors[IDi].begin(), _cellNeighbors[IDi].end(), _ghostCellID ) == _cellNeighbors[IDi].end() ) {
+            _cellNeighbors[IDi].push_back( _ghostCellID );
+            _cellNormals[IDi].push_back( normalsFlat[i] );
+            _cellInterfaceMidPoints[IDi].push_back( interfaceMidFlat[i] );
+            // temp++;
+            // }
+            // std::cout << temp << "\n";
         }
         else {    // normal cell neighbor
-            if( std::find( _cellNeighbors[IDi].begin(), _cellNeighbors[IDi].end(), IDj ) == _cellNeighbors[IDi].end() ) {
-                _cellNeighbors[IDi].push_back( IDj );
-                _cellNormals[IDi].push_back( normalsFlat[i] );
-                _cellInterfaceMidPoints[IDi].push_back( interfaceMidFlat[i] );
-            }
+            // if( std::find( _cellNeighbors[IDi].begin(), _cellNeighbors[IDi].end(), IDj ) == _cellNeighbors[IDi].end() ) {
+            _cellNeighbors[IDi].push_back( neighborsFlat[i] );
+            _cellNormals[IDi].push_back( normalsFlat[i] );
+            _cellInterfaceMidPoints[IDi].push_back( interfaceMidFlat[i] );
+            //}
         }
     }
 
     // assign boundary types to all cells
     _cellBoundaryTypes.resize( _numCells, BOUNDARY_TYPE::NONE );
+#pragma omp parallel for
     for( unsigned i = 0; i < _numCells; ++i ) {
         if( std::any_of( _cellNeighbors[i].begin(), _cellNeighbors[i].end(), [this]( unsigned i ) {
                 return i == _ghostCellID;
@@ -185,6 +228,7 @@ void Mesh::ComputeConnectivity() {
 
 void Mesh::ComputeCellAreas() {
     _cellAreas.resize( _numCells );
+#pragma omp parallel for
     for( unsigned i = 0; i < _numCells; ++i ) {
         switch( _numNodesPerCell ) {
             case 3: {    // triangular cells
@@ -223,6 +267,7 @@ void Mesh::ComputeCellAreas() {
 
 void Mesh::ComputeCellMidpoints() {
     _cellMidPoints = std::vector( _numCells, Vector( _dim, 0.0 ) );
+#pragma omp parallel for
     for( unsigned j = 0; j < _numCells; ++j ) {               // loop over cells
         for( unsigned l = 0; l < _cells[j].size(); ++l ) {    // loop over nodes of the cell
             _cellMidPoints[j] = _cellMidPoints[j] + _nodes[_cells[j][l]];
@@ -255,7 +300,7 @@ void Mesh::ComputeSlopes( unsigned nq, VectorVector& psiDerX, VectorVector& psiD
             psiDerX[idx_cell][idx_sys] = 0.0;
             psiDerY[idx_cell][idx_sys] = 0.0;
             if( _cellBoundaryTypes[idx_cell] != 2 ) continue;    // skip ghost cells
-            // compute derivative by summing over cell boundary
+            //  compute derivative by summing over cell boundary using Green Gauss Theorem
             for( unsigned idx_nbr = 0; idx_nbr < _cellNeighbors[idx_cell].size(); ++idx_nbr ) {
                 psiDerX[idx_cell][idx_sys] +=
                     0.5 * ( psi[idx_cell][idx_sys] + psi[_cellNeighbors[idx_cell][idx_nbr]][idx_sys] ) * _cellNormals[idx_cell][idx_nbr][0];
@@ -290,14 +335,18 @@ void Mesh::ComputeLimiter(
     double const eps = 1e-10;
 #pragma omp parallel for
     for( unsigned idx_cell = 0; idx_cell < _numCells; idx_cell++ ) {
-        for( unsigned idx_sys = 0; idx_sys < nSys; idx_sys++ ) {
-            double r = 0.0;
-            if( _cellBoundaryTypes[idx_cell] != 2 ) {
+        if( _cellBoundaryTypes[idx_cell] != 2 ) {
+            for( unsigned idx_sys = 0; idx_sys < nSys; idx_sys++ ) {
                 limiter[idx_cell][idx_sys] = 0.0;    // turn to first order on boundaries
-                continue;                            // skip computation
             }
+            continue;    // skip computation
+        }
+
+        for( unsigned idx_sys = 0; idx_sys < nSys; idx_sys++ ) {
+            double r      = 0.0;
             double minSol = sol[idx_cell][idx_sys];
             double maxSol = sol[idx_cell][idx_sys];
+
             Vector localLimiter( _numNodesPerCell, 0.0 );
             for( unsigned idx_nbr = 0; idx_nbr < _cellNeighbors[idx_cell].size(); idx_nbr++ ) {
                 // Compute ptswise max and minimum solultion values of current and neighbor cells
@@ -309,12 +358,13 @@ void Mesh::ComputeLimiter(
                     minSol = sol[glob_nbr][idx_sys];
                 }
             }
+
             for( unsigned idx_nbr = 0; idx_nbr < _cellNeighbors[idx_cell].size(); idx_nbr++ ) {
                 // Compute value at interface midpoint, called gaussPt
                 double gaussPt = 0.0;
                 // gauss point is at cell vertex
-                gaussPt = solDx[idx_cell][idx_sys] * ( _nodes[_cells[idx_cell][idx_nbr]][0] - _cellMidPoints[idx_cell][0] ) +
-                          solDy[idx_cell][idx_sys] * ( _nodes[_cells[idx_cell][idx_nbr]][1] - _cellMidPoints[idx_cell][1] );
+                gaussPt = 0.5 * ( solDx[idx_cell][idx_sys] * ( _nodes[_cells[idx_cell][idx_nbr]][0] - _cellMidPoints[idx_cell][0] ) +
+                                  solDy[idx_cell][idx_sys] * ( _nodes[_cells[idx_cell][idx_nbr]][1] - _cellMidPoints[idx_cell][1] ) );
 
                 // Compute limiter input
                 if( std::abs( gaussPt ) > eps ) {
@@ -332,70 +382,19 @@ void Mesh::ComputeLimiter(
                     std::cout << "r <0.0 \n";    // if this happens there is a bug or a deformend mesh
                 }
                 localLimiter[idx_nbr] = std::min( r, 1.0 );    // LimiterBarthJespersen( r );
-                // double epsVenka = ( 1 * sqrt( _cellAreas[idx_cell] ) );
-                // epsVenka        = epsVenka * epsVenka * epsVenka;
-                // double dMax     = maxSol - sol[idx_cell][idx_sys];
-                // double dMin     = minSol - sol[idx_cell][idx_sys];
-                //// venkat limiter
-                // if( gaussPt > 0.0 ) {
-                //    localLimiter[idx_nbr] = ( 1 / gaussPt ) * ( ( dMax * dMax + epsVenka * epsVenka ) * gaussPt + 2 * gaussPt * gaussPt * dMax ) /
-                //                            ( dMax * dMax + 2 * gaussPt * gaussPt + dMax * gaussPt + epsVenka * epsVenka );
-                //}
-                // else if( gaussPt < 0.0 ) {
-                //    localLimiter[idx_nbr] = ( 1 / gaussPt ) * ( ( dMin * dMin + epsVenka * epsVenka ) * gaussPt + 2 * gaussPt * gaussPt * dMin ) /
-                //                            ( dMin * dMin + 2 * gaussPt * gaussPt + dMin * gaussPt + epsVenka * epsVenka );
-                //}
-                // else {
-                //    localLimiter[idx_nbr] = 1.0;
-                //}
             }
             // get smallest limiter
             limiter[idx_cell][idx_sys] = localLimiter[0];
             for( unsigned idx_nbr = 0; idx_nbr < _cellNeighbors[idx_cell].size(); idx_nbr++ ) {
                 if( localLimiter[idx_nbr] < limiter[idx_cell][idx_sys] ) limiter[idx_cell][idx_sys] = localLimiter[idx_nbr];
             }
-            // check maximum principle
-            // for( unsigned idx_nbr = 0; idx_nbr < _cellNeighbors[idx_cell].size(); idx_nbr++ ) {
-            //    double currLim = limiter[idx_cell][idx_sys];
-            //    // double dy      = solDy[idx_cell][idx_sys];
-            //    // double dx      = solDx[idx_cell][idx_sys];
-            //    // double rijx    = _cellInterfaceMidPoints[idx_cell][idx_nbr][0];
-            //    // double rijy    = _cellInterfaceMidPoints[idx_cell][idx_nbr][1];
-            //    // double cmx     = _cellMidPoints[idx_cell][0];
-            //    // double cmy     = _cellMidPoints[idx_cell][1];
-            //    // double curSol  = sol[idx_cell][idx_sys];
-            //    double gaussPt = solDx[idx_cell][idx_sys] * ( _cellInterfaceMidPoints[idx_cell][idx_nbr][0] - _cellMidPoints[idx_cell][0] ) +
-            //                     solDy[idx_cell][idx_sys] * ( _cellInterfaceMidPoints[idx_cell][idx_nbr][1] - _cellMidPoints[idx_cell][1] );
-
-            //    double psiL = sol[idx_cell][idx_sys] + currLim * gaussPt;
-            //    // double psiL2 = curSol + currLim * ( dx * ( rijx - cmx ) + dy * ( rijy - cmy ) );
-
-            //    if( psiL > maxSol ) {
-            //        // std::cout << "max principle hurt\n";
-            //        // gaussPt = solDx[idx_cell][idx_sys] * ( _nodes[_cells[idx_cell][idx_nbr]][0] - _cellMidPoints[idx_cell][0] ) +
-            //        //           solDy[idx_cell][idx_sys] * ( _nodes[_cells[idx_cell][idx_nbr]][1] - _cellMidPoints[idx_cell][1] );
-            //        // std::cout << "gaussPt" << gaussPt << "\n";
-            //        // std::cout << "enumMax" << maxSol - sol[idx_cell][idx_sys] << "\n";
-            //        // std::cout << "enumMin" << minSol - sol[idx_cell][idx_sys] << "\n";
-            //        // std::cout << "minSol" << minSol << "psiL" << psiL << "maxSol" << maxSol << "\n";
-            //        // limiter[idx_cell][idx_sys] = 0.0;
-            //    }
-            //    if( psiL < minSol ) {
-            //        // std::cout << "min principle hurt\n";
-            //        // std::cout << "gaussPt" << gaussPt << "\n";
-            //        // std::cout << "enumMax" << maxSol - sol[idx_cell][idx_sys] << "\n";
-            //        // std::cout << "enumMin" << minSol - sol[idx_cell][idx_sys] << "\n";
-            //        // std::cout << "minSol" << minSol << "psiL" << psiL << "maxSol" << maxSol << "\n";
-            //        // limiter[idx_cell][idx_sys] = 0.0;
-            //    }
-            //}
         }
     }
 }
 
 void Mesh::ComputeLimiter1D( unsigned nSys, const VectorVector& sol, VectorVector& limiter ) const {
-    //#pragma omp parallel for
     double const eps = 1e-10;
+#pragma omp parallel for
     for( unsigned idx_cell = 0; idx_cell < _numCells; idx_cell++ ) {
         for( unsigned idx_sys = 0; idx_sys < nSys; idx_sys++ ) {
             double r = 0.0;
@@ -445,4 +444,31 @@ double Mesh::GetDistanceToOrigin( unsigned idx_cell ) const {
         distance += _cellMidPoints[idx_cell][idx_dim] * _cellMidPoints[idx_cell][idx_dim];
     }
     return sqrt( distance );
+}
+
+unsigned Mesh::GetCellOfKoordinate( double x, double y ) const {
+    for( unsigned idx_cell = 0; idx_cell < _numCells; idx_cell++ ) {
+        if( IsPointInsideCell( idx_cell, x, y ) ) {
+            return idx_cell;
+        }
+    }
+    ErrorMessages::Error( "Probing point (" + std::to_string( x ) + "," + std::to_string( y ) + ") is not contained in mesh.", CURRENT_FUNCTION );
+    return 0;
+}
+
+bool Mesh::IsPointInsideCell( unsigned idx_cell, double x, double y ) const {
+    bool inside = false;
+    for( unsigned i = 0, j = _numNodesPerCell - 1; i < _numNodesPerCell; j = i++ ) {
+        double xi = _nodes[_cells[idx_cell][i]][0];
+        double yi = _nodes[_cells[idx_cell][i]][1];
+        double xj = _nodes[_cells[idx_cell][j]][0];
+        double yj = _nodes[_cells[idx_cell][j]][1];
+
+        bool intersect = ( ( yi > y ) != ( yj > y ) ) && ( x < ( xj - xi ) * ( y - yi ) / ( yj - yi ) + xi );
+
+        if( intersect ) {
+            inside = true;
+        }
+    }
+    return inside;
 }

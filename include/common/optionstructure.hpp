@@ -161,6 +161,22 @@ class OptionStringList : public OptionBase
     void SetDefault() override;
 };
 
+class OptionDoubleList : public OptionBase
+{
+    std::vector<double>& _field; /*!< @brief Reference to the string list field value. no default value */
+    std::string _name;           /*!< @brief string identifier for the option */
+    unsigned short& _size;       /*!< @brief Size of string list */
+
+  public:
+    OptionDoubleList( std::string option_field_name, unsigned short& list_size, std::vector<double>& option_field );
+
+    ~OptionDoubleList() override {}
+
+    std::string SetValue( std::vector<std::string> option_value ) override;
+
+    void SetDefault() override;
+};
+
 // Template classes (TODO: Find a way to split code to .cpp)
 
 template <class Tenum> class OptionEnum : public OptionBase

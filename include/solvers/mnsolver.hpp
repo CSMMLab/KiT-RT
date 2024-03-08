@@ -52,8 +52,7 @@ class MNSolver : public SolverBase
     // Solver
     virtual void FVMUpdate( unsigned idx_iter ) override;
     virtual void FluxUpdate() override;
-    virtual void IterPreprocessing( unsigned /*idx_iter*/ ) override;
-    virtual void IterPostprocessing( unsigned /*idx_iter*/ ) override;
+    virtual void IterPreprocessing( unsigned idx_iter ) override;
 
     void FluxUpdatePseudo1D();    // Helper
     void FluxUpdatePseudo2D();    // Helper
@@ -70,6 +69,6 @@ class MNSolver : public SolverBase
 
     // Helper
     /*! @brief Computes the radiative flux from the solution vector of the moment system */
-    void ComputeRadFlux() override;
+    void ComputeScalarFlux() override;
 };
 #endif    // MNSOLVER_H

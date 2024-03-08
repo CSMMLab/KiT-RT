@@ -9,7 +9,7 @@ class PhantomImage : public ProblemBase
     PhantomImage() = delete;
     double _sigmaS; /*!< @brief Scattering coefficient */
   public:
-    PhantomImage( Config* settings, Mesh* mesh );
+    PhantomImage( Config* settings, Mesh* mesh, QuadratureBase* quad );
     virtual ~PhantomImage();
     VectorVector SetupIC() override;
     std::vector<VectorVector> GetExternalSource( const Vector& energies ) override;

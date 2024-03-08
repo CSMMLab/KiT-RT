@@ -6,23 +6,25 @@
 #include "common/typedef.hpp"
 
 #include <algorithm>
-#include <mpi.h>
-#include <omp.h>
 #include <vector>
 
 #include "toolboxes/errormessages.hpp"
 #include "toolboxes/reconstructor.hpp"
 
+class Config;
+
 class Mesh
 {
   protected:
+    const Config* _settings; /*!< @brief config class for global information */
+
     const unsigned _dim;             /*!< @brief spatial dimension of the mesh, i.e. 1D,2D,3D */
     const unsigned _numCells;        /*!< @brief number of cells in the mesh */
     const unsigned _numNodes;        /*!< @brief number of nodes in the mesh (for node centered view)*/
     const unsigned _numNodesPerCell; /*!< @brief number of nodes per cell */
     const unsigned _numBoundaries;   /*!< @brief number of boundary cells in the mesh */
     const unsigned _ghostCellID; /*!< @brief Id of the ghost cell. (we use only one ghost cell). equal to _numCells and therefore has the ID of the
-                                    last cell + 1 */
+                                  last cell + 1 */
 
     unsigned _numNodesPerBoundary;
     std::vector<std::pair<double, double>> _bounds;    // ???
@@ -61,12 +63,15 @@ class Mesh
     Vector ComputeCellInterfaceMidpoints( const Vector& nodeA,
                                           const Vector& nodeB ); /*!< @brief compute the midpoint of the edge between nodeA and nodeB */
 
+    bool IsPointInsideCell( unsigned idx_cell, double x, double y ) const; /*!< @brief Function to check if a point is inside a polygon (cell)*/
+
   public:
     Mesh() = delete;    //  no default constructor
 
     /*! @brief Constructor of mesh. Needs nodes, cells, and boundary descriptions as specified above.
      *          See LoadSU2MeshFromFile in io.cpp for setup information*/
-    Mesh( std::vector<Vector> nodes,
+    Mesh( const Config* settings,
+          std::vector<Vector> nodes,
           std::vector<std::vector<unsigned>> cells,
           std::vector<std::pair<BOUNDARY_TYPE, std::vector<unsigned>>> boundaries );
     ~Mesh();
@@ -121,6 +126,10 @@ class Mesh
     /*! @brief Returns distance of a specified cells center to the coordinate systems origin
      *  @return dimension: scalar */
     double GetDistanceToOrigin( unsigned idx_cell ) const;
+
+    /*! @brief Returns index of cell containing the coordinate (x,y)
+     *  @return cell_idx: unsigned */
+    unsigned GetCellOfKoordinate( double x, double y ) const;
 
     /*! @brief ComputeSlopes calculates the slope in every cell into x and y direction using the divergence theorem.
      *  @param nq is number of quadrature points

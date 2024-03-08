@@ -6,7 +6,7 @@
 
 // ---- 2d test case
 
-PhantomImage::PhantomImage( Config* settings, Mesh* mesh ) : ProblemBase( settings, mesh ) {}
+PhantomImage::PhantomImage( Config* settings, Mesh* mesh, QuadratureBase* quad ) : ProblemBase( settings, mesh, quad ) {}
 
 PhantomImage::~PhantomImage() {}
 
@@ -32,8 +32,12 @@ std::vector<double> PhantomImage::GetDensity( const VectorVector& cellMidPoints 
 
     std::string imageFile = _settings->GetCTFile();
     std::string meshFile  = _settings->GetMeshFile();
-    Matrix gsImage        = createSU2MeshFromImage( imageFile, meshFile );
-    auto bounds           = _mesh->GetBounds();
+    ErrorMessages::Error( "Python API support is deprecated for KiT-RT. This function needs to be rewritten.\n Use a python script to first create "
+                          "the mesh, then call KiT-RT from Python. This is the recommended workflow for stability and performance.",
+                          CURRENT_FUNCTION );
+
+    Matrix gsImage = Matrix( 0, 0 );    //    createSU2MeshFromImage( imageFile, meshFile ); DEprecated
+    auto bounds    = _mesh->GetBounds();
 
     double xMin = bounds[0].first;
     double xMax = bounds[0].second;

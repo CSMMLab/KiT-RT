@@ -42,16 +42,15 @@ class PNSolver : public SolverBase
 
     // IO
     void PrepareVolumeOutput() override;
-    void WriteVolumeOutput( unsigned idx_pseudoTime ) override;
+    void WriteVolumeOutput( unsigned idx_iter ) override;
 
     // Solver
-    void FVMUpdate( unsigned idx_energy ) override;
+    void FVMUpdate( unsigned idx_iter ) override;
     void FluxUpdate() override;
-    void IterPreprocessing( unsigned idx_pseudotime ) override;
-    void IterPostprocessing( unsigned idx_pseudotime ) override;
+    void IterPreprocessing( unsigned idx_iter ) override;
 
     // Helper
-    void ComputeRadFlux() override;
+    void ComputeScalarFlux() override;
 
     // Initialization of the Solver
     /*! @brief parameter functions for setting up system matrix

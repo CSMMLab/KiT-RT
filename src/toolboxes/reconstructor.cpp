@@ -1,7 +1,7 @@
 #include "toolboxes/reconstructor.hpp"
 #include "common/config.hpp"
 
-Reconstructor::Reconstructor( Config* settings ) { _reconsOrder = settings->GetReconsOrder(); }
+Reconstructor::Reconstructor( Config* settings ) { _reconsOrder = settings->GetSpatialOrder(); }
 
 double FortSign( double a, double b ) {
     if( b > 0.0 ) return std::fabs( a );
