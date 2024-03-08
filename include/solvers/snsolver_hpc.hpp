@@ -35,16 +35,18 @@ class SNSolverHPC
     unsigned _nNbr;
     unsigned _nNodes;
 
-    std::vector<double> _areas;                          /*!< @brief surface area of all spatial cells,
-                                                            dim(_areas) = _NCells */
-    std::vector<double> _normals;                        /*!< @brief edge normals multiplied by edge length,
-                                                                         dim(_normals) = (_NCells,nEdgesPerCell,spatialDim) */
-    std::vector<unsigned> _neighbors;                    /*!< @brief edge neighbor cell ids, dim(_neighbors) = (_NCells,nEdgesPerCell) */
-    std::vector<double> _cellMidPoints;                  /*!< @brief dim _nCells x _dim */
+    std::vector<double> _areas;         /*!< @brief surface area of all spatial cells,
+                                           dim(_areas) = _NCells */
+    std::vector<double> _normals;       /*!< @brief edge normals multiplied by edge length,
+                                                        dim(_normals) = (_NCells,nEdgesPerCell,spatialDim) */
+    std::vector<unsigned> _neighbors;   /*!< @brief edge neighbor cell ids, dim(_neighbors) = (_NCells,nEdgesPerCell) */
+    std::vector<double> _cellMidPoints; /*!< @brief dim _nCells x _dim */
+
     std::vector<double> _interfaceMidPoints;             /*!< @brief dim: _nCells x _nEdgesPerCell x _dim */
     std::vector<BOUNDARY_TYPE> _cellBoundaryTypes;       /*!< @brief dim: _nCells x _nEdgesPerCell x _dim */
     std::map<unsigned, std::vector<double>> _ghostCells; /*!< @brief Vector of ghost cells for boundary conditions. CAN BE MORE EFFICIENT */
     std::vector<double> _relativeInterfaceMidPt;         /*!< @brief dim _nCells * _nNbr * _nDim */
+    std::vector<double> _relativeCellVertices;           /*!< @brief dim _nCells * _nNbr * _nDim */
 
     std::map<unsigned, bool> _ghostCellsReflectingY; /*!< map that indicates if a ghostcell has a fixed value or is a mirroring boundary */
     std::vector<unsigned> _quadratureYReflection;    /*!< map that gives a Reflection against the y axis for the velocity ordinates */

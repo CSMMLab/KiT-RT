@@ -71,7 +71,7 @@ std::vector<VectorVector> HalfLattice_SN::GetExternalSource( const Vector& /*ene
 }
 
 VectorVector HalfLattice_SN::SetupIC() {
-    VectorVector psi( _mesh->GetNumCells(), Vector( _settings->GetNQuadPoints(), 1e-10 ) );
+    VectorVector psi( _mesh->GetNumCells(), Vector( _settings->GetNQuadPoints(), 0.0 ) );
     return psi;
 }
 
