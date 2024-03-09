@@ -158,7 +158,7 @@ class SNSolverHPC
      *  @param settings config class that stores all needed config information */
     SNSolverHPC( Config* settings );
 
-    ~SNSolverHPC() {}
+    ~SNSolverHPC();
 
     /*! @brief Solve functions runs main iteration loop. Components of the solve
      * loop are pure  and subclassed by the child solvers.  */

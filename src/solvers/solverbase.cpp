@@ -61,6 +61,9 @@ SolverBase::SolverBase( Config* settings ) {
     if( _settings->GetIsCSD() ) {
         _nIter = _nEnergies - 1;    // Since CSD does not go the last energy step
     }
+    else {
+        _nIter++;
+    }
 
     // setup problem  and store frequently used params
 
@@ -132,6 +135,10 @@ void SolverBase::Solve() {
     std::chrono::duration<double> duration;
     // Loop over energies (pseudo-time of continuous slowing down approach)
     for( unsigned iter = 0; iter < _nIter; iter++ ) {
+        if( iter == _nIter - 1 ) {    // last iteration
+            _dT = _settings->GetTEnd() - iter * _dT;
+        }
+
         if( rkStages == 2 ) solRK0 = _sol;
 
         for( unsigned rkStep = 0; rkStep < rkStages; ++rkStep ) {

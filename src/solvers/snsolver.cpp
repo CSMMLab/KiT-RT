@@ -188,6 +188,7 @@ void SNSolver::FVMUpdate( unsigned idx_iter ) {
             // for( unsigned idx_quad = 0; idx_quad < _nq; ++idx_quad ) {
             // time update angular flux with numerical flux and total scattering cross
             // section
+
             _solNew[idx_cell] = _sol[idx_cell] - ( _dT / _areas[idx_cell] ) * _solNew[idx_cell] - _dT * _sigmaT[0][idx_cell] * _sol[idx_cell];
             //}
             // compute scattering effects
