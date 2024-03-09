@@ -67,7 +67,8 @@ class SNSolverHPC
     std::vector<double> _quadWeights; /*!< @brief dim: _nSys*/
 
     // Solution related members
-    std::vector<double> _sol; /*!< @brief dim = _nCells x _nSys */
+    std::vector<double> _sol;  /*!< @brief dim = _nCells x _nSys */
+    std::vector<double> _flux; /*!< @brief dim = _nCells x _nSys */
 
     // Output related members
     std::vector<double> _scalarFlux; /*!< @brief dim = _nCells  */
@@ -97,8 +98,10 @@ class SNSolverHPC
     // ---- Member functions ----
 
     // Solver
-    void FVMUpdateOrder1();
-    void FVMUpdateOrder2();
+    void FluxOrder1();
+    void FluxOrder2();
+
+    void FVMUpdate();
 
     /*! @brief Computes the finite Volume update step for the current iteration
          @param idx_iter  current (peudo) time iteration */

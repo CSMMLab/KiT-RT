@@ -56,7 +56,8 @@ SNSolverHPC::SNSolverHPC( Config* settings ) {
     _quadratureYReflection = std::vector<unsigned>( _nSys );
 
     // Solution
-    _sol = std::vector<double>( _nCells * _nSys );
+    _sol  = std::vector<double>( _nCells * _nSys );
+    _flux = std::vector<double>( _nCells * _nSys );
 
     _scalarFlux              = std::vector<double>( _nCells );
     _localMaxOrdinateOutflow = std::vector<double>( _nCells );
@@ -181,15 +182,18 @@ void SNSolverHPC::Solve() {
         }
         if( _temporalOrder == 2 ) {
             std::vector<double> solRK0( _sol );
-            ( _spatialOrder == 2 ) ? FVMUpdateOrder2() : FVMUpdateOrder1();
-            ( _spatialOrder == 2 ) ? FVMUpdateOrder2() : FVMUpdateOrder1();
+            ( _spatialOrder == 2 ) ? FluxOrder2() : FluxOrder1();
+            FVMUpdate();
+            ( _spatialOrder == 2 ) ? FluxOrder2() : FluxOrder1();
+            FVMUpdate();
 #pragma omp parallel for
             for( unsigned i = 0; i < _nCells; ++i ) {
                 _sol[i] = 0.5 * ( solRK0[i] + _sol[i] );    // Solution averaging with HEUN
             }
         }
         else {
-            ( _spatialOrder == 2 ) ? FVMUpdateOrder2() : FVMUpdateOrder1();
+            ( _spatialOrder == 2 ) ? FluxOrder2() : FluxOrder1();
+            FVMUpdate();
         }
 
         // --- Wall time measurement
@@ -233,7 +237,7 @@ void SNSolverHPC::PrintVolumeOutput( int idx_iter ) const {
     }
 }
 
-void SNSolverHPC::FVMUpdateOrder2() {
+void SNSolverHPC::FluxOrder2() {
 
     double const eps = 1e-10;
 
@@ -315,15 +319,14 @@ void SNSolverHPC::FVMUpdateOrder2() {
 
         double localMaxOrdinatewiseOutflow = _curMaxOrdinateOutflow;
         double localCurrScalarOutflow      = 0.0;
-        std::vector<double> localFlux( _nSys );
-        double localScalarFlux = 0;
+        double localScalarFlux             = 0;
 
         unsigned idx_nbr_glob = 0;
 #pragma omp for nowait
         for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
             // #pragma omp simd
             for( unsigned idx_sys = 0; idx_sys < _nSys; idx_sys++ ) {
-                localFlux[idx_sys] = 0;
+                _flux[idx_sys] = 0;
             }
 
             // First order at boundary
@@ -338,14 +341,14 @@ void SNSolverHPC::FVMUpdateOrder2() {
                                                 _quadPts[Idx2D( idx_sys, 1, _nDim )] * _normals[Idx3D( idx_cell, idx_nbr, 1, _nNbr, _nDim )];
 
                             if( localInner > 0 ) {
-                                localFlux[idx_sys] += localInner * _sol[Idx2D( idx_cell, idx_sys, _nSys )];
+                                _flux[idx_sys] += localInner * _sol[Idx2D( idx_cell, idx_sys, _nSys )];
                             }
                             else {
                                 double ghostCellValue = ( _ghostCellsReflectingY[idx_cell] )
                                                             ? _sol[Idx2D( idx_cell, _quadratureYReflection[idx_sys], _nSys )]    // Relecting boundary
                                                             : _ghostCells[idx_cell][idx_sys];                                    // fixed boundary
 
-                                localFlux[idx_sys] += localInner * ghostCellValue;
+                                _flux[idx_sys] += localInner * ghostCellValue;
                             }
                         }
                     }
@@ -356,8 +359,8 @@ void SNSolverHPC::FVMUpdateOrder2() {
                         for( unsigned idx_sys = 0; idx_sys < _nSys; idx_sys++ ) {
                             double localInner = _quadPts[Idx2D( idx_sys, 0, _nDim )] * _normals[Idx3D( idx_cell, idx_nbr, 0, _nNbr, _nDim )] +
                                                 _quadPts[Idx2D( idx_sys, 1, _nDim )] * _normals[Idx3D( idx_cell, idx_nbr, 1, _nNbr, _nDim )];
-                            localFlux[idx_sys] += ( localInner > 0 ) ? localInner * _sol[Idx2D( idx_cell, idx_sys, _nSys )]
-                                                                     : localInner * _sol[Idx2D( idx_nbr_glob, idx_sys, _nSys )];
+                            _flux[idx_sys] += ( localInner > 0 ) ? localInner * _sol[Idx2D( idx_cell, idx_sys, _nSys )]
+                                                                 : localInner * _sol[Idx2D( idx_nbr_glob, idx_sys, _nSys )];
                         }
                     }
                 }
@@ -373,31 +376,29 @@ void SNSolverHPC::FVMUpdateOrder2() {
                         double localInner = _quadPts[Idx2D( idx_sys, 0, _nDim )] * _normals[Idx3D( idx_cell, idx_nbr, 0, _nNbr, _nDim )] +
                                             _quadPts[Idx2D( idx_sys, 1, _nDim )] * _normals[Idx3D( idx_cell, idx_nbr, 1, _nNbr, _nDim )];
 
-                        localFlux[idx_sys] += ( localInner > 0 )
-                                                  ? localInner * _sol[Idx2D( idx_cell, idx_sys, _nSys )] +
-                                                        _limiter[Idx2D( idx_cell, idx_sys, _nSys )] *
-                                                            ( _solDx[Idx3D( idx_cell, idx_sys, 0, _nSys, _nDim )] *
-                                                                  _relativeInterfaceMidPt[Idx3D( idx_cell, idx_nbr, 0, _nNbr, _nDim )] +
-                                                              _solDx[Idx3D( idx_cell, idx_sys, 1, _nSys, _nDim )] *
-                                                                  _relativeInterfaceMidPt[Idx3D( idx_cell, idx_nbr, 1, _nNbr, _nDim )] )
-                                                  : localInner * _sol[Idx2D( idx_nbr_glob, idx_sys, _nSys )] +
-                                                        _limiter[Idx2D( idx_nbr_glob, idx_sys, _nSys )] *
-                                                            ( _solDx[Idx3D( idx_nbr_glob, idx_sys, 0, _nSys, _nDim )] *
-                                                                  ( _interfaceMidPoints[Idx3D( idx_cell, idx_nbr, 0, _nNbr, _nDim )] -
-                                                                    _cellMidPoints[Idx2D( idx_nbr_glob, 0, _nDim )] ) +
-                                                              _solDx[Idx3D( idx_nbr_glob, idx_sys, 1, _nSys, _nDim )] *
-                                                                  ( _interfaceMidPoints[Idx3D( idx_cell, idx_nbr, 1, _nNbr, _nDim )] -
-                                                                    _cellMidPoints[Idx2D( idx_nbr_glob, 1, _nDim )] ) );
+                        _flux[idx_sys] += ( localInner > 0 ) ? localInner * _sol[Idx2D( idx_cell, idx_sys, _nSys )] +
+                                                                   _limiter[Idx2D( idx_cell, idx_sys, _nSys )] *
+                                                                       ( _solDx[Idx3D( idx_cell, idx_sys, 0, _nSys, _nDim )] *
+                                                                             _relativeInterfaceMidPt[Idx3D( idx_cell, idx_nbr, 0, _nNbr, _nDim )] +
+                                                                         _solDx[Idx3D( idx_cell, idx_sys, 1, _nSys, _nDim )] *
+                                                                             _relativeInterfaceMidPt[Idx3D( idx_cell, idx_nbr, 1, _nNbr, _nDim )] )
+                                                             : localInner * _sol[Idx2D( idx_nbr_glob, idx_sys, _nSys )] +
+                                                                   _limiter[Idx2D( idx_nbr_glob, idx_sys, _nSys )] *
+                                                                       ( _solDx[Idx3D( idx_nbr_glob, idx_sys, 0, _nSys, _nDim )] *
+                                                                             ( _interfaceMidPoints[Idx3D( idx_cell, idx_nbr, 0, _nNbr, _nDim )] -
+                                                                               _cellMidPoints[Idx2D( idx_nbr_glob, 0, _nDim )] ) +
+                                                                         _solDx[Idx3D( idx_nbr_glob, idx_sys, 1, _nSys, _nDim )] *
+                                                                             ( _interfaceMidPoints[Idx3D( idx_cell, idx_nbr, 1, _nNbr, _nDim )] -
+                                                                               _cellMidPoints[Idx2D( idx_nbr_glob, 1, _nDim )] ) );
                     }
                 }
             }
             // Upate
 #pragma omp simd
             for( unsigned idx_sys = 0; idx_sys < _nSys; idx_sys++ ) {
-                _sol[Idx2D( idx_cell, idx_sys, _nSys )] =
-                    ( 1 - _dT * _sigmaT[idx_cell] ) * _sol[Idx2D( idx_cell, idx_sys, _nSys )] +
-                    _dT * ( _sigmaS[idx_cell] * _scalarFlux[idx_cell] / ( 4 * M_PI ) + _source[Idx2D( idx_cell, idx_sys, _nSys )] -
-                            localFlux[idx_sys] / _areas[idx_cell] );
+                _sol[Idx2D( idx_cell, idx_sys, _nSys )] = ( 1 - _dT * _sigmaT[idx_cell] ) * _sol[Idx2D( idx_cell, idx_sys, _nSys )] +
+                                                          _dT * ( _sigmaS[idx_cell] * _scalarFlux[idx_cell] / ( 4 * M_PI ) +
+                                                                  _source[Idx2D( idx_cell, idx_sys, _nSys )] - _flux[idx_sys] / _areas[idx_cell] );
             }
             // --- Iter Postprocessing ---
 
@@ -471,12 +472,7 @@ void SNSolverHPC::FVMUpdateOrder2() {
     _totalAbsorptionLattice += _curAbsorptionLattice * _dT;
 }
 
-void SNSolverHPC::FVMUpdateOrder1() {
-    _mass    = 0.0;
-    _rmsFlux = 0.0;
-    std::vector<double> localFlux( _nSys * _nCells );
-
-    // Loop over all spatial cells
+void SNSolverHPC::FluxOrder1() {
 
 #pragma omp parallel for
     for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
@@ -484,7 +480,7 @@ void SNSolverHPC::FVMUpdateOrder1() {
 
 #pragma omp simd
         for( unsigned idx_sys = 0; idx_sys < _nSys; idx_sys++ ) {
-            localFlux[Idx2D( idx_cell, idx_sys, _nSys )] = 0.0;    // Reset temporary variable
+            _flux[Idx2D( idx_cell, idx_sys, _nSys )] = 0.0;    // Reset temporary variable
         }
 
         // Fluxes
@@ -495,13 +491,13 @@ void SNSolverHPC::FVMUpdateOrder1() {
                     double localInner = _quadPts[Idx2D( idx_sys, 0, _nDim )] * _normals[Idx3D( idx_cell, idx_nbr, 0, _nNbr, _nDim )] +
                                         _quadPts[Idx2D( idx_sys, 1, _nDim )] * _normals[Idx3D( idx_cell, idx_nbr, 1, _nNbr, _nDim )];
                     if( localInner > 0 ) {
-                        localFlux[Idx2D( idx_cell, idx_sys, _nSys )] += localInner * _sol[Idx2D( idx_cell, idx_sys, _nSys )];
+                        _flux[Idx2D( idx_cell, idx_sys, _nSys )] += localInner * _sol[Idx2D( idx_cell, idx_sys, _nSys )];
                     }
                     else {
                         double ghostCellValue = ( _ghostCellsReflectingY[idx_cell] )
                                                     ? _sol[Idx2D( idx_cell, _quadratureYReflection[idx_sys], _nSys )]    // Relecting boundary
                                                     : _ghostCells[idx_cell][idx_sys];                                    // fixed boundary
-                        // localFlux[Idx2D( idx_cell, idx_sys, _nSys )] += localInner * _sol[Idx2D( idx_cell, idx_sys, _nSys )];
+                        // _flux[Idx2D( idx_cell, idx_sys, _nSys )] += localInner * _sol[Idx2D( idx_cell, idx_sys, _nSys )];
                     }
                 }
             }
@@ -513,12 +509,17 @@ void SNSolverHPC::FVMUpdateOrder1() {
                     double localInner = _quadPts[Idx2D( idx_sys, 0, _nDim )] * _normals[Idx3D( idx_cell, idx_nbr, 0, _nNbr, _nDim )] +
                                         _quadPts[Idx2D( idx_sys, 1, _nDim )] * _normals[Idx3D( idx_cell, idx_nbr, 1, _nNbr, _nDim )];
 
-                    localFlux[Idx2D( idx_cell, idx_sys, _nSys )] += ( localInner > 0 ) ? localInner * _sol[Idx2D( idx_cell, idx_sys, _nSys )]
-                                                                                       : localInner * _sol[Idx2D( nbr_glob, idx_sys, _nSys )];
+                    _flux[Idx2D( idx_cell, idx_sys, _nSys )] += ( localInner > 0 ) ? localInner * _sol[Idx2D( idx_cell, idx_sys, _nSys )]
+                                                                                   : localInner * _sol[Idx2D( nbr_glob, idx_sys, _nSys )];
                 }
             }
         }
     }
+}
+
+void SNSolverHPC::FVMUpdate() {
+    _mass    = 0.0;
+    _rmsFlux = 0.0;
 
 #pragma omp parallel for reduction( + : _mass, _rmsFlux, _curAbsorptionLattice, _curScalarOutflow )                                                  \
     reduction( max : _curMaxOrdinateOutflow, _curMaxAbsorptionLattice )
@@ -529,7 +530,7 @@ void SNSolverHPC::FVMUpdateOrder1() {
             // Upate
             _sol[Idx2D( idx_cell, idx_sys, _nSys )] =
                 ( 1 - _dT * _sigmaT[idx_cell] ) * _sol[Idx2D( idx_cell, idx_sys, _nSys )] -
-                _dT / _areas[idx_cell] * localFlux[Idx2D( idx_cell, idx_sys, _nSys )] +
+                _dT / _areas[idx_cell] * _flux[Idx2D( idx_cell, idx_sys, _nSys )] +
                 _dT * ( _sigmaS[idx_cell] * _scalarFlux[idx_cell] / ( 4 * M_PI ) + _source[Idx2D( idx_cell, idx_sys, _nSys )] );
         }
 
