@@ -283,8 +283,8 @@ void SNSolverHPC::FluxOrder2() {
                     _solDx[Idx3D( idx_cell, idx_sys, 1, _nSys, _nDim )] * _relativeCellVertices[Idx3D( idx_cell, idx_nbr, 1, _nNbr, _nDim )];
 
                 // BARTH-JESPERSEN LIMITER
-                r = ( gaussPoint > 0 ) ? std::min( 0.5 * ( maxSol - _sol[Idx2D( idx_cell, idx_sys, _nSys )] ) / ( gaussPoint + eps ), 1.0 )
-                                       : std::min( 0.5 * ( minSol - _sol[Idx2D( idx_cell, idx_sys, _nSys )] ) / ( gaussPoint - eps ), 1.0 );
+                r = ( gaussPoint > 0 ) ? std::min( ( maxSol - _sol[Idx2D( idx_cell, idx_sys, _nSys )] ) / ( gaussPoint + eps ), 1.0 )
+                                       : std::min( ( minSol - _sol[Idx2D( idx_cell, idx_sys, _nSys )] ) / ( gaussPoint - eps ), 1.0 );
 
                 r = ( std::abs( gaussPoint ) < eps ) ? 1 : r;
 
