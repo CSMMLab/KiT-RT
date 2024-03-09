@@ -124,8 +124,8 @@ SNSolverHPC::SNSolverHPC( Config* settings ) {
             }
         }
 
-        _sigmaS[idx_cell]     = 1;    // sigmaS[0][idx_cell];
-        _sigmaT[idx_cell]     = 1;    // sigmaT[0][idx_cell];
+        _sigmaS[idx_cell]     = sigmaS[0][idx_cell];
+        _sigmaT[idx_cell]     = sigmaT[0][idx_cell];
         _scalarFlux[idx_cell] = 0;
 
         for( unsigned idx_sys = 0; idx_sys < _nSys; idx_sys++ ) {
@@ -533,7 +533,7 @@ void SNSolverHPC::FVMUpdate() {
                 _dT / _areas[idx_cell] * _flux[Idx2D( idx_cell, idx_sys, _nSys )] +
                 _dT * ( _sigmaS[idx_cell] * _scalarFlux[idx_cell] / ( 4 * M_PI ) + _source[Idx2D( idx_cell, idx_sys, _nSys )] );
         }
-
+  
         // --- Iter Postprocessing ---
 
         double localScalarFlux = 0;
@@ -547,8 +547,7 @@ void SNSolverHPC::FVMUpdate() {
         _rmsFlux += ( localScalarFlux - _scalarFlux[idx_cell] ) * ( localScalarFlux - _scalarFlux[idx_cell] );
         _scalarFlux[idx_cell] = localScalarFlux;    // set flux
 
-        if( IsAbsorptionLattice( _cellMidPoints[Idx2D( idx_cell, 0, _nDim )], _cellMidPoints[Idx2D( idx_cell, 1, _nDim )] ) ) {
-
+        if( IsAbsorptionLattice( _cellMidPoints[Idx2D( idx_cell, 0, _nDim )], _cellMidPoints[Idx2D( idx_cell, 1, _nDim )] ) ) {      
             double sigmaAPsi = _scalarFlux[idx_cell] * ( _sigmaT[idx_cell] - _sigmaS[idx_cell] );
 
             _curAbsorptionLattice += sigmaAPsi * _areas[idx_cell];
@@ -562,7 +561,6 @@ void SNSolverHPC::FVMUpdate() {
 
             for( unsigned idx_nbr = 0; idx_nbr < _nNbr; ++idx_nbr ) {
                 // Find face that points outward
-
                 if( _neighbors[Idx2D( idx_cell, idx_nbr, _nNbr )] == _nCells ) {
 #pragma omp simd reduction( + : _curScalarOutflow ) reduction( max : _curMaxOrdinateOutflow )
                     for( unsigned idx_sys = 0; idx_sys < _nSys; ++idx_sys ) {
@@ -587,7 +585,6 @@ void SNSolverHPC::FVMUpdate() {
             }
         }
     }
-
     _rmsFlux = sqrt( _rmsFlux );
     _totalScalarOutflow += _curScalarOutflow * _dT;
     _totalAbsorptionLattice += _curAbsorptionLattice * _dT;
@@ -1091,8 +1088,7 @@ void SNSolverHPC::SetGhostCells() {
             for( unsigned idx_q = 0; idx_q < _nSys; idx_q++ ) {
                 for( unsigned idx_q2 = 0; idx_q2 < _nSys; idx_q2++ ) {
                     if( abs( _quadPts[Idx2D( idx_q, 0, _nDim )] + _quadPts[Idx2D( idx_q2, 0, _nDim )] ) +
-                            abs( _quadPts[Idx2D( idx_q, 1, _nDim )] - _quadPts[Idx2D( idx_q2, 1, _nDim )] ) <
-                        tol ) {
+                            abs( _quadPts[Idx2D( idx_q, 1, _nDim )] - _quadPts[Idx2D( idx_q2, 1, _nDim )] ) < tol ) {
                         _quadratureYReflection[idx_q] = idx_q2;
                         break;
                     }
