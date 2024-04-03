@@ -969,14 +969,16 @@ void SNSolverHPC::PrepareVolumeOutput() {
 
 void SNSolverHPC::SetGhostCells() {
     if( _settings->GetProblemName() == PROBLEM_Lattice ) {
+        std::vector<double> void_flow( _nSys, 0.0 );
+
         for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
             if( _cellBoundaryTypes[idx_cell] == BOUNDARY_TYPE::NEUMANN || _cellBoundaryTypes[idx_cell] == BOUNDARY_TYPE::DIRICHLET ) {
-                _ghostCells[idx_cell]            = std::vector<double>( _nSys, 1e-15 );
+                _ghostCells[idx_cell]            = void_flow;
                 _ghostCellsReflectingY[idx_cell] = false;
             }
         }
     }
-    else {    // HALF LATTICE
+    else if( _settings->GetProblemName() == PROBLEM_HalfLattice ) {    // HALF LATTICE NOT WORKING
 
         double tol = 1e-12;    // For distance to boundary
 
@@ -1028,4 +1030,97 @@ void SNSolverHPC::SetGhostCells() {
             }
         }
     }
+
+    else if( _settings->GetProblemName() == PROBLEM_SymmetricHohlraum ) {
+        std::vector<double> left_inflow( _nSys, 0.0 );
+        std::vector<double> right_inflow( _nSys, 0.0 );
+        std::vector<double> vertical_flow( _nSys, 0.0 );
+
+        for( unsigned idx_q = 0; idx_q < _nSys; idx_q++ ) {
+            if( _quadPts[Idx2D( idx_q, 0, _nDim )] > 0.0 ) left_inflow[idx_q] = 1.0;
+            if( _quadPts[Idx2D( idx_q, 1, _nDim )] < 0.0 ) right_inflow[idx_q] = 1.0;
+        }
+
+        for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
+
+            _ghostCellsReflectingY[idx_cell] = false;
+
+            if( _cellBoundaryTypes[idx_cell] == BOUNDARY_TYPE::NEUMANN || _cellBoundaryTypes[idx_cell] == BOUNDARY_TYPE::DIRICHLET ) {
+                if( _cellMidPoints[Idx2D( idx_cell, 1, _nDim )] < -0.6 )
+                    _ghostCells[idx_cell] = vertical_flow;
+                else if( _cellMidPoints[Idx2D( idx_cell, 1, _nDim )] > 0.6 )
+                    _ghostCells[idx_cell] = vertical_flow;
+                else if( _cellMidPoints[Idx2D( idx_cell, 0, _nDim )] < -0.6 )
+                    _ghostCells[idx_cell] = left_inflow;
+                else if( _cellMidPoints[Idx2D( idx_cell, 0, _nDim )] > 0.6 )
+                    _ghostCells[idx_cell] = right_inflow;
+            }
+        }
+    }
 }
+/*
+void SNSolverHPC::ComputeTotalAbsorptionHohlraum( double dT ) {
+    _totalAbsorptionHohlraumCenter += _curAbsorptionHohlraumCenter * dT;
+    _totalAbsorptionHohlraumVertical += _curAbsorptionHohlraumVertical * dT;
+    _totalAbsorptionHohlraumHorizontal += _curAbsorptionHohlraumHorizontal * dT;
+}
+
+void SNSolverHPC::ComputeVarAbsorptionGreen( const Vector& scalarFlux ) {
+    double a_g                  = 0.0;
+    _varAbsorptionHohlraumGreen = 0.0;
+
+    unsigned nCells           = _mesh->GetNumCells();
+    auto cellMids             = _mesh->GetCellMidPoints();
+    std::vector<double> areas = _mesh->GetCellAreas();
+
+#pragma omp parallel for default( shared ) reduction( + : a_g )
+    for( unsigned idx_cell = 0; idx_cell < nCells; ++idx_cell ) {
+        double x = cellMids[idx_cell][0];
+        double y = cellMids[idx_cell][1];
+        bool green1, green2, green3, green4;
+
+        green1 = x > -0.2 && x < -0.15 && y > -0.35 && y < 0.35;    // green area 1 (lower boundary)
+        green2 = x > 0.15 && x < 0.2 && y > -0.35 && y < 0.35;      // green area 2 (upper boundary)
+        green3 = x > -0.2 && x < 0.2 && y > -0.4 && y < -0.35;      // green area 3 (left boundary)
+        green4 = x > -0.2 && x < 0.2 && y > 0.35 && y < 0.4;        // green area 4 (right boundary)
+
+        if( green1 || green2 || green3 || green4 ) {
+            a_g += ( _sigmaT[idx_cell] - _sigmaS[idx_cell] ) * scalarFlux[idx_cell] * areas[idx_cell];
+        }
+    }
+
+#pragma omp parallel for default( shared ) reduction( + : _varAbsorptionHohlraumGreen )
+    for( unsigned idx_cell = 0; idx_cell < nCells; ++idx_cell ) {
+        double x = cellMids[idx_cell][0];
+        double y = cellMids[idx_cell][1];
+        bool green1, green2, green3, green4;
+
+        green1 = x > -0.2 && x < -0.15 && y > -0.35 && y < 0.35;    // green area 1 (lower boundary)
+        green2 = x > 0.15 && x < 0.2 && y > -0.35 && y < 0.35;      // green area 2 (upper boundary)
+        green3 = x > -0.2 && x < 0.2 && y > -0.4 && y < -0.35;      // green area 3 (left boundary)
+        green4 = x > -0.2 && x < 0.2 && y > 0.35 && y < 0.4;        // green area 4 (right boundary)
+
+        if( green1 || green2 || green3 || green4 ) {
+            _varAbsorptionHohlraumGreen += ( a_g - scalarFlux[idx_cell] * ( _sigmaT[idx_cell] - _sigmaS[idx_cell] ) ) *
+                                           ( a_g - scalarFlux[idx_cell] * ( _sigmaT[idx_cell] - _sigmaS[idx_cell] ) ) * areas[idx_cell];
+        }
+    }
+}
+
+void SymmetricHohlraum::ComputeCurrentProbeMoment( const VectorVector& solution ) {
+    const VectorVector& quadPoints = _quad->GetPoints();
+    const Vector& weights          = _quad->GetWeights();
+    unsigned nq                    = _quad->GetNq();
+
+    for( unsigned idx_cell = 0; idx_cell < 4; idx_cell++ ) {    // Loop over probing cells
+        _probingMoments[idx_cell][0] = blaze::dot( solution[_probingCells[idx_cell]], weights );
+        _probingMoments[idx_cell][1] = 0.0;
+        _probingMoments[idx_cell][2] = 0.0;
+
+        for( unsigned idx_quad = 0; idx_quad < nq; idx_quad++ ) {
+            _probingMoments[idx_cell][1] += quadPoints[idx_quad][0] * solution[_probingCells[idx_cell]][idx_quad] * weights[idx_quad];
+            _probingMoments[idx_cell][2] += quadPoints[idx_quad][2] * solution[_probingCells[idx_cell]][idx_quad] * weights[idx_quad];
+        }
+    }
+}
+*/
