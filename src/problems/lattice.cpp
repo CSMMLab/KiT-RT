@@ -71,7 +71,7 @@ std::vector<VectorVector> Lattice_SN::GetExternalSource( const Vector& /*energie
 }
 
 VectorVector Lattice_SN::SetupIC() {
-    VectorVector psi( _mesh->GetNumCells(), Vector( _settings->GetNQuadPoints(), 0.0 ) );
+    VectorVector psi( _mesh->GetNumCells(), Vector( _settings->GetNQuadPoints(), 1e-15 ) );
     return psi;
 }
 
@@ -135,7 +135,7 @@ void Lattice_SN::SetGhostCells() {
 
     for( unsigned idx_cell = 0; idx_cell < _mesh->GetNumCells(); idx_cell++ ) {
         if( cellBoundaries[idx_cell] == BOUNDARY_TYPE::NEUMANN || cellBoundaries[idx_cell] == BOUNDARY_TYPE::DIRICHLET ) {
-            ghostCellMap.insert( { idx_cell, void_ghostcell } );
+            ghostCellMap[idx_cell] = void_ghostcell;
         }
     }
     _ghostCells = ghostCellMap;

@@ -991,6 +991,16 @@ void Config::SetPostprocessing() {
                 for( unsigned i = 0; i < 6; i++ ) _historyOutput.push_back( PROBE_MOMENT_TIME_TRACE );
             }
         }
+
+        if( _problemName == PROBLEM_SymmetricHohlraum ) {
+            std::vector<SCALAR_OUTPUT>::iterator it;
+            it = find( _historyOutput.begin(), _historyOutput.end(), VAR_ABSORPTION_GREEN_LINE );
+            if( it != _historyOutput.end() ) {
+                _historyOutput.erase( it );
+                _nHistoryOutput += _nProbingCellsLineGreenHohlraum - 1;    // extend the screen output by the number of probing points
+                for( unsigned i = 0; i < _nProbingCellsLineGreenHohlraum; i++ ) _historyOutput.push_back( VAR_ABSORPTION_GREEN_LINE );
+            }
+        }
     }
 
     // Mesh postprocessing

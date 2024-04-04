@@ -363,15 +363,15 @@ void Mesh::ComputeLimiter(
                 // Compute value at interface midpoint, called gaussPt
                 double gaussPt = 0.0;
                 // gauss point is at cell vertex
-                gaussPt = 0.5 * ( solDx[idx_cell][idx_sys] * ( _nodes[_cells[idx_cell][idx_nbr]][0] - _cellMidPoints[idx_cell][0] ) +
-                                  solDy[idx_cell][idx_sys] * ( _nodes[_cells[idx_cell][idx_nbr]][1] - _cellMidPoints[idx_cell][1] ) );
+                gaussPt = ( solDx[idx_cell][idx_sys] * ( _nodes[_cells[idx_cell][idx_nbr]][0] - _cellMidPoints[idx_cell][0] ) +
+                            solDy[idx_cell][idx_sys] * ( _nodes[_cells[idx_cell][idx_nbr]][1] - _cellMidPoints[idx_cell][1] ) );
 
                 // Compute limiter input
                 if( std::abs( gaussPt ) > eps ) {
                     if( gaussPt > 0.0 ) {
                         r = ( maxSol - sol[idx_cell][idx_sys] ) / gaussPt;
                     }
-                    else if( gaussPt < 0.0 ) {
+                    else {
                         r = ( minSol - sol[idx_cell][idx_sys] ) / gaussPt;
                     }
                 }
