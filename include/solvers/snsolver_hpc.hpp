@@ -84,6 +84,43 @@ class SNSolverHPC
     double _curMaxOrdinateOutflow;   /*!< @brief Maximum ordinate-wise ouftlow  over boundary over all time steps */
     std::vector<double> _localMaxOrdinateOutflow; /*!< @brief Maximum ordinate-wise ouftlow  over boundary over all time steps */
 
+    // Hohlraum QOIS
+    double _totalAbsorptionHohlraumCenter;
+    double _totalAbsorptionHohlraumVertical;
+    double _totalAbsorptionHohlraumHorizontal;
+    double _curAbsorptionHohlraumCenter;
+    double _curAbsorptionHohlraumVertical;
+    double _curAbsorptionHohlraumHorizontal;
+    double _varAbsorptionHohlraumGreen;
+    std::vector<unsigned> _probingCellsHohlraum; /*!< @brief Indices of cells that contain a probing sensor */
+    std::vector<double> _probingMoments;         /*!< @brief Solution Momnets at the probing cells that contain a probing sensor */
+
+    unsigned _nProbingCellsLineGreen;                 /*!< @brief Number of sampling cells that contain a probing sensor for the sliding window */
+    std::vector<unsigned> _probingCellsLineGreen;     /*!< @brief Indices of cells that contain a probing sensor for the sliding window */
+    std::vector<double> _absorptionValsIntegrated;    /*!< @brief Avg Absorption value at the sampleing points of lineGreen */
+    std::vector<double> _varAbsorptionValsIntegrated; /*!< @brief Var in Avg Absorption value at the sampleing points of lineGreen */
+
+    // Design parameters
+    std::vector<double> _cornerUpperLeftGreen; /*!< @brief Coord of corner of the green area (minus thickness/2 of it) relative to the green center */
+    std::vector<double> _cornerLowerLeftGreen; /*!< @brief Coord of corner of the green area (minus thickness/2 of it) relative to the green center */
+    std::vector<double>
+        _cornerUpperRightGreen; /*!< @brief Coord of corner of the green area (minus thickness/2 of it) relative to the green center */
+    std::vector<double>
+        _cornerLowerRightGreen; /*!< @brief Coord of corner of the green area (minus thickness/2 of it) relative to the green center */
+
+    double _widthGreen;               /*!< @brief width of the green area */
+    double _heightGreen;              /*!< @brief height of the green area  */
+    double _thicknessGreen;           /*!< @brief thickness of the green area */
+    std::vector<double> _centerGreen; /*!< @brief Center of the Hohlraum   */
+
+    double _redLeftTop;        /*!< @brief y coord of the top of the left red area  */
+    double _redLeftBottom;     /*!< @brief y coord of the bottom of the left red area  */
+    double _redRightTop;       /*!< @brief y coord of the top of the right red area  */
+    double _redRightBottom;    /*!< @brief y coord of the bottom of the right red area  */
+    double _thicknessRedLeft;  /*!< @brief thickness of the left red area */
+    double _thicknessRedRight; /*!< @brief thickness of the right red area */
+
+    // Output
     std::vector<std::vector<std::vector<double>>> _outputFields; /*!< @brief Solver Output: dimensions
                    (GroupID,FieldID,CellID).*/
     std::vector<std::vector<std::string>> _outputFieldNames;     /*!< @brief Names of the outputFields: dimensions
@@ -155,6 +192,10 @@ class SNSolverHPC
     unsigned Idx2D( unsigned idx1, unsigned idx2, unsigned len2 );
     unsigned Idx3D( unsigned idx1, unsigned idx2, unsigned idx3, unsigned len2, unsigned len3 );
     bool IsAbsorptionLattice( double x, double y ) const;
+
+    void SetProbingCellsLineGreen();
+    void ComputeQOIsGreenProbingLine();
+    std::vector<unsigned> linspace2D( const std::vector<double>& start, const std::vector<double>& end, unsigned num_points );
 
   public:
     /*! @brief Solver constructor

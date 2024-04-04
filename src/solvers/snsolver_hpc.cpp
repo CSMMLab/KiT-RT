@@ -146,14 +146,60 @@ SNSolverHPC::SNSolverHPC( Config* settings ) {
     delete k;
 
     // Initialiye QOIS
-    //_mass                    = 0;
-    _rmsFlux                 = 0;
+    _mass    = 0;
+    _rmsFlux = 0;
+
+    // Lattice
     _curAbsorptionLattice    = 0;
     _totalAbsorptionLattice  = 0;
     _curMaxAbsorptionLattice = 0;
     _curScalarOutflow        = 0;
     _totalScalarOutflow      = 0;
     _curMaxOrdinateOutflow   = 0;
+
+    // Hohlraum
+    _totalAbsorptionHohlraumCenter     = 0;
+    _totalAbsorptionHohlraumVertical   = 0;
+    _totalAbsorptionHohlraumHorizontal = 0;
+    _curAbsorptionHohlraumCenter       = 0;
+    _curAbsorptionHohlraumVertical     = 0;
+    _curAbsorptionHohlraumHorizontal   = 0;
+    _varAbsorptionHohlraumGreen        = 0;
+
+    _probingCellsHohlraum = {
+        _mesh->GetCellOfKoordinate( -0.4, 0. ),
+        _mesh->GetCellOfKoordinate( 0.4, 0. ),
+        _mesh->GetCellOfKoordinate( 0., -0.6 ),
+        _mesh->GetCellOfKoordinate( 0., 0.6 ),
+    };
+    _probingMoments = std::vector<double>( 12, 0. );
+
+    // Red
+    _redLeftTop        = 0.4;
+    _redLeftBottom     = -0.4;
+    _redRightTop       = 0.4;
+    _redRightBottom    = -0.4;
+    _thicknessRedLeft  = 0.05;
+    _thicknessRedRight = 0.05;
+    // Green
+    _widthGreen     = 0.4;
+    _heightGreen    = 0.8;
+    _thicknessGreen = 0.05;
+    _centerGreen    = { 0.0, 0.0 };
+
+    _cornerUpperLeftGreen  = { -0.2 + _thicknessGreen / 2.0, 0.4 - _thicknessGreen / 2.0 };
+    _cornerLowerLeftGreen  = { -0.2 + _thicknessGreen / 2.0, -0.4 + _thicknessGreen / 2.0 };
+    _cornerUpperRightGreen = { 0.2 - _thicknessGreen / 2.0, 0.4 - _thicknessGreen / 2.0 };
+    _cornerLowerRightGreen = { 0.2 - _thicknessGreen / 2.0, -0.4 + _thicknessGreen / 2.0 };
+
+    std::cout << "Solver initialized!" << std::endl;
+
+    _nProbingCellsLineGreen = _settings->GetNumProbingCellsLineHohlraum();
+    SetProbingCellsLineGreen();
+    std::cout << "Probing cells initialized!" << std::endl;
+
+    _absorptionValsIntegrated    = std::vector<double>( _nProbingCellsLineGreen, 0.0 );
+    _varAbsorptionValsIntegrated = std::vector<double>( _nProbingCellsLineGreen, 0.0 );
 }
 
 SNSolverHPC::~SNSolverHPC() {
@@ -338,8 +384,7 @@ void SNSolverHPC::FluxOrder2() {
                         double ghostCellValue = ( _ghostCellsReflectingY[idx_cell] )
                                                     ? 0.0 * _sol[Idx2D( idx_cell, _quadratureYReflection[idx_sys], _nSys )]    // Relecting boundary
                                                     : _ghostCells[idx_cell][idx_sys];                                          // fixed boundary
-                        _flux[Idx2D( idx_cell, idx_sys, _nSys )] += 0.0;
-                        // localInner* ghostCellValue;
+                        _flux[Idx2D( idx_cell, idx_sys, _nSys )] += localInner * ghostCellValue;
                     }
                 }
             }
@@ -353,20 +398,20 @@ void SNSolverHPC::FluxOrder2() {
                                         _quadPts[Idx2D( idx_sys, 1, _nDim )] * _normals[Idx3D( idx_cell, idx_nbr, 1, _nNbr, _nDim )];
 
                     _flux[Idx2D( idx_cell, idx_sys, _nSys )] +=
-                        ( localInner > 0 ) ? localInner * _sol[Idx2D( idx_cell, idx_sys, _nSys )] +
-                                                 _limiter[Idx2D( idx_cell, idx_sys, _nSys )] *
-                                                     ( _solDx[Idx3D( idx_cell, idx_sys, 0, _nSys, _nDim )] *
-                                                           _relativeInterfaceMidPt[Idx3D( idx_cell, idx_nbr, 0, _nNbr, _nDim )] +
-                                                       _solDx[Idx3D( idx_cell, idx_sys, 1, _nSys, _nDim )] *
-                                                           _relativeInterfaceMidPt[Idx3D( idx_cell, idx_nbr, 1, _nNbr, _nDim )] )
-                                           : localInner * _sol[Idx2D( idx_nbr_glob, idx_sys, _nSys )] +
-                                                 _limiter[Idx2D( idx_nbr_glob, idx_sys, _nSys )] *
-                                                     ( _solDx[Idx3D( idx_nbr_glob, idx_sys, 0, _nSys, _nDim )] *
-                                                           ( _interfaceMidPoints[Idx3D( idx_cell, idx_nbr, 0, _nNbr, _nDim )] -
-                                                             _cellMidPoints[Idx2D( idx_nbr_glob, 0, _nDim )] ) +
-                                                       _solDx[Idx3D( idx_nbr_glob, idx_sys, 1, _nSys, _nDim )] *
-                                                           ( _interfaceMidPoints[Idx3D( idx_cell, idx_nbr, 1, _nNbr, _nDim )] -
-                                                             _cellMidPoints[Idx2D( idx_nbr_glob, 1, _nDim )] ) );
+                        ( localInner > 0 ) ? localInner * ( _sol[Idx2D( idx_cell, idx_sys, _nSys )] +
+                                                            _limiter[Idx2D( idx_cell, idx_sys, _nSys )] *
+                                                                ( _solDx[Idx3D( idx_cell, idx_sys, 0, _nSys, _nDim )] *
+                                                                      _relativeInterfaceMidPt[Idx3D( idx_cell, idx_nbr, 0, _nNbr, _nDim )] +
+                                                                  _solDx[Idx3D( idx_cell, idx_sys, 1, _nSys, _nDim )] *
+                                                                      _relativeInterfaceMidPt[Idx3D( idx_cell, idx_nbr, 1, _nNbr, _nDim )] ) )
+                                           : localInner * ( _sol[Idx2D( idx_nbr_glob, idx_sys, _nSys )] +
+                                                            _limiter[Idx2D( idx_nbr_glob, idx_sys, _nSys )] *
+                                                                ( _solDx[Idx3D( idx_nbr_glob, idx_sys, 0, _nSys, _nDim )] *
+                                                                      ( _interfaceMidPoints[Idx3D( idx_cell, idx_nbr, 0, _nNbr, _nDim )] -
+                                                                        _cellMidPoints[Idx2D( idx_nbr_glob, 0, _nDim )] ) +
+                                                                  _solDx[Idx3D( idx_nbr_glob, idx_sys, 1, _nSys, _nDim )] *
+                                                                      ( _interfaceMidPoints[Idx3D( idx_cell, idx_nbr, 1, _nNbr, _nDim )] -
+                                                                        _cellMidPoints[Idx2D( idx_nbr_glob, 1, _nDim )] ) ) );
                 }
             }
         }
@@ -418,11 +463,24 @@ void SNSolverHPC::FluxOrder1() {
 }
 
 void SNSolverHPC::FVMUpdate() {
-    _mass    = 0.0;
-    _rmsFlux = 0.0;
+    _mass                            = 0.0;
+    _rmsFlux                         = 0.0;
+    _curAbsorptionLattice            = 0.0;
+    _curScalarOutflow                = 0.0;
+    _curAbsorptionHohlraumCenter     = 0.0;    // Green and blue areas of symmetric hohlraum
+    _curAbsorptionHohlraumVertical   = 0.0;    // Red areas of symmetric hohlraum
+    _curAbsorptionHohlraumHorizontal = 0.0;    // Black areas of symmetric hohlraum
+    _varAbsorptionHohlraumGreen      = 0.0;
+    double a_g                       = 0.0;
 
-#pragma omp parallel for reduction( + : _mass, _rmsFlux, _curAbsorptionLattice, _curScalarOutflow )                                                  \
-    reduction( max : _curMaxOrdinateOutflow, _curMaxAbsorptionLattice )
+#pragma omp parallel for reduction( + : _mass,                                                                                                       \
+                                        _rmsFlux,                                                                                                    \
+                                        _curAbsorptionLattice,                                                                                       \
+                                        _curScalarOutflow,                                                                                           \
+                                        _curAbsorptionHohlraumCenter,                                                                                \
+                                        _curAbsorptionHohlraumVertical,                                                                              \
+                                        _curAbsorptionHohlraumHorizontal,                                                                            \
+                                        a_g ) reduction( max : _curMaxOrdinateOutflow, _curMaxAbsorptionLattice )
     for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
 
 #pragma omp simd
@@ -448,14 +506,41 @@ void SNSolverHPC::FVMUpdate() {
         _rmsFlux += ( localScalarFlux - _scalarFlux[idx_cell] ) * ( localScalarFlux - _scalarFlux[idx_cell] );
         _scalarFlux[idx_cell] = localScalarFlux;    // set flux
 
-        if( IsAbsorptionLattice( _cellMidPoints[Idx2D( idx_cell, 0, _nDim )], _cellMidPoints[Idx2D( idx_cell, 1, _nDim )] ) ) {
-            double sigmaAPsi = _scalarFlux[idx_cell] * ( _sigmaT[idx_cell] - _sigmaS[idx_cell] );
-
-            _curAbsorptionLattice += sigmaAPsi * _areas[idx_cell];
-
-            _curMaxAbsorptionLattice = ( _curMaxAbsorptionLattice < sigmaAPsi ) ? sigmaAPsi : _curMaxAbsorptionLattice;
+        if( _settings->GetProblemName() == PROBLEM_Lattice || _settings->GetProblemName() == PROBLEM_HalfLattice ) {
+            if( IsAbsorptionLattice( _cellMidPoints[Idx2D( idx_cell, 0, _nDim )], _cellMidPoints[Idx2D( idx_cell, 1, _nDim )] ) ) {
+                double sigmaAPsi = _scalarFlux[idx_cell] * ( _sigmaT[idx_cell] - _sigmaS[idx_cell] );
+                _curAbsorptionLattice += sigmaAPsi * _areas[idx_cell];
+                _curMaxAbsorptionLattice = ( _curMaxAbsorptionLattice < sigmaAPsi ) ? sigmaAPsi : _curMaxAbsorptionLattice;
+            }
         }
 
+        if( _settings->GetProblemName() == PROBLEM_SymmetricHohlraum || _settings->GetProblemName() == PROBLEM_QuarterHohlraum ) {
+
+            double x = _cellMidPoints[Idx2D( idx_cell, 0, _nDim )];
+            double y = _cellMidPoints[Idx2D( idx_cell, 1, _nDim )];
+
+            if( x > -0.2 && x < 0.2 && y > -0.35 && y < 0.35 ) {
+                _curAbsorptionHohlraumCenter += _scalarFlux[idx_cell] * ( _sigmaT[idx_cell] - _sigmaS[idx_cell] ) * _areas[idx_cell];
+            }
+            if( ( x < -0.6 && y > -0.4 && y < 0.4 ) || ( x > 0.6 && y > -0.4 && y < 0.4 ) ) {
+                _curAbsorptionHohlraumVertical += _scalarFlux[idx_cell] * ( _sigmaT[idx_cell] - _sigmaS[idx_cell] ) * _areas[idx_cell];
+            }
+            if( y > 0.6 || y < -0.6 ) {
+                _curAbsorptionHohlraumHorizontal += _scalarFlux[idx_cell] * ( _sigmaT[idx_cell] - _sigmaS[idx_cell] ) * _areas[idx_cell];
+            }
+
+            // Variation in absorption of center (part 1)
+            bool green1 = x > -0.2 && x < -0.15 && y > -0.35 && y < 0.35;    // green area 1 (lower boundary)
+            bool green2 = x > 0.15 && x < 0.2 && y > -0.35 && y < 0.35;      // green area 2 (upper boundary)
+            bool green3 = x > -0.2 && x < 0.2 && y > -0.4 && y < -0.35;      // green area 3 (left boundary)
+            bool green4 = x > -0.2 && x < 0.2 && y > 0.35 && y < 0.4;        // green area 4 (right boundary)
+
+            if( green1 || green2 || green3 || green4 ) {
+                a_g += ( _sigmaT[idx_cell] - _sigmaS[idx_cell] ) * _scalarFlux[idx_cell] * _areas[idx_cell];
+            }
+        }
+
+        // Outflow
         if( _cellBoundaryTypes[idx_cell] == BOUNDARY_TYPE::NEUMANN && !_ghostCellsReflectingY[idx_cell] ) {
             // Iterate over face cell faces
             double currOrdinatewiseOutflow = 0.0;
@@ -486,9 +571,50 @@ void SNSolverHPC::FVMUpdate() {
             }
         }
     }
+    // Variation absorption (part II)
+    if( _settings->GetProblemName() == PROBLEM_SymmetricHohlraum || _settings->GetProblemName() == PROBLEM_QuarterHohlraum ) {
+#pragma omp parallel for reduction( + : _varAbsorptionHohlraumGreen )
+        for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
+            double x = _cellMidPoints[Idx2D( idx_cell, 0, _nDim )];
+            double y = _cellMidPoints[Idx2D( idx_cell, 1, _nDim )];
+            bool green1, green2, green3, green4;
+
+            green1 = x > -0.2 && x < -0.15 && y > -0.35 && y < 0.35;    // green area 1 (lower boundary)
+            green2 = x > 0.15 && x < 0.2 && y > -0.35 && y < 0.35;      // green area 2 (upper boundary)
+            green3 = x > -0.2 && x < 0.2 && y > -0.4 && y < -0.35;      // green area 3 (left boundary)
+            green4 = x > -0.2 && x < 0.2 && y > 0.35 && y < 0.4;        // green area 4 (right boundary)
+
+            if( green1 || green2 || green3 || green4 ) {
+                _varAbsorptionHohlraumGreen += ( a_g - _scalarFlux[idx_cell] * ( _sigmaT[idx_cell] - _sigmaS[idx_cell] ) ) *
+                                               ( a_g - _scalarFlux[idx_cell] * ( _sigmaT[idx_cell] - _sigmaS[idx_cell] ) ) * _areas[idx_cell];
+            }
+        }
+// Probes value moments
+#pragma omp parallel for
+        for( unsigned idx_probe = 0; idx_probe < 4; idx_probe++ ) {    // Loop over probing cells
+            _probingMoments[Idx2D( idx_probe, 0, 3 )] = _scalarFlux[_probingCellsHohlraum[idx_probe]];
+            _probingMoments[Idx2D( idx_probe, 1, 3 )] = 0.0;
+            _probingMoments[Idx2D( idx_probe, 2, 3 )] = 0.0;
+
+            // for( unsigned idx_sys = 0; idx_sys < _nSys; idx_sys++ ) {
+            //     _probingMoments[Idx2D( idx_probe, 1, 3 )] +=
+            //         _quadPts[Idx2D( idx_sys, 0, _nDim )] * _sol[Idx2D( _probingCellsHohlraum[idx_probe], idx_sys, _nSys )] * _quadWeights[idx_sys];
+            //     _probingMoments[Idx2D( idx_probe, 2, 3 )] +=
+            //         _quadPts[Idx2D( idx_sys, 1, _nDim )] * _sol[Idx2D( _probingCellsHohlraum[idx_probe], idx_sys, _nSys )] * _quadWeights[idx_sys];
+            // }
+        }
+
+        // probe values green
+        ComputeQOIsGreenProbingLine();
+    }
+
     _rmsFlux = sqrt( _rmsFlux );
     _totalScalarOutflow += _curScalarOutflow * _dT;
     _totalAbsorptionLattice += _curAbsorptionLattice * _dT;
+
+    _totalAbsorptionHohlraumCenter += _curAbsorptionHohlraumCenter * _dT;
+    _totalAbsorptionHohlraumVertical += _curAbsorptionHohlraumVertical * _dT;
+    _totalAbsorptionHohlraumHorizontal += _curAbsorptionHohlraumHorizontal * _dT;
 }
 
 bool SNSolverHPC::IsAbsorptionLattice( double x, double y ) const {
@@ -621,19 +747,19 @@ void SNSolverHPC::WriteScalarOutput( unsigned idx_iter ) {
             case CUR_PARTICLE_ABSORPTION: _screenOutputFields[idx_field] = _curAbsorptionLattice; break;
             case TOTAL_PARTICLE_ABSORPTION: _screenOutputFields[idx_field] = _totalAbsorptionLattice; break;
             case MAX_PARTICLE_ABSORPTION: _screenOutputFields[idx_field] = _curMaxAbsorptionLattice; break;
-            case TOTAL_PARTICLE_ABSORPTION_CENTER: _screenOutputFields[idx_field] = _problem->GetTotalAbsorptionHohlraumCenter(); break;
-            case TOTAL_PARTICLE_ABSORPTION_VERTICAL: _screenOutputFields[idx_field] = _problem->GetTotalAbsorptionHohlraumVertical(); break;
-            case TOTAL_PARTICLE_ABSORPTION_HORIZONTAL: _screenOutputFields[idx_field] = _problem->GetTotalAbsorptionHohlraumHorizontal(); break;
+            case TOTAL_PARTICLE_ABSORPTION_CENTER: _screenOutputFields[idx_field] = _totalAbsorptionHohlraumCenter; break;
+            case TOTAL_PARTICLE_ABSORPTION_VERTICAL: _screenOutputFields[idx_field] = _totalAbsorptionHohlraumVertical; break;
+            case TOTAL_PARTICLE_ABSORPTION_HORIZONTAL: _screenOutputFields[idx_field] = _totalAbsorptionHohlraumHorizontal; break;
             case PROBE_MOMENT_TIME_TRACE:
                 if( _settings->GetProblemName() == PROBLEM_SymmetricHohlraum ) n_probes = 4;
                 if( _settings->GetProblemName() == PROBLEM_QuarterHohlraum ) n_probes = 2;
                 for( unsigned i = 0; i < n_probes; i++ ) {
-                    _screenOutputFields[idx_field] = probingMoments[i][0];
+                    _screenOutputFields[idx_field] = _probingMoments[Idx2D( i, 0, 3 )];
                     idx_field++;
                 }
                 idx_field--;
                 break;
-            case VAR_ABSORPTION_GREEN: _screenOutputFields[idx_field] = _problem->GetVarAbsorptionHohlraumGreen(); break;
+            case VAR_ABSORPTION_GREEN: _screenOutputFields[idx_field] = _varAbsorptionHohlraumGreen; break;
             default: ErrorMessages::Error( "Screen output group not defined!", CURRENT_FUNCTION ); break;
         }
     }
@@ -672,24 +798,24 @@ void SNSolverHPC::WriteScalarOutput( unsigned idx_iter ) {
             case CUR_PARTICLE_ABSORPTION: _historyOutputFields[idx_field] = _curAbsorptionLattice; break;
             case TOTAL_PARTICLE_ABSORPTION: _historyOutputFields[idx_field] = _totalAbsorptionLattice; break;
             case MAX_PARTICLE_ABSORPTION: _historyOutputFields[idx_field] = _curMaxAbsorptionLattice; break;
-            case TOTAL_PARTICLE_ABSORPTION_CENTER: _historyOutputFields[idx_field] = _problem->GetTotalAbsorptionHohlraumCenter(); break;
-            case TOTAL_PARTICLE_ABSORPTION_VERTICAL: _historyOutputFields[idx_field] = _problem->GetTotalAbsorptionHohlraumVertical(); break;
-            case TOTAL_PARTICLE_ABSORPTION_HORIZONTAL: _historyOutputFields[idx_field] = _problem->GetTotalAbsorptionHohlraumHorizontal(); break;
+            case TOTAL_PARTICLE_ABSORPTION_CENTER: _historyOutputFields[idx_field] = _totalAbsorptionHohlraumCenter; break;
+            case TOTAL_PARTICLE_ABSORPTION_VERTICAL: _historyOutputFields[idx_field] = _totalAbsorptionHohlraumVertical; break;
+            case TOTAL_PARTICLE_ABSORPTION_HORIZONTAL: _historyOutputFields[idx_field] = _totalAbsorptionHohlraumHorizontal; break;
             case PROBE_MOMENT_TIME_TRACE:
                 if( _settings->GetProblemName() == PROBLEM_SymmetricHohlraum ) n_probes = 4;
                 if( _settings->GetProblemName() == PROBLEM_QuarterHohlraum ) n_probes = 2;
                 for( unsigned i = 0; i < n_probes; i++ ) {
                     for( unsigned j = 0; j < 3; j++ ) {
-                        _historyOutputFields[idx_field] = probingMoments[i][j];
+                        _screenOutputFields[idx_field] = _probingMoments[Idx2D( i, j, 3 )];
                         idx_field++;
                     }
                 }
                 idx_field--;
                 break;
-            case VAR_ABSORPTION_GREEN: _historyOutputFields[idx_field] = _problem->GetVarAbsorptionHohlraumGreen(); break;
+            case VAR_ABSORPTION_GREEN: _historyOutputFields[idx_field] = _varAbsorptionHohlraumGreen; break;
             case VAR_ABSORPTION_GREEN_LINE:
                 for( unsigned i = 0; i < _settings->GetNumProbingCellsLineHohlraum(); i++ ) {
-                    _historyOutputFieldNames[idx_field] = _problem->GetCurrentVarProbeValuesGreenLine()[i];
+                    _historyOutputFieldNames[idx_field] = _varAbsorptionValsIntegrated[i];
                     idx_field++;
                 }
                 idx_field--;
@@ -1058,69 +1184,79 @@ void SNSolverHPC::SetGhostCells() {
         }
     }
 }
-/*
-void SNSolverHPC::ComputeTotalAbsorptionHohlraum( double dT ) {
-    _totalAbsorptionHohlraumCenter += _curAbsorptionHohlraumCenter * dT;
-    _totalAbsorptionHohlraumVertical += _curAbsorptionHohlraumVertical * dT;
-    _totalAbsorptionHohlraumHorizontal += _curAbsorptionHohlraumHorizontal * dT;
+
+void SNSolverHPC::SetProbingCellsLineGreen() {
+    std::cout << "SetProbingCellsLineGreen" << std::endl;
+
+    double verticalLineWidth   = std::abs( _cornerUpperLeftGreen[1] - _cornerLowerLeftGreen[1] );
+    double horizontalLineWidth = std::abs( _cornerUpperLeftGreen[0] - _cornerUpperRightGreen[0] );
+
+    // double dx = 2 * ( horizontalLineWidth + verticalLineWidth ) / ( (double)_nProbingCellsLineGreen );
+
+    unsigned nHorizontalProbingCells =
+        (unsigned)std::ceil( _nProbingCellsLineGreen / 2 * ( horizontalLineWidth / ( horizontalLineWidth + verticalLineWidth ) ) );
+    unsigned nVerticalProbingCells = _nProbingCellsLineGreen - nHorizontalProbingCells;
+
+    _probingCellsLineGreen = std::vector<unsigned>( _nProbingCellsLineGreen );
+
+    // printf( "here" );
+
+    // Sample points on each side of the rectangle
+    std::vector<unsigned> side1 = linspace2D( _cornerUpperLeftGreen, _cornerLowerLeftGreen, nVerticalProbingCells );
+    std::vector<unsigned> side2 = linspace2D( _cornerLowerLeftGreen, _cornerLowerRightGreen, nHorizontalProbingCells );
+    std::vector<unsigned> side3 = linspace2D( _cornerLowerRightGreen, _cornerUpperRightGreen, nVerticalProbingCells );
+    std::vector<unsigned> side4 = linspace2D( _cornerUpperRightGreen, _cornerUpperLeftGreen, nHorizontalProbingCells );
+
+    // printf( "here" );
+    //  Combine the points from each side
+    _probingCellsLineGreen.insert( _probingCellsLineGreen.end(), side1.begin(), side1.end() );
+    _probingCellsLineGreen.insert( _probingCellsLineGreen.end(), side2.begin(), side2.end() );
+    _probingCellsLineGreen.insert( _probingCellsLineGreen.end(), side3.begin(), side3.end() );
+    _probingCellsLineGreen.insert( _probingCellsLineGreen.end(), side4.begin(), side4.end() );
 }
 
-void SNSolverHPC::ComputeVarAbsorptionGreen( const Vector& scalarFlux ) {
-    double a_g                  = 0.0;
-    _varAbsorptionHohlraumGreen = 0.0;
+void SNSolverHPC::ComputeQOIsGreenProbingLine() {
+    std::cout << "ComputeQOIsGreenProbingLine" << std::endl;
+    double verticalLineWidth   = std::abs( _cornerUpperLeftGreen[1] - _cornerLowerLeftGreen[1] );
+    double horizontalLineWidth = std::abs( _cornerUpperLeftGreen[0] - _cornerUpperRightGreen[0] );
 
-    unsigned nCells           = _mesh->GetNumCells();
-    auto cellMids             = _mesh->GetCellMidPoints();
-    std::vector<double> areas = _mesh->GetCellAreas();
+    double dl    = 2 * ( horizontalLineWidth + verticalLineWidth ) / ( (double)_nProbingCellsLineGreen );
+    double area  = dl * _thicknessGreen;
+    double a_g   = 0;
+    double l_max = _nProbingCellsLineGreen * dl;
 
-#pragma omp parallel for default( shared ) reduction( + : a_g )
-    for( unsigned idx_cell = 0; idx_cell < nCells; ++idx_cell ) {
-        double x = cellMids[idx_cell][0];
-        double y = cellMids[idx_cell][1];
-        bool green1, green2, green3, green4;
-
-        green1 = x > -0.2 && x < -0.15 && y > -0.35 && y < 0.35;    // green area 1 (lower boundary)
-        green2 = x > 0.15 && x < 0.2 && y > -0.35 && y < 0.35;      // green area 2 (upper boundary)
-        green3 = x > -0.2 && x < 0.2 && y > -0.4 && y < -0.35;      // green area 3 (left boundary)
-        green4 = x > -0.2 && x < 0.2 && y > 0.35 && y < 0.4;        // green area 4 (right boundary)
-
-        if( green1 || green2 || green3 || green4 ) {
-            a_g += ( _sigmaT[idx_cell] - _sigmaS[idx_cell] ) * scalarFlux[idx_cell] * areas[idx_cell];
-        }
+    for( unsigned i = 0; i < _nProbingCellsLineGreen; i++ ) {    // Loop over probing cells
+        _absorptionValsIntegrated[i] =
+            ( _sigmaT[_probingCellsLineGreen[i]] - _sigmaS[_probingCellsLineGreen[i]] ) * _scalarFlux[_probingCellsLineGreen[i]] * area;
+        a_g += _absorptionValsIntegrated[i] / (double)_nProbingCellsLineGreen;
     }
-
-#pragma omp parallel for default( shared ) reduction( + : _varAbsorptionHohlraumGreen )
-    for( unsigned idx_cell = 0; idx_cell < nCells; ++idx_cell ) {
-        double x = cellMids[idx_cell][0];
-        double y = cellMids[idx_cell][1];
-        bool green1, green2, green3, green4;
-
-        green1 = x > -0.2 && x < -0.15 && y > -0.35 && y < 0.35;    // green area 1 (lower boundary)
-        green2 = x > 0.15 && x < 0.2 && y > -0.35 && y < 0.35;      // green area 2 (upper boundary)
-        green3 = x > -0.2 && x < 0.2 && y > -0.4 && y < -0.35;      // green area 3 (left boundary)
-        green4 = x > -0.2 && x < 0.2 && y > 0.35 && y < 0.4;        // green area 4 (right boundary)
-
-        if( green1 || green2 || green3 || green4 ) {
-            _varAbsorptionHohlraumGreen += ( a_g - scalarFlux[idx_cell] * ( _sigmaT[idx_cell] - _sigmaS[idx_cell] ) ) *
-                                           ( a_g - scalarFlux[idx_cell] * ( _sigmaT[idx_cell] - _sigmaS[idx_cell] ) ) * areas[idx_cell];
-        }
+    for( unsigned i = 0; i < _nProbingCellsLineGreen; i++ ) {    // Loop over probing cells
+        _varAbsorptionValsIntegrated[i] = dl / l_max * ( a_g - _absorptionValsIntegrated[i] ) * ( a_g - _absorptionValsIntegrated[i] );
     }
 }
 
-void SymmetricHohlraum::ComputeCurrentProbeMoment( const VectorVector& solution ) {
-    const VectorVector& quadPoints = _quad->GetPoints();
-    const Vector& weights          = _quad->GetWeights();
-    unsigned nq                    = _quad->GetNq();
+std::vector<unsigned> SNSolverHPC::linspace2D( const std::vector<double>& start, const std::vector<double>& end, unsigned num_points ) {
+    /**
+     * Generate a 2D linspace based on the start and end points with a specified number of points.
+     *
+     * @param start vector of starting x and y coordinates
+     * @param end vector of ending x and y coordinates
+     * @param num_points number of points to generate
+     *
+     * @return vector of unsigned integers representing the result
+     */
 
-    for( unsigned idx_cell = 0; idx_cell < 4; idx_cell++ ) {    // Loop over probing cells
-        _probingMoments[idx_cell][0] = blaze::dot( solution[_probingCells[idx_cell]], weights );
-        _probingMoments[idx_cell][1] = 0.0;
-        _probingMoments[idx_cell][2] = 0.0;
+    std::vector<unsigned> result;
+    result.resize( num_points );
+    double stepX = ( end[0] - start[0] ) / ( num_points - 1 );
+    double stepY = ( end[1] - start[1] ) / ( num_points - 1 );
 
-        for( unsigned idx_quad = 0; idx_quad < nq; idx_quad++ ) {
-            _probingMoments[idx_cell][1] += quadPoints[idx_quad][0] * solution[_probingCells[idx_cell]][idx_quad] * weights[idx_quad];
-            _probingMoments[idx_cell][2] += quadPoints[idx_quad][2] * solution[_probingCells[idx_cell]][idx_quad] * weights[idx_quad];
-        }
+    for( unsigned i = 0; i < num_points; ++i ) {
+        double x = start[0] + i * stepX;
+        double y = start[1] + i * stepY;
+
+        result[i] = _mesh->GetCellOfKoordinate( x, y );
     }
+
+    return result;
 }
-*/
