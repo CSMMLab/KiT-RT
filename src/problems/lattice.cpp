@@ -71,7 +71,7 @@ std::vector<VectorVector> Lattice_SN::GetExternalSource( const Vector& /*energie
 }
 
 VectorVector Lattice_SN::SetupIC() {
-    VectorVector psi( _mesh->GetNumCells(), Vector( _settings->GetNQuadPoints(), 1e-10 ) );
+    VectorVector psi( _mesh->GetNumCells(), Vector( _settings->GetNQuadPoints(), 1e-15 ) );
     return psi;
 }
 
@@ -84,6 +84,22 @@ bool Lattice_SN::IsAbsorption( const Vector& pos ) const {
         for( unsigned l = 0; l < lbounds.size(); ++l ) {
             if( ( l + k ) % 2 == 1 || ( k == 2 && l == 2 ) || ( k == 2 && l == 4 ) ) continue;
             if( pos[0] >= lbounds[k] && pos[0] <= ubounds[k] && pos[1] >= lbounds[l] && pos[1] <= ubounds[l] ) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+bool Lattice_SN::IsAbsorption( double x, double y ) const {
+    // Check whether pos is inside absorbing squares
+    double xy_corrector = -3.5;
+    std::vector<double> lbounds{ 1 + xy_corrector, 2 + xy_corrector, 3 + xy_corrector, 4 + xy_corrector, 5 + xy_corrector };
+    std::vector<double> ubounds{ 2 + xy_corrector, 3 + xy_corrector, 4 + xy_corrector, 5 + xy_corrector, 6 + xy_corrector };
+    for( unsigned k = 0; k < lbounds.size(); ++k ) {
+        for( unsigned l = 0; l < lbounds.size(); ++l ) {
+            if( ( l + k ) % 2 == 1 || ( k == 2 && l == 2 ) || ( k == 2 && l == 4 ) ) continue;
+            if( x >= lbounds[k] && x <= ubounds[k] && y >= lbounds[l] && y <= ubounds[l] ) {
                 return true;
             }
         }
@@ -119,7 +135,7 @@ void Lattice_SN::SetGhostCells() {
 
     for( unsigned idx_cell = 0; idx_cell < _mesh->GetNumCells(); idx_cell++ ) {
         if( cellBoundaries[idx_cell] == BOUNDARY_TYPE::NEUMANN || cellBoundaries[idx_cell] == BOUNDARY_TYPE::DIRICHLET ) {
-            ghostCellMap.insert( { idx_cell, void_ghostcell } );
+            ghostCellMap[idx_cell] = void_ghostcell;
         }
     }
     _ghostCells = ghostCellMap;

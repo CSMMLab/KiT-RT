@@ -21,6 +21,8 @@ class Lattice_SN : public ProblemBase
     bool IsAbsorption( const Vector& pos ) const; /*!< @return True if pos is in absorption region, False otherwise */
     bool IsSource( const Vector& pos ) const;     /*!< @return True if pos is in source region, False otherwise */
 
+    bool IsAbsorption( double x, double y ) const; /*!< @return True if pos is in absorption region, False otherwise */
+
   protected:
     void SetGhostCells() override;                  /*!< @brief Sets vector of ghost cells for boundary conditions */
     unsigned GetBlockID( const Vector& pos ) const; /*!< @brief Returns checkerboard field id (0-48, row major) of the Lattice test case */
@@ -48,7 +50,7 @@ class Lattice_Moment : public ProblemBase
 {
   private:
     Vector _sigmaS; /*!< @brief Vector of scattering crosssections len: numCells  */
-    Vector _sigmaT;       /*!< @brief Vector of total crosssections. len: numCells*/
+    Vector _sigmaT; /*!< @brief Vector of total crosssections. len: numCells*/
 
     Lattice_Moment() = delete;
 

@@ -191,18 +191,20 @@ void Mesh::ComputeConnectivity() {
         unsigned IDj = neighborsFlat[i];
         if( IDi == IDj ) continue;     // avoid self assignment
         if( IDj == _ghostCellID ) {    // cell is boundary cell
-            if( std::find( _cellNeighbors[IDi].begin(), _cellNeighbors[IDi].end(), _ghostCellID ) == _cellNeighbors[IDi].end() ) {
-                _cellNeighbors[IDi].push_back( _ghostCellID );
-                _cellNormals[IDi].push_back( normalsFlat[i] );
-                _cellInterfaceMidPoints[IDi].push_back( interfaceMidFlat[i] );
-            }
+            // if( std::find( _cellNeighbors[IDi].begin(), _cellNeighbors[IDi].end(), _ghostCellID ) == _cellNeighbors[IDi].end() ) {
+            _cellNeighbors[IDi].push_back( _ghostCellID );
+            _cellNormals[IDi].push_back( normalsFlat[i] );
+            _cellInterfaceMidPoints[IDi].push_back( interfaceMidFlat[i] );
+            // temp++;
+            // }
+            // std::cout << temp << "\n";
         }
         else {    // normal cell neighbor
-            if( std::find( _cellNeighbors[IDi].begin(), _cellNeighbors[IDi].end(), IDj ) == _cellNeighbors[IDi].end() ) {
-                _cellNeighbors[IDi].push_back( neighborsFlat[i] );
-                _cellNormals[IDi].push_back( normalsFlat[i] );
-                _cellInterfaceMidPoints[IDi].push_back( interfaceMidFlat[i] );
-            }
+            // if( std::find( _cellNeighbors[IDi].begin(), _cellNeighbors[IDi].end(), IDj ) == _cellNeighbors[IDi].end() ) {
+            _cellNeighbors[IDi].push_back( neighborsFlat[i] );
+            _cellNormals[IDi].push_back( normalsFlat[i] );
+            _cellInterfaceMidPoints[IDi].push_back( interfaceMidFlat[i] );
+            //}
         }
     }
 
@@ -361,15 +363,15 @@ void Mesh::ComputeLimiter(
                 // Compute value at interface midpoint, called gaussPt
                 double gaussPt = 0.0;
                 // gauss point is at cell vertex
-                gaussPt = 0.5 * ( solDx[idx_cell][idx_sys] * ( _nodes[_cells[idx_cell][idx_nbr]][0] - _cellMidPoints[idx_cell][0] ) +
-                                  solDy[idx_cell][idx_sys] * ( _nodes[_cells[idx_cell][idx_nbr]][1] - _cellMidPoints[idx_cell][1] ) );
+                gaussPt = ( solDx[idx_cell][idx_sys] * ( _nodes[_cells[idx_cell][idx_nbr]][0] - _cellMidPoints[idx_cell][0] ) +
+                            solDy[idx_cell][idx_sys] * ( _nodes[_cells[idx_cell][idx_nbr]][1] - _cellMidPoints[idx_cell][1] ) );
 
                 // Compute limiter input
                 if( std::abs( gaussPt ) > eps ) {
                     if( gaussPt > 0.0 ) {
                         r = ( maxSol - sol[idx_cell][idx_sys] ) / gaussPt;
                     }
-                    else if( gaussPt < 0.0 ) {
+                    else {
                         r = ( minSol - sol[idx_cell][idx_sys] ) / gaussPt;
                     }
                 }

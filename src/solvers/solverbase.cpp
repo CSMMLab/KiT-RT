@@ -37,7 +37,7 @@ SolverBase::SolverBase( Config* settings ) {
 
     // build slope related params
     _reconstructor      = new Reconstructor( settings );    // Not used!
-    _reconsOrder        = _reconstructor->GetReconsOrder();
+    _reconsOrder        = _reconstructor->GetSpatialOrder();
     _interfaceMidPoints = _mesh->GetInterfaceMidPoints();
 
     _cellMidPoints = _mesh->GetCellMidPoints();
@@ -60,6 +60,9 @@ SolverBase::SolverBase( Config* settings ) {
     _nIter = _nEnergies;
     if( _settings->GetIsCSD() ) {
         _nIter = _nEnergies - 1;    // Since CSD does not go the last energy step
+    }
+    else {
+        _nIter++;
     }
 
     // setup problem  and store frequently used params
@@ -124,7 +127,7 @@ void SolverBase::Solve() {
 
     // Preprocessing before first pseudo time step
     SolverPreprocessing();
-    unsigned rkStages = _settings->GetRKStages();
+    unsigned rkStages = _settings->GetTemporalOrder();
     // Create Backup solution for Runge Kutta
     VectorVector solRK0 = _sol;
 
@@ -132,6 +135,10 @@ void SolverBase::Solve() {
     std::chrono::duration<double> duration;
     // Loop over energies (pseudo-time of continuous slowing down approach)
     for( unsigned iter = 0; iter < _nIter; iter++ ) {
+        if( iter == _nIter - 1 ) {    // last iteration
+            _dT = _settings->GetTEnd() - iter * _dT;
+        }
+
         if( rkStages == 2 ) solRK0 = _sol;
 
         for( unsigned rkStep = 0; rkStep < rkStages; ++rkStep ) {
@@ -175,7 +182,7 @@ void SolverBase::Solve() {
     DrawPostSolverOutput();
 }
 
-void SolverBase::RKUpdate( VectorVector sol_0, VectorVector sol_rk ) {
+void SolverBase::RKUpdate( VectorVector& sol_0, VectorVector& sol_rk ) {
 #pragma omp parallel for
     for( unsigned i = 0; i < _nCells; ++i ) {
         _sol[i] = 0.5 * ( sol_0[i] + sol_rk[i] );

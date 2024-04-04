@@ -71,7 +71,7 @@ std::vector<VectorVector> HalfLattice_SN::GetExternalSource( const Vector& /*ene
 }
 
 VectorVector HalfLattice_SN::SetupIC() {
-    VectorVector psi( _mesh->GetNumCells(), Vector( _settings->GetNQuadPoints(), 1e-10 ) );
+    VectorVector psi( _mesh->GetNumCells(), Vector( _settings->GetNQuadPoints(), 1e-15 ) );
     return psi;
 }
 
@@ -198,6 +198,7 @@ const Vector& HalfLattice_SN::GetGhostCellValue( int idx_cell, const Vector& cel
 double HalfLattice_SN::GetCurAbsorptionLattice() { return _curAbsorptionLattice; }
 double HalfLattice_SN::GetTotalAbsorptionLattice() { return _totalAbsorptionLattice; }
 double HalfLattice_SN::GetMaxAbsorptionLattice() { return _curMaxAbsorptionLattice; }
+
 // QOI setter
 void HalfLattice_SN::ComputeTotalAbsorptionLattice( double dT ) { _totalAbsorptionLattice += _curAbsorptionLattice * dT; }
 
