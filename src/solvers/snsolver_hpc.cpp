@@ -95,7 +95,7 @@ SNSolverHPC::SNSolverHPC( Config* settings ) {
         for( unsigned idx_dim = 0; idx_dim < _nDim; idx_dim++ ) {
             _quadPts[Idx2D( idx_sys, idx_dim, _nDim )] = quadPoints[idx_sys][idx_dim];
         }
-        _quadWeights[idx_sys] = quadWeights[idx_sys];
+        _quadWeights[idx_sys] = 4.0 * quadWeights[idx_sys];    // Rescaling of quadweights TODO: Check if this needs general refactoring
 
         for( unsigned idx_sys2 = 0; idx_sys2 < _nSys; idx_sys2++ ) {
             _scatteringKernel[Idx2D( idx_sys, idx_sys2, _nSys )] = scatteringKernel( idx_sys, idx_sys2 );

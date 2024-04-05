@@ -129,7 +129,7 @@ VectorVector LineSource_SN::SetupIC() {
     for( unsigned j = 0; j < cellMids.size(); ++j ) {
         double x = cellMids[j][0];
         double y = cellMids[j][1];
-        psi[j]   = Vector( _settings->GetNQuadPoints(), 10.0 / ( 4.0 * M_PI * t ) * std::exp( -( x * x + y * y ) / ( 4 * t ) ) ) / ( 4 * M_PI );
+        psi[j]   = Vector( _settings->GetNQuadPoints(), 1.0 / ( 4.0 * M_PI * t ) * std::exp( -( x * x + y * y ) / ( 4 * t ) ) ) / ( 4 * M_PI );
     }
     return psi;
 }
