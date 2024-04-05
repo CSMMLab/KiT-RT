@@ -166,12 +166,18 @@ SNSolverHPC::SNSolverHPC( Config* settings ) {
     _curAbsorptionHohlraumHorizontal   = 0;
     _varAbsorptionHohlraumGreen        = 0;
 
-    _probingCellsHohlraum = {
-        _mesh->GetCellOfKoordinate( -0.4, 0. ),
-        _mesh->GetCellOfKoordinate( 0.4, 0. ),
-        _mesh->GetCellOfKoordinate( 0., -0.6 ),
-        _mesh->GetCellOfKoordinate( 0., 0.6 ),
-    };
+    if( _settings->GetProblemName() == PROBLEM_SymmetricHohlraum ) {
+        _probingCellsHohlraum = {
+            _mesh->GetCellOfKoordinate( -0.4, 0. ),
+            _mesh->GetCellOfKoordinate( 0.4, 0. ),
+            _mesh->GetCellOfKoordinate( 0., -0.6 ),
+            _mesh->GetCellOfKoordinate( 0., 0.6 ),
+        };
+    }
+    else {
+        _probingCellsHohlraum = std::vector<unsigned>( 4, 0. );
+    }
+
     _probingMoments = std::vector<double>( 12, 0. );
 
     // Red
@@ -195,8 +201,9 @@ SNSolverHPC::SNSolverHPC( Config* settings ) {
     std::cout << "Solver initialized!" << std::endl;
 
     _nProbingCellsLineGreen = _settings->GetNumProbingCellsLineHohlraum();
-    SetProbingCellsLineGreen();
-    std::cout << "Probing cells initialized!" << std::endl;
+    if( _settings->GetProblemName() == PROBLEM_SymmetricHohlraum ) {
+        SetProbingCellsLineGreen();
+    }
 
     _absorptionValsIntegrated    = std::vector<double>( _nProbingCellsLineGreen, 0.0 );
     _varAbsorptionValsIntegrated = std::vector<double>( _nProbingCellsLineGreen, 0.0 );
