@@ -170,8 +170,8 @@ SNSolverHPC::SNSolverHPC( Config* settings ) {
         _probingCellsHohlraum = {
             _mesh->GetCellOfKoordinate( -0.4, 0. ),
             _mesh->GetCellOfKoordinate( 0.4, 0. ),
-            _mesh->GetCellOfKoordinate( 0., -0.6 ),
-            _mesh->GetCellOfKoordinate( 0., 0.6 ),
+            _mesh->GetCellOfKoordinate( 0., -0.5 ),
+            _mesh->GetCellOfKoordinate( 0., 0.5 ),
         };
     }
     else {
@@ -243,10 +243,12 @@ void SNSolverHPC::Solve() {
             for( unsigned i = 0; i < _nCells; ++i ) {
                 _sol[i] = 0.5 * ( solRK0[i] + _sol[i] );    // Solution averaging with HEUN
             }
+            IterPostprocessing();
         }
         else {
             ( _spatialOrder == 2 ) ? FluxOrder2() : FluxOrder1();
             FVMUpdate();
+            IterPostprocessing();
         }
 
         // --- Wall time measurement
@@ -254,7 +256,6 @@ void SNSolverHPC::Solve() {
         _currTime = std::chrono::duration_cast<std::chrono::duration<double>>( duration ).count();
 
         // --- Runge Kutta Timestep ---
-        // if( _temporalOrder == 2 ) RKUpdate( solRK0, _sol );
         // --- Write Output ---
         WriteVolumeOutput( iter );
         WriteScalarOutput( iter );
@@ -470,24 +471,10 @@ void SNSolverHPC::FluxOrder1() {
 }
 
 void SNSolverHPC::FVMUpdate() {
-    _mass                            = 0.0;
-    _rmsFlux                         = 0.0;
-    _curAbsorptionLattice            = 0.0;
-    _curScalarOutflow                = 0.0;
-    _curAbsorptionHohlraumCenter     = 0.0;    // Green and blue areas of symmetric hohlraum
-    _curAbsorptionHohlraumVertical   = 0.0;    // Red areas of symmetric hohlraum
-    _curAbsorptionHohlraumHorizontal = 0.0;    // Black areas of symmetric hohlraum
-    _varAbsorptionHohlraumGreen      = 0.0;
-    double a_g                       = 0.0;
+    _mass    = 0.0;
+    _rmsFlux = 0.0;
 
-#pragma omp parallel for reduction( + : _mass,                                                                                                       \
-                                        _rmsFlux,                                                                                                    \
-                                        _curAbsorptionLattice,                                                                                       \
-                                        _curScalarOutflow,                                                                                           \
-                                        _curAbsorptionHohlraumCenter,                                                                                \
-                                        _curAbsorptionHohlraumVertical,                                                                              \
-                                        _curAbsorptionHohlraumHorizontal,                                                                            \
-                                        a_g ) reduction( max : _curMaxOrdinateOutflow, _curMaxAbsorptionLattice )
+#pragma omp parallel for reduction( + : _mass, _rmsFlux )
     for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
 
 #pragma omp simd
@@ -498,9 +485,6 @@ void SNSolverHPC::FVMUpdate() {
                 _dT / _areas[idx_cell] * _flux[Idx2D( idx_cell, idx_sys, _nSys )] +
                 _dT * ( _sigmaS[idx_cell] * _scalarFlux[idx_cell] / ( 4 * M_PI ) + _source[Idx2D( idx_cell, idx_sys, _nSys )] );
         }
-
-        // --- Iter Postprocessing ---
-
         double localScalarFlux = 0;
 
 #pragma omp simd reduction( + : localScalarFlux )
@@ -508,10 +492,29 @@ void SNSolverHPC::FVMUpdate() {
             _sol[Idx2D( idx_cell, idx_sys, _nSys )] = std::max( _sol[Idx2D( idx_cell, idx_sys, _nSys )], 0.0 );
             localScalarFlux += _sol[Idx2D( idx_cell, idx_sys, _nSys )] * _quadWeights[idx_sys];
         }
-
         _mass += localScalarFlux * _areas[idx_cell];
         _rmsFlux += ( localScalarFlux - _scalarFlux[idx_cell] ) * ( localScalarFlux - _scalarFlux[idx_cell] );
         _scalarFlux[idx_cell] = localScalarFlux;    // set flux
+    }
+}
+
+void SNSolverHPC::IterPostprocessing() {
+
+    _curAbsorptionLattice            = 0.0;
+    _curScalarOutflow                = 0.0;
+    _curAbsorptionHohlraumCenter     = 0.0;    // Green and blue areas of symmetric hohlraum
+    _curAbsorptionHohlraumVertical   = 0.0;    // Red areas of symmetric hohlraum
+    _curAbsorptionHohlraumHorizontal = 0.0;    // Black areas of symmetric hohlraum
+    _varAbsorptionHohlraumGreen      = 0.0;
+    double a_g                       = 0.0;
+
+#pragma omp parallel for reduction( + : _curAbsorptionLattice,                                                                                       \
+                                        _curScalarOutflow,                                                                                           \
+                                        _curAbsorptionHohlraumCenter,                                                                                \
+                                        _curAbsorptionHohlraumVertical,                                                                              \
+                                        _curAbsorptionHohlraumHorizontal,                                                                            \
+                                        a_g ) reduction( max : _curMaxOrdinateOutflow, _curMaxAbsorptionLattice )
+    for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
 
         if( _settings->GetProblemName() == PROBLEM_Lattice || _settings->GetProblemName() == PROBLEM_HalfLattice ) {
             if( IsAbsorptionLattice( _cellMidPoints[Idx2D( idx_cell, 0, _nDim )], _cellMidPoints[Idx2D( idx_cell, 1, _nDim )] ) ) {
@@ -623,7 +626,6 @@ void SNSolverHPC::FVMUpdate() {
     _totalAbsorptionHohlraumVertical += _curAbsorptionHohlraumVertical * _dT;
     _totalAbsorptionHohlraumHorizontal += _curAbsorptionHohlraumHorizontal * _dT;
 }
-
 bool SNSolverHPC::IsAbsorptionLattice( double x, double y ) const {
     // Check whether pos is inside absorbing squares
     double xy_corrector = -3.5;
@@ -1223,7 +1225,6 @@ void SNSolverHPC::SetProbingCellsLineGreen() {
 }
 
 void SNSolverHPC::ComputeQOIsGreenProbingLine() {
-    std::cout << "ComputeQOIsGreenProbingLine" << std::endl;
     double verticalLineWidth   = std::abs( _cornerUpperLeftGreen[1] - _cornerLowerLeftGreen[1] );
     double horizontalLineWidth = std::abs( _cornerUpperLeftGreen[0] - _cornerUpperRightGreen[0] );
 
