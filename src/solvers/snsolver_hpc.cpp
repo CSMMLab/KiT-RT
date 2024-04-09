@@ -1223,7 +1223,6 @@ void SNSolverHPC::SetProbingCellsLineGreen() {
 }
 
 void SNSolverHPC::ComputeQOIsGreenProbingLine() {
-    std::cout << "ComputeQOIsGreenProbingLine" << std::endl;
     double verticalLineWidth   = std::abs( _cornerUpperLeftGreen[1] - _cornerLowerLeftGreen[1] );
     double horizontalLineWidth = std::abs( _cornerUpperLeftGreen[0] - _cornerUpperRightGreen[0] );
 
