@@ -140,6 +140,8 @@ class SNSolverHPC
 
     void FVMUpdate();
 
+    void IterPostprocessing();
+
     /*! @brief Computes the finite Volume update step for the current iteration
          @param idx_iter  current (peudo) time iteration */
     void RKUpdate( std::vector<double>& sol0, std::vector<double>& sol_rk );
