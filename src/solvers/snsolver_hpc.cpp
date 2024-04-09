@@ -174,11 +174,19 @@ SNSolverHPC::SNSolverHPC( Config* settings ) {
             _mesh->GetCellOfKoordinate( 0., 0.5 ),
         };
     }
+    else if( _settings->GetProblemName() == PROBLEM_QuarterHohlraum ) {
+        _probingCellsHohlraum = {
+            _mesh->GetCellOfKoordinate( 0.4, 0. ),
+            _mesh->GetCellOfKoordinate( 0., 0.5 ),
+        };
+    }
     else {
         _probingCellsHohlraum = std::vector<unsigned>( 4, 0. );
     }
-
-    _probingMoments = std::vector<double>( 12, 0. );
+    unsigned n_probes = 4;
+    if( _settings->GetProblemName() == PROBLEM_SymmetricHohlraum ) n_probes = 4;
+    if( _settings->GetProblemName() == PROBLEM_QuarterHohlraum ) n_probes = 2;
+    _probingMoments = std::vector<double>( n_probes * 3, 0. );
 
     // Red
     _redLeftTop        = 0.4;
@@ -197,8 +205,6 @@ SNSolverHPC::SNSolverHPC( Config* settings ) {
     _cornerLowerLeftGreen  = { -0.2 + _thicknessGreen / 2.0, -0.4 + _thicknessGreen / 2.0 };
     _cornerUpperRightGreen = { 0.2 - _thicknessGreen / 2.0, 0.4 - _thicknessGreen / 2.0 };
     _cornerLowerRightGreen = { 0.2 - _thicknessGreen / 2.0, -0.4 + _thicknessGreen / 2.0 };
-
-    std::cout << "Solver initialized!" << std::endl;
 
     _nProbingCellsLineGreen = _settings->GetNumProbingCellsLineHohlraum();
     if( _settings->GetProblemName() == PROBLEM_SymmetricHohlraum ) {
@@ -599,19 +605,21 @@ void SNSolverHPC::IterPostprocessing() {
                                                ( a_g - _scalarFlux[idx_cell] * ( _sigmaT[idx_cell] - _sigmaS[idx_cell] ) ) * _areas[idx_cell];
             }
         }
-// Probes value moments
+        // Probes value moments
+        unsigned n_probes = 4;
+        if( _settings->GetProblemName() == PROBLEM_QuarterHohlraum ) n_probes = 2;
 #pragma omp parallel for
-        for( unsigned idx_probe = 0; idx_probe < 4; idx_probe++ ) {    // Loop over probing cells
+        for( unsigned idx_probe = 0; idx_probe < n_probes; idx_probe++ ) {    // Loop over probing cells
             _probingMoments[Idx2D( idx_probe, 0, 3 )] = _scalarFlux[_probingCellsHohlraum[idx_probe]];
             _probingMoments[Idx2D( idx_probe, 1, 3 )] = 0.0;
             _probingMoments[Idx2D( idx_probe, 2, 3 )] = 0.0;
 
-            // for( unsigned idx_sys = 0; idx_sys < _nSys; idx_sys++ ) {
-            //     _probingMoments[Idx2D( idx_probe, 1, 3 )] +=
-            //         _quadPts[Idx2D( idx_sys, 0, _nDim )] * _sol[Idx2D( _probingCellsHohlraum[idx_probe], idx_sys, _nSys )] * _quadWeights[idx_sys];
-            //     _probingMoments[Idx2D( idx_probe, 2, 3 )] +=
-            //         _quadPts[Idx2D( idx_sys, 1, _nDim )] * _sol[Idx2D( _probingCellsHohlraum[idx_probe], idx_sys, _nSys )] * _quadWeights[idx_sys];
-            // }
+            for( unsigned idx_sys = 0; idx_sys < _nSys; idx_sys++ ) {
+                _probingMoments[Idx2D( idx_probe, 1, 3 )] +=
+                    _quadPts[Idx2D( idx_sys, 0, _nDim )] * _sol[Idx2D( _probingCellsHohlraum[idx_probe], idx_sys, _nSys )] * _quadWeights[idx_sys];
+                _probingMoments[Idx2D( idx_probe, 2, 3 )] +=
+                    _quadPts[Idx2D( idx_sys, 1, _nDim )] * _sol[Idx2D( _probingCellsHohlraum[idx_probe], idx_sys, _nSys )] * _quadWeights[idx_sys];
+            }
         }
 
         // probe values green
@@ -815,7 +823,7 @@ void SNSolverHPC::WriteScalarOutput( unsigned idx_iter ) {
                 if( _settings->GetProblemName() == PROBLEM_QuarterHohlraum ) n_probes = 2;
                 for( unsigned i = 0; i < n_probes; i++ ) {
                     for( unsigned j = 0; j < 3; j++ ) {
-                        _screenOutputFields[idx_field] = _probingMoments[Idx2D( i, j, 3 )];
+                        _historyOutputFields[idx_field] = _probingMoments[Idx2D( i, j, 3 )];
                         idx_field++;
                     }
                 }
@@ -1165,38 +1173,30 @@ void SNSolverHPC::SetGhostCells() {
             }
         }
     }
-
     else if( _settings->GetProblemName() == PROBLEM_SymmetricHohlraum ) {
-        std::vector<double> left_inflow( _nSys, 0.0 );
-        std::vector<double> right_inflow( _nSys, 0.0 );
-        std::vector<double> vertical_flow( _nSys, 0.0 );
-
-        for( unsigned idx_q = 0; idx_q < _nSys; idx_q++ ) {
-            if( _quadPts[Idx2D( idx_q, 0, _nDim )] > 0.0 ) left_inflow[idx_q] = 1.0;
-            if( _quadPts[Idx2D( idx_q, 1, _nDim )] < 0.0 ) right_inflow[idx_q] = 1.0;
-        }
 
         for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
 
-            _ghostCellsReflectingY[idx_cell] = false;
-
             if( _cellBoundaryTypes[idx_cell] == BOUNDARY_TYPE::NEUMANN || _cellBoundaryTypes[idx_cell] == BOUNDARY_TYPE::DIRICHLET ) {
-                if( _cellMidPoints[Idx2D( idx_cell, 1, _nDim )] < -0.6 )
-                    _ghostCells[idx_cell] = vertical_flow;
-                else if( _cellMidPoints[Idx2D( idx_cell, 1, _nDim )] > 0.6 )
-                    _ghostCells[idx_cell] = vertical_flow;
-                else if( _cellMidPoints[Idx2D( idx_cell, 0, _nDim )] < -0.6 )
-                    _ghostCells[idx_cell] = left_inflow;
-                else if( _cellMidPoints[Idx2D( idx_cell, 0, _nDim )] > 0.6 )
-                    _ghostCells[idx_cell] = right_inflow;
+                _ghostCellsReflectingY[idx_cell] = false;
+                _ghostCells[idx_cell]            = std::vector<double>( _nSys, 0.0 );
+
+                if( _cellMidPoints[Idx2D( idx_cell, 0, _nDim )] < -0.64 ) {
+                    for( unsigned idx_q = 0; idx_q < _nSys; idx_q++ ) {
+                        if( _quadPts[Idx2D( idx_q, 0, _nDim )] > 0.0 ) _ghostCells[idx_cell][idx_q] = 1.0;
+                    }
+                }
+                else if( _cellMidPoints[Idx2D( idx_cell, 0, _nDim )] > 0.64 ) {
+                    for( unsigned idx_q = 0; idx_q < _nSys; idx_q++ ) {
+                        if( _quadPts[Idx2D( idx_q, 0, _nDim )] < 0.0 ) _ghostCells[idx_cell][idx_q] = 1.0;
+                    }
+                }
             }
         }
     }
 }
 
 void SNSolverHPC::SetProbingCellsLineGreen() {
-    std::cout << "SetProbingCellsLineGreen" << std::endl;
-
     double verticalLineWidth   = std::abs( _cornerUpperLeftGreen[1] - _cornerLowerLeftGreen[1] );
     double horizontalLineWidth = std::abs( _cornerUpperLeftGreen[0] - _cornerUpperRightGreen[0] );
 

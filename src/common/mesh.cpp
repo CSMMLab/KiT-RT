@@ -418,6 +418,7 @@ void Mesh::ComputeLimiter1D( unsigned nSys, const VectorVector& sol, VectorVecto
 
 void Mesh::ComputeBounds() {
     _bounds = std::vector( _dim, std::make_pair( std::numeric_limits<double>::infinity(), -std::numeric_limits<double>::infinity() ) );
+#pragma omp parallel for
     for( unsigned i = 0; i < _numNodes; ++i ) {
         for( unsigned j = 0; j < _dim; ++j ) {
             if( _nodes[i][j] < _bounds[j].first ) _bounds[j].first = _nodes[i][j];
