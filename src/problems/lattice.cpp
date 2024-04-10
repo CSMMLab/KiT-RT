@@ -71,7 +71,7 @@ std::vector<VectorVector> Lattice_SN::GetExternalSource( const Vector& /*energie
 }
 
 VectorVector Lattice_SN::SetupIC() {
-    VectorVector psi( _mesh->GetNumCells(), Vector( _settings->GetNQuadPoints(), 1e-15 ) );
+    VectorVector psi( _mesh->GetNumCells(), Vector( _settings->GetNQuadPoints(), 0.0 ) );
     return psi;
 }
 

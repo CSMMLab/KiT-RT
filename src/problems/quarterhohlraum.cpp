@@ -31,7 +31,7 @@ QuarterHohlraum::QuarterHohlraum( Config* settings, Mesh* mesh, QuadratureBase* 
     _varAbsorptionHohlraumGreen        = 0.0;
     _probingCells                      = {
         _mesh->GetCellOfKoordinate( 0.4, 0. ),
-        _mesh->GetCellOfKoordinate( 0., 0.6 ),
+        _mesh->GetCellOfKoordinate( 0., 0.5 ),
     };
     _probingMoments         = VectorVector( 2, Vector( 3, 0.0 ) );
     _nProbingCellsLineGreen = _settings->GetNumProbingCellsLineHohlraum();
@@ -97,7 +97,7 @@ std::vector<VectorVector> QuarterHohlraum::GetExternalSource( const Vector& /* e
 }
 
 VectorVector QuarterHohlraum::SetupIC() {
-    VectorVector psi( _mesh->GetNumCells(), Vector( _settings->GetNQuadPoints(), 1e-10 ) );
+    VectorVector psi( _mesh->GetNumCells(), Vector( _settings->GetNQuadPoints(), 0.0 ) );
     VectorVector cellMids = _mesh->GetCellMidPoints();
 
     for( unsigned j = 0; j < cellMids.size(); ++j ) {

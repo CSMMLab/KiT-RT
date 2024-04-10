@@ -54,6 +54,7 @@ SNSolverHPC::SNSolverHPC( Config* settings ) {
     _quadWeights           = std::vector<double>( _nSys );
     _scatteringKernel      = std::vector<double>( _nSys * _nSys );
     _quadratureYReflection = std::vector<unsigned>( _nSys );
+    _quadratureXReflection = std::vector<unsigned>( _nSys );
 
     // Solution
     _sol  = std::vector<double>( _nCells * _nSys );
@@ -91,6 +92,8 @@ SNSolverHPC::SNSolverHPC( Config* settings ) {
 
     ScatteringKernel* k   = ScatteringKernel::CreateScatteringKernel( settings->GetKernelName(), quad );
     auto scatteringKernel = k->GetScatteringKernel();
+
+#pragma omp parallel for
     for( unsigned idx_sys = 0; idx_sys < _nSys; idx_sys++ ) {
         for( unsigned idx_dim = 0; idx_dim < _nDim; idx_dim++ ) {
             _quadPts[Idx2D( idx_sys, idx_dim, _nDim )] = quadPoints[idx_sys][idx_dim];
@@ -102,7 +105,7 @@ SNSolverHPC::SNSolverHPC( Config* settings ) {
         }
     }
 
-    // #pragma omp parallel for
+#pragma omp parallel for
     for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
         _cellBoundaryTypes[idx_cell] = boundaryTypes[idx_cell];
 
@@ -137,7 +140,7 @@ SNSolverHPC::SNSolverHPC( Config* settings ) {
         _mass += _scalarFlux[idx_cell] * _areas[idx_cell];
     }
 
-    SetGhostCells();    // ONLY FOR LATTICE AND HALF LATTICE
+    SetGhostCells();
 
     PrepareScreenOutput();     // Screen Output
     PrepareHistoryOutput();    // History Output
@@ -150,69 +153,79 @@ SNSolverHPC::SNSolverHPC( Config* settings ) {
     _rmsFlux = 0;
 
     // Lattice
-    _curAbsorptionLattice    = 0;
-    _totalAbsorptionLattice  = 0;
-    _curMaxAbsorptionLattice = 0;
-    _curScalarOutflow        = 0;
-    _totalScalarOutflow      = 0;
-    _curMaxOrdinateOutflow   = 0;
-
+    {
+        _curAbsorptionLattice    = 0;
+        _totalAbsorptionLattice  = 0;
+        _curMaxAbsorptionLattice = 0;
+        _curScalarOutflow        = 0;
+        _totalScalarOutflow      = 0;
+        _curMaxOrdinateOutflow   = 0;
+    }
     // Hohlraum
-    _totalAbsorptionHohlraumCenter     = 0;
-    _totalAbsorptionHohlraumVertical   = 0;
-    _totalAbsorptionHohlraumHorizontal = 0;
-    _curAbsorptionHohlraumCenter       = 0;
-    _curAbsorptionHohlraumVertical     = 0;
-    _curAbsorptionHohlraumHorizontal   = 0;
-    _varAbsorptionHohlraumGreen        = 0;
+    {
+        _totalAbsorptionHohlraumCenter     = 0;
+        _totalAbsorptionHohlraumVertical   = 0;
+        _totalAbsorptionHohlraumHorizontal = 0;
+        _curAbsorptionHohlraumCenter       = 0;
+        _curAbsorptionHohlraumVertical     = 0;
+        _curAbsorptionHohlraumHorizontal   = 0;
+        _varAbsorptionHohlraumGreen        = 0;
 
-    if( _settings->GetProblemName() == PROBLEM_SymmetricHohlraum ) {
-        _probingCellsHohlraum = {
-            _mesh->GetCellOfKoordinate( -0.4, 0. ),
-            _mesh->GetCellOfKoordinate( 0.4, 0. ),
-            _mesh->GetCellOfKoordinate( 0., -0.5 ),
-            _mesh->GetCellOfKoordinate( 0., 0.5 ),
-        };
+        unsigned n_probes = 4;
+        if( _settings->GetProblemName() == PROBLEM_SymmetricHohlraum ) n_probes = 4;
+        if( _settings->GetProblemName() == PROBLEM_QuarterHohlraum ) n_probes = 2;
+
+        _probingCellsHohlraum = std::vector<unsigned>( n_probes, 0. );
+        _probingMoments       = std::vector<double>( n_probes * 3, 0. );
+
+        if( _settings->GetProblemName() == PROBLEM_SymmetricHohlraum ) {
+            _probingCellsHohlraum = {
+                _mesh->GetCellOfKoordinate( -0.4, 0. ),
+                _mesh->GetCellOfKoordinate( 0.4, 0. ),
+                _mesh->GetCellOfKoordinate( 0., -0.5 ),
+                _mesh->GetCellOfKoordinate( 0., 0.5 ),
+            };
+        }
+        else if( _settings->GetProblemName() == PROBLEM_QuarterHohlraum ) {
+            _probingCellsHohlraum = {
+                _mesh->GetCellOfKoordinate( 0.4, 0. ),
+                _mesh->GetCellOfKoordinate( 0., 0.5 ),
+            };
+        }
+
+        // Red
+        _redLeftTop        = 0.4;
+        _redLeftBottom     = -0.4;
+        _redRightTop       = 0.4;
+        _redRightBottom    = -0.4;
+        _thicknessRedLeft  = 0.05;
+        _thicknessRedRight = 0.05;
+        // Green
+        _widthGreen     = 0.4;
+        _heightGreen    = 0.8;
+        _thicknessGreen = 0.05;
+        _centerGreen    = { 0.0, 0.0 };
+
+        if( _settings->GetProblemName() == PROBLEM_SymmetricHohlraum ) {
+            _cornerUpperLeftGreen  = { -0.2 + _thicknessGreen / 2.0, 0.4 - _thicknessGreen / 2.0 };
+            _cornerLowerLeftGreen  = { -0.2 + _thicknessGreen / 2.0, -0.4 + _thicknessGreen / 2.0 };
+            _cornerUpperRightGreen = { 0.2 - _thicknessGreen / 2.0, 0.4 - _thicknessGreen / 2.0 };
+            _cornerLowerRightGreen = { 0.2 - _thicknessGreen / 2.0, -0.4 + _thicknessGreen / 2.0 };
+        }
+        else {
+            _cornerUpperLeftGreen  = { 0., 0.4 - _thicknessGreen / 2.0 };
+            _cornerLowerLeftGreen  = { 0., +_thicknessGreen / 2.0 };
+            _cornerUpperRightGreen = { 0.2 - _thicknessGreen / 2.0, 0.4 - _thicknessGreen / 2.0 };
+            _cornerLowerRightGreen = { 0.2 - _thicknessGreen / 2.0, 0. + _thicknessGreen / 2.0 };
+        }
+
+        _nProbingCellsLineGreen = _settings->GetNumProbingCellsLineHohlraum();
+
+        SetProbingCellsLineGreen();    // ONLY FOR HOHLRAUM
+
+        _absorptionValsIntegrated    = std::vector<double>( _nProbingCellsLineGreen, 0.0 );
+        _varAbsorptionValsIntegrated = std::vector<double>( _nProbingCellsLineGreen, 0.0 );
     }
-    else if( _settings->GetProblemName() == PROBLEM_QuarterHohlraum ) {
-        _probingCellsHohlraum = {
-            _mesh->GetCellOfKoordinate( 0.4, 0. ),
-            _mesh->GetCellOfKoordinate( 0., 0.5 ),
-        };
-    }
-    else {
-        _probingCellsHohlraum = std::vector<unsigned>( 4, 0. );
-    }
-    unsigned n_probes = 4;
-    if( _settings->GetProblemName() == PROBLEM_SymmetricHohlraum ) n_probes = 4;
-    if( _settings->GetProblemName() == PROBLEM_QuarterHohlraum ) n_probes = 2;
-    _probingMoments = std::vector<double>( n_probes * 3, 0. );
-
-    // Red
-    _redLeftTop        = 0.4;
-    _redLeftBottom     = -0.4;
-    _redRightTop       = 0.4;
-    _redRightBottom    = -0.4;
-    _thicknessRedLeft  = 0.05;
-    _thicknessRedRight = 0.05;
-    // Green
-    _widthGreen     = 0.4;
-    _heightGreen    = 0.8;
-    _thicknessGreen = 0.05;
-    _centerGreen    = { 0.0, 0.0 };
-
-    _cornerUpperLeftGreen  = { -0.2 + _thicknessGreen / 2.0, 0.4 - _thicknessGreen / 2.0 };
-    _cornerLowerLeftGreen  = { -0.2 + _thicknessGreen / 2.0, -0.4 + _thicknessGreen / 2.0 };
-    _cornerUpperRightGreen = { 0.2 - _thicknessGreen / 2.0, 0.4 - _thicknessGreen / 2.0 };
-    _cornerLowerRightGreen = { 0.2 - _thicknessGreen / 2.0, -0.4 + _thicknessGreen / 2.0 };
-
-    _nProbingCellsLineGreen = _settings->GetNumProbingCellsLineHohlraum();
-    if( _settings->GetProblemName() == PROBLEM_SymmetricHohlraum ) {
-        SetProbingCellsLineGreen();
-    }
-
-    _absorptionValsIntegrated    = std::vector<double>( _nProbingCellsLineGreen, 0.0 );
-    _varAbsorptionValsIntegrated = std::vector<double>( _nProbingCellsLineGreen, 0.0 );
 }
 
 SNSolverHPC::~SNSolverHPC() {
@@ -406,8 +419,10 @@ void SNSolverHPC::FluxOrder2() {
                     }
                     else {
                         double ghostCellValue = ( _ghostCellsReflectingY[idx_cell] )
-                                                    ? 0.0 * _sol[Idx2D( idx_cell, _quadratureYReflection[idx_sys], _nSys )]    // Relecting boundary
-                                                    : _ghostCells[idx_cell][idx_sys];                                          // fixed boundary
+                                                    ? _sol[Idx2D( idx_cell, _quadratureYReflection[idx_sys], _nSys )]    // Relecting boundary Y
+                                                : ( _ghostCellsReflectingX[idx_cell] )
+                                                    ? _sol[Idx2D( idx_cell, _quadratureXReflection[idx_sys], _nSys )]    // Relecting boundary X
+                                                    : _ghostCells[idx_cell][idx_sys];                                    // fixed boundary
                         _flux[Idx2D( idx_cell, idx_sys, _nSys )] += localInner * ghostCellValue;
                     }
                 }
@@ -464,7 +479,9 @@ void SNSolverHPC::FluxOrder1() {
                     }
                     else {
                         double ghostCellValue = ( _ghostCellsReflectingY[idx_cell] )
-                                                    ? _sol[Idx2D( idx_cell, _quadratureYReflection[idx_sys], _nSys )]    // Relecting boundary
+                                                    ? _sol[Idx2D( idx_cell, _quadratureYReflection[idx_sys], _nSys )]    // Relecting boundary Y
+                                                : ( _ghostCellsReflectingX[idx_cell] )
+                                                    ? _sol[Idx2D( idx_cell, _quadratureXReflection[idx_sys], _nSys )]    // Relecting boundary X
                                                     : _ghostCells[idx_cell][idx_sys];                                    // fixed boundary
                         _flux[Idx2D( idx_cell, idx_sys, _nSys )] += localInner * ghostCellValue;
                     }
@@ -567,7 +584,7 @@ void SNSolverHPC::IterPostprocessing() {
         }
 
         // Outflow
-        if( _cellBoundaryTypes[idx_cell] == BOUNDARY_TYPE::NEUMANN && !_ghostCellsReflectingY[idx_cell] ) {
+        if( _cellBoundaryTypes[idx_cell] == BOUNDARY_TYPE::NEUMANN && !_ghostCellsReflectingY[idx_cell] && !_ghostCellsReflectingX[idx_cell] ) {
             // Iterate over face cell faces
             double currOrdinatewiseOutflow = 0.0;
 
@@ -1123,11 +1140,12 @@ void SNSolverHPC::PrepareVolumeOutput() {
 void SNSolverHPC::SetGhostCells() {
     if( _settings->GetProblemName() == PROBLEM_Lattice ) {
         std::vector<double> void_flow( _nSys, 0.0 );
-
+#pragma omp parallel for
         for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
             if( _cellBoundaryTypes[idx_cell] == BOUNDARY_TYPE::NEUMANN || _cellBoundaryTypes[idx_cell] == BOUNDARY_TYPE::DIRICHLET ) {
                 _ghostCells[idx_cell]            = void_flow;
                 _ghostCellsReflectingY[idx_cell] = false;
+                _ghostCellsReflectingX[idx_cell] = false;
             }
         }
     }
@@ -1160,23 +1178,24 @@ void SNSolverHPC::SetGhostCells() {
         auto nodes     = _mesh->GetNodes();
         auto cellNodes = _mesh->GetCells();
 
+#pragma omp parallel for
         for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
             if( _cellBoundaryTypes[idx_cell] != BOUNDARY_TYPE::NONE ) {
-
                 _ghostCellsReflectingY[idx_cell] = false;
+                _ghostCellsReflectingX[idx_cell] = false;
                 for( unsigned idx_node = 0; idx_node < _nNbr; idx_node++ ) {    // Check if corner node is in this cell
                     if( abs( nodes[cellNodes[idx_cell][idx_node]][1] ) < -3.5 + tol || abs( nodes[cellNodes[idx_cell][idx_node]][1] ) > 3.5 - tol ) {
                         // upper and lower boundary
-                        _ghostCells.insert( { idx_cell, std::vector<double>( _nSys, 1e-15 ) } );
+                        _ghostCells.insert( { idx_cell, std::vector<double>( _nSys, 0.0 ) } );
                         break;
                     }
                     else if( abs( nodes[cellNodes[idx_cell][idx_node]][0] ) < tol ) {    // close to 0 => left boundary
                         _ghostCellsReflectingY[idx_cell] = true;
-                        // _ghostCells.insert( { idx_cell, std::vector<double>( _nSys ) } );
+                        _ghostCells.insert( { idx_cell, std::vector<double>( _nSys, -1.0 ) } );
                         break;
                     }
                     else {    // right boundary
-                        _ghostCells.insert( { idx_cell, std::vector<double>( _nSys, 1e-15 ) } );
+                        _ghostCells.insert( { idx_cell, std::vector<double>( _nSys, 0.0 ) } );
                         break;
                     }
                 }
@@ -1185,20 +1204,116 @@ void SNSolverHPC::SetGhostCells() {
     }
     else if( _settings->GetProblemName() == PROBLEM_SymmetricHohlraum ) {
 
+        auto nodes = _mesh->GetNodes();
+        double tol = 1e-12;    // For distance to boundary
+
+#pragma omp parallel for
         for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
 
             if( _cellBoundaryTypes[idx_cell] == BOUNDARY_TYPE::NEUMANN || _cellBoundaryTypes[idx_cell] == BOUNDARY_TYPE::DIRICHLET ) {
                 _ghostCellsReflectingY[idx_cell] = false;
+                _ghostCellsReflectingX[idx_cell] = false;
                 _ghostCells[idx_cell]            = std::vector<double>( _nSys, 0.0 );
 
-                if( _cellMidPoints[Idx2D( idx_cell, 0, _nDim )] < -0.64 ) {
-                    for( unsigned idx_q = 0; idx_q < _nSys; idx_q++ ) {
-                        if( _quadPts[Idx2D( idx_q, 0, _nDim )] > 0.0 ) _ghostCells[idx_cell][idx_q] = 1.0;
+                auto localCellNodes = _mesh->GetCells()[idx_cell];
+
+                for( unsigned idx_node = 0; idx_node < _mesh->GetNumNodesPerCell(); idx_node++ ) {    // Check if corner node is in this cell
+                    if( abs( nodes[localCellNodes[idx_node]][0] ) < -0.65 + tol ) {                   // close to 0 => left boundary
+                        for( unsigned idx_q = 0; idx_q < _nSys; idx_q++ ) {
+                            if( _quadPts[Idx2D( idx_q, 0, _nDim )] > 0.0 ) _ghostCells[idx_cell][idx_q] = 1.0;
+                        }
+                        break;
+                    }
+                    else if( abs( nodes[localCellNodes[idx_node]][0] ) > 0.65 - tol ) {    // right boundary
+                        for( unsigned idx_q = 0; idx_q < _nSys; idx_q++ ) {
+                            if( _quadPts[Idx2D( idx_q, 0, _nDim )] < 0.0 ) _ghostCells[idx_cell][idx_q] = 1.0;
+                        }
+                        break;
+                    }
+                    else if( abs( nodes[localCellNodes[idx_node]][1] ) < -0.65 + tol ) {    // lower boundary
+
+                        break;
+                    }
+                    else if( abs( nodes[localCellNodes[idx_node]][1] ) > 0.65 - tol ) {    // upper boundary
+                        break;
+                    }
+                    else {
+                        ErrorMessages::Error( " Problem with ghost cell setup and  boundary of this mesh ", CURRENT_FUNCTION );
                     }
                 }
-                else if( _cellMidPoints[Idx2D( idx_cell, 0, _nDim )] > 0.64 ) {
-                    for( unsigned idx_q = 0; idx_q < _nSys; idx_q++ ) {
-                        if( _quadPts[Idx2D( idx_q, 0, _nDim )] < 0.0 ) _ghostCells[idx_cell][idx_q] = 1.0;
+            }
+        }
+    }
+    else if( _settings->GetProblemName() == PROBLEM_QuarterHohlraum ) {
+
+        double tol = 1e-12;    // For distance to boundary
+
+        if( _settings->GetQuadName() != QUAD_GaussLegendreTensorized2D ) {
+            ErrorMessages::Error( "This simplified test case only works with symmetric quadrature orders. Use QUAD_GAUSS_LEGENDRE_TENSORIZED_2D",
+                                  CURRENT_FUNCTION );
+        }
+
+        {    // Create the symmetry maps for the quadratures
+
+            for( unsigned idx_q = 0; idx_q < _nSys; idx_q++ ) {
+                for( unsigned idx_q2 = 0; idx_q2 < _nSys; idx_q2++ ) {
+                    if( abs( _quadPts[Idx2D( idx_q, 0, _nDim )] + _quadPts[Idx2D( idx_q2, 0, _nDim )] ) +
+                            abs( _quadPts[Idx2D( idx_q, 1, _nDim )] - _quadPts[Idx2D( idx_q2, 1, _nDim )] ) <
+                        tol ) {
+                        _quadratureYReflection[idx_q] = idx_q2;
+                        break;
+                    }
+                }
+                for( unsigned idx_q2 = 0; idx_q2 < _nSys; idx_q2++ ) {
+                    if( abs( _quadPts[Idx2D( idx_q, 0, _nDim )] - _quadPts[Idx2D( idx_q2, 0, _nDim )] ) +
+                            abs( _quadPts[Idx2D( idx_q, 1, _nDim )] * _quadPts[Idx2D( idx_q2, 1, _nDim )] ) <
+                        tol ) {
+                        _quadratureXReflection[idx_q] = idx_q2;
+                        break;
+                    }
+                }
+            }
+        }
+        if( _quadratureXReflection.size() != _nSys ) {
+            ErrorMessages::Error( "Problem with X symmetry of quadrature of this mesh", CURRENT_FUNCTION );
+        }
+        if( _quadratureYReflection.size() != _nSys ) {
+            ErrorMessages::Error( "Problem with Y symmetry of quadrature of this mesh", CURRENT_FUNCTION );
+        }
+
+        auto nodes = _mesh->GetNodes();
+
+#pragma omp parallel for
+        for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
+
+            if( _cellBoundaryTypes[idx_cell] == BOUNDARY_TYPE::NEUMANN || _cellBoundaryTypes[idx_cell] == BOUNDARY_TYPE::DIRICHLET ) {
+
+                auto localCellNodes = _mesh->GetCells()[idx_cell];
+
+                _ghostCellsReflectingX[idx_cell] = false;
+                _ghostCellsReflectingY[idx_cell] = false;
+                _ghostCells[idx_cell]            = std::vector<double>( _nSys, 0.0 );
+
+                for( unsigned idx_node = 0; idx_node < _mesh->GetNumNodesPerCell(); idx_node++ ) {    // Check if corner node is in this cell
+                    if( abs( nodes[localCellNodes[idx_node]][0] ) < tol ) {                           // close to 0 => left boundary
+                        _ghostCellsReflectingY[idx_cell] = true;
+                        break;
+                    }
+                    else if( abs( nodes[localCellNodes[idx_node]][0] ) > 0.65 - tol ) {    // right boundary
+                        for( unsigned idx_q = 0; idx_q < _nSys; idx_q++ ) {
+                            if( _quadPts[Idx2D( idx_q, 0, _nDim )] < 0.0 ) _ghostCells[idx_cell][idx_q] = 1.0;
+                        }
+                        break;
+                    }
+                    else if( abs( nodes[localCellNodes[idx_node]][1] ) < tol ) {    // lower boundary
+                        _ghostCellsReflectingX[idx_cell] = true;
+                        break;
+                    }
+                    else if( abs( nodes[localCellNodes[idx_node]][1] ) > 0.65 - tol ) {    // upper boundary
+                        break;
+                    }
+                    else {
+                        ErrorMessages::Error( " Problem with ghost cell setup and  boundary of this mesh ", CURRENT_FUNCTION );
                     }
                 }
             }
@@ -1207,31 +1322,51 @@ void SNSolverHPC::SetGhostCells() {
 }
 
 void SNSolverHPC::SetProbingCellsLineGreen() {
-    double verticalLineWidth   = std::abs( _cornerUpperLeftGreen[1] - _cornerLowerLeftGreen[1] );
-    double horizontalLineWidth = std::abs( _cornerUpperLeftGreen[0] - _cornerUpperRightGreen[0] );
 
-    // double dx = 2 * ( horizontalLineWidth + verticalLineWidth ) / ( (double)_nProbingCellsLineGreen );
+    if( _settings->GetProblemName() == PROBLEM_QuarterHohlraum ) {
+        double verticalLineWidth   = std::abs( _cornerUpperLeftGreen[1] - _cornerLowerLeftGreen[1] );
+        double horizontalLineWidth = std::abs( _cornerUpperLeftGreen[0] - _cornerUpperRightGreen[0] );
 
-    unsigned nHorizontalProbingCells =
-        (unsigned)std::ceil( _nProbingCellsLineGreen / 2 * ( horizontalLineWidth / ( horizontalLineWidth + verticalLineWidth ) ) );
-    unsigned nVerticalProbingCells = _nProbingCellsLineGreen - nHorizontalProbingCells;
+        // double dx = 2 * ( horizontalLineWidth + verticalLineWidth ) / ( (double)_nProbingCellsLineGreen );
 
-    _probingCellsLineGreen = std::vector<unsigned>( _nProbingCellsLineGreen );
+        unsigned nHorizontalProbingCells =
+            (unsigned)std::ceil( _nProbingCellsLineGreen * ( horizontalLineWidth / ( horizontalLineWidth + verticalLineWidth ) ) );
+        unsigned nVerticalProbingCells = _nProbingCellsLineGreen - nHorizontalProbingCells;
 
-    // printf( "here" );
+        _probingCellsLineGreen = std::vector<unsigned>( _nProbingCellsLineGreen );
 
-    // Sample points on each side of the rectangle
-    std::vector<unsigned> side1 = linspace2D( _cornerUpperLeftGreen, _cornerLowerLeftGreen, nVerticalProbingCells );
-    std::vector<unsigned> side2 = linspace2D( _cornerLowerLeftGreen, _cornerLowerRightGreen, nHorizontalProbingCells );
-    std::vector<unsigned> side3 = linspace2D( _cornerLowerRightGreen, _cornerUpperRightGreen, nVerticalProbingCells );
-    std::vector<unsigned> side4 = linspace2D( _cornerUpperRightGreen, _cornerUpperLeftGreen, nHorizontalProbingCells );
+        // Sample points on each side of the rectangle
+        std::vector<unsigned> side3 = linspace2D( _cornerLowerRightGreen, _cornerUpperRightGreen, nVerticalProbingCells );
+        std::vector<unsigned> side4 = linspace2D( _cornerUpperRightGreen, _cornerUpperLeftGreen, nHorizontalProbingCells );
 
-    // printf( "here" );
-    //  Combine the points from each side
-    _probingCellsLineGreen.insert( _probingCellsLineGreen.end(), side1.begin(), side1.end() );
-    _probingCellsLineGreen.insert( _probingCellsLineGreen.end(), side2.begin(), side2.end() );
-    _probingCellsLineGreen.insert( _probingCellsLineGreen.end(), side3.begin(), side3.end() );
-    _probingCellsLineGreen.insert( _probingCellsLineGreen.end(), side4.begin(), side4.end() );
+        //  Combine the points from each side
+        _probingCellsLineGreen.insert( _probingCellsLineGreen.end(), side3.begin(), side3.end() );
+        _probingCellsLineGreen.insert( _probingCellsLineGreen.end(), side4.begin(), side4.end() );
+    }
+    else if( _settings->GetProblemName() == PROBLEM_SymmetricHohlraum ) {
+        double verticalLineWidth   = std::abs( _cornerUpperLeftGreen[1] - _cornerLowerLeftGreen[1] );
+        double horizontalLineWidth = std::abs( _cornerUpperLeftGreen[0] - _cornerUpperRightGreen[0] );
+
+        // double dx = 2 * ( horizontalLineWidth + verticalLineWidth ) / ( (double)_nProbingCellsLineGreen );
+
+        unsigned nHorizontalProbingCells =
+            (unsigned)std::ceil( _nProbingCellsLineGreen / 2 * ( horizontalLineWidth / ( horizontalLineWidth + verticalLineWidth ) ) );
+        unsigned nVerticalProbingCells = _nProbingCellsLineGreen - nHorizontalProbingCells;
+
+        _probingCellsLineGreen = std::vector<unsigned>( _nProbingCellsLineGreen );
+
+        // Sample points on each side of the rectangle
+        std::vector<unsigned> side1 = linspace2D( _cornerUpperLeftGreen, _cornerLowerLeftGreen, nVerticalProbingCells );
+        std::vector<unsigned> side2 = linspace2D( _cornerLowerLeftGreen, _cornerLowerRightGreen, nHorizontalProbingCells );
+        std::vector<unsigned> side3 = linspace2D( _cornerLowerRightGreen, _cornerUpperRightGreen, nVerticalProbingCells );
+        std::vector<unsigned> side4 = linspace2D( _cornerUpperRightGreen, _cornerUpperLeftGreen, nHorizontalProbingCells );
+
+        //  Combine the points from each side
+        _probingCellsLineGreen.insert( _probingCellsLineGreen.end(), side1.begin(), side1.end() );
+        _probingCellsLineGreen.insert( _probingCellsLineGreen.end(), side2.begin(), side2.end() );
+        _probingCellsLineGreen.insert( _probingCellsLineGreen.end(), side3.begin(), side3.end() );
+        _probingCellsLineGreen.insert( _probingCellsLineGreen.end(), side4.begin(), side4.end() );
+    }
 }
 
 void SNSolverHPC::ComputeQOIsGreenProbingLine() {

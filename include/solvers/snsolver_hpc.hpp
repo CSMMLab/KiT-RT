@@ -49,7 +49,9 @@ class SNSolverHPC
     std::vector<double> _relativeCellVertices;           /*!< @brief dim _nCells * _nNbr * _nDim */
 
     std::map<unsigned, bool> _ghostCellsReflectingY; /*!< map that indicates if a ghostcell has a fixed value or is a mirroring boundary */
+    std::map<unsigned, bool> _ghostCellsReflectingX; /*!< map that indicates if a ghostcell has a fixed value or is a mirroring boundary */
     std::vector<unsigned> _quadratureYReflection;    /*!< map that gives a Reflection against the y axis for the velocity ordinates */
+    std::vector<unsigned> _quadratureXReflection;    /*!< map that gives a Reflection against the y axis for the velocity ordinates */
 
     unsigned _temporalOrder;      /*!< @brief temporal order (current: 1 & 2) */
     unsigned _spatialOrder;       /*!< @brief spatial order (current: 1 & 2) */

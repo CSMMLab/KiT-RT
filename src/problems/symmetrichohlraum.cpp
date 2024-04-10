@@ -47,8 +47,8 @@ SymmetricHohlraum::SymmetricHohlraum( Config* settings, Mesh* mesh, QuadratureBa
     _probingCells = {
         _mesh->GetCellOfKoordinate( -0.4, 0. ),
         _mesh->GetCellOfKoordinate( 0.4, 0. ),
-        _mesh->GetCellOfKoordinate( 0., -0.6 ),
-        _mesh->GetCellOfKoordinate( 0., 0.6 ),
+        _mesh->GetCellOfKoordinate( 0., -0.5 ),
+        _mesh->GetCellOfKoordinate( 0., 0.5 ),
     };
     _probingMoments         = VectorVector( 4, Vector( 3, 0.0 ) );
     _nProbingCellsLineGreen = _settings->GetNumProbingCellsLineHohlraum();
@@ -77,7 +77,11 @@ SymmetricHohlraum::SymmetricHohlraum( Config* settings, Mesh* mesh, QuadratureBa
             _sigmaS[idx_cell] = 90.0;
             _sigmaT[idx_cell] = 100.0;
         }
-        // green area 2 (upper boundary)
+        _cornerUpperLeftGreen  = { 0., 0.4 - _thicknessGreen / 2.0 };
+        _cornerLowerLeftGreen  = { 0., +_thicknessGreen / 2.0 };
+        _cornerUpperRightGreen = { 0.2 - _thicknessGreen / 2.0, 0.4 - _thicknessGreen / 2.0 };
+        _cornerLowerRightGreen = { 0.2 - _thicknessGreen / 2.0, 0. + _thicknessGreen / 2.0 };
+
         if( x > 0.15 && x < 0.2 && y > -0.35 && y < 0.35 ) {
             _sigmaS[idx_cell] = 90.0;
             _sigmaT[idx_cell] = 100.0;
@@ -114,7 +118,7 @@ std::vector<VectorVector> SymmetricHohlraum::GetExternalSource( const Vector& /*
 }
 
 VectorVector SymmetricHohlraum::SetupIC() {
-    VectorVector psi( _mesh->GetNumCells(), Vector( _settings->GetNQuadPoints(), 1e-10 ) );
+    VectorVector psi( _mesh->GetNumCells(), Vector( _settings->GetNQuadPoints(), 0.0 ) );
     VectorVector cellMids = _mesh->GetCellMidPoints();
 
     for( unsigned j = 0; j < cellMids.size(); ++j ) {
