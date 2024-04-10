@@ -142,7 +142,8 @@ SNSolverHPC::SNSolverHPC( Config* settings ) {
 
     SetGhostCells();
 
-    PrepareScreenOutput();     // Screen Output
+    PrepareScreenOutput();    // Screen Output
+
     PrepareHistoryOutput();    // History Output
 
     delete quad;
@@ -1140,7 +1141,7 @@ void SNSolverHPC::PrepareVolumeOutput() {
 void SNSolverHPC::SetGhostCells() {
     if( _settings->GetProblemName() == PROBLEM_Lattice ) {
         std::vector<double> void_flow( _nSys, 0.0 );
-#pragma omp parallel for
+        // #pragma omp parallel for
         for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
             if( _cellBoundaryTypes[idx_cell] == BOUNDARY_TYPE::NEUMANN || _cellBoundaryTypes[idx_cell] == BOUNDARY_TYPE::DIRICHLET ) {
                 _ghostCells[idx_cell]            = void_flow;
@@ -1178,7 +1179,7 @@ void SNSolverHPC::SetGhostCells() {
         auto nodes     = _mesh->GetNodes();
         auto cellNodes = _mesh->GetCells();
 
-#pragma omp parallel for
+        // #pragma omp parallel for
         for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
             if( _cellBoundaryTypes[idx_cell] != BOUNDARY_TYPE::NONE ) {
                 _ghostCellsReflectingY[idx_cell] = false;
@@ -1207,7 +1208,7 @@ void SNSolverHPC::SetGhostCells() {
         auto nodes = _mesh->GetNodes();
         double tol = 1e-12;    // For distance to boundary
 
-#pragma omp parallel for
+        // #pragma omp parallel for
         for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
 
             if( _cellBoundaryTypes[idx_cell] == BOUNDARY_TYPE::NEUMANN || _cellBoundaryTypes[idx_cell] == BOUNDARY_TYPE::DIRICHLET ) {
@@ -1252,27 +1253,27 @@ void SNSolverHPC::SetGhostCells() {
                                   CURRENT_FUNCTION );
         }
 
-        {    // Create the symmetry maps for the quadratures
-
-            for( unsigned idx_q = 0; idx_q < _nSys; idx_q++ ) {
-                for( unsigned idx_q2 = 0; idx_q2 < _nSys; idx_q2++ ) {
-                    if( abs( _quadPts[Idx2D( idx_q, 0, _nDim )] + _quadPts[Idx2D( idx_q2, 0, _nDim )] ) +
-                            abs( _quadPts[Idx2D( idx_q, 1, _nDim )] - _quadPts[Idx2D( idx_q2, 1, _nDim )] ) <
-                        tol ) {
-                        _quadratureYReflection[idx_q] = idx_q2;
-                        break;
-                    }
+        // Create the symmetry maps for the quadratures
+        std::cout << " Setting up symmetry maps " << std::endl;
+        for( unsigned idx_q = 0; idx_q < _nSys; idx_q++ ) {
+            for( unsigned idx_q2 = 0; idx_q2 < _nSys; idx_q2++ ) {
+                if( abs( _quadPts[Idx2D( idx_q, 0, _nDim )] + _quadPts[Idx2D( idx_q2, 0, _nDim )] ) +
+                        abs( _quadPts[Idx2D( idx_q, 1, _nDim )] - _quadPts[Idx2D( idx_q2, 1, _nDim )] ) <
+                    tol ) {
+                    _quadratureYReflection[idx_q] = idx_q2;
+                    break;
                 }
-                for( unsigned idx_q2 = 0; idx_q2 < _nSys; idx_q2++ ) {
-                    if( abs( _quadPts[Idx2D( idx_q, 0, _nDim )] - _quadPts[Idx2D( idx_q2, 0, _nDim )] ) +
-                            abs( _quadPts[Idx2D( idx_q, 1, _nDim )] * _quadPts[Idx2D( idx_q2, 1, _nDim )] ) <
-                        tol ) {
-                        _quadratureXReflection[idx_q] = idx_q2;
-                        break;
-                    }
+            }
+            for( unsigned idx_q2 = 0; idx_q2 < _nSys; idx_q2++ ) {
+                if( abs( _quadPts[Idx2D( idx_q, 0, _nDim )] - _quadPts[Idx2D( idx_q2, 0, _nDim )] ) +
+                        abs( _quadPts[Idx2D( idx_q, 1, _nDim )] * _quadPts[Idx2D( idx_q2, 1, _nDim )] ) <
+                    tol ) {
+                    _quadratureXReflection[idx_q] = idx_q2;
+                    break;
                 }
             }
         }
+
         if( _quadratureXReflection.size() != _nSys ) {
             ErrorMessages::Error( "Problem with X symmetry of quadrature of this mesh", CURRENT_FUNCTION );
         }
@@ -1282,7 +1283,7 @@ void SNSolverHPC::SetGhostCells() {
 
         auto nodes = _mesh->GetNodes();
 
-#pragma omp parallel for
+        // #pragma omp parallel for
         for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
 
             if( _cellBoundaryTypes[idx_cell] == BOUNDARY_TYPE::NEUMANN || _cellBoundaryTypes[idx_cell] == BOUNDARY_TYPE::DIRICHLET ) {
@@ -1300,7 +1301,9 @@ void SNSolverHPC::SetGhostCells() {
                     }
                     else if( abs( nodes[localCellNodes[idx_node]][0] ) > 0.65 - tol ) {    // right boundary
                         for( unsigned idx_q = 0; idx_q < _nSys; idx_q++ ) {
-                            if( _quadPts[Idx2D( idx_q, 0, _nDim )] < 0.0 ) _ghostCells[idx_cell][idx_q] = 1.0;
+                            if( _quadPts[Idx2D( idx_q, 0, _nDim )] < 0.0 ) {
+                                _ghostCells[idx_cell][idx_q] = 1.0;
+                            }
                         }
                         break;
                     }
