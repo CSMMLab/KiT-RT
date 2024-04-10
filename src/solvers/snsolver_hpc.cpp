@@ -205,15 +205,16 @@ SNSolverHPC::SNSolverHPC( Config* settings ) {
         _widthGreen     = 0.4;
         _heightGreen    = 0.8;
         _thicknessGreen = 0.05;
-        _centerGreen    = { 0.0, 0.0 };
 
         if( _settings->GetProblemName() == PROBLEM_SymmetricHohlraum ) {
-            _cornerUpperLeftGreen  = { -0.2 + _thicknessGreen / 2.0, 0.4 - _thicknessGreen / 2.0 };
-            _cornerLowerLeftGreen  = { -0.2 + _thicknessGreen / 2.0, -0.4 + _thicknessGreen / 2.0 };
-            _cornerUpperRightGreen = { 0.2 - _thicknessGreen / 2.0, 0.4 - _thicknessGreen / 2.0 };
-            _cornerLowerRightGreen = { 0.2 - _thicknessGreen / 2.0, -0.4 + _thicknessGreen / 2.0 };
+            _centerGreen           = { _settings->GetPosXCenterGreenHohlraum(), _settings->GetPosYCenterGreenHohlraum() };
+            _cornerUpperLeftGreen  = { -0.2 + _centerGreen[0], 0.4 + _centerGreen[1] };
+            _cornerLowerLeftGreen  = { -0.2 + _centerGreen[0], -0.4 + _centerGreen[1] };
+            _cornerUpperRightGreen = { 0.2 + _centerGreen[0], 0.4 + _centerGreen[1] };
+            _cornerLowerRightGreen = { 0.2 + _centerGreen[0], -0.4 + _centerGreen[1] };
         }
         else {
+            _centerGreen           = { 0.0, 0.0 };
             _cornerUpperLeftGreen  = { 0., 0.4 - _thicknessGreen / 2.0 };
             _cornerLowerLeftGreen  = { 0., +_thicknessGreen / 2.0 };
             _cornerUpperRightGreen = { 0.2 - _thicknessGreen / 2.0, 0.4 - _thicknessGreen / 2.0 };
@@ -1219,22 +1220,22 @@ void SNSolverHPC::SetGhostCells() {
                 auto localCellNodes = _mesh->GetCells()[idx_cell];
 
                 for( unsigned idx_node = 0; idx_node < _mesh->GetNumNodesPerCell(); idx_node++ ) {    // Check if corner node is in this cell
-                    if( abs( nodes[localCellNodes[idx_node]][0] ) < -0.65 + tol ) {                   // close to 0 => left boundary
+                    if( nodes[localCellNodes[idx_node]][0] < -0.65 + tol ) {                          // close to 0 => left boundary
                         for( unsigned idx_q = 0; idx_q < _nSys; idx_q++ ) {
                             if( _quadPts[Idx2D( idx_q, 0, _nDim )] > 0.0 ) _ghostCells[idx_cell][idx_q] = 1.0;
                         }
                         break;
                     }
-                    else if( abs( nodes[localCellNodes[idx_node]][0] ) > 0.65 - tol ) {    // right boundary
+                    else if( nodes[localCellNodes[idx_node]][0] > 0.65 - tol ) {    // right boundary
                         for( unsigned idx_q = 0; idx_q < _nSys; idx_q++ ) {
                             if( _quadPts[Idx2D( idx_q, 0, _nDim )] < 0.0 ) _ghostCells[idx_cell][idx_q] = 1.0;
                         }
                         break;
                     }
-                    else if( abs( nodes[localCellNodes[idx_node]][1] ) < -0.65 + tol ) {    // lower boundary
+                    else if( nodes[localCellNodes[idx_node]][1] < -0.65 + tol ) {    // lower boundary
                         break;
                     }
-                    else if( abs( nodes[localCellNodes[idx_node]][1] ) > 0.65 - tol ) {    // upper boundary
+                    else if( nodes[localCellNodes[idx_node]][1] > 0.65 - tol ) {    // upper boundary
                         break;
                     }
                     else if( idx_node == _mesh->GetNumNodesPerCell() - 1 ) {
@@ -1357,11 +1358,16 @@ void SNSolverHPC::SetProbingCellsLineGreen() {
 
         _probingCellsLineGreen = std::vector<unsigned>( _nProbingCellsLineGreen );
 
+        std::vector<double> p1 = { _cornerUpperLeftGreen[0] + _thicknessGreen / 2.0, _cornerUpperLeftGreen[1] - _thicknessGreen / 2.0 };
+        std::vector<double> p2 = { _cornerLowerLeftGreen[0] + _thicknessGreen / 2.0, _cornerLowerLeftGreen[1] + _thicknessGreen / 2.0 };
+        std::vector<double> p3 = { _cornerUpperRightGreen[0] - _thicknessGreen / 2.0, _cornerUpperRightGreen[1] - _thicknessGreen / 2.0 };
+        std::vector<double> p4 = { _cornerLowerRightGreen[0] - _thicknessGreen / 2.0, _cornerLowerRightGreen[1] + _thicknessGreen / 2.0 };
+
         // Sample points on each side of the rectangle
-        std::vector<unsigned> side1 = linspace2D( _cornerUpperLeftGreen, _cornerLowerLeftGreen, nVerticalProbingCells );
-        std::vector<unsigned> side2 = linspace2D( _cornerLowerLeftGreen, _cornerLowerRightGreen, nHorizontalProbingCells );
-        std::vector<unsigned> side3 = linspace2D( _cornerLowerRightGreen, _cornerUpperRightGreen, nVerticalProbingCells );
-        std::vector<unsigned> side4 = linspace2D( _cornerUpperRightGreen, _cornerUpperLeftGreen, nHorizontalProbingCells );
+        std::vector<unsigned> side1 = linspace2D( p1, p2, nVerticalProbingCells );
+        std::vector<unsigned> side2 = linspace2D( p2, p3, nHorizontalProbingCells );
+        std::vector<unsigned> side3 = linspace2D( p3, p4, nVerticalProbingCells );
+        std::vector<unsigned> side4 = linspace2D( p4, p1, nHorizontalProbingCells );
 
         //  Combine the points from each side
         _probingCellsLineGreen.insert( _probingCellsLineGreen.end(), side1.begin(), side1.end() );
@@ -1372,8 +1378,8 @@ void SNSolverHPC::SetProbingCellsLineGreen() {
 }
 
 void SNSolverHPC::ComputeQOIsGreenProbingLine() {
-    double verticalLineWidth   = std::abs( _cornerUpperLeftGreen[1] - _cornerLowerLeftGreen[1] );
-    double horizontalLineWidth = std::abs( _cornerUpperLeftGreen[0] - _cornerUpperRightGreen[0] );
+    double verticalLineWidth   = std::abs( _cornerUpperLeftGreen[1] - _cornerLowerLeftGreen[1] - _thicknessGreen );
+    double horizontalLineWidth = std::abs( _cornerUpperLeftGreen[0] - _cornerUpperRightGreen[0] - _thicknessGreen );
 
     double dl    = 2 * ( horizontalLineWidth + verticalLineWidth ) / ( (double)_nProbingCellsLineGreen );
     double area  = dl * _thicknessGreen;

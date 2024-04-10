@@ -28,12 +28,12 @@ SymmetricHohlraum::SymmetricHohlraum( Config* settings, Mesh* mesh, QuadratureBa
     _widthGreen     = 0.4;
     _heightGreen    = 0.8;
     _thicknessGreen = 0.05;
-    _centerGreen    = { 0.0, 0.0 };
+    _centerGreen    = { _settings->GetPosXCenterGreenHohlraum(), _settings->GetPosYCenterGreenHohlraum() };
 
-    _cornerUpperLeftGreen  = { -0.2 + _thicknessGreen / 2.0, 0.4 - _thicknessGreen / 2.0 };
-    _cornerLowerLeftGreen  = { -0.2 + _thicknessGreen / 2.0, -0.4 + _thicknessGreen / 2.0 };
-    _cornerUpperRightGreen = { 0.2 - _thicknessGreen / 2.0, 0.4 - _thicknessGreen / 2.0 };
-    _cornerLowerRightGreen = { 0.2 - _thicknessGreen / 2.0, -0.4 + _thicknessGreen / 2.0 };
+    _cornerUpperLeftGreen  = { _centerGreen[0] - _widthGreen / 2.0, _centerGreen[1] + _heightGreen / 2.0 };
+    _cornerLowerLeftGreen  = { _centerGreen[0] - _widthGreen / 2.0, _centerGreen[1] - _heightGreen / 2.0 };
+    _cornerUpperRightGreen = { _centerGreen[0] + _widthGreen / 2.0, _centerGreen[1] + _heightGreen / 2.0 };
+    _cornerLowerRightGreen = { _centerGreen[0] + _widthGreen / 2.0, _centerGreen[1] - _heightGreen / 2.0 };
 
     // QOIS
     _curAbsorptionHohlraumCenter       = 0.0;
@@ -50,8 +50,10 @@ SymmetricHohlraum::SymmetricHohlraum( Config* settings, Mesh* mesh, QuadratureBa
         _mesh->GetCellOfKoordinate( 0., -0.5 ),
         _mesh->GetCellOfKoordinate( 0., 0.5 ),
     };
+
     _probingMoments         = VectorVector( 4, Vector( 3, 0.0 ) );
     _nProbingCellsLineGreen = _settings->GetNumProbingCellsLineHohlraum();
+
     SetProbingCellsLineGreen();
     _absorptionValsIntegrated    = std::vector<double>( _nProbingCellsLineGreen, 0.0 );
     _varAbsorptionValsIntegrated = std::vector<double>( _nProbingCellsLineGreen, 0.0 );
@@ -73,31 +75,27 @@ SymmetricHohlraum::SymmetricHohlraum( Config* settings, Mesh* mesh, QuadratureBa
             _sigmaT[idx_cell] = 100.0;
         }
         // green area 1 (lower boundary)
-        if( x > -0.2 && x < -0.15 && y > -0.35 && y < 0.35 ) {
+        if( x > -0.2 + _centerGreen[0] && x < -0.15 + _centerGreen[0] && y > -0.35 + _centerGreen[1] && y < 0.35 + _centerGreen[1] ) {
             _sigmaS[idx_cell] = 90.0;
             _sigmaT[idx_cell] = 100.0;
         }
-        _cornerUpperLeftGreen  = { 0., 0.4 - _thicknessGreen / 2.0 };
-        _cornerLowerLeftGreen  = { 0., +_thicknessGreen / 2.0 };
-        _cornerUpperRightGreen = { 0.2 - _thicknessGreen / 2.0, 0.4 - _thicknessGreen / 2.0 };
-        _cornerLowerRightGreen = { 0.2 - _thicknessGreen / 2.0, 0. + _thicknessGreen / 2.0 };
-
-        if( x > 0.15 && x < 0.2 && y > -0.35 && y < 0.35 ) {
+        // green area 2 (upper boundary)
+        if( x > 0.15 + _centerGreen[0] && x < 0.2 + _centerGreen[0] && y > -0.35 + _centerGreen[1] && y < 0.35 + _centerGreen[1] ) {
             _sigmaS[idx_cell] = 90.0;
             _sigmaT[idx_cell] = 100.0;
         }
         // green area 3 (left boundary)
-        if( x > -0.2 && x < 0.2 && y > -0.4 && y < -0.35 ) {
+        if( x > -0.2 + _centerGreen[0] && x < 0.2 + _centerGreen[0] && y > -0.4 + _centerGreen[1] && y < -0.35 + _centerGreen[1] ) {
             _sigmaS[idx_cell] = 90.0;
             _sigmaT[idx_cell] = 100.0;
         }
         // green area 4 (right boundary)
-        if( x > -0.2 && x < 0.2 && y > 0.35 && y < 0.4 ) {
+        if( x > -0.2 + _centerGreen[0] && x < 0.2 + _centerGreen[0] && y > 0.35 + _centerGreen[1] && y < 0.4 + _centerGreen[1] ) {
             _sigmaS[idx_cell] = 90.0;
             _sigmaT[idx_cell] = 100.0;
         }
         // blue checkered area
-        if( x > -0.15 && x < 0.15 && y > -0.35 && y < 0.35 ) {
+        if( x > -0.15 + _centerGreen[0] && x < 0.15 + _centerGreen[0] && y > -0.35 + _centerGreen[1] && y < 0.35 + _centerGreen[1] ) {
             _sigmaS[idx_cell] = 50.0;
             _sigmaT[idx_cell] = 100.0;
         }
@@ -265,7 +263,7 @@ void SymmetricHohlraum::ComputeCurrentProbeMoment( const VectorVector& solution 
 
 void SymmetricHohlraum::SetProbingCellsLineGreen() {
 
-    double verticalLineWidth   = std::abs( _cornerUpperLeftGreen[1] - _cornerLowerLeftGreen[1] );
+    double verticalLineWidth   = std::abs( _cornerUpperLeftGreen[1] - _cornerLowerLeftGreen[1] - _thicknessGreen );
     double horizontalLineWidth = std::abs( _cornerUpperLeftGreen[0] - _cornerUpperRightGreen[0] );
 
     // double dx = 2 * ( horizontalLineWidth + verticalLineWidth ) / ( (double)_nProbingCellsLineGreen );
@@ -276,13 +274,16 @@ void SymmetricHohlraum::SetProbingCellsLineGreen() {
 
     _probingCellsLineGreen = std::vector<unsigned>( _nProbingCellsLineGreen );
 
-    // printf( "here" );
+    std::vector<double> p1 = { _cornerUpperLeftGreen[0] + _thicknessGreen / 2.0, _cornerUpperLeftGreen[1] - _thicknessGreen / 2.0 };
+    std::vector<double> p2 = { _cornerLowerLeftGreen[0] + _thicknessGreen / 2.0, _cornerLowerLeftGreen[1] + _thicknessGreen / 2.0 };
+    std::vector<double> p3 = { _cornerUpperRightGreen[0] - _thicknessGreen / 2.0, _cornerUpperRightGreen[1] - _thicknessGreen / 2.0 };
+    std::vector<double> p4 = { _cornerLowerRightGreen[0] - _thicknessGreen / 2.0, _cornerLowerRightGreen[1] + _thicknessGreen / 2.0 };
 
     // Sample points on each side of the rectangle
-    std::vector<unsigned> side1 = linspace2D( _cornerUpperLeftGreen, _cornerLowerLeftGreen, nVerticalProbingCells );
-    std::vector<unsigned> side2 = linspace2D( _cornerLowerLeftGreen, _cornerLowerRightGreen, nHorizontalProbingCells );
-    std::vector<unsigned> side3 = linspace2D( _cornerLowerRightGreen, _cornerUpperRightGreen, nVerticalProbingCells );
-    std::vector<unsigned> side4 = linspace2D( _cornerUpperRightGreen, _cornerUpperLeftGreen, nHorizontalProbingCells );
+    std::vector<unsigned> side1 = linspace2D( p1, p2, nVerticalProbingCells );
+    std::vector<unsigned> side2 = linspace2D( p2, p3, nHorizontalProbingCells );
+    std::vector<unsigned> side3 = linspace2D( p3, p4, nVerticalProbingCells );
+    std::vector<unsigned> side4 = linspace2D( p4, p1, nHorizontalProbingCells );
 
     // printf( "here" );
     //  Combine the points from each side
@@ -294,8 +295,8 @@ void SymmetricHohlraum::SetProbingCellsLineGreen() {
 
 void SymmetricHohlraum::ComputeQOIsGreenProbingLine( const Vector& scalarFlux ) {
 
-    double verticalLineWidth   = std::abs( _cornerUpperLeftGreen[1] - _cornerLowerLeftGreen[1] );
-    double horizontalLineWidth = std::abs( _cornerUpperLeftGreen[0] - _cornerUpperRightGreen[0] );
+    double verticalLineWidth   = std::abs( _cornerUpperLeftGreen[1] - _cornerLowerLeftGreen[1] - _thicknessGreen );
+    double horizontalLineWidth = std::abs( _cornerUpperLeftGreen[0] - _cornerUpperRightGreen[0] - _thicknessGreen );
 
     double dl    = 2 * ( horizontalLineWidth + verticalLineWidth ) / ( (double)_nProbingCellsLineGreen );
     double area  = dl * _thicknessGreen;

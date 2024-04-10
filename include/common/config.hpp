@@ -102,6 +102,9 @@ class Config
 
     // Hohlraum
     unsigned short _nProbingCellsLineGreenHohlraum; /*!< @brief Number SamplingPoints for Hohlraum Green region sampling.*/
+    double _posCenterXHohlraum;                     /*!< @brief Center of the Hohlraum Green region. */
+    double _posCenterYHohlraum;                     /*!< @brief Center of the Hohlraum Green region. */
+
     // CSD
     double _maxEnergyCSD; /*!< @brief Maximum energy for CSD simulation */
 
@@ -334,6 +337,8 @@ class Config
     unsigned short inline GetNLatticeScatterIndividual() const { return _nDsgnScatterIndividual; }
     // Hohlraum
     unsigned short inline GetNumProbingCellsLineHohlraum() const { return _nProbingCellsLineGreenHohlraum; }
+    double inline GetPosXCenterGreenHohlraum() const { return _posCenterXHohlraum; }
+    double inline GetPosYCenterGreenHohlraum() const { return _posCenterYHohlraum; }
 
     //  Optimizer
     double inline GetNewtonOptimizerEpsilon() const { return _optimizerEpsilon; }

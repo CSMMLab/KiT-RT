@@ -298,6 +298,8 @@ void Config::SetConfigOptions() {
 
     // Hohlraum related options
     AddUnsignedShortOption( "N_SAMPLING_PTS_LINE_GREEN", _nProbingCellsLineGreenHohlraum, 4 );
+    AddDoubleOption( "POS_CENTER_X", _posCenterXHohlraum, 0.0 );
+    AddDoubleOption( "POS_CENTER_Y", _posCenterYHohlraum, 0.0 );
 
     // Entropy related options
     /*! @brief Entropy Functional \n DESCRIPTION: Entropy functional used for the MN_Solver \n DEFAULT QUADRTATIC @ingroup Config. */
