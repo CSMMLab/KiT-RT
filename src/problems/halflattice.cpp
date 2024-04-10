@@ -156,8 +156,6 @@ void HalfLattice_SN::SetGhostCells() {
 
     for( unsigned idx_cell = 0; idx_cell < _mesh->GetNumCells(); idx_cell++ ) {
         if( cellBoundaries[idx_cell] == BOUNDARY_TYPE::NEUMANN || cellBoundaries[idx_cell] == BOUNDARY_TYPE::DIRICHLET ) {
-            double x = _mesh->GetCellMidPoints()[idx_cell][0];
-            double y = _mesh->GetCellMidPoints()[idx_cell][1];
 
             auto localCellNodes = _mesh->GetCells()[idx_cell];
 

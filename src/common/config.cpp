@@ -992,7 +992,7 @@ void Config::SetPostprocessing() {
             }
         }
 
-        if( _problemName == PROBLEM_SymmetricHohlraum ) {
+        if( _problemName == PROBLEM_SymmetricHohlraum || _problemName == PROBLEM_QuarterHohlraum ) {
             std::vector<SCALAR_OUTPUT>::iterator it;
             it = find( _historyOutput.begin(), _historyOutput.end(), VAR_ABSORPTION_GREEN_LINE );
             if( it != _historyOutput.end() ) {

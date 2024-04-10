@@ -164,8 +164,6 @@ void QuarterHohlraum::SetGhostCells() {
 
     for( unsigned idx_cell = 0; idx_cell < _mesh->GetNumCells(); idx_cell++ ) {
         if( cellBoundaries[idx_cell] == BOUNDARY_TYPE::NEUMANN || cellBoundaries[idx_cell] == BOUNDARY_TYPE::DIRICHLET ) {
-            double x = _mesh->GetCellMidPoints()[idx_cell][0];
-            double y = _mesh->GetCellMidPoints()[idx_cell][1];
 
             auto localCellNodes = _mesh->GetCells()[idx_cell];
 
@@ -191,8 +189,11 @@ void QuarterHohlraum::SetGhostCells() {
                     ghostCellMap.insert( { idx_cell, vertical_flow } );
                     break;
                 }
-                else {
-                    ErrorMessages::Error( " Problem with ghost cell setup and  boundary of this mesh ", CURRENT_FUNCTION );
+                else if( idx_node == _mesh->GetNumNodesPerCell() - 1 ) {
+                    ErrorMessages::Error( " Problem with ghost cell setup and boundary of this mesh at cell " + std::to_string( idx_cell ) +
+                                              " with node coordinates " + std::to_string( _mesh->GetNodes()[localCellNodes[idx_node]][0] ) + "," +
+                                              std::to_string( _mesh->GetNodes()[localCellNodes[idx_node]][1] ),
+                                          CURRENT_FUNCTION );
                 }
             }
         }

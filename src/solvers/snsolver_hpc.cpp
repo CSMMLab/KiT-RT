@@ -1231,13 +1231,12 @@ void SNSolverHPC::SetGhostCells() {
                         break;
                     }
                     else if( abs( nodes[localCellNodes[idx_node]][1] ) < -0.65 + tol ) {    // lower boundary
-
                         break;
                     }
                     else if( abs( nodes[localCellNodes[idx_node]][1] ) > 0.65 - tol ) {    // upper boundary
                         break;
                     }
-                    else {
+                    else if( idx_node == _mesh->GetNumNodesPerCell() - 1 ) {
                         ErrorMessages::Error( " Problem with ghost cell setup and  boundary of this mesh ", CURRENT_FUNCTION );
                     }
                 }
@@ -1312,7 +1311,7 @@ void SNSolverHPC::SetGhostCells() {
                     else if( abs( nodes[localCellNodes[idx_node]][1] ) > 0.65 - tol ) {    // upper boundary
                         break;
                     }
-                    else {
+                    else if( idx_node == _mesh->GetNumNodesPerCell() - 1 ) {
                         ErrorMessages::Error( " Problem with ghost cell setup and  boundary of this mesh ", CURRENT_FUNCTION );
                     }
                 }
