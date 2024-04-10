@@ -300,6 +300,10 @@ void Config::SetConfigOptions() {
     AddUnsignedShortOption( "N_SAMPLING_PTS_LINE_GREEN", _nProbingCellsLineGreenHohlraum, 4 );
     AddDoubleOption( "POS_CENTER_X", _posCenterXHohlraum, 0.0 );
     AddDoubleOption( "POS_CENTER_Y", _posCenterYHohlraum, 0.0 );
+    AddDoubleOption( "POS_RED_RIGHT_TOP", _posRedRightTop, 0.4 );
+    AddDoubleOption( "POS_RED_RIGHT_BOTTOM", _posRedRightBottom, -0.4 );
+    AddDoubleOption( "POS_RED_LEFT_TOP", _posRedLeftTop, 0.4 );
+    AddDoubleOption( "POS_RED_LEFT_BOTTOM", _posRedLeftBottom, -0.4 );
 
     // Entropy related options
     /*! @brief Entropy Functional \n DESCRIPTION: Entropy functional used for the MN_Solver \n DEFAULT QUADRTATIC @ingroup Config. */

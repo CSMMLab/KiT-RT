@@ -18,10 +18,10 @@ SymmetricHohlraum::SymmetricHohlraum( Config* settings, Mesh* mesh, QuadratureBa
     // Design parameters defining the hohlraum geometry
 
     // Red
-    _redLeftTop        = 0.4;
-    _redLeftBottom     = -0.4;
-    _redRightTop       = 0.4;
-    _redRightBottom    = -0.4;
+    _redLeftTop        = _settings->GetPosRedLeftTopHohlraum();
+    _redLeftBottom     = _settings->GetPosRedLeftBottomHohlraum();
+    _redRightTop       = _settings->GetPosRedRightTopHohlraum();
+    _redRightBottom    = _settings->GetPosRedRightBottomHohlraum();
     _thicknessRedLeft  = 0.05;
     _thicknessRedRight = 0.05;
     // Green
