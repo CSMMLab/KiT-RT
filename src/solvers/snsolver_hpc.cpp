@@ -1256,29 +1256,32 @@ void SNSolverHPC::SetGhostCells() {
 
         // Create the symmetry maps for the quadratures
         std::cout << " Setting up symmetry maps " << std::endl;
+        unsigned filled_X_reflection = 0;
+        unsigned filled_Y_reflection = 0;
         for( unsigned idx_q = 0; idx_q < _nSys; idx_q++ ) {
             for( unsigned idx_q2 = 0; idx_q2 < _nSys; idx_q2++ ) {
                 if( abs( _quadPts[Idx2D( idx_q, 0, _nDim )] + _quadPts[Idx2D( idx_q2, 0, _nDim )] ) +
                         abs( _quadPts[Idx2D( idx_q, 1, _nDim )] - _quadPts[Idx2D( idx_q2, 1, _nDim )] ) <
                     tol ) {
                     _quadratureYReflection[idx_q] = idx_q2;
+                    filled_Y_reflection++;
                     break;
                 }
             }
             for( unsigned idx_q2 = 0; idx_q2 < _nSys; idx_q2++ ) {
                 if( abs( _quadPts[Idx2D( idx_q, 0, _nDim )] - _quadPts[Idx2D( idx_q2, 0, _nDim )] ) +
-                        abs( _quadPts[Idx2D( idx_q, 1, _nDim )] * _quadPts[Idx2D( idx_q2, 1, _nDim )] ) <
+                        abs( _quadPts[Idx2D( idx_q, 1, _nDim )] + _quadPts[Idx2D( idx_q2, 1, _nDim )] ) <
                     tol ) {
                     _quadratureXReflection[idx_q] = idx_q2;
+                    filled_X_reflection++;
                     break;
                 }
             }
         }
-
-        if( _quadratureXReflection.size() != _nSys ) {
+        if( filled_X_reflection != _nSys ) {
             ErrorMessages::Error( "Problem with X symmetry of quadrature of this mesh", CURRENT_FUNCTION );
         }
-        if( _quadratureYReflection.size() != _nSys ) {
+        if( filled_Y_reflection != _nSys ) {
             ErrorMessages::Error( "Problem with Y symmetry of quadrature of this mesh", CURRENT_FUNCTION );
         }
 
