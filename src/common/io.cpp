@@ -78,16 +78,19 @@ void ExportVTK( const std::string fileName,
             }
         }
         vtkCellArraySP cellArray = vtkCellArraySP::New();
-        for( unsigned i = 0; i < numCells; ++i ) {
-            if( numNodesPerCell == 3 ) {
-                auto tri = vtkTriangleSP::New();
+        if( numNodesPerCell == 3 ) {
+            auto tri = vtkTriangleSP::New();
+            for( unsigned i = 0; i < numCells; ++i ) {
                 for( unsigned j = 0; j < numNodesPerCell; ++j ) {
                     tri->GetPointIds()->SetId( j, cells[i][j] );
                 }
                 cellArray->InsertNextCell( tri );
             }
-            if( numNodesPerCell == 4 ) {
-                auto quad = vtkQuad::New();
+        }
+
+        if( numNodesPerCell == 4 ) {
+            auto quad = vtkQuad::New();
+            for( unsigned i = 0; i < numCells; ++i ) {
                 for( unsigned j = 0; j < numNodesPerCell; ++j ) {
                     quad->GetPointIds()->SetId( j, cells[i][j] );
                 }
@@ -102,11 +105,12 @@ void ExportVTK( const std::string fileName,
         }
 
         // Write the output
+        auto cellData = vtkDoubleArraySP::New();
+
         for( unsigned idx_group = 0; idx_group < outputFields.size(); idx_group++ ) {
 
             for( unsigned idx_field = 0; idx_field < outputFields[idx_group].size(); idx_field++ ) {    // Loop over all output fields
-
-                auto cellData = vtkDoubleArraySP::New();
+                cellData = vtkDoubleArraySP::New();
                 cellData->SetName( outputFieldNames[idx_group][idx_field].c_str() );
 
                 for( unsigned idx_cell = 0; idx_cell < numCells; idx_cell++ ) {
@@ -125,14 +129,12 @@ void ExportVTK( const std::string fileName,
         converter->PassCellDataOn();
         converter->Update();
 
-        auto conv_grid = converter->GetOutput();
-
-        writer->SetInputData( conv_grid );
+        writer->SetInputData( converter->GetOutput() );
 
         writer->Write();
 
-        // auto log = spdlog::get( "event" );
-        // log->info( "Result successfully exported to '{0}'!", fileNameWithExt );
+        //  auto log = spdlog::get( "event" );
+        //  log->info( "Result successfully exported to '{0}'!", fileNameWithExt );
     }
     // MPI_Barrier( MPI_COMM_WORLD );
 }

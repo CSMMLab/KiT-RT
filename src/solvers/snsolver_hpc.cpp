@@ -1102,9 +1102,9 @@ void SNSolverHPC::WriteVolumeOutput( unsigned idx_iter ) {
         for( unsigned idx_group = 0; idx_group < nGroups; idx_group++ ) {
             switch( _settings->GetVolumeOutput()[idx_group] ) {
                 case MINIMAL:
-                    for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
-                        _outputFields[idx_group][0][idx_cell] = _scalarFlux[idx_cell];
-                    }
+                    // for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
+                    _outputFields[idx_group][0] = _scalarFlux;    //[idx_cell];
+                    //}
                     break;
 
                 default: ErrorMessages::Error( "Volume Output Group not defined for HPC SN Solver!", CURRENT_FUNCTION ); break;
