@@ -175,9 +175,9 @@ SNSolverHPC::SNSolverHPC( Config* settings ) {
         unsigned n_probes = 4;
         if( _settings->GetProblemName() == PROBLEM_SymmetricHohlraum ) n_probes = 4;
         if( _settings->GetProblemName() == PROBLEM_QuarterHohlraum ) n_probes = 2;
-
-        _probingCellsHohlraum = std::vector<unsigned>( n_probes, 0. );
-        _probingMoments       = std::vector<double>( n_probes * 3, 0. );
+        _probingMomentsTimeIntervals = 10;
+        _probingCellsHohlraum        = std::vector<unsigned>( n_probes, 0. );
+        _probingMoments              = std::vector<double>( n_probes * 3, 0. );    // 10 time horizons
 
         if( _settings->GetProblemName() == PROBLEM_SymmetricHohlraum ) {
             _probingCellsHohlraum = {
@@ -194,16 +194,7 @@ SNSolverHPC::SNSolverHPC( Config* settings ) {
             };
         }
 
-        // Red
-        _redLeftTop        = 0.4;
-        _redLeftBottom     = -0.4;
-        _redRightTop       = 0.4;
-        _redRightBottom    = -0.4;
-        _thicknessRedLeft  = 0.05;
-        _thicknessRedRight = 0.05;
         // Green
-        _widthGreen     = 0.4;
-        _heightGreen    = 0.8;
         _thicknessGreen = 0.05;
 
         if( _settings->GetProblemName() == PROBLEM_SymmetricHohlraum ) {
@@ -564,10 +555,14 @@ void SNSolverHPC::IterPostprocessing() {
             double x = _cellMidPoints[Idx2D( idx_cell, 0, _nDim )];
             double y = _cellMidPoints[Idx2D( idx_cell, 1, _nDim )];
 
-            if( x > -0.2 && x < 0.2 && y > -0.35 && y < 0.35 ) {
+            if( x > -0.2 + _settings->GetPosXCenterGreenHohlraum() && x < 0.2 + _settings->GetPosXCenterGreenHohlraum() &&
+                y > -0.35 + _settings->GetPosYCenterGreenHohlraum() && y < 0.35 + _settings->GetPosYCenterGreenHohlraum() ) {
                 _curAbsorptionHohlraumCenter += _scalarFlux[idx_cell] * ( _sigmaT[idx_cell] - _sigmaS[idx_cell] ) * _areas[idx_cell];
             }
-            if( ( x < -0.6 && y > -0.4 && y < 0.4 ) || ( x > 0.6 && y > -0.4 && y < 0.4 ) ) {
+            if( ( x < _settings->GetPosRedLeftBorderHohlraum() && y > _settings->GetPosRedLeftBottomHohlraum() &&
+                  y < _settings->GetPosRedLeftTopHohlraum() ) ||
+                ( x > _settings->GetPosRedRightBorderHohlraum() && y > _settings->GetPosRedLeftBottomHohlraum() &&
+                  y < _settings->GetPosRedRightTopHohlraum() ) ) {
                 _curAbsorptionHohlraumVertical += _scalarFlux[idx_cell] * ( _sigmaT[idx_cell] - _sigmaS[idx_cell] ) * _areas[idx_cell];
             }
             if( y > 0.6 || y < -0.6 ) {
@@ -575,11 +570,18 @@ void SNSolverHPC::IterPostprocessing() {
             }
 
             // Variation in absorption of center (part 1)
-            bool green1 = x > -0.2 && x < -0.15 && y > -0.35 && y < 0.35;    // green area 1 (lower boundary)
-            bool green2 = x > 0.15 && x < 0.2 && y > -0.35 && y < 0.35;      // green area 2 (upper boundary)
-            bool green3 = x > -0.2 && x < 0.2 && y > -0.4 && y < -0.35;      // green area 3 (left boundary)
-            bool green4 = x > -0.2 && x < 0.2 && y > 0.35 && y < 0.4;        // green area 4 (right boundary)
-
+            // green area 1 (lower boundary)
+            bool green1 = x > -0.2 + _settings->GetPosXCenterGreenHohlraum() && x < -0.15 + _settings->GetPosXCenterGreenHohlraum() &&
+                          y > -0.35 + _settings->GetPosYCenterGreenHohlraum() && y < 0.35 + _settings->GetPosYCenterGreenHohlraum();
+            // green area 2 (upper boundary)
+            bool green2 = x > 0.15 + _settings->GetPosXCenterGreenHohlraum() && x < 0.2 + _settings->GetPosXCenterGreenHohlraum() &&
+                          y > -0.35 + _settings->GetPosYCenterGreenHohlraum() && y < 0.35 + _settings->GetPosYCenterGreenHohlraum();
+            // green area 3 (left boundary)
+            bool green3 = x > -0.2 + _settings->GetPosXCenterGreenHohlraum() && x < 0.2 + _settings->GetPosXCenterGreenHohlraum() &&
+                          y > -0.4 + _settings->GetPosYCenterGreenHohlraum() && y < -0.35 + _settings->GetPosYCenterGreenHohlraum();
+            // green area 4 (right boundary)
+            bool green4 = x > -0.2 + _settings->GetPosXCenterGreenHohlraum() && x < 0.2 + _settings->GetPosXCenterGreenHohlraum() &&
+                          y > 0.35 + _settings->GetPosYCenterGreenHohlraum() && y < 0.4 + _settings->GetPosYCenterGreenHohlraum();
             if( green1 || green2 || green3 || green4 ) {
                 a_g += ( _sigmaT[idx_cell] - _sigmaS[idx_cell] ) * _scalarFlux[idx_cell] * _areas[idx_cell];
             }
@@ -622,13 +624,19 @@ void SNSolverHPC::IterPostprocessing() {
         for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
             double x = _cellMidPoints[Idx2D( idx_cell, 0, _nDim )];
             double y = _cellMidPoints[Idx2D( idx_cell, 1, _nDim )];
-            bool green1, green2, green3, green4;
 
-            green1 = x > -0.2 && x < -0.15 && y > -0.35 && y < 0.35;    // green area 1 (lower boundary)
-            green2 = x > 0.15 && x < 0.2 && y > -0.35 && y < 0.35;      // green area 2 (upper boundary)
-            green3 = x > -0.2 && x < 0.2 && y > -0.4 && y < -0.35;      // green area 3 (left boundary)
-            green4 = x > -0.2 && x < 0.2 && y > 0.35 && y < 0.4;        // green area 4 (right boundary)
-
+            // green area 1 (lower boundary)
+            bool green1 = x > -0.2 + _settings->GetPosXCenterGreenHohlraum() && x < -0.15 + _settings->GetPosXCenterGreenHohlraum() &&
+                          y > -0.35 + _settings->GetPosYCenterGreenHohlraum() && y < 0.35 + _settings->GetPosYCenterGreenHohlraum();
+            // green area 2 (upper boundary)
+            bool green2 = x > 0.15 + _settings->GetPosXCenterGreenHohlraum() && x < 0.2 + _settings->GetPosXCenterGreenHohlraum() &&
+                          y > -0.35 + _settings->GetPosYCenterGreenHohlraum() && y < 0.35 + _settings->GetPosYCenterGreenHohlraum();
+            // green area 3 (left boundary)
+            bool green3 = x > -0.2 + _settings->GetPosXCenterGreenHohlraum() && x < 0.2 + _settings->GetPosXCenterGreenHohlraum() &&
+                          y > -0.4 + _settings->GetPosYCenterGreenHohlraum() && y < -0.35 + _settings->GetPosYCenterGreenHohlraum();
+            // green area 4 (right boundary)
+            bool green4 = x > -0.2 + _settings->GetPosXCenterGreenHohlraum() && x < 0.2 + _settings->GetPosXCenterGreenHohlraum() &&
+                          y > 0.35 + _settings->GetPosYCenterGreenHohlraum() && y < 0.4 + _settings->GetPosYCenterGreenHohlraum();
             if( green1 || green2 || green3 || green4 ) {
                 _varAbsorptionHohlraumGreen += ( a_g - _scalarFlux[idx_cell] * ( _sigmaT[idx_cell] - _sigmaS[idx_cell] ) ) *
                                                ( a_g - _scalarFlux[idx_cell] * ( _sigmaT[idx_cell] - _sigmaS[idx_cell] ) ) * _areas[idx_cell];
@@ -663,6 +671,7 @@ void SNSolverHPC::IterPostprocessing() {
     _totalAbsorptionHohlraumVertical += _curAbsorptionHohlraumVertical * _dT;
     _totalAbsorptionHohlraumHorizontal += _curAbsorptionHohlraumHorizontal * _dT;
 }
+
 bool SNSolverHPC::IsAbsorptionLattice( double x, double y ) const {
     // Check whether pos is inside absorbing squares
     double xy_corrector = -3.5;

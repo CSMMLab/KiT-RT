@@ -22,8 +22,9 @@ SymmetricHohlraum::SymmetricHohlraum( Config* settings, Mesh* mesh, QuadratureBa
     _redLeftBottom     = _settings->GetPosRedLeftBottomHohlraum();
     _redRightTop       = _settings->GetPosRedRightTopHohlraum();
     _redRightBottom    = _settings->GetPosRedRightBottomHohlraum();
-    _thicknessRedLeft  = 0.05;
-    _thicknessRedRight = 0.05;
+    _posRedLeftBorder  = _settings->GetPosRedLeftBorderHohlraum();
+    _posRedRightBorder = _settings->GetPosRedRightBorderHohlraum();
+
     // Green
     _widthGreen     = 0.4;
     _heightGreen    = 0.8;
@@ -65,12 +66,12 @@ SymmetricHohlraum::SymmetricHohlraum( Config* settings, Mesh* mesh, QuadratureBa
         double y = _mesh->GetCellMidPoints()[idx_cell][1];
 
         // red area left
-        if( x < -0.65 + _thicknessRedLeft && y > _redLeftBottom && y < _redLeftTop ) {
+        if( x < _posRedLeftBorder && y > _redLeftBottom && y < _redLeftTop ) {
             _sigmaS[idx_cell] = 95.0;
             _sigmaT[idx_cell] = 100.0;
         }
         // red area right
-        if( x > 0.65 - _thicknessRedRight && y > _redRightBottom && y < _redRightTop ) {
+        if( x > _posRedRightBorder && y > _redRightBottom && y < _redRightTop ) {
             _sigmaS[idx_cell] = 95.0;
             _sigmaT[idx_cell] = 100.0;
         }
@@ -214,12 +215,18 @@ void SymmetricHohlraum::ComputeVarAbsorptionGreen( const Vector& scalarFlux ) {
     for( unsigned idx_cell = 0; idx_cell < nCells; ++idx_cell ) {
         double x = cellMids[idx_cell][0];
         double y = cellMids[idx_cell][1];
-        bool green1, green2, green3, green4;
-
-        green1 = x > -0.2 && x < -0.15 && y > -0.35 && y < 0.35;    // green area 1 (lower boundary)
-        green2 = x > 0.15 && x < 0.2 && y > -0.35 && y < 0.35;      // green area 2 (upper boundary)
-        green3 = x > -0.2 && x < 0.2 && y > -0.4 && y < -0.35;      // green area 3 (left boundary)
-        green4 = x > -0.2 && x < 0.2 && y > 0.35 && y < 0.4;        // green area 4 (right boundary)
+        // green area 1 (lower boundary)
+        bool green1 = x > -0.2 + _settings->GetPosXCenterGreenHohlraum() && x < -0.15 + _settings->GetPosXCenterGreenHohlraum() &&
+                      y > -0.35 + _settings->GetPosYCenterGreenHohlraum() && y < 0.35 + _settings->GetPosYCenterGreenHohlraum();
+        // green area 2 (upper boundary)
+        bool green2 = x > 0.15 + _settings->GetPosXCenterGreenHohlraum() && x < 0.2 + _settings->GetPosXCenterGreenHohlraum() &&
+                      y > -0.35 + _settings->GetPosYCenterGreenHohlraum() && y < 0.35 + _settings->GetPosYCenterGreenHohlraum();
+        // green area 3 (left boundary)
+        bool green3 = x > -0.2 + _settings->GetPosXCenterGreenHohlraum() && x < 0.2 + _settings->GetPosXCenterGreenHohlraum() &&
+                      y > -0.4 + _settings->GetPosYCenterGreenHohlraum() && y < -0.35 + _settings->GetPosYCenterGreenHohlraum();
+        // green area 4 (right boundary)
+        bool green4 = x > -0.2 + _settings->GetPosXCenterGreenHohlraum() && x < 0.2 + _settings->GetPosXCenterGreenHohlraum() &&
+                      y > 0.35 + _settings->GetPosYCenterGreenHohlraum() && y < 0.4 + _settings->GetPosYCenterGreenHohlraum();
 
         if( green1 || green2 || green3 || green4 ) {
             a_g += ( _sigmaT[idx_cell] - _sigmaS[idx_cell] ) * scalarFlux[idx_cell] * areas[idx_cell];
@@ -230,12 +237,18 @@ void SymmetricHohlraum::ComputeVarAbsorptionGreen( const Vector& scalarFlux ) {
     for( unsigned idx_cell = 0; idx_cell < nCells; ++idx_cell ) {
         double x = cellMids[idx_cell][0];
         double y = cellMids[idx_cell][1];
-        bool green1, green2, green3, green4;
-
-        green1 = x > -0.2 && x < -0.15 && y > -0.35 && y < 0.35;    // green area 1 (lower boundary)
-        green2 = x > 0.15 && x < 0.2 && y > -0.35 && y < 0.35;      // green area 2 (upper boundary)
-        green3 = x > -0.2 && x < 0.2 && y > -0.4 && y < -0.35;      // green area 3 (left boundary)
-        green4 = x > -0.2 && x < 0.2 && y > 0.35 && y < 0.4;        // green area 4 (right boundary)
+        // green area 1 (lower boundary)
+        bool green1 = x > -0.2 + _settings->GetPosXCenterGreenHohlraum() && x < -0.15 + _settings->GetPosXCenterGreenHohlraum() &&
+                      y > -0.35 + _settings->GetPosYCenterGreenHohlraum() && y < 0.35 + _settings->GetPosYCenterGreenHohlraum();
+        // green area 2 (upper boundary)
+        bool green2 = x > 0.15 + _settings->GetPosXCenterGreenHohlraum() && x < 0.2 + _settings->GetPosXCenterGreenHohlraum() &&
+                      y > -0.35 + _settings->GetPosYCenterGreenHohlraum() && y < 0.35 + _settings->GetPosYCenterGreenHohlraum();
+        // green area 3 (left boundary)
+        bool green3 = x > -0.2 + _settings->GetPosXCenterGreenHohlraum() && x < 0.2 + _settings->GetPosXCenterGreenHohlraum() &&
+                      y > -0.4 + _settings->GetPosYCenterGreenHohlraum() && y < -0.35 + _settings->GetPosYCenterGreenHohlraum();
+        // green area 4 (right boundary)
+        bool green4 = x > -0.2 + _settings->GetPosXCenterGreenHohlraum() && x < 0.2 + _settings->GetPosXCenterGreenHohlraum() &&
+                      y > 0.35 + _settings->GetPosYCenterGreenHohlraum() && y < 0.4 + _settings->GetPosYCenterGreenHohlraum();
 
         if( green1 || green2 || green3 || green4 ) {
             _varAbsorptionHohlraumGreen += ( a_g - scalarFlux[idx_cell] * ( _sigmaT[idx_cell] - _sigmaS[idx_cell] ) ) *

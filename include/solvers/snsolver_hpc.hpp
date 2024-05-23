@@ -96,6 +96,7 @@ class SNSolverHPC
     double _varAbsorptionHohlraumGreen;
     std::vector<unsigned> _probingCellsHohlraum; /*!< @brief Indices of cells that contain a probing sensor */
     std::vector<double> _probingMoments;         /*!< @brief Solution Momnets at the probing cells that contain a probing sensor */
+    unsigned _probingMomentsTimeIntervals;       /*!< @brief Solution Momnets at the probing cells that contain a probing sensor */
 
     unsigned _nProbingCellsLineGreen;                 /*!< @brief Number of sampling cells that contain a probing sensor for the sliding window */
     std::vector<unsigned> _probingCellsLineGreen;     /*!< @brief Indices of cells that contain a probing sensor for the sliding window */
@@ -110,17 +111,8 @@ class SNSolverHPC
     std::vector<double>
         _cornerLowerRightGreen; /*!< @brief Coord of corner of the green area (minus thickness/2 of it) relative to the green center */
 
-    double _widthGreen;               /*!< @brief width of the green area */
-    double _heightGreen;              /*!< @brief height of the green area  */
     double _thicknessGreen;           /*!< @brief thickness of the green area */
     std::vector<double> _centerGreen; /*!< @brief Center of the Hohlraum   */
-
-    double _redLeftTop;        /*!< @brief y coord of the top of the left red area  */
-    double _redLeftBottom;     /*!< @brief y coord of the bottom of the left red area  */
-    double _redRightTop;       /*!< @brief y coord of the top of the right red area  */
-    double _redRightBottom;    /*!< @brief y coord of the bottom of the right red area  */
-    double _thicknessRedLeft;  /*!< @brief thickness of the left red area */
-    double _thicknessRedRight; /*!< @brief thickness of the right red area */
 
     // Output
     std::vector<std::vector<std::vector<double>>> _outputFields; /*!< @brief Solver Output: dimensions

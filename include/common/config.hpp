@@ -108,6 +108,8 @@ class Config
     double _posRedLeftTop;                          /*!< @brief y coord of the top of the left red area  */
     double _posRedRightBottom;                      /*!< @brief y coord of the bottom of the right red area  */
     double _posRedLeftBottom;                       /*!< @brief y coord of the bottom of the left red area  */
+    double _posRedLeftBorder;                       /*!< @brief pos of the inner border of the left red area  */
+    double _posRedRightBorder;                      /*!< @brief pos of the inner border of the right red area  */
 
     // CSD
     double _maxEnergyCSD; /*!< @brief Maximum energy for CSD simulation */
@@ -347,6 +349,8 @@ class Config
     double inline GetPosRedRightBottomHohlraum() const { return _posRedRightBottom; }
     double inline GetPosRedLeftTopHohlraum() const { return _posRedLeftTop; }
     double inline GetPosRedLeftBottomHohlraum() const { return _posRedLeftBottom; }
+    double inline GetPosRedLeftBorderHohlraum() const { return _posRedLeftBorder; }
+    double inline GetPosRedRightBorderHohlraum() const { return _posRedRightBorder; }
 
     //  Optimizer
     double inline GetNewtonOptimizerEpsilon() const { return _optimizerEpsilon; }

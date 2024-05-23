@@ -304,7 +304,8 @@ void Config::SetConfigOptions() {
     AddDoubleOption( "POS_RED_RIGHT_BOTTOM", _posRedRightBottom, -0.4 );
     AddDoubleOption( "POS_RED_LEFT_TOP", _posRedLeftTop, 0.4 );
     AddDoubleOption( "POS_RED_LEFT_BOTTOM", _posRedLeftBottom, -0.4 );
-
+    AddDoubleOption( "WIDTH_RED_LEFT", _posRedLeftBorder, -0.65 );
+    AddDoubleOption( "WIDTH_RED_RIGHT", _posRedRightBorder, 0.65 );
     // Entropy related options
     /*! @brief Entropy Functional \n DESCRIPTION: Entropy functional used for the MN_Solver \n DEFAULT QUADRTATIC @ingroup Config. */
     AddEnumOption( "ENTROPY_FUNCTIONAL", _entropyName, Entropy_Map, QUADRATIC );

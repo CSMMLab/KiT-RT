@@ -30,8 +30,8 @@ class SymmetricHohlraum : public ProblemBase
     double _redLeftBottom;     /*!< @brief y coord of the bottom of the left red area  */
     double _redRightTop;       /*!< @brief y coord of the top of the right red area  */
     double _redRightBottom;    /*!< @brief y coord of the bottom of the right red area  */
-    double _thicknessRedLeft;  /*!< @brief thickness of the left red area */
-    double _thicknessRedRight; /*!< @brief thickness of the right red area */
+    double _posRedLeftBorder;  /*!< @brief thickness of the left red area */
+    double _posRedRightBorder; /*!< @brief thickness of the right red area */
 
     void SetGhostCells() override; /*!< @brief Sets vector of ghost cells for boundary conditions */
 
