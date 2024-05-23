@@ -175,9 +175,9 @@ SNSolverHPC::SNSolverHPC( Config* settings ) {
         unsigned n_probes = 4;
         if( _settings->GetProblemName() == PROBLEM_SymmetricHohlraum ) n_probes = 4;
         if( _settings->GetProblemName() == PROBLEM_QuarterHohlraum ) n_probes = 2;
-        _probingMomentsTimeIntervals = 10;
-        _probingCellsHohlraum        = std::vector<unsigned>( n_probes, 0. );
-        _probingMoments              = std::vector<double>( n_probes * 3, 0. );    // 10 time horizons
+        //_probingMomentsTimeIntervals = 10;
+        _probingCellsHohlraum = std::vector<unsigned>( n_probes, 0. );
+        _probingMoments       = std::vector<double>( n_probes * 3, 0. );    // 10 time horizons
 
         if( _settings->GetProblemName() == PROBLEM_SymmetricHohlraum ) {
             _probingCellsHohlraum = {
