@@ -75,7 +75,7 @@ class SNSolverHPC
     // Output related members
     std::vector<double> _scalarFlux; /*!< @brief dim = _nCells  */
 
-    // QOIS
+    // Lattice QOIS
     double _mass;
     double _rmsFlux;
     double _curAbsorptionLattice;    /*!< @brief Absorption of particles at Lattice checkerboard regions at current time step */
@@ -85,6 +85,15 @@ class SNSolverHPC
     double _totalScalarOutflow;      /*!< @brief Outflow over whole boundary integrated until current time step */
     double _curMaxOrdinateOutflow;   /*!< @brief Maximum ordinate-wise ouftlow  over boundary over all time steps */
     std::vector<double> _localMaxOrdinateOutflow; /*!< @brief Maximum ordinate-wise ouftlow  over boundary over all time steps */
+    double _curScalarOutflowPeri1;                /*!< @brief Outflow over whole boundary at current time step */
+    double _totalScalarOutflowPeri1;              /*!< @brief Outflow over whole boundary integrated until current time step */
+    double _curScalarOutflowPeri2;                /*!< @brief Outflow over whole boundary at current time step */
+    double _totalScalarOutflowPeri2;              /*!< @brief Outflow over whole boundary integrated until current time step */
+    // helper
+    std::map<unsigned, std::vector<unsigned>> _cellsLatticePerimeter1;
+    std::map<unsigned, std::vector<unsigned>> _cellsLatticePerimeter2;
+    std::vector<bool> _isPerimeterLatticeCell1;
+    std::vector<bool> _isPerimeterLatticeCell2;
 
     // Hohlraum QOIS
     double _totalAbsorptionHohlraumCenter;
@@ -188,6 +197,7 @@ class SNSolverHPC
     unsigned Idx2D( unsigned idx1, unsigned idx2, unsigned len2 );
     unsigned Idx3D( unsigned idx1, unsigned idx2, unsigned idx3, unsigned len2, unsigned len3 );
     bool IsAbsorptionLattice( double x, double y ) const;
+    void ComputeCellsPerimeterLattice();
 
     void SetProbingCellsLineGreen();
     void ComputeQOIsGreenProbingLine();
