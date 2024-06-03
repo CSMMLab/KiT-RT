@@ -23,7 +23,7 @@ class QuarterHohlraum : public ProblemBase
     std::vector<double> _cornerUpperRightGreen; /*!< @brief Coord of corner of the green area (minus thickness/2 of it) */
     std::vector<double> _cornerLowerRightGreen; /*!< @brief Coord of corner of the green area (minus thickness/2 of it) */
     double _thicknessGreen;                     /*!< @brief thickness of the green area */
-    double _redRightTopX;                       /*!< @brief x coord of the right top corner of the red area */
+    double _redRightTop;                        /*!< @brief x coord of the right top corner of the red area */
     double _posRedRightBorder;                  /*!< @brief x coord of the left border of the right red area */
 
     void SetGhostCells() override; /*!< @brief Sets vector of ghost cells for boundary conditions */
