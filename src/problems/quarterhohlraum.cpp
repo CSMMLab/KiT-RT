@@ -15,6 +15,10 @@ QuarterHohlraum::QuarterHohlraum( Config* settings, Mesh* mesh, QuadratureBase* 
     _sigmaS = Vector( _mesh->GetNumCells(), 0.1 );    // white area default
     _sigmaT = Vector( _mesh->GetNumCells(), 0.1 );    // white area default
 
+    // Geometry of the red barrier
+    _redRightTop       = _settings->GetPosRedRightTopHohlraum();
+    _posRedRightBorder = _settings->GetPosRedRightBorderHohlraum();
+
     // Geometry of the green capsule
     _thicknessGreen        = 0.05;
     _cornerUpperLeftGreen  = { 0., 0.4 - _thicknessGreen / 2.0 };
@@ -51,7 +55,7 @@ QuarterHohlraum::QuarterHohlraum( Config* settings, Mesh* mesh, QuadratureBase* 
             _sigmaT[idx_cell] = 100.0;
         }
         // red area right
-        if( x > 0.6 && y > -0.4 && y < 0.4 ) {
+        if( x > _posRedRightBorder && y > -0.4 && y < _redRightTop ) {
             _sigmaS[idx_cell] = 95.0;
             _sigmaT[idx_cell] = 100.0;
         }
