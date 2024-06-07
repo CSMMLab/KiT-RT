@@ -86,7 +86,7 @@ void Mesh::ComputeConnectivity() {
     log->info( "| ...connect cells to nodes..." );
     blaze::CompressedMatrix<bool> connMat( _numCells, _numNodes );
 
-    // #pragma omp parallel for
+#pragma omp parallel for
     for( unsigned i = mpiCellStart; i < mpiCellEnd; ++i ) {
         for( auto j : _cells[i] ) connMat.set( i, j, true );
     }
