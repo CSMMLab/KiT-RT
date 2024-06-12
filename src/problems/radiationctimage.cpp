@@ -70,7 +70,9 @@ std::vector<double> RadiationCTImage::GetDensity( const VectorVector& /*cellMidP
     ErrorMessages::Error( "Python API support is deprecated for KiT-RT. This function needs to be rewritten.\n Use a python script to first create "
                           "the mesh, then call KiT-RT from Python. This is the recommended workflow for stability and performance.",
                           CURRENT_FUNCTION );
-    Matrix gsImage     = Matrix( 0, 0 );    //    createSU2MeshFromImage( imageFile, meshFile ); DEprecated
+    Matrix gsImage = Matrix( 0, 0 );    //    createSU2MeshFromImage( imageFile, meshFile ); DEprecated
+
+    ErrorMessages::Error( "GetBounds function currently deprecetaded", CURRENT_FUNCTION );
     auto bounds        = _mesh->GetBounds();
     auto cellMidPoints = _mesh->GetCellMidPoints();
 

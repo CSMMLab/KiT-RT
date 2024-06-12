@@ -1,10 +1,13 @@
 #include "common/mesh.hpp"
 #include "common/config.hpp"
 #include "common/io.hpp"
+#include <algorithm>
 #include <chrono>
 #include <filesystem>
 #include <iostream>
+#include <map>
 #include <omp.h>
+#include <set>
 
 Mesh::Mesh( const Config* settings,
             std::vector<Vector> nodes,
@@ -49,6 +52,7 @@ Mesh::Mesh( const Config* settings,
     }
     log->info( "| Compute boundary..." );
     ComputeBounds();
+    log->info( "| Mesh created." );
 }
 
 Mesh::~Mesh() {}
@@ -68,6 +72,85 @@ void Mesh::ComputeConnectivity() {
     std::vector<Vector> normalsFlatPart( _numNodesPerCell * chunkSize, Vector( _dim, -1.0 ) );
     std::vector<Vector> interfaceMidFlatPart( _numNodesPerCell * chunkSize, Vector( _dim, -1.0 ) );
 
+    // ++++++
+    std::vector<std::vector<int>> neighbors( _numCells );
+    std::vector<std::vector<Vector>> normals( _numCells );
+    std::vector<std::vector<Vector>> interfaceMid( _numCells );
+
+    std::map<std::pair<unsigned, unsigned>, std::vector<unsigned>> edge_to_cells;
+    //  Step 1: Build a mapping from edges to cells
+    log->info( "| ...map edges to cells..." );
+
+    for( unsigned i = 0; i < _numCells; ++i ) {
+        const auto& cell = _cells[i];
+        for( unsigned j = 0; j < _numNodesPerCell; ++j ) {
+            unsigned v1                        = cell[j];
+            unsigned v2                        = cell[( j + 1 ) % _numNodesPerCell];
+            std::pair<unsigned, unsigned> edge = std::minmax( v1, v2 );
+            edge_to_cells[edge].push_back( i );
+        }
+    }
+
+    // Step 2: Determine neighbors
+    log->info( "| ...determine neighbors of cells..." );
+
+    for( const auto& item : edge_to_cells ) {
+        const auto& cell_list     = item.second;
+        const auto& nodes_of_edge = item.first;
+        // std::cout << "nodes_of_edge: " << nodes_of_edge.first << " " << nodes_of_edge.second << std::endl;
+        if( cell_list.size() == 2 ) {
+            if( cell_list[0] == cell_list[1] ) {
+                ErrorMessages::Error( "Error", CURRENT_FUNCTION );
+            }
+            unsigned cell1 = cell_list[0];
+            unsigned cell2 = cell_list[1];
+
+            neighbors[cell1].push_back( cell2 );
+            neighbors[cell2].push_back( cell1 );
+
+            normals[cell1].push_back(
+                ComputeOutwardFacingNormal( _nodes[nodes_of_edge.first], _nodes[nodes_of_edge.second], _cellMidPoints[cell1] ) );
+            normals[cell2].push_back(
+                ComputeOutwardFacingNormal( _nodes[nodes_of_edge.first], _nodes[nodes_of_edge.second], _cellMidPoints[cell2] ) );
+            interfaceMid[cell1].push_back( ComputeCellInterfaceMidpoints( _nodes[nodes_of_edge.first], _nodes[nodes_of_edge.second] ) );
+            interfaceMid[cell2].push_back( ComputeCellInterfaceMidpoints( _nodes[nodes_of_edge.first], _nodes[nodes_of_edge.second] ) );
+        }
+        else if( /* condition */ cell_list.size() == 1 ) {
+
+            unsigned cell1 = cell_list[0];
+            neighbors[cell1].push_back( _ghostCellID );    // neighbor must be a ghost cell
+            normals[cell1].push_back(
+                ComputeOutwardFacingNormal( _nodes[nodes_of_edge.first], _nodes[nodes_of_edge.second], _cellMidPoints[cell1] ) );
+            interfaceMid[cell1].push_back( ComputeCellInterfaceMidpoints( _nodes[nodes_of_edge.first], _nodes[nodes_of_edge.second] ) );
+        }
+        else {
+            ErrorMessages::Error( "More than 2 cells share an edge: " + std::to_string( cell_list.size() ), CURRENT_FUNCTION );
+        }
+    }
+    // check for any unassigned faces
+    _cellNeighbors.resize( _numCells );
+    for( unsigned i = 0; i < _numCells; ++i ) {
+        _cellNeighbors[i].resize( _numNodesPerCell );
+        if( neighbors[i].size() != _numNodesPerCell ) {
+            ErrorMessages::Error( "Not " + std::to_string( _numNodesPerCell ) + " neighbors detected: " + std::to_string( i ), CURRENT_FUNCTION );
+        }
+        if( normals[i].size() != _numNodesPerCell ) {
+            ErrorMessages::Error( "Not" + std::to_string( _numNodesPerCell ) + " normals detected: " + std::to_string( i ), CURRENT_FUNCTION );
+        }
+        if( interfaceMid[i].size() != _numNodesPerCell ) {
+            ErrorMessages::Error( "Not" + std::to_string( _numNodesPerCell ) + " interfaceMid detected: " + std::to_string( i ), CURRENT_FUNCTION );
+        }
+        for( unsigned j = 0; j < _numNodesPerCell; ++j ) {
+            if( neighbors[i][j] == -1 ) {
+                ErrorMessages::Error( "Face not assigned: " + std::to_string( i ) + " " + std::to_string( j ), CURRENT_FUNCTION );
+            }
+            _cellNeighbors[i][j] = neighbors[i][j];
+        }
+    }
+    _cellNormals            = normals;
+    _cellInterfaceMidPoints = interfaceMid;
+
+    /*
     // pre sort cells and boundaries; sorting is needed for std::set_intersection
     log->info( "| ...sort cells..." );
 
@@ -86,7 +169,7 @@ void Mesh::ComputeConnectivity() {
     log->info( "| ...connect cells to nodes..." );
     blaze::CompressedMatrix<bool> connMat( _numCells, _numNodes );
 
-//#pragma omp parallel for
+    // #pragma omp parallel for
     for( unsigned i = mpiCellStart; i < mpiCellEnd; ++i ) {
         for( auto j : _cells[i] ) connMat.set( i, j, true );
     }
@@ -104,7 +187,8 @@ void Mesh::ComputeConnectivity() {
             else if( ctr == _numNodesPerCell )
                 break;
             else if( static_cast<unsigned>( blaze::dot( blaze::row( connMat, i ), blaze::row( connMat, j ) ) ) ==
-                     _numNodesPerBoundary ) {    // in 2D cells are neighbors if they share two nodes std::vector<unsigned>* cellsJ = &sortedCells[j];
+                     _numNodesPerBoundary ) {    // in 2D cells are neighbors if they share two nodes std::vector<unsigned>* cellsJ =
+                                                 // &sortedCells[j];
                 // which are the two common nodes and which edge belongs to them?
                 std::vector<unsigned>* cellsJ = &sortedCells[j];
                 std::vector<unsigned> commonElements;    // vector of nodes that are shared by cells i and j
@@ -139,8 +223,8 @@ void Mesh::ComputeConnectivity() {
                                        bNodes->begin(),
                                        bNodes->end(),
                                        std::back_inserter( commonElements ) );    // find common nodes of two cells
-                // _boundaries[k].second has all boundary nodes of boundary k. Therefore if all cell nodes lie on the boundary, the number of common
-                // nodes can be 3 for triangles, 4 for quadrangles etc
+                // _boundaries[k].second has all boundary nodes of boundary k. Therefore if all cell nodes lie on the boundary, the number of
+                // common nodes can be 3 for triangles, 4 for quadrangles etc
                 if( commonElements.size() >= _numNodesPerBoundary && commonElements.size() <= _numNodesPerCell ) {
                     unsigned pos0 = _numNodesPerCell * ( i - mpiCellStart );
                     unsigned pos  = pos0;
@@ -148,8 +232,8 @@ void Mesh::ComputeConnectivity() {
                         pos++;
                     }
                     neighborsFlatPart[pos]    = _ghostCellID;
-                    normalsFlatPart[pos]      = ComputeOutwardFacingNormal( _nodes[commonElements[0]], _nodes[commonElements[1]], _cellMidPoints[i] );
-                    interfaceMidFlatPart[pos] = ComputeCellInterfaceMidpoints( _nodes[commonElements[0]], _nodes[commonElements[1]] );
+                    normalsFlatPart[pos]      = ComputeOutwardFacingNormal( _nodes[commonElements[0]], _nodes[commonElements[1]],
+_cellMidPoints[i] ); interfaceMidFlatPart[pos] = ComputeCellInterfaceMidpoints( _nodes[commonElements[0]], _nodes[commonElements[1]] );
                 }
             }
         }
@@ -207,7 +291,7 @@ void Mesh::ComputeConnectivity() {
             //}
         }
     }
-
+*/
     // assign boundary types to all cells
     _cellBoundaryTypes.resize( _numCells, BOUNDARY_TYPE::NONE );
 #pragma omp parallel for
@@ -417,14 +501,15 @@ void Mesh::ComputeLimiter1D( unsigned nSys, const VectorVector& sol, VectorVecto
 // double LimiterBarthJespersen( double r ) { return std::min( r, 1.0 ); }
 
 void Mesh::ComputeBounds() {
-    _bounds = std::vector( _dim, std::make_pair( std::numeric_limits<double>::infinity(), -std::numeric_limits<double>::infinity() ) );
-#pragma omp parallel for
-    for( unsigned i = 0; i < _numNodes; ++i ) {
-        for( unsigned j = 0; j < _dim; ++j ) {
-            if( _nodes[i][j] < _bounds[j].first ) _bounds[j].first = _nodes[i][j];
-            if( _nodes[i][j] > _bounds[j].second ) _bounds[j].second = _nodes[i][j];
-        }
-    }
+    _bounds = std::vector( _dim, std::make_pair( 0.0, 1.0 ) );    // Currently not used
+    //_bounds = std::vector( _dim, std::make_pair( std::numeric_limits<double>::infinity(), -std::numeric_limits<double>::infinity() ) );
+    //
+    //     for( unsigned i = 0; i < _numNodes; ++i ) {
+    //         for( unsigned j = 0; j < _dim; ++j ) {
+    //             if( _nodes[i][j] < _bounds[j].first ) _bounds[j].first = _nodes[i][j];
+    //             if( _nodes[i][j] > _bounds[j].second ) _bounds[j].second = _nodes[i][j];
+    //         }
+    //     }
 }
 
 const std::vector<Vector>& Mesh::GetNodes() const { return _nodes; }
