@@ -151,15 +151,16 @@ void ProblemBase::SetGhostCells() {
     std::map<int, Vector> ghostCellMap;
 
     Vector dummyGhostCell( 1, 0.0 );
-
+    // #pragma omp parallel for
     for( unsigned idx_cell = 0; idx_cell < _mesh->GetNumCells(); idx_cell++ ) {
         if( cellBoundaries[idx_cell] == BOUNDARY_TYPE::NEUMANN || cellBoundaries[idx_cell] == BOUNDARY_TYPE::DIRICHLET ) {
             // TODO: Refactor Boundary Conditions: We only have Ghost Cells with
             // Dirichlet conditions right now
-            ghostCellMap.insert( { idx_cell, dummyGhostCell } );
+            // #pragma omp critical
+            { ghostCellMap.insert( { idx_cell, dummyGhostCell } ); }
         }
-        _ghostCells = ghostCellMap;
     }
+    _ghostCells = ghostCellMap;
 }
 
 const Vector& ProblemBase::GetGhostCellValue( int /*idx_cell*/, const Vector& cell_sol ) { return cell_sol; }

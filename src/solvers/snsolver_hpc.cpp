@@ -1370,39 +1370,40 @@ void SNSolverHPC::SetGhostCells() {
 
         auto nodes = _mesh->GetNodes();
 
-        // #pragma omp parallel for
+#pragma omp parallel for
         for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
-
             if( _cellBoundaryTypes[idx_cell] == BOUNDARY_TYPE::NEUMANN || _cellBoundaryTypes[idx_cell] == BOUNDARY_TYPE::DIRICHLET ) {
+#pragma omp critical
+                {
+                    auto localCellNodes = _mesh->GetCells()[idx_cell];
 
-                auto localCellNodes = _mesh->GetCells()[idx_cell];
+                    _ghostCellsReflectingX[idx_cell] = false;
+                    _ghostCellsReflectingY[idx_cell] = false;
+                    _ghostCells[idx_cell]            = std::vector<double>( _nSys, 0.0 );
 
-                _ghostCellsReflectingX[idx_cell] = false;
-                _ghostCellsReflectingY[idx_cell] = false;
-                _ghostCells[idx_cell]            = std::vector<double>( _nSys, 0.0 );
-
-                for( unsigned idx_node = 0; idx_node < _mesh->GetNumNodesPerCell(); idx_node++ ) {    // Check if corner node is in this cell
-                    if( abs( nodes[localCellNodes[idx_node]][0] ) < tol ) {                           // close to 0 => left boundary
-                        _ghostCellsReflectingY[idx_cell] = true;
-                        break;
-                    }
-                    else if( abs( nodes[localCellNodes[idx_node]][0] ) > 0.65 - tol ) {    // right boundary
-                        for( unsigned idx_q = 0; idx_q < _nSys; idx_q++ ) {
-                            if( _quadPts[Idx2D( idx_q, 0, _nDim )] < 0.0 ) {
-                                _ghostCells[idx_cell][idx_q] = 1.0;
-                            }
+                    for( unsigned idx_node = 0; idx_node < _mesh->GetNumNodesPerCell(); idx_node++ ) {    // Check if corner node is in this cell
+                        if( abs( nodes[localCellNodes[idx_node]][0] ) < tol ) {                           // close to 0 => left boundary
+                            _ghostCellsReflectingY[idx_cell] = true;
+                            break;
                         }
-                        break;
-                    }
-                    else if( abs( nodes[localCellNodes[idx_node]][1] ) < tol ) {    // lower boundary
-                        _ghostCellsReflectingX[idx_cell] = true;
-                        break;
-                    }
-                    else if( abs( nodes[localCellNodes[idx_node]][1] ) > 0.65 - tol ) {    // upper boundary
-                        break;
-                    }
-                    else if( idx_node == _mesh->GetNumNodesPerCell() - 1 ) {
-                        ErrorMessages::Error( " Problem with ghost cell setup and  boundary of this mesh ", CURRENT_FUNCTION );
+                        else if( abs( nodes[localCellNodes[idx_node]][0] ) > 0.65 - tol ) {    // right boundary
+                            for( unsigned idx_q = 0; idx_q < _nSys; idx_q++ ) {
+                                if( _quadPts[Idx2D( idx_q, 0, _nDim )] < 0.0 ) {
+                                    _ghostCells[idx_cell][idx_q] = 1.0;
+                                }
+                            }
+                            break;
+                        }
+                        else if( abs( nodes[localCellNodes[idx_node]][1] ) < tol ) {    // lower boundary
+                            _ghostCellsReflectingX[idx_cell] = true;
+                            break;
+                        }
+                        else if( abs( nodes[localCellNodes[idx_node]][1] ) > 0.65 - tol ) {    // upper boundary
+                            break;
+                        }
+                        else if( idx_node == _mesh->GetNumNodesPerCell() - 1 ) {
+                            ErrorMessages::Error( " Problem with ghost cell setup and  boundary of this mesh ", CURRENT_FUNCTION );
+                        }
                     }
                 }
             }

@@ -533,13 +533,25 @@ double Mesh::GetDistanceToOrigin( unsigned idx_cell ) const {
 }
 
 unsigned Mesh::GetCellOfKoordinate( double x, double y ) const {
+    // Experimental parallel implementation
+    unsigned koordinate_cell_id = 0;
+    bool found                  = false;
+
+#pragma omp parallel for
     for( unsigned idx_cell = 0; idx_cell < _numCells; idx_cell++ ) {
         if( IsPointInsideCell( idx_cell, x, y ) ) {
-            return idx_cell;
+#pragma omp critical
+            {
+                koordinate_cell_id = idx_cell;
+                found              = true;
+            }
         }
+        // Check if cancellation has been requested
     }
-    ErrorMessages::Error( "Probing point (" + std::to_string( x ) + "," + std::to_string( y ) + ") is not contained in mesh.", CURRENT_FUNCTION );
-    return 0;
+    if( !found ) {
+        ErrorMessages::Error( "Probing point (" + std::to_string( x ) + "," + std::to_string( y ) + ") is not contained in mesh.", CURRENT_FUNCTION );
+    }
+    return koordinate_cell_id;
 }
 
 bool Mesh::IsPointInsideCell( unsigned idx_cell, double x, double y ) const {

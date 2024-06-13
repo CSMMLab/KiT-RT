@@ -118,13 +118,6 @@ void QuarterHohlraum::SetGhostCells() {
 
     double tol = 1e-12;    // For distance to boundary
 
-    unsigned nGhostcells = 0;
-    for( unsigned idx_cell = 0; idx_cell < _mesh->GetNumCells(); idx_cell++ ) {
-        if( cellBoundaries[idx_cell] == BOUNDARY_TYPE::NEUMANN || cellBoundaries[idx_cell] == BOUNDARY_TYPE::DIRICHLET ) {
-            nGhostcells++;
-        }
-    }
-
     QuadratureBase* quad = QuadratureBase::Create( _settings );
     VectorVector vq      = quad->GetPoints();
     unsigned nq          = quad->GetNq();
@@ -165,39 +158,41 @@ void QuarterHohlraum::SetGhostCells() {
     }
 
     auto nodes = _mesh->GetNodes();
-
+#pragma omp parallel for
     for( unsigned idx_cell = 0; idx_cell < _mesh->GetNumCells(); idx_cell++ ) {
         if( cellBoundaries[idx_cell] == BOUNDARY_TYPE::NEUMANN || cellBoundaries[idx_cell] == BOUNDARY_TYPE::DIRICHLET ) {
+#pragma omp critical
+            {
+                auto localCellNodes = _mesh->GetCells()[idx_cell];
 
-            auto localCellNodes = _mesh->GetCells()[idx_cell];
+                _ghostCellsReflectingX[idx_cell] = false;
+                _ghostCellsReflectingY[idx_cell] = false;
+                for( unsigned idx_node = 0; idx_node < _mesh->GetNumNodesPerCell(); idx_node++ ) {    // Check if corner node is in this cell
+                    if( abs( nodes[localCellNodes[idx_node]][0] ) < tol ) {                           // close to 0 => left boundary
+                        _ghostCellsReflectingY[idx_cell] = true;
+                        ghostCellMap.insert( { idx_cell, vertical_flow } );
+                        break;
+                    }
+                    else if( abs( nodes[localCellNodes[idx_node]][0] ) > 0.65 - tol ) {    // right boundary
+                        ghostCellMap.insert( { idx_cell, right_inflow } );
+                        break;
+                    }
+                    else if( abs( nodes[localCellNodes[idx_node]][1] ) < tol ) {    // lower boundary
+                        _ghostCellsReflectingX[idx_cell] = true;
+                        ghostCellMap.insert( { idx_cell, vertical_flow } );
 
-            _ghostCellsReflectingX[idx_cell] = false;
-            _ghostCellsReflectingY[idx_cell] = false;
-            for( unsigned idx_node = 0; idx_node < _mesh->GetNumNodesPerCell(); idx_node++ ) {    // Check if corner node is in this cell
-                if( abs( nodes[localCellNodes[idx_node]][0] ) < tol ) {                           // close to 0 => left boundary
-                    _ghostCellsReflectingY[idx_cell] = true;
-                    ghostCellMap.insert( { idx_cell, vertical_flow } );
-                    break;
-                }
-                else if( abs( nodes[localCellNodes[idx_node]][0] ) > 0.65 - tol ) {    // right boundary
-                    ghostCellMap.insert( { idx_cell, right_inflow } );
-                    break;
-                }
-                else if( abs( nodes[localCellNodes[idx_node]][1] ) < tol ) {    // lower boundary
-                    _ghostCellsReflectingX[idx_cell] = true;
-                    ghostCellMap.insert( { idx_cell, vertical_flow } );
-
-                    break;
-                }
-                else if( abs( nodes[localCellNodes[idx_node]][1] ) > 0.65 - tol ) {    // upper boundary
-                    ghostCellMap.insert( { idx_cell, vertical_flow } );
-                    break;
-                }
-                else if( idx_node == _mesh->GetNumNodesPerCell() - 1 ) {
-                    ErrorMessages::Error( " Problem with ghost cell setup and boundary of this mesh at cell " + std::to_string( idx_cell ) +
-                                              " with node coordinates " + std::to_string( _mesh->GetNodes()[localCellNodes[idx_node]][0] ) + "," +
-                                              std::to_string( _mesh->GetNodes()[localCellNodes[idx_node]][1] ),
-                                          CURRENT_FUNCTION );
+                        break;
+                    }
+                    else if( abs( nodes[localCellNodes[idx_node]][1] ) > 0.65 - tol ) {    // upper boundary
+                        ghostCellMap.insert( { idx_cell, vertical_flow } );
+                        break;
+                    }
+                    else if( idx_node == _mesh->GetNumNodesPerCell() - 1 ) {
+                        ErrorMessages::Error( " Problem with ghost cell setup and boundary of this mesh at cell " + std::to_string( idx_cell ) +
+                                                  " with node coordinates " + std::to_string( _mesh->GetNodes()[localCellNodes[idx_node]][0] ) + "," +
+                                                  std::to_string( _mesh->GetNodes()[localCellNodes[idx_node]][1] ),
+                                              CURRENT_FUNCTION );
+                    }
                 }
             }
         }
