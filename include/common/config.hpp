@@ -50,7 +50,7 @@ class Config
     // Mesh
     unsigned _nCells;                      /*!< @brief Number of cells in the mesh */
     unsigned short _dim;                   /*!< @brief spatial dimensionality of the mesh/test case */
-    bool _forcedConnectivityWrite = false; /*!< @brief If true, the meshconnectivity is always computed and written to .con file */
+    bool _forcedConnectivityWrite; /*!< @brief If true, the meshconnectivity is always computed and written to .con file */
 
     // Boundary Conditions
     /*!< @brief List of all Pairs (marker, BOUNDARY_TYPE), e.g. (farfield,DIRICHLET).

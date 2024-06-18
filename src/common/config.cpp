@@ -221,6 +221,8 @@ void Config::SetConfigOptions() {
     AddStringOption( "MESH_FILE", _meshFile, string( "mesh.su2" ) );
     /*! @brief MESH_FILE \n DESCRIPTION: Name of mesh file \n DEFAULT "" \ingroup Config.*/
     AddStringOption( "CT_FILE", _ctFile, string( "/home/pia/kitrt/examples/meshes/phantom.png" ) );
+    /*! @brief FORCE_CONNECTIVITY_RECOMPUTE \n DESCRIPTION:If true, mesh recomputes connectivity instead of loading from file \n DEFAULT false \ingroup Config.*/
+    AddBoolOption("FORCE_CONNECTIVITY_RECOMPUTE",_forcedConnectivityWrite, false);
 
     // Quadrature relatated options
     /*! @brief QUAD_TYPE \n DESCRIPTION: Type of Quadrature rule \n Options: see @link QUAD_NAME \endlink \n DEFAULT: QUAD_MonteCarlo
