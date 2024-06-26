@@ -1338,7 +1338,6 @@ void SNSolverHPC::SetGhostCells() {
         }
 
         // Create the symmetry maps for the quadratures
-        std::cout << " Setting up symmetry maps " << std::endl;
         unsigned filled_X_reflection = 0;
         unsigned filled_Y_reflection = 0;
         for( unsigned idx_q = 0; idx_q < _nSys; idx_q++ ) {

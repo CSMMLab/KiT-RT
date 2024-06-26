@@ -534,18 +534,20 @@ double Mesh::GetDistanceToOrigin( unsigned idx_cell ) const {
     return sqrt( distance );
 }
 
-unsigned Mesh::GetCellOfKoordinate( double x, double y ) const {
+unsigned Mesh::GetCellOfKoordinate( const double x, const double y ) const {
     // Experimental parallel implementation
-    unsigned koordinate_cell_id = 0;
+    unsigned koordinate_cell_id = std::numeric_limits<unsigned>::max();
     bool found                  = false;
 
-#pragma omp parallel for
+    // #pragma omp parallel for shared( found )
     for( unsigned idx_cell = 0; idx_cell < _numCells; idx_cell++ ) {
         if( IsPointInsideCell( idx_cell, x, y ) ) {
-#pragma omp critical
+            // #pragma omp critical
             {
-                koordinate_cell_id = idx_cell;
-                found              = true;
+                if( !found ) {
+                    koordinate_cell_id = idx_cell;
+                    found              = true;
+                }
             }
         }
         // Check if cancellation has been requested
@@ -558,17 +560,57 @@ unsigned Mesh::GetCellOfKoordinate( double x, double y ) const {
 
 bool Mesh::IsPointInsideCell( unsigned idx_cell, double x, double y ) const {
     bool inside = false;
-    for( unsigned i = 0, j = _numNodesPerCell - 1; i < _numNodesPerCell; j = i++ ) {
-        double xi = _nodes[_cells[idx_cell][i]][0];
-        double yi = _nodes[_cells[idx_cell][i]][1];
-        double xj = _nodes[_cells[idx_cell][j]][0];
-        double yj = _nodes[_cells[idx_cell][j]][1];
-
-        bool intersect = ( ( yi > y ) != ( yj > y ) ) && ( x < ( xj - xi ) * ( y - yi ) / ( yj - yi ) + xi );
-
-        if( intersect ) {
-            inside = true;
-        }
+    if( _numNodesPerCell == 3 ) {
+        inside = isPointInTriangle( x,
+                                    y,
+                                    _nodes[_cells[idx_cell][0]][0],
+                                    _nodes[_cells[idx_cell][0]][1],
+                                    _nodes[_cells[idx_cell][1]][0],
+                                    _nodes[_cells[idx_cell][1]][1],
+                                    _nodes[_cells[idx_cell][2]][0],
+                                    _nodes[_cells[idx_cell][2]][1] );
     }
+    else if( _numNodesPerCell == 4 ) {    // quadrilateral cell  +> divide into 2 triangles
+        inside = isPointInTriangle( x,
+                                    y,
+                                    _nodes[_cells[idx_cell][0]][0],
+                                    _nodes[_cells[idx_cell][0]][1],
+                                    _nodes[_cells[idx_cell][1]][0],
+                                    _nodes[_cells[idx_cell][1]][1],
+                                    _nodes[_cells[idx_cell][2]][0],
+                                    _nodes[_cells[idx_cell][2]][1] ) ||
+                 isPointInTriangle( x,
+                                    y,
+                                    _nodes[_cells[idx_cell][0]][0],
+                                    _nodes[_cells[idx_cell][0]][1],
+                                    _nodes[_cells[idx_cell][2]][0],
+                                    _nodes[_cells[idx_cell][2]][1],
+                                    _nodes[_cells[idx_cell][3]][0],
+                                    _nodes[_cells[idx_cell][3]][1] );
+    }
+    else {
+        ErrorMessages::Error( "Unsupported number of nodes per cell: " + std::to_string( _numNodesPerCell ), CURRENT_FUNCTION );
+    }
+    // if( inside ) {
+    //     std::cout << "Cells: " << idx_cell << "pt: " << _cellMidPoints[idx_cell][0] << " " << _cellMidPoints[idx_cell][1] << " pt: " << x << " " <<
+    //     y
+    //               << "\n";
+    // }
+
     return inside;
+}
+
+bool Mesh::isPointInTriangle( double x, double y, double x1, double y1, double x2, double y2, double x3, double y3 ) const {
+    // Calculate the area of the triangle
+    double d1, d2, d3;
+    bool hasNeg, hasPos;
+
+    d1 = ( x - x2 ) * ( y1 - y2 ) - ( x1 - x2 ) * ( y - y2 );
+    d2 = ( x - x3 ) * ( y2 - y3 ) - ( x2 - x3 ) * ( y - y3 );
+    d3 = ( x - x1 ) * ( y3 - y1 ) - ( x3 - x1 ) * ( y - y1 );
+
+    hasNeg = ( d1 < 0 ) || ( d2 < 0 ) || ( d3 < 0 );
+    hasPos = ( d1 > 0 ) || ( d2 > 0 ) || ( d3 > 0 );
+
+    return !( hasNeg && hasPos );
 }

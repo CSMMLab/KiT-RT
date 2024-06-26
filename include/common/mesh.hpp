@@ -63,8 +63,6 @@ class Mesh
     Vector ComputeCellInterfaceMidpoints( const Vector& nodeA,
                                           const Vector& nodeB ); /*!< @brief compute the midpoint of the edge between nodeA and nodeB */
 
-    bool IsPointInsideCell( unsigned idx_cell, double x, double y ) const; /*!< @brief Function to check if a point is inside a polygon (cell)*/
-
   public:
     Mesh() = delete;    //  no default constructor
 
@@ -129,7 +127,7 @@ class Mesh
 
     /*! @brief Returns index of cell containing the coordinate (x,y)
      *  @return cell_idx: unsigned */
-    unsigned GetCellOfKoordinate( double x, double y ) const;
+    unsigned GetCellOfKoordinate( const double x, const double y ) const;
 
     /*! @brief ComputeSlopes calculates the slope in every cell into x and y direction using the divergence theorem.
      *  @param nq is number of quadrature points
@@ -157,6 +155,10 @@ class Mesh
      *  @param psiDerX is slope in x direction (gets computed. Slope is stored here)
      *  @param psi is solution for which slope is computed */
     void ComputeSlopes1D( unsigned nq, VectorVector& psiDerX, const VectorVector& psi ) const;
+
+  private:
+    bool isPointInTriangle( double x, double y, double x1, double y1, double x2, double y2, double x3, double y3 ) const;
+    bool IsPointInsideCell( unsigned idx_cell, double x, double y ) const; /*!< @brief Function to check if a point is inside a polygon (cell)*/
 };
 
 #endif    // MESH_H
