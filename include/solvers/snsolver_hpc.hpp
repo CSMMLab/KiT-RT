@@ -76,6 +76,8 @@ class SNSolverHPC
     std::vector<double> _scalarFlux; /*!< @brief dim = _nCells  */
 
     // Lattice QOIS
+    unsigned _nOutputMoments;
+
     double _mass;
     double _rmsFlux;
     double _curAbsorptionLattice;    /*!< @brief Absorption of particles at Lattice checkerboard regions at current time step */
@@ -169,7 +171,7 @@ class SNSolverHPC
        Write frequency is given by option VOLUME_OUTPUT_FREQUENCY. Always prints
        last iteration without iteration affix.
         @param idx_iter  current (pseudo) time iteration */
-    void PrintVolumeOutput( int idx_iter ) const;
+    void PrintVolumeOutput( int idx_iter );
     /*! @brief Initialized the output fields and their Names for the screenoutput
      */
     void PrepareScreenOutput();
@@ -215,6 +217,6 @@ class SNSolverHPC
     void Solve();
 
     /*! @brief Save Output solution to VTK file */
-    void PrintVolumeOutput() const;    // Only for debugging purposes.
+    void PrintVolumeOutput() const {};    // Only for debugging purposes.
 };
 #endif    // SNSOLVERHPC_H

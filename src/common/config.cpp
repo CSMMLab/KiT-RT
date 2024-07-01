@@ -221,8 +221,9 @@ void Config::SetConfigOptions() {
     AddStringOption( "MESH_FILE", _meshFile, string( "mesh.su2" ) );
     /*! @brief MESH_FILE \n DESCRIPTION: Name of mesh file \n DEFAULT "" \ingroup Config.*/
     AddStringOption( "CT_FILE", _ctFile, string( "/home/pia/kitrt/examples/meshes/phantom.png" ) );
-    /*! @brief FORCE_CONNECTIVITY_RECOMPUTE \n DESCRIPTION:If true, mesh recomputes connectivity instead of loading from file \n DEFAULT false \ingroup Config.*/
-    AddBoolOption("FORCE_CONNECTIVITY_RECOMPUTE",_forcedConnectivityWrite, false);
+    /*! @brief FORCE_CONNECTIVITY_RECOMPUTE \n DESCRIPTION:If true, mesh recomputes connectivity instead of loading from file \n DEFAULT false
+     * \ingroup Config.*/
+    AddBoolOption( "FORCE_CONNECTIVITY_RECOMPUTE", _forcedConnectivityWrite, false );
 
     // Quadrature relatated options
     /*! @brief QUAD_TYPE \n DESCRIPTION: Type of Quadrature rule \n Options: see @link QUAD_NAME \endlink \n DEFAULT: QUAD_MonteCarlo
@@ -640,12 +641,15 @@ void Config::SetPostprocessing() {
                 case SN_SOLVER:
                     if( _problemName == PROBLEM_Linesource )
                         supportedGroups = { MINIMAL, ANALYTIC };
-                    else
+                    else {
                         supportedGroups = { MINIMAL };
+                        if( _HPC ) supportedGroups = { MINIMAL, MOMENTS };
+                    }
 
                     if( supportedGroups.end() == std::find( supportedGroups.begin(), supportedGroups.end(), _volumeOutput[idx_volOutput] ) ) {
-                        ErrorMessages::Error( "SN_SOLVER only supports volume output MINIMAL and ANALYTIC.\nPlease check your .cfg file.",
-                                              CURRENT_FUNCTION );
+                        ErrorMessages::Error(
+                            "SN_SOLVER only supports volume output MINIMAL and ANALYTIC (and experimentally MOMENTS).\nPlease check your .cfg file.",
+                            CURRENT_FUNCTION );
                     }
                     if( _volumeOutput[idx_volOutput] == ANALYTIC && _problemName != PROBLEM_Linesource ) {
                         ErrorMessages::Error( "Analytical solution (VOLUME_OUTPUT=ANALYTIC) is only available for the PROBLEM=LINESOURCE.\nPlease "

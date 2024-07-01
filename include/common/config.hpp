@@ -62,7 +62,7 @@ class Config
     std::vector<std::string> _MarkerNeumann;   /*!< @brief Neumann BC markers. */
 
     // Solver
-    bool _HPC;                        /* Triggers better performinc solvers */
+    bool _HPC;                        /* Triggers usage of faster SN solvers */
     double _CFL;                      /*!< @brief CFL Number for Solver*/
     double _tEnd;                     /*!< @brief Final Time for Simulation */
     PROBLEM_NAME _problemName;        /*!< @brief Name of predefined Problem   */

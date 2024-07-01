@@ -9,9 +9,9 @@
 
 #include "common/config.hpp"
 #include "common/io.hpp"
-#include "solvers/solverbase.hpp"
-#include "solvers/snsolver_hpc.hpp"
 #include "datagenerator/datageneratorbase.hpp"
+#include "solvers/snsolver_hpc.hpp"
+#include "solvers/solverbase.hpp"
 
 #ifdef BUILD_GUI
 #include <QApplication>
@@ -45,14 +45,13 @@ int main( int argc, char** argv ) {
     }
     else {
         // Build solver
-        if (config->GetHPC()){
+        if( config->GetHPC() ) {
             SNSolverHPC* solver = new SNSolverHPC( config );
             // Run solver and export
             solver->Solve();
-            solver->PrintVolumeOutput();
             delete solver;
-            }
-            else{
+        }
+        else {
             SolverBase* solver = SolverBase::Create( config );
             // Run solver and export
             solver->Solve();

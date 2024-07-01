@@ -11,6 +11,7 @@ SNSolverHPC::SNSolverHPC( Config* settings ) {
     _settings = settings;
     _currTime = 0.0;
 
+    _nOutputMoments = 2;    //  Currently only u_1 (x direction) and u_1 (y direction) are supported
     // Create Mesh
     _mesh = LoadSU2MeshFromFile( settings );
     _settings->SetNCells( _mesh->GetNumCells() );
@@ -269,7 +270,6 @@ void SNSolverHPC::Solve() {
 
         // --- Runge Kutta Timestep ---
         // --- Write Output ---
-        WriteVolumeOutput( iter );
         WriteScalarOutput( iter );
 
         // --- Update Scalar Fluxes
@@ -292,13 +292,13 @@ void SNSolverHPC::RKUpdate( std::vector<double>& sol_0, std::vector<double>& sol
     }
 }
 
-void SNSolverHPC::PrintVolumeOutput() const { ExportVTK( _settings->GetOutputFile(), _outputFields, _outputFieldNames, _mesh ); }
-
-void SNSolverHPC::PrintVolumeOutput( int idx_iter ) const {
+void SNSolverHPC::PrintVolumeOutput( int idx_iter ) {
     if( _settings->GetVolumeOutputFrequency() != 0 && idx_iter % (unsigned)_settings->GetVolumeOutputFrequency() == 0 ) {
+        WriteVolumeOutput( idx_iter );
         ExportVTK( _settings->GetOutputFile() + "_" + std::to_string( idx_iter ), _outputFields, _outputFieldNames, _mesh );    // slow
     }
     if( idx_iter == (int)_nIter - 1 ) {    // Last iteration write without suffix.
+        WriteVolumeOutput( idx_iter );
         ExportVTK( _settings->GetOutputFile(), _outputFields, _outputFieldNames, _mesh );
     }
 }
@@ -1190,6 +1190,22 @@ void SNSolverHPC::WriteVolumeOutput( unsigned idx_iter ) {
                     //}
                     break;
 
+                case MOMENTS:
+#pragma omp parallel for
+                    for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
+                        _outputFields[idx_group][0][idx_cell] = 0.0;
+                        _outputFields[idx_group][1][idx_cell] = 0.0;
+                        for( unsigned idx_moments = 0; idx_moments < _nOutputMoments; idx_moments++ ) {
+                            for( unsigned idx_sys = 0; idx_sys < _nSys; idx_sys++ ) {
+                                _outputFields[idx_group][0][idx_cell] +=
+                                    _quadPts[Idx2D( idx_sys, 0, _nDim )] * _sol[Idx2D( idx_cell, idx_sys, _nSys )] * _quadWeights[idx_sys];
+                                _outputFields[idx_group][1][idx_cell] +=
+                                    _quadPts[Idx2D( idx_sys, 1, _nDim )] * _sol[Idx2D( idx_cell, idx_sys, _nSys )] * _quadWeights[idx_sys];
+                            }
+                        }
+                    }
+                    break;
+
                 default: ErrorMessages::Error( "Volume Output Group not defined for HPC SN Solver!", CURRENT_FUNCTION ); break;
             }
         }
@@ -1215,6 +1231,16 @@ void SNSolverHPC::PrepareVolumeOutput() {
 
                 _outputFields[idx_group][0].resize( _nCells );
                 _outputFieldNames[idx_group][0] = "scalar flux";
+                break;
+            case MOMENTS:
+                // As many entries as there are moments in the system
+                _outputFields[idx_group].resize( _nOutputMoments );
+                _outputFieldNames[idx_group].resize( _nOutputMoments );
+
+                for( unsigned idx_moment = 0; idx_moment < _nOutputMoments; idx_moment++ ) {
+                    _outputFieldNames[idx_group][idx_moment] = std::string( "u_" + std::to_string( idx_moment ) );
+                    _outputFields[idx_group][idx_moment].resize( _nCells );
+                }
                 break;
 
             default: ErrorMessages::Error( "Volume Output Group not defined for HPC SN Solver!", CURRENT_FUNCTION ); break;
