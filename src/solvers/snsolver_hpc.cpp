@@ -255,8 +255,12 @@ void SNSolverHPC::Solve() {
             ( _spatialOrder == 2 ) ? FluxOrder2() : FluxOrder1();
             FVMUpdate();
 #pragma omp parallel for
-            for( unsigned i = 0; i < _nCells; ++i ) {
-                _sol[i] = 0.5 * ( solRK0[i] + _sol[i] );    // Solution averaging with HEUN
+            for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
+#pragma omp simd
+                for( unsigned idx_sys = 0; idx_sys < _nSys; idx_sys++ ) {
+                    _sol[Idx2D( idx_cell, idx_sys, _nSys )] = 0.5 * ( solRK0[Idx2D( idx_cell, idx_sys, _nSys )] +
+                                                                      _sol[Idx2D( idx_cell, idx_sys, _nSys )] );    // Solution averaging with HEUN
+                }
             }
         }
         else {
