@@ -18,6 +18,12 @@ class SNSolverHPC
 {
 
   private:
+    int _rank;
+    int _numProcs;
+    unsigned _localNSys;
+    unsigned _startSysIdx;
+    unsigned _endSysIdx;
+
     double _currTime;  /*!< @brief wall-time after current iteration */
     Config* _settings; /*!< @brief config class for global information */
     Mesh* _mesh;
@@ -146,10 +152,6 @@ class SNSolverHPC
     void FVMUpdate();
 
     void IterPostprocessing();
-
-    /*! @brief Computes the finite Volume update step for the current iteration
-         @param idx_iter  current (peudo) time iteration */
-    void RKUpdate( std::vector<double>& sol0, std::vector<double>& sol_rk );
 
     void SetGhostCells(); /*!< @brief Sets vector of ghost cells for
 

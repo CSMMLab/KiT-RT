@@ -4,6 +4,7 @@
  *  @version: 0.1
  */
 
+#include <mpi.h>
 #include <omp.h>
 #include <string>
 
@@ -28,6 +29,7 @@ int main( int argc, char** argv ) {
 #else
     // wchar_t* program = Py_DecodeLocale( argv[0], NULL );
     // Py_SetProgramName( program );
+    MPI_Init( &argc, &argv );
 
     std::string filename = ParseArguments( argc, argv );
 
@@ -61,6 +63,8 @@ int main( int argc, char** argv ) {
     }
 
     delete config;
+
+    MPI_Finalize();
 
     return EXIT_SUCCESS;
 #endif
