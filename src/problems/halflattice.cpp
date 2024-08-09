@@ -36,8 +36,8 @@ HalfLattice_SN::HalfLattice_SN( Config* settings, Mesh* mesh, QuadratureBase* qu
     }
     else {
         auto log = spdlog::get( "event" );
-        log->info( "| " );
-        log->info( "| Lattice test case WITHOUT individual scattering and absorption values for each block.  " );
+        //log->info( "| " );
+        //log->info( "| Lattice test case WITHOUT individual scattering and absorption values for each block.  " );
         // For absorption cells: set scattering XS to 0 and absorption to 10
         auto cellMids = _mesh->GetCellMidPoints();
         for( unsigned j = 0; j < cellMids.size(); ++j ) {

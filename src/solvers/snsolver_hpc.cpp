@@ -30,14 +30,15 @@ SNSolverHPC::SNSolverHPC( Config* settings ) {
     _nDim   = _mesh->GetDim();
     _nNodes = _mesh->GetNumNodes();
 
-    _nq        = quad->GetNq();
-    _nSys      = _nq;
-    _localNSys = _nq / _numProcs;
-    if( _rank == _numProcs - 1 ) {
-        _localNSys += _nq % _numProcs;
-    }
+    _nq          = quad->GetNq();
+    _nSys        = _nq;
+    _localNSys   = _nq / _numProcs;
     _startSysIdx = _rank * _localNSys;
     _endSysIdx   = _rank * _localNSys + _localNSys;
+    if( _rank == _numProcs - 1 ) {
+        _localNSys += _nq % _numProcs;
+        _endSysIdx = _nSys;
+    }
 
     _spatialOrder  = _settings->GetSpatialOrder();
     _temporalOrder = _settings->GetTemporalOrder();
@@ -521,7 +522,10 @@ void SNSolverHPC::FVMUpdate() {
         temp_scalarFlux[idx_cell] = localScalarFlux;    // set flux
     }
     // MPI Allreduce: _scalarFlux
+    MPI_Barrier( MPI_COMM_WORLD );
+
     MPI_Allreduce( temp_scalarFlux.data(), _scalarFlux.data(), _nCells, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
+    MPI_Barrier( MPI_COMM_WORLD );
 }
 
 void SNSolverHPC::IterPostprocessing() {
@@ -709,36 +713,27 @@ void SNSolverHPC::IterPostprocessing() {
     }
 
     // MPI Allreduce
-    double tmp_curAbsorptionLattice            = 0.0;
-    double tmp_curScalarOutflow                = 0.0;
-    double tmp_curScalarOutflowPeri1           = 0.0;
-    double tmp_curScalarOutflowPeri2           = 0.0;
-    double tmp_curAbsorptionHohlraumCenter     = 0.0;    // Green and blue areas of symmetric hohlraum
-    double tmp_curAbsorptionHohlraumVertical   = 0.0;    // Red areas of symmetric hohlraum
-    double tmp_curAbsorptionHohlraumHorizontal = 0.0;    // Black areas of symmetric hohlraum
-    double tmp_varAbsorptionHohlraumGreen      = 0.0;
-    double tmp_mass                            = 0.0;
-    double tmp_rmsFlux                         = 0.0;
-    MPI_Allreduce( &_curAbsorptionLattice, &tmp_curAbsorptionLattice, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
-    _curAbsorptionLattice = tmp_curAbsorptionLattice;
+    double tmp_curScalarOutflow      = 0.0;
+    double tmp_curScalarOutflowPeri1 = 0.0;
+    double tmp_curScalarOutflowPeri2 = 0.0;
+    double tmp_mass                  = 0.0;
+    double tmp_rmsFlux               = 0.0;
+    MPI_Barrier( MPI_COMM_WORLD );
     MPI_Allreduce( &_curScalarOutflow, &tmp_curScalarOutflow, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
     _curScalarOutflow = tmp_curScalarOutflow;
+    MPI_Barrier( MPI_COMM_WORLD );
     MPI_Allreduce( &_curScalarOutflowPeri1, &tmp_curScalarOutflowPeri1, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
     _curScalarOutflowPeri1 = tmp_curScalarOutflowPeri1;
+    MPI_Barrier( MPI_COMM_WORLD );
     MPI_Allreduce( &_curScalarOutflowPeri2, &tmp_curScalarOutflowPeri2, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
     _curScalarOutflowPeri2 = tmp_curScalarOutflowPeri2;
-    MPI_Allreduce( &_curAbsorptionHohlraumCenter, &tmp_curAbsorptionHohlraumCenter, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
-    _curAbsorptionHohlraumCenter = tmp_curAbsorptionHohlraumCenter;
-    MPI_Allreduce( &_curAbsorptionHohlraumVertical, &tmp_curAbsorptionHohlraumVertical, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
-    _curAbsorptionHohlraumVertical = tmp_curAbsorptionHohlraumVertical;
-    MPI_Allreduce( &_curAbsorptionHohlraumHorizontal, &tmp_curAbsorptionHohlraumHorizontal, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
-    _curAbsorptionHohlraumHorizontal = tmp_curAbsorptionHohlraumHorizontal;
-    MPI_Allreduce( &_varAbsorptionHohlraumGreen, &tmp_varAbsorptionHohlraumGreen, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
-    _varAbsorptionHohlraumGreen = tmp_varAbsorptionHohlraumGreen;
+    MPI_Barrier( MPI_COMM_WORLD );
     MPI_Allreduce( &_mass, &tmp_mass, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
     _mass = tmp_mass;
+    MPI_Barrier( MPI_COMM_WORLD );
     MPI_Allreduce( &_rmsFlux, &tmp_rmsFlux, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
     _rmsFlux = tmp_rmsFlux;
+    MPI_Barrier( MPI_COMM_WORLD );
 
     // Update time integral values on rank 0
     if( _rank == 0 ) {
