@@ -666,8 +666,35 @@ void SNSolverHPC::IterPostprocessing() {
             }
         }
     }
+    // MPI Allreduce
+    double tmp_curScalarOutflow      = 0.0;
+    double tmp_curScalarOutflowPeri1 = 0.0;
+    double tmp_curScalarOutflowPeri2 = 0.0;
+    double tmp_mass                  = 0.0;
+    double tmp_rmsFlux               = 0.0;
+
+    MPI_Barrier( MPI_COMM_WORLD );
+    MPI_Allreduce( &_curScalarOutflow, &tmp_curScalarOutflow, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
+    _curScalarOutflow = tmp_curScalarOutflow;
+    MPI_Barrier( MPI_COMM_WORLD );
+    MPI_Allreduce( &_curScalarOutflowPeri1, &tmp_curScalarOutflowPeri1, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
+    _curScalarOutflowPeri1 = tmp_curScalarOutflowPeri1;
+    MPI_Barrier( MPI_COMM_WORLD );
+    MPI_Allreduce( &_curScalarOutflowPeri2, &tmp_curScalarOutflowPeri2, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
+    _curScalarOutflowPeri2 = tmp_curScalarOutflowPeri2;
+    MPI_Barrier( MPI_COMM_WORLD );
+    MPI_Allreduce( &_mass, &tmp_mass, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
+    _mass = tmp_mass;
+    MPI_Barrier( MPI_COMM_WORLD );
+    MPI_Allreduce( &_rmsFlux, &tmp_rmsFlux, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
+    _rmsFlux = tmp_rmsFlux;
+    MPI_Barrier( MPI_COMM_WORLD );
+
     // Variation absorption (part II)
     if( _settings->GetProblemName() == PROBLEM_SymmetricHohlraum ) {
+        unsigned n_probes = 4;
+        std::vector<double> temp_probingMoments( 3 * n_probes );    // for MPI allreduce
+
 #pragma omp parallel for reduction( + : _varAbsorptionHohlraumGreen )
         for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
             double x = _cellMidPoints[Idx2D( idx_cell, 0, _nDim )];
@@ -691,49 +718,30 @@ void SNSolverHPC::IterPostprocessing() {
             }
         }
         // Probes value moments
-        unsigned n_probes = 4;
 #pragma omp parallel for
         for( unsigned idx_probe = 0; idx_probe < n_probes; idx_probe++ ) {    // Loop over probing cells
-            _probingMoments[Idx2D( idx_probe, 0, 3 )] = _scalarFlux[_probingCellsHohlraum[idx_probe]];
-            _probingMoments[Idx2D( idx_probe, 1, 3 )] = 0.0;
-            _probingMoments[Idx2D( idx_probe, 2, 3 )] = 0.0;
+            temp_probingMoments[Idx2D( idx_probe, 0, 3 )] = 0.0;
+            temp_probingMoments[Idx2D( idx_probe, 1, 3 )] = 0.0;
+            temp_probingMoments[Idx2D( idx_probe, 2, 3 )] = 0.0;
 
             for( unsigned idx_sys = 0; idx_sys < _localNSys; idx_sys++ ) {    // TODO
-                _probingMoments[Idx2D( idx_probe, 1, 3 )] += _quadPts[Idx2D( idx_sys, 0, _nDim )] *
-                                                             _sol[Idx2D( _probingCellsHohlraum[idx_probe], idx_sys, _localNSys )] *
-                                                             _quadWeights[idx_sys];
-                _probingMoments[Idx2D( idx_probe, 2, 3 )] += _quadPts[Idx2D( idx_sys, 1, _nDim )] *
-                                                             _sol[Idx2D( _probingCellsHohlraum[idx_probe], idx_sys, _localNSys )] *
-                                                             _quadWeights[idx_sys];
+                temp_probingMoments[Idx2D( idx_probe, 0, 3 )] +=
+                    _sol[Idx2D( _probingCellsHohlraum[idx_probe], idx_sys, _localNSys )] * _quadWeights[idx_sys];
+                temp_probingMoments[Idx2D( idx_probe, 1, 3 )] += _quadPts[Idx2D( idx_sys, 0, _nDim )] *
+                                                                 _sol[Idx2D( _probingCellsHohlraum[idx_probe], idx_sys, _localNSys )] *
+                                                                 _quadWeights[idx_sys];
+                temp_probingMoments[Idx2D( idx_probe, 2, 3 )] += _quadPts[Idx2D( idx_sys, 1, _nDim )] *
+                                                                 _sol[Idx2D( _probingCellsHohlraum[idx_probe], idx_sys, _localNSys )] *
+                                                                 _quadWeights[idx_sys];
             }
         }
 
         // probe values green
         ComputeQOIsGreenProbingLine();
+        MPI_Barrier( MPI_COMM_WORLD );
+        MPI_Allreduce( temp_probingMoments.data(), _probingMoments.data(), 3 * n_probes, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
+        MPI_Barrier( MPI_COMM_WORLD );
     }
-
-    // MPI Allreduce
-    double tmp_curScalarOutflow      = 0.0;
-    double tmp_curScalarOutflowPeri1 = 0.0;
-    double tmp_curScalarOutflowPeri2 = 0.0;
-    double tmp_mass                  = 0.0;
-    double tmp_rmsFlux               = 0.0;
-    MPI_Barrier( MPI_COMM_WORLD );
-    MPI_Allreduce( &_curScalarOutflow, &tmp_curScalarOutflow, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
-    _curScalarOutflow = tmp_curScalarOutflow;
-    MPI_Barrier( MPI_COMM_WORLD );
-    MPI_Allreduce( &_curScalarOutflowPeri1, &tmp_curScalarOutflowPeri1, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
-    _curScalarOutflowPeri1 = tmp_curScalarOutflowPeri1;
-    MPI_Barrier( MPI_COMM_WORLD );
-    MPI_Allreduce( &_curScalarOutflowPeri2, &tmp_curScalarOutflowPeri2, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
-    _curScalarOutflowPeri2 = tmp_curScalarOutflowPeri2;
-    MPI_Barrier( MPI_COMM_WORLD );
-    MPI_Allreduce( &_mass, &tmp_mass, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
-    _mass = tmp_mass;
-    MPI_Barrier( MPI_COMM_WORLD );
-    MPI_Allreduce( &_rmsFlux, &tmp_rmsFlux, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
-    _rmsFlux = tmp_rmsFlux;
-    MPI_Barrier( MPI_COMM_WORLD );
 
     // Update time integral values on rank 0
     if( _rank == 0 ) {
