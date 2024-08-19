@@ -75,27 +75,12 @@ SymmetricHohlraum::SymmetricHohlraum( Config* settings, Mesh* mesh, QuadratureBa
             _sigmaS[idx_cell] = 95.0;
             _sigmaT[idx_cell] = 100.0;
         }
-        // green area 1 (lower boundary)
-        if( x > -0.2 + _centerGreen[0] && x < -0.15 + _centerGreen[0] && y > -0.35 + _centerGreen[1] && y < 0.35 + _centerGreen[1] ) {
+        // green and blue area
+        if( x > -0.2 + _centerGreen[0] && x < 0.2 + _centerGreen[0] && y > -0.4 + _centerGreen[1] && y < 0.4 + _centerGreen[1] ) {
             _sigmaS[idx_cell] = 90.0;
             _sigmaT[idx_cell] = 100.0;
         }
-        // green area 2 (upper boundary)
-        if( x > 0.15 + _centerGreen[0] && x < 0.2 + _centerGreen[0] && y > -0.35 + _centerGreen[1] && y < 0.35 + _centerGreen[1] ) {
-            _sigmaS[idx_cell] = 90.0;
-            _sigmaT[idx_cell] = 100.0;
-        }
-        // green area 3 (left boundary)
-        if( x > -0.2 + _centerGreen[0] && x < 0.2 + _centerGreen[0] && y > -0.4 + _centerGreen[1] && y < -0.35 + _centerGreen[1] ) {
-            _sigmaS[idx_cell] = 90.0;
-            _sigmaT[idx_cell] = 100.0;
-        }
-        // green area 4 (right boundary)
-        if( x > -0.2 + _centerGreen[0] && x < 0.2 + _centerGreen[0] && y > 0.35 + _centerGreen[1] && y < 0.4 + _centerGreen[1] ) {
-            _sigmaS[idx_cell] = 90.0;
-            _sigmaT[idx_cell] = 100.0;
-        }
-        // blue checkered area
+        // blue checkered area (overwrites part of green n blue area)
         if( x > -0.15 + _centerGreen[0] && x < 0.15 + _centerGreen[0] && y > -0.35 + _centerGreen[1] && y < 0.35 + _centerGreen[1] ) {
             _sigmaS[idx_cell] = 50.0;
             _sigmaT[idx_cell] = 100.0;
