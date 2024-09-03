@@ -795,6 +795,7 @@ void Config::SetPostprocessing() {
                                      TOTAL_PARTICLE_ABSORPTION_CENTER,
                                      TOTAL_PARTICLE_ABSORPTION_VERTICAL,
                                      TOTAL_PARTICLE_ABSORPTION_HORIZONTAL,
+                                     TOTAL_PARTICLE_ABSORPTION,
                                      PROBE_MOMENT_TIME_TRACE,
                                      VAR_ABSORPTION_GREEN };
 
@@ -941,6 +942,7 @@ void Config::SetPostprocessing() {
                                      TOTAL_PARTICLE_ABSORPTION_CENTER,
                                      TOTAL_PARTICLE_ABSORPTION_VERTICAL,
                                      TOTAL_PARTICLE_ABSORPTION_HORIZONTAL,
+                                     TOTAL_PARTICLE_ABSORPTION,
                                      PROBE_MOMENT_TIME_TRACE,
                                      VAR_ABSORPTION_GREEN,
                                      VAR_ABSORPTION_GREEN_LINE };

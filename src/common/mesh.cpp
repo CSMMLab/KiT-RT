@@ -595,6 +595,34 @@ unsigned Mesh::GetCellOfKoordinate( const double x, const double y ) const {
     return koordinate_cell_id;
 }
 
+std::vector<unsigned> Mesh::GetCellsofBall( const double x, const double y, const double r ) const {
+    std::vector<unsigned> cells_in_ball;
+
+    // Experimental parallel implementation
+    // #pragma omp parallel for
+    for( unsigned idx_cell = 0; idx_cell < _numCells; idx_cell++ ) {
+        // Assume GetCellCenter returns the center coordinates of the cell
+        double cell_x = _cellMidPoints[idx_cell][0];
+        double cell_y = _cellMidPoints[idx_cell][1];
+
+        // Calculate the distance from the cell center to the point (x, y)
+        double distance = std::sqrt( ( cell_x - x ) * ( cell_x - x ) + ( cell_y - y ) * ( cell_y - y ) );
+
+        if( distance <= r ) {
+            // #pragma omp critical
+            { cells_in_ball.push_back( idx_cell ); }
+        }
+    }
+
+    if( cells_in_ball.empty() ) {
+        ErrorMessages::Error( "No cells found within the ball centered at (" + std::to_string( x ) + "," + std::to_string( y ) + ") with radius " +
+                                  std::to_string( r ) + ".",
+                              CURRENT_FUNCTION );
+    }
+
+    return cells_in_ball;
+}
+
 bool Mesh::IsPointInsideCell( unsigned idx_cell, double x, double y ) const {
     bool inside = false;
     if( _numNodesPerCell == 3 ) {

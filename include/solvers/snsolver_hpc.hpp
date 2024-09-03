@@ -111,7 +111,7 @@ class SNSolverHPC
     double _curAbsorptionHohlraumVertical;
     double _curAbsorptionHohlraumHorizontal;
     double _varAbsorptionHohlraumGreen;
-    std::vector<unsigned> _probingCellsHohlraum; /*!< @brief Indices of cells that contain a probing sensor */
+    std::vector<  std::vector<unsigned>> _probingCellsHohlraum; /*!< @brief Indices of cells that contain a probing sensor */
     std::vector<double> _probingMoments;         /*!< @brief Solution Momnets at the probing cells that contain a probing sensor */
     unsigned _probingMomentsTimeIntervals;       /*!< @brief Solution Momnets at the probing cells that contain a probing sensor */
 

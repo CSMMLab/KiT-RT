@@ -184,21 +184,20 @@ SNSolverHPC::SNSolverHPC( Config* settings ) {
         if( _settings->GetProblemName() == PROBLEM_SymmetricHohlraum ) n_probes = 4;
         if( _settings->GetProblemName() == PROBLEM_QuarterHohlraum ) n_probes = 2;
         //_probingMomentsTimeIntervals = 10;
-        _probingCellsHohlraum = std::vector<unsigned>( n_probes, 0. );
-        _probingMoments       = std::vector<double>( n_probes * 3, 0. );    // 10 time horizons
+        _probingMoments = std::vector<double>( n_probes * 3, 0. );    // 10 time horizons
 
         if( _settings->GetProblemName() == PROBLEM_SymmetricHohlraum ) {
             _probingCellsHohlraum = {
-                _mesh->GetCellOfKoordinate( -0.4, 0. ),
-                _mesh->GetCellOfKoordinate( 0.4, 0. ),
-                _mesh->GetCellOfKoordinate( 0., -0.5 ),
-                _mesh->GetCellOfKoordinate( 0., 0.5 ),
+                _mesh->GetCellsofBall( -0.4, 0., 0.01 ),
+                _mesh->GetCellsofBall( 0.4, 0., 0.01 ),
+                _mesh->GetCellsofBall( 0., -0.5, 0.01 ),
+                _mesh->GetCellsofBall( 0., 0.5, 0.01 ),
             };
         }
         else if( _settings->GetProblemName() == PROBLEM_QuarterHohlraum ) {
             _probingCellsHohlraum = {
-                _mesh->GetCellOfKoordinate( 0.4, 0. ),
-                _mesh->GetCellOfKoordinate( 0., 0.5 ),
+                _mesh->GetCellsofBall( 0.4, 0., 0.01 ),
+                _mesh->GetCellsofBall( 0., 0.5, 0.01 ),
             };
         }
 
@@ -563,7 +562,7 @@ void SNSolverHPC::IterPostprocessing() {
 
             double x = _cellMidPoints[Idx2D( idx_cell, 0, _nDim )];
             double y = _cellMidPoints[Idx2D( idx_cell, 1, _nDim )];
-
+            _curAbsorptionLattice += _scalarFlux[idx_cell] * ( _sigmaT[idx_cell] - _sigmaS[idx_cell] ) * _areas[idx_cell];
             if( x > -0.2 + _settings->GetPosXCenterGreenHohlraum() && x < 0.2 + _settings->GetPosXCenterGreenHohlraum() &&
                 y > -0.4 + _settings->GetPosYCenterGreenHohlraum() && y < 0.4 + _settings->GetPosYCenterGreenHohlraum() ) {
                 _curAbsorptionHohlraumCenter += _scalarFlux[idx_cell] * ( _sigmaT[idx_cell] - _sigmaS[idx_cell] ) * _areas[idx_cell];
@@ -725,14 +724,17 @@ void SNSolverHPC::IterPostprocessing() {
             temp_probingMoments[Idx2D( idx_probe, 2, 3 )] = 0.0;
 
             for( unsigned idx_sys = 0; idx_sys < _localNSys; idx_sys++ ) {
-                temp_probingMoments[Idx2D( idx_probe, 0, 3 )] +=
-                    _sol[Idx2D( _probingCellsHohlraum[idx_probe], idx_sys, _localNSys )] * _quadWeights[idx_sys];
-                temp_probingMoments[Idx2D( idx_probe, 1, 3 )] += _quadPts[Idx2D( idx_sys, 0, _nDim )] *
-                                                                 _sol[Idx2D( _probingCellsHohlraum[idx_probe], idx_sys, _localNSys )] *
-                                                                 _quadWeights[idx_sys];
-                temp_probingMoments[Idx2D( idx_probe, 2, 3 )] += _quadPts[Idx2D( idx_sys, 1, _nDim )] *
-                                                                 _sol[Idx2D( _probingCellsHohlraum[idx_probe], idx_sys, _localNSys )] *
-                                                                 _quadWeights[idx_sys];
+                for( unsigned idx_ball = 0; idx_sys < _probingCellsHohlraum[idx_probe].size(); idx_sys++ ) {
+                    temp_probingMoments[Idx2D( idx_probe, 0, 3 )] += _sol[Idx2D( _probingCellsHohlraum[idx_probe][idx_ball], idx_sys, _localNSys )] *
+                                                                     _quadWeights[idx_sys] * _areas[_probingCellsHohlraum[idx_probe][idx_ball]] /
+                                                                     ( 0.01 * 0.01 * M_PI );
+                    temp_probingMoments[Idx2D( idx_probe, 1, 3 )] +=
+                        _quadPts[Idx2D( idx_sys, 0, _nDim )] * _sol[Idx2D( _probingCellsHohlraum[idx_probe][idx_ball], idx_sys, _localNSys )] *
+                        _quadWeights[idx_sys] * _areas[_probingCellsHohlraum[idx_probe][idx_ball]] / ( 0.01 * 0.01 * M_PI );
+                    temp_probingMoments[Idx2D( idx_probe, 2, 3 )] +=
+                        _quadPts[Idx2D( idx_sys, 1, _nDim )] * _sol[Idx2D( _probingCellsHohlraum[idx_probe][idx_ball], idx_sys, _localNSys )] *
+                        _quadWeights[idx_sys] * _areas[_probingCellsHohlraum[idx_probe][idx_ball]] / ( 0.01 * 0.01 * M_PI );
+                }
             }
         }
 
