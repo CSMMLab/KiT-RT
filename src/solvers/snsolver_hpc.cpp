@@ -552,8 +552,8 @@ void SNSolverHPC::IterPostprocessing() {
 
         if( _settings->GetProblemName() == PROBLEM_Lattice || _settings->GetProblemName() == PROBLEM_HalfLattice ) {
             if( IsAbsorptionLattice( _cellMidPoints[Idx2D( idx_cell, 0, _nDim )], _cellMidPoints[Idx2D( idx_cell, 1, _nDim )] ) ) {
-                double sigmaAPsi = _scalarFlux[idx_cell] * ( _sigmaT[idx_cell] - _sigmaS[idx_cell] );
-                _curAbsorptionLattice += sigmaAPsi * _areas[idx_cell];
+                double sigmaAPsi = _scalarFlux[idx_cell] * ( _sigmaT[idx_cell] - _sigmaS[idx_cell] ) * _areas[idx_cell];
+                _curAbsorptionLattice += sigmaAPsi;
                 _curMaxAbsorptionLattice = ( _curMaxAbsorptionLattice < sigmaAPsi ) ? sigmaAPsi : _curMaxAbsorptionLattice;
             }
         }
@@ -562,6 +562,8 @@ void SNSolverHPC::IterPostprocessing() {
 
             double x = _cellMidPoints[Idx2D( idx_cell, 0, _nDim )];
             double y = _cellMidPoints[Idx2D( idx_cell, 1, _nDim )];
+
+            _curAbsorptionLattice += _scalarFlux[idx_cell] * ( _sigmaT[idx_cell] - _sigmaS[idx_cell] ) * _areas[idx_cell];
             if( x > -0.2 + _settings->GetPosXCenterGreenHohlraum() && x < 0.2 + _settings->GetPosXCenterGreenHohlraum() &&
                 y > -0.4 + _settings->GetPosYCenterGreenHohlraum() && y < 0.4 + _settings->GetPosYCenterGreenHohlraum() ) {
                 _curAbsorptionHohlraumCenter += _scalarFlux[idx_cell] * ( _sigmaT[idx_cell] - _sigmaS[idx_cell] ) * _areas[idx_cell];

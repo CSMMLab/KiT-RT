@@ -794,6 +794,7 @@ void Config::SetPostprocessing() {
                                      TOTAL_PARTICLE_ABSORPTION_CENTER,
                                      TOTAL_PARTICLE_ABSORPTION_VERTICAL,
                                      TOTAL_PARTICLE_ABSORPTION_HORIZONTAL,
+                                     TOTAL_PARTICLE_ABSORPTION,
                                      PROBE_MOMENT_TIME_TRACE,
                                      VAR_ABSORPTION_GREEN };
 
@@ -802,7 +803,7 @@ void Config::SetPostprocessing() {
                     if( it == legalOutputs.end() ) {
                         std::string foundKey = findKey( ScalarOutput_Map, _screenOutput[idx_screenOutput] );
                         ErrorMessages::Error(
-                            "HERE Illegal output field <" + foundKey +
+                            "Illegal output field <" + foundKey +
                                 "> for option SCREEN_OUTPUT for this test case.\n"
                                 "Supported fields are: ITER, MASS, RMS_FLUX, VTK_OUTPUT, CSV_OUTPUT, TOTAL_PARTICLE_ABSORPTION_CENTER, \n"
                                 "TOTAL_PARTICLE_ABSORPTION_VERTICAL, TOTAL_PARTICLE_ABSORPTION_HORIZONTAL, PROBE_MOMENT_TIME_TRACE, CUR_OUTFLOW, \n "
@@ -940,6 +941,7 @@ void Config::SetPostprocessing() {
                                      TOTAL_PARTICLE_ABSORPTION_CENTER,
                                      TOTAL_PARTICLE_ABSORPTION_VERTICAL,
                                      TOTAL_PARTICLE_ABSORPTION_HORIZONTAL,
+                                     TOTAL_PARTICLE_ABSORPTION,
                                      PROBE_MOMENT_TIME_TRACE,
                                      VAR_ABSORPTION_GREEN,
                                      VAR_ABSORPTION_GREEN_LINE };
