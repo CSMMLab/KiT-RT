@@ -87,7 +87,7 @@ SymmetricHohlraum::SymmetricHohlraum( Config* settings, Mesh* mesh, QuadratureBa
         }
         // black area (upper and lower boundary)
         if( y > 0.6 || y < -0.6 ) {
-            _sigmaS[idx_cell] = 0.0;
+            _sigmaS[idx_cell] = 100.0;
             _sigmaT[idx_cell] = 100.0;
         }
     }
