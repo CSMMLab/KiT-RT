@@ -4,7 +4,9 @@
  *  @version: 0.1
  */
 
+#ifdef BUILD_MPI
 #include <mpi.h>
+#endif
 #include <omp.h>
 #include <string>
 
@@ -27,10 +29,11 @@ int main( int argc, char** argv ) {
     mw.show();
     return app.exec();
 #else
-    // wchar_t* program = Py_DecodeLocale( argv[0], NULL );
-    // Py_SetProgramName( program );
+// wchar_t* program = Py_DecodeLocale( argv[0], NULL );
+// Py_SetProgramName( program );
+#ifdef BUILD_MPI
     MPI_Init( &argc, &argv );
-
+#endif
     std::string filename = ParseArguments( argc, argv );
 
     // CD  Load Settings from File
@@ -63,8 +66,9 @@ int main( int argc, char** argv ) {
     }
 
     delete config;
-
+#ifdef BUILD_MPI
     MPI_Finalize();
+#endif
 
     return EXIT_SUCCESS;
 #endif

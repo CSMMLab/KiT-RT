@@ -1,5 +1,6 @@
+#ifdef BUILD_MPI
 #include <mpi.h>
-
+#endif
 #include "common/config.hpp"
 #include "common/io.hpp"
 #include "common/mesh.hpp"
@@ -10,10 +11,15 @@
 #include "toolboxes/textprocessingtoolbox.hpp"
 
 SNSolverHPC::SNSolverHPC( Config* settings ) {
-
+#ifdef BUILD_MPI
     // Initialize MPI
     MPI_Comm_size( MPI_COMM_WORLD, &_numProcs );
     MPI_Comm_rank( MPI_COMM_WORLD, &_rank );
+#endif
+#ifndef BUILD_MPI
+    _numProcs = 1;    // default values
+    _rank     = 0;
+#endif
 
     _settings = settings;
     _currTime = 0.0;
@@ -141,15 +147,17 @@ SNSolverHPC::SNSolverHPC( Config* settings ) {
         }
         // _mass += _scalarFlux[idx_cell] * _areas[idx_cell];
     }
-
+#ifdef BUILD_MPI
     MPI_Barrier( MPI_COMM_WORLD );
-
+#endif
     SetGhostCells();
     if( _rank == 0 ) {
         PrepareScreenOutput();     // Screen Output
         PrepareHistoryOutput();    // History Output
     }
+#ifdef BUILD_MPI
     MPI_Barrier( MPI_COMM_WORLD );
+#endif
     delete quad;
 
     // Initialiye QOIS
@@ -520,11 +528,15 @@ void SNSolverHPC::FVMUpdate() {
         _rmsFlux += ( localScalarFlux - _scalarFlux[idx_cell] ) * ( localScalarFlux - _scalarFlux[idx_cell] );
         temp_scalarFlux[idx_cell] = localScalarFlux;    // set flux
     }
-    // MPI Allreduce: _scalarFlux
+// MPI Allreduce: _scalarFlux
+#ifdef BUILD_MPI
     MPI_Barrier( MPI_COMM_WORLD );
-
     MPI_Allreduce( temp_scalarFlux.data(), _scalarFlux.data(), _nCells, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
     MPI_Barrier( MPI_COMM_WORLD );
+#endif
+#ifndef BUILD_MPI
+    _scalarFlux = temp_scalarFlux;
+#endif
 }
 
 void SNSolverHPC::IterPostprocessing() {
@@ -665,13 +677,13 @@ void SNSolverHPC::IterPostprocessing() {
             }
         }
     }
-    // MPI Allreduce
+// MPI Allreduce
+#ifdef BUILD_MPI
     double tmp_curScalarOutflow      = 0.0;
     double tmp_curScalarOutflowPeri1 = 0.0;
     double tmp_curScalarOutflowPeri2 = 0.0;
     double tmp_mass                  = 0.0;
     double tmp_rmsFlux               = 0.0;
-
     MPI_Barrier( MPI_COMM_WORLD );
     MPI_Allreduce( &_curScalarOutflow, &tmp_curScalarOutflow, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
     _curScalarOutflow = tmp_curScalarOutflow;
@@ -688,7 +700,7 @@ void SNSolverHPC::IterPostprocessing() {
     MPI_Allreduce( &_rmsFlux, &tmp_rmsFlux, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
     _rmsFlux = tmp_rmsFlux;
     MPI_Barrier( MPI_COMM_WORLD );
-
+#endif
     // Variation absorption (part II)
     if( _settings->GetProblemName() == PROBLEM_SymmetricHohlraum ) {
         unsigned n_probes = 4;
@@ -717,14 +729,16 @@ void SNSolverHPC::IterPostprocessing() {
             }
         }
         // Probes value moments
-#pragma omp parallel for
+        // #pragma omp parallel for
         for( unsigned idx_probe = 0; idx_probe < n_probes; idx_probe++ ) {    // Loop over probing cells
             temp_probingMoments[Idx2D( idx_probe, 0, 3 )] = 0.0;
             temp_probingMoments[Idx2D( idx_probe, 1, 3 )] = 0.0;
             temp_probingMoments[Idx2D( idx_probe, 2, 3 )] = 0.0;
-
+            // for( unsigned idx_ball = 0; idx_ball < _probingCellsHohlraum[idx_probe].size(); idx_ball++ ) {
+            //   std::cout << idx_ball << _areas[_probingCellsHohlraum[idx_probe][idx_ball]] / ( 0.01 * 0.01 * M_PI ) << std::endl;
+            //}
             for( unsigned idx_sys = 0; idx_sys < _localNSys; idx_sys++ ) {
-                for( unsigned idx_ball = 0; idx_sys < _probingCellsHohlraum[idx_probe].size(); idx_sys++ ) {
+                for( unsigned idx_ball = 0; idx_ball < _probingCellsHohlraum[idx_probe].size(); idx_ball++ ) {
                     temp_probingMoments[Idx2D( idx_probe, 0, 3 )] += _sol[Idx2D( _probingCellsHohlraum[idx_probe][idx_ball], idx_sys, _localNSys )] *
                                                                      _quadWeights[idx_sys] * _areas[_probingCellsHohlraum[idx_probe][idx_ball]] /
                                                                      ( 0.01 * 0.01 * M_PI );
@@ -740,9 +754,18 @@ void SNSolverHPC::IterPostprocessing() {
 
         // probe values green
         ComputeQOIsGreenProbingLine();
+#ifdef BUILD_MPI
         MPI_Barrier( MPI_COMM_WORLD );
         MPI_Allreduce( temp_probingMoments.data(), _probingMoments.data(), 3 * n_probes, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
         MPI_Barrier( MPI_COMM_WORLD );
+#endif
+#ifndef BUILD_MPI
+        for( unsigned idx_probe = 0; idx_probe < n_probes; idx_probe++ ) {    // Loop over probing cells
+            _probingMoments[Idx2D( idx_probe, 0, 3 )] = temp_probingMoments[Idx2D( idx_probe, 0, 3 )];
+            _probingMoments[Idx2D( idx_probe, 1, 3 )] = temp_probingMoments[Idx2D( idx_probe, 1, 3 )];
+            _probingMoments[Idx2D( idx_probe, 2, 3 )] = temp_probingMoments[Idx2D( idx_probe, 2, 3 )];
+        }
+#endif
     }
 
     // Update time integral values on rank 0

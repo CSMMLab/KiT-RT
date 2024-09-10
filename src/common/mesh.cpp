@@ -6,7 +6,9 @@
 #include <filesystem>
 #include <iostream>
 #include <map>
+#ifdef BUILD_MPI
 #include <mpi.h>
+#endif
 #include <omp.h>
 #include <set>
 
@@ -26,8 +28,10 @@ Mesh::Mesh( const Config* settings,
     }
     int nprocs = 1;
     int rank   = 0;
+#ifdef BUILD_MPI
     MPI_Comm_size( MPI_COMM_WORLD, &nprocs );
     MPI_Comm_rank( MPI_COMM_WORLD, &rank );
+#endif
     if( rank == 0 ) {
 
         auto log = spdlog::get( "event" );
@@ -91,8 +95,10 @@ Mesh::~Mesh() {}
 void Mesh::ComputeConnectivity() {
     int nprocs = 1;
     int rank   = 0;
+#ifdef BUILD_MPI
     MPI_Comm_size( MPI_COMM_WORLD, &nprocs );
     MPI_Comm_rank( MPI_COMM_WORLD, &rank );
+#endif
 
     unsigned comm_size = 1;    // No MPI implementation right now
     // determine number/chunk size and indices of cells treated by each mpi thread (deactivated for now)
@@ -615,6 +621,8 @@ std::vector<unsigned> Mesh::GetCellsofBall( const double x, const double y, cons
     }
 
     if( cells_in_ball.empty() ) {    // take the only cell that contains the point
+        std::cout << "No cells found within the ball centered at (" << x << "," << y << ") with radius " << r << "." << std::endl;
+        std::cout << "Taking the only cell that contains the point." << std::endl;
         cells_in_ball.push_back( GetCellOfKoordinate( x, y ) );
         // ErrorMessages::Error( "No cells found within the ball centered at (" + std::to_string( x ) + "," + std::to_string( y ) + ") with radius " +
         // std::to_string( r ) + ".",

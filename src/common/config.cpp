@@ -5,8 +5,9 @@
  *
  * Disclaimer: This class structure was copied and modifed with open source permission from SU2 v7.0.3 https://su2code.github.io/
  */
+#ifdef BUILD_MPI
 #include <mpi.h>
-
+#endif
 #include "common/config.hpp"
 #include "common/globalconstants.hpp"
 #include "common/optionstructure.hpp"
@@ -1205,8 +1206,10 @@ bool Config::TokenizeString( string& str, string& option_name, vector<string>& o
 }
 
 void Config::InitLogger() {
-    int rank;
-    MPI_Comm_rank( MPI_COMM_WORLD, &rank );
+    int rank = 0;
+#ifdef BUILD_MPI
+    MPI_Comm_rank( MPI_COMM_WORLD, &rank );    // Initialize MPI
+#endif
 
     if( rank == 0 ) {
 
@@ -1363,7 +1366,9 @@ void Config::InitLogger() {
             spdlog::flush_every( std::chrono::seconds( 5 ) );
         }
     }
+#ifdef BUILD_MPI
     MPI_Barrier( MPI_COMM_WORLD );
+#endif
 }
 
 // Function to find the key for a given value in a map
