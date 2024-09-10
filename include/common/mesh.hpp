@@ -129,6 +129,10 @@ class Mesh
      *  @return cell_idx: unsigned */
     unsigned GetCellOfKoordinate( const double x, const double y ) const;
 
+      /*! @brief Returns index of cells contained in the ball around the coordinate (x,y) with radius r
+     *  @return cell_idxs:   std::vector<unsigned> */
+    std::vector<unsigned> GetCellsofBall( const double x, const double y, const double r ) const;
+
     /*! @brief ComputeSlopes calculates the slope in every cell into x and y direction using the divergence theorem.
      *  @param nq is number of quadrature points
      *  @param psiDerX is slope in x direction (gets computed. Slope is stored here)

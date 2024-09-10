@@ -8,6 +8,7 @@ option( BUILD_DOC "builds Doxygen and Sphinx documentation" OFF )
 option( BUILD_UNITY "enables unity build for faster compile times" ON )
 option( BUILD_CODE_COV "enables compiler option required for code coverage analysis" OFF )
 option( BUILD_ML "enables build with tensorflow backend access" OFF )
+option( BUILD_MPI "enables build with MPI access" OFF )
 
 #################################################
 
@@ -30,6 +31,11 @@ endif()
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake ${CMAKE_MODULE_PATH})
 
 find_package( OpenMP REQUIRED )
+
+if( BUILD_MPI )
+    find_package( MPI REQUIRED )
+    include_directories( ${MPI_INCLUDE_PATH} )
+endif()
 
 find_package( LAPACK REQUIRED )
 include_directories( ${LAPACK_INCLUDE_DIR} )
@@ -55,7 +61,11 @@ include_directories( ${CMAKE_SOURCE_DIR}/ext/blaze )
 include_directories( ${CMAKE_SOURCE_DIR}/ext/cpptoml/include )
 include_directories( ${CMAKE_SOURCE_DIR}/ext/spdlog/include )
 
-set( CORE_LIBRARIES ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES}  ${VTK_LIBRARIES} OpenMP::OpenMP_CXX -lstdc++fs )
+if( BUILD_MPI )
+    set( CORE_LIBRARIES ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} ${MPI_LIBRARIES} ${VTK_LIBRARIES} OpenMP::OpenMP_CXX -lstdc++fs )
+else()
+    set( CORE_LIBRARIES ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES}  ${VTK_LIBRARIES} OpenMP::OpenMP_CXX -lstdc++fs )
+endif()
 
 
 #################################################

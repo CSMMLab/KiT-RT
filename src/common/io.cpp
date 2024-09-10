@@ -14,10 +14,14 @@
 #include <fstream>
 #include <iomanip>
 #include <iostream>
+
+#ifdef BUILD_MPI
+#include <mpi.h>
+#endif
+
+#include <omp.h>
 #include <sstream>
 #include <vector>
-// #include <mpi.h>
-#include <omp.h>
 #include <vtkCellArray.h>
 #include <vtkCellData.h>
 #include <vtkCellDataToPointData.h>
@@ -141,7 +145,7 @@ void ExportVTK( const std::string fileName,
 
 Mesh* LoadSU2MeshFromFile( const Config* settings ) {
     auto log = spdlog::get( "event" );
-    log->info( "| Importing mesh. This may take a while for large meshes." );
+    // log->info( "| Importing mesh. This may take a while for large meshes." );
     unsigned dim;
     std::vector<Vector> nodes;
     std::vector<std::vector<unsigned>> cells;
@@ -300,7 +304,7 @@ Mesh* LoadSU2MeshFromFile( const Config* settings ) {
         ErrorMessages::Error( "Cannot open mesh file '" + settings->GetMeshFile() + "!", CURRENT_FUNCTION );
     }
     ifs.close();
-    log->info( "| Mesh imported." );
+    // log->info( "| Mesh imported." );
     return new Mesh( settings, nodes, cells, boundaries );
 }
 
@@ -461,8 +465,11 @@ std::string ParseArguments( int argc, char* argv[] ) {
 void PrintLogHeader( std::string inputFile ) {
     int nprocs = 1;
     int rank   = 0;
-    // MPI_Comm_size( MPI_COMM_WORLD, &nprocs );
-    // MPI_Comm_rank( MPI_COMM_WORLD, &rank );
+#ifdef BUILD_MPI
+    // Initialize MPI
+    MPI_Comm_size( MPI_COMM_WORLD, &nprocs );
+    MPI_Comm_rank( MPI_COMM_WORLD, &rank );
+#endif
     if( rank == 0 ) {
         auto log = spdlog::get( "event" );
 
@@ -498,7 +505,9 @@ void PrintLogHeader( std::string inputFile ) {
         }
         // log->info( "------------------------------------------------------------------------" );
     }
-    // MPI_Barrier( MPI_COMM_WORLD );
+#ifdef BUILD_MPI
+    MPI_Barrier( MPI_COMM_WORLD );
+#endif
 }
 
 /*

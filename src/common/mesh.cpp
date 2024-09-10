@@ -6,6 +6,9 @@
 #include <filesystem>
 #include <iostream>
 #include <map>
+#ifdef BUILD_MPI
+#include <mpi.h>
+#endif
 #include <omp.h>
 #include <set>
 
@@ -23,10 +26,22 @@ Mesh::Mesh( const Config* settings,
     else {
         ErrorMessages::Error( "Unsupported mesh dimension!", CURRENT_FUNCTION );
     }
-    auto log = spdlog::get( "event" );
-    log->info( "| Compute cell areas..." );
+    int nprocs = 1;
+    int rank   = 0;
+#ifdef BUILD_MPI
+    MPI_Comm_size( MPI_COMM_WORLD, &nprocs );
+    MPI_Comm_rank( MPI_COMM_WORLD, &rank );
+#endif
+    if( rank == 0 ) {
+
+        auto log = spdlog::get( "event" );
+        log->info( "| Compute cell areas..." );
+    }
     ComputeCellAreas();
-    log->info( "| Compute cell midpoints..." );
+    if( rank == 0 ) {
+        auto log = spdlog::get( "event" );
+        log->info( "| Compute cell midpoints..." );
+    }
     ComputeCellMidpoints();
 
     // Connectivity
@@ -35,11 +50,20 @@ Mesh::Mesh( const Config* settings,
     connectivityFile             = connectivityFile.substr( 0, lastDotIndex );
     connectivityFile += ".con";
     if( !std::filesystem::exists( connectivityFile ) || _settings->GetForcedConnectivity() ) {
-        log->info( "| Compute mesh connectivity..." );
+        if( rank == 0 ) {
+            auto log = spdlog::get( "event" );
+
+            log->info( "| Compute mesh connectivity..." );
+        }
         ComputeConnectivity();    // Computes  _cellNeighbors, _cellInterfaceMidPoints, _cellNormals, _cellBoundaryTypes
         if( !_settings->GetForcedConnectivity() ) {
-            log->info( "| Save mesh connectivity to file " + connectivityFile );
-            WriteConnecitivityToFile( connectivityFile, _cellNeighbors, _cellInterfaceMidPoints, _cellNormals, _cellBoundaryTypes, _numCells, _dim );
+            if( rank == 0 ) {
+                auto log = spdlog::get( "event" );
+
+                log->info( "| Save mesh connectivity to file " + connectivityFile );
+                WriteConnecitivityToFile(
+                    connectivityFile, _cellNeighbors, _cellInterfaceMidPoints, _cellNormals, _cellBoundaryTypes, _numCells, _dim );
+            }
         }
     }
     else {
@@ -48,19 +72,33 @@ Mesh::Mesh( const Config* settings,
         _cellInterfaceMidPoints.resize( _numCells );
         _cellNormals.resize( _numCells );
         _cellBoundaryTypes.resize( _numCells );
-        log->info( "| Load mesh connectivity from file " + connectivityFile );
+        if( rank == 0 ) {
+            auto log = spdlog::get( "event" );
+            log->info( "| Load mesh connectivity from file " + connectivityFile );
+        }
         LoadConnectivityFromFile(
             connectivityFile, _cellNeighbors, _cellInterfaceMidPoints, _cellNormals, _cellBoundaryTypes, _numCells, _numNodesPerCell, _dim );
     }
-    log->info( "| Compute boundary..." );
+    if( rank == 0 ) {
+        auto log = spdlog::get( "event" );
+        log->info( "| Compute boundary..." );
+    }
     ComputeBounds();
-    log->info( "| Mesh created." );
+    if( rank == 0 ) {
+        auto log = spdlog::get( "event" );
+        log->info( "| Mesh created." );
+    }
 }
 
 Mesh::~Mesh() {}
 
 void Mesh::ComputeConnectivity() {
-    auto log = spdlog::get( "event" );
+    int nprocs = 1;
+    int rank   = 0;
+#ifdef BUILD_MPI
+    MPI_Comm_size( MPI_COMM_WORLD, &nprocs );
+    MPI_Comm_rank( MPI_COMM_WORLD, &rank );
+#endif
 
     unsigned comm_size = 1;    // No MPI implementation right now
     // determine number/chunk size and indices of cells treated by each mpi thread (deactivated for now)
@@ -81,8 +119,10 @@ void Mesh::ComputeConnectivity() {
 
     std::map<std::pair<unsigned, unsigned>, std::vector<unsigned>> edge_to_cells;
     //  Step 1: Build a mapping from edges to cells
-    log->info( "| ...map edges to cells..." );
-
+    if( rank == 0 ) {
+        auto log = spdlog::get( "event" );
+        log->info( "| ...map edges to cells..." );
+    }
     for( unsigned i = 0; i < _numCells; ++i ) {
         const auto& cell = _cells[i];
         for( unsigned j = 0; j < _numNodesPerCell; ++j ) {
@@ -94,7 +134,10 @@ void Mesh::ComputeConnectivity() {
     }
 
     // Step 2: Determine neighbors
-    log->info( "| ...determine neighbors of cells..." );
+    if( rank == 0 ) {
+        auto log = spdlog::get( "event" );
+        log->info( "| ...determine neighbors of cells..." );
+    }
 
     for( const auto& item : edge_to_cells ) {
         const auto& cell_list     = item.second;
@@ -556,6 +599,37 @@ unsigned Mesh::GetCellOfKoordinate( const double x, const double y ) const {
         ErrorMessages::Error( "Probing point (" + std::to_string( x ) + "," + std::to_string( y ) + ") is not contained in mesh.", CURRENT_FUNCTION );
     }
     return koordinate_cell_id;
+}
+
+std::vector<unsigned> Mesh::GetCellsofBall( const double x, const double y, const double r ) const {
+    std::vector<unsigned> cells_in_ball;
+
+    // Experimental parallel implementation
+    // #pragma omp parallel for
+    for( unsigned idx_cell = 0; idx_cell < _numCells; idx_cell++ ) {
+        // Assume GetCellCenter returns the center coordinates of the cell
+        double cell_x = _cellMidPoints[idx_cell][0];
+        double cell_y = _cellMidPoints[idx_cell][1];
+
+        // Calculate the distance from the cell center to the point (x, y)
+        double distance = std::sqrt( ( cell_x - x ) * ( cell_x - x ) + ( cell_y - y ) * ( cell_y - y ) );
+
+        if( distance <= r ) {
+            // #pragma omp critical
+            { cells_in_ball.push_back( idx_cell ); }
+        }
+    }
+
+    if( cells_in_ball.empty() ) {    // take the only cell that contains the point
+        std::cout << "No cells found within the ball centered at (" << x << "," << y << ") with radius " << r << "." << std::endl;
+        std::cout << "Taking the only cell that contains the point." << std::endl;
+        cells_in_ball.push_back( GetCellOfKoordinate( x, y ) );
+        // ErrorMessages::Error( "No cells found within the ball centered at (" + std::to_string( x ) + "," + std::to_string( y ) + ") with radius " +
+        // std::to_string( r ) + ".",
+        // CURRENT_FUNCTION );
+    }
+
+    return cells_in_ball;
 }
 
 bool Mesh::IsPointInsideCell( unsigned idx_cell, double x, double y ) const {

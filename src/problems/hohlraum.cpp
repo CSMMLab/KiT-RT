@@ -46,7 +46,7 @@ Hohlraum::Hohlraum( Config* settings, Mesh* mesh, QuadratureBase* quad ) : Probl
         }
         // blue area
         if( x > 1.25 || y < 0.05 || y > 1.25 ) {
-            _sigmaS[idx_cell] = 100.0;
+            _sigmaS[idx_cell] = 0.0;
             _sigmaT[idx_cell] = 100.0;
         }
     }

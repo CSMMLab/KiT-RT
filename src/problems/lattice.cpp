@@ -20,9 +20,9 @@ Lattice_SN::Lattice_SN( Config* settings, Mesh* mesh, QuadratureBase* quad ) : P
     _totalAbsorptionLattice  = 0.0;
 
     if( _settings->GetNLatticeAbsIndividual() == 49 && _settings->GetNLatticeScatterIndividual() == 49 ) {    // Individual values set
-        auto log = spdlog::get( "event" );
-        log->info( "| " );
-        log->info( "| Lattice test case WITH individual scattering and absorption values for each block.  " );
+        // auto log = spdlog::get( "event" );
+        // log->info( "| " );
+        // log->info( "| Lattice test case WITH individual scattering and absorption values for each block.  " );
 
         auto cellMids = _mesh->GetCellMidPoints();
 
@@ -35,10 +35,10 @@ Lattice_SN::Lattice_SN( Config* settings, Mesh* mesh, QuadratureBase* quad ) : P
         }
     }
     else {
-        auto log = spdlog::get( "event" );
-        log->info( "| " );
-        log->info( "| Lattice test case WITHOUT individual scattering and absorption values for each block.  " );
-        // For absorption cells: set scattering XS to 0 and absorption to 10
+        // auto log = spdlog::get( "event" );
+        // log->info( "| " );
+        // log->info( "| Lattice test case WITHOUT individual scattering and absorption values for each block.  " );
+        //  For absorption cells: set scattering XS to 0 and absorption to 10
         auto cellMids = _mesh->GetCellMidPoints();
         for( unsigned j = 0; j < cellMids.size(); ++j ) {
             if( IsAbsorption( cellMids[j] ) ) {

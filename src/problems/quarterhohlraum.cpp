@@ -49,44 +49,24 @@ QuarterHohlraum::QuarterHohlraum( Config* settings, Mesh* mesh, QuadratureBase* 
         double x = _mesh->GetCellMidPoints()[idx_cell][0];
         double y = _mesh->GetCellMidPoints()[idx_cell][1];
 
-        // red area left
-        if( x < -0.6 && y > -0.4 && y < 0.4 ) {
-            _sigmaS[idx_cell] = 95.0;
-            _sigmaT[idx_cell] = 100.0;
-        }
         // red area right
-        if( x > _posRedRightBorder && y > -0.4 && y < _redRightTop ) {
+        if( x > _posRedRightBorder && y < _redRightTop ) {
             _sigmaS[idx_cell] = 95.0;
             _sigmaT[idx_cell] = 100.0;
         }
-        // green area 1 (lower boundary)
-        if( x > -0.2 && x < -0.15 && y > -0.35 && y < 0.35 ) {
+        // green and blue area
+        if( x > -0.2 && x < 0.2 && y > -0.4 && y < 0.4 ) {
             _sigmaS[idx_cell] = 90.0;
             _sigmaT[idx_cell] = 100.0;
         }
-        // green area 2 (upper boundary)
-        if( x > 0.15 && x < 0.2 && y > -0.35 && y < 0.35 ) {
-            _sigmaS[idx_cell] = 90.0;
-            _sigmaT[idx_cell] = 100.0;
-        }
-        // green area 3 (left boundary)
-        if( x > -0.2 && x < 0.2 && y > -0.4 && y < -0.35 ) {
-            _sigmaS[idx_cell] = 90.0;
-            _sigmaT[idx_cell] = 100.0;
-        }
-        // green area 4 (right boundary)
-        if( x > -0.2 && x < 0.2 && y > 0.35 && y < 0.4 ) {
-            _sigmaS[idx_cell] = 90.0;
-            _sigmaT[idx_cell] = 100.0;
-        }
-        // blue checkered area
+        // blue checkered area (overwrites part of green n blue area)
         if( x > -0.15 && x < 0.15 && y > -0.35 && y < 0.35 ) {
-            _sigmaS[idx_cell] = 50.0;
+            _sigmaS[idx_cell] = 0.0;
             _sigmaT[idx_cell] = 100.0;
         }
         // black area (upper and lower boundary)
         if( y > 0.6 || y < -0.6 ) {
-            _sigmaS[idx_cell] = 100.0;
+            _sigmaS[idx_cell] = 50.0;
             _sigmaT[idx_cell] = 100.0;
         }
     }
