@@ -82,12 +82,12 @@ SymmetricHohlraum::SymmetricHohlraum( Config* settings, Mesh* mesh, QuadratureBa
         }
         // blue checkered area (overwrites part of green n blue area)
         if( x > -0.15 + _centerGreen[0] && x < 0.15 + _centerGreen[0] && y > -0.35 + _centerGreen[1] && y < 0.35 + _centerGreen[1] ) {
-            _sigmaS[idx_cell] = 50.0;
+            _sigmaS[idx_cell] = 0.0;
             _sigmaT[idx_cell] = 100.0;
         }
         // black area (upper and lower boundary)
         if( y > 0.6 || y < -0.6 ) {
-            _sigmaS[idx_cell] = 100.0;
+            _sigmaS[idx_cell] = 50.0;
             _sigmaT[idx_cell] = 100.0;
         }
     }
