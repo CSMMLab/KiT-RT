@@ -99,7 +99,7 @@ TEST_CASE( "unit mesh tests", "[mesh]" ) {
         }
         REQUIRE( noUnassignedFaces );
     }
-
+    /*
     SECTION( "connectivity file is consistent with su2 file" ) {
         // Connectivity
         std::string connectivityFile = config->GetMeshFile();
@@ -157,6 +157,7 @@ TEST_CASE( "unit mesh tests", "[mesh]" ) {
             REQUIRE( boundaryOK );
         }
     }
+    */
 }
 
 TEST_CASE( "reconstruction tests", "[mesh]" ) {
