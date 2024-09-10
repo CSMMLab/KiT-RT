@@ -75,7 +75,8 @@ SymmetricHohlraum::SymmetricHohlraum( Config* settings, Mesh* mesh, QuadratureBa
             _sigmaS[idx_cell] = 95.0;
             _sigmaT[idx_cell] = 100.0;
         }
-        // green and blue area
+
+        // green area 1 (including blue area)
         if( x > -0.2 + _centerGreen[0] && x < 0.2 + _centerGreen[0] && y > -0.4 + _centerGreen[1] && y < 0.4 + _centerGreen[1] ) {
             _sigmaS[idx_cell] = 90.0;
             _sigmaT[idx_cell] = 100.0;
