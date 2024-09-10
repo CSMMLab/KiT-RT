@@ -614,10 +614,11 @@ std::vector<unsigned> Mesh::GetCellsofBall( const double x, const double y, cons
         }
     }
 
-    if( cells_in_ball.empty() ) {
-        ErrorMessages::Error( "No cells found within the ball centered at (" + std::to_string( x ) + "," + std::to_string( y ) + ") with radius " +
-                                  std::to_string( r ) + ".",
-                              CURRENT_FUNCTION );
+    if( cells_in_ball.empty() ) {    // take the only cell that contains the point
+        cells_in_ball.push_back( GetCellOfKoordinate( x, y ) );
+        // ErrorMessages::Error( "No cells found within the ball centered at (" + std::to_string( x ) + "," + std::to_string( y ) + ") with radius " +
+        // std::to_string( r ) + ".",
+        // CURRENT_FUNCTION );
     }
 
     return cells_in_ball;
