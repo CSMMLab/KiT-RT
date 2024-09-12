@@ -5,12 +5,15 @@
 #include "common/globalconstants.hpp"
 #include "common/io.hpp"
 #include "common/mesh.hpp"
+#include <filesystem>
+#include <iostream>
 
 TEST_CASE( "unit mesh tests", "[mesh]" ) {
     std::string config_file_name = std::string( TESTS_PATH ) + "input/unit_tests/common/unit_mesh.cfg";
 
     Config* config = new Config( config_file_name );
-    Mesh* mesh     = LoadSU2MeshFromFile( config );
+    config->SetForcedConnectivity( true );
+    Mesh* mesh = LoadSU2MeshFromFile( config );
 
     SECTION( "sum of all cell areas is equal to total domain volume" ) {
         double domainArea   = 1.0;
@@ -33,21 +36,26 @@ TEST_CASE( "unit mesh tests", "[mesh]" ) {
                 for( unsigned k = 0; k < neighbors[nID].size(); ++k ) {
                     if( neighbors[nID][k] == i ) pos = k;
                 }
-                if( blaze::l2Norm( n[i][j] + n[nID][pos] ) > eps ) errorWithinBounds = false;
+                if( blaze::l2Norm( n[i][j] + n[nID][pos] ) > eps ) {
+                    errorWithinBounds = false;
+                    std::cout << "neighbor coordinate error: " << blaze::l2Norm( n[i][j] + n[nID][pos] ) << "\n";
+                }
             }
         }
         REQUIRE( errorWithinBounds );
     }
 
     SECTION( "neighbor and faces are indexed consistently" ) {
+
         auto neighbors     = mesh->GetNeighbours();
         auto cellMidPoints = mesh->GetCellMidPoints();
         auto faceMidPoints = mesh->GetInterfaceMidPoints();
+        bool isConsistent  = true;
 
-        bool isConsistent = true;
         for( unsigned i = 0; i < mesh->GetNumCells(); ++i ) {
             for( unsigned j = 0; j < mesh->GetNumNodesPerCell(); ++j ) {
                 unsigned nID = neighbors[i][j];
+
                 if( nID == mesh->GetNumCells() ) continue;
 
                 auto fx = faceMidPoints[i][j][0];
@@ -59,7 +67,6 @@ TEST_CASE( "unit mesh tests", "[mesh]" ) {
                 if( fy > std::max( cellMidPoints[i][1], cellMidPoints[nID][1] ) ) isConsistent = false;
             }
         }
-
         REQUIRE( isConsistent );
     }
 
@@ -72,7 +79,11 @@ TEST_CASE( "unit mesh tests", "[mesh]" ) {
             for( unsigned j = 0; j < mesh->GetNumNodesPerCell(); ++j ) {
                 sum += n[i][j];
             }
-            if( blaze::l2Norm( sum ) > eps ) errorWithinBounds = false;
+            if( blaze::l2Norm( sum ) > eps ) {
+                errorWithinBounds = false;
+
+                std::cout << blaze::l2Norm( sum ) << "\n";
+            }
         }
         REQUIRE( errorWithinBounds );
     }
@@ -88,6 +99,65 @@ TEST_CASE( "unit mesh tests", "[mesh]" ) {
         }
         REQUIRE( noUnassignedFaces );
     }
+    /*
+    SECTION( "connectivity file is consistent with su2 file" ) {
+        // Connectivity
+        std::string connectivityFile = config->GetMeshFile();
+        size_t lastDotIndex          = connectivityFile.find_last_of( '.' );
+        connectivityFile             = connectivityFile.substr( 0, lastDotIndex );
+        connectivityFile += ".con";
+
+        if( !std::filesystem::exists( connectivityFile ) ) {
+            REQUIRE( false );    // File should be written by the mesh creation
+        }
+        else {
+            config->SetForcedConnectivity( false );
+            Mesh* mesh2 = LoadSU2MeshFromFile( config );
+
+            // Check cell number
+            REQUIRE( mesh2->GetNumCells() == mesh->GetNumCells() );
+            REQUIRE( mesh2->GetNumNodes() == mesh->GetNumNodes() );
+
+            // Resize the outer vector to have nCells elements
+            bool neighborOK  = true;
+            bool midpointsOK = true;
+            bool normalsOK   = true;
+            bool boundaryOK  = true;
+            double eps       = 1e-10;
+
+            for( unsigned i = 0; i < mesh2->GetNumCells(); ++i ) {
+                for( unsigned j = 0; j < mesh2->GetNumNodesPerCell(); ++j ) {
+                    if( mesh2->GetNeighbours()[i][j] != mesh2->GetNeighbours()[i][j] ) {
+                        neighborOK = false;
+                        std::cout << "neighbor ID missmatch at index " << i << " " << j << "\n";
+                    }
+                    if( mesh->GetInterfaceMidPoints()[i][j].size() != mesh2->GetInterfaceMidPoints()[i][j].size() ) {
+                        std::cout << "Vector size missmatch at index " << i << " " << j << " with error \n";
+                        std::cout << mesh->GetInterfaceMidPoints()[i][j].size() << "\n" << mesh2->GetInterfaceMidPoints()[i][j].size() << "\n";
+                    }
+                    if( blaze::l2Norm( mesh->GetInterfaceMidPoints()[i][j] - mesh2->GetInterfaceMidPoints()[i][j] ) > eps ) {
+                        midpointsOK = false;
+                        std::cout << "midpoint missmatch at index " << i << " " << j << " with error "
+                                  << blaze::l2Norm( mesh->GetInterfaceMidPoints()[i][j] - mesh2->GetInterfaceMidPoints()[i][j] ) << "\n";
+                    }
+                    if( blaze::l2Norm( mesh->GetNormals()[i][j] - mesh2->GetNormals()[i][j] ) > eps ) {
+                        normalsOK = false;
+                        std::cout << "normal missmatch at index " << i << " " << j << " with error "
+                                  << blaze::l2Norm( mesh->GetInterfaceMidPoints()[i][j] - mesh2->GetInterfaceMidPoints()[i][j] ) << "\n";
+                    }
+                }
+                if( mesh2->GetBoundaryTypes()[i] != mesh2->GetBoundaryTypes()[i] ) {
+                    boundaryOK = false;
+                    std::cout << "Boundary ID missmatch at index " << i << "\n";
+                }
+            }
+            REQUIRE( neighborOK );
+            REQUIRE( midpointsOK );
+            REQUIRE( normalsOK );
+            REQUIRE( boundaryOK );
+        }
+    }
+    */
 }
 
 TEST_CASE( "reconstruction tests", "[mesh]" ) {

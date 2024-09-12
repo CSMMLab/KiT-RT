@@ -8,8 +8,8 @@ class SphericalBase;
 class Checkerboard_SN : public ProblemBase
 {
   private:
-    Vector _scatteringXS; /*!< @brief Vector of scattering crosssections */
-    Vector _totalXS;      /*!< @brief Vector of total crosssections */
+    Vector _sigmaS; /*!< @brief Vector of scattering crosssections */
+    Vector _sigmaT; /*!< @brief Vector of total crosssections */
 
     Checkerboard_SN() = delete;
 
@@ -17,7 +17,7 @@ class Checkerboard_SN : public ProblemBase
     bool isSource( const Vector& pos ) const;     /*!< @return True if pos is in source region, False otherwise */
 
   public:
-    Checkerboard_SN( Config* settings, Mesh* mesh );
+    Checkerboard_SN( Config* settings, Mesh* mesh, QuadratureBase* quad );
     virtual ~Checkerboard_SN();
 
     virtual VectorVector GetScatteringXS( const Vector& energies ) override;
@@ -29,8 +29,8 @@ class Checkerboard_SN : public ProblemBase
 class Checkerboard_Moment : public ProblemBase
 {
   private:
-    Vector _scatteringXS; /*!< @brief Vector of scattering crosssections len: numCells  */
-    Vector _totalXS;      /*!< @brief Vector of total crosssections. len: numCells*/
+    Vector _sigmaS; /*!< @brief Vector of scattering crosssections len: numCells  */
+    Vector _sigmaT; /*!< @brief Vector of total crosssections. len: numCells*/
 
     Checkerboard_Moment() = delete;
 
@@ -48,7 +48,7 @@ class Checkerboard_Moment : public ProblemBase
     int GlobalIndex( int l, int k ) const;
 
   public:
-    Checkerboard_Moment( Config* settings, Mesh* mesh );
+    Checkerboard_Moment( Config* settings, Mesh* mesh, QuadratureBase* quad );
     virtual ~Checkerboard_Moment();
 
     virtual VectorVector GetScatteringXS( const Vector& energies ) override;
@@ -60,8 +60,8 @@ class Checkerboard_Moment : public ProblemBase
 class Checkerboard_SN_1D : public ProblemBase
 {
   private:
-    Vector _scatteringXS; /*!< @brief Vector of scattering crosssections */
-    Vector _totalXS;      /*!< @brief Vector of total crosssections */
+    Vector _sigmaS; /*!< @brief Vector of scattering crosssections */
+    Vector _sigmaT; /*!< @brief Vector of total crosssections */
 
     Checkerboard_SN_1D() = delete;
 
@@ -69,7 +69,7 @@ class Checkerboard_SN_1D : public ProblemBase
     bool isSource( const Vector& pos ) const;     /*!< @return True if pos is in source region, False otherwise */
 
   public:
-    Checkerboard_SN_1D( Config* settings, Mesh* mesh );
+    Checkerboard_SN_1D( Config* settings, Mesh* mesh, QuadratureBase* quad );
     virtual ~Checkerboard_SN_1D();
 
     virtual VectorVector GetScatteringXS( const Vector& energies ) override;
@@ -81,8 +81,8 @@ class Checkerboard_SN_1D : public ProblemBase
 class Checkerboard_Moment_1D : public ProblemBase
 {
   private:
-    Vector _scatteringXS; /*!< @brief Vector of scattering crosssections len: numCells  */
-    Vector _totalXS;      /*!< @brief Vector of total crosssections. len: numCells*/
+    Vector _sigmaS; /*!< @brief Vector of scattering crosssections len: numCells  */
+    Vector _sigmaT; /*!< @brief Vector of total crosssections. len: numCells*/
 
     Checkerboard_Moment_1D() = delete;
 
@@ -100,7 +100,7 @@ class Checkerboard_Moment_1D : public ProblemBase
     int GlobalIndex( int l, int k ) const;
 
   public:
-    Checkerboard_Moment_1D( Config* settings, Mesh* mesh );
+    Checkerboard_Moment_1D( Config* settings, Mesh* mesh, QuadratureBase* quad );
     virtual ~Checkerboard_Moment_1D();
 
     virtual VectorVector GetScatteringXS( const Vector& energies ) override;

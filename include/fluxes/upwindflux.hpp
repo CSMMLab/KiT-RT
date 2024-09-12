@@ -25,6 +25,18 @@ class UpwindFlux : public NumericalFluxBase
      * @return numerical flux value
      */
     double Flux( const Vector& Omega, double psiL, double psiR, const Vector& n ) const override;
+   
+    /**
+     * @brief Flux computes flux on edge for fixed ordinate at a given edge using x and y axis
+     * @param quadPts  ordinates for flux computation
+     * @param psiL left solution state
+     * @param psiR right solution state
+     * @param n scaled normal vector of given edge
+     * @param n_sys number of quadpts
+     * @param flux numerical flux value
+     */
+     void Flux( const VectorVector& quadPts, const Vector& psiL, const Vector& psiR, Vector& flux, const Vector& n, unsigned n_sys )  override;
+
     /**
      * @brief FluxXZ computes flux on edge for fixed ordinate at a given edge using x and z axis
      * @param Omega fixed ordinate for flux computation

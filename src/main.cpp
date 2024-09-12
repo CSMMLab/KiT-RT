@@ -4,16 +4,17 @@
  *  @version: 0.1
  */
 
-#include <Python.h>
-#define PY_ARRAY_UNIQUE_SYMBOL KITRT_ARRAY_API
+#ifdef BUILD_MPI
 #include <mpi.h>
+#endif
+#include <omp.h>
 #include <string>
 
 #include "common/config.hpp"
 #include "common/io.hpp"
-#include "solvers/solverbase.hpp"
-
 #include "datagenerator/datageneratorbase.hpp"
+#include "solvers/snsolver_hpc.hpp"
+#include "solvers/solverbase.hpp"
 
 #ifdef BUILD_GUI
 #include <QApplication>
@@ -23,16 +24,16 @@
 
 int main( int argc, char** argv ) {
 #ifdef BUILD_GUI
-    MPI_Init( &argc, &argv );
     QApplication app( argc, argv );
     MainWindow mw;
     mw.show();
     return app.exec();
 #else
+// wchar_t* program = Py_DecodeLocale( argv[0], NULL );
+// Py_SetProgramName( program );
+#ifdef BUILD_MPI
     MPI_Init( &argc, &argv );
-    wchar_t* program = Py_DecodeLocale( argv[0], NULL );
-    Py_SetProgramName( program );
-
+#endif
     std::string filename = ParseArguments( argc, argv );
 
     // CD  Load Settings from File
@@ -49,17 +50,25 @@ int main( int argc, char** argv ) {
     }
     else {
         // Build solver
-        SolverBase* solver = SolverBase::Create( config );
-
-        // Run solver and export
-        solver->Solve();
-        solver->PrintVolumeOutput();
-        delete solver;
+        if( config->GetHPC() ) {
+            SNSolverHPC* solver = new SNSolverHPC( config );
+            // Run solver and export
+            solver->Solve();
+            delete solver;
+        }
+        else {
+            SolverBase* solver = SolverBase::Create( config );
+            // Run solver and export
+            solver->Solve();
+            solver->PrintVolumeOutput();
+            delete solver;
+        }
     }
 
     delete config;
-
+#ifdef BUILD_MPI
     MPI_Finalize();
+#endif
 
     return EXIT_SUCCESS;
 #endif

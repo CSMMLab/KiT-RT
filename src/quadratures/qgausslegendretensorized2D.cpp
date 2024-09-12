@@ -58,7 +58,7 @@ void QGaussLegendreTensorized2D::SetPointsAndWeights() {
     }
 
     unsigned range             = std::floor( _order / 2.0 );    // comment (steffen): Only half of the points, due to projection
-    double normalizationFactor = .5;
+    double normalizationFactor = 0.5;
 
     // resize points and weights
     _pointsKarth.resize( _nq );

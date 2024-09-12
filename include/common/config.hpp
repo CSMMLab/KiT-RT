@@ -48,8 +48,9 @@ class Config
     // std::vector<double> _1dIntegrationBounds; /*!< @brief Quadrature Order*/
 
     // Mesh
-    unsigned _nCells;    /*!< @brief Number of cells in the mesh */
-    unsigned short _dim; /*!< @brief spatial dimensionality of the mesh/test case */
+    unsigned _nCells;                      /*!< @brief Number of cells in the mesh */
+    unsigned short _dim;                   /*!< @brief spatial dimensionality of the mesh/test case */
+    bool _forcedConnectivityWrite; /*!< @brief If true, the meshconnectivity is always computed and written to .con file */
 
     // Boundary Conditions
     /*!< @brief List of all Pairs (marker, BOUNDARY_TYPE), e.g. (farfield,DIRICHLET).
@@ -61,6 +62,7 @@ class Config
     std::vector<std::string> _MarkerNeumann;   /*!< @brief Neumann BC markers. */
 
     // Solver
+    bool _HPC;                        /* Triggers usage of faster SN solvers */
     double _CFL;                      /*!< @brief CFL Number for Solver*/
     double _tEnd;                     /*!< @brief Final Time for Simulation */
     PROBLEM_NAME _problemName;        /*!< @brief Name of predefined Problem   */
@@ -90,6 +92,24 @@ class Config
     std::string _hydrogenFile;      /*!< @brief Name of hydrogen cross section file path*/
     std::string _oxygenFile;        /*!< @brief Name of oxygen cross section file path */
     std::string _stoppingPowerFile; /*!< @brief Name of stopping power file path */
+    // Lattice
+    double _dsgnAbsBlue;                        /*!< @brief Absorption in all blue blocks */
+    double _dsgnScatterWhite;                   /*!< @brief Scattering in all white blocks */
+    std::vector<double> _dsgnAbsIndividual;     /*!< @brief Absorption in all 7x7 blocks of the Lattice test case (up left to low right) */
+    unsigned short _nDsgnAbsIndividual;         /*!< @brief Number of individual blocks. Needs to be 49*/
+    std::vector<double> _dsgnScatterIndividual; /*!< @brief Scatter in all 7x7 blocks of the Lattice test case (up left to low right) */
+    unsigned short _nDsgnScatterIndividual;     /*!< @brief Number of individual blocks. Needs to be 49*/
+
+    // Hohlraum
+    unsigned short _nProbingCellsLineGreenHohlraum; /*!< @brief Number SamplingPoints for Hohlraum Green region sampling.*/
+    double _posCenterXHohlraum;                     /*!< @brief Center of the Hohlraum Green region. */
+    double _posCenterYHohlraum;                     /*!< @brief Center of the Hohlraum Green region. */
+    double _posRedRightTop;                         /*!< @brief y coord of the top of the right red area  */
+    double _posRedLeftTop;                          /*!< @brief y coord of the top of the left red area  */
+    double _posRedRightBottom;                      /*!< @brief y coord of the bottom of the right red area  */
+    double _posRedLeftBottom;                       /*!< @brief y coord of the bottom of the left red area  */
+    double _posRedLeftBorder;                       /*!< @brief pos of the inner border of the left red area  */
+    double _posRedRightBorder;                      /*!< @brief pos of the inner border of the right red area  */
 
     // CSD
     double _maxEnergyCSD; /*!< @brief Maximum energy for CSD simulation */
@@ -237,6 +257,8 @@ class Config
     // List Options
     void AddStringListOption( const std::string name, unsigned short& input_size, std::vector<std::string>& option_field );
 
+    void AddDoubleListOption( const std::string name, unsigned short& input_size, std::vector<double>& option_field );
+
     template <class Tenum>
     void AddEnumListOption( const std::string name,
                             unsigned short& num_marker,
@@ -245,6 +267,9 @@ class Config
 
     // Initialize the cmdline and file logger
     void InitLogger();
+
+    // Helper functions
+    template <typename K, typename V> K findKey( const std::map<K, V>& myMap, const V& valueToFind );
 
   public:
     /*!
@@ -279,21 +304,24 @@ class Config
     std::string inline GetDataDir() const { return std::filesystem::path( _dataDir ).lexically_normal(); }
 
     // Quadrature Structure
-    unsigned GetNQuadPoints() { return _nQuadPoints; }
+    unsigned GetNQuadPoints() const { return _nQuadPoints; }
     QUAD_NAME inline GetQuadName() const { return _quadName; }
     unsigned short inline GetQuadOrder() const { return _quadOrder; }
 
     // Mesh Structure
-    unsigned GetNCells() { return _nCells; }
+    unsigned GetNCells() const { return _nCells; }
     unsigned short GetDim() const { return _dim; }
+    bool inline GetForcedConnectivity() const { return _forcedConnectivityWrite; }
 
     // Solver Structure
+    bool inline GetHPC() const { return _HPC; }
+
     double inline GetCFL() const { return _CFL; }
     bool inline GetCleanFluxMat() const { return _cleanFluxMat; }
     ENTROPY_NAME inline GetEntropyName() const { return _entropyName; }
     unsigned short inline GetMaxMomentDegree() const { return _maxMomentDegree; }
     PROBLEM_NAME inline GetProblemName() const { return _problemName; }
-    unsigned inline GetReconsOrder() { return _reconsOrder; }
+    unsigned inline GetSpatialOrder() { return _reconsOrder; }
     SOLVER_NAME inline GetSolverName() const { return _solverName; }
     double inline GetTEnd() const { return _tEnd; }
     bool inline GetSNAllGaussPts() const { return _allGaussPts; }
@@ -306,6 +334,24 @@ class Config
     double inline GetSourceMagnitude() const { return _magQ; }
     // CSD
     double inline GetMaxEnergyCSD() const { return _maxEnergyCSD; }
+    // Lattice
+    double inline GetLatticeAbsBlue() const { return _dsgnAbsBlue; }
+    double inline GetLatticeScatterWhite() const { return _dsgnScatterWhite; }
+    std::vector<double> inline GetLatticeAbsorptionIndividual() const { return _dsgnAbsIndividual; }
+    unsigned short inline GetNLatticeAbsIndividual() { return _nDsgnAbsIndividual; }
+    std::vector<double> inline GetLatticeScatterIndividual() const { return _dsgnScatterIndividual; }
+    unsigned short inline GetNLatticeScatterIndividual() const { return _nDsgnScatterIndividual; }
+    // Hohlraum
+    unsigned short inline GetNumProbingCellsLineHohlraum() const { return _nProbingCellsLineGreenHohlraum; }
+    double inline GetPosXCenterGreenHohlraum() const { return _posCenterXHohlraum; }
+    double inline GetPosYCenterGreenHohlraum() const { return _posCenterYHohlraum; }
+    double inline GetPosRedRightTopHohlraum() const { return _posRedRightTop; }
+    double inline GetPosRedRightBottomHohlraum() const { return _posRedRightBottom; }
+    double inline GetPosRedLeftTopHohlraum() const { return _posRedLeftTop; }
+    double inline GetPosRedLeftBottomHohlraum() const { return _posRedLeftBottom; }
+    double inline GetPosRedLeftBorderHohlraum() const { return _posRedLeftBorder; }
+    double inline GetPosRedRightBorderHohlraum() const { return _posRedRightBorder; }
+
     //  Optimizer
     double inline GetNewtonOptimizerEpsilon() const { return _optimizerEpsilon; }
     unsigned long inline GetNewtonIter() const { return _newtonIter; }
@@ -317,9 +363,9 @@ class Config
     double inline GetEntropyDynamicAnsatz() const { return _entropyDynamicClosure; }
 
     // Neural Closure
-    unsigned short inline GetModelMK() { return _neuralModel; }
-    unsigned short inline GetNeuralModelGamma() { return _neuralGamma; }
-    bool inline GetEnforceNeuralRotationalSymmetry() { return _enforceNeuralRotationalSymmetry; }
+    unsigned short inline GetModelMK() const { return _neuralModel; }
+    unsigned short inline GetNeuralModelGamma() const { return _neuralGamma; }
+    bool inline GetEnforceNeuralRotationalSymmetry() const { return _enforceNeuralRotationalSymmetry; }
 
     // Boundary Conditions
     BOUNDARY_TYPE GetBoundaryType( std::string nameMarker ) const; /*!< @brief Get Boundary Type of given marker */
@@ -330,52 +376,54 @@ class Config
     // Basis name
     SPHERICAL_BASIS_NAME inline GetSphericalBasisName() const { return _sphericalBasisName; }
     // Output Structure
-    std::vector<VOLUME_OUTPUT> inline GetVolumeOutput() { return _volumeOutput; }
-    unsigned short inline GetNVolumeOutput() { return _nVolumeOutput; }
-    unsigned short inline GetVolumeOutputFrequency() { return _volumeOutputFrequency; }
+    std::vector<VOLUME_OUTPUT> inline GetVolumeOutput() const { return _volumeOutput; }
+    unsigned short inline GetNVolumeOutput() const { return _nVolumeOutput; }
+    unsigned short inline GetVolumeOutputFrequency() const { return _volumeOutputFrequency; }
 
-    std::vector<SCALAR_OUTPUT> inline GetScreenOutput() { return _screenOutput; }
-    unsigned short inline GetNScreenOutput() { return _nScreenOutput; }
-    unsigned short inline GetScreenOutputFrequency() { return _screenOutputFrequency; }
+    std::vector<SCALAR_OUTPUT> inline GetScreenOutput() const { return _screenOutput; }
+    unsigned short inline GetNScreenOutput() const { return _nScreenOutput; }
+    unsigned short inline GetScreenOutputFrequency() const { return _screenOutputFrequency; }
 
-    std::vector<SCALAR_OUTPUT> inline GetHistoryOutput() { return _historyOutput; }
-    unsigned short inline GetNHistoryOutput() { return _nHistoryOutput; }
-    unsigned short inline GetHistoryOutputFrequency() { return _historyOutputFrequency; }
+    std::vector<SCALAR_OUTPUT> inline GetHistoryOutput() const { return _historyOutput; }
+    unsigned short inline GetNHistoryOutput() const { return _nHistoryOutput; }
+    unsigned short inline GetHistoryOutputFrequency() const { return _historyOutputFrequency; }
 
     // Data generator
-    bool inline GetDataGeneratorMode() { return _dataGeneratorMode; }
-    SAMPLER_NAME inline GetSamplerName() { return _sampler; }
-    unsigned long inline GetTrainingDataSetSize() { return _tainingSetSize; }
-    bool inline GetSizeByDimension() { return _sizeByDimension; }
-    unsigned long inline GetMaxValFirstMoment() { return _maxValFirstMoment; }    // Deprecated
-    double GetRealizableSetEpsilonU0() { return _RealizableSetEpsilonU0; }
-    double GetRealizableSetEpsilonU1() { return _RealizableSetEpsilonU1; }
-    bool inline GetNormalizedSampling() { return _normalizedSampling; }
-    bool inline GetAlphaSampling() { return _alphaSampling; }
-    bool inline GetUniformSamlping() { return _sampleUniform; }
-    double inline GetAlphaSamplingBound() { return _alphaBound; }
-    double inline GetMinimalEVBound() { return _minEVAlphaSampling; }
+    bool inline GetDataGeneratorMode() const { return _dataGeneratorMode; }
+    SAMPLER_NAME inline GetSamplerName() const { return _sampler; }
+    unsigned long inline GetTrainingDataSetSize() const { return _tainingSetSize; }
+    bool inline GetSizeByDimension() const { return _sizeByDimension; }
+    unsigned long inline GetMaxValFirstMoment() const { return _maxValFirstMoment; }    // Deprecated
+    double GetRealizableSetEpsilonU0() const { return _RealizableSetEpsilonU0; }
+    double GetRealizableSetEpsilonU1() const { return _RealizableSetEpsilonU1; }
+    bool inline GetNormalizedSampling() const { return _normalizedSampling; }
+    bool inline GetAlphaSampling() const { return _alphaSampling; }
+    bool inline GetUniformSamlping() const { return _sampleUniform; }
+    double inline GetAlphaSamplingBound() const { return _alphaBound; }
+    double inline GetMinimalEVBound() const { return _minEVAlphaSampling; }
     // double inline GetMinimalSamplingVelocity() { return _minSamplingVelocity; }
-    double inline GetMaximalSamplingVelocity() { return _maxSamplingVelocity; }
-    double inline GetMinimalSamplingTemperature() { return _minSamplingTemperature; }
-    double inline GetMaximalSamplingTemperature() { return _maxSamplingTemperature; }
-    unsigned short inline GetNSamplingTemperatures() { return _nTemperatures; }
-    bool inline GetIsMomentSolver() { return _isMomentSolver; }
-    unsigned short inline GetRKStages() { return _rungeKuttaStages; }
+    double inline GetMaximalSamplingVelocity() const { return _maxSamplingVelocity; }
+    double inline GetMinimalSamplingTemperature() const { return _minSamplingTemperature; }
+    double inline GetMaximalSamplingTemperature() const { return _maxSamplingTemperature; }
+    unsigned short inline GetNSamplingTemperatures() const { return _nTemperatures; }
+    bool inline GetIsMomentSolver() const { return _isMomentSolver; }
+    unsigned short inline GetTemporalOrder() const { return _rungeKuttaStages; }
 
     // ---- Setters for option structure
     // This section is dangerous
     // Quadrature Structure
-    void inline SetNQuadPoints( unsigned nq ) { _nQuadPoints = nq; }        /*!< @brief Never change the nq! This is only for the test framework. */
-    void inline SetQuadName( QUAD_NAME quadName ) { _quadName = quadName; } /*!< @brief Never change the quadName! This is only for the test framework. */
+    void inline SetNQuadPoints( unsigned nq ) { _nQuadPoints = nq; } /*!< @brief Never change the nq! This is only for the test framework. */
+    void inline SetQuadName( QUAD_NAME quadName ) {
+        _quadName = quadName;
+    } /*!< @brief Never change the quadName! This is only for the test framework. */
     void inline SetQuadOrder( unsigned quadOrder ) {
         _quadOrder = quadOrder;
-    }                                                               /*!< @brief Never change the quadOrder! This is only for the test framework. */
+    } /*!< @brief Never change the quadOrder! This is only for the test framework. */
     void inline SetSNAllGaussPts( bool useall ) { _allGaussPts = useall; } /*!< @brief Never change the this! This is only for the test framework. */
     // Mesh Structure
     void inline SetNCells( unsigned nCells ) { _nCells = nCells; }
-    void inline SetEnforceNeuralRotationalSymmetry(bool symmetryEnforce) {  _enforceNeuralRotationalSymmetry =symmetryEnforce ; }
-
+    void inline SetEnforceNeuralRotationalSymmetry( bool symmetryEnforce ) { _enforceNeuralRotationalSymmetry = symmetryEnforce; }
+    void inline SetForcedConnectivity( bool connectivityEnforce ) { _forcedConnectivityWrite = connectivityEnforce; }
 };
 
 #endif    // CONFIG_H

@@ -13,7 +13,7 @@
 
 #include <fstream>
 
-RadiationCTImage::RadiationCTImage( Config* settings, Mesh* mesh ) : ProblemBase( settings, mesh ) {}
+RadiationCTImage::RadiationCTImage( Config* settings, Mesh* mesh, QuadratureBase* quad ) : ProblemBase( settings, mesh, quad ) {}
 
 RadiationCTImage::~RadiationCTImage() {}
 
@@ -67,9 +67,14 @@ VectorVector RadiationCTImage::SetupIC() {
 std::vector<double> RadiationCTImage::GetDensity( const VectorVector& /*cellMidPoints*/ ) {
     std::string imageFile = _settings->GetCTFile();
     std::string meshFile  = _settings->GetMeshFile();
-    Matrix gsImage        = createSU2MeshFromImage( imageFile, meshFile );
-    auto bounds           = _mesh->GetBounds();
-    auto cellMidPoints    = _mesh->GetCellMidPoints();
+    ErrorMessages::Error( "Python API support is deprecated for KiT-RT. This function needs to be rewritten.\n Use a python script to first create "
+                          "the mesh, then call KiT-RT from Python. This is the recommended workflow for stability and performance.",
+                          CURRENT_FUNCTION );
+    Matrix gsImage = Matrix( 0, 0 );    //    createSU2MeshFromImage( imageFile, meshFile ); DEprecated
+
+    ErrorMessages::Error( "GetBounds function currently deprecetaded", CURRENT_FUNCTION );
+    auto bounds        = _mesh->GetBounds();
+    auto cellMidPoints = _mesh->GetCellMidPoints();
 
     double xMin = bounds[0].first;
     double xMax = bounds[0].second;
@@ -107,7 +112,7 @@ VectorVector RadiationCTImage::GetTotalXS( const Vector& /*energies*/ ) {
     return VectorVector( 1, Vector( 1, 0.0 ) );
 }
 
-RadiationCTImage_Moment::RadiationCTImage_Moment( Config* settings, Mesh* mesh ) : RadiationCTImage( settings, mesh ) {}
+RadiationCTImage_Moment::RadiationCTImage_Moment( Config* settings, Mesh* mesh, QuadratureBase* quad ) : RadiationCTImage( settings, mesh, quad ) {}
 
 RadiationCTImage_Moment::~RadiationCTImage_Moment() {}
 

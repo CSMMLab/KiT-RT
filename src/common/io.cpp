@@ -1,6 +1,6 @@
 /*!
  * \file io.cpp
- * \brief Set of utility io functions for rtns
+ * \brief Set of utility io functions for KiT-RT
  * \author  J. Kusch, S. Schotthoefer, P. Stammer,  J. Wolters, T. Xiao
  */
 
@@ -11,11 +11,17 @@
 #include "toolboxes/errormessages.hpp"
 #include "toolboxes/textprocessingtoolbox.hpp"
 
+#include <fstream>
+#include <iomanip>
 #include <iostream>
 
+#ifdef BUILD_MPI
 #include <mpi.h>
-#include <omp.h>
+#endif
 
+#include <omp.h>
+#include <sstream>
+#include <vector>
 #include <vtkCellArray.h>
 #include <vtkCellData.h>
 #include <vtkCellDataToPointData.h>
@@ -27,9 +33,9 @@
 #include <vtkUnstructuredGrid.h>
 #include <vtkUnstructuredGridWriter.h>
 
-#include <Python.h>
-#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
-#include <numpy/arrayobject.h>
+// #include <Python.h>
+// #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
+// #include <numpy/arrayobject.h>
 
 using vtkPointsSP                 = vtkSmartPointer<vtkPoints>;
 using vtkUnstructuredGridSP       = vtkSmartPointer<vtkUnstructuredGrid>;
@@ -43,8 +49,8 @@ void ExportVTK( const std::string fileName,
                 const std::vector<std::vector<std::vector<double>>>& outputFields,
                 const std::vector<std::vector<std::string>>& outputFieldNames,
                 const Mesh* mesh ) {
-    int rank;
-    MPI_Comm_rank( MPI_COMM_WORLD, &rank );
+    int rank = 0;
+    // MPI_Comm_rank( MPI_COMM_WORLD, &rank );
     if( rank == 0 ) {
         unsigned dim             = mesh->GetDim();
         unsigned numCells        = mesh->GetNumCells();
@@ -76,16 +82,19 @@ void ExportVTK( const std::string fileName,
             }
         }
         vtkCellArraySP cellArray = vtkCellArraySP::New();
-        for( unsigned i = 0; i < numCells; ++i ) {
-            if( numNodesPerCell == 3 ) {
-                auto tri = vtkTriangleSP::New();
+        if( numNodesPerCell == 3 ) {
+            auto tri = vtkTriangleSP::New();
+            for( unsigned i = 0; i < numCells; ++i ) {
                 for( unsigned j = 0; j < numNodesPerCell; ++j ) {
                     tri->GetPointIds()->SetId( j, cells[i][j] );
                 }
                 cellArray->InsertNextCell( tri );
             }
-            if( numNodesPerCell == 4 ) {
-                auto quad = vtkQuad::New();
+        }
+
+        if( numNodesPerCell == 4 ) {
+            auto quad = vtkQuad::New();
+            for( unsigned i = 0; i < numCells; ++i ) {
                 for( unsigned j = 0; j < numNodesPerCell; ++j ) {
                     quad->GetPointIds()->SetId( j, cells[i][j] );
                 }
@@ -100,11 +109,12 @@ void ExportVTK( const std::string fileName,
         }
 
         // Write the output
+        auto cellData = vtkDoubleArraySP::New();
+
         for( unsigned idx_group = 0; idx_group < outputFields.size(); idx_group++ ) {
 
             for( unsigned idx_field = 0; idx_field < outputFields[idx_group].size(); idx_field++ ) {    // Loop over all output fields
-
-                auto cellData = vtkDoubleArraySP::New();
+                cellData = vtkDoubleArraySP::New();
                 cellData->SetName( outputFieldNames[idx_group][idx_field].c_str() );
 
                 for( unsigned idx_cell = 0; idx_cell < numCells; idx_cell++ ) {
@@ -123,21 +133,19 @@ void ExportVTK( const std::string fileName,
         converter->PassCellDataOn();
         converter->Update();
 
-        auto conv_grid = converter->GetOutput();
-
-        writer->SetInputData( conv_grid );
+        writer->SetInputData( converter->GetOutput() );
 
         writer->Write();
 
-        // auto log = spdlog::get( "event" );
-        // log->info( "Result successfully exported to '{0}'!", fileNameWithExt );
+        //  auto log = spdlog::get( "event" );
+        //  log->info( "Result successfully exported to '{0}'!", fileNameWithExt );
     }
-    MPI_Barrier( MPI_COMM_WORLD );
+    // MPI_Barrier( MPI_COMM_WORLD );
 }
 
 Mesh* LoadSU2MeshFromFile( const Config* settings ) {
     auto log = spdlog::get( "event" );
-    log->info( "| Importing mesh. This may take a while for large meshes." );
+    // log->info( "| Importing mesh. This may take a while for large meshes." );
     unsigned dim;
     std::vector<Vector> nodes;
     std::vector<std::vector<unsigned>> cells;
@@ -297,14 +305,141 @@ Mesh* LoadSU2MeshFromFile( const Config* settings ) {
     }
     ifs.close();
     // log->info( "| Mesh imported." );
-    return new Mesh( nodes, cells, boundaries );
+    return new Mesh( settings, nodes, cells, boundaries );
+}
+
+void LoadConnectivityFromFile( const std::string inputFile,
+                               std::vector<std::vector<unsigned>>& cellNeighbors,
+                               std::vector<std::vector<Vector>>& cellInterfaceMidPoints,
+                               std::vector<std::vector<Vector>>& cellNormals,
+                               std::vector<BOUNDARY_TYPE>& cellBoundaryTypes,
+                               unsigned nCells,
+                               unsigned nNodesPerCell,
+                               unsigned nDim ) {
+    // File has nCells lines, each line is a comma separated entry containing:
+    // cellNeighbors (nNodesPerCell elements),
+    // cellInterfaceMidPoints (nNodesPerCell x nDim elements),
+    // cellNormals (nNodesPerCell x nDim elements),
+    // cellBoundaryTypes (1 element), (tranlated from  unsigned to enum BOUNDARY_TYPE)
+
+    std::ifstream inFile( inputFile );
+
+    if( !inFile.is_open() ) {
+        ErrorMessages::Error( "Error opening connectivity file.", CURRENT_FUNCTION );
+        return;
+    }
+    for( unsigned i = 0; i < nCells; ++i ) {
+        std::string line;
+        unsigned count = 1;
+
+        std::getline( inFile, line );
+        for( char ch : line ) {
+            if( ch == ',' ) {
+                count++;
+            }
+        }
+
+        unsigned correctedNodesPerCell = nNodesPerCell;
+        if( count < nNodesPerCell + nNodesPerCell * nDim * 2 + 1 ) {
+            correctedNodesPerCell = nNodesPerCell - 1;
+            ErrorMessages::Error( "Error opening connectivity file.", CURRENT_FUNCTION );
+        }
+
+        std::istringstream iss( line );
+        // Load cellNeighbors
+        cellNeighbors[i].resize( correctedNodesPerCell );
+
+        for( unsigned j = 0; j < correctedNodesPerCell; ++j ) {
+            std::getline( iss, line, ',' );
+            std::istringstream converter( line );
+            converter >> std::fixed >> setprecision( 12 ) >> cellNeighbors[i][j];
+        }
+
+        // Load cellInterfaceMidPoints
+        cellInterfaceMidPoints[i].resize( correctedNodesPerCell );
+        for( unsigned j = 0; j < correctedNodesPerCell; ++j ) {
+            cellInterfaceMidPoints[i][j] = Vector( nDim, 0.0 );
+            for( unsigned k = 0; k < nDim; ++k ) {
+                std::getline( iss, line, ',' );
+                std::istringstream converter( line );
+                converter >> std::fixed >> setprecision( 12 ) >> cellInterfaceMidPoints[i][j][k];    // Replace with appropriate member of Vector
+                // std::cout << std::fixed << setprecision( 12 ) << cellInterfaceMidPoints[i][j][k] << std::endl;
+            }
+        }
+        // Load cellNormals
+        cellNormals[i].resize( correctedNodesPerCell );
+        for( unsigned j = 0; j < correctedNodesPerCell; ++j ) {
+            cellNormals[i][j] = Vector( nDim, 0.0 );
+            for( unsigned k = 0; k < nDim; ++k ) {
+                std::getline( iss, line, ',' );
+                std::istringstream converter( line );
+                converter >> std::fixed >> setprecision( 12 ) >> cellNormals[i][j][k];    // Replace with appropriate member of Vector
+            }
+        }
+        // Load cellBoundaryTypes
+        std::getline( iss, line, ',' );
+        std::istringstream converter( line );
+        unsigned boundaryTypeValue;
+        converter >> boundaryTypeValue;
+        cellBoundaryTypes[i] = static_cast<BOUNDARY_TYPE>( boundaryTypeValue );
+    }
+    inFile.close();
+}
+
+void WriteConnecitivityToFile( const std::string outputFile,
+                               const std::vector<std::vector<unsigned>>& cellNeighbors,
+                               const std::vector<std::vector<Vector>>& cellInterfaceMidPoints,
+                               const std::vector<std::vector<Vector>>& cellNormals,
+                               const std::vector<BOUNDARY_TYPE>& cellBoundaryTypes,
+                               unsigned nCells,
+                               unsigned nDim ) {
+    // File has nCells lines, each line is a comma separated entry containing:
+    // cellNeighbors (nNodesPerCell elements),
+    // cellInterfaceMidPoints (nNodesPerCell x nDim elements),
+    // cellNormals (nNodesPerCell x nDim elements),
+    // cellBoundaryTypes (1 element), (tranlated from BOUNDARY_TYPE to unsigned)
+
+    std::ofstream outFile( outputFile );
+    outFile << std::fixed << setprecision( 12 );
+    // const std::size_t bufferSize = 10000;    // Adjust as needed
+    // outFile.rdbuf()->pubsetbuf( 0, bufferSize );
+    if( outFile.is_open() ) {
+        // Write data to the file
+        for( unsigned i = 0; i < nCells; ++i ) {
+            // Write cellNeighbors
+            for( unsigned j = 0; j < cellNeighbors[i].size(); ++j ) {
+                outFile << cellNeighbors[i][j];
+                if( j < cellNeighbors[i].size() - 1 ) {
+                    outFile << ",";
+                }
+            }
+            // Write cellInterfaceMidPoints
+            for( unsigned j = 0; j < cellInterfaceMidPoints[i].size(); ++j ) {
+                for( unsigned k = 0; k < nDim; ++k ) {
+                    outFile << "," << cellInterfaceMidPoints[i][j][k];
+                }
+            }
+            // Write cellNormals
+            for( unsigned j = 0; j < cellNormals[i].size(); ++j ) {
+                for( unsigned k = 0; k < nDim; ++k ) {
+                    outFile << "," << cellNormals[i][j][k];
+                }
+            }
+
+            // Write cellBoundaryTypes
+            outFile << "," << static_cast<unsigned>( cellBoundaryTypes[i] );
+            outFile << std::endl;
+        }
+        outFile.close();
+    }
+    else {
+        ErrorMessages::Error( "Error opening connectivity file.", CURRENT_FUNCTION );
+    }
 }
 
 std::string ParseArguments( int argc, char* argv[] ) {
     std::string inputFile;
-    std::string usage_help = "\n"
-                             "Usage: " +
-                             std::string( argv[0] ) + " inputfile\n";
+    std::string usage_help = "\nUsage: " + std::string( argv[0] ) + " inputfile\n";
 
     if( argc < 2 ) {
         std::cout << usage_help;
@@ -328,9 +463,13 @@ std::string ParseArguments( int argc, char* argv[] ) {
 }
 
 void PrintLogHeader( std::string inputFile ) {
-    int nprocs, rank;
+    int nprocs = 1;
+    int rank   = 0;
+#ifdef BUILD_MPI
+    // Initialize MPI
     MPI_Comm_size( MPI_COMM_WORLD, &nprocs );
     MPI_Comm_rank( MPI_COMM_WORLD, &rank );
+#endif
     if( rank == 0 ) {
         auto log = spdlog::get( "event" );
 
@@ -366,9 +505,12 @@ void PrintLogHeader( std::string inputFile ) {
         }
         // log->info( "------------------------------------------------------------------------" );
     }
+#ifdef BUILD_MPI
     MPI_Barrier( MPI_COMM_WORLD );
+#endif
 }
 
+/*
 Matrix createSU2MeshFromImage( std::string imageName, std::string SU2Filename ) {
     auto log = spdlog::get( "event" );
 
@@ -433,3 +575,4 @@ Matrix createSU2MeshFromImage( std::string imageName, std::string SU2Filename ) 
 
     return gsImage.transpose();
 }
+*/

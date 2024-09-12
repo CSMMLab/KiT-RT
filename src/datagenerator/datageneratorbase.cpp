@@ -22,7 +22,7 @@
 #include "toolboxes/textprocessingtoolbox.hpp"
 #include "velocitybasis/sphericalbase.hpp"
 
-//#include <chrono>
+// #include <chrono>
 #include "spdlog/spdlog.h"
 #include <iomanip>
 #include <math.h>
@@ -54,8 +54,9 @@ DataGeneratorBase::DataGeneratorBase( Config* settings ) {
     _quadPointsSphere = _quadrature->GetPointsSphere();
 
     // Spherical Harmonics
-    if( _settings->GetSphericalBasisName() == SPHERICAL_HARMONICS && _maxPolyDegree > 0 && _settings->GetAlphaSampling() == false) {
-        ErrorMessages::Error( "No direct moment sampling algorithm for spherical harmonics basis with degree higher than 0 implemented", CURRENT_FUNCTION );
+    if( _settings->GetSphericalBasisName() == SPHERICAL_HARMONICS && _maxPolyDegree > 0 && _settings->GetAlphaSampling() == false ) {
+        ErrorMessages::Error( "No direct moment sampling algorithm for spherical harmonics basis with degree higher than 0 implemented",
+                              CURRENT_FUNCTION );
     }
     _basisGenerator = SphericalBase::Create( _settings );
 
@@ -136,7 +137,7 @@ void DataGeneratorBase::SampleMultiplierAlpha() {
         for( unsigned idx_set = 0; idx_set < _setSize; idx_set++ ) {
             Vector alphaRed = Vector( _nTotalEntries - 1, 0.0 );    // local reduced alpha
 
-            bool accepted = false;
+            bool accepted     = false;
             bool normAccepted = false;
             while( !accepted ) {
                 // Sample random multivariate uniformly distributed alpha between minAlpha and MaxAlpha.
@@ -159,7 +160,7 @@ void DataGeneratorBase::SampleMultiplierAlpha() {
                 for( unsigned idx_quad = 0; idx_quad < _nq; idx_quad++ ) {
                     integral += _entropy->EntropyPrimeDual( dot( alphaRed, momentsRed[idx_quad] ) ) * _weights[idx_quad];
                 }
-                _alpha[idx_set][0] = -(log( integral )+ log(_momentBasis[0][0]) )/_momentBasis[0][0]; //  normalization
+                _alpha[idx_set][0] = -( log( integral ) + log( _momentBasis[0][0] ) ) / _momentBasis[0][0];    //  normalization
 
                 // Assemble complete alpha (normalized)
                 for( unsigned idx_sys = 1; idx_sys < _nTotalEntries; idx_sys++ ) {
@@ -199,7 +200,7 @@ bool DataGeneratorBase::ComputeEVRejection( unsigned idx_set ) {
     Vector ew = Vector( _nTotalEntries, 0.0 );
     eigen( hessianSym, ew );
     if( min( ew ) < _settings->GetMinimalEVBound() ) {
-        std::cout << "ew: " << min( ew ) << "\n";
+        // std::cout << "ew: " << min( ew ) << "\n";
         return false;
     }
     return true;
@@ -212,8 +213,7 @@ bool DataGeneratorBase::ComputeReducedEVRejection( VectorVector& redMomentBasis,
     Vector ew = Vector( _nTotalEntries - 1, 0.0 );
     eigen( hessianSym, ew );
     if( min( ew ) < _settings->GetMinimalEVBound() ) {
-        std::cout << "ew: " <<  min( ew ) << "\n";
-
+        // std::cout << "ew: " << min( ew ) << "\n";
         return false;
     }
     return true;

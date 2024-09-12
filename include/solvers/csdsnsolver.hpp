@@ -3,7 +3,6 @@
 
 // externals
 #include "spdlog/spdlog.h"
-#include <mpi.h>
 
 #include "common/config.hpp"
 #include "common/io.hpp"

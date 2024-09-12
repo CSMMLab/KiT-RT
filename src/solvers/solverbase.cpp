@@ -14,16 +14,16 @@
 #include "solvers/pnsolver.hpp"
 #include "solvers/snsolver.hpp"
 #include "toolboxes/textprocessingtoolbox.hpp"
-
-#include <mpi.h>
+#include <chrono>
+#include <cmath>
+#include <limits>
 
 SolverBase::SolverBase( Config* settings ) {
+    _currTime = 0.0;
     _settings = settings;
 
-    // @TODO save parameters from settings class
+    _mesh = LoadSU2MeshFromFile( settings );
 
-    // build mesh and store  and store frequently used params
-    _mesh      = LoadSU2MeshFromFile( settings );
     _areas     = _mesh->GetCellAreas();
     _neighbors = _mesh->GetNeighbours();
     _normals   = _mesh->GetNormals();
@@ -36,31 +36,42 @@ SolverBase::SolverBase( Config* settings ) {
     _settings->SetNQuadPoints( _nq );
 
     // build slope related params
-    _reconstructor = new Reconstructor( settings );
-    _reconsOrder   = _reconstructor->GetReconsOrder();
-
+    _reconstructor      = new Reconstructor( settings );    // Not used!
+    _reconsOrder        = _reconstructor->GetSpatialOrder();
     _interfaceMidPoints = _mesh->GetInterfaceMidPoints();
 
     _cellMidPoints = _mesh->GetCellMidPoints();
 
     // set time step or energy step
-    _dE = ComputeTimeStep( _settings->GetCFL() );
-
+    _dT = ComputeTimeStep( _settings->GetCFL() );
     if( _settings->GetIsCSD() ) {
         // carefull: This gets overwritten by almost all subsolvers
         double minE = 5e-5;    // 2.231461e-01;    // 5e-5;
         double maxE = _settings->GetMaxEnergyCSD();
-        _nEnergies  = std::ceil( ( maxE - minE ) / _dE );
+        _nEnergies  = std::ceil( ( maxE - minE ) / _dT );
         _energies   = blaze::linspace( _nEnergies, minE, maxE );
     }
-    else {                                                                       // Not CSD Solver
-        _nEnergies = unsigned( settings->GetTEnd() / _dE );
-        _energies  = blaze::linspace( _nEnergies, 0.0, settings->GetTEnd() );    // go upward from 0 to T_end
+    else {                                                     // Not CSD Solver
+        _nEnergies = unsigned( settings->GetTEnd() / _dT );    // redundancy with nIter (<-Better) ?
+        _energies  = 0;    // blaze::linspace( _nEnergies, 0.0, settings->GetTEnd() );    // go upward from 0 to T_end =>Not needed
     }
+
+    // Adjust maxIter, depending if we have a normal run or a csd Run
+    _nIter = _nEnergies;
+    if( _settings->GetIsCSD() ) {
+        _nIter = _nEnergies - 1;    // Since CSD does not go the last energy step
+    }
+    else {
+        _nIter++;
+    }
+
     // setup problem  and store frequently used params
-    _problem = ProblemBase::Create( _settings, _mesh );
-    _sol     = _problem->SetupIC();
-    _solNew  = _sol;    // setup temporary sol variable
+
+    _problem = ProblemBase::Create( _settings, _mesh, _quadrature );
+
+    _sol = _problem->SetupIC();
+
+    _solNew = _sol;    // setup temporary sol variable
     if( !_settings->GetIsCSD() ) {
         _sigmaT = _problem->GetTotalXS( _energies );
         _sigmaS = _problem->GetScatteringXS( _energies );
@@ -73,16 +84,12 @@ SolverBase::SolverBase( Config* settings ) {
     // boundary type
     _boundaryCells = _mesh->GetBoundaryTypes();
 
-    // Solver Output
-    _solverOutput.resize( _nCells );    // LEGACY! Only used for CSD SN
-
-    PrepareScreenOutput();              // Screen Output
-    PrepareHistoryOutput();             // History Output
+    PrepareScreenOutput();     // Screen Output
+    PrepareHistoryOutput();    // History Output
 
     // initialize Helper Variables
-    _fluxNew = Vector( _nCells, 0 );
-    _flux    = Vector( _nCells, 0 );
-
+    _scalarFluxNew = Vector( _nCells, 0 );
+    _scalarFlux    = Vector( _nCells, 0 );
     // write density
     _density = _problem->GetDensity( _mesh->GetCellMidPoints() );
 }
@@ -114,26 +121,26 @@ SolverBase* SolverBase::Create( Config* settings ) {
 void SolverBase::Solve() {
 
     // --- Preprocessing ---
-
     PrepareVolumeOutput();
 
     DrawPreSolverOutput();
 
-    // Adjust maxIter, depending if we have a normal run or a csd Run
-    _maxIter = _nEnergies;
-    if( _settings->GetIsCSD() ) {
-        _maxIter = _nEnergies - 1;    // Since CSD does not go the last energy step
-    }
-
     // Preprocessing before first pseudo time step
     SolverPreprocessing();
-    unsigned rkStages = _settings->GetRKStages();
+    unsigned rkStages = _settings->GetTemporalOrder();
     // Create Backup solution for Runge Kutta
     VectorVector solRK0 = _sol;
 
+    auto start = std::chrono::high_resolution_clock::now();    // Start timing
+    std::chrono::duration<double> duration;
     // Loop over energies (pseudo-time of continuous slowing down approach)
-    for( unsigned iter = 0; iter < _maxIter; iter++ ) {
+    for( unsigned iter = 0; iter < _nIter; iter++ ) {
+        if( iter == _nIter - 1 ) {    // last iteration
+            _dT = _settings->GetTEnd() - iter * _dT;
+        }
+
         if( rkStages == 2 ) solRK0 = _sol;
+
         for( unsigned rkStep = 0; rkStep < rkStages; ++rkStep ) {
             // --- Prepare Boundaries and temp variables
             IterPreprocessing( iter + rkStep );
@@ -150,12 +157,21 @@ void SolverBase::Solve() {
         // --- Iter Postprocessing ---
         IterPostprocessing( iter );
 
+        // --- Wall time measurement
+        duration  = std::chrono::high_resolution_clock::now() - start;
+        _currTime = std::chrono::duration_cast<std::chrono::duration<double>>( duration ).count();
+
         // --- Runge Kutta Timestep ---
         if( rkStages == 2 ) RKUpdate( solRK0, _sol );
 
-        // --- Solver Output ---
+        // --- Write Output ---
         WriteVolumeOutput( iter );
         WriteScalarOutput( iter );
+
+        // --- Update Scalar Fluxes
+        _scalarFlux = _scalarFluxNew;
+
+        // --- Print Output ---
         PrintScreenOutput( iter );
         PrintHistoryOutput( iter );
         PrintVolumeOutput( iter );
@@ -166,7 +182,7 @@ void SolverBase::Solve() {
     DrawPostSolverOutput();
 }
 
-void SolverBase::RKUpdate( VectorVector sol_0, VectorVector sol_rk ) {
+void SolverBase::RKUpdate( VectorVector& sol_0, VectorVector& sol_rk ) {
 #pragma omp parallel for
     for( unsigned i = 0; i < _nCells; ++i ) {
         _sol[i] = 0.5 * ( sol_0[i] + sol_rk[i] );
@@ -179,7 +195,7 @@ void SolverBase::PrintVolumeOutput( int currEnergy ) const {
     if( _settings->GetVolumeOutputFrequency() != 0 && currEnergy % (unsigned)_settings->GetVolumeOutputFrequency() == 0 ) {
         ExportVTK( _settings->GetOutputFile() + "_" + std::to_string( currEnergy ), _outputFields, _outputFieldNames, _mesh );
     }
-    if( currEnergy == (int)_maxIter - 1 ) {    // Last iteration write without suffix.
+    if( currEnergy == (int)_nIter - 1 ) {    // Last iteration write without suffix.
         ExportVTK( _settings->GetOutputFile(), _outputFields, _outputFieldNames, _mesh );
     }
 }
@@ -204,14 +220,19 @@ double SolverBase::ComputeTimeStep( double cfl ) const {
         default: break;    // 2d as normal
     }
     // 2D case
-    double maxEdge = -1.0;
+    double charSize = __DBL_MAX__;    // minimum char size of all mesh cells in the mesh
     for( unsigned j = 0; j < _nCells; j++ ) {
-        for( unsigned l = 0; l < _normals[j].size(); l++ ) {
-            double currentEdge = _areas[j] / norm( _normals[j][l] );
-            if( currentEdge > maxEdge ) maxEdge = currentEdge;
+        double currCharSize = sqrt( _areas[j] );
+        if( currCharSize < charSize ) {
+            charSize = currCharSize;
         }
     }
-    return cfl * maxEdge;
+    auto log         = spdlog::get( "event" );
+    std::string line = "| Smallest characteristic length of a grid cell in this mesh: " + std::to_string( charSize );
+    log->info( line );
+    line = "| Corresponding maximal time-step: " + std::to_string( cfl * charSize );
+    log->info( line );
+    return cfl * charSize;
 }
 
 // --- IO ----
@@ -228,56 +249,84 @@ void SolverBase::PrepareScreenOutput() {
         // Different procedure, depending on the Group...
         switch( _settings->GetScreenOutput()[idx_field] ) {
             case MASS: _screenOutputFieldNames[idx_field] = "Mass"; break;
-
             case ITER: _screenOutputFieldNames[idx_field] = "Iter"; break;
-
+            case WALL_TIME: _screenOutputFieldNames[idx_field] = "Wall time [s]"; break;
             case RMS_FLUX: _screenOutputFieldNames[idx_field] = "RMS flux"; break;
-
             case VTK_OUTPUT: _screenOutputFieldNames[idx_field] = "VTK out"; break;
-
             case CSV_OUTPUT: _screenOutputFieldNames[idx_field] = "CSV out"; break;
-
+            case CUR_OUTFLOW: _screenOutputFieldNames[idx_field] = "Cur. outflow"; break;
+            case TOTAL_OUTFLOW: _screenOutputFieldNames[idx_field] = "Tot. outflow"; break;
+            case MAX_OUTFLOW: _screenOutputFieldNames[idx_field] = "Max outflow"; break;
+            case CUR_PARTICLE_ABSORPTION: _screenOutputFieldNames[idx_field] = "Cur. absorption"; break;
+            case TOTAL_PARTICLE_ABSORPTION: _screenOutputFieldNames[idx_field] = "Tot. absorption"; break;
+            case MAX_PARTICLE_ABSORPTION: _screenOutputFieldNames[idx_field] = "Max absorption"; break;
+            case TOTAL_PARTICLE_ABSORPTION_CENTER: _screenOutputFieldNames[idx_field] = "Tot. abs. center"; break;
+            case TOTAL_PARTICLE_ABSORPTION_VERTICAL: _screenOutputFieldNames[idx_field] = "Tot. abs. vertical wall"; break;
+            case TOTAL_PARTICLE_ABSORPTION_HORIZONTAL: _screenOutputFieldNames[idx_field] = "Tot. abs. horizontal wall"; break;
+            case PROBE_MOMENT_TIME_TRACE:
+                _screenOutputFieldNames[idx_field] = "Probe 1 u_0";
+                idx_field++;
+                _screenOutputFieldNames[idx_field] = "Probe 2 u_0";
+                if( _settings->GetProblemName() == PROBLEM_SymmetricHohlraum ) {
+                    idx_field++;
+                    _screenOutputFieldNames[idx_field] = "Probe 3 u_0";
+                    idx_field++;
+                    _screenOutputFieldNames[idx_field] = "Probe 4 u_0";
+                }
+                break;
+            case VAR_ABSORPTION_GREEN: _screenOutputFieldNames[idx_field] = "Var. absorption green"; break;
             default: ErrorMessages::Error( "Screen output field not defined!", CURRENT_FUNCTION ); break;
         }
     }
 }
 
-void SolverBase::WriteScalarOutput( unsigned iteration ) {
+void SolverBase::WriteScalarOutput( unsigned idx_iter ) {
+    unsigned n_probes = 4;
 
-    unsigned nFields = (unsigned)_settings->GetNScreenOutput();
-    double mass      = 0.0;
-
+    unsigned nFields                  = (unsigned)_settings->GetNScreenOutput();
+    const VectorVector probingMoments = _problem->GetCurrentProbeMoment();
     // -- Screen Output
     for( unsigned idx_field = 0; idx_field < nFields; idx_field++ ) {
         // Prepare all Output Fields per group
         // Different procedure, depending on the Group...
         switch( _settings->GetScreenOutput()[idx_field] ) {
-            case MASS:
-                for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
-                    mass += _fluxNew[idx_cell] * _areas[idx_cell];
-                }
-                _screenOutputFields[idx_field] = mass;
-                break;
-
-            case ITER: _screenOutputFields[idx_field] = iteration; break;
-
-            case RMS_FLUX: _screenOutputFields[idx_field] = blaze::l2Norm( _fluxNew - _flux ); break;
-
+            case MASS: _screenOutputFields[idx_field] = _problem->GetMass(); break;
+            case ITER: _screenOutputFields[idx_field] = idx_iter; break;
+            case WALL_TIME: _screenOutputFields[idx_field] = _currTime; break;
+            case RMS_FLUX: _screenOutputFields[idx_field] = _problem->GetChangeRateFlux(); break;
             case VTK_OUTPUT:
                 _screenOutputFields[idx_field] = 0;
-                if( ( _settings->GetVolumeOutputFrequency() != 0 && iteration % (unsigned)_settings->GetVolumeOutputFrequency() == 0 ) ||
-                    ( iteration == _maxIter - 1 ) /* need sol at last iteration */ ) {
+                if( ( _settings->GetVolumeOutputFrequency() != 0 && idx_iter % (unsigned)_settings->GetVolumeOutputFrequency() == 0 ) ||
+                    ( idx_iter == _nIter - 1 ) /* need sol at last iteration */ ) {
                     _screenOutputFields[idx_field] = 1;
                 }
                 break;
-
             case CSV_OUTPUT:
                 _screenOutputFields[idx_field] = 0;
-                if( ( _settings->GetHistoryOutputFrequency() != 0 && iteration % (unsigned)_settings->GetHistoryOutputFrequency() == 0 ) ||
-                    ( iteration == _maxIter - 1 ) /* need sol at last iteration */ ) {
+                if( ( _settings->GetHistoryOutputFrequency() != 0 && idx_iter % (unsigned)_settings->GetHistoryOutputFrequency() == 0 ) ||
+                    ( idx_iter == _nIter - 1 ) /* need sol at last iteration */ ) {
                     _screenOutputFields[idx_field] = 1;
                 }
                 break;
+            case CUR_OUTFLOW: _screenOutputFields[idx_field] = _problem->GetCurrentOutflow(); break;
+            case TOTAL_OUTFLOW: _screenOutputFields[idx_field] = _problem->GetTotalOutflow(); break;
+            case MAX_OUTFLOW: _screenOutputFields[idx_field] = _problem->GetMaxOrdinatewiseOutflow(); break;
+            case CUR_PARTICLE_ABSORPTION: _screenOutputFields[idx_field] = _problem->GetCurAbsorptionLattice(); break;
+            case TOTAL_PARTICLE_ABSORPTION: _screenOutputFields[idx_field] = _problem->GetTotalAbsorptionLattice(); break;
+            case MAX_PARTICLE_ABSORPTION: _screenOutputFields[idx_field] = _problem->GetMaxAbsorptionLattice(); break;
+            case TOTAL_PARTICLE_ABSORPTION_CENTER: _screenOutputFields[idx_field] = _problem->GetTotalAbsorptionHohlraumCenter(); break;
+            case TOTAL_PARTICLE_ABSORPTION_VERTICAL: _screenOutputFields[idx_field] = _problem->GetTotalAbsorptionHohlraumVertical(); break;
+            case TOTAL_PARTICLE_ABSORPTION_HORIZONTAL: _screenOutputFields[idx_field] = _problem->GetTotalAbsorptionHohlraumHorizontal(); break;
+            case PROBE_MOMENT_TIME_TRACE:
+                if( _settings->GetProblemName() == PROBLEM_SymmetricHohlraum ) n_probes = 4;
+                if( _settings->GetProblemName() == PROBLEM_QuarterHohlraum ) n_probes = 2;
+                for( unsigned i = 0; i < n_probes; i++ ) {
+                    _screenOutputFields[idx_field] = probingMoments[i][0];
+                    idx_field++;
+                }
+                idx_field--;
+                break;
+            case VAR_ABSORPTION_GREEN: _screenOutputFields[idx_field] = _problem->GetVarAbsorptionHohlraumGreen(); break;
             default: ErrorMessages::Error( "Screen output group not defined!", CURRENT_FUNCTION ); break;
         }
     }
@@ -288,64 +337,65 @@ void SolverBase::WriteScalarOutput( unsigned iteration ) {
     std::vector<SCALAR_OUTPUT> screenOutputFields = _settings->GetScreenOutput();
     for( unsigned idx_field = 0; idx_field < nFields; idx_field++ ) {
 
-        // Check first, if the field was already filled by screenoutput writer!
-        std::vector<SCALAR_OUTPUT>::iterator itScreenOutput =
-            std::find( screenOutputFields.begin(), screenOutputFields.end(), _settings->GetHistoryOutput()[idx_field] );
-
         // Prepare all Output Fields per group
         // Different procedure, depending on the Group...
         switch( _settings->GetHistoryOutput()[idx_field] ) {
-            case MASS:
-                if( screenOutputFields.end() == itScreenOutput ) {
-                    for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
-                        mass += _fluxNew[idx_cell] * _areas[idx_cell];
-                    }
-                    _historyOutputFields[idx_field] = mass;
-                }
-                else {
-                    _historyOutputFields[idx_field] = *itScreenOutput;
-                }
-                break;
-
-            case ITER: _historyOutputFields[idx_field] = iteration; break;
-
-            case RMS_FLUX:
-                if( screenOutputFields.end() == itScreenOutput ) {
-                    _screenOutputFields[idx_field] = blaze::l2Norm( _fluxNew - _flux );
-                }
-                else {
-                    _historyOutputFields[idx_field] = *itScreenOutput;
-                }
-                break;
-
+            case MASS: _historyOutputFields[idx_field] = _problem->GetMass(); break;
+            case ITER: _historyOutputFields[idx_field] = idx_iter; break;
+            case WALL_TIME: _historyOutputFields[idx_field] = _currTime; break;
+            case RMS_FLUX: _historyOutputFields[idx_field] = _problem->GetChangeRateFlux(); break;
             case VTK_OUTPUT:
                 _historyOutputFields[idx_field] = 0;
-                if( ( _settings->GetVolumeOutputFrequency() != 0 && iteration % (unsigned)_settings->GetVolumeOutputFrequency() == 0 ) ||
-                    ( iteration == _maxIter - 1 ) /* need sol at last iteration */ ) {
+                if( ( _settings->GetVolumeOutputFrequency() != 0 && idx_iter % (unsigned)_settings->GetVolumeOutputFrequency() == 0 ) ||
+                    ( idx_iter == _nIter - 1 ) /* need sol at last iteration */ ) {
                     _historyOutputFields[idx_field] = 1;
                 }
                 break;
 
             case CSV_OUTPUT:
                 _historyOutputFields[idx_field] = 0;
-                if( ( _settings->GetHistoryOutputFrequency() != 0 && iteration % (unsigned)_settings->GetHistoryOutputFrequency() == 0 ) ||
-                    ( iteration == _maxIter - 1 ) /* need sol at last iteration */ ) {
+                if( ( _settings->GetHistoryOutputFrequency() != 0 && idx_iter % (unsigned)_settings->GetHistoryOutputFrequency() == 0 ) ||
+                    ( idx_iter == _nIter - 1 ) /* need sol at last iteration */ ) {
                     _historyOutputFields[idx_field] = 1;
                 }
                 break;
-
+            case CUR_OUTFLOW: _historyOutputFields[idx_field] = _problem->GetCurrentOutflow(); break;
+            case TOTAL_OUTFLOW: _historyOutputFields[idx_field] = _problem->GetTotalOutflow(); break;
+            case MAX_OUTFLOW: _historyOutputFields[idx_field] = _problem->GetMaxOrdinatewiseOutflow(); break;
+            case CUR_PARTICLE_ABSORPTION: _historyOutputFields[idx_field] = _problem->GetCurAbsorptionLattice(); break;
+            case TOTAL_PARTICLE_ABSORPTION: _historyOutputFields[idx_field] = _problem->GetTotalAbsorptionLattice(); break;
+            case MAX_PARTICLE_ABSORPTION: _historyOutputFields[idx_field] = _problem->GetMaxAbsorptionLattice(); break;
+            case TOTAL_PARTICLE_ABSORPTION_CENTER: _historyOutputFields[idx_field] = _problem->GetTotalAbsorptionHohlraumCenter(); break;
+            case TOTAL_PARTICLE_ABSORPTION_VERTICAL: _historyOutputFields[idx_field] = _problem->GetTotalAbsorptionHohlraumVertical(); break;
+            case TOTAL_PARTICLE_ABSORPTION_HORIZONTAL: _historyOutputFields[idx_field] = _problem->GetTotalAbsorptionHohlraumHorizontal(); break;
+            case PROBE_MOMENT_TIME_TRACE:
+                if( _settings->GetProblemName() == PROBLEM_SymmetricHohlraum ) n_probes = 4;
+                if( _settings->GetProblemName() == PROBLEM_QuarterHohlraum ) n_probes = 2;
+                for( unsigned i = 0; i < n_probes; i++ ) {
+                    for( unsigned j = 0; j < 3; j++ ) {
+                        _historyOutputFields[idx_field] = probingMoments[i][j];
+                        idx_field++;
+                    }
+                }
+                idx_field--;
+                break;
+            case VAR_ABSORPTION_GREEN: _historyOutputFields[idx_field] = _problem->GetVarAbsorptionHohlraumGreen(); break;
+            case VAR_ABSORPTION_GREEN_LINE:
+                for( unsigned i = 0; i < _settings->GetNumProbingCellsLineHohlraum(); i++ ) {
+                    _historyOutputFieldNames[idx_field] = _problem->GetCurrentVarProbeValuesGreenLine()[i];
+                    idx_field++;
+                }
+                idx_field--;
+                break;
             default: ErrorMessages::Error( "History output group not defined!", CURRENT_FUNCTION ); break;
         }
     }
-    _flux = _fluxNew;
 }
 
-void SolverBase::PrintScreenOutput( unsigned iteration ) {
-    int rank;
-    MPI_Comm_rank( MPI_COMM_WORLD, &rank );
+void SolverBase::PrintScreenOutput( unsigned idx_iter ) {
     auto log = spdlog::get( "event" );
 
-    unsigned strLen  = 10;    // max width of one column
+    unsigned strLen  = 15;    // max width of one column
     char paddingChar = ' ';
 
     // assemble the line to print
@@ -356,7 +406,21 @@ void SolverBase::PrintScreenOutput( unsigned iteration ) {
 
         // Format outputs correctly
         std::vector<SCALAR_OUTPUT> integerFields    = { ITER };
-        std::vector<SCALAR_OUTPUT> scientificFields = { RMS_FLUX, MASS };
+        std::vector<SCALAR_OUTPUT> scientificFields = { RMS_FLUX,
+                                                        MASS,
+                                                        WALL_TIME,
+                                                        CUR_OUTFLOW,
+                                                        TOTAL_OUTFLOW,
+                                                        MAX_OUTFLOW,
+                                                        CUR_PARTICLE_ABSORPTION,
+                                                        TOTAL_PARTICLE_ABSORPTION,
+                                                        MAX_PARTICLE_ABSORPTION,
+                                                        TOTAL_PARTICLE_ABSORPTION_CENTER,
+                                                        TOTAL_PARTICLE_ABSORPTION_VERTICAL,
+                                                        TOTAL_PARTICLE_ABSORPTION_HORIZONTAL,
+                                                        PROBE_MOMENT_TIME_TRACE,
+                                                        VAR_ABSORPTION_GREEN,
+                                                        VAR_ABSORPTION_GREEN_LINE };
         std::vector<SCALAR_OUTPUT> booleanFields    = { VTK_OUTPUT, CSV_OUTPUT };
 
         if( !( integerFields.end() == std::find( integerFields.begin(), integerFields.end(), _settings->GetScreenOutput()[idx_field] ) ) ) {
@@ -370,29 +434,29 @@ void SolverBase::PrintScreenOutput( unsigned iteration ) {
                     std::find( scientificFields.begin(), scientificFields.end(), _settings->GetScreenOutput()[idx_field] ) ) ) {
 
             std::stringstream ss;
-            ss << _screenOutputFields[idx_field];
+            ss << TextProcessingToolbox::DoubleToScientificNotation( _screenOutputFields[idx_field] );
             tmp = ss.str();
             tmp.erase( std::remove( tmp.begin(), tmp.end(), '+' ), tmp.end() );    // removing the '+' sign
         }
 
-        if( strLen > tmp.size() )         // Padding
+        if( strLen > tmp.size() )    // Padding
             tmp.insert( 0, strLen - tmp.size(), paddingChar );
         else if( strLen < tmp.size() )    // Cutting
             tmp.resize( strLen );
 
         lineToPrint += tmp + " |";
     }
-    if( rank == 0 ) {
-        if( _settings->GetScreenOutputFrequency() != 0 && iteration % (unsigned)_settings->GetScreenOutputFrequency() == 0 ) {
-            log->info( lineToPrint );
-        }
-        else if( iteration == _maxIter - 1 ) {    // Always print last iteration
-            log->info( lineToPrint );
-        }
+    if( _settings->GetScreenOutputFrequency() != 0 && idx_iter % (unsigned)_settings->GetScreenOutputFrequency() == 0 ) {
+        log->info( lineToPrint );
+    }
+    else if( idx_iter == _nIter - 1 ) {    // Always print last iteration
+        log->info( lineToPrint );
     }
 }
 
 void SolverBase::PrepareHistoryOutput() {
+    unsigned n_probes = 4;
+
     unsigned nFields = (unsigned)_settings->GetNHistoryOutput();
 
     _historyOutputFieldNames.resize( nFields );
@@ -405,49 +469,72 @@ void SolverBase::PrepareHistoryOutput() {
         // Different procedure, depending on the Group...
         switch( _settings->GetHistoryOutput()[idx_field] ) {
             case MASS: _historyOutputFieldNames[idx_field] = "Mass"; break;
-
             case ITER: _historyOutputFieldNames[idx_field] = "Iter"; break;
-
+            case WALL_TIME: _historyOutputFieldNames[idx_field] = "Wall_time_[s]"; break;
             case RMS_FLUX: _historyOutputFieldNames[idx_field] = "RMS_flux"; break;
-
             case VTK_OUTPUT: _historyOutputFieldNames[idx_field] = "VTK_out"; break;
-
             case CSV_OUTPUT: _historyOutputFieldNames[idx_field] = "CSV_out"; break;
-
+            case CUR_OUTFLOW: _historyOutputFieldNames[idx_field] = "Cur_outflow"; break;
+            case TOTAL_OUTFLOW: _historyOutputFieldNames[idx_field] = "Total_outflow"; break;
+            case MAX_OUTFLOW: _historyOutputFieldNames[idx_field] = "Max_outflow"; break;
+            case CUR_PARTICLE_ABSORPTION: _historyOutputFieldNames[idx_field] = "Cur_absorption"; break;
+            case TOTAL_PARTICLE_ABSORPTION: _historyOutputFieldNames[idx_field] = "Total_absorption"; break;
+            case MAX_PARTICLE_ABSORPTION: _historyOutputFieldNames[idx_field] = "Max_absorption"; break;
+            case TOTAL_PARTICLE_ABSORPTION_CENTER: _historyOutputFieldNames[idx_field] = "Cumulated_absorption_center"; break;
+            case TOTAL_PARTICLE_ABSORPTION_VERTICAL: _historyOutputFieldNames[idx_field] = "Cumulated_absorption_vertical_wall"; break;
+            case TOTAL_PARTICLE_ABSORPTION_HORIZONTAL: _historyOutputFieldNames[idx_field] = "Cumulated_absorption_horizontal_wall"; break;
+            case PROBE_MOMENT_TIME_TRACE:
+                if( _settings->GetProblemName() == PROBLEM_SymmetricHohlraum ) n_probes = 4;
+                if( _settings->GetProblemName() == PROBLEM_QuarterHohlraum ) n_probes = 2;
+                for( unsigned i = 0; i < n_probes; i++ ) {
+                    for( unsigned j = 0; j < 3; j++ ) {
+                        _historyOutputFieldNames[idx_field] = "Probe " + std::to_string( i ) + " u_" + std::to_string( j );
+                        idx_field++;
+                    }
+                }
+                idx_field--;
+                break;
+            case VAR_ABSORPTION_GREEN: _historyOutputFieldNames[idx_field] = "Var. absorption green"; break;
+            case VAR_ABSORPTION_GREEN_LINE:
+                for( unsigned i = 0; i < _settings->GetNumProbingCellsLineHohlraum(); i++ ) {
+                    _historyOutputFieldNames[idx_field] = "Probe Green Line " + std::to_string( i );
+                    idx_field++;
+                }
+                idx_field--;
+                break;
             default: ErrorMessages::Error( "History output field not defined!", CURRENT_FUNCTION ); break;
         }
     }
 }
 
-void SolverBase::PrintHistoryOutput( unsigned iteration ) {
-    int rank;
-    MPI_Comm_rank( MPI_COMM_WORLD, &rank );
+void SolverBase::PrintHistoryOutput( unsigned idx_iter ) {
+
     auto log = spdlog::get( "tabular" );
 
     // assemble the line to print
     std::string lineToPrint = "";
     std::string tmp;
-    for( int idx_field = 0; idx_field < _settings->GetNScreenOutput() - 1; idx_field++ ) {
-        tmp = std::to_string( _screenOutputFields[idx_field] );
+    for( int idx_field = 0; idx_field < _settings->GetNHistoryOutput() - 1; idx_field++ ) {
+        if( idx_field == 0 ) {
+            tmp = std::to_string( _historyOutputFields[idx_field] );    // Iteration count
+        }
+        else {
+            tmp = TextProcessingToolbox::DoubleToScientificNotation( _historyOutputFields[idx_field] );
+        }
         lineToPrint += tmp + ",";
     }
-    tmp = std::to_string( _screenOutputFields[_settings->GetNScreenOutput() - 1] );
+    tmp = TextProcessingToolbox::DoubleToScientificNotation( _historyOutputFields[_settings->GetNScreenOutput() - 1] );
     lineToPrint += tmp;    // Last element without comma
 
-    if( rank == 0 ) {
-        if( _settings->GetHistoryOutputFrequency() != 0 && iteration % (unsigned)_settings->GetHistoryOutputFrequency() == 0 ) {
-            log->info( lineToPrint );
-        }
-        else if( iteration == _nEnergies - 1 ) {    // Always print last iteration
-            log->info( lineToPrint );
-        }
+    if( _settings->GetHistoryOutputFrequency() != 0 && idx_iter % (unsigned)_settings->GetHistoryOutputFrequency() == 0 ) {
+        log->info( lineToPrint );
+    }
+    else if( idx_iter == _nEnergies - 1 ) {    // Always print last iteration
+        log->info( lineToPrint );
     }
 }
 
 void SolverBase::DrawPreSolverOutput() {
-    // MPI
-    int rank;
-    MPI_Comm_rank( MPI_COMM_WORLD, &rank );
 
     // Logger
     auto log    = spdlog::get( "event" );
@@ -455,76 +542,97 @@ void SolverBase::DrawPreSolverOutput() {
 
     std::string hLine = "--";
 
-    if( rank == 0 ) {
-        unsigned strLen  = 10;    // max width of one column
-        char paddingChar = ' ';
+    unsigned strLen  = 15;    // max width of one column
+    char paddingChar = ' ';
 
-        // Assemble Header for Screen Output
-        std::string lineToPrint = "| ";
-        std::string tmpLine     = "------------";
-        for( unsigned idxFields = 0; idxFields < _settings->GetNScreenOutput(); idxFields++ ) {
-            std::string tmp = _screenOutputFieldNames[idxFields];
+    // Assemble Header for Screen Output
+    std::string lineToPrint = "| ";
+    std::string tmpLine     = "-----------------";
+    for( unsigned idxFields = 0; idxFields < _settings->GetNScreenOutput(); idxFields++ ) {
+        std::string tmp = _screenOutputFieldNames[idxFields];
 
-            if( strLen > tmp.size() )         // Padding
-                tmp.insert( 0, strLen - tmp.size(), paddingChar );
-            else if( strLen < tmp.size() )    // Cutting
-                tmp.resize( strLen );
+        if( strLen > tmp.size() )    // Padding
+            tmp.insert( 0, strLen - tmp.size(), paddingChar );
+        else if( strLen < tmp.size() )    // Cutting
+            tmp.resize( strLen );
 
-            lineToPrint += tmp + " |";
-            hLine += tmpLine;
-        }
-        log->info( "---------------------------- Solver Starts -----------------------------" );
-        log->info( "| The simulation will run for {} iterations.", _nEnergies );
-        log->info( "| The spatial grid contains {} cells.", _nCells );
-        log->info( hLine );
-        log->info( lineToPrint );
-        log->info( hLine );
-
-        std::string lineToPrintCSV = "";
-        for( int idxFields = 0; idxFields < _settings->GetNHistoryOutput() - 1; idxFields++ ) {
-            std::string tmp = _historyOutputFieldNames[idxFields];
-            lineToPrintCSV += tmp + ",";
-        }
-        lineToPrintCSV += _historyOutputFieldNames[_settings->GetNHistoryOutput() - 1];
-        logCSV->info( lineToPrintCSV );
+        lineToPrint += tmp + " |";
+        hLine += tmpLine;
     }
+    log->info( "---------------------------- Solver Starts -----------------------------" );
+    log->info( "| The simulation will run for {} iterations.", _nEnergies );
+    log->info( "| The spatial grid contains {} cells.", _nCells );
+    if( _settings->GetSolverName() != PN_SOLVER && _settings->GetSolverName() != CSD_PN_SOLVER ) {
+        log->info( "| The velocity grid contains {} points.", _quadrature->GetNq() );
+    }
+    log->info( hLine );
+    log->info( lineToPrint );
+    log->info( hLine );
+
+    std::string lineToPrintCSV = "";
+    for( int idxFields = 0; idxFields < _settings->GetNHistoryOutput() - 1; idxFields++ ) {
+        std::string tmp = _historyOutputFieldNames[idxFields];
+        lineToPrintCSV += tmp + ",";
+    }
+    lineToPrintCSV += _historyOutputFieldNames[_settings->GetNHistoryOutput() - 1];
+    logCSV->info( lineToPrintCSV );
 }
 
 void SolverBase::DrawPostSolverOutput() {
-    // MPI
-    int rank;
-    MPI_Comm_rank( MPI_COMM_WORLD, &rank );
 
     // Logger
     auto log = spdlog::get( "event" );
 
     std::string hLine = "--";
 
-    if( rank == 0 ) {
-        unsigned strLen  = 10;    // max width of one column
-        char paddingChar = ' ';
+    unsigned strLen  = 10;    // max width of one column
+    char paddingChar = ' ';
 
-        // Assemble Header for Screen Output
-        std::string lineToPrint = "| ";
-        std::string tmpLine     = "------------";
-        for( unsigned idxFields = 0; idxFields < _settings->GetNScreenOutput(); idxFields++ ) {
-            std::string tmp = _screenOutputFieldNames[idxFields];
+    // Assemble Header for Screen Output
+    std::string lineToPrint = "| ";
+    std::string tmpLine     = "------------";
+    for( unsigned idxFields = 0; idxFields < _settings->GetNScreenOutput(); idxFields++ ) {
+        std::string tmp = _screenOutputFieldNames[idxFields];
 
-            if( strLen > tmp.size() )         // Padding
-                tmp.insert( 0, strLen - tmp.size(), paddingChar );
-            else if( strLen < tmp.size() )    // Cutting
-                tmp.resize( strLen );
+        if( strLen > tmp.size() )    // Padding
+            tmp.insert( 0, strLen - tmp.size(), paddingChar );
+        else if( strLen < tmp.size() )    // Cutting
+            tmp.resize( strLen );
 
-            lineToPrint += tmp + " |";
-            hLine += tmpLine;
-        }
-        log->info( hLine );
-#ifndef BUILD_TESTING
-        log->info( "| The volume output files have been stored at " + _settings->GetOutputFile() );
-        log->info( "| The log files have been stored at " + _settings->GetLogDir() + _settings->GetLogFile() );
-#endif
-        log->info( "--------------------------- Solver Finished ----------------------------" );
+        lineToPrint += tmp + " |";
+        hLine += tmpLine;
     }
+    log->info( hLine );
+#ifndef BUILD_TESTING
+    log->info( "| The volume output files have been stored at " + _settings->GetOutputFile() );
+    log->info( "| The log files have been stored at " + _settings->GetLogDir() + _settings->GetLogFile() );
+#endif
+    log->info( "--------------------------- Solver Finished ----------------------------" );
 }
 
 void SolverBase::SolverPreprocessing() {}
+
+void SolverBase::IterPostprocessing( unsigned /*idx_iter*/ ) {
+    // --- Compute Quantities of interest for Volume and Screen Output ---
+    ComputeScalarFlux();    // Needs to be called first is a solver function
+
+    _problem->ComputeMass( _scalarFluxNew );
+    _problem->ComputeChangeRateFlux( _scalarFlux, _scalarFluxNew );
+
+    _problem->ComputeCurrentOutflow( _sol );
+    _problem->ComputeTotalOutflow( _dT );
+    _problem->ComputeMaxOrdinatewiseOutflow( _sol );
+
+    if( _settings->GetProblemName() == PROBLEM_Lattice || _settings->GetProblemName() == PROBLEM_HalfLattice ) {
+        _problem->ComputeCurrentAbsorptionLattice( _scalarFlux );
+        _problem->ComputeTotalAbsorptionLattice( _dT );
+        _problem->ComputeMaxAbsorptionLattice( _scalarFlux );
+    }
+    if( _settings->GetProblemName() == PROBLEM_SymmetricHohlraum || _settings->GetProblemName() == PROBLEM_QuarterHohlraum ) {
+        _problem->ComputeCurrentAbsorptionHohlraum( _scalarFlux );    // Unify
+        _problem->ComputeTotalAbsorptionHohlraum( _dT );              // Unify and parallelize
+        _problem->ComputeCurrentProbeMoment( _sol );
+        _problem->ComputeVarAbsorptionGreen( _scalarFlux );
+        _problem->ComputeQOIsGreenProbingLine( _scalarFlux );
+    }
+}

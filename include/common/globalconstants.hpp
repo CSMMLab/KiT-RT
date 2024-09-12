@@ -102,7 +102,11 @@ enum PROBLEM_NAME {
     PROBLEM_RadiationCT,
     PROBLEM_Meltingcube,
     PROBLEM_Meltingcube1D,
-    PROBLEM_Hohlraum
+    PROBLEM_Hohlraum,
+    PROBLEM_SymmetricHohlraum,
+    PROBLEM_QuarterHohlraum,
+    PROBLEM_Lattice,
+    PROBLEM_HalfLattice
 };
 
 inline std::map<std::string, PROBLEM_NAME> Problem_Map{ { "LINESOURCE", PROBLEM_Linesource },
@@ -116,7 +120,11 @@ inline std::map<std::string, PROBLEM_NAME> Problem_Map{ { "LINESOURCE", PROBLEM_
                                                         { "RADIATIONCT", PROBLEM_RadiationCT },
                                                         { "MELTINGCUBE", PROBLEM_Meltingcube },
                                                         { "MELTINGCUBE_1D", PROBLEM_Meltingcube1D },
-                                                        { "HOHLRAUM", PROBLEM_Hohlraum } };
+                                                        { "HOHLRAUM", PROBLEM_Hohlraum },
+                                                        { "SYMMETRIC_HOHLRAUM", PROBLEM_SymmetricHohlraum },
+                                                        { "QUARTER_HOHLRAUM", PROBLEM_QuarterHohlraum },
+                                                        { "LATTICE", PROBLEM_Lattice },
+                                                        { "HALF_LATTICE", PROBLEM_HalfLattice } };
 
 // Kernel name
 enum KERNEL_NAME { KERNEL_Isotropic, KERNEL_Isotropic1D };
@@ -165,10 +173,53 @@ inline std::map<std::string, VOLUME_OUTPUT> VolOutput_Map{
     { "ANALYTIC", ANALYTIC }, { "MINIMAL", MINIMAL }, { "MOMENTS", MOMENTS }, { "DUAL_MOMENTS", DUAL_MOMENTS }, { "MEDICAL", MEDICAL } };
 
 // Scalar output
-enum SCALAR_OUTPUT { ITER, MASS, RMS_FLUX, VTK_OUTPUT, CSV_OUTPUT };
+enum SCALAR_OUTPUT {
+    WALL_TIME,
+    ITER,
+    MASS,
+    RMS_FLUX,
+    VTK_OUTPUT,
+    CSV_OUTPUT,
+    CUR_OUTFLOW,
+    TOTAL_OUTFLOW,
+    CUR_OUTFLOW_P1,
+    TOTAL_OUTFLOW_P1,
+    CUR_OUTFLOW_P2,
+    TOTAL_OUTFLOW_P2,
+    MAX_OUTFLOW,
+    CUR_PARTICLE_ABSORPTION,
+    TOTAL_PARTICLE_ABSORPTION,
+    MAX_PARTICLE_ABSORPTION,
+    TOTAL_PARTICLE_ABSORPTION_CENTER,
+    TOTAL_PARTICLE_ABSORPTION_VERTICAL,
+    TOTAL_PARTICLE_ABSORPTION_HORIZONTAL,
+    PROBE_MOMENT_TIME_TRACE,
+    VAR_ABSORPTION_GREEN,
+    VAR_ABSORPTION_GREEN_LINE
+};
 
-inline std::map<std::string, SCALAR_OUTPUT> ScalarOutput_Map{
-    { "ITER", ITER }, { "MASS", MASS }, { "RMS_FLUX", RMS_FLUX }, { "VTK_OUTPUT", VTK_OUTPUT }, { "CSV_OUTPUT", CSV_OUTPUT } };
+inline std::map<std::string, SCALAR_OUTPUT> ScalarOutput_Map{ { "ITER", ITER },
+                                                              { "WALL_TIME", WALL_TIME },
+                                                              { "MASS", MASS },
+                                                              { "RMS_FLUX", RMS_FLUX },
+                                                              { "VTK_OUTPUT", VTK_OUTPUT },
+                                                              { "CSV_OUTPUT", CSV_OUTPUT },
+                                                              { "CUR_OUTFLOW", CUR_OUTFLOW },
+                                                              { "TOTAL_OUTFLOW", TOTAL_OUTFLOW },
+                                                              { "CUR_OUTFLOW_P1", CUR_OUTFLOW_P1 },
+                                                              { "TOTAL_OUTFLOW_P1", TOTAL_OUTFLOW_P1 },
+                                                              { "CUR_OUTFLOW_P2", CUR_OUTFLOW_P2 },
+                                                              { "TOTAL_OUTFLOW_P2", TOTAL_OUTFLOW_P2 },
+                                                              { "MAX_OUTFLOW", MAX_OUTFLOW },
+                                                              { "CUR_PARTICLE_ABSORPTION", CUR_PARTICLE_ABSORPTION },
+                                                              { "TOTAL_PARTICLE_ABSORPTION", TOTAL_PARTICLE_ABSORPTION },
+                                                              { "MAX_PARTICLE_ABSORPTION", MAX_PARTICLE_ABSORPTION },
+                                                              { "TOTAL_PARTICLE_ABSORPTION_CENTER", TOTAL_PARTICLE_ABSORPTION_CENTER },
+                                                              { "TOTAL_PARTICLE_ABSORPTION_VERTICAL", TOTAL_PARTICLE_ABSORPTION_VERTICAL },
+                                                              { "TOTAL_PARTICLE_ABSORPTION_HORIZONTAL", TOTAL_PARTICLE_ABSORPTION_HORIZONTAL },
+                                                              { "PROBE_MOMENT_TIME_TRACE", PROBE_MOMENT_TIME_TRACE },
+                                                              { "VAR_ABSORPTION_GREEN", VAR_ABSORPTION_GREEN },
+                                                              { "VAR_ABSORPTION_GREEN_LINE", VAR_ABSORPTION_GREEN_LINE } };
 
 // Spherical Basis Name
 enum SPHERICAL_BASIS_NAME { SPHERICAL_HARMONICS, SPHERICAL_MONOMIALS, SPHERICAL_MONOMIALS_ROTATED };

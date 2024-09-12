@@ -13,6 +13,16 @@ double UpwindFlux::Flux( const Vector& Omega, double psiL, double psiR, const Ve
     }
 }
 
+void UpwindFlux::Flux( const VectorVector& quadPts, const Vector& psiL, const Vector& psiR, Vector& flux, const Vector& n, unsigned n_sys ) {
+    double inner;    // Only use x and y axis in 2d case, minus because y axis is flipped for some reason
+
+    for( unsigned idx_q = 0; idx_q < n_sys; idx_q++ ) {
+        inner = quadPts[idx_q][0] * n[0] + quadPts[idx_q][1] * n[1];
+
+        flux[idx_q] += ( inner > 0 ) ? inner * psiL[idx_q] : inner * psiR[idx_q];
+    }
+}
+
 double UpwindFlux::FluxXZ( const Vector& Omega, double psiL, double psiR, const Vector& n ) const {
     double inner = Omega[0] * n[0] + Omega[2] * n[1];    // Only use x and z axis in 2d case
     if( inner > 0 ) {
