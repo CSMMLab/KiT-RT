@@ -582,10 +582,10 @@ unsigned Mesh::GetCellOfKoordinate( const double x, const double y ) const {
     unsigned koordinate_cell_id = std::numeric_limits<unsigned>::max();
     bool found                  = false;
 
-    // #pragma omp parallel for shared( found )
+#pragma omp parallel for shared( found )
     for( unsigned idx_cell = 0; idx_cell < _numCells; idx_cell++ ) {
         if( IsPointInsideCell( idx_cell, x, y ) ) {
-            // #pragma omp critical
+            #pragma omp critical
             {
                 if( !found ) {
                     koordinate_cell_id = idx_cell;

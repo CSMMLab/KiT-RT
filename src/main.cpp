@@ -32,7 +32,12 @@ int main( int argc, char** argv ) {
 // Py_SetProgramName( program );
 #ifdef BUILD_MPI
     MPI_Init( &argc, &argv );
+    printf( "MPI initialized\n" );
 #endif
+#ifndef BUILD_MPI
+    printf( "MPI not initialized\n" );
+#endif
+
     std::string filename = ParseArguments( argc, argv );
 
     // CD  Load Settings from File

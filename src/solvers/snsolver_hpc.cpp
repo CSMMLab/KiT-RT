@@ -87,6 +87,7 @@ SNSolverHPC::SNSolverHPC( Config* settings ) {
     auto nodes           = _mesh->GetNodes();
     auto cells           = _mesh->GetCells();
 
+#pragma omp parallel for
     for( unsigned idx_cell = 0; idx_cell < _nCells; idx_cell++ ) {
         _areas[idx_cell] = areas[idx_cell];
     }
