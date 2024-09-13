@@ -1456,7 +1456,7 @@ std::vector<unsigned> SNSolverHPC::linspace2D( const std::vector<double>& start,
     result.resize( num_points );
     double stepX = ( end[0] - start[0] ) / ( num_points - 1 );
     double stepY = ( end[1] - start[1] ) / ( num_points - 1 );
-
+#pragma omp parallel for
     for( unsigned i = 0; i < num_points; ++i ) {
         double x = start[0] + i * stepX;
         double y = start[1] + i * stepY;

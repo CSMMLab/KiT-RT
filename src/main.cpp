@@ -32,10 +32,10 @@ int main( int argc, char** argv ) {
 // Py_SetProgramName( program );
 #ifdef BUILD_MPI
     MPI_Init( &argc, &argv );
-    printf( "MPI initialized\n" );
+    printf( "| KiT-RT compiled with MPI and OpenMP parallelization\n" );
 #endif
 #ifndef BUILD_MPI
-    printf( "MPI not initialized\n" );
+      printf( "| KiT-RT compiled with OpenMP, but without MPI parallelization\n" );
 #endif
 
     std::string filename = ParseArguments( argc, argv );
