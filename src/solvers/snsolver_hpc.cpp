@@ -820,6 +820,8 @@ double SNSolverHPC::ComputeTimeStep( double cfl ) const {
     }
     // 2D case
     double charSize = __DBL_MAX__;    // minimum char size of all mesh cells in the mesh
+
+#pragma omp parallel for reduction( min : charSize )
     for( unsigned j = 0; j < _nCells; j++ ) {
         double currCharSize = sqrt( _areas[j] );
         if( currCharSize < charSize ) {

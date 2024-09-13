@@ -17,9 +17,8 @@
 #include "solvers/solverbase.hpp"
 
 #ifdef BUILD_GUI
-#include <QApplication>
-
 #include "mainwindow.h"
+#include <QApplication>
 #endif
 
 int main( int argc, char** argv ) {
