@@ -35,6 +35,7 @@ find_package( OpenMP REQUIRED )
 if( BUILD_MPI )
     find_package( MPI REQUIRED )
     include_directories( ${MPI_INCLUDE_PATH} )
+    message( STATUS "MPI: enabled" )
 endif()
 
 find_package( LAPACK REQUIRED )
@@ -63,6 +64,8 @@ include_directories( ${CMAKE_SOURCE_DIR}/ext/spdlog/include )
 
 if( BUILD_MPI )
     set( CORE_LIBRARIES ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} ${MPI_LIBRARIES} ${VTK_LIBRARIES} OpenMP::OpenMP_CXX -lstdc++fs )
+    message( STATUS "MPI: libraries loaded" )
+
 else()
     set( CORE_LIBRARIES ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES}  ${VTK_LIBRARIES} OpenMP::OpenMP_CXX -lstdc++fs )
 endif()

@@ -50,8 +50,13 @@ void ExportVTK( const std::string fileName,
                 const std::vector<std::vector<std::string>>& outputFieldNames,
                 const Mesh* mesh ) {
     int rank = 0;
-    // MPI_Comm_rank( MPI_COMM_WORLD, &rank );
-    if( rank == 0 ) {
+    int nprocs = 1;
+#ifdef BUILD_MPI
+    // Initialize MPI
+    MPI_Comm_size( MPI_COMM_WORLD, &nprocs );
+    MPI_Comm_rank( MPI_COMM_WORLD, &rank );
+#endif    
+if( rank == 0 ) {
         unsigned dim             = mesh->GetDim();
         unsigned numCells        = mesh->GetNumCells();
         unsigned numNodes        = mesh->GetNumNodes();
@@ -140,7 +145,9 @@ void ExportVTK( const std::string fileName,
         //  auto log = spdlog::get( "event" );
         //  log->info( "Result successfully exported to '{0}'!", fileNameWithExt );
     }
-    // MPI_Barrier( MPI_COMM_WORLD );
+#ifdef BUILD_MPI
+       MPI_Barrier( MPI_COMM_WORLD );
+#endif
 }
 
 Mesh* LoadSU2MeshFromFile( const Config* settings ) {
