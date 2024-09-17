@@ -1,4 +1,4 @@
-#ifdef BUILD_MPI
+#ifdef IMPORT_MPI
 #include <mpi.h>
 #endif
 #include "common/config.hpp"
@@ -11,12 +11,12 @@
 #include "toolboxes/textprocessingtoolbox.hpp"
 
 SNSolverHPC::SNSolverHPC( Config* settings ) {
-#ifdef BUILD_MPI
+#ifdef IMPORT_MPI
     // Initialize MPI
     MPI_Comm_size( MPI_COMM_WORLD, &_numProcs );
     MPI_Comm_rank( MPI_COMM_WORLD, &_rank );
 #endif
-#ifndef BUILD_MPI
+#ifndef IMPORT_MPI
     _numProcs = 1;    // default values
     _rank     = 0;
 #endif
@@ -148,7 +148,7 @@ SNSolverHPC::SNSolverHPC( Config* settings ) {
         }
         // _mass += _scalarFlux[idx_cell] * _areas[idx_cell];
     }
-#ifdef BUILD_MPI
+#ifdef IMPORT_MPI
     MPI_Barrier( MPI_COMM_WORLD );
 #endif
     SetGhostCells();
@@ -156,7 +156,7 @@ SNSolverHPC::SNSolverHPC( Config* settings ) {
         PrepareScreenOutput();     // Screen Output
         PrepareHistoryOutput();    // History Output
     }
-#ifdef BUILD_MPI
+#ifdef IMPORT_MPI
     MPI_Barrier( MPI_COMM_WORLD );
 #endif
     delete quad;
@@ -530,12 +530,12 @@ void SNSolverHPC::FVMUpdate() {
         temp_scalarFlux[idx_cell] = localScalarFlux;    // set flux
     }
 // MPI Allreduce: _scalarFlux
-#ifdef BUILD_MPI
+#ifdef IMPORT_MPI
     MPI_Barrier( MPI_COMM_WORLD );
     MPI_Allreduce( temp_scalarFlux.data(), _scalarFlux.data(), _nCells, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
     MPI_Barrier( MPI_COMM_WORLD );
 #endif
-#ifndef BUILD_MPI
+#ifndef IMPORT_MPI
     _scalarFlux = temp_scalarFlux;
 #endif
 }
@@ -679,7 +679,7 @@ void SNSolverHPC::IterPostprocessing() {
         }
     }
 // MPI Allreduce
-#ifdef BUILD_MPI
+#ifdef IMPORT_MPI
     double tmp_curScalarOutflow      = 0.0;
     double tmp_curScalarOutflowPeri1 = 0.0;
     double tmp_curScalarOutflowPeri2 = 0.0;
@@ -755,12 +755,12 @@ void SNSolverHPC::IterPostprocessing() {
 
         // probe values green
         ComputeQOIsGreenProbingLine();
-#ifdef BUILD_MPI
+#ifdef IMPORT_MPI
         MPI_Barrier( MPI_COMM_WORLD );
         MPI_Allreduce( temp_probingMoments.data(), _probingMoments.data(), 3 * n_probes, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
         MPI_Barrier( MPI_COMM_WORLD );
 #endif
-#ifndef BUILD_MPI
+#ifndef IMPORT_MPI
         for( unsigned idx_probe = 0; idx_probe < n_probes; idx_probe++ ) {    // Loop over probing cells
             _probingMoments[Idx2D( idx_probe, 0, 3 )] = temp_probingMoments[Idx2D( idx_probe, 0, 3 )];
             _probingMoments[Idx2D( idx_probe, 1, 3 )] = temp_probingMoments[Idx2D( idx_probe, 1, 3 )];
@@ -1147,7 +1147,7 @@ void SNSolverHPC::PrintHistoryOutput( unsigned idx_iter ) {
         }
         lineToPrint += tmp + ",";
     }
-    tmp = TextProcessingToolbox::DoubleToScientificNotation( _historyOutputFields[_settings->GetNScreenOutput() - 1] );
+    tmp = TextProcessingToolbox::DoubleToScientificNotation( _historyOutputFields[_settings->GetNHistoryOutput() - 1] );
     lineToPrint += tmp;    // Last element without comma
 
     if( _settings->GetHistoryOutputFrequency() != 0 && idx_iter % (unsigned)_settings->GetHistoryOutputFrequency() == 0 ) {
