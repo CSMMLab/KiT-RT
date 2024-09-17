@@ -6,7 +6,7 @@
 #include <filesystem>
 #include <iostream>
 #include <map>
-#ifdef BUILD_MPI
+#ifdef IMPORT_MPI
 #include <mpi.h>
 #endif
 #include <omp.h>
@@ -28,7 +28,7 @@ Mesh::Mesh( const Config* settings,
     }
     int nprocs = 1;
     int rank   = 0;
-#ifdef BUILD_MPI
+#ifdef IMPORT_MPI
     MPI_Comm_size( MPI_COMM_WORLD, &nprocs );
     MPI_Comm_rank( MPI_COMM_WORLD, &rank );
 #endif
@@ -95,7 +95,7 @@ Mesh::~Mesh() {}
 void Mesh::ComputeConnectivity() {
     int nprocs = 1;
     int rank   = 0;
-#ifdef BUILD_MPI
+#ifdef IMPORT_MPI
     MPI_Comm_size( MPI_COMM_WORLD, &nprocs );
     MPI_Comm_rank( MPI_COMM_WORLD, &rank );
 #endif
@@ -577,16 +577,15 @@ double Mesh::GetDistanceToOrigin( unsigned idx_cell ) const {
     return sqrt( distance );
 }
 
-
 unsigned Mesh::GetCellOfKoordinate( const double x, const double y ) const {
     // Experimental parallel implementation
     unsigned koordinate_cell_id = std::numeric_limits<unsigned>::max();
     bool found                  = false;
 
-//#pragma omp parallel for shared( found )
+    // #pragma omp parallel for shared( found )
     for( unsigned idx_cell = 0; idx_cell < _numCells; idx_cell++ ) {
         if( IsPointInsideCell( idx_cell, x, y ) ) {
-            //#pragma omp critical
+            // #pragma omp critical
             {
                 if( !found ) {
                     koordinate_cell_id = idx_cell;

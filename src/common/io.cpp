@@ -15,7 +15,7 @@
 #include <iomanip>
 #include <iostream>
 
-#ifdef BUILD_MPI
+#ifdef IMPORT_MPI
 #include <mpi.h>
 #endif
 
@@ -51,7 +51,7 @@ void ExportVTK( const std::string fileName,
                 const Mesh* mesh ) {
     int rank   = 0;
     int nprocs = 1;
-#ifdef BUILD_MPI
+#ifdef IMPORT_MPI
     // Initialize MPI
     MPI_Comm_size( MPI_COMM_WORLD, &nprocs );
     MPI_Comm_rank( MPI_COMM_WORLD, &rank );
@@ -469,7 +469,7 @@ std::string ParseArguments( int argc, char* argv[] ) {
 void PrintLogHeader( std::string inputFile ) {
     int nprocs = 1;
     int rank   = 0;
-#ifdef BUILD_MPI
+#ifdef IMPORT_MPI
     // Initialize MPI
     MPI_Comm_size( MPI_COMM_WORLD, &nprocs );
     MPI_Comm_rank( MPI_COMM_WORLD, &rank );
@@ -509,7 +509,7 @@ void PrintLogHeader( std::string inputFile ) {
         }
         // log->info( "------------------------------------------------------------------------" );
     }
-#ifdef BUILD_MPI
+#ifdef IMPORT_MPI
     MPI_Barrier( MPI_COMM_WORLD );
 #endif
 }

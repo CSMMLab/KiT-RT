@@ -5,7 +5,7 @@
  *
  * Disclaimer: This class structure was copied and modifed with open source permission from SU2 v7.0.3 https://su2code.github.io/
  */
-#ifdef BUILD_MPI
+#ifdef IMPORT_MPI
 #include <mpi.h>
 #endif
 #include "common/config.hpp"
@@ -1207,7 +1207,7 @@ bool Config::TokenizeString( string& str, string& option_name, vector<string>& o
 
 void Config::InitLogger() {
     int rank = 0;
-#ifdef BUILD_MPI
+#ifdef IMPORT_MPI
     MPI_Comm_rank( MPI_COMM_WORLD, &rank );    // Initialize MPI
 #endif
 
@@ -1366,7 +1366,7 @@ void Config::InitLogger() {
             spdlog::flush_every( std::chrono::seconds( 5 ) );
         }
     }
-#ifdef BUILD_MPI
+#ifdef IMPORT_MPI
     MPI_Barrier( MPI_COMM_WORLD );
 #endif
 }

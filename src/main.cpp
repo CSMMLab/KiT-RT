@@ -4,7 +4,7 @@
  *  @version: 0.1
  */
 
-#ifdef BUILD_MPI
+#ifdef IMPORT_MPI
 #include <mpi.h>
 #endif
 #include <omp.h>
@@ -30,12 +30,12 @@ int main( int argc, char** argv ) {
 #else
 // wchar_t* program = Py_DecodeLocale( argv[0], NULL );
 // Py_SetProgramName( program );
-#ifdef BUILD_MPI
+#ifdef IMPORT_MPI
     MPI_Init( &argc, &argv );
     printf( "| KiT-RT compiled with MPI and OpenMP parallelization\n" );
 #endif
-#ifndef BUILD_MPI
-      printf( "| KiT-RT compiled with OpenMP, but without MPI parallelization\n" );
+#ifndef IMPORT_MPI
+    printf( "| KiT-RT compiled with OpenMP, but without MPI parallelization\n" );
 #endif
 
     std::string filename = ParseArguments( argc, argv );
@@ -70,7 +70,7 @@ int main( int argc, char** argv ) {
     }
 
     delete config;
-#ifdef BUILD_MPI
+#ifdef IMPORT_MPI
     MPI_Finalize();
 #endif
 

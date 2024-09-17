@@ -9,7 +9,6 @@ option( BUILD_UNITY "enables unity build for faster compile times" ON )
 option( BUILD_CODE_COV "enables compiler option required for code coverage analysis" OFF )
 option( BUILD_ML "enables build with tensorflow backend access" OFF )
 option( BUILD_MPI "enables build with MPI access" OFF )
-add_definitions(-DBUILD_MPI)
 #################################################
 
 
@@ -33,6 +32,7 @@ find_package( OpenMP REQUIRED )
 
 message(STATUS "MPI build flag: ${BUILD_MPI}")
 if( BUILD_MPI )
+    add_definitions(-DIMPORT_MPI)
     find_package( MPI REQUIRED )
     include_directories( ${MPI_INCLUDE_PATH} )
     message(STATUS "C++ compiler: ${CMAKE_CXX_COMPILER}")
