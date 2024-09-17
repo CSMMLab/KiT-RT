@@ -295,8 +295,10 @@ void SNSolverHPC::Solve() {
             PrintHistoryOutput( iter );
             PrintVolumeOutput( iter );
         }
+#ifdef BUILD_MPI
+        MPI_Barrier( MPI_COMM_WORLD );
+#endif
     }
-
     // --- Postprocessing ---
     if( _rank == 0 ) {
         DrawPostSolverOutput();
