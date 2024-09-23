@@ -1262,14 +1262,11 @@ void SNSolverHPC::WriteVolumeOutput( unsigned idx_iter ) {
                     break;
 
                 case MOMENTS:
-#ifdef BUILD_MPI
-        MPI_Barrier( MPI_COMM_WORLD );
-#endif
 #pragma omp parallel for
                     for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
                         _outputFields[idx_group][0][idx_cell] = 0.0;
                         _outputFields[idx_group][1][idx_cell] = 0.0;
-                        for( unsigned idx_sys = _startSysIdx; idx_sys < _endSysIdx; idx_sys++ ) {    // TODO
+                        for( unsigned idx_sys = 0; idx_sys < _localNSys; idx_sys++ ) {
                              _outputFields[idx_group][0][idx_cell] +=
                                  _quadPts[Idx2D( idx_sys, 0, _nDim )] * _sol[Idx2D( idx_cell, idx_sys, _localNSys )] * _quadWeights[idx_sys];
                              _outputFields[idx_group][1][idx_cell] +=
@@ -1277,6 +1274,7 @@ void SNSolverHPC::WriteVolumeOutput( unsigned idx_iter ) {
                         }
                     }
 #ifdef BUILD_MPI
+        MPI_Barrier( MPI_COMM_WORLD );
         MPI_Allreduce(   _outputFields[idx_group][0].data(),   _outputFields[idx_group][0].data(), _nCells, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
         MPI_Allreduce(   _outputFields[idx_group][1].data(),   _outputFields[idx_group][1].data(), _nCells, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
         MPI_Barrier( MPI_COMM_WORLD );
