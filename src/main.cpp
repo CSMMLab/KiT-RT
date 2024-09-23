@@ -32,7 +32,11 @@ int main( int argc, char** argv ) {
 // Py_SetProgramName( program );
 #ifdef IMPORT_MPI
     MPI_Init( &argc, &argv );
-    printf( "| KiT-RT compiled with MPI and OpenMP parallelization\n" );
+    int rank;
+    MPI_Comm_rank( MPI_COMM_WORLD, &rank );
+    if ( rank == 0 ) {
+        printf( "| KiT-RT compiled with MPI and OpenMP parallelization\n" );
+    }
 #endif
 #ifndef IMPORT_MPI
     printf( "| KiT-RT compiled with OpenMP, but without MPI parallelization\n" );

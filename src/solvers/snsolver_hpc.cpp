@@ -293,8 +293,11 @@ void SNSolverHPC::Solve() {
             // --- Print Output ---
             PrintScreenOutput( iter );
             PrintHistoryOutput( iter );
-            PrintVolumeOutput( iter );
         }
+#ifdef BUILD_MPI
+        MPI_Barrier( MPI_COMM_WORLD );
+#endif
+        PrintVolumeOutput( iter );
 #ifdef BUILD_MPI
         MPI_Barrier( MPI_COMM_WORLD );
 #endif
@@ -308,11 +311,15 @@ void SNSolverHPC::Solve() {
 void SNSolverHPC::PrintVolumeOutput( int idx_iter ) {
     if( _settings->GetVolumeOutputFrequency() != 0 && idx_iter % (unsigned)_settings->GetVolumeOutputFrequency() == 0 ) {
         WriteVolumeOutput( idx_iter );
-        ExportVTK( _settings->GetOutputFile() + "_" + std::to_string( idx_iter ), _outputFields, _outputFieldNames, _mesh );    // slow
+        if(_rank==0){
+            ExportVTK( _settings->GetOutputFile() + "_" + std::to_string( idx_iter ), _outputFields, _outputFieldNames, _mesh );    // slow
+        }
     }
     if( idx_iter == (int)_nIter - 1 ) {    // Last iteration write without suffix.
         WriteVolumeOutput( idx_iter );
-        ExportVTK( _settings->GetOutputFile(), _outputFields, _outputFieldNames, _mesh );
+        if(_rank==0){
+            ExportVTK( _settings->GetOutputFile(), _outputFields, _outputFieldNames, _mesh );
+        }
     }
 }
 
@@ -1249,30 +1256,32 @@ void SNSolverHPC::WriteVolumeOutput( unsigned idx_iter ) {
         for( unsigned idx_group = 0; idx_group < nGroups; idx_group++ ) {
             switch( _settings->GetVolumeOutput()[idx_group] ) {
                 case MINIMAL:
-                    // for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
-                    _outputFields[idx_group][0] = _scalarFlux;    //[idx_cell];
-                    //}
+                    if(_rank==0){
+                        _outputFields[idx_group][0] = _scalarFlux;   
+                    }
                     break;
 
                 case MOMENTS:
+#ifdef BUILD_MPI
+        MPI_Barrier( MPI_COMM_WORLD );
+#endif
 #pragma omp parallel for
                     for( unsigned idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {
                         _outputFields[idx_group][0][idx_cell] = 0.0;
                         _outputFields[idx_group][1][idx_cell] = 0.0;
-                        for( unsigned idx_moments = 0; idx_moments < _nOutputMoments; idx_moments++ ) {
-                            _outputFields[idx_group][0][idx_cell] = 0.0;
-                            _outputFields[idx_group][1][idx_cell] = 0.0;
-                            _outputFields[idx_group][2][idx_cell] = 0.0;
-                            // for( unsigned idx_sys = _startSysIdx; idx_sys < _endSysIdx; idx_sys++ ) {    // TODO
-                            //     _outputFields[idx_group][0][idx_cell] +=
-                            //         _quadPts[Idx2D( idx_sys, 0, _nDim )] * _sol[Idx2D( idx_cell, idx_sys, _localNSys )] * _quadWeights[idx_sys];
-                            //     _outputFields[idx_group][1][idx_cell] +=
-                            //         _quadPts[Idx2D( idx_sys, 1, _nDim )] * _sol[Idx2D( idx_cell, idx_sys, _localNSys )] * _quadWeights[idx_sys];
-                            // }
+                        for( unsigned idx_sys = _startSysIdx; idx_sys < _endSysIdx; idx_sys++ ) {    // TODO
+                             _outputFields[idx_group][0][idx_cell] +=
+                                 _quadPts[Idx2D( idx_sys, 0, _nDim )] * _sol[Idx2D( idx_cell, idx_sys, _localNSys )] * _quadWeights[idx_sys];
+                             _outputFields[idx_group][1][idx_cell] +=
+                                 _quadPts[Idx2D( idx_sys, 1, _nDim )] * _sol[Idx2D( idx_cell, idx_sys, _localNSys )] * _quadWeights[idx_sys];
                         }
                     }
+#ifdef BUILD_MPI
+        MPI_Allreduce(   _outputFields[idx_group][0].data(),   _outputFields[idx_group][0].data(), _nCells, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
+        MPI_Allreduce(   _outputFields[idx_group][1].data(),   _outputFields[idx_group][1].data(), _nCells, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
+        MPI_Barrier( MPI_COMM_WORLD );
+#endif
                     break;
-
                 default: ErrorMessages::Error( "Volume Output Group not defined for HPC SN Solver!", CURRENT_FUNCTION ); break;
             }
         }
