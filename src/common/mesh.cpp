@@ -604,8 +604,8 @@ unsigned Mesh::GetCellOfKoordinate( const double x, const double y ) const {
 std::vector<unsigned> Mesh::GetCellsofBall( const double x, const double y, const double r ) const {
     std::vector<unsigned> cells_in_ball;
 
-    // Experimental parallel implementation
-    // #pragma omp parallel for
+// Experimental parallel implementation
+#pragma omp parallel for
     for( unsigned idx_cell = 0; idx_cell < _numCells; idx_cell++ ) {
         // Assume GetCellCenter returns the center coordinates of the cell
         double cell_x = _cellMidPoints[idx_cell][0];
@@ -615,7 +615,7 @@ std::vector<unsigned> Mesh::GetCellsofBall( const double x, const double y, cons
         double distance = std::sqrt( ( cell_x - x ) * ( cell_x - x ) + ( cell_y - y ) * ( cell_y - y ) );
 
         if( distance <= r ) {
-            // #pragma omp critical
+#pragma omp critical
             { cells_in_ball.push_back( idx_cell ); }
         }
     }

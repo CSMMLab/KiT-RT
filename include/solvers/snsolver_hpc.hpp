@@ -20,9 +20,9 @@ class SNSolverHPC
   private:
     int _rank;
     int _numProcs;
-    unsigned _localNSys;
-    unsigned _startSysIdx;
-    unsigned _endSysIdx;
+    unsigned long _localNSys;
+    unsigned long _startSysIdx;
+    unsigned long _endSysIdx;
 
     double _currTime;  /*!< @brief wall-time after current iteration */
     Config* _settings; /*!< @brief config class for global information */
@@ -30,16 +30,16 @@ class SNSolverHPC
     ProblemBase* _problem;
 
     // Time
-    unsigned _nIter; /*!< @brief number of time steps, for non CSD, this equals _nEnergies, for _csd, _maxIter =_nEnergies-1*/
-    double _dT;      /*!< @brief energy/time step size */
+    unsigned long _nIter; /*!< @brief number of time steps, for non CSD, this equals _nEnergies, for _csd, _maxIter =_nEnergies-1*/
+    double _dT;           /*!< @brief energy/time step size */
 
     // Mesh related members, memory optimized
-    unsigned _nCells; /*!< @brief number of spatial cells */
-    unsigned _nSys;   /*!< @brief number of equations in the transport system, i.e. num quad pts */
-    unsigned _nq;     /*!< @brief number of quadrature points */
-    unsigned _nDim;
-    unsigned _nNbr;
-    unsigned _nNodes;
+    unsigned long _nCells; /*!< @brief number of spatial cells */
+    unsigned long _nSys;   /*!< @brief number of equations in the transport system, i.e. num quad pts */
+    unsigned long _nq;     /*!< @brief number of quadrature points */
+    unsigned long _nDim;
+    unsigned long _nNbr;
+    unsigned long _nNodes;
 
     std::vector<double> _areas;         /*!< @brief surface area of all spatial cells,
                                            dim(_areas) = _NCells */
@@ -111,9 +111,9 @@ class SNSolverHPC
     double _curAbsorptionHohlraumVertical;
     double _curAbsorptionHohlraumHorizontal;
     double _varAbsorptionHohlraumGreen;
-    std::vector<  std::vector<unsigned>> _probingCellsHohlraum; /*!< @brief Indices of cells that contain a probing sensor */
-    std::vector<double> _probingMoments;         /*!< @brief Solution Momnets at the probing cells that contain a probing sensor */
-    unsigned _probingMomentsTimeIntervals;       /*!< @brief Solution Momnets at the probing cells that contain a probing sensor */
+    std::vector<std::vector<unsigned>> _probingCellsHohlraum; /*!< @brief Indices of cells that contain a probing sensor */
+    std::vector<double> _probingMoments;                      /*!< @brief Solution Momnets at the probing cells that contain a probing sensor */
+    unsigned _probingMomentsTimeIntervals;                    /*!< @brief Solution Momnets at the probing cells that contain a probing sensor */
 
     unsigned _nProbingCellsLineGreen;                 /*!< @brief Number of sampling cells that contain a probing sensor for the sliding window */
     std::vector<unsigned> _probingCellsLineGreen;     /*!< @brief Indices of cells that contain a probing sensor for the sliding window */
@@ -198,8 +198,8 @@ class SNSolverHPC
     void DrawPostSolverOutput();
 
     // Helper
-    unsigned Idx2D( unsigned idx1, unsigned idx2, unsigned len2 );
-    unsigned Idx3D( unsigned idx1, unsigned idx2, unsigned idx3, unsigned len2, unsigned len3 );
+    unsigned long Idx2D( unsigned long idx1, unsigned long idx2, unsigned long len2 );
+    unsigned long Idx3D( unsigned long idx1, unsigned long idx2, unsigned long idx3, unsigned long len2, unsigned long len3 );
     bool IsAbsorptionLattice( double x, double y ) const;
     void ComputeCellsPerimeterLattice();
 
