@@ -115,8 +115,13 @@ SNSolverHPC::SNSolverHPC( Config* settings ) {
         for( unsigned long idx_dim = 0; idx_dim < _nDim; idx_dim++ ) {
             _quadPts[Idx2D( idx_sys, idx_dim, _nDim )] = quadPoints[idx_sys + _startSysIdx][idx_dim];
         }
-        _quadWeights[idx_sys] =
-            2.0 * quadWeights[idx_sys + _startSysIdx];    // Rescaling of quadweights TODO: Check if this needs general refactoring
+        if( _settings->GetQuadName() == QUAD_GaussLegendreTensorized2D ) {
+            _quadWeights[idx_sys] =
+                2.0 * quadWeights[idx_sys + _startSysIdx];    // Rescaling of quadweights TODO: Check if this needs general refactoring
+        }
+        else {
+            _quadWeights[idx_sys] = quadWeights[idx_sys + _startSysIdx];    // Rescaling of quadweights TODO: Check if this needs general refactoring}
+        }
     }
 
 #pragma omp parallel for
