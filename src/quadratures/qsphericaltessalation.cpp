@@ -14,33 +14,72 @@ QSphericalTessalation::QSphericalTessalation( Config* settings ) : QuadratureBas
     _supportedDimensions = { 2 };    // Extension to 3d is straightforward
 }
 
+std::vector<std::array<std::array<double, 3>, 3>> QSphericalTessalation::generate_tessellation( const std::array<std::array<double, 3>, 3>& triangle,
+                                                                                                int order ) {
+    std::vector<std::array<std::array<double, 3>, 3>> triangles;
+
+    // Vertices of the triangle
+    std::array<double, 3> A = triangle[0];
+    std::array<double, 3> B = triangle[1];
+    std::array<double, 3> C = triangle[2];
+
+    // Generate grid points along edges and inside the triangle
+    std::vector<std::array<double, 3>> grid_points;
+    for( int i = 0; i <= order; ++i ) {
+        for( int j = 0; j <= order - i; ++j ) {
+            double alpha                = static_cast<double>( i ) / order;
+            double beta                 = static_cast<double>( j ) / order;
+            double gamma                = 1.0 - alpha - beta;
+            std::array<double, 3> point = {
+                alpha * A[0] + beta * B[0] + gamma * C[0], alpha * A[1] + beta * B[1] + gamma * C[1], alpha * A[2] + beta * B[2] + gamma * C[2] };
+            grid_points.push_back( point );
+        }
+    }
+
+    // Create triangles from the grid points
+    auto idx = [&]( int i, int j ) -> int { return i * ( order + 1 ) - ( i * ( i - 1 ) ) / 2 + j; };
+
+    for( int i = 0; i < order; ++i ) {
+        for( int j = 0; j < order - i; ++j ) {
+            std::array<double, 3> p1 = grid_points[idx( i, j )];
+            std::array<double, 3> p2 = grid_points[idx( i + 1, j )];
+            std::array<double, 3> p3 = grid_points[idx( i, j + 1 )];
+            triangles.push_back( { p1, p2, p3 } );
+
+            if( j < order - i - 1 ) {
+                std::array<double, 3> p4 = grid_points[idx( i + 1, j + 1 )];
+                triangles.push_back( { p2, p4, p3 } );
+            }
+        }
+    }
+
+    return triangles;
+}
+
 void QSphericalTessalation::SetPointsAndWeights() {
     // Define basal triangle vertices
-    std::array<double, 3> A                             = { 1.0, 0.0, 0.0 };
-    std::array<double, 3> B                             = { 0.0, 1.0, 0.0 };
-    std::array<double, 3> C                             = { 0.0, 0.0, 1.0 };
-    std::array<std::array<double, 3>, 3> basal_triangle = { A, B, C };
+    std::array<double, 3> A = { 1.0, 0.0, 0.0 };
+    std::array<double, 3> B = { 0.0, 1.0, 0.0 };
+    std::array<double, 3> C = { 0.0, 0.0, 1.0 };
 
-    // Perform recursive subdivision
-    std::vector<std::array<std::array<double, 3>, 3>> final_triangles = recursive_subdivide( { basal_triangle }, _order );
+    // Generate the tessellation for the given order
+    std::vector<std::array<std::array<double, 3>, 3>> final_triangles = generate_tessellation( { A, B, C }, _order );
 
-    // Compute centroids and map to unit sphere
+    // Compute centroids of triangles and map them to the unit sphere
     std::vector<std::array<double, 3>> centroids;
     std::vector<std::array<double, 3>> mapped_points;
     std::vector<double> weights;
 
     for( const auto& tri : final_triangles ) {
+        // Compute the centroid
         auto centroid        = compute_centroid( tri );
         auto mapped_centroid = map_to_unit_sphere( centroid );
-        centroids.push_back( centroid );
-        mapped_points.push_back( mapped_centroid );
+        centroids.push_back( mapped_centroid );
 
-        // Map triangle vertices to unit sphere
-        std::array<double, 3> a = map_to_unit_sphere( tri[0] );
-        std::array<double, 3> b = map_to_unit_sphere( tri[1] );
-        std::array<double, 3> c = map_to_unit_sphere( tri[2] );
-
-        // Calculate area using spherical excess
+        // Compute the area of the spherical triangle
+        auto a      = map_to_unit_sphere( tri[0] );
+        auto b      = map_to_unit_sphere( tri[1] );
+        auto c      = map_to_unit_sphere( tri[2] );
         double area = spherical_triangle_area( a, b, c );
         weights.push_back( area );
     }
@@ -49,40 +88,36 @@ void QSphericalTessalation::SetPointsAndWeights() {
     std::vector<std::array<double, 3>> full_points;
     std::vector<double> full_weights;
 
-    // Perform reflection and permutation
-    reflect_and_permute( mapped_points, weights, full_points, full_weights );
+    // Perform reflection and permutation (as done in the original code)
+    reflect_and_permute( centroids, weights, full_points, full_weights );
 
+    // Set the points and weights for the quadrature
     _nq = full_points.size();
     _pointsKarth.resize( _nq );
     _pointsSphere.resize( _nq );
     _weights.resize( _nq );
+
     for( size_t i = 0; i < _nq; ++i ) {
         _pointsKarth[i] = { full_points[i][0], full_points[i][1], full_points[i][2] };
         _weights[i]     = full_weights[i];
     }
-    double w = 0.0;
-    // Transform _points to _pointsSphere ==>transform (x,y,z) into (my,phi)
-    for( unsigned idx = 0; idx < _nq; idx++ ) {
-        _pointsSphere[idx].resize( 3 );                                                 // (my,phi)
-        _pointsSphere[idx][0] = _pointsKarth[idx][2];                                   // my = z
-        _pointsSphere[idx][1] = atan2( _pointsKarth[idx][1], _pointsKarth[idx][0] );    // phi in [-pi,pi]
-        _pointsSphere[idx][2] = 1.0;                                                    // radius r
 
-        // adapt intervall s.t. phi in [0,2pi]
+    double w = 0.0;
+    for( unsigned idx = 0; idx < _nq; idx++ ) {
+        _pointsSphere[idx].resize( 3 );
+        _pointsSphere[idx][0] = _pointsKarth[idx][2];
+        _pointsSphere[idx][1] = atan2( _pointsKarth[idx][1], _pointsKarth[idx][0] );
+        _pointsSphere[idx][2] = 1.0;
+
         if( _pointsSphere[idx][1] < 0 ) {
             _pointsSphere[idx][1] = 2 * M_PI + _pointsSphere[idx][1];
         }
 
-        // std::cout << _pointsKarth[idx][0] << " " << _pointsKarth[idx][1] << " " << _pointsKarth[idx][2] << std::endl;
-        // std::cout << _pointsSphere[idx][0] << " " << _pointsSphere[idx][1] << " " << _pointsSphere[idx][2] << std::endl;
-        // std::cout << _weights[idx] << std::endl;
         w += _weights[idx];
     }
-    // std::cout << w << std::endl;
-    // exit( 1 );
 }
 
-void QSphericalTessalation::SetNq() { _nq = pow( GetOrder(), 4 ); }
+void QSphericalTessalation::SetNq() { _nq = 4 * pow( GetOrder(), 2 ); }
 
 void QSphericalTessalation::SetConnectivity() {    // TODO
     // Not initialized for this quadrature.
@@ -91,45 +126,6 @@ void QSphericalTessalation::SetConnectivity() {    // TODO
 }
 
 bool QSphericalTessalation::CheckOrder() { return true; }
-
-// Helper function to compute midpoint of two vectors
-std::array<double, 3> QSphericalTessalation::midpoint( const std::array<double, 3>& p1, const std::array<double, 3>& p2 ) {
-    return { ( p1[0] + p2[0] ) / 2, ( p1[1] + p2[1] ) / 2, ( p1[2] + p2[2] ) / 2 };
-}
-
-// Subdivide a triangle into four smaller triangles
-std::vector<std::array<std::array<double, 3>, 3>> QSphericalTessalation::subdivide_triangle( const std::array<std::array<double, 3>, 3>& triangle ) {
-    std::array<double, 3> A = triangle[0];
-    std::array<double, 3> B = triangle[1];
-    std::array<double, 3> C = triangle[2];
-
-    // Compute midpoints of edges
-    std::array<double, 3> AB_mid = midpoint( A, B );
-    std::array<double, 3> BC_mid = midpoint( B, C );
-    std::array<double, 3> CA_mid = midpoint( C, A );
-
-    // Define four new triangles
-    std::vector<std::array<std::array<double, 3>, 3>> new_triangles = {
-        { A, AB_mid, CA_mid }, { AB_mid, B, BC_mid }, { CA_mid, BC_mid, C }, { AB_mid, BC_mid, CA_mid } };
-
-    return new_triangles;
-}
-
-// Recursively subdivide triangles to the desired order
-std::vector<std::array<std::array<double, 3>, 3>>
-QSphericalTessalation::recursive_subdivide( const std::vector<std::array<std::array<double, 3>, 3>>& triangles, int order ) {
-    if( order == 1 ) {
-        return triangles;
-    }
-    else {
-        std::vector<std::array<std::array<double, 3>, 3>> new_triangles;
-        for( const auto& triangle : triangles ) {
-            std::vector<std::array<std::array<double, 3>, 3>> subdivided = subdivide_triangle( triangle );
-            new_triangles.insert( new_triangles.end(), subdivided.begin(), subdivided.end() );
-        }
-        return recursive_subdivide( new_triangles, order - 1 );
-    }
-}
 
 // Compute the centroid of a triangle
 std::array<double, 3> QSphericalTessalation::compute_centroid( const std::array<std::array<double, 3>, 3>& triangle ) {

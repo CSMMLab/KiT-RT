@@ -20,9 +20,6 @@ class QSphericalTessalation : public QuadratureBase
     void SetConnectivity() override;
 
   private:
-    std::vector<std::array<std::array<double, 3>, 3>> subdivide_triangle( const std::array<std::array<double, 3>, 3>& triangle );
-    std::vector<std::array<std::array<double, 3>, 3>> recursive_subdivide( const std::vector<std::array<std::array<double, 3>, 3>>& triangles,
-                                                                           int order );
     std::array<double, 3> compute_centroid( const std::array<std::array<double, 3>, 3>& triangle );
     std::array<double, 3> map_to_unit_sphere( const std::array<double, 3>& point );
     double dot_product( const std::array<double, 3>& v1, const std::array<double, 3>& v2 );
@@ -33,6 +30,8 @@ class QSphericalTessalation : public QuadratureBase
                               const std::vector<double>& weights,
                               std::vector<std::array<double, 3>>& full_points,
                               std::vector<double>& full_weights );
+
+    std::vector<std::array<std::array<double, 3>, 3>> generate_tessellation( const std::array<std::array<double, 3>, 3>& triangle, int order );
 };
 
 #endif    // QSPHERICALTRIANGLE_H

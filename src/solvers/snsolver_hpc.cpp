@@ -1295,6 +1295,7 @@ void SNSolverHPC::PrintVolumeOutput( int idx_iter ) {
         }
     }
 }
+
 void SNSolverHPC::PrepareVolumeOutput() {
     unsigned nGroups = (unsigned)_settings->GetNVolumeOutput();
 
