@@ -37,8 +37,12 @@ std::vector<std::array<std::array<double, 3>, 3>> QSphericalTessalation::generat
     }
 
     // Create triangles from the grid points
-    auto idx = [&]( int i, int j ) -> int { return i * ( order + 1 ) - ( i * ( i - 1 ) ) / 2 + j; };
-
+    auto idx = [&](int i, int j) -> int {
+        if (i < 0 || j < 0 || i > order || j > order - i) {
+            throw std::out_of_range("Index out of range in idx calculation");
+        }
+        return i * (order + 1) - (i * (i - 1)) / 2 + j;
+    };
     for( int i = 0; i < order; ++i ) {
         for( int j = 0; j < order - i; ++j ) {
             std::array<double, 3> p1 = grid_points[idx( i, j )];
@@ -52,7 +56,6 @@ std::vector<std::array<std::array<double, 3>, 3>> QSphericalTessalation::generat
             }
         }
     }
-
     return triangles;
 }
 
@@ -69,52 +72,50 @@ void QSphericalTessalation::SetPointsAndWeights() {
     std::vector<std::array<double, 3>> centroids;
     std::vector<std::array<double, 3>> mapped_points;
     std::vector<double> weights;
-
     for( const auto& tri : final_triangles ) {
-        // Compute the centroid
         auto centroid        = compute_centroid( tri );
         auto mapped_centroid = map_to_unit_sphere( centroid );
-        centroids.push_back( mapped_centroid );
-
-        // Compute the area of the spherical triangle
-        auto a      = map_to_unit_sphere( tri[0] );
-        auto b      = map_to_unit_sphere( tri[1] );
-        auto c      = map_to_unit_sphere( tri[2] );
+        centroids.push_back( centroid );
+        mapped_points.push_back( mapped_centroid );
+        // Map triangle vertices to unit sphere
+        std::array<double, 3> a = map_to_unit_sphere( tri[0] );
+        std::array<double, 3> b = map_to_unit_sphere( tri[1] );
+        std::array<double, 3> c = map_to_unit_sphere( tri[2] );
+        // Calculate area using spherical excess
         double area = spherical_triangle_area( a, b, c );
         weights.push_back( area );
     }
-
     // Vectors to hold the full set of points and weights for the upper hemisphere
     std::vector<std::array<double, 3>> full_points;
     std::vector<double> full_weights;
-
-    // Perform reflection and permutation (as done in the original code)
-    reflect_and_permute( centroids, weights, full_points, full_weights );
-
-    // Set the points and weights for the quadrature
+    // Perform reflection and permutation
+    reflect_and_permute( mapped_points, weights, full_points, full_weights );
     _nq = full_points.size();
     _pointsKarth.resize( _nq );
     _pointsSphere.resize( _nq );
     _weights.resize( _nq );
-
     for( size_t i = 0; i < _nq; ++i ) {
         _pointsKarth[i] = { full_points[i][0], full_points[i][1], full_points[i][2] };
         _weights[i]     = full_weights[i];
     }
-
     double w = 0.0;
+    // Transform _points to _pointsSphere ==>transform (x,y,z) into (my,phi)
     for( unsigned idx = 0; idx < _nq; idx++ ) {
-        _pointsSphere[idx].resize( 3 );
-        _pointsSphere[idx][0] = _pointsKarth[idx][2];
-        _pointsSphere[idx][1] = atan2( _pointsKarth[idx][1], _pointsKarth[idx][0] );
-        _pointsSphere[idx][2] = 1.0;
-
+        _pointsSphere[idx].resize( 3 );                                                 // (my,phi)
+        _pointsSphere[idx][0] = _pointsKarth[idx][2];                                   // my = z
+        _pointsSphere[idx][1] = atan2( _pointsKarth[idx][1], _pointsKarth[idx][0] );    // phi in [-pi,pi]
+        _pointsSphere[idx][2] = 1.0;                                                    // radius r
+        // adapt intervall s.t. phi in [0,2pi]
         if( _pointsSphere[idx][1] < 0 ) {
             _pointsSphere[idx][1] = 2 * M_PI + _pointsSphere[idx][1];
         }
-
+        // std::cout << _pointsKarth[idx][0] << " " << _pointsKarth[idx][1] << " " << _pointsKarth[idx][2] << std::endl;
+        // std::cout << _pointsSphere[idx][0] << " " << _pointsSphere[idx][1] << " " << _pointsSphere[idx][2] << std::endl;
+        // std::cout << _weights[idx] << std::endl;
         w += _weights[idx];
     }
+    // std::cout << w << std::endl;
+    // exit( 1 );
 }
 
 void QSphericalTessalation::SetNq() { _nq = 4 * pow( GetOrder(), 2 ); }
