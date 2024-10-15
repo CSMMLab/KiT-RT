@@ -321,21 +321,6 @@ void SNSolverHPC::Solve() {
     }
 }
 
-void SNSolverHPC::PrintVolumeOutput( int idx_iter ) {
-    if( _settings->GetVolumeOutputFrequency() != 0 && idx_iter % (unsigned)_settings->GetVolumeOutputFrequency() == 0 ) {
-        WriteVolumeOutput( idx_iter );
-        if( _rank == 0 ) {
-            ExportVTK( _settings->GetOutputFile() + "_" + std::to_string( idx_iter ), _outputFields, _outputFieldNames, _mesh );    // slow
-        }
-    }
-    if( idx_iter == (int)_nIter - 1 ) {    // Last iteration write without suffix.
-        WriteVolumeOutput( idx_iter );
-        if( _rank == 0 ) {
-            ExportVTK( _settings->GetOutputFile(), _outputFields, _outputFieldNames, _mesh );
-        }
-    }
-}
-
 void SNSolverHPC::FluxOrder2() {
 
     double const eps = 1e-10;
@@ -1296,6 +1281,20 @@ void SNSolverHPC::WriteVolumeOutput( unsigned idx_iter ) {
     }
 }
 
+void SNSolverHPC::PrintVolumeOutput( int idx_iter ) {
+    if( _settings->GetVolumeOutputFrequency() != 0 && idx_iter % (unsigned)_settings->GetVolumeOutputFrequency() == 0 ) {
+        WriteVolumeOutput( idx_iter );
+        if( _rank == 0 ) {
+            ExportVTK( _settings->GetOutputFile() + "_" + std::to_string( idx_iter ), _outputFields, _outputFieldNames, _mesh );    // slow
+        }
+    }
+    if( idx_iter == (int)_nIter - 1 ) {    // Last iteration write without suffix.
+        WriteVolumeOutput( idx_iter );
+        if( _rank == 0 ) {
+            ExportVTK( _settings->GetOutputFile(), _outputFields, _outputFieldNames, _mesh );
+        }
+    }
+}
 void SNSolverHPC::PrepareVolumeOutput() {
     unsigned nGroups = (unsigned)_settings->GetNVolumeOutput();
 
