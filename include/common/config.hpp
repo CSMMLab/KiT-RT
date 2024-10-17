@@ -48,9 +48,11 @@ class Config
     // std::vector<double> _1dIntegrationBounds; /*!< @brief Quadrature Order*/
 
     // Mesh
-    unsigned _nCells;                      /*!< @brief Number of cells in the mesh */
-    unsigned short _dim;                   /*!< @brief spatial dimensionality of the mesh/test case */
-    bool _forcedConnectivityWrite; /*!< @brief If true, the meshconnectivity is always computed and written to .con file */
+    unsigned _nCells;                            /*!< @brief Number of cells in the mesh */
+    unsigned short _dim;                         /*!< @brief spatial dimensionality of the mesh/test case */
+    bool _forcedConnectivityWrite;               /*!< @brief If true, the meshconnectivity is always computed and written to .con file */
+    bool _loadrestartSolution;                   /*!< @brief If true, the simulation loads a restart solution from file */
+    unsigned long _saveRestartSolutionFrequency; /*!< @brief Frequency for saving restart solution to file */
 
     // Boundary Conditions
     /*!< @brief List of all Pairs (marker, BOUNDARY_TYPE), e.g. (farfield,DIRICHLET).
@@ -312,6 +314,8 @@ class Config
     unsigned GetNCells() const { return _nCells; }
     unsigned short GetDim() const { return _dim; }
     bool inline GetForcedConnectivity() const { return _forcedConnectivityWrite; }
+    bool inline GetLoadRestartSolution() const { return _loadrestartSolution; }
+    unsigned long inline GetSaveRestartSolutionFrequency() const { return _saveRestartSolutionFrequency; }
 
     // Solver Structure
     bool inline GetHPC() const { return _HPC; }

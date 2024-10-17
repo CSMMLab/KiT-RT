@@ -21,9 +21,9 @@ SNSolverHPC::SNSolverHPC( Config* settings ) {
     _rank     = 0;
 #endif
 
-    _settings = settings;
-    _currTime = 0.0;
-
+    _settings       = settings;
+    _currTime       = 0.0;
+    _idx_start_iter = 0;
     _nOutputMoments = 2;    //  Currently only u_1 (x direction) and u_1 (y direction) are supported
     // Create Mesh
     _mesh = LoadSU2MeshFromFile( settings );
@@ -159,6 +159,9 @@ SNSolverHPC::SNSolverHPC( Config* settings ) {
         // _mass += _scalarFlux[idx_cell] * _areas[idx_cell];
     }
 
+    if( _settings->GetLoadRestartSolution() )
+        _idx_start_iter = LoadRestartSolution( _settings->GetOutputFile(), _sol, _scalarFlux, _rank, _nCells ) + 1;
+
 #ifdef IMPORT_MPI
     MPI_Barrier( MPI_COMM_WORLD );
 #endif
@@ -265,7 +268,7 @@ void SNSolverHPC::Solve() {
 
     std::chrono::duration<double> duration;
     // Loop over energies (pseudo-time of continuous slowing down approach)
-    for( unsigned iter = 0; iter < _nIter; iter++ ) {
+    for( unsigned iter = (unsigned)_idx_start_iter; iter < _nIter; iter++ ) {
 
         if( iter == _nIter - 1 ) {    // last iteration
             _dT = _settings->GetTEnd() - iter * _dT;
@@ -310,6 +313,7 @@ void SNSolverHPC::Solve() {
 #ifdef BUILD_MPI
         MPI_Barrier( MPI_COMM_WORLD );
 #endif
+
         PrintVolumeOutput( iter );
 #ifdef BUILD_MPI
         MPI_Barrier( MPI_COMM_WORLD );
@@ -352,7 +356,7 @@ void SNSolverHPC::FluxOrder2() {
     for( unsigned long idx_cell = 0; idx_cell < _nCells; ++idx_cell ) {    // Compute Limiter
         if( _cellBoundaryTypes[idx_cell] == BOUNDARY_TYPE::NONE ) {        // skip ghost cells
 
-            // #pragma omp simd
+#pragma omp simd
             for( unsigned long idx_sys = 0; idx_sys < _localNSys; idx_sys++ ) {
 
                 double gaussPoint = 0;
@@ -400,7 +404,7 @@ void SNSolverHPC::FluxOrder2() {
             }
         }
         else {
-            // #pragma omp simd
+#pragma omp simd
             for( unsigned long idx_sys = 0; idx_sys < _localNSys; idx_sys++ ) {
                 _limiter[Idx2D( idx_cell, idx_sys, _localNSys )]         = 0.;    // limiter should be zero at boundary
                 _solDx[Idx3D( idx_cell, idx_sys, 0, _localNSys, _nDim )] = 0.;
@@ -1282,7 +1286,12 @@ void SNSolverHPC::WriteVolumeOutput( unsigned idx_iter ) {
 }
 
 void SNSolverHPC::PrintVolumeOutput( int idx_iter ) {
-    if( _settings->GetVolumeOutputFrequency() != 0 && idx_iter % (unsigned)_settings->GetVolumeOutputFrequency() == 0 ) {
+    if( _settings->GetSaveRestartSolutionFrequency() != 0 && idx_iter % (int)_settings->GetSaveRestartSolutionFrequency() == 0 ) {
+        std::cout << "Saving restart solution at iteration " << idx_iter << std::endl;
+        WriteRestartSolution( _settings->GetOutputFile(), _sol, _scalarFlux, _rank, idx_iter );
+    }
+
+    if( _settings->GetVolumeOutputFrequency() != 0 && idx_iter % (int)_settings->GetVolumeOutputFrequency() == 0 ) {
         WriteVolumeOutput( idx_iter );
         if( _rank == 0 ) {
             ExportVTK( _settings->GetOutputFile() + "_" + std::to_string( idx_iter ), _outputFields, _outputFieldNames, _mesh );    // slow

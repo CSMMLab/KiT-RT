@@ -226,6 +226,10 @@ void Config::SetConfigOptions() {
     /*! @brief FORCE_CONNECTIVITY_RECOMPUTE \n DESCRIPTION:If true, mesh recomputes connectivity instead of loading from file \n DEFAULT false
      * \ingroup Config.*/
     AddBoolOption( "FORCE_CONNECTIVITY_RECOMPUTE", _forcedConnectivityWrite, false );
+    /*! @brief RESTART_SOLUTION \n DESCRIPTION:If true, simulation loads a restart solution from file \n DEFAULT false
+     * \ingroup Config.*/
+    AddBoolOption( "LOAD_RESTART_SOLUTION", _loadrestartSolution, false );
+    AddUnsignedLongOption( "SAVE_RESTART_SOLUTION_FREQUENCY", _saveRestartSolutionFrequency, false );
 
     // Quadrature relatated options
     /*! @brief QUAD_TYPE \n DESCRIPTION: Type of Quadrature rule \n Options: see @link QUAD_NAME \endlink \n DEFAULT: QUAD_MonteCarlo

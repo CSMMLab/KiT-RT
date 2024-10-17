@@ -43,6 +43,12 @@ std::string ParseArguments( int argc, char* argv[] );
 
 void PrintLogHeader( std::string inputFile );
 
+void WriteRestartSolution(
+    const std::string& baseOutputFile, const std::vector<double>& solution, const std::vector<double>& scalarFlux, int rank, int idx_iter );
+
+int LoadRestartSolution(
+    const std::string& baseInputFile, std::vector<double>& solution, std::vector<double>& scalarFlux, int rank, unsigned long nCells );
+
 // Matrix createSU2MeshFromImage( std::string imageName, std::string SU2Filename ); Deprecated
 
 #endif    // IO_H

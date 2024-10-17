@@ -32,7 +32,7 @@ class SNSolverHPC
     // Time
     unsigned long _nIter; /*!< @brief number of time steps, for non CSD, this equals _nEnergies, for _csd, _maxIter =_nEnergies-1*/
     double _dT;           /*!< @brief energy/time step size */
-
+    int _idx_start_iter;  /*!< @brief index of first iteration */
     // Mesh related members, memory optimized
     unsigned long _nCells; /*!< @brief number of spatial cells */
     unsigned long _nSys;   /*!< @brief number of equations in the transport system, i.e. num quad pts */
