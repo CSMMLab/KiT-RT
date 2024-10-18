@@ -380,7 +380,7 @@ void SolverBase::WriteScalarOutput( unsigned idx_iter ) {
                 idx_field--;
                 break;
             case VAR_ABSORPTION_GREEN: _historyOutputFields[idx_field] = _problem->GetVarAbsorptionHohlraumGreen(); break;
-            case VAR_ABSORPTION_GREEN_LINE:
+            case ABSORPTION_GREEN_LINE:
                 for( unsigned i = 0; i < _settings->GetNumProbingCellsLineHohlraum(); i++ ) {
                     _historyOutputFieldNames[idx_field] = _problem->GetCurrentVarProbeValuesGreenLine()[i];
                     idx_field++;
@@ -420,7 +420,8 @@ void SolverBase::PrintScreenOutput( unsigned idx_iter ) {
                                                         TOTAL_PARTICLE_ABSORPTION_HORIZONTAL,
                                                         PROBE_MOMENT_TIME_TRACE,
                                                         VAR_ABSORPTION_GREEN,
-                                                        VAR_ABSORPTION_GREEN_LINE };
+                                                        ABSORPTION_GREEN_BLOCK,
+                                                        ABSORPTION_GREEN_LINE };
         std::vector<SCALAR_OUTPUT> booleanFields    = { VTK_OUTPUT, CSV_OUTPUT };
 
         if( !( integerFields.end() == std::find( integerFields.begin(), integerFields.end(), _settings->GetScreenOutput()[idx_field] ) ) ) {
@@ -495,7 +496,7 @@ void SolverBase::PrepareHistoryOutput() {
                 idx_field--;
                 break;
             case VAR_ABSORPTION_GREEN: _historyOutputFieldNames[idx_field] = "Var. absorption green"; break;
-            case VAR_ABSORPTION_GREEN_LINE:
+            case ABSORPTION_GREEN_LINE:
                 for( unsigned i = 0; i < _settings->GetNumProbingCellsLineHohlraum(); i++ ) {
                     _historyOutputFieldNames[idx_field] = "Probe Green Line " + std::to_string( i );
                     idx_field++;

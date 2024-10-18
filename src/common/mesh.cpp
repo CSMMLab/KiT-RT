@@ -6,7 +6,7 @@
 #include <filesystem>
 #include <iostream>
 #include <map>
-#ifdef BUILD_MPI
+#ifdef IMPORT_MPI
 #include <mpi.h>
 #endif
 #include <omp.h>
@@ -28,7 +28,7 @@ Mesh::Mesh( const Config* settings,
     }
     int nprocs = 1;
     int rank   = 0;
-#ifdef BUILD_MPI
+#ifdef IMPORT_MPI
     MPI_Comm_size( MPI_COMM_WORLD, &nprocs );
     MPI_Comm_rank( MPI_COMM_WORLD, &rank );
 #endif
@@ -95,7 +95,7 @@ Mesh::~Mesh() {}
 void Mesh::ComputeConnectivity() {
     int nprocs = 1;
     int rank   = 0;
-#ifdef BUILD_MPI
+#ifdef IMPORT_MPI
     MPI_Comm_size( MPI_COMM_WORLD, &nprocs );
     MPI_Comm_rank( MPI_COMM_WORLD, &rank );
 #endif
@@ -337,6 +337,7 @@ _cellMidPoints[i] ); interfaceMidFlatPart[pos] = ComputeCellInterfaceMidpoints( 
         }
     }
 */
+
     // assign boundary types to all cells
     _cellBoundaryTypes.resize( _numCells, BOUNDARY_TYPE::NONE );
 #pragma omp parallel for
@@ -604,8 +605,8 @@ unsigned Mesh::GetCellOfKoordinate( const double x, const double y ) const {
 std::vector<unsigned> Mesh::GetCellsofBall( const double x, const double y, const double r ) const {
     std::vector<unsigned> cells_in_ball;
 
-    // Experimental parallel implementation
-    // #pragma omp parallel for
+// Experimental parallel implementation
+#pragma omp parallel for
     for( unsigned idx_cell = 0; idx_cell < _numCells; idx_cell++ ) {
         // Assume GetCellCenter returns the center coordinates of the cell
         double cell_x = _cellMidPoints[idx_cell][0];
@@ -615,7 +616,7 @@ std::vector<unsigned> Mesh::GetCellsofBall( const double x, const double y, cons
         double distance = std::sqrt( ( cell_x - x ) * ( cell_x - x ) + ( cell_y - y ) * ( cell_y - y ) );
 
         if( distance <= r ) {
-            // #pragma omp critical
+#pragma omp critical
             { cells_in_ball.push_back( idx_cell ); }
         }
     }
@@ -630,6 +631,44 @@ std::vector<unsigned> Mesh::GetCellsofBall( const double x, const double y, cons
     }
 
     return cells_in_ball;
+}
+
+std::vector<unsigned> Mesh::GetCellsofRectangle( const std::vector<std::vector<double>>& cornercoordinates ) const {
+
+    std::vector<unsigned> cells_in_rectangle;
+
+    // Compute x_min, x_max, y_min, y_max from the corner coordinates
+    double x_min = cornercoordinates[0][0];
+    double x_max = cornercoordinates[0][0];
+    double y_min = cornercoordinates[0][1];
+    double y_max = cornercoordinates[0][1];
+
+    // Loop over the cornercoordinates to find the minimum and maximum x and y values
+    for( const auto& corner : cornercoordinates ) {
+        x_min = std::min( x_min, corner[0] );
+        x_max = std::max( x_max, corner[0] );
+        y_min = std::min( y_min, corner[1] );
+        y_max = std::max( y_max, corner[1] );
+    }
+    //  Loop over all cells and check if their midpoints fall within the rectangle
+#pragma omp parallel for
+    for( unsigned idx_cell = 0; idx_cell < _numCells; ++idx_cell ) {
+        double cell_x = _cellMidPoints[idx_cell][0];
+        double cell_y = _cellMidPoints[idx_cell][1];
+
+        // Check if the cell's midpoint is inside the rectangle
+        if( cell_x >= x_min && cell_x <= x_max && cell_y >= y_min && cell_y <= y_max ) {
+#pragma omp critical
+            { cells_in_rectangle.push_back( idx_cell ); }
+        }
+    }
+    if( cells_in_rectangle.empty() ) {    // take the only cell that contains the point
+        std::cout << "No cells found within rectangle centered at defined by corner coordinates. " << std::endl;
+        std::cout << "Taking the only cell that contains the point." << std::endl;
+        cells_in_rectangle.push_back( GetCellOfKoordinate( x_min + x_max / 2.0, y_min + y_max / 2.0 ) );
+    }
+
+    return cells_in_rectangle;
 }
 
 bool Mesh::IsPointInsideCell( unsigned idx_cell, double x, double y ) const {

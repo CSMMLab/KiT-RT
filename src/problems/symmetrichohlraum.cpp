@@ -130,19 +130,23 @@ void SymmetricHohlraum::SetGhostCells() {
         if( vq[idx_q][0] < 0.0 ) right_inflow[idx_q] = 1.0;
     }
 
+#pragma omp parallel for
     for( unsigned idx_cell = 0; idx_cell < _mesh->GetNumCells(); idx_cell++ ) {
         double x = _mesh->GetCellMidPoints()[idx_cell][0];
         double y = _mesh->GetCellMidPoints()[idx_cell][1];
 
         if( cellBoundaries[idx_cell] == BOUNDARY_TYPE::NEUMANN || cellBoundaries[idx_cell] == BOUNDARY_TYPE::DIRICHLET ) {
-            if( y < -0.6 )
-                ghostCellMap.insert( { idx_cell, vertical_flow } );
-            else if( y > 0.6 )
-                ghostCellMap.insert( { idx_cell, vertical_flow } );
-            else if( x < -0.6 )
-                ghostCellMap.insert( { idx_cell, left_inflow } );
-            else if( x > 0.6 )
-                ghostCellMap.insert( { idx_cell, right_inflow } );
+#pragma omp critical
+            {
+                if( y < -0.6 )
+                    ghostCellMap.insert( { idx_cell, vertical_flow } );
+                else if( y > 0.6 )
+                    ghostCellMap.insert( { idx_cell, vertical_flow } );
+                else if( x < -0.6 )
+                    ghostCellMap.insert( { idx_cell, left_inflow } );
+                else if( x > 0.6 )
+                    ghostCellMap.insert( { idx_cell, right_inflow } );
+            }
         }
     }
     _ghostCells = ghostCellMap;
@@ -318,6 +322,7 @@ std::vector<unsigned> SymmetricHohlraum::linspace2D( const std::vector<double>& 
     double stepX = ( end[0] - start[0] ) / ( num_points - 1 );
     double stepY = ( end[1] - start[1] ) / ( num_points - 1 );
 
+#pragma omp parallel for
     for( unsigned i = 0; i < num_points; ++i ) {
         double x = start[0] + i * stepX;
         double y = start[1] + i * stepY;

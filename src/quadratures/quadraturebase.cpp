@@ -10,6 +10,7 @@
 #include "quadratures/qmontecarlo.hpp"
 #include "quadratures/qproduct.hpp"
 #include "quadratures/qrectangular.hpp"
+#include "quadratures/qsphericaltessalation.hpp"
 #include "toolboxes/errormessages.hpp"
 #include "toolboxes/textprocessingtoolbox.hpp"
 
@@ -31,6 +32,7 @@ QuadratureBase* QuadratureBase::Create( Config* settings ) {
         case QUAD_GaussChebyshev1D: return new QGaussChebyshev1D( settings );
         case QUAD_LevelSymmetric: return new QLevelSymmetric( settings );
         case QUAD_LDFESA: return new QLDFESA( settings );
+        case QUAD_SphericalTessalation2D: return new QSphericalTessalation( settings );
         case QUAD_Lebedev: return new QLebedev( settings );
         case QUAD_Product: return new QProduct( settings );
         // case QUAD_Midpoint1D: return new QMidpoint1D( settings );

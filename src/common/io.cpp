@@ -11,11 +11,13 @@
 #include "toolboxes/errormessages.hpp"
 #include "toolboxes/textprocessingtoolbox.hpp"
 
+#include <filesystem>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
+#include <sstream>
 
-#ifdef BUILD_MPI
+#ifdef IMPORT_MPI
 #include <mpi.h>
 #endif
 
@@ -49,8 +51,13 @@ void ExportVTK( const std::string fileName,
                 const std::vector<std::vector<std::vector<double>>>& outputFields,
                 const std::vector<std::vector<std::string>>& outputFieldNames,
                 const Mesh* mesh ) {
-    int rank = 0;
-    // MPI_Comm_rank( MPI_COMM_WORLD, &rank );
+    int rank   = 0;
+    int nprocs = 1;
+#ifdef IMPORT_MPI
+    // Initialize MPI
+    MPI_Comm_size( MPI_COMM_WORLD, &nprocs );
+    MPI_Comm_rank( MPI_COMM_WORLD, &rank );
+#endif
     if( rank == 0 ) {
         unsigned dim             = mesh->GetDim();
         unsigned numCells        = mesh->GetNumCells();
@@ -140,7 +147,6 @@ void ExportVTK( const std::string fileName,
         //  auto log = spdlog::get( "event" );
         //  log->info( "Result successfully exported to '{0}'!", fileNameWithExt );
     }
-    // MPI_Barrier( MPI_COMM_WORLD );
 }
 
 Mesh* LoadSU2MeshFromFile( const Config* settings ) {
@@ -352,7 +358,7 @@ void LoadConnectivityFromFile( const std::string inputFile,
         for( unsigned j = 0; j < correctedNodesPerCell; ++j ) {
             std::getline( iss, line, ',' );
             std::istringstream converter( line );
-            converter >> std::fixed >> setprecision( 12 ) >> cellNeighbors[i][j];
+            converter >> std::fixed >> setprecision( 15 ) >> cellNeighbors[i][j];
         }
 
         // Load cellInterfaceMidPoints
@@ -362,8 +368,8 @@ void LoadConnectivityFromFile( const std::string inputFile,
             for( unsigned k = 0; k < nDim; ++k ) {
                 std::getline( iss, line, ',' );
                 std::istringstream converter( line );
-                converter >> std::fixed >> setprecision( 12 ) >> cellInterfaceMidPoints[i][j][k];    // Replace with appropriate member of Vector
-                // std::cout << std::fixed << setprecision( 12 ) << cellInterfaceMidPoints[i][j][k] << std::endl;
+                converter >> std::fixed >> setprecision( 15 ) >> cellInterfaceMidPoints[i][j][k];    // Replace with appropriate member of Vector
+                // std::cout << std::fixed << setprecision( 15 ) << cellInterfaceMidPoints[i][j][k] << std::endl;
             }
         }
         // Load cellNormals
@@ -373,7 +379,7 @@ void LoadConnectivityFromFile( const std::string inputFile,
             for( unsigned k = 0; k < nDim; ++k ) {
                 std::getline( iss, line, ',' );
                 std::istringstream converter( line );
-                converter >> std::fixed >> setprecision( 12 ) >> cellNormals[i][j][k];    // Replace with appropriate member of Vector
+                converter >> std::fixed >> setprecision( 15 ) >> cellNormals[i][j][k];    // Replace with appropriate member of Vector
             }
         }
         // Load cellBoundaryTypes
@@ -400,7 +406,7 @@ void WriteConnecitivityToFile( const std::string outputFile,
     // cellBoundaryTypes (1 element), (tranlated from BOUNDARY_TYPE to unsigned)
 
     std::ofstream outFile( outputFile );
-    outFile << std::fixed << setprecision( 12 );
+    outFile << std::fixed << setprecision( 15 );
     // const std::size_t bufferSize = 10000;    // Adjust as needed
     // outFile.rdbuf()->pubsetbuf( 0, bufferSize );
     if( outFile.is_open() ) {
@@ -437,6 +443,83 @@ void WriteConnecitivityToFile( const std::string outputFile,
     }
 }
 
+void WriteRestartSolution(
+    const std::string& baseOutputFile, const std::vector<double>& solution, const std::vector<double>& scalarFlux, int rank, int idx_iter ) {
+    // Generate filename with rank number
+    std::string outputFile = baseOutputFile + "_restart_rank_" + std::to_string( rank );
+
+    // Check if the file exists and delete it
+    if( std::filesystem::exists( outputFile ) ) {
+        std::filesystem::remove( outputFile );
+    }
+
+    // Open the file for writing (automatically creates a new file)
+    std::ofstream outFile( outputFile, std::ios::out );
+    if( !outFile ) {
+        ErrorMessages::Error( "Error opening restart solution file.", CURRENT_FUNCTION );
+        return;
+    }
+
+    // Write the iteration number as the first line
+    outFile << idx_iter << "\n";
+    outFile << std::fixed << std::setprecision( 15 );
+
+    // Write each element of the solution to the file on a new line
+    for( const double& value : solution ) {
+        outFile << value << "\n";
+    }
+
+    // Append each element of the scalarFlux to the file on a new line
+    for( const double& fluxValue : scalarFlux ) {
+        outFile << fluxValue << "\n";
+    }
+
+    // Close the file
+    outFile.close();
+}
+
+int LoadRestartSolution(
+    const std::string& baseInputFile, std::vector<double>& solution, std::vector<double>& scalarFlux, int rank, unsigned long nCells ) {
+    // Generate filename with rank number
+    std::string inputFile = baseInputFile + "_restart_rank_" + std::to_string( rank );
+
+    // Open the file for reading
+    std::ifstream inFile( inputFile );
+    if( !inFile ) {
+        std::cerr << "Error opening restart solution file for reading." << std::endl;
+        return 0;    // Signal failure
+    }
+
+    // Read the iteration number from the first line
+    std::string line;
+    std::getline( inFile, line );
+    int idx_iter = std::stoi( line );    // Convert the line to an integer
+
+    // Read data into a temporary vector
+    std::vector<double> tempData;
+    double value;
+    while( std::getline( inFile, line ) ) {
+        std::istringstream converter( line );
+        converter >> std::fixed >> std::setprecision( 15 ) >> value;
+        tempData.push_back( value );
+    }
+
+    // Close the file
+    inFile.close();
+
+    // Verify that we have at least nCells entries to populate scalarFlux
+    if( tempData.size() < nCells ) {
+        std::cerr << "Not enough data to populate scalar flux vector." << std::endl;
+        return 0;    // Signal failure
+    }
+
+    // Allocate the last nCells entries to scalarFlux and the rest to solution
+    solution.assign( tempData.begin(), tempData.end() - nCells );
+    scalarFlux.assign( tempData.end() - nCells, tempData.end() );
+
+    return idx_iter;    // Return the iteration index
+}
+
 std::string ParseArguments( int argc, char* argv[] ) {
     std::string inputFile;
     std::string usage_help = "\nUsage: " + std::string( argv[0] ) + " inputfile\n";
@@ -465,7 +548,7 @@ std::string ParseArguments( int argc, char* argv[] ) {
 void PrintLogHeader( std::string inputFile ) {
     int nprocs = 1;
     int rank   = 0;
-#ifdef BUILD_MPI
+#ifdef IMPORT_MPI
     // Initialize MPI
     MPI_Comm_size( MPI_COMM_WORLD, &nprocs );
     MPI_Comm_rank( MPI_COMM_WORLD, &rank );
@@ -505,7 +588,7 @@ void PrintLogHeader( std::string inputFile ) {
         }
         // log->info( "------------------------------------------------------------------------" );
     }
-#ifdef BUILD_MPI
+#ifdef IMPORT_MPI
     MPI_Barrier( MPI_COMM_WORLD );
 #endif
 }
