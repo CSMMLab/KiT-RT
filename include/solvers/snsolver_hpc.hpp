@@ -111,14 +111,18 @@ class SNSolverHPC
     double _curAbsorptionHohlraumVertical;
     double _curAbsorptionHohlraumHorizontal;
     double _varAbsorptionHohlraumGreen;
+
     std::vector<std::vector<unsigned>> _probingCellsHohlraum; /*!< @brief Indices of cells that contain a probing sensor */
     std::vector<double> _probingMoments;                      /*!< @brief Solution Momnets at the probing cells that contain a probing sensor */
     unsigned _probingMomentsTimeIntervals;                    /*!< @brief Solution Momnets at the probing cells that contain a probing sensor */
 
-    unsigned _nProbingCellsLineGreen;                 /*!< @brief Number of sampling cells that contain a probing sensor for the sliding window */
-    std::vector<unsigned> _probingCellsLineGreen;     /*!< @brief Indices of cells that contain a probing sensor for the sliding window */
-    std::vector<double> _absorptionValsIntegrated;    /*!< @brief Avg Absorption value at the sampleing points of lineGreen */
-    std::vector<double> _varAbsorptionValsIntegrated; /*!< @brief Var in Avg Absorption value at the sampleing points of lineGreen */
+    unsigned _nProbingCellsLineGreen;               /*!< @brief Number of sampling cells that contain a probing sensor for the sliding window */
+    std::vector<unsigned> _probingCellsLineGreen;   /*!< @brief Indices of cells that contain a probing sensor for the sliding window */
+    std::vector<double> _absorptionValsLineSegment; /*!< @brief Avg Absorption value at the sampleing points of lineGreen */
+
+    unsigned _nProbingCellsBlocksGreen;
+    std::vector<std::vector<unsigned>> _probingCellsBlocksGreen; /*!< @brief Indices of cells that contain a probing sensor blocks */
+    std::vector<double> _absorptionValsBlocksGreen;              /*!< @brief Avg Absorption value at the sampleing blocks of lineGreen */
 
     // Design parameters
     std::vector<double> _cornerUpperLeftGreen; /*!< @brief Coord of corner of the green area (minus thickness/2 of it) relative to the green center */

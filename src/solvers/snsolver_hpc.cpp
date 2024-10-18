@@ -206,7 +206,6 @@ SNSolverHPC::SNSolverHPC( Config* settings ) {
         unsigned n_probes = 4;
         if( _settings->GetProblemName() == PROBLEM_SymmetricHohlraum ) n_probes = 4;
         if( _settings->GetProblemName() == PROBLEM_QuarterHohlraum ) n_probes = 2;
-        //_probingMomentsTimeIntervals = 10;
         _probingMoments = std::vector<double>( n_probes * 3, 0. );    // 10 time horizons
 
         if( _settings->GetProblemName() == PROBLEM_SymmetricHohlraum ) {
@@ -244,10 +243,11 @@ SNSolverHPC::SNSolverHPC( Config* settings ) {
 
         _nProbingCellsLineGreen = _settings->GetNumProbingCellsLineHohlraum();
 
-        SetProbingCellsLineGreen();    // ONLY FOR HOHLRAUM
+        _nProbingCellsBlocksGreen  = 44;
+        _absorptionValsBlocksGreen = std::vector<double>( _nProbingCellsBlocksGreen, 0. );
+        _absorptionValsLineSegment = std::vector<double>( _nProbingCellsLineGreen, 0.0 );
 
-        _absorptionValsIntegrated    = std::vector<double>( _nProbingCellsLineGreen, 0.0 );
-        _varAbsorptionValsIntegrated = std::vector<double>( _nProbingCellsLineGreen, 0.0 );
+        SetProbingCellsLineGreen();    // ONLY FOR HOHLRAUM
     }
 }
 
@@ -610,7 +610,8 @@ void SNSolverHPC::IterPostprocessing() {
             bool green4 = x > 0.15 + _settings->GetPosXCenterGreenHohlraum() && x < 0.2 + _settings->GetPosXCenterGreenHohlraum() &&
                           y > -0.35 + _settings->GetPosYCenterGreenHohlraum() && y < 0.35 + _settings->GetPosYCenterGreenHohlraum();
             if( green1 || green2 || green3 || green4 ) {
-                a_g += ( _sigmaT[idx_cell] - _sigmaS[idx_cell] ) * _scalarFlux[idx_cell] * _areas[idx_cell];
+                a_g += ( _sigmaT[idx_cell] - _sigmaS[idx_cell] ) * _scalarFlux[idx_cell] * _areas[idx_cell] /
+                       ( 44 * 0.05 * 0.05 );    // divisor is area of the green
             }
         }
 
@@ -759,8 +760,6 @@ void SNSolverHPC::IterPostprocessing() {
             }
         }
 
-        // probe values green
-        ComputeQOIsGreenProbingLine();
 #ifdef IMPORT_MPI
         MPI_Barrier( MPI_COMM_WORLD );
         MPI_Allreduce( temp_probingMoments.data(), _probingMoments.data(), 3 * n_probes, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
@@ -774,7 +773,8 @@ void SNSolverHPC::IterPostprocessing() {
         }
 #endif
     }
-
+    // probe values green
+    ComputeQOIsGreenProbingLine();
     // Update time integral values on rank 0
     if( _rank == 0 ) {
         _totalScalarOutflow += _curScalarOutflow * _dT;
@@ -889,6 +889,7 @@ void SNSolverHPC::PrepareScreenOutput() {
                 }
                 break;
             case VAR_ABSORPTION_GREEN: _screenOutputFieldNames[idx_field] = "Var. absorption green"; break;
+
             default: ErrorMessages::Error( "Screen output field not defined!", CURRENT_FUNCTION ); break;
         }
     }
@@ -944,7 +945,7 @@ void SNSolverHPC::WriteScalarOutput( unsigned idx_iter ) {
                 }
                 idx_field--;
                 break;
-            case VAR_ABSORPTION_GREEN: _screenOutputFields[idx_field] = _varAbsorptionHohlraumGreen; break;
+            case VAR_ABSORPTION_GREEN: _screenOutputFields[idx_field] = _absorptionValsBlocksGreen[0]; break;
             default: ErrorMessages::Error( "Screen output group not defined!", CURRENT_FUNCTION ); break;
         }
     }
@@ -1002,9 +1003,17 @@ void SNSolverHPC::WriteScalarOutput( unsigned idx_iter ) {
                 idx_field--;
                 break;
             case VAR_ABSORPTION_GREEN: _historyOutputFields[idx_field] = _varAbsorptionHohlraumGreen; break;
-            case VAR_ABSORPTION_GREEN_LINE:
+            case ABSORPTION_GREEN_LINE:
                 for( unsigned i = 0; i < _settings->GetNumProbingCellsLineHohlraum(); i++ ) {
-                    _historyOutputFieldNames[idx_field] = _varAbsorptionValsIntegrated[i];
+                    _historyOutputFields[idx_field] = _absorptionValsLineSegment[i];
+                    idx_field++;
+                }
+                idx_field--;
+                break;
+            case ABSORPTION_GREEN_BLOCK:
+                for( unsigned i = 0; i < 44; i++ ) {
+                    _historyOutputFields[idx_field] = _absorptionValsBlocksGreen[i];
+                    // std::cout << _absorptionValsBlocksGreen[i] << "/" << _historyOutputFields[idx_field] << std::endl;
                     idx_field++;
                 }
                 idx_field--;
@@ -1046,7 +1055,8 @@ void SNSolverHPC::PrintScreenOutput( unsigned idx_iter ) {
                                                         TOTAL_PARTICLE_ABSORPTION_HORIZONTAL,
                                                         PROBE_MOMENT_TIME_TRACE,
                                                         VAR_ABSORPTION_GREEN,
-                                                        VAR_ABSORPTION_GREEN_LINE };
+                                                        ABSORPTION_GREEN_BLOCK,
+                                                        ABSORPTION_GREEN_LINE };
         std::vector<SCALAR_OUTPUT> booleanFields    = { VTK_OUTPUT, CSV_OUTPUT };
 
         if( !( integerFields.end() == std::find( integerFields.begin(), integerFields.end(), _settings->GetScreenOutput()[idx_field] ) ) ) {
@@ -1125,7 +1135,15 @@ void SNSolverHPC::PrepareHistoryOutput() {
                 idx_field--;
                 break;
             case VAR_ABSORPTION_GREEN: _historyOutputFieldNames[idx_field] = "Var. absorption green"; break;
-            case VAR_ABSORPTION_GREEN_LINE:
+            case ABSORPTION_GREEN_BLOCK:
+                for( unsigned i = 0; i < 44; i++ ) {
+                    _historyOutputFieldNames[idx_field] = "Probe Green Block " + std::to_string( i );
+                    idx_field++;
+                }
+                idx_field--;
+                break;
+
+            case ABSORPTION_GREEN_LINE:
                 for( unsigned i = 0; i < _settings->GetNumProbingCellsLineHohlraum(); i++ ) {
                     _historyOutputFieldNames[idx_field] = "Probe Green Line " + std::to_string( i );
                     idx_field++;
@@ -1155,7 +1173,7 @@ void SNSolverHPC::PrintHistoryOutput( unsigned idx_iter ) {
     }
     tmp = TextProcessingToolbox::DoubleToScientificNotation( _historyOutputFields[_settings->GetNHistoryOutput() - 1] );
     lineToPrint += tmp;    // Last element without comma
-
+    // std::cout << lineToPrint << std::endl;
     if( _settings->GetHistoryOutputFrequency() != 0 && idx_iter % (unsigned)_settings->GetHistoryOutputFrequency() == 0 ) {
         log->info( lineToPrint );
     }
@@ -1287,7 +1305,7 @@ void SNSolverHPC::WriteVolumeOutput( unsigned idx_iter ) {
 
 void SNSolverHPC::PrintVolumeOutput( int idx_iter ) {
     if( _settings->GetSaveRestartSolutionFrequency() != 0 && idx_iter % (int)_settings->GetSaveRestartSolutionFrequency() == 0 ) {
-        std::cout << "Saving restart solution at iteration " << idx_iter << std::endl;
+        // std::cout << "Saving restart solution at iteration " << idx_iter << std::endl;
         WriteRestartSolution( _settings->GetOutputFile(), _sol, _scalarFlux, _rank, idx_iter );
     }
 
@@ -1447,6 +1465,79 @@ void SNSolverHPC::SetProbingCellsLineGreen() {
         _probingCellsLineGreen.insert( _probingCellsLineGreen.end(), side2.begin(), side2.end() );
         _probingCellsLineGreen.insert( _probingCellsLineGreen.end(), side3.begin(), side3.end() );
         _probingCellsLineGreen.insert( _probingCellsLineGreen.end(), side4.begin(), side4.end() );
+
+        // Block-wise approach
+        // Initialize the vector to store the corner points of each block
+        std::vector<std::vector<std::vector<double>>> block_corners;
+
+        double block_size = 0.05;
+
+        // Loop to fill the blocks
+        for( int i = 0; i < 8; ++i ) {    // 8 blocks in the x-direction (horizontal)
+
+            // Top row
+            double x1 = -0.2 + i * block_size;
+            double y1 = 0.4;
+            double x2 = x1 + block_size;
+            double y2 = y1 - block_size;
+
+            std::vector<std::vector<double>> corners = {
+                { x1, y1 },    // top-left
+                { x2, y1 },    // top-right
+                { x2, y2 },    // bottom-right
+                { x1, y2 }     // bottom-left
+            };
+            block_corners.push_back( corners );
+
+            // bottom row
+            y1 = -0.35;
+            y2 = y1 - block_size;
+
+            corners = {
+                { x1, y1 },    // top-left
+                { x2, y1 },    // top-right
+                { x2, y2 },    // bottom-right
+                { x1, y2 }     // bottom-left
+            };
+            block_corners.push_back( corners );
+        }
+        for( int j = 0; j < 14; ++j ) {    // 14 blocks in the y-direction (vertical)
+
+            // left column
+            double x1 = -0.2;
+            double y1 = 0.35 - j * block_size;
+            double x2 = x1 + block_size;
+            double y2 = y1 - block_size;
+
+            // Store the four corner points for this block
+            std::vector<std::vector<double>> corners = {
+                { x1, y1 },    // top-left
+                { x2, y1 },    // top-right
+                { x2, y2 },    // bottom-right
+                { x1, y2 }     // bottom-left
+            };
+
+            block_corners.push_back( corners );
+
+            // right column double x1 = 0.15;
+            x1 = 0.15;
+            x2 = x1 + block_size;
+
+            // Store the four corner points for this block
+            corners = {
+                { x1, y1 },    // top-left
+                { x2, y1 },    // top-right
+                { x2, y2 },    // bottom-right
+                { x1, y2 }     // bottom-left
+            };
+
+            block_corners.push_back( corners );
+        }
+
+        // Compute the probing cells for each block
+        for( int i = 0; i < _nProbingCellsBlocksGreen; i++ ) {
+            _probingCellsBlocksGreen.push_back( _mesh->GetCellsofRectangle( block_corners[i] ) );
+        }
     }
 }
 
@@ -1456,17 +1547,25 @@ void SNSolverHPC::ComputeQOIsGreenProbingLine() {
 
     double dl    = 2 * ( horizontalLineWidth + verticalLineWidth ) / ( (double)_nProbingCellsLineGreen );
     double area  = dl * _thicknessGreen;
-    double a_g   = 0;
     double l_max = _nProbingCellsLineGreen * dl;
 
+#pragma omp parallel for
     for( unsigned i = 0; i < _nProbingCellsLineGreen; i++ ) {    // Loop over probing cells
-        _absorptionValsIntegrated[i] =
-            ( _sigmaT[_probingCellsLineGreen[i]] - _sigmaS[_probingCellsLineGreen[i]] ) * _scalarFlux[_probingCellsLineGreen[i]] * area;
-        a_g += _absorptionValsIntegrated[i] / (double)_nProbingCellsLineGreen;
+        _absorptionValsLineSegment[i] = ( _sigmaT[_probingCellsLineGreen[i]] - _sigmaS[_probingCellsLineGreen[i]] ) *
+                                        _scalarFlux[_probingCellsLineGreen[i]] * _areas[_probingCellsLineGreen[i]] / dl;
     }
-    for( unsigned i = 0; i < _nProbingCellsLineGreen; i++ ) {    // Loop over probing cells
-        _varAbsorptionValsIntegrated[i] = dl / l_max * ( a_g - _absorptionValsIntegrated[i] ) * ( a_g - _absorptionValsIntegrated[i] );
+
+    // Block-wise approach
+    // #pragma omp parallel for
+    for( unsigned i = 0; i < _nProbingCellsBlocksGreen; i++ ) {
+        _absorptionValsBlocksGreen[i] = 0.0;
+        for( unsigned j = 0; j < _probingCellsBlocksGreen[i].size(); j++ ) {
+            _absorptionValsBlocksGreen[i] += ( _sigmaT[_probingCellsBlocksGreen[i][j]] - _sigmaS[_probingCellsBlocksGreen[i][j]] ) *
+                                             _scalarFlux[_probingCellsBlocksGreen[i][j]] * _areas[_probingCellsBlocksGreen[i][j]];
+        }
     }
+    // std::cout << _absorptionValsBlocksGreen[1] << std::endl;
+    // std::cout << _absorptionValsLineSegment[1] << std::endl;
 }
 
 std::vector<unsigned> SNSolverHPC::linspace2D( const std::vector<double>& start, const std::vector<double>& end, unsigned num_points ) {
