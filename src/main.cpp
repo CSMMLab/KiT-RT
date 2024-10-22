@@ -4,7 +4,7 @@
  *  @version: 0.1
  */
 
-#ifdef BUILD_MPI
+#ifdef IMPORT_MPI
 #include <mpi.h>
 #endif
 #include <omp.h>
@@ -17,9 +17,8 @@
 #include "solvers/solverbase.hpp"
 
 #ifdef BUILD_GUI
-#include <QApplication>
-
 #include "mainwindow.h"
+#include <QApplication>
 #endif
 
 int main( int argc, char** argv ) {
@@ -31,9 +30,18 @@ int main( int argc, char** argv ) {
 #else
 // wchar_t* program = Py_DecodeLocale( argv[0], NULL );
 // Py_SetProgramName( program );
-#ifdef BUILD_MPI
+#ifdef IMPORT_MPI
     MPI_Init( &argc, &argv );
+    int rank;
+    MPI_Comm_rank( MPI_COMM_WORLD, &rank );
+    if ( rank == 0 ) {
+        printf( "| KiT-RT compiled with MPI and OpenMP parallelization\n" );
+    }
 #endif
+#ifndef IMPORT_MPI
+    printf( "| KiT-RT compiled with OpenMP, but without MPI parallelization\n" );
+#endif
+
     std::string filename = ParseArguments( argc, argv );
 
     // CD  Load Settings from File
@@ -66,7 +74,7 @@ int main( int argc, char** argv ) {
     }
 
     delete config;
-#ifdef BUILD_MPI
+#ifdef IMPORT_MPI
     MPI_Finalize();
 #endif
 

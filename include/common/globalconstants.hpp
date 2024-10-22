@@ -62,6 +62,7 @@ enum QUAD_NAME {
     QUAD_LevelSymmetric,
     QUAD_Lebedev,
     QUAD_LDFESA,
+    QUAD_SphericalTessalation2D,
     QUAD_Product,
     QUAD_Rectangular1D,
     QUAD_Rectangular2D,
@@ -82,6 +83,7 @@ inline std::map<std::string, QUAD_NAME> Quadrature_Map{ { "MONTE_CARLO", QUAD_Mo
                                                         { "LEVEL_SYMMETRIC", QUAD_LevelSymmetric },
                                                         { "LEBEDEV", QUAD_Lebedev },
                                                         { "LDFESA", QUAD_LDFESA },
+                                                        { "TESSALATION", QUAD_SphericalTessalation2D },
                                                         { "MIDPOINT_1D", QUAD_Midpoint1D },
                                                         { "MIDPOINT_2D", QUAD_Midpoint2D },
                                                         { "MIDPOINT_3D", QUAD_Midpoint3D },
@@ -195,7 +197,8 @@ enum SCALAR_OUTPUT {
     TOTAL_PARTICLE_ABSORPTION_HORIZONTAL,
     PROBE_MOMENT_TIME_TRACE,
     VAR_ABSORPTION_GREEN,
-    VAR_ABSORPTION_GREEN_LINE
+    ABSORPTION_GREEN_BLOCK,
+    ABSORPTION_GREEN_LINE
 };
 
 inline std::map<std::string, SCALAR_OUTPUT> ScalarOutput_Map{ { "ITER", ITER },
@@ -219,7 +222,8 @@ inline std::map<std::string, SCALAR_OUTPUT> ScalarOutput_Map{ { "ITER", ITER },
                                                               { "TOTAL_PARTICLE_ABSORPTION_HORIZONTAL", TOTAL_PARTICLE_ABSORPTION_HORIZONTAL },
                                                               { "PROBE_MOMENT_TIME_TRACE", PROBE_MOMENT_TIME_TRACE },
                                                               { "VAR_ABSORPTION_GREEN", VAR_ABSORPTION_GREEN },
-                                                              { "VAR_ABSORPTION_GREEN_LINE", VAR_ABSORPTION_GREEN_LINE } };
+                                                              { "ABSORPTION_GREEN_BLOCK", ABSORPTION_GREEN_BLOCK },
+                                                              { "ABSORPTION_GREEN_LINE", ABSORPTION_GREEN_LINE } };
 
 // Spherical Basis Name
 enum SPHERICAL_BASIS_NAME { SPHERICAL_HARMONICS, SPHERICAL_MONOMIALS, SPHERICAL_MONOMIALS_ROTATED };

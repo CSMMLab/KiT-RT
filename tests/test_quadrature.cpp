@@ -12,6 +12,7 @@ std::vector<QUAD_NAME> quadraturenames = { QUAD_MonteCarlo,
                                            QUAD_LevelSymmetric,
                                            QUAD_Lebedev,
                                            QUAD_LDFESA,
+                                           QUAD_SphericalTessalation2D,
                                            QUAD_Product,
                                            QUAD_Rectangular1D,
                                            QUAD_Rectangular2D,
@@ -26,6 +27,7 @@ std::vector<std::vector<int>> quadratureorders = {
     { 3,  5,  7,  9,  11, 13, 15, 17, 19, 21, 23,  25,  27,  29,  31,  35,
       41, 47, 53, 59, 65, 71, 77, 83, 89, 95, 101, 107, 113, 119, 125, 131 },    // Available orders for Lebedev
     { 1, 2, 3 },                                                                 // Available Orders for LDFESA
+    { 1, 2, 3, 4, 5 },                                                           // Available Orders for SphericalTessalation
     { 4, 6, 8, 10 },                                                             // Available Orders for Product
     { 60, 80, 100 },                                                             // Rectangular 1D
     { 60, 80, 100 },                                                             // Rectangular 2D
@@ -117,6 +119,12 @@ TEST_CASE( "Quadrature Tests", "[quadrature]" ) {
                     if( !approxequal( Q->SumUpWeights(), 8.0, lowAccuracyTesting ) ) {
                         testPassed = false;
                         PrintErrorMsg( config, std::abs( Q->SumUpWeights() - 8.0 ), Q->SumUpWeights(), lowAccuracyTesting );
+                    }
+                }
+                else if( quadraturename == QUAD_SphericalTessalation2D ) {
+                    if( !approxequal( Q->SumUpWeights(), 2 * M_PI, lowAccuracyTesting ) ) {
+                        testPassed = false;
+                        PrintErrorMsg( config, std::abs( Q->SumUpWeights() - 2 * M_PI ), Q->SumUpWeights(), lowAccuracyTesting );
                     }
                 }
                 else {
@@ -330,7 +338,8 @@ TEST_CASE( "Quadrature Tests", "[quadrature]" ) {
                         PrintErrorMsg( config, std::abs( result - 0 ), result, lowAccuracyTesting );
                     }
                 }
-                else if( quadraturename == QUAD_GaussLegendreTensorized2D || quadraturename == QUAD_Midpoint2D ) {
+                else if( quadraturename == QUAD_SphericalTessalation2D || quadraturename == QUAD_GaussLegendreTensorized2D ||
+                         quadraturename == QUAD_Midpoint2D ) {
                     result = Q->Integrate( sin );
                     if( !approxequal( result, 0, lowAccuracyTesting ) ) {
                         testPassed = false;
@@ -459,9 +468,10 @@ TEST_CASE( "Quadrature Tests", "[quadrature]" ) {
                 QuadratureBase* Q = QuadratureBase::Create( config );
 
                 // Note: Leaving out Quad_GaussLegendreTensorized with half weights... (to be added)
-                if( quadraturename != QUAD_GaussLegendreTensorized2D && quadraturename != QUAD_GaussLegendre1D && quadraturename != QUAD_MonteCarlo &&
-                    quadraturename != QUAD_Midpoint2D && quadraturename != QUAD_Midpoint1D && quadraturename != QUAD_Rectangular1D &&
-                    quadraturename != QUAD_Rectangular2D && quadraturename != QUAD_Rectangular3D )    // MonteCarlo is too low order...
+                if( quadraturename != QUAD_SphericalTessalation2D && quadraturename != QUAD_GaussLegendreTensorized2D &&
+                    quadraturename != QUAD_GaussLegendre1D && quadraturename != QUAD_MonteCarlo && quadraturename != QUAD_Midpoint2D &&
+                    quadraturename != QUAD_Midpoint1D && quadraturename != QUAD_Rectangular1D && quadraturename != QUAD_Rectangular2D &&
+                    quadraturename != QUAD_Rectangular3D )    // MonteCarlo is too low order...
                 {
                     if( quadraturename == QUAD_LevelSymmetric && quadratureorder == 20 ) continue;    // Order 20 is somehow errorous
                     result = Q->IntegrateSpherical( Omega_0 );

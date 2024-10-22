@@ -5,7 +5,7 @@
  *
  * Disclaimer: This class structure was copied and modifed with open source permission from SU2 v7.0.3 https://su2code.github.io/
  */
-#ifdef BUILD_MPI
+#ifdef IMPORT_MPI
 #include <mpi.h>
 #endif
 #include "common/config.hpp"
@@ -226,6 +226,10 @@ void Config::SetConfigOptions() {
     /*! @brief FORCE_CONNECTIVITY_RECOMPUTE \n DESCRIPTION:If true, mesh recomputes connectivity instead of loading from file \n DEFAULT false
      * \ingroup Config.*/
     AddBoolOption( "FORCE_CONNECTIVITY_RECOMPUTE", _forcedConnectivityWrite, false );
+    /*! @brief RESTART_SOLUTION \n DESCRIPTION:If true, simulation loads a restart solution from file \n DEFAULT false
+     * \ingroup Config.*/
+    AddBoolOption( "LOAD_RESTART_SOLUTION", _loadrestartSolution, false );
+    AddUnsignedLongOption( "SAVE_RESTART_SOLUTION_FREQUENCY", _saveRestartSolutionFrequency, false );
 
     // Quadrature relatated options
     /*! @brief QUAD_TYPE \n DESCRIPTION: Type of Quadrature rule \n Options: see @link QUAD_NAME \endlink \n DEFAULT: QUAD_MonteCarlo
@@ -784,21 +788,23 @@ void Config::SetPostprocessing() {
                     break;
                 case PROBLEM_QuarterHohlraum:
                 case PROBLEM_SymmetricHohlraum:
-                    legalOutputs = { ITER,
-                                     WALL_TIME,
-                                     MASS,
-                                     RMS_FLUX,
-                                     VTK_OUTPUT,
-                                     CSV_OUTPUT,
-                                     CUR_OUTFLOW,
-                                     TOTAL_OUTFLOW,
-                                     MAX_OUTFLOW,
-                                     TOTAL_PARTICLE_ABSORPTION_CENTER,
-                                     TOTAL_PARTICLE_ABSORPTION_VERTICAL,
-                                     TOTAL_PARTICLE_ABSORPTION_HORIZONTAL,
-                                     TOTAL_PARTICLE_ABSORPTION,
-                                     PROBE_MOMENT_TIME_TRACE,
-                                     VAR_ABSORPTION_GREEN };
+                    legalOutputs = {
+                        ITER,
+                        WALL_TIME,
+                        MASS,
+                        RMS_FLUX,
+                        VTK_OUTPUT,
+                        CSV_OUTPUT,
+                        CUR_OUTFLOW,
+                        TOTAL_OUTFLOW,
+                        MAX_OUTFLOW,
+                        TOTAL_PARTICLE_ABSORPTION_CENTER,
+                        TOTAL_PARTICLE_ABSORPTION_VERTICAL,
+                        TOTAL_PARTICLE_ABSORPTION_HORIZONTAL,
+                        TOTAL_PARTICLE_ABSORPTION,
+                        PROBE_MOMENT_TIME_TRACE,
+                        VAR_ABSORPTION_GREEN,
+                    };
 
                     it = std::find( legalOutputs.begin(), legalOutputs.end(), _screenOutput[idx_screenOutput] );
 
@@ -894,7 +900,7 @@ void Config::SetPostprocessing() {
         }
 
         // Check if the choice of history output is compatible to the problem
-        for( unsigned short idx_screenOutput = 0; idx_screenOutput < _nHistoryOutput; idx_screenOutput++ ) {
+        for( unsigned short idx_historyOutput = 0; idx_historyOutput < _nHistoryOutput; idx_historyOutput++ ) {
             std::vector<SCALAR_OUTPUT> legalOutputs;
             std::vector<SCALAR_OUTPUT>::iterator it;
 
@@ -917,9 +923,9 @@ void Config::SetPostprocessing() {
                                      CUR_PARTICLE_ABSORPTION,
                                      TOTAL_PARTICLE_ABSORPTION,
                                      MAX_PARTICLE_ABSORPTION };
-                    it           = std::find( legalOutputs.begin(), legalOutputs.end(), _historyOutput[idx_screenOutput] );
+                    it           = std::find( legalOutputs.begin(), legalOutputs.end(), _historyOutput[idx_historyOutput] );
                     if( it == legalOutputs.end() ) {
-                        std::string foundKey = findKey( ScalarOutput_Map, _historyOutput[idx_screenOutput] );
+                        std::string foundKey = findKey( ScalarOutput_Map, _historyOutput[idx_historyOutput] );
                         ErrorMessages::Error(
                             "Illegal output field <" + foundKey +
                                 "> for option HISTORY_OUTPUT for this test case.\n"
@@ -946,18 +952,19 @@ void Config::SetPostprocessing() {
                                      TOTAL_PARTICLE_ABSORPTION,
                                      PROBE_MOMENT_TIME_TRACE,
                                      VAR_ABSORPTION_GREEN,
-                                     VAR_ABSORPTION_GREEN_LINE };
+                                     ABSORPTION_GREEN_BLOCK,
+                                     ABSORPTION_GREEN_LINE };
 
-                    it = std::find( legalOutputs.begin(), legalOutputs.end(), _historyOutput[idx_screenOutput] );
+                    it = std::find( legalOutputs.begin(), legalOutputs.end(), _historyOutput[idx_historyOutput] );
 
                     if( it == legalOutputs.end() ) {
-                        std::string foundKey = findKey( ScalarOutput_Map, _historyOutput[idx_screenOutput] );
+                        std::string foundKey = findKey( ScalarOutput_Map, _historyOutput[idx_historyOutput] );
                         ErrorMessages::Error(
                             "Illegal output field <" + foundKey +
                                 "> for option HISTORY_OUTPUT for this test case.\n"
                                 "Supported fields are: ITER, MASS, RMS_FLUX, VTK_OUTPUT, CSV_OUTPUT, TOTAL_PARTICLE_ABSORPTION_CENTER, \n "
                                 "TOTAL_PARTICLE_ABSORPTION_VERTICAL, TOTAL_PARTICLE_ABSORPTION_HORIZONTAL,PROBE_MOMENT_TIME_TRACE,  CUR_OUTFLOW, \n"
-                                "TOTAL_OUTFLOW, MAX_OUTFLOW , VAR_ABSORPTION_GREEN, VAR_ABSORPTION_GREEN_LINE \n"
+                                "TOTAL_OUTFLOW, MAX_OUTFLOW , VAR_ABSORPTION_GREEN, ABSORPTION_GREEN_BLOCK, ABSORPTION_GREEN_LINE \n"
                                 "Please check your .cfg file.",
                             CURRENT_FUNCTION );
                     }
@@ -965,10 +972,10 @@ void Config::SetPostprocessing() {
 
                 default:
                     legalOutputs = { ITER, WALL_TIME, MASS, RMS_FLUX, VTK_OUTPUT, CSV_OUTPUT, CUR_OUTFLOW, TOTAL_OUTFLOW, MAX_OUTFLOW };
-                    it           = std::find( legalOutputs.begin(), legalOutputs.end(), _historyOutput[idx_screenOutput] );
+                    it           = std::find( legalOutputs.begin(), legalOutputs.end(), _historyOutput[idx_historyOutput] );
 
                     if( it == legalOutputs.end() ) {
-                        std::string foundKey = findKey( ScalarOutput_Map, _historyOutput[idx_screenOutput] );
+                        std::string foundKey = findKey( ScalarOutput_Map, _historyOutput[idx_historyOutput] );
                         ErrorMessages::Error(
                             "Illegal output field <" + foundKey +
                                 "> for option SCREEN_OUTPUT for this test case.\n"
@@ -1019,11 +1026,18 @@ void Config::SetPostprocessing() {
 
         if( _problemName == PROBLEM_SymmetricHohlraum || _problemName == PROBLEM_QuarterHohlraum ) {
             std::vector<SCALAR_OUTPUT>::iterator it;
-            it = find( _historyOutput.begin(), _historyOutput.end(), VAR_ABSORPTION_GREEN_LINE );
+            it = find( _historyOutput.begin(), _historyOutput.end(), ABSORPTION_GREEN_LINE );
             if( it != _historyOutput.end() ) {
                 _historyOutput.erase( it );
                 _nHistoryOutput += _nProbingCellsLineGreenHohlraum - 1;    // extend the screen output by the number of probing points
-                for( unsigned i = 0; i < _nProbingCellsLineGreenHohlraum; i++ ) _historyOutput.push_back( VAR_ABSORPTION_GREEN_LINE );
+                for( unsigned i = 0; i < _nProbingCellsLineGreenHohlraum; i++ ) _historyOutput.push_back( ABSORPTION_GREEN_LINE );
+            }
+
+            it = find( _historyOutput.begin(), _historyOutput.end(), ABSORPTION_GREEN_BLOCK );
+            if( it != _historyOutput.end() ) {
+                _historyOutput.erase( it );
+                _nHistoryOutput += 44 - 1;    // extend the screen output by the number of probing points
+                for( unsigned i = 0; i < 44; i++ ) _historyOutput.push_back( ABSORPTION_GREEN_BLOCK );
             }
         }
     }
@@ -1207,7 +1221,7 @@ bool Config::TokenizeString( string& str, string& option_name, vector<string>& o
 
 void Config::InitLogger() {
     int rank = 0;
-#ifdef BUILD_MPI
+#ifdef IMPORT_MPI
     MPI_Comm_rank( MPI_COMM_WORLD, &rank );    // Initialize MPI
 #endif
 
@@ -1366,7 +1380,7 @@ void Config::InitLogger() {
             spdlog::flush_every( std::chrono::seconds( 5 ) );
         }
     }
-#ifdef BUILD_MPI
+#ifdef IMPORT_MPI
     MPI_Barrier( MPI_COMM_WORLD );
 #endif
 }
