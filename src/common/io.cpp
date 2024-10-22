@@ -453,26 +453,27 @@ void WriteRestartSolution(
         std::filesystem::remove( outputFile );
     }
 
-    // Open the file for writing (automatically creates a new file)
-    std::ofstream outFile( outputFile, std::ios::out );
+    // Open the file for binary writing
+    std::ofstream outFile( outputFile, std::ios::out | std::ios::binary );
     if( !outFile ) {
-        ErrorMessages::Error( "Error opening restart solution file.", CURRENT_FUNCTION );
+        std::cerr << "Error opening restart solution file." << std::endl;
         return;
     }
 
-    // Write the iteration number as the first line
-    outFile << idx_iter << "\n";
-    outFile << std::fixed << std::setprecision( 15 );
+    // Write the iteration number as the first item (in binary)
+    outFile.write( reinterpret_cast<const char*>( &idx_iter ), sizeof( idx_iter ) );
 
-    // Write each element of the solution to the file on a new line
-    for( const double& value : solution ) {
-        outFile << value << "\n";
-    }
+    // Write the size of the solution and scalarFlux vectors (optional but useful for reading)
+    size_t solution_size   = solution.size();
+    size_t scalarFlux_size = scalarFlux.size();
+    outFile.write( reinterpret_cast<const char*>( &solution_size ), sizeof( solution_size ) );
+    outFile.write( reinterpret_cast<const char*>( &scalarFlux_size ), sizeof( scalarFlux_size ) );
 
-    // Append each element of the scalarFlux to the file on a new line
-    for( const double& fluxValue : scalarFlux ) {
-        outFile << fluxValue << "\n";
-    }
+    // Write each element of the solution vector in binary
+    outFile.write( reinterpret_cast<const char*>( solution.data() ), solution_size * sizeof( double ) );
+
+    // Write each element of the scalarFlux vector in binary
+    outFile.write( reinterpret_cast<const char*>( scalarFlux.data() ), scalarFlux_size * sizeof( double ) );
 
     // Close the file
     outFile.close();
@@ -483,31 +484,32 @@ int LoadRestartSolution(
     // Generate filename with rank number
     std::string inputFile = baseInputFile + "_restart_rank_" + std::to_string( rank );
 
-    // Open the file for reading
-    std::ifstream inFile( inputFile );
+    // Open the file for binary reading
+    std::ifstream inFile( inputFile, std::ios::in | std::ios::binary );
     if( !inFile ) {
         std::cerr << "Error opening restart solution file for reading." << std::endl;
         return 0;    // Signal failure
     }
 
-    // Read the iteration number from the first line
-    std::string line;
-    std::getline( inFile, line );
-    int idx_iter = std::stoi( line );    // Convert the line to an integer
+    // Read the iteration number
+    int idx_iter = 0;
+    inFile.read( reinterpret_cast<char*>( &idx_iter ), sizeof( idx_iter ) );
 
-    // Read data into a temporary vector
-    std::vector<double> tempData;
-    double value;
-    while( std::getline( inFile, line ) ) {
-        std::istringstream converter( line );
-        converter >> std::fixed >> std::setprecision( 15 ) >> value;
-        tempData.push_back( value );
-    }
+    // Read the size of the solution and scalarFlux vectors
+    size_t solution_size, scalarFlux_size;
+    inFile.read( reinterpret_cast<char*>( &solution_size ), sizeof( solution_size ) );
+    inFile.read( reinterpret_cast<char*>( &scalarFlux_size ), sizeof( scalarFlux_size ) );
+
+    // Temporary vector to hold the full data
+    std::vector<double> tempData( solution_size + scalarFlux_size );
+
+    // Read the entire data block in binary form
+    inFile.read( reinterpret_cast<char*>( tempData.data() ), ( solution_size + scalarFlux_size ) * sizeof( double ) );
 
     // Close the file
     inFile.close();
 
-    // Verify that we have at least nCells entries to populate scalarFlux
+    // Verify that we have enough entries to populate scalarFlux
     if( tempData.size() < nCells ) {
         std::cerr << "Not enough data to populate scalar flux vector." << std::endl;
         return 0;    // Signal failure
